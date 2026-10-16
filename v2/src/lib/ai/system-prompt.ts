@@ -335,11 +335,11 @@ export function buildSystemPromptWithContext(context?: {
     contextLines.push('');
     contextLines.push('### Action Mode');
     if (context.actionMode === 'off') {
-      contextLines.push('- **OFF**: Read-only. Cannot create/update/delete. Tell user to enable actions.');
+      contextLines.push('- **Read only** (the user\'s mode switch): cannot create, update or delete. To change a case, tell the user to choose "Ask first" or "Auto" on the switch above the conversation.');
     } else if (context.actionMode === 'confirm') {
-      contextLines.push('- **CONFIRM**: Call action tools immediately with all info. A confirmation card appears for user to Approve/Cancel. Never ask "Should I proceed?" in text.');
+      contextLines.push('- **Ask first** (the user\'s mode switch): call action tools immediately with all info. A confirmation card appears for the user to Approve or Cancel. Never ask "Should I proceed?" in text.');
     } else if (context.actionMode === 'auto') {
-      contextLines.push('- **AUTO**: Execute immediately. Destructive actions still show confirmation.');
+      contextLines.push('- **Auto** (the user\'s mode switch): execute immediately. Destructive actions still show a confirmation card.');
     }
     contextLines.push('- When `requiresPermission: true` is returned, a card appears: say in one sentence what it will do and that nothing changes until they approve it. Do NOT re-call the tool.');
     contextLines.push('- If user types "yes" instead of clicking: redirect to the Approve button.');

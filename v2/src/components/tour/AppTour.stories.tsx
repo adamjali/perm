@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useEffect, useState, type ReactNode } from "react";
 import { render } from "@react-email/render";
 
+import type { ActionMode } from "@/components/chat/ActionModeToggle";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
@@ -149,15 +150,29 @@ export const SettingsCalendar: Story = {
   ),
 };
 
-/** The assistant panel on its own, as it opens over a page. */
-export const Assistant: Story = {
-  render: () => (
+/** The assistant panel on its own, as it opens over a page, its mode switch on Ask first. */
+function AssistantPanel() {
+  const [mode, setMode] = useState<ActionMode>("confirm");
+  return (
     <TourConvex>
       <div id="tour-capture" className="h-[640px] w-[420px] bg-background">
-        <ChatPanel messages={MESSAGES} input="" onInputChange={() => {}} onSend={() => {}} status="ready" onClose={() => {}} />
+        <ChatPanel
+          messages={MESSAGES}
+          input=""
+          onInputChange={() => {}}
+          onSend={() => {}}
+          status="ready"
+          onClose={() => {}}
+          actionMode={mode}
+          onActionModeChange={setMode}
+        />
       </div>
     </TourConvex>
-  ),
+  );
+}
+
+export const Assistant: Story = {
+  render: () => <AssistantPanel />,
 };
 
 const DIGEST = (fixtures as Record<string, unknown>)["tour:digest"] as Pick<DeadlineDigestProps, "userName" | "items">;

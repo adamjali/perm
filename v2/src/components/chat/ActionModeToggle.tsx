@@ -1,26 +1,27 @@
 /**
  * ActionModeToggle Component
  *
- * Segmented control for switching between chatbot action modes:
- * - OFF: Read-only mode, chatbot only answers questions
- * - CONFIRM: Chatbot proposes actions and waits for confirmation (default, safest)
- * - AUTO: Chatbot executes actions automatically
+ * What the assistant may do to your cases, chosen on a strip under the chat's
+ * title bar (round 2, Oct 15 2026: three icons in the title bar read as
+ * nothing; the owner asked for the modes with good colour, like an app's
+ * permission modes):
+ * - Read only (`off`, ink): it answers questions and changes nothing
+ * - Ask first (`confirm`, lime, the default): it shows each change and waits
+ *   for an OK
+ * - Auto (`auto`, amber): it changes cases right away; a deletion still asks
  *
- * Design:
- * - 2px black border container
- * - Hard shadow (2px 2px 0px)
- * - Active segment: Forest Green bg, white text
- * - Inactive: white bg, black text with hover state
- * - Icons only (tooltips explain functionality)
+ * Each option has its icon and its words; the chosen one fills with its
+ * colour, and a line under the strip says what that mode means, edged in the
+ * same colour. The words carry the meaning, so nothing rests on colour alone.
+ * A radiogroup: Left and Right (or Up and Down) move the choice.
  *
  * @module components/chat/ActionModeToggle
  */
 
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { EyeSlashIcon as EyeOff, LightningIcon as Zap, ShieldCheckIcon } from "@phosphor-icons/react/ssr";
+import { useCallback, useRef, type KeyboardEvent } from "react";
+import { EyeSlashIcon, LightningIcon, ShieldCheckIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import type { ActionMode } from "@/lib/ai/tool-permissions";
 
@@ -42,202 +43,108 @@ export interface ActionModeToggleProps {
 // Constants
 // ============================================================================
 
-interface ModeConfig {
-  icon: typeof EyeOff;
-  label: string;
-  tooltip: string;
-}
-
-const MODE_CONFIG: Record<ActionMode, ModeConfig> = {
+const MODE_CONFIG: Record<
+  ActionMode,
+  { icon: typeof EyeSlashIcon; label: string; fill: string; edge: string }
+> = {
   off: {
-    icon: EyeOff,
-    label: "Off",
-    tooltip: "Read-only: I’ll only answer questions",
+    icon: EyeSlashIcon,
+    label: "Read only",
+    fill: "bg-[#141414] text-white dark:bg-white dark:text-black",
+    edge: "border-l-[#141414] dark:border-l-white",
   },
   confirm: {
     icon: ShieldCheckIcon,
-    label: "Confirm",
-    tooltip: "I’ll ask before taking actions",
+    label: "Ask first",
+    fill: "bg-primary text-black",
+    edge: "border-l-primary",
   },
   auto: {
-    icon: Zap,
+    icon: LightningIcon,
     label: "Auto",
-    tooltip: "I’ll act immediately (destructive actions still ask)",
+    fill: "bg-data-warn text-black",
+    edge: "border-l-data-warn",
   },
 };
 
 const MODES: ActionMode[] = ["off", "confirm", "auto"];
 
-/** Each mode's colour when chosen; black words read on the lime and the amber. */
-const ACTIVE_FILL: Record<ActionMode, string> = {
-  off: "bg-[#141414] text-white dark:bg-white dark:text-black",
-  confirm: "bg-primary text-black",
-  auto: "bg-data-warn text-black",
-};
-
-/**
- * One line naming what a mode does, shown briefly after it changes. The
- * tooltips above appear on hover only, so a phone never saw them.
- */
+/** What each mode means, in one line under the strip. */
 export const ACTION_MODE_NOTICE: Record<ActionMode, string> = {
-  off: "Off: I’ll only answer questions",
-  confirm: "Confirm: I’ll ask before taking actions",
-  auto: "Auto: I’ll act right away; deletions still ask",
+  off: "Read only: it answers questions and changes nothing.",
+  confirm: "Ask first: it shows each change and waits for your OK.",
+  auto: "Auto: it changes cases right away. A deletion still asks.",
 };
-
-// ============================================================================
-// Tooltip Component (Portal-based)
-// ============================================================================
-
-interface TooltipPortalProps {
-  children: React.ReactNode;
-  targetRef: React.RefObject<HTMLElement | null>;
-  visible: boolean;
-}
-
-function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (visible && targetRef.current) {
-      const rect = targetRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.top - 8, // 8px above the element
-        left: rect.left + rect.width / 2, // centered
-      });
-    }
-  }, [visible, targetRef]);
-
-  if (!mounted || !visible) return null;
-
-  return createPortal(
-    <>
-      {visible && (
-        <div
-          className={cn(
-            "fixed z-[9999] -translate-x-1/2 -translate-y-full",
-            "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
-            "whitespace-nowrap shadow-hard-sm",
-            "pointer-events-none",
-            "border-2 border-black"
-          )}
-          style={{ top: position.top, left: position.left }}
-        >
-          {children}
-          {/* Arrow pointer */}
-          <div
-            className="absolute top-full left-1/2 -translate-x-1/2 border border-transparent border-t-foreground"
-          />
-        </div>
-      )}
-    </>,
-    document.body
-  );
-}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export function ActionModeToggle({
-  mode,
-  onChange,
-  disabled = false,
-  className,
-}: ActionModeToggleProps) {
-  const [hoveredMode, setHoveredMode] = useState<ActionMode | null>(null);
-  const buttonRefs = useRef<Map<ActionMode, HTMLButtonElement>>(new Map());
+export function ActionModeToggle({ mode, onChange, disabled = false, className }: ActionModeToggleProps) {
+  const refs = useRef<Map<ActionMode, HTMLButtonElement>>(new Map());
 
-  const handleClick = useCallback(
-    (newMode: ActionMode) => {
-      if (!disabled && newMode !== mode) {
-        onChange(newMode);
-      }
+  const choose = useCallback(
+    (next: ActionMode) => {
+      if (!disabled && next !== mode) onChange(next);
     },
-    [disabled, mode, onChange]
+    [disabled, mode, onChange],
   );
 
-  // Stable ref callback that extracts mode from data attribute
-  // This avoids calling a function during render which would access refs
-  const handleButtonRef = useCallback((el: HTMLButtonElement | null) => {
-    if (el) {
-      const modeAttr = el.dataset.mode as ActionMode | undefined;
-      if (modeAttr) {
-        buttonRefs.current.set(modeAttr, el);
-      }
-    }
-  }, []);
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      const step =
+        e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+      if (!step || disabled) return;
+      e.preventDefault();
+      const next = MODES[(MODES.indexOf(mode) + step + MODES.length) % MODES.length]!;
+      choose(next);
+      refs.current.get(next)?.focus();
+    },
+    [choose, disabled, mode],
+  );
 
-  /* eslint-disable react-hooks/refs -- Ref access for tooltip positioning is safe and necessary */
   return (
-    <div
-      className={cn(
-        // Container styling
-        "relative inline-flex",
-        "border-2 border-black bg-background",
-        "shadow-hard-sm",
-        // Disabled state
-        disabled && "opacity-50 pointer-events-none",
-        className
-      )}
-      role="radiogroup"
-      aria-label="Action mode"
-    >
-      {MODES.map((m) => {
-        const config = MODE_CONFIG[m];
-        const Icon = config.icon;
-        const isActive = mode === m;
-        const isHovered = hoveredMode === m;
-
-        return (
-          <div
-            key={m}
-            className="relative"
-            onMouseEnter={() => setHoveredMode(m)}
-            onMouseLeave={() => setHoveredMode(null)}
-          >
+    <div className={cn("border-b-2 border-border bg-muted px-3 py-2.5", className)}>
+      <div
+        role="radiogroup"
+        aria-label="What the assistant may do"
+        onKeyDown={onKeyDown}
+        className={cn("grid grid-cols-3 border-2 border-black bg-background shadow-hard-sm dark:border-[var(--object-border)]", disabled && "opacity-60")}
+      >
+        {MODES.map((m) => {
+          const { icon: Icon, label, fill } = MODE_CONFIG[m];
+          const on = mode === m;
+          return (
             <button
-              ref={handleButtonRef}
-              data-mode={m}
+              key={m}
+              ref={(el) => {
+                if (el) refs.current.set(m, el);
+              }}
               type="button"
               role="radio"
-              aria-checked={isActive}
-              aria-label={config.tooltip}
-              onClick={() => handleClick(m)}
+              aria-checked={on}
+              tabIndex={on ? 0 : -1}
               disabled={disabled}
+              onClick={() => choose(m)}
               className={cn(
-                // Base segment styling - icons only, compact
-                "relative flex items-center justify-center",
-                "w-11 h-11 md:w-9 md:h-8",
-                "transition-colors duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                // Border between segments (not on last)
-                "border-r-2 border-border last:border-r-0",
-                // The chosen mode in its own colour (round 2, Oct 15 2026): read
-                // only is ink, asking first is lime, acting on its own is amber.
-                isActive
-                  ? ACTIVE_FILL[m]
-                  : "bg-background text-soft hover:bg-muted hover:text-foreground"
+                "flex min-h-11 items-center justify-center gap-1.5 border-r-2 border-black px-1 text-sm last:border-r-0 md:min-h-9 dark:border-[var(--object-border)]",
+                "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                "disabled:cursor-not-allowed",
+                on ? cn(fill, "font-bold") : "font-semibold text-soft hover:bg-accent hover:text-foreground",
               )}
             >
-              <Icon weight={isActive ? "bold" : "regular"} className="h-4 w-4" />
+              <Icon weight={on ? "bold" : "regular"} className="size-4 shrink-0" aria-hidden="true" />
+              {label}
             </button>
-
-            {/* Portal-based Tooltip */}
-            <TooltipPortal
-              targetRef={{ current: buttonRefs.current.get(m) || null }}
-              visible={isHovered && !disabled}
-            >
-              {config.tooltip}
-            </TooltipPortal>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>{" "}
+      <p
+        aria-live="polite"
+        className={cn("mt-2 border-l-4 pl-2 text-sm leading-snug text-foreground", MODE_CONFIG[mode].edge)}
+      >
+        {ACTION_MODE_NOTICE[mode]}
+      </p>
     </div>
   );
 }

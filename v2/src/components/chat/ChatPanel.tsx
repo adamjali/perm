@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
-import { ActionModeToggle, ACTION_MODE_NOTICE, type ActionMode } from './ActionModeToggle';
+import { ActionModeToggle, type ActionMode } from './ActionModeToggle';
 import { ChatCompactionDivider } from './ChatCompactionDivider';
 import { NotLegalAdviceNotice } from '@/components/legal/NotLegalAdviceNotice';
 import { springConfig } from '@/lib/motion';
@@ -227,17 +227,6 @@ export function ChatPanel({
     if (lastUserId) stick();
   }, [lastUserId, stick]);
 
-  // Name the new mode for a few seconds after it changes (touch has no hover).
-  const [modeNotice, setModeNotice] = useState<string | null>(null);
-  const prevMode = useRef(actionMode);
-  useEffect(() => {
-    if (prevMode.current === actionMode) return;
-    prevMode.current = actionMode;
-    setModeNotice(ACTION_MODE_NOTICE[actionMode]);
-    const t = setTimeout(() => setModeNotice(null), 3500);
-    return () => clearTimeout(t);
-  }, [actionMode]);
-
   const isProcessing = status === 'submitted' || status === 'streaming';
   const errorText = chatErrorText(error ?? undefined);
   // Actions in the interrupted reply already ran; Try again carries on from
@@ -297,17 +286,6 @@ export function ChatPanel({
           <h2 id={titleId} className="font-heading font-semibold text-sm max-[389px]:sr-only">PERM Assistant</h2>
         </div>
 
-        {/* Action Mode Toggle (icons only, portal tooltip) */}
-        {onActionModeChange && (
-          <ActionModeToggle
-            mode={actionMode}
-            onChange={onActionModeChange}
-            // Not while a reply is running: a mode change then started a
-            // second request beside it.
-            disabled={actionModeLoading || isProcessing}
-          />
-        )}
-
         <div className="flex items-center gap-1 flex-shrink-0">
           {onOpenHistory && (
             <Button
@@ -332,21 +310,17 @@ export function ChatPanel({
         </div>
       </div>
 
-      {/* The mode just chosen, named */}
-      <AnimatePresence initial={false}>
-        {modeNotice && (
-          <motion.p
-            role="status"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.15 }}
-            className="px-3 py-2 text-sm border-b-2 border-border bg-background overflow-hidden"
-          >
-            {modeNotice}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      {/* What the assistant may do: three labelled, coloured modes and a line
+          saying what the chosen one means. */}
+      {onActionModeChange && (
+        <ActionModeToggle
+          mode={actionMode}
+          onChange={onActionModeChange}
+          // Not while a reply is running: a mode change then started a
+          // second request beside it.
+          disabled={actionModeLoading || isProcessing}
+        />
+      )}
 
       {/* Messages Area */}
       <div className="relative flex-1 min-h-0">
