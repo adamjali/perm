@@ -1002,3 +1002,29 @@ request only when a slot is spare after the Oct 11 sections.
 
 1. `/terms`
 2. `/privacy`
+
+## Queue after the Oct 13 to 16 changes (the middle-ground redesign, live Oct 15 6:04 PM EDT, rounds 2 and 3 to 10:42 PM)
+
+`node scripts/gsc_queue.mjs --since 7edd296d` lists 169 changed public pages: the redesign touched every
+template. The sitemap's lastmod carries most of them; slots go to the pages most people land on, in order:
+
+1. `/` (most visitors; the definition, the board's labels and the sections changed)
+2. `/perm-case-status`
+3. `/perm-processing-times`
+4. `/faq`
+5. `/about`
+6. `/for-attorneys`
+7. `/perm-case-statuses` (rebuilt: banners and colours per program)
+8. `/perm-employers/google-llc` (the employer family's sample)
+9. `/perm-queue`
+10. `/visa-bulletin`
+11. `/case-search`
+12. `/perm-cases`
+13. `/uscis-case-status`
+14. `/guides`
+15. `/changelog` (rebuilt as a compact list)
+16. `/tools`
+17. `/perm-employers`
+18. `/perm-wages/software-developers`
+19. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
+20. `/policy-changes`

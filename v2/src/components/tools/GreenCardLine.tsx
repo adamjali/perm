@@ -21,6 +21,7 @@ import {
   type LineCategory,
   type LineSnapshot,
 } from "@/lib/greenCardLine";
+import { plausibleRange } from "@/lib/greenCardLineCompare";
 import type { CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH_2DP } from "@/lib/time";
@@ -268,18 +269,23 @@ function LineAnswer({
     { key: "pending", label: "Waiting for I-140 approval", note: "pending petitions at the rate USCIS approves them", value: (parts.pendingApproval.low + parts.pendingApproval.high) / 2, cls: "bg-chart-yellow" },
   ];
   const total = segs.reduce((n, s) => n + s.value, 0);
+  // The headline is the whole honest range (Oct 16 2026: it printed only the
+  // high end). Where the estimate disagrees with USCIS's own I-485 count, the
+  // low end is the estimate scaled down by that disagreement.
+  const shown = plausibleRange(result);
+  const perYear = result.supply?.perYear ?? 0;
 
   return (
     <>
       <div className="border-b-2 border-border p-6 sm:p-8">
         <p className={EYEBROW_CLASS}>{lineLabel}</p>{" "}
         <p className="mt-2 font-heading text-4xl font-bold leading-[1.05] tabular-nums sm:text-5xl">
-          {rangeText(result.peopleAhead.low, result.peopleAhead.high)}
+          {rangeText(shown.low, shown.high)}
         </p>{" "}
         <p className="mt-1 font-heading text-xl font-bold">people ahead of you</p>{" "}
-        {showYears && result.years && result.supply ? (
+        {showYears && result.years && result.supply && perYear > 0 ? (
           <p className="mt-4 text-lg leading-relaxed">
-            <b className="font-bold">{yearsText(result.years.low, result.years.high)} years</b>{" "}
+            <b className="font-bold">{yearsText(shown.low / perYear, shown.high / perYear)} years</b>{" "}
             <span className="text-soft">
               at FY{result.supply.fy}&apos;s pace: {result.supply.perYear.toLocaleString("en-US")} green cards
               went to this line and country that year (State&apos;s Table V), families included.
@@ -306,16 +312,14 @@ function LineAnswer({
           <div className="mt-5 flex items-start gap-3 border-2 border-data-warn bg-data-warn/10 p-4">
             <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
             <p className="text-base leading-relaxed">
-              <b className="font-bold">Treat this as rough for this line.</b>{" "}
-              At the dates-for-filing cutoff ({formatAsOf(result.check.at)}), this estimate puts{" "}
-              {rangeText(result.check.estimate.low, result.check.estimate.high)} people where USCIS counted{" "}
-              {roundPeople(result.check.counted.low)} who filed, {result.check.ratio.toFixed(1)} times as many. If it
-              runs that far over everywhere, the line ahead is{" "}
-              <b className="font-bold">{rangeText(result.check.scaled.low, result.check.scaled.high)}</b> people
-              {showYears && result.supply && result.supply.perYear > 0
-                ? `, about ${yearsText(result.check.scaled.low / result.supply.perYear, result.check.scaled.high / result.supply.perYear)} years`
-                : ""}
-              .
+              <b className="font-bold">Why the range is this wide.</b>{" "}
+              The high end, {rangeText(result.peopleAhead.low, result.peopleAhead.high)}, counts every approved
+              petition as one person and their family, and USCIS says one person can hold several petitions. At the
+              dates-for-filing cutoff ({formatAsOf(result.check.at)}) that count puts{" "}
+              {rangeText(result.check.estimate.low, result.check.estimate.high)} people ahead, where USCIS counted{" "}
+              {roundPeople(result.check.counted.low)} who filed, {result.check.ratio.toFixed(1)} times as many. The low
+              end, <b className="font-bold">{rangeText(result.check.scaled.low, result.check.scaled.high)}</b>, assumes
+              it runs that far over everywhere. The real line is likely somewhere between.
             </p>
           </div>
         ) : null}

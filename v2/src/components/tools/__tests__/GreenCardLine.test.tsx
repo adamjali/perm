@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { GreenCardLine, formatYears, roundPeople } from "../GreenCardLine";
-import { lineSnapshot } from "@/lib/__tests__/greenCardLine.fixture";
+import { lineSnapshot, twoLines } from "@/lib/__tests__/greenCardLine.fixture";
+import { estimateLine, monthIndex } from "@/lib/greenCardLine";
+import { plausibleRange } from "@/lib/greenCardLineCompare";
+import { rangeText } from "../GreenCardLine";
 
 /**
  * The calculator's four states, on the made-up EB-3 Other Workers line the
@@ -158,3 +161,36 @@ describe("rounding a count this uncertain", () => {
   });
 });
 
+describe("a line whose estimate runs over USCIS's own count", () => {
+  // Oct 16 2026: EB-2 India printed 739,000 to 765,000 in the headline, the
+  // top of the range, while the page's own check said that count runs 2.3
+  // times what USCIS has on file. The headline is the whole range now.
+  function overcounting(dff = "2021-01-01") {
+    const snap = twoLines(50_000, 1_000);
+    snap.latest!.datesForFiling.EB2 = { india: { kind: "date", iso: dff } };
+    snap.i485Filed = { asOf: "2026-08-05", cells: { EB2: { india: [[monthIndex("2014-06"), 6_000, 0]] }, EB3: {}, EW3: {} } };
+    return snap;
+  }
+
+  it("leads with the scaled low end and the counted high end, and says why", () => {
+    const snap = overcounting();
+    const result = estimateLine({ category: "EB2", country: "india", priorityDate: "2025-06-01" }, snap);
+    if (result.kind !== "estimate" || !result.check?.disagrees) throw new Error("fixture must disagree");
+    const shown = plausibleRange(result);
+    expect(shown.low).toBeLessThan(result.peopleAhead.low);
+
+    render(<GreenCardLine snapshot={snap} pace={{}} defaultCategory="EB2" defaultCountry="india" />);
+    setDate("2025-06-01");
+    expect(screen.getByText(rangeText(shown.low, shown.high))).toBeInTheDocument();
+    expect(screen.getByText(/why the range is this wide/i)).toBeInTheDocument();
+  });
+
+  it("never scales by a ratio of zero (nobody estimated ahead at the check)", () => {
+    const result = estimateLine({ category: "EB2", country: "india", priorityDate: "2025-06-01" }, overcounting("2018-01-01"));
+    if (result.kind !== "estimate") throw new Error("expected an estimate");
+    expect(result.check?.ratio).toBe(0);
+    expect(result.check?.scaled).toBeNull();
+    const shown = plausibleRange(result);
+    expect(Number.isFinite(shown.high)).toBe(true);
+  });
+});

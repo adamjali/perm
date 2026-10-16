@@ -6,6 +6,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { AlertMark } from "@/components/ui/note";
 
 /**
  * Which employment-based green card categories could fit, from a few answers
@@ -72,8 +73,10 @@ export default function WhichGreenCardPage() {
         <VisaChooser />
       </section>
 
-      <details className="group mt-12 bg-tint p-6 sm:p-8 border-2 border-border">
-        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
+      {/* Folded, in the site's caveat colours, like every other "what this can't tell you". */}
+      <details className="group mt-12 border-2 border-data-warn bg-soft-wait p-6 sm:p-8">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none [&::-webkit-details-marker]:hidden">
+          <AlertMark className="mr-3" />{" "}
           What this can&apos;t tell you
         </summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">

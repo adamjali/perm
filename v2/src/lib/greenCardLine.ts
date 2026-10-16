@@ -637,7 +637,9 @@ export function estimateLine(input: LineInput, snap: LineSnapshot): LineResult {
         ratio,
         comparable,
         disagrees,
-        scaled: disagrees ? { low: Math.max(floor, low / ratio), high: Math.max(floor, high / ratio) } : null,
+        // Only a ratio above zero scales: with nobody estimated ahead at the
+        // check, dividing by it would print an infinite line.
+        scaled: disagrees && ratio > 0 ? { low: Math.max(floor, low / ratio), high: Math.max(floor, high / ratio) } : null,
       };
     }
   }

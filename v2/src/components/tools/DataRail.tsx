@@ -113,30 +113,20 @@ export function DataRail() {
     document.getElementById(id)?.focus();
   }, [railOpen]);
 
-  // Sticky only when it fits. A sticky element taller than the viewport never
-  // shows its bottom, and a scroll box would clip the protruding tab, so the
-  // rail measures itself against the space under the header and scrolls with
-  // the page when it's taller.
-  const navRef = useRef<HTMLElement>(null);
-  const [fits, setFits] = useState(true);
+  // The rail is always pinned under the header at the screen's full height,
+  // and only its list scrolls (Oct 16 2026: with Calculators open, 21 pages,
+  // the rail used to stop being pinned and scroll away with the page). The
+  // current page's row is brought into the list's view on arrival.
+  const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = navRef.current;
-    if (!el) return;
-    const check = () => {
-      const root = getComputedStyle(document.documentElement);
-      const header = parseFloat(root.getPropertyValue("--site-header-max-h")) || 72;
-      const banner = parseFloat(root.getPropertyValue("--security-banner-h")) || 0;
-      setFits(el.scrollHeight <= window.innerHeight - header - banner);
-    };
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    window.addEventListener("resize", check);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", check);
-    };
-  }, [railOpen]);
+    const list = listRef.current;
+    const row = list?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!list || !row) return;
+    const top = row.offsetTop - list.offsetTop;
+    if (top < list.scrollTop || top + row.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = Math.max(0, top - list.clientHeight / 3);
+    }
+  }, [pathname, railOpen]);
 
   // Client-side navigation changes the pathname without remounting, so the
   // open group has to follow it. Without this, walking from Queue into
@@ -306,21 +296,16 @@ export function DataRail() {
         )}
         style={{ width: railOpen ? RAIL_W : RAIL_W_COLLAPSED }}
       >
-        {/* Sticky at the column's own top (the same offset `main` pads by), so
-            the rail never drifts on the first pixels of scroll. A flex column
-            with a minimum height, so the footer's `mt-auto` has a viewport to
-            push against; no `overflow`, which would clip the protruding tab. */}
+        {/* Pinned at the column's own top (the same offset `main` pads by), so
+            the rail never drifts on the first pixels of scroll, and exactly as
+            tall as the screen under the header: the list scrolls inside it and
+            the footer stays at its foot. */}
         <nav
-          ref={navRef}
           aria-label="Data sections"
-          className={cn("flex flex-col py-2 lg:py-1", fits ? "sticky" : "relative")}
+          className="sticky flex flex-col py-2 lg:py-1"
           style={{
-            // `top` only while sticky: on a `relative` element the same value
-            // would shift the rail down by a header's height.
-            top: fits
-              ? "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))"
-              : undefined,
-            minHeight: "calc(100dvh - var(--site-header-max-h, 4.5rem) - 2rem - var(--security-banner-h, 0px))",
+            top: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))",
+            height: "calc(100dvh - var(--site-header-max-h, 4.5rem) - var(--security-banner-h, 0px))",
           }}
         >
           {railOpen ? (
@@ -341,7 +326,7 @@ export function DataRail() {
                 }}
                 className={cn(
                   // `-mt-1` takes the nav's 4px top padding, so the 44px button costs
-                  // the rail the 40px the old tab did (rail-fits.test.ts).
+                  // the rail only 40px.
                   "-mt-1 flex size-11 shrink-0 items-center justify-center self-end text-foreground/65",
                   "transition-colors duration-150 hover:bg-rail-hover hover:text-foreground",
                   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
@@ -351,8 +336,18 @@ export function DataRail() {
                 <span className="sr-only">Collapse data sections</span>
                 <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
               </button>
-              <div id="data-rail-desktop" className="flex flex-1 flex-col">
-                {renderBody("rail")}
+              <div id="data-rail-desktop" className="flex min-h-0 flex-1 flex-col">
+                {/* The scroll box is 24px wider than the rail, so the current
+                    page's tab, which crosses the rail's edge by up to 20px plus its shadow, is
+                    inside it and never clipped; the content keeps the rail's
+                    width. A thin scrollbar, out in the gap beside the rail. */}
+                <div
+                  ref={listRef}
+                  className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:thin]"
+                  style={{ width: "calc(100% + 24px)" }}
+                >
+                  <div style={{ width: "calc(100% - 24px)" }}>{renderBody("rail")}</div>
+                </div>
                 <RailFooter />
               </div>
             </>
@@ -605,10 +600,9 @@ function Tab({
 /**
  * What sits under the last section: the lookup, pinned to the foot of the rail.
  *
- * It stays at the bottom (`mt-auto` in a flex column with a viewport-based
- * minimum height); the rail fits around it with 40px rows at `lg` and up, and
- * drops `sticky` when the viewport is too short (measured above). Overview,
- * six groups, one open group and this block measure about 740px at 1440x812.
+ * It stays at the foot of the rail, which is exactly as tall as the screen
+ * under the header; the list above it scrolls inside the rail when an open
+ * group runs longer than the screen (Calculators holds 21 pages).
  *
  * IT IS THE ACTION, NOT ANOTHER LINK. Every figure on these pages is an
  * aggregate, and the question underneath every aggregate is "where does that

@@ -230,7 +230,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
           <BarLink page={HEADER_PAGES.forAttorneys} current={pathname === HEADER_PAGES.forAttorneys.href} />
         </nav>{" "}
         <div className="ml-auto flex items-center gap-1 lg:gap-3">
-          <SiteSearch articles={articles} className="w-80 2xl:w-96" />{" "}
+          <SiteSearch articles={articles} className="w-[22rem] 2xl:w-96" />{" "}
           {pathname !== "/login" ? (
             <Link
               href="/login"

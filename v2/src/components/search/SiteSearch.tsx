@@ -109,7 +109,7 @@ export function SiteSearch({
           enterKeyHint="search"
           placeholder={SEARCH_PLACEHOLDER}
           onFocus={(e) => openPalette("button", e.currentTarget.value)}
-          className="h-10 w-full min-w-0 border border-input bg-card pl-10 pr-14 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="h-10 w-full min-w-0 text-ellipsis border border-input bg-card pl-10 pr-12 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <kbd className="pointer-events-none absolute right-3 hidden font-mono text-sm text-muted-foreground xl:inline">
           ⌘K

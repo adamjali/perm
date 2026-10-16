@@ -338,7 +338,7 @@ function LineCard({
       ) : (
         <>
           <p className="mt-5 font-heading text-3xl font-bold leading-tight tabular-nums">
-            {rangeText(result.peopleAhead.low, result.peopleAhead.high)}
+            {rangeLabel(result)}
           </p>{" "}
           <p className="font-heading text-lg font-bold">people ahead</p>{" "}
           {result.counted && result.counted.low > 0 ? (
@@ -352,8 +352,10 @@ function LineCard({
             <p className="mt-3 flex items-start gap-2 text-base leading-relaxed">
               <WarningIcon className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
               <span>
-                Rough for this line: it runs {result.check.ratio.toFixed(1)} times USCIS&apos;s own count where both
-                exist. If it overcounts that much everywhere, the line ahead is{" "}
+                Wide for this line: counting every approved petition gives{" "}
+                {rangeText(result.peopleAhead.low, result.peopleAhead.high)}, which runs{" "}
+                {result.check.ratio.toFixed(1)} times USCIS&apos;s own count where both exist; one person can hold
+                several petitions. Scaled down by that, it&apos;s{" "}
                 {rangeText(result.check.scaled.low, result.check.scaled.high)}.
               </span>
             </p>
