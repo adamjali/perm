@@ -645,49 +645,50 @@ html {
   .flap-word { display: flex; width: max-content; max-width: 100%; font-size: clamp(0.85rem, 3.4vw, 1.25rem); }
 }
 
-/* The homepage hero's own ground (round 3, Oct 15 2026). The page's own
-   colour (the owner took the sage and mint fields off, 9:48 PM), a fine dot
-   pattern and an ink rule under it. The variants were sampled for the owner;
-   `data-hero` picks one. The pattern never sits under text alone: the lookup
-   box and the board are solid objects on top of it. */
+/* The homepage hero's own ground (round 3, Oct 15 2026; Oct 16 2026: grain,
+   parallax, and the pattern faded behind the words). The page's own colour
+   (the owner took the sage and mint fields off), then one layer of fine dots
+   and grain behind the content. It fades out under the text column so the
+   words read on a clean ground, and drifts slower than the page as it scrolls
+   (HeroParallax sets --hero-shift; reduced motion never does). The layer
+   starts 260px above the section so the drift never opens a gap at its top.
+   An ink rule closes the section. */
 .hero-ground {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background-color: var(--background);
   border-bottom: 2px solid var(--border);
 }
-.hero-ground[data-hero="dots"] {
-  background-image: radial-gradient(circle at center, rgb(20 20 20 / 0.2) 1.1px, transparent 1.7px);
-  background-size: 20px 20px;
-}
-.dark .hero-ground[data-hero="dots"] {
-  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.1px, transparent 1.7px);
-}
-.hero-ground[data-hero="grid"] {
+.hero-ground::before {
+  content: "";
+  position: absolute;
+  inset: -260px 0 0 0;
+  z-index: -1;
+  pointer-events: none;
   background-image:
-    linear-gradient(to right, rgb(46 204 64 / 0.3) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(46 204 64 / 0.3) 1px, transparent 1px);
-  background-size: 28px 28px;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(circle at center, rgb(20 20 20 / 0.2) 1.1px, transparent 1.7px);
+  background-size: 160px 160px, 20px 20px;
+  transform: translate3d(0, var(--hero-shift, 0px), 0);
+  /* Faint behind the words, whole around them. On a phone the words fill the
+     width, so the pattern stays faint throughout. */
+  -webkit-mask-image: linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.28));
+  mask-image: linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.28));
 }
-.hero-ground[data-hero="photo"] {
+@media (min-width: 64rem) {
+  .hero-ground::before {
+    -webkit-mask-image: linear-gradient(to right, rgb(0 0 0 / 0.12) 0%, rgb(0 0 0 / 0.12) 46%, #000 64%);
+    mask-image: linear-gradient(to right, rgb(0 0 0 / 0.12) 0%, rgb(0 0 0 / 0.12) 46%, #000 64%);
+  }
+}
+.dark .hero-ground::before {
   background-image:
-    linear-gradient(90deg, rgb(232 240 228 / 0.97) 0%, rgb(232 240 228 / 0.9) 45%, rgb(232 240 228 / 0.5) 100%),
-    url("/images/content/heroes/blog/what-dol-publishes-about-perm.webp");
-  background-size: cover;
-  background-position: center 35%;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.1px, transparent 1.7px);
 }
-.dark .hero-ground[data-hero="photo"] {
-  background-image:
-    linear-gradient(90deg, rgb(24 33 26 / 0.97) 0%, rgb(24 33 26 / 0.9) 45%, rgb(24 33 26 / 0.55) 100%),
-    url("/images/content/heroes/blog/what-dol-publishes-about-perm.webp");
-}
-.hero-ground[data-hero="mint"] {
-  background-color: #D7F0CF;
-  background-image: radial-gradient(circle at center, rgb(20 20 20 / 0.16) 1.1px, transparent 1.7px);
-  background-size: 20px 20px;
-}
-.dark .hero-ground[data-hero="mint"] {
-  background-color: #16301A;
-  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.13) 1.1px, transparent 1.7px);
+@media (prefers-reduced-motion: reduce) {
+  .hero-ground::before { transform: none; }
 }
 
 @keyframes flap-show {
