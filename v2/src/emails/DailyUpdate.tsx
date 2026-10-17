@@ -18,7 +18,7 @@ import { EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
 
 export interface DailyUpdateItem {
-  kind: "case" | "queue" | "bulletin" | "employer";
+  kind: "case" | "queue" | "bulletin" | "employer" | "match";
   title: string;
   line: string;
   url: string;
@@ -40,6 +40,7 @@ const KIND_LABEL: Record<DailyUpdateItem["kind"], string> = {
   queue: "DOL queue",
   bulletin: "Visa bulletin",
   employer: "Employer you follow",
+  match: "A PERM that may be yours",
 };
 
 export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: DailyUpdateProps) {

@@ -29,7 +29,13 @@ const OUTBOX_WEEK_READ = 3000;
 /** Employer follows read for the follower list. */
 const FOLLOWS_READ = 2000;
 
-const kindValidator = v.union(v.literal("case"), v.literal("queue"), v.literal("bulletin"), v.literal("employer"));
+const kindValidator = v.union(
+  v.literal("case"),
+  v.literal("queue"),
+  v.literal("bulletin"),
+  v.literal("employer"),
+  v.literal("match"),
+);
 
 /**
  * When the address behind an outbox row signed up for that alert, and when it
@@ -44,7 +50,8 @@ async function signedUp(
   const [kind, raw] = ref.split(":");
   let row: { _creationTime: number; createdAt?: number; confirmedAt?: number } | null = null;
   if (raw) {
-    if (kind === "case") {
+    // A match is about a wage request someone watches: its row is the case alert.
+    if (kind === "case" || kind === "match") {
       const id = ctx.db.normalizeId("caseStatusAlerts", raw);
       row = id ? await ctx.db.get(id) : null;
     } else if (kind === "queue") {
@@ -102,7 +109,7 @@ export const getDelivery = query({
         direct: v.number(),
         failed: v.number(),
         dropped: v.number(),
-        byKind: v.object({ case: v.number(), queue: v.number(), bulletin: v.number(), employer: v.number() }),
+        byKind: v.object({ case: v.number(), queue: v.number(), bulletin: v.number(), employer: v.number(), match: v.number() }),
       }),
     }),
     recent: v.array(
@@ -185,7 +192,7 @@ export const getDelivery = query({
       .withIndex("by_created", (q) => q.gte("createdAt", now - 7 * MS_PER_DAY))
       .order("desc")
       .take(OUTBOX_WEEK_READ);
-    const byKind = { case: 0, queue: 0, bulletin: 0, employer: 0 };
+    const byKind = { case: 0, queue: 0, bulletin: 0, employer: 0, match: 0 };
     let items = 0;
     let direct = 0;
     let failed = 0;

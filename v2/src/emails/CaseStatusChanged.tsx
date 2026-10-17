@@ -54,6 +54,7 @@ import type { FigureRow } from "./components/FigureTable";
 import { RatingRow } from "./components/RatingRow";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
 import { SITE_URL } from "../../convex/lib/links";
+import type { NextLink, NextSteps } from "../../convex/lib/alertNextSteps";
 
 /** The public case page. The email's primary destination. */
 export const CASE_PAGE_URL = `${SITE_URL}/perm-case-status`;
@@ -129,6 +130,19 @@ export interface CaseStatusChangedProps {
    * opens is what records the score, never the link itself.
    */
   ratingUrl?: string | null;
+  /**
+   * What comes next, on a final status: the step after this one and the alert
+   * that helps with it (convex/lib/alertNextSteps.ts). Null on a status with
+   * nothing honest to add.
+   */
+  next?: NextSteps | null;
+  /**
+   * The "Also on PERM Tracker" links after the employer's own page. Omitted by
+   * older callers, which get the two links every alert carried before Oct 16
+   * 2026; the sweep passes `alsoLinksFor`, which names DOL's PERM queue only
+   * to someone still waiting in it.
+   */
+  alsoLinks?: readonly NextLink[];
 }
 
 export function CaseStatusChanged({
@@ -153,6 +167,8 @@ export function CaseStatusChanged({
   prefsUrl,
   timelineUrl = null,
   ratingUrl = null,
+  next = null,
+  alsoLinks,
 }: CaseStatusChangedProps) {
   // Three figure groups in one email is a spec sheet. When the RFI funnel is
   // showing it is the more useful of the two, so the employer record stands
@@ -163,7 +179,8 @@ export function CaseStatusChanged({
   return (
     <EmailLayout
       previewText={
-        `${caseNumber}${employerName ? ` at ${employerName}` : ""}.` +
+        // "Example Systems, Inc." already ends the sentence; a second period read "Inc..".
+        `${caseNumber}${employerName ? ` at ${employerName}` : ""}`.replace(/\.?$/, ".") +
         (observedAt ? ` DOL last checked it on ${observedAt}.` : "")
       }
       hideSettingsLink={!prefsUrl}
@@ -210,7 +227,9 @@ export function CaseStatusChanged({
         <Text className="em-text-body" style={styles.body}>
           {meaning}
         </Text>
-      ) : (
+      ) : next ? null : (
+        // With "What comes next" below, the reader has the step that follows;
+        // saying we won't guess at the status right above it read as a contradiction.
         <Text className="em-text-body" style={styles.body}>
           DOL doesn&rsquo;t publish what this status means, and we&rsquo;re not
           going to guess at it. The counts below are what we can say.
@@ -231,6 +250,8 @@ export function CaseStatusChanged({
           </>
         )}
       </Text>
+
+      {next ? <NextStepsBlock next={next} /> : null}
 
       {rfiRows && rfiRows.length > 0 ? (
         <>
@@ -298,17 +319,53 @@ export function CaseStatusChanged({
                 },
               ]
             : []),
-          {
-            href: `${SITE_URL}/perm-processing-times`,
-            text: "The filing month DOL's queue has reached",
-          },
-          {
-            href: `${SITE_URL}/methodology`,
-            text: "Where every figure in this email comes from",
-          },
+          ...(alsoLinks ?? [
+            {
+              href: `${SITE_URL}/perm-processing-times`,
+              text: "The filing month DOL's queue has reached",
+            },
+            {
+              href: `${SITE_URL}/methodology`,
+              text: "Where every figure in this email comes from",
+            },
+          ]),
         ]}
       />
     </EmailLayout>
+  );
+}
+
+/**
+ * The step after this one, set apart by a lime rule so it reads as the
+ * email's second message rather than another table. One optional outline
+ * button (the onward alert), then plain links.
+ */
+function NextStepsBlock({ next }: { next: NextSteps }) {
+  return (
+    <Section style={styles.next}>
+      <Text className="em-text" style={styles.nextHeading}>
+        What comes next
+      </Text>
+      {next.steps.map((s) => (
+        <Text key={s.title} className="em-text-body" style={styles.nextStep}>
+          <strong>{s.title}.</strong> {s.body}
+        </Text>
+      ))}
+      {next.button ? (
+        <Section style={styles.nextButton}>
+          <EmailButton href={next.button.href} variant="outline">
+            {next.button.text}
+          </EmailButton>
+        </Section>
+      ) : null}
+      {next.links.map((l) => (
+        <Text key={l.href} style={styles.nextLinkRow}>
+          <Link href={l.href} className="em-link-strong" style={styles.nextLink}>
+            {l.text}
+          </Link>
+        </Text>
+      ))}
+    </Section>
   );
 }
 
@@ -363,6 +420,44 @@ const styles = {
   ask: {
     marginTop: "28px",
     marginBottom: "4px",
+  },
+  next: {
+    margin: "8px 0 28px 0",
+    padding: "4px 0 0 16px",
+    borderLeft: "4px solid #2ECC40",
+  },
+  nextHeading: {
+    fontFamily: SANS_STACK,
+    color: "#000001",
+    fontSize: "18px",
+    fontWeight: 700 as const,
+    lineHeight: "24px",
+    margin: "0 0 10px 0",
+  },
+  nextStep: {
+    fontFamily: SANS_STACK,
+    color: "#2A2A2A",
+    fontSize: "16px",
+    lineHeight: "25px",
+    margin: "0 0 12px 0",
+  },
+  nextButton: {
+    margin: "4px 0 8px 0",
+  },
+  nextLinkRow: {
+    margin: "0",
+  },
+  nextLink: {
+    fontFamily: SANS_STACK,
+    color: "#1A1A1A",
+    fontSize: "15px",
+    fontWeight: 600 as const,
+    textDecorationLine: "underline" as const,
+    // A standalone link on its own line: inline-block puts the padding inside
+    // the hit box, so each one is a 44px tap target like the link list's.
+    display: "inline-block",
+    padding: "12px 0",
+    lineHeight: "20px",
   },
   footerExtra: {
     color: "#5F5F67",

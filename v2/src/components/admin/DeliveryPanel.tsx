@@ -30,7 +30,13 @@ function ago(ms: number): string {
   return `${Math.floor(h / 24)} days`;
 }
 
-const KIND_LABEL = { case: "Case status", queue: "Queue month", bulletin: "Visa bulletin", employer: "Employer" } as const;
+const KIND_LABEL = {
+  case: "Case status",
+  queue: "Queue month",
+  bulletin: "Visa bulletin",
+  employer: "Employer",
+  match: "Possible PERM",
+} as const;
 
 const STATUS_CLASS: Record<string, string> = {
   sent: "bg-primary text-primary-foreground",

@@ -351,6 +351,19 @@ crons.cron(
   internal.alertOutbox.sendBundles,
   {}
 );
+/**
+ * After DOL issues a PERM job's prevailing wage, look for the PERM that
+ * follows it (convex/pipelineMatches.ts). Once a day, after the 4:10 AM ET
+ * pass has rebuilt the PERM remainder it reads and twenty minutes before the
+ * morning bundle, so a match that has to wait goes out with it.
+ */
+crons.daily(
+  "pwd-perm-matches",
+  { hourUTC: 11, minuteUTC: 10 },
+  internal.pipelineMatches.sweep,
+  {}
+);
+
 crons.daily(
   "alert-bundles-after-bulletin",
   { hourUTC: 18, minuteUTC: 0 },

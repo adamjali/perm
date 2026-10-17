@@ -20,7 +20,7 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL } from "./lib/links";
 import { oneClickUnsubscribeUrl, prefsLink } from "./lib/prefsLink";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
-import { oneClickHeaders } from "./lib/alertDelivery";
+import { ACCUMULATING_KINDS, oneClickHeaders } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { recordError } from "./lib/errorRecording";
 import { createLogger } from "./lib/logging";
@@ -45,6 +45,7 @@ const kindValidator = v.union(
   v.literal("queue"),
   v.literal("bulletin"),
   v.literal("employer"),
+  v.literal("match"),
 );
 const summaryValidator = v.object({
   title: v.string(),
@@ -134,7 +135,7 @@ export const enqueue = internalMutation({
     for await (const old of ctx.db
       .query("alertOutbox")
       .withIndex("by_ref_status", (q) => q.eq("ref", args.ref).eq("status", "queued"))) {
-      if (old.email === args.email && args.kind !== "employer") {
+      if (old.email === args.email && !ACCUMULATING_KINDS.has(args.kind)) {
         await ctx.db.patch(old._id, { status: "dropped", html: undefined, text: undefined, lastError: "superseded" });
       }
     }

@@ -15,6 +15,7 @@ import { EmployerAlertConfirm } from "../EmployerAlertConfirm";
 import { EmployerMoved } from "../EmployerMoved";
 import { QueueReached } from "../QueueReached";
 import { StatusChange } from "../StatusChange";
+import { PossiblePermMatch } from "../PossiblePermMatch";
 import type { DigestData } from "@convex/lib/newsletterCompose";
 
 /**
@@ -89,6 +90,16 @@ const subscriberMail: Array<[string, (over?: { prefsUrl?: string }) => React.Rea
         bulletinMonth: "2026-09",
         fromCutoff: "January 1, 2013",
         toCutoff: "February 1, 2013",
+        unsubscribeUrl: UNSUB,
+        prefsUrl: PREFS,
+        ...over,
+      }),
+  ],
+  [
+    "PossiblePermMatch",
+    (over = {}) =>
+      PossiblePermMatch({
+        ...PossiblePermMatch.PreviewProps,
         unsubscribeUrl: UNSUB,
         prefsUrl: PREFS,
         ...over,

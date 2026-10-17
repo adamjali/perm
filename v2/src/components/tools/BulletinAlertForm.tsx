@@ -20,6 +20,8 @@ import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
 import { useAlertFormTelemetry } from "@/lib/funnelEvents";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
+import { longDate } from "@convex/lib/months";
 
 const CATEGORIES = [
   { value: "EB1", label: "EB-1" },
@@ -38,7 +40,28 @@ const COUNTRIES = [
   { value: "philippines", label: "Philippines" },
 ] as const;
 
-export function BulletinAlertForm({ source }: { source: string }) {
+type Category = (typeof CATEGORIES)[number]["value"];
+type Country = (typeof COUNTRIES)[number]["value"];
+
+const isCategory = (v: string | null): v is Category => CATEGORIES.some((c) => c.value === v);
+const isCountry = (v: string | null): v is Country => COUNTRIES.some((c) => c.value === v);
+
+export function BulletinAlertForm({
+  source,
+  initialCategory = "EB2",
+  initialCountry = "india",
+  priorityDate = null,
+}: {
+  source: string;
+  initialCategory?: Category;
+  initialCountry?: Country;
+  /**
+   * The reader's priority date, "YYYY-MM-DD", when a link carried it (the
+   * certified PERM alert does: convex/lib/alertNextSteps.ts). Shown beside the
+   * form so the cutoff in the alert can be read against it; never sent.
+   */
+  priorityDate?: string | null;
+}) {
   const { observe, onFocusCapture } = useAlertFormTelemetry("bulletin", source);
   const emailId = useId();
   const catId = useId();
@@ -46,8 +69,9 @@ export function BulletinAlertForm({ source }: { source: string }) {
   const newsId = useId();
 
   const [email, setEmail] = useState("");
-  const [category, setCategory] = useState("EB2");
-  const [country, setCountry] = useState("india");
+  const [category, setCategory] = useState<string>(initialCategory);
+  const [country, setCountry] = useState<string>(initialCountry);
+  const priorityLabel = longDate(priorityDate);
   const [news, setNews] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -117,7 +141,13 @@ export function BulletinAlertForm({ source }: { source: string }) {
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         When a new bulletin changes the final-action cutoff for your category and country, one email with the
         change. Nothing in the months it doesn&apos;t move.
-      </p>
+      </p>{" "}
+      {priorityLabel ? (
+        <p className="mt-3 max-w-2xl text-base leading-relaxed">
+          Your priority date is <strong>{priorityLabel}</strong>. Pick the category on your I-140 and your country of
+          birth, and set each cutoff we send against that date.
+        </p>
+      ) : null}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
         <div>
           <Label htmlFor={catId}>Category</Label>{" "}
@@ -165,5 +195,26 @@ export function BulletinAlertForm({ source }: { source: string }) {
         className="mt-1"
       />
     </form>
+  );
+}
+
+/**
+ * The form with its choices read from the address: `category`, `country` and
+ * `pd` (a priority date to show beside it). Values outside the form's own
+ * lists are ignored. Render it inside a `SearchParamsBoundary`, so the
+ * prerendered page holds the form as it looks with no parameters.
+ */
+export function BulletinAlertFormFromUrl({ source }: { source: string }) {
+  const params = useUrlSearchParams();
+  const category = params.get("category");
+  const country = params.get("country");
+  const pd = params.get("pd");
+  return (
+    <BulletinAlertForm
+      source={source}
+      initialCategory={isCategory(category) ? category : undefined}
+      initialCountry={isCountry(country) ? country : undefined}
+      priorityDate={pd && /^\d{4}-\d{2}-\d{2}$/.test(pd) ? pd : null}
+    />
   );
 }

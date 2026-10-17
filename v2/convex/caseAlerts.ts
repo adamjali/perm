@@ -91,6 +91,7 @@
  *   firm-page claim emails         10/day   (convex/firmClaims.ts)
  *   webhook pause notices          20/day   (convex/webhookDelivery.ts)
  *   support mail forwards          30/day   (convex/supportEmail.ts)
+ *   possible PERM matches          20/day   (convex/pipelineMatches.ts)
  *   sign-in and reset codes        80/day   (convex/authMail.ts)
  *
  * They add up to more than 100 on purpose: the day's real count decides, and a
@@ -186,6 +187,13 @@ import { formatInt } from "./lib/format";
 import { scaled } from "./lib/emailAllowance";
 import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import { isPlausibleEmail } from "./lib/emailShape";
+import {
+  alsoLinksFor,
+  dayDolActed,
+  filingDayOnRecord,
+  nextStepsFor,
+  nextStepsText,
+} from "./lib/alertNextSteps";
 
 const log = createLogger("CaseAlerts");
 
@@ -1000,6 +1008,8 @@ export const unsubscribeByToken = internalMutation({
       });
     }
     await dropQueued(ctx, all[0]!.email, "case");
+    // The PERMs a watched wage request may have led to go with its alerts.
+    await dropQueued(ctx, all[0]!.email, "match");
     return true;
   },
 });
@@ -1314,6 +1324,8 @@ export const forEmail = internalQuery({
 /** Everything the alert email needs about one case, beyond the transition. */
 interface CaseContext {
   filingMonth: string | null;
+  /** The filing day on DOL's record (a PERM's priority date), "YYYY-MM-DD". */
+  filingDay: string | null;
   employerName: string | null;
   jobTitle: string | null;
   nowInStatus: number;
@@ -1358,7 +1370,7 @@ async function caseContext(
   const table = statusTableFor(program);
 
   const base = await one(
-    `SELECT filing_date, employer_name, job_title FROM ${table}
+    `SELECT filing_date, employer_name, job_title, submitted_date FROM ${table}
       WHERE case_number = ?`,
     [caseNumber],
   );
@@ -1404,6 +1416,7 @@ async function caseContext(
 
   return {
     filingMonth: month,
+    filingDay: filingDayOnRecord(str(base.submitted_date), filingDate),
     employerName: str(base.employer_name),
     jobTitle: str(base.job_title),
     nowInStatus: num(censusRow?.n),
@@ -1449,6 +1462,21 @@ async function rfiFunnel(): Promise<{
     tracked: num(row.total_tracked),
     observedAt: num(row.observed_at),
   };
+}
+
+/**
+ * The day DOL's record moved a PERM case to `status`, from the event the
+ * writer logged when it saw the move (scripts/check_watched_cases.py every few
+ * minutes, the sweeps twice a day), or null when no event was logged.
+ */
+async function dayRecordMoved(caseNumber: string, status: string): Promise<string | null> {
+  const row = await one(
+    `SELECT max(changed_at) AS seen FROM perm_case_events
+      WHERE case_number = ? AND to_status = ?`,
+    [caseNumber, status],
+  );
+  const seen = Number(row?.seen);
+  return Number.isFinite(seen) && seen > 0 ? dayDolActed(seen) : null;
 }
 
 /**
@@ -1714,8 +1742,29 @@ export const sweepCaseChanges = internalAction({
         // them apart and will act on it. Non-PERM programs get no sentence
         // until one can be sourced; the template already renders nothing.
         const meaning = program === "perm" ? statusMeaning(status) : null;
-        const tone =
-          !isFinal || isProgramApproval(program, status) ? "live" : "closed";
+        const approved = isProgramApproval(program, status);
+        const tone = !isFinal || approved ? "live" : "closed";
+        // What comes next (convex/lib/alertNextSteps.ts). The certification
+        // day is read only for the email that uses it.
+        const certified = program === "perm" && isFinal && approved;
+        const next = nextStepsFor({
+          program,
+          caseNumber: sub.caseNumber,
+          status,
+          isFinal,
+          approved,
+          priorityDate: program === "perm" ? context.filingDay : null,
+          certifiedOn: certified
+            ? await dayRecordMoved(sub.caseNumber, status).catch((error: unknown) => {
+                // The block still goes, with the rule and no computed day.
+                log.error("certification day unreadable", { caseNumber: sub.caseNumber, error });
+                return null;
+              })
+            : null,
+          employerName: context.employerName,
+          jobTitle: context.jobTitle,
+        });
+        const alsoLinks = alsoLinksFor({ program, status, isFinal });
 
         const contextRows = [
           { label: "Cases now at this status", value: formatInt(context.nowInStatus) },
@@ -1807,6 +1856,8 @@ export const sweepCaseChanges = internalAction({
               unsubscribeUrl: unsubUrl,
               prefsUrl,
               ratingUrl,
+              next,
+              alsoLinks,
               // The ask for post-PERM dates goes with a PERM case's
               // certification only: an expiry, a denial or another program's
               // approval has nothing after it to report here.
@@ -1850,6 +1901,7 @@ export const sweepCaseChanges = internalAction({
             // A final status IS the decision, so the disclaimer is for the rest.
             ...(isFinal ? [] : ["It isn't a decision on your case and it isn't a prediction of one."]),
             "",
+            ...nextStepsText(next),
             ...(rfiRows
               ? [
                   "RFIs that have since resolved:",

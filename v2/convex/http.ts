@@ -18,7 +18,8 @@ import {
 } from "./lib/mailPages";
 import { RATING_PATH, parseScore } from "./alertRatings";
 import { REVIEW_URL } from "../src/lib/constants/externalLinks";
-import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
+import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
+import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
 import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
 
 const isPrefsKind = (k: string): k is PrefsKind => (PREFS_KINDS as readonly string[]).includes(k);
@@ -418,6 +419,8 @@ http.route({
       result.alreadyReached
         ? `DOL's PERM analyst-review queue has already reached ${result.filingMonth}. Your alert is on its way now, and that's the only message you'll get. Current figures are always on permtracker.app/perm-processing-times.`
         : `We'll email you once, when the Department of Labor's PERM analyst-review queue reaches ${result.filingMonth}. That's the only message you'll get, and DOL's current figures are always on permtracker.app/perm-processing-times.`,
+      undefined,
+      confirmOffers("queue"),
     );
   }),
 });
@@ -558,15 +561,23 @@ http.route({
     }
 
     const list = result.caseNumbers.join(", ");
+    // The next alert in the chain for these cases' programs, and for a PERM
+    // job's wage request the PERM it watches for (convex/lib/alertNextSteps.ts).
+    const offers = confirmOffers("case", result.caseNumbers, programOf);
+    const matchNote = result.caseNumbers.some(isPermWageRequest) ? ` ${PWD_MATCH_SENTENCE}` : "";
     if (result.already) {
       return messagePage(
         "You're already on the list",
-        `Nothing more to do: we'll email you when the Department of Labor's status changes for ${list}.`,
+        `Nothing more to do: we'll email you when the Department of Labor's status changes for ${list}.${matchNote}`,
+        undefined,
+        offers,
       );
     }
     return messagePage(
       "You're on the list",
-      `We'll email you when the Department of Labor's status changes for ${list}, and again each time it moves until the case is decided. Current figures are always on permtracker.app/perm-case-status.`,
+      `We'll email you when the Department of Labor's status changes for ${list}, each time it moves, and for a year after it's decided. Current figures are always on permtracker.app/perm-case-status.${matchNote}`,
+      undefined,
+      offers,
     );
   }),
 });
@@ -985,11 +996,15 @@ http.route({
       return messagePage(
         "You're already following",
         `Nothing more to do: we'll write when DOL moves ${escapeHtml(result.employers.join(", "))}'s PERM cases as a group.`,
+        undefined,
+        confirmOffers("employer"),
       );
     }
     return messagePage(
       "You're following",
       `We'll write when DOL moves ${escapeHtml(result.employers.join(", "))}'s PERM cases as a group. Every figure is on permtracker.app/perm-employers/under-review.`,
+      undefined,
+      confirmOffers("employer"),
     );
   }),
 });

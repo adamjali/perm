@@ -29,7 +29,8 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
+import { BulletinAlertFormFromUrl } from "@/components/tools/BulletinAlertForm";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { getVisaBulletinSeries, getI485Cells } from "@/lib/db/publicData";
@@ -463,8 +464,12 @@ export default async function VisaBulletinPage() {
 
       <BulletinMonthStrip months={series.map((b) => b.bulletinMonth)} newest={last.bulletinMonth} />
 
-      <div className="mt-12">
-        <BulletinAlertForm source="visa-bulletin" />
+      {/* `#bulletin-alert` is linked from the certified PERM alert, with the
+          reader's priority date as `?pd=` (convex/lib/alertNextSteps.ts). */}
+      <div id="bulletin-alert" className="mt-12 scroll-mt-24">
+        <SearchParamsBoundary>
+          <BulletinAlertFormFromUrl source="visa-bulletin" />
+        </SearchParamsBoundary>
       </div>
 
       <div className="mt-12">

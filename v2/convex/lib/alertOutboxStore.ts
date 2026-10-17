@@ -10,7 +10,7 @@
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
-type Kind = "case" | "queue" | "bulletin" | "employer";
+type Kind = "case" | "queue" | "bulletin" | "employer" | "match";
 
 /**
  * Drop queued items for an address: every kind, one kind, or one row.

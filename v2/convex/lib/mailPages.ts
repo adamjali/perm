@@ -18,6 +18,7 @@
  */
 
 import { SITE_URL } from "./links";
+import type { ConfirmOffer } from "./alertNextSteps";
 import {
   EMAIL_PREFERENCES_PATH,
   MAIL_KINDS,
@@ -97,13 +98,29 @@ export function messagePage(
   title: string,
   body: string,
   action?: { post: string; label?: string } | { href: string; label: string },
+  offers: readonly ConfirmOffer[] = [],
 ): Response {
   const control = !action
     ? ""
     : "post" in action
       ? `<form method="POST" action="${action.post}" class="actions"><button type="submit" class="btn go">${escapeHtml(action.label ?? "Unsubscribe")}</button></form>`
       : `<p class="actions"><a class="btn" href="${action.href}">${escapeHtml(action.label)}</a></p>`;
-  return htmlPage(title, `<h1>${escapeHtml(title)}</h1><p class="muted">${body}</p>${control}`);
+  return htmlPage(title, `<h1>${escapeHtml(title)}</h1><p class="muted">${body}</p>${control}${offersHtml(offers)}`);
+}
+
+/**
+ * The next alert in the chain, under a confirmation (convex/lib/alertNextSteps.ts).
+ * Links only: each one opens its own form, which asks its own confirmation.
+ */
+export function offersHtml(offers: readonly ConfirmOffer[]): string {
+  if (offers.length === 0) return "";
+  const rows = offers
+    .map(
+      (o) =>
+        `<div class="row"><div><a href="${escapeHtml(o.href)}">${escapeHtml(o.label)}</a><div class="detail">${escapeHtml(o.detail)}</div></div></div>`,
+    )
+    .join("");
+  return `<h2>What to watch next</h2>${rows}<p class="detail">Each one asks you to confirm by email first, like this one did.</p>`;
 }
 
 /**

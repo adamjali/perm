@@ -56,6 +56,13 @@ export const BUDGETS = {
    */
   supportForward: { key: "support_forward_global", limit: 30, label: "Support mail forwards" },
   /**
+   * The email telling a wage request's subscriber about a PERM application
+   * that may be theirs (convex/pipelineMatches.ts). At most three per wage
+   * request, ever, and only for PERM jobs' wage requests someone watches, so
+   * the bound sits well above what it can need.
+   */
+  pipelineMatch: { key: "pipeline_match_global", limit: 20, label: "Possible PERM matches" },
+  /**
    * Sign-in and password-reset codes (convex/authMail.ts). Not list mail: these
    * are the emails whose absence locks someone out, so the pool sits above the
    * busiest measured day instead of inside the list ledger's remainder. See the
@@ -75,6 +82,7 @@ export const LIST_MAIL_POOLS = [
   "firmClaim",
   "webhookPause",
   "supportForward",
+  "pipelineMatch",
 ] as const satisfies readonly (keyof typeof BUDGETS)[];
 
 /** Codes to one address, whatever kind: enough for a few resends, not a flood. */

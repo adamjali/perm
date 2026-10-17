@@ -1641,6 +1641,26 @@ export default defineSchema({
    * like queue alerts, so it carries `lastSeenCutoff` as its change detector
    * rather than `notifiedAt`.
    */
+  /**
+   * The PERM applications we've told a wage request's subscriber may be theirs
+   * (convex/pipelineMatches.ts). One row per PERM told, so nothing is told
+   * twice to one address, and a wage request is told about three at most.
+   */
+  permMatchNotices: defineTable({
+    subscriptionId: v.id("caseStatusAlerts"),
+    email: v.string(),
+    /** The watched wage request, "P-100-...". */
+    pwdCaseNumber: v.string(),
+    /** The PERM told about. */
+    permCaseNumber: v.string(),
+    /** Its filing day, "YYYY-MM-DD". */
+    filingDate: v.string(),
+    toldAt: v.number(),
+  })
+    .index("by_subscription", ["subscriptionId"])
+    .index("by_email_perm", ["email", "permCaseNumber"])
+    .index("by_told", ["toldAt"]),
+
   bulletinAlerts: defineTable({
     email: v.string(),
     /** Employment category as the bulletin prints it: EB1..EB5, EW3. */
@@ -2379,6 +2399,8 @@ export default defineSchema({
       v.literal("queue"),
       v.literal("bulletin"),
       v.literal("employer"),
+      // A PERM that may follow a watched wage request (convex/pipelineMatches.ts).
+      v.literal("match"),
     ),
     /** `<kind>:<row id>`, so an opt-out can drop what is still waiting. */
     ref: v.string(),

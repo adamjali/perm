@@ -28,6 +28,7 @@ describe("the daily email budget table", () => {
       ["firm-page claim emails", BUDGETS.firmClaim.limit],
       ["webhook pause notices", BUDGETS.webhookPause.limit],
       ["support mail forwards", BUDGETS.supportForward.limit],
+      ["possible PERM matches", BUDGETS.pipelineMatch.limit],
       ["sign-in and reset codes", BUDGETS.authMail.limit],
     ] as const) {
       expect(ledger).toMatch(new RegExp(`${line}\\s+${n}/day`));

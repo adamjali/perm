@@ -622,6 +622,8 @@ async function disableForEmail(
     if (row && row.email === email && row.unsubscribedAt === undefined) {
       await ctx.db.patch(row._id, { unsubscribedAt: now, pendingCaseNumber: undefined });
       await dropQueued(ctx, email, `case:${row._id}`);
+      // The PERMs this wage request may have led to go with its alerts.
+      await dropQueued(ctx, email, `match:${row._id}`);
     }
   } else if (kind === "bulletin") {
     const wanted = ctx.db.normalizeId("bulletinAlerts", id);

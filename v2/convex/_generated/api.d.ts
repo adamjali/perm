@@ -65,6 +65,7 @@ import type * as knowledge from "../knowledge.js";
 import type * as lib_admin from "../lib/admin.js";
 import type * as lib_alertBudgets from "../lib/alertBudgets.js";
 import type * as lib_alertDelivery from "../lib/alertDelivery.js";
+import type * as lib_alertNextSteps from "../lib/alertNextSteps.js";
 import type * as lib_alertOutboxStore from "../lib/alertOutboxStore.js";
 import type * as lib_apiKeyFormat from "../lib/apiKeyFormat.js";
 import type * as lib_apiKeyStats from "../lib/apiKeyStats.js";
@@ -169,6 +170,7 @@ import type * as lib_perm_validators_recruitment from "../lib/perm/validators/re
 import type * as lib_perm_validators_rfe from "../lib/perm/validators/rfe.js";
 import type * as lib_perm_validators_rfi from "../lib/perm/validators/rfi.js";
 import type * as lib_perm_validators_validateCase from "../lib/perm/validators/validateCase.js";
+import type * as lib_pipelineMatch from "../lib/pipelineMatch.js";
 import type * as lib_posthog from "../lib/posthog.js";
 import type * as lib_prefsLink from "../lib/prefsLink.js";
 import type * as lib_publicMirror from "../lib/publicMirror.js";
@@ -202,6 +204,7 @@ import type * as newsletter from "../newsletter.js";
 import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
+import type * as pipelineMatches from "../pipelineMatches.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as queueAlerts from "../queueAlerts.js";
@@ -292,6 +295,7 @@ declare const fullApi: ApiFromModules<{
   "lib/admin": typeof lib_admin;
   "lib/alertBudgets": typeof lib_alertBudgets;
   "lib/alertDelivery": typeof lib_alertDelivery;
+  "lib/alertNextSteps": typeof lib_alertNextSteps;
   "lib/alertOutboxStore": typeof lib_alertOutboxStore;
   "lib/apiKeyFormat": typeof lib_apiKeyFormat;
   "lib/apiKeyStats": typeof lib_apiKeyStats;
@@ -396,6 +400,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/validators/rfe": typeof lib_perm_validators_rfe;
   "lib/perm/validators/rfi": typeof lib_perm_validators_rfi;
   "lib/perm/validators/validateCase": typeof lib_perm_validators_validateCase;
+  "lib/pipelineMatch": typeof lib_pipelineMatch;
   "lib/posthog": typeof lib_posthog;
   "lib/prefsLink": typeof lib_prefsLink;
   "lib/publicMirror": typeof lib_publicMirror;
@@ -429,6 +434,7 @@ declare const fullApi: ApiFromModules<{
   notificationActions: typeof notificationActions;
   notifications: typeof notifications;
   onboarding: typeof onboarding;
+  pipelineMatches: typeof pipelineMatches;
   pushNotifications: typeof pushNotifications;
   pushSubscriptions: typeof pushSubscriptions;
   queueAlerts: typeof queueAlerts;

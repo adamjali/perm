@@ -35,12 +35,19 @@ import type { ActionCtx } from "../_generated/server";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./email";
 import { easternDay } from "./time";
 
-export type AlertKind = "case" | "queue" | "bulletin" | "employer";
+export type AlertKind = "case" | "queue" | "bulletin" | "employer" | "match";
 /** `<kind>:<row id>`: the subscription an alert is about, its kind first. */
 export type AlertRef = `${AlertKind}:${string}`;
 
 /** Kinds that never wait for a bundle. */
 export const IMMEDIATE_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>(["case"]);
+
+/**
+ * Kinds where two waiting items for one row are different news, so a newer one
+ * doesn't replace the older: an employer's moves, and the PERMs found for a
+ * wage request on different days.
+ */
+export const ACCUMULATING_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>(["employer", "match"]);
 
 export interface AlertSummary {
   /** What it is about: "G-100-26125-868956", "Adobe Inc.", "EB2 India". */
