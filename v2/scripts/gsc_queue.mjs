@@ -106,6 +106,8 @@ for (const { file, route, inputs } of pages) {
 for (const file of changed) {
   const m = CONTENT.exec(file);
   if (!m) continue;
+  // A draft (`published: false`) has no page: requesting it spends a slot on a 404.
+  if (/^published:\s*false\s*$/m.test(readFileSync(file, "utf8").split(/^---\s*$/m)[1] ?? "")) continue;
   const route = `/${m[1]}/${m[2]}`;
   (added.has(file) ? fresh : edited).push(route);
 }

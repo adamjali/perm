@@ -43,8 +43,13 @@ const MDX_OPTIONS = {
 };
 
 export function createContentDetailPage(type: ContentType) {
+  // A draft (`published: false`) has no page: it isn't listed here, and with
+  // `dynamicParams = false` its address answers 404. It had rendered at its
+  // URL while hidden from every list.
   function generateStaticParams() {
-    return getPostSlugs(type).map((slug) => ({ slug }));
+    return getPostSlugs(type)
+      .filter((slug) => getPostBySlug(type, slug)?.meta.published)
+      .map((slug) => ({ slug }));
   }
 
   async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -55,7 +60,7 @@ export function createContentDetailPage(type: ContentType) {
     // This throw is the backstop for a route that forgets the export, and it
     // only sets the status when no loading boundary sits above the segment
     // (with one, Next streams a 200 before any page code runs - measured).
-    if (!post) notFound();
+    if (!post || !post.meta.published) notFound();
 
     return {
       title: post.meta.seoTitle ?? post.meta.title,
@@ -97,7 +102,7 @@ export function createContentDetailPage(type: ContentType) {
   async function Page({ params }: PageProps) {
     const { slug } = await params;
     const post = getPostBySlug(type, slug);
-    if (!post) notFound();
+    if (!post || !post.meta.published) notFound();
 
     const related = getRelatedPosts({ slug, type, meta: post.meta });
     const steps = type === "guides" ? extractHeadings(post.content) : undefined;
