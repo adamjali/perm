@@ -1245,8 +1245,18 @@ html {
     min-height: 100%;
     min-height: 100vh;
     min-height: -webkit-fill-available;
-    /* No overflow on body - html handles it */
-    overflow: visible;
+    /* No vertical overflow on body - html handles it. Sideways, clip: html's
+       overflow-x: hidden doesn't stop iPhone Safari panning a page whose content
+       is wider than the screen (the case list's pagination did it, Oct 17 2026),
+       and `clip` (unlike `hidden`) makes no scroll container, so sticky headers
+       and the data rail still stick. A wide part still needs fixing: this only
+       keeps it from moving the whole page. Safari 16+, Chrome 90+, Firefox 81+. */
+    overflow-x: clip;
+    overflow-y: visible;
+    /* A string with nowhere to break (a USCIS file name in a source line, a
+       URL) breaks only when it would otherwise run past its box. break-word
+       leaves min-content alone, so table columns size as before. */
+    overflow-wrap: break-word;
     /* Ensure no margin/padding on body */
     margin: 0;
     padding: 0;
@@ -1952,6 +1962,16 @@ input[type="week"] {
   appearance: none;
   color: inherit;
   max-width: 100%;
+}
+
+/* A select is as wide as its longest option unless something holds it, and the
+   options come from data (a NAICS title made one 615px wide on a 320px phone,
+   Oct 17 2026). Never wider than the box it sits in; a long choice is cut
+   inside the control. In the base layer, so a narrower width utility still wins. */
+@layer base {
+  select {
+    max-width: 100%;
+  }
 }
 
 

@@ -11,6 +11,7 @@ import { languageAlternates, localeByCode, type LocaleCode, type LocaleDef } fro
 import { openGraphBase } from "@/lib/openGraphBase";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
@@ -139,7 +140,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
               <li>
                 <a
                   href={`#${id}`}
-                  className={buttonVariants({ variant: "outline", size: "default" })}
+                  className={cn(buttonVariants({ variant: "outline", size: "default" }), "h-auto min-h-11 whitespace-normal py-2 text-left")}
                 >
                   <span className="tabular-nums text-muted-foreground">{i + 1}</span> {copy.toc[id]}
                 </a>
@@ -297,7 +298,9 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                 <a
                   href={l.href}
                   hrefLang="en"
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
+                  // A translated label runs long ("Qual green card por emprego se
+                  // aplica a você"): it wraps rather than run off a phone.
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-auto min-h-12 w-full justify-start whitespace-normal py-2 text-left")}
                 >
                   {l.label}
                 </a>

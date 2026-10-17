@@ -2,10 +2,13 @@
  * CasePagination Component
  * Pagination controls for the case list.
  *
- * Layout:
+ * Layout (md and up, one row):
  * - Left: "Showing X-Y of Z cases"
  * - Center: "Page X of Y"
  * - Right: Previous | Next buttons + Per page dropdown
+ * Below md it's two rows: the count and page number, then Previous and Next
+ * side by side over the page size. As one row it was about 560px wide and
+ * pushed a phone's whole page sideways (Safari, iPhone, Oct 17 2026).
  *
  * Features:
  * - Disabled state for first/last page navigation
@@ -100,26 +103,29 @@ export function CasePagination({
   return (
     <div
       data-testid="case-pagination"
-      className="flex items-center justify-between gap-4 py-4"
+      className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between md:gap-4"
     >
-      {/* Left: Case Count Range */}
-      <div className="flex-1">
-        <p className="text-sm font-mono text-muted-foreground">
-          {totalCount === 0
-            ? "Showing 0 of 0 cases"
-            : `Showing ${start}-${end} of ${totalCount} cases`}
-        </p>
-      </div>
+      {/* The count and the page number: one line on a phone, the row's ends on md+ */}
+      <div className="flex min-w-0 items-center justify-between gap-3 md:contents">
+        {/* Left: Case Count Range */}
+        <div className="min-w-0 md:flex-1">
+          <p className="text-sm font-mono text-muted-foreground">
+            {totalCount === 0
+              ? "Showing 0 of 0 cases"
+              : `Showing ${start}-${end} of ${totalCount} cases`}
+          </p>
+        </div>
 
-      {/* Center: Page Number */}
-      <div className="flex-shrink-0">
-        <p className="text-sm font-mono font-semibold">
-          Page {currentPage} of {totalPages}
-        </p>
+        {/* Center: Page Number */}
+        <div className="flex-shrink-0">
+          <p className="text-sm font-mono font-semibold">
+            Page {currentPage} of {totalPages}
+          </p>
+        </div>
       </div>
 
       {/* Right: Navigation Controls */}
-      <div className="flex items-center gap-2 flex-1 justify-end">
+      <div className="grid grid-cols-2 gap-2 md:flex md:flex-1 md:items-center md:justify-end">
         {/* Previous Button */}
         <Button
           variant="outline"
@@ -127,7 +133,7 @@ export function CasePagination({
           onClick={handlePrevious}
           disabled={isFirstPage}
           aria-label="Previous page"
-          className="gap-1"
+          className="w-full gap-1 md:w-auto"
         >
           <CaretLeftIcon className="size-4" />
           Previous
@@ -140,7 +146,7 @@ export function CasePagination({
           onClick={handleNext}
           disabled={isLastPage}
           aria-label="Next page"
-          className="gap-1"
+          className="w-full gap-1 md:w-auto"
         >
           Next
           <CaretRightIcon className="size-4" />
@@ -153,7 +159,7 @@ export function CasePagination({
               variant="outline"
               size="sm"
               aria-label={`${pageSize} per page`}
-              className="gap-1 tabular-nums"
+              className="col-span-2 w-full gap-1 tabular-nums md:w-auto"
             >
               {pageSize} per page
             </Button>

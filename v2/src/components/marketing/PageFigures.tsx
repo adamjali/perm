@@ -56,8 +56,8 @@ export function AlertLanesFigure({ className }: { className?: string }) {
       {ALERT_LANES.map((label) => (
         <div key={label} className="flex items-center gap-3">
           <span aria-hidden="true" className="size-3.5 shrink-0 bg-data-good-ink" />{" "}
-          <span className="whitespace-nowrap text-sm font-semibold">{label}</span>{" "}
-          <span aria-hidden="true" className="h-0 min-w-6 flex-1 border-t-2 border-dashed border-foreground/35" />{" "}
+          <span className="min-w-0 text-sm font-semibold">{label}</span>{" "}
+          <span aria-hidden="true" className="h-0 min-w-4 flex-1 border-t-2 border-dashed border-foreground/35" />{" "}
           <EnvelopeSimpleIcon aria-hidden="true" className="size-6 shrink-0" weight="bold" />
         </div>
       ))}

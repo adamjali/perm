@@ -393,7 +393,7 @@ export function FilterableStatTable<T>({
 
           {facets.map((f) => (
             <Fragment key={f.key}>{" "}
-            <label className="flex min-h-[44px] items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm">
+            <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm">
               <span className="text-sm font-bold text-muted-foreground">
                 {f.label}
               </span>{" "}
@@ -405,7 +405,9 @@ export function FilterableStatTable<T>({
                   setFacetValues((v) => ({ ...v, [f.key]: e.target.value }));
                   setPage(0);
                 }}
-                className="min-h-11 min-w-0 bg-transparent text-base outline-none"
+                // A select is as wide as its longest option unless held: a NAICS
+                // title made this one 615px on a 320px phone (Oct 17 2026).
+                className="min-h-11 min-w-0 max-w-full flex-1 truncate bg-transparent text-base outline-none"
               >
                 {/* The space that keeps option labels from gluing in the DOM sits
                     INSIDE each option: a whitespace text node between options
