@@ -87,7 +87,10 @@ def main():
     # a gate that only knew one of them reported every cross-link as broken.
     files = sorted(GUIDES.glob("*.mdx")) + sorted((ROOT / "content/blog").glob("*.mdx"))
     shots = {p.stem for p in SHOTS.glob("*.webp")}
-    slugs = {p.stem for p in files}
+    # A draft (`published: false`) has no page, so a published article linking
+    # to one links to a 404. Drafts may link to each other: they ship together.
+    drafts = {p.stem for p in files if re.search(r"^published:\s*false\s*$", p.read_text().split("\n---", 1)[0], re.M)}
+    slugs = {p.stem for p in files} - drafts
     # Every internal route the articles may link to, from the live sitemap list
     # plus the guide slugs themselves.
     routes = set(json.load(open("scripts/known-routes.json"))) if pathlib.Path("scripts/known-routes.json").exists() else set()
@@ -95,6 +98,15 @@ def main():
     routes |= {"/signup", "/login", "/settings", "/dashboard", "/cases"}
     # Changelog posts are articles too (the corrections log among them).
     routes |= {f"/changelog/{p.stem}" for p in (ROOT / "content/changelog").glob("*.mdx")}
+    # Pages of a dynamic family (an employer, an occupation, a bulletin month),
+    # by the family's shape, from the templates page_dates.mjs lists. A link to
+    # one that doesn't exist is caught on the rendered page by
+    # audit_internal_links.py; here only the shape can be checked.
+    families = [
+        re.compile("^" + re.sub(r"\\\[[^/]+?\\\]", "[a-z0-9-]+", re.escape(t)) + "$")
+        for t in json.load(open(ROOT / "src/lib/sitemap/page-dates.json"))
+        if "[" in t and not t.startswith(("/cases", "/blog", "/guides", "/changelog"))
+    ]
 
     print(f"scanned {len(files)} articles, {len(shots)} screenshots available")
     print(f"{len(ALLOWED)} classified false positive(s), each with a stated reason")
@@ -130,9 +142,9 @@ def main():
             h = href.rstrip("/")
             if h.startswith("/guides/") or h.startswith("/blog/"):
                 slug = h.rsplit("/", 1)[-1]
-                if slug not in slugs:
+                if slug not in slugs and not (f.stem in drafts and slug in drafts):
                     problems.append((rel, f"link to missing article: {href}"))
-            elif routes and h not in routes:
+            elif routes and h not in routes and not any(f.match(h) for f in families):
                 problems.append((rel, f"link to unknown route: {href}"))
 
         for pat, why in BANNED:
