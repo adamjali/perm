@@ -1045,3 +1045,66 @@ Still to request, in order: `/` (FIRST: its description names both sides since O
 to 14, when the search-engine cap of 6 turned away up to 19% of Googlebot's requests (8,294 on Oct 13). The cap went to 12
 at 3:09 PM Oct 15, and Search Console started validating again the same minute (its 3:08 and 3:09 PM emails), so don't
 press Validate again. Since then: 157 Googlebot 503s, all between 10 and 11 PM EDT Oct 15, about 0.3% of its day.
+
+## Queue after the Oct 16 to 17 night changes (a date on every page, 40 new articles, six retitles)
+
+`node scripts/gsc_queue.mjs --since a86aa31f` lists 37 new published articles, 24 changed pages and the employer
+family. Every page now shows "Updated <day>" and carries the same day as a WebPage `dateModified` and as its sitemap
+lastmod, so the sitemap carries most of the rest. Live after the 1af8bb34 deploy (Oct 17, about 2:35 AM EDT). Work
+this list top down, inspecting each first (a page crawled after Oct 17 2 AM EDT is skipped); then the Oct 13 to 16
+section's "Still to request" list.
+
+1. `/` (still first: its two-sided description from Oct 16, and the WebPage date)
+2. `/perm-case-status` (retitled "PERM Case Status: Check and Track a Case")
+3. `/blog/best-immigration-case-management-tools` (refreshed: what each tool says about PERM; AI answers cite it)
+4. `/guides/employer-suspended-from-perm` (new; the Oct 8 suspensions, live hold counts)
+5. `/guides/perm-certified-what-next` (new)
+6. `/guides/when-does-the-visa-bulletin-come-out` (new; the November bulletin is due)
+7. `/perm-processing-times` (retitled "PERM Processing Times 2026, Tracked Daily")
+8. `/for-attorneys` (retitled "Free PERM Case Management App for Attorneys")
+9. `/perm-employers/google-llc` (the employer family: "sponsors green cards" answer, Updated line)
+10. `/guides/how-the-perm-queue-works` (retitled for "PERM analyst review", DOL's month read live)
+11. `/blog/docketwise-alternatives-for-perm`
+12. `/blog/immigration-software-pricing-2026`
+13. `/guides/dol-average-vs-your-wait`
+14. `/guides/priority-date-current-perm-pending`
+15. `/guides/priority-date-retrogressed-after-filing`
+16. `/guides/h1b-six-year-limit-with-perm-pending`
+17. `/guides/i140-revoked-before-after-180-days`
+18. `/guides/h1b-60-day-grace-period-proposal`
+19. `/guides/ead-renewal-no-automatic-extension`
+20. `/guides/eb2-india-forecasts-how-close`
+21. `/guides/eta-9089-expiration-and-i140-deadline`
+22. `/guides/how-long-perm-recruitment-stays-valid`
+23. `/guides/perm-audit-response`
+24. `/guides/green-card-sponsors-for-your-job`
+25. `/guides/find-your-lca-without-the-number`
+26. `/guides/opt-to-green-card-employers`
+27. `/guides/i485-inventory-month-by-month`
+28. `/guides/salary-high-enough-perm-h1b`
+29. `/guides/perm-recruitment-failed-h1b-clock`
+30. `/guides/perm-employer-questionnaire`
+31. `/guides/perm-business-necessity`
+32. `/guides/perm-layoff-rule-for-employers`
+33. `/guides/perm-sunday-ads-additional-recruitment-steps`
+34. `/guides/special-handling-university-teachers`
+35. `/blog/docketwise-vs-inszoom-lollylaw-eimmigration`
+36. `/blog/free-immigration-case-management-software`
+37. `/blog/client-status-updates-without-the-email-load`
+38. `/blog/vendor-data-security-questions`
+39. `/blog/perm-attorney-fees-employer-must-pay`
+40. `/blog/proposed-perm-rule-rin-1205-ac29`
+41. `/blog/rule-changes-since-august-2026`
+42. `/blog/perm-queue-october-2026`
+43. `/blog/h1b-sponsors-layoff-notices-october-2026`
+44. `/blog/opt-fee-proposal-2026`
+45. `/blog/is-my-company-still-filing-perm` (refreshed)
+46. `/guides/where-your-filing-month-sits` (DOL's figures read live)
+47. `/guides/perm-appeal-reconsideration-balca` (refreshed with measured outcomes)
+48. `/guides/three-180-day-clocks`, `/guides/perm-denied-what-happens-next`, `/guides/employer-layoffs-and-your-perm`,
+    `/guides/eb2-vs-eb3-perm`, `/guides/track-a-prevailing-wage-request` (refreshed)
+49. `/tools/perm-timeline-calculator`, `/pwd-cases`, `/lca-cases` (retitled)
+50. `/glossary`, `/perm-attorneys`, `/perm-employers`, `/layoffs`, `/h1b-employers` (layout fixes, dates)
+
+**Not yet:** `/guides/perm-recruitment-report-sample`, `/guides/perm-notice-of-filing-sample` and
+`/guides/perm-audit-file-index` are `published: false` until the attorney reviews them; they answer 404 until then.
