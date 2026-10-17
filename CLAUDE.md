@@ -824,7 +824,7 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   Svix still refuses an unsigned or forged webhook with 401, checked live).
 - **A scrolling chart can open at its newest end** (`ChartTips startAtEnd`): a 141-month chart opened at FY2015 on a phone.
 
-## Oct 17 2026, in fourteen lines
+## Oct 17 2026, in sixteen lines
 
 - **The PWD expiry limits a case only while recruitment hasn't begun inside it** (20 CFR 656.40(c) as BALCA read it in
   Karl Storz, en banc 2011, and MPHASIS, 2015; the attorney confirmed): `pwdBearing` and `pwdStepLimit` in
@@ -865,3 +865,8 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   inside the site's own (the dev server renders that case in-layout, production didn't). `NotFoundBody` is shared.
 - **A support reply greets by first name** (`convex/lib/replyName.ts`, from the sender's display name; it had greeted
   "Hi jane.doe,"). Pass `supportEmail:replyToEmail` the message alone: the email adds the greeting and the sign-off.
+- **Articles written for attorneys cite in Bluebook form** (the attorney's call, Oct 17): "20 C.F.R. § 656.10(d) (2025)" on
+  first cite, § and §§ after, "72 Fed. Reg. 27,904, 27,920 (May 17, 2007)", BALCA cases with docket, date and pin cite. Pages
+  for people waiting on their own case stay plain. `attorney-citations.test.ts` holds the rule; quoted regulation text is exempt.
+- **A sample document is a ```document fence**: it wraps to its box (it had filled the left half), and each section cite
+  stays on one line (`citationRuns`).
