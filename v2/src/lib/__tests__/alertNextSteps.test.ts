@@ -86,6 +86,7 @@ describe("what comes next after a case alert", () => {
     expect(next.button?.href).toBe("https://permtracker.app/visa-bulletin?pd=2026-03-11#bulletin-alert");
     expect(bulletinAlertUrl("2026-3-1")).toBe("https://permtracker.app/visa-bulletin#bulletin-alert");
     const hrefs = next.links.map((l) => l.href);
+    expect(hrefs[0]).toBe("https://permtracker.app/guides/perm-certified-what-next");
     expect(hrefs).toContain("https://permtracker.app/tools/green-card-line");
     expect(hrefs).toContain("https://permtracker.app/uscis-processing-times");
   });

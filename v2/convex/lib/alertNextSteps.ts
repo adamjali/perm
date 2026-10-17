@@ -78,6 +78,7 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 export const NEXT_PATHS = {
   bulletinAlert: "/visa-bulletin#bulletin-alert",
   queueAlert: "/tools/perm-timeline-calculator#queue-alert",
+  certifiedGuide: "/guides/perm-certified-what-next",
   greenCardLine: "/tools/green-card-line",
   uscisTimes: "/uscis-processing-times",
   denialGuide: "/guides/perm-denied-what-happens-next",
@@ -172,6 +173,7 @@ function permCertified(input: NextStepInput): NextSteps {
     ],
     button: { href: bulletinAlertUrl(pd), text: "Email me when the bulletin moves" },
     links: [
+      { href: at(NEXT_PATHS.certifiedGuide), text: "What happens after a PERM is certified, step by step" },
       { href: at(NEXT_PATHS.greenCardLine), text: "How many people stand ahead of your date" },
       { href: at(NEXT_PATHS.uscisTimes), text: "How long USCIS is taking with the I-140, from its own figures" },
     ],
