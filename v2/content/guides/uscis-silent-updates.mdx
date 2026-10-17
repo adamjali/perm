@@ -1,0 +1,86 @@
+---
+title: "USCIS silent updates: what they are and what they mean"
+description: "What a USCIS silent update is, where it shows up, what USCIS says can cause one, and why no tracker can read the codes from a receipt number."
+date: "2026-10-17"
+author: "PERM Tracker data desk"
+image: "/images/content/heroes/guides/uscis-silent-updates.webp"
+imageAlt: "A USCIS Application Support Center on Jamaica Avenue in Queens, New York, where applicants give fingerprints and photos"
+imageCredit: "Photo: Tdorante10 / Wikimedia Commons, CC BY-SA 4.0"
+imageSource: "https://commons.wikimedia.org/wiki/File:Jamaica_Av_153rd_St_td_(2022-04-11)_02_-_USCIS_Application_Support_Center.jpg"
+tags: ["uscis", "silent-updates", "case-status", "my-uscis", "i-485", "i-140", "explainer"]
+category: "green-card"
+seoTitle: "USCIS Silent Updates: What They Mean"
+seoDescription: "A USCIS silent update is a change in your own account's case data with no new status. What USCIS says causes one, and what it can't tell you."
+published: true
+---
+
+This guide is for anyone waiting on a USCIS case, an I-485, I-140, I-765 or any other form, who has heard about "silent updates" or "API movement" and wants to know what they mean.
+
+<Callout type="important" title="The short answer">
+A silent update is a change in your own USCIS account's case data, a new date or a new code, while the status on USCIS's public page stays the same. USCIS says some of these changes are "internal or administrative updates that do not impact the outcome of a case." So a silent update tells you something happened. It doesn't tell you what, and it doesn't mean a decision is near.
+</Callout>
+
+## Where a case's status shows up
+
+<ComparisonTable
+  headers={["Where", "Who can see it", "What it shows", "Silent updates?"]}
+  rows={[
+    ["USCIS Case Status Online", "Anyone with the receipt number", "The current status and its paragraph", "No"],
+    ["Your USCIS online account", "You, signed in", "Your recent case updates, \"up to the last five actions on your case\"", "Yes. This is where people see them"],
+    ["USCIS's Case Status API, for apps", "Companies USCIS has approved, by receipt number", "The form, the status, a dated history of completed steps, and a modified date", "One date that moves, and none for receipts that start with IOE"]
+  ]}
+/>
+
+The first two are USCIS's own tools: [Case Status Online](https://egov.uscis.gov/casestatus/landing.do) and [your online account](https://my.uscis.gov). USCIS's [page on checking your status](https://www.uscis.gov/tools/checking-your-case-status-online) says the account lets you "receive your most recent case updates including up to the last five actions on your case."
+
+## What USCIS says causes them
+
+USCIS's own description of its [Case Status API](https://developer.uscis.gov/api/case-status) is the only place it explains what moves behind a case. Its modified date "is updated when an event occurs related to a receiptNumber." Some of those events show up as a new status or a new history entry. Others don't: "Internal or administrative updates that do not impact the outcome of a case may also cause a modifiedDate update."
+
+That sentence is the honest reading of a silent update. Something was done on the file. It may be a step toward a decision, or it may be a file moving between offices, a record being touched, or a routine check.
+
+## The codes
+
+People who look at the case data their own signed-in account loads see short action codes beside dates. USCIS doesn't publish what the codes mean. The meanings traded online come from people comparing their own cases. They're a guess that's sometimes right and often wrong, so don't plan around one.
+
+No code is a decision. The decision is the status USCIS shows and the notice it mails.
+
+## Why no tracker can show them from a receipt number
+
+- **A receipt number reaches only the public data.** A tracker that has your number can read what Case Status Online shows, or what USCIS's API returns. Neither carries your account's codes.
+- **The API's one signal is the modified date**, and USCIS doesn't send it at all for receipts that start with IOE (cases filed online): the date is "Not supported where receiptNumber prefix = IOE."
+- **The codes live behind your login, and your login is yours alone.** USCIS's [account terms](https://myaccount.uscis.gov/legal-terms) bar account holders from sharing their password "with anyone else, or any entity or company, for their own use," from letting another person or company "log into, access, or use" their account, and from "Utilizing unauthorized third-party software within the USCIS online electronic immigration system."
+
+So an app that promises silent-update codes from your receipt number alone is promising something USCIS doesn't give it. An app that asks for your USCIS login is asking you to break your account's terms.
+
+## When you see one
+
+<StepByStep>
+<Step number={1} title="Read the status and the notices">
+The status on USCIS's page and the notices USCIS mails are the record. A new code beside an unchanged status is just that.
+</Step>
+<Step number={2} title="Compare your wait with USCIS's posted time">
+USCIS posts processing times by form and office. The [guide to USCIS processing times](/guides/uscis-processing-times-median-vs-80-percent) explains what the posted figure measures.
+</Step>
+<Step number={3} title="Use USCIS's own channels if you're past it">
+If your case is outside the posted time, USCIS's case inquiry tools and the Contact Center at 1-800-375-5283 are the route. A silent update doesn't change that.
+</Step>
+<Step number={4} title="Keep your login to yourself">
+No tracker, forum helper or app needs your USCIS password.
+</Step>
+</StepByStep>
+
+## What this can't tell you
+
+- **What any code means.** USCIS doesn't say, and nothing here guesses.
+- **Whether a silent update means a decision is coming.** USCIS says some don't affect the outcome at all.
+- **Anything about a receipt that starts with IOE through USCIS's API.** USCIS doesn't send the modified date for those.
+
+PERM Tracker doesn't read USCIS accounts and won't ever ask for a USCIS login. Nothing here is legal advice.
+
+## Related
+
+- [How to read a USCIS receipt number](/guides/uscis-receipt-number)
+- [What Emma told you, and which form it meant](/guides/what-emma-told-you)
+- [Median vs 80%: the two USCIS processing times](/guides/uscis-processing-times-median-vs-80-percent)
+- [EAD and advance parole timelines while an I-485 is pending](/guides/ead-and-advance-parole-timelines)
