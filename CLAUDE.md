@@ -855,7 +855,8 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   full disk, re-check every edit made around it.
 - **The pre-push hook typechecks the working tree**, uncommitted edits included: an unfinished edit blocks pushing a
   finished commit.
-- **A person's name can be withheld at their request** (`src/lib/privacy/withheld.ts`, owner's decision per request):
-  the list is `WITHHELD_EMPLOYERS` in the server's production.env and a GitHub secret for the build, never in this
-  public repo (a hash can be matched against DOL's files). Every read (`rows()`) drops rows naming it, its page or
-  its case numbers; every live answer (`askDol`) shows the label and is never recorded.
+- **A person's name can be withheld at their request, in one command** (owner's decision per request, no rule):
+  `python3 scripts/withhold.py add "slug|name|label|cases"`; the runbook, legal notes and reply template are in
+  `v2/docs/PRIVACY_REMOVALS.md`. The list lives only in `WITHHELD_EMPLOYERS` (server production.env, mirrored to a
+  GitHub secret), never in this public repo: every read (`rows()`) drops what names it, a live answer shows a
+  neutral label, and every deploy clears Cloudflare's copies of the pages it was on.

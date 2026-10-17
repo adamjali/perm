@@ -206,6 +206,20 @@ jobs:
           fi
           node scripts/gsc_queue.mjs --since "$BEFORE" --purge
 
+      # Names withheld at a person's request (scripts/withhold.py,
+      # docs/PRIVACY_REMOVALS.md): drop Cloudflare's copies of every page that
+      # showed one, on every deploy. Prints counts only, never a page, because
+      # this log is public. Never fails the deploy; a refusal shows red here.
+      - name: Drop Cloudflare's copies of pages a withheld name was on
+        continue-on-error: true
+        env:
+          WITHHELD_EMPLOYERS: ${{ secrets.WITHHELD_EMPLOYERS }}
+          CF_PURGE_TOKEN: ${{ secrets.CF_PURGE_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          DATABASE_URL: http://127.0.0.1:18080
+          DATABASE_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
+        run: python3 scripts/withhold.py purge
+
       - name: Close the tunnel
         if: always()
         run: pkill -f "18080:127.0.0.1:8080" || true
