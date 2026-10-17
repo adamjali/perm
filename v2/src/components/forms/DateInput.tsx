@@ -221,10 +221,18 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       [internalValue, value, onChange, onBlur]
     );
 
-    // Open native date picker on calendar icon click
+    // Open native date picker on calendar icon click. A browser can still refuse
+    // (NotAllowedError when it doesn't count the click as a gesture, seen Oct 17
+    // 2026 on the priority date calculator); the box then takes the cursor so
+    // the date can be typed.
     const handleCalendarClick = useCallback(() => {
-      if (inputRef.current && !disabled) {
-        inputRef.current.showPicker?.();
+      const input = inputRef.current;
+      if (!input || disabled) return;
+      try {
+        if (input.showPicker) input.showPicker();
+        else input.focus();
+      } catch {
+        input.focus();
       }
     }, [disabled]);
 

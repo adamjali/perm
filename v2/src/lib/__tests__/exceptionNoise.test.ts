@@ -26,6 +26,11 @@ describe("fromInjectedBridge", () => {
     expect(fromInjectedBridge("undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')")).toBe(true);
     expect(fromInjectedBridge("undefined is not an object (evaluating 'window.webkit.messageHandlers')")).toBe(true);
     expect(fromInjectedBridge("Error invoking postMessage: Java object is gone")).toBe(true);
+    expect(
+      fromInjectedBridge(
+        "undefined is not an object (evaluating 'top.webkit.messageHandlers.foregroundToBackground.postMessage')",
+      ),
+    ).toBe(true);
   });
 
   it("keeps errors that only share a word", () => {

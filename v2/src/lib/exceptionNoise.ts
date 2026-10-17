@@ -35,7 +35,12 @@ export function fromServiceWorkerRegister(props: Record<string, unknown> | undef
  * two visits from Facebook links in October 2026) calling a bridge its app took away.
  */
 export function fromInjectedBridge(msg = ""): boolean {
-  return /\bwindow\.ethereum\b|\bwindow\.webkit\.messageHandlers\b|\bJava object is gone\b/.test(msg);
+  // An app's script can reach the bridge through `top` or `self` as well as
+  // `window` (Oct 17 2026: "top.webkit.messageHandlers.foregroundToBackground",
+  // 10 events from one visit).
+  return /\b(?:window|top|self|parent)\.ethereum\b|\b(?:window|top|self|parent)\.webkit\.messageHandlers\b|\bJava object is gone\b/.test(
+    msg,
+  );
 }
 
 /**

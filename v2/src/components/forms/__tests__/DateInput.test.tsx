@@ -104,6 +104,30 @@ describe("DateInput", () => {
     });
   });
 
+  describe("calendar button", () => {
+    it("opens the browser's picker", () => {
+      renderWithProviders(<DateInput name="pwdFilingDate" value="" />);
+      const input = getDateInput();
+      const showPicker = vi.fn();
+      Object.defineProperty(input, "showPicker", { value: showPicker, configurable: true });
+      fireEvent.click(screen.getByRole("button", { name: "Open date picker" }));
+      expect(showPicker).toHaveBeenCalledTimes(1);
+    });
+
+    it("puts the cursor in the box when the browser refuses the picker", () => {
+      renderWithProviders(<DateInput name="pwdFilingDate" value="" />);
+      const input = getDateInput();
+      Object.defineProperty(input, "showPicker", {
+        value: () => {
+          throw new DOMException("Input showPicker() requires a user gesture.", "NotAllowedError");
+        },
+        configurable: true,
+      });
+      expect(() => fireEvent.click(screen.getByRole("button", { name: "Open date picker" }))).not.toThrow();
+      expect(document.activeElement).toBe(input);
+    });
+  });
+
   describe("disabled state", () => {
     it("can be disabled", () => {
       renderWithProviders(<DateInput name="pwdFilingDate" disabled />);
