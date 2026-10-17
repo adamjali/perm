@@ -1101,5 +1101,41 @@
   },
   "credit": "Screenshot of permtracker.app, October 17, 2026",
   "alt": "The days of the month by which past visa bulletins were already out, on permtracker.app"
+ },
+ "guides/perm-filing-window-worked-example": {
+  "capture": {
+   "url": "/tools/perm-deadline-calculator",
+   "fill": [
+    {
+     "sel": "main input[type=date] >> nth=0",
+     "text": "2026-03-10"
+    },
+    {
+     "sel": "main input[type=date] >> nth=1",
+     "text": "2026-04-06"
+    },
+    {
+     "sel": "main input[type=date] >> nth=2",
+     "text": "2026-05-06"
+    }
+   ],
+   "clip": "h:Your PERM deadlines",
+   "width": 1000,
+   "fit": "contain",
+   "maxHeight": 700
+  },
+  "credit": "Screenshot of permtracker.app, October 17, 2026",
+  "alt": "The PERM deadline calculator with the example's dates: the filing window opens June 5, 2026 and closes October 3, 2026"
+ },
+ "guides/file-perm-after-prevailing-wage-expires": {
+  "pdf": {
+   "file": "karl-storz-2011-per-00040.pdf",
+   "page": 15,
+   "top": 0.0,
+   "anchor": "bottom"
+  },
+  "credit": "Karl Storz Endoscopy-America, 2011-PER-00040 (Dec. 1, 2011), page 16. U.S. Department of Labor, Board of Alien Labor Certification Appeals",
+  "source": "https://www.oalj.dol.gov/DECISIONS/ALJ/PER/2011/In_re_KARL_STORZ_ENDOSCOPY_2011PER00040_(DEC_01_2011)_091125_CADEC_SD.PDF",
+  "alt": "The page of the Board's en banc Karl Storz decision holding that an employer who begins recruitment before its wage determination must file while the determination is valid"
  }
 }

@@ -1,0 +1,105 @@
+---
+title: "The PERM filing window, worked on real dates"
+description: "How to work out a PERM filing window from your own recruitment dates: the day it opens, the day it closes, and when the wage determination closes it early."
+date: "2026-10-17"
+author: "PERM Tracker data desk"
+image: "/images/content/heroes/guides/perm-filing-window-worked-example.webp"
+imageAlt: "The PERM deadline calculator with the example's dates: the filing window opens June 5, 2026 and closes October 3, 2026"
+imageCredit: "Screenshot of permtracker.app, October 17, 2026"
+tags: ["perm", "filing-window", "eta-9089", "recruitment", "prevailing-wage", "deadlines", "attorneys"]
+category: "deadlines"
+seoTitle: "How to Calculate the PERM Filing Window"
+seoDescription: "Work out a PERM filing window step by step: 30 days after the last mandatory step, 180 days after the first, and when the PWD expiry closes it early."
+published: true
+---
+
+This guide is for attorneys, paralegals and HR teams with a PERM case in recruitment, and for anyone who wants to check the dates on their own case. The ETA-9089 can be filed only inside a window that two dates set, and a third can close it early. Here's the whole calculation on one example case.
+
+<Callout type="important" title="The window in one line">
+It opens 30 days after the last mandatory recruitment step ends, and closes 180 days after the first step began. The wage determination's expiry closes it earlier only when recruitment didn't begin inside the determination's validity period.
+</Callout>
+
+## The rules behind each date
+
+<ComparisonTable
+  headers={["Date", "What sets it", "The rule"]}
+  rows={[
+    ["Window opens", "The last mandatory step: the 30-day job order and the two Sunday ads", "\"at least 30 days, but no more than 180 days, before the filing\" (20 CFR 656.17(e)(1)(i))"],
+    ["Window closes", "The first recruitment step, including a professional job's additional steps", "mandatory steps \"no more than 180 days\" before filing (656.17(e)(1)(i)); additional steps likewise (656.17(e)(1)(ii))"],
+    ["Notice of filing", "Posted 10 consecutive business days", "\"between 30 and 180 days before filing\" (656.10(d)(3)(iv))"],
+    ["Wage determination expiry", "The validity period printed on the determination", "file \"or begin the recruitment period\" inside it (656.40(c))"]
+  ]}
+/>
+
+For a professional job, three additional steps come on top of the mandatory ones, and one of them may fall inside the last 30 days before filing. So the latest additional step doesn't hold the window shut, but all three count toward the 180 days.
+
+## One case, step by step
+
+A professional job. The wage determination is dated March 10, 2026, and expires June 30, 2026.
+
+<ComparisonTable
+  headers={["Step", "Dates"]}
+  rows={[
+    ["Job order with the state workforce agency", "April 6 to May 6, 2026"],
+    ["Sunday ads", "April 12 and April 19, 2026"],
+    ["Notice of filing", "April 6 to April 17, 2026"],
+    ["Employer's website", "April 6 to May 6, 2026"],
+    ["Job search website", "April 6 to May 6, 2026"],
+    ["Local newspaper", "May 3, 2026"]
+  ]}
+/>
+
+<StepByStep>
+<Step number={1} title="Find the last day the mandatory steps ran">
+The job order ends May 6, after the second Sunday ad (April 19) and the notice (April 17). So the last day is May 6, 2026.
+</Step>
+<Step number={2} title="Add 30 days: the window opens">
+May 6 plus 30 days is June 5, 2026. Filing before then is too early.
+</Step>
+<Step number={3} title="Find the first day any step began">
+The job order, the notice and two of the additional steps all began April 6, 2026.
+</Step>
+<Step number={4} title="Add 180 days: the window closes">
+April 6 plus 180 days is October 3, 2026, the last day to file on this recruitment.
+</Step>
+<Step number={5} title="Check the wage determination">
+The first step (April 6) falls between the determination date (March 10) and its expiry (June 30). Recruitment began inside the validity period, so the expiry doesn't close the window. It stays open from June 5 through October 3, about three months after the determination expires.
+</Step>
+</StepByStep>
+
+## When the wage determination closes it early
+
+Change one date: say the determination had been issued on April 15, 2026, nine days after recruitment began. It would expire July 14, 2026. Recruitment began before the determination existed, so the filing has to be in while it's still valid.
+
+<ComparisonTable
+  headers={["When recruitment began", "Window opens", "Window closes", "Why"]}
+  rows={[
+    ["Inside the validity period (example above)", "June 5, 2026", "October 3, 2026", "656.40(c) is met by beginning recruitment; the 180-day rule alone closes it"],
+    ["Before the determination date", "June 5, 2026", "July 14, 2026", "File inside the validity period (Karl Storz, en banc, 2011)"],
+    ["After the expiry", "-", "-", "This determination can't be used; request a new one"],
+    ["Determination date not known", "June 5, 2026", "The expiry", "PERM Tracker takes the stricter reading until the date is entered"]
+  ]}
+/>
+
+The second row is the one that catches cases. The Board of Alien Labor Certification Appeals held in *Karl Storz Endoscopy-America* (2011-PER-00040, December 1, 2011) that "begin the recruitment" means conducting the first recruitment step, and that an employer who starts before receiving its determination "must file its application within the PWD validity period." The [prevailing wage expiry guide](/guides/file-perm-after-prevailing-wage-expires) walks through that decision and a 2015 one that went the other way.
+
+The notice of filing comes from a different section, 656.10(d), so PERM Tracker doesn't count it as beginning recruitment for this test. It does count toward the 180 days, because 656.10(d)(3)(iv) gives it the same outer limit.
+
+## Run your own dates
+
+The [PERM deadline calculator](/tools/perm-deadline-calculator) takes the determination date, the first recruitment date and the last, and shows when the window opens and closes and whether the determination limits it. In the app, a case's filing window updates as its dates are saved, and says so when the determination's expiry is what closes it.
+
+Two things the calculation can't settle for you:
+
+- **When a step really began.** It's usually the date on the job order or the ad, but an ongoing step such as an employee referral program begins when employees learn of the opening. That point decided a 2015 appeal.
+- **Weekends and holidays.** Part 656 says nothing about a deadline that falls on one, so don't count on the next business day: file before the last day.
+
+Nothing here is legal advice. Check the dates with the attorney on the case.
+
+## Related
+
+- [Can you file PERM after the prevailing wage expires?](/guides/file-perm-after-prevailing-wage-expires)
+- [Compute every PERM deadline](/guides/compute-every-perm-deadline)
+- [How long PERM recruitment stays valid](/guides/how-long-perm-recruitment-stays-valid)
+- [PERM Sunday ads and the additional recruitment steps](/guides/perm-sunday-ads-additional-recruitment-steps)
+- [How long a prevailing wage determination is valid](/tools/pwd-validity)
