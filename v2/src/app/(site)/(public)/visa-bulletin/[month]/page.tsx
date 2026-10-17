@@ -38,6 +38,9 @@ import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey } from
 import { withSocialCard } from "@/lib/socialCard";
 import { BOARD_COUNTRIES, categoriesIn } from "@/lib/db/bulletin";
 import { getVisaBulletins } from "@/lib/db/publicData";
+import { getDateSources } from "@/lib/db/dateSources";
+import { bulletinMonthDate } from "@/lib/pageDates";
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 
@@ -323,9 +326,11 @@ export default async function BulletinMonthPage({
   const prevHasFiling = !!prev && Object.keys(prev.datesForFiling).length > 0;
   const hasSetAsides = categories.some((c) => c === "EB5R" || c === "EB5HU" || c === "EB5I");
   const isNewest = month === newestMonth;
-
+  const updated = bulletinMonthDate(isNewest, await getDateSources());
 
   return (
+    <>
+    <SiteBreadcrumbs date={updated} />
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
 
       <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
@@ -431,5 +436,6 @@ export default async function BulletinMonthPage({
         ]}
       />
     </div>
+    </>
   );
 }

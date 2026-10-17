@@ -197,6 +197,18 @@ export async function getLiveOnlySlugWindow(chunk: number, size: number): Promis
   return found.map((r) => ({ slug: r.slug, lastChanged: r.last_changed ?? null }));
 }
 
+/**
+ * The day a live-only employer's page last changed, the date its sitemap
+ * entry carries, so the page's "Updated" line says the same. Null when the
+ * nightly index hasn't dated it or can't be read.
+ */
+export async function liveOnlyLastChanged(slug: string): Promise<string | null> {
+  const r = await one<{ d: string | null }>("SELECT last_changed AS d FROM perm_live_only_index WHERE slug = ?", [
+    slug,
+  ]).catch(() => null);
+  return r?.d ? String(r.d) : null;
+}
+
 export async function countLiveOnlyRanks(): Promise<number> {
   const r = await one<{ n: number }>("SELECT max(rank) AS n FROM perm_live_only_index");
   return r?.n ?? 0;

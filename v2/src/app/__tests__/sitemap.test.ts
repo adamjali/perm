@@ -283,7 +283,7 @@ describe("sitemap.ts", () => {
       // beside the per-page one.
       return Array.from({ length: Math.max(0, hi - lo) }, (_, i) => ({
         slug: `live-${lo + i + 1}`,
-        lastChanged: (lo + i) % 3 === 2 ? null : `2026-08-${String(10 + ((lo + i) % 15)).padStart(2, "0")}`,
+        lastChanged: (lo + i) % 3 === 2 ? null : `2099-08-${String(10 + ((lo + i) % 15)).padStart(2, "0")}`,
       }));
     });
     const names = await childNames();
@@ -298,12 +298,15 @@ describe("sitemap.ts", () => {
     expect(all[0]).toBe("https://permtracker.app/perm-employers/live-1");
     expect(all[size - 1]).toBe("https://permtracker.app/perm-employers/live-12000");
     // LASTMOD IS PER PAGE: each URL carries the day that employer's page last
-    // changed, and only an undated row falls back to the sweep's finish date.
-    // It used to be the sweep date on every URL, a nightly timestamp.
+    // changed (or the template's day, when that's later: the page shows the
+    // same, through employerOwnDate), and only an undated row falls back to
+    // the sweep's finish date. It used to be the sweep date on every URL, a
+    // nightly timestamp.
+    const template = (PAGE_DATES as Record<string, string>)["/perm-employers/[slug]"]!;
     const first = await liveEmployerEntries(0);
-    expect(first[0]!.lastModified).toBe("2026-08-10");
-    expect(first[1]!.lastModified).toBe("2026-08-11");
-    expect(first[2]!.lastModified).toBe("2026-09-15");
+    expect(first[0]!.lastModified).toBe("2099-08-10");
+    expect(first[1]!.lastModified).toBe("2099-08-11");
+    expect(first[2]!.lastModified).toBe(template > "2026-09-15" ? template : "2026-09-15");
     expect(new Set(first.map((e) => e.lastModified)).size).toBeGreaterThan(2);
   });
 
@@ -324,7 +327,7 @@ describe("sitemap.ts", () => {
       const hi = Math.min(lo + per, size);
       return Array.from({ length: Math.max(0, hi - lo) }, (_, i) => ({
         slug: `farm-${lo + i + 1}`,
-        lastChanged: (lo + i) % 2 ? null : "2026-04-10",
+        lastChanged: (lo + i) % 2 ? null : "2099-04-10",
       }));
     });
     const names = await childNames();
@@ -339,7 +342,7 @@ describe("sitemap.ts", () => {
     expect(new Set(all).size).toBe(size);
     expect(all[0]).toBe("https://permtracker.app/perm-employers/farm-1");
     const first = await otherEmployerEntries(0);
-    expect(first[0]!.lastModified).toBe("2026-04-10");
+    expect(first[0]!.lastModified).toBe("2099-04-10");
     // An undated row falls back to a real date, never an empty lastmod.
     expect(first[1]!.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
@@ -390,20 +393,30 @@ describe("sitemap.ts", () => {
     expect(revalidate).toBe(86400);
   });
 
-  it("homepage lastModified derives from the newest post's date or updated", async () => {
+  it("the article hubs' lastModified derives from the newest post's date or updated", async () => {
     vi.mocked(getAllPosts).mockReturnValue([
-      // Dated past any page change, so the posts decide (the homepage takes
-      // the later of its newest post and its own last change).
+      // Dated past any page change, so the posts decide (a hub takes the later
+      // of its newest post and its own last change).
       mkPost("first", "blog", "2099-01-01"),
       mkPost("second", "blog", "2099-02-15", "2099-03-04"),
       mkPost("third", "tutorials", "2099-01-20"),
     ]);
     const entries = await sitemap();
+    const blog = entries.find((e) => e.url === "https://permtracker.app/blog");
+    expect(blog).toBeDefined();
+    // The second post has the most recent `updated` (2099-03-04) — that should win.
+    expect(blog!.lastModified).toBe("2099-03-04");
+  });
+
+  it("homepage lastModified follows the status sweep, whose figures lead it", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2099-01-01")]);
+    const entries = await sitemap();
     // With the trailing slash since 2026-09-15: the form Google inspects and the canonical declares.
     const root = entries.find((e) => e.url === "https://permtracker.app/");
     expect(root).toBeDefined();
-    // The second post has the most recent `updated` (2099-03-04) — that should win.
-    expect(root!.lastModified).toBe("2099-03-04");
+    const page = (PAGE_DATES as Record<string, string>)["/"]!;
+    // The sweep is mocked to 2026-09-15; a newer post no longer dates the homepage.
+    expect(root!.lastModified).toBe(page > "2026-09-15" ? page : "2026-09-15");
   });
 
   it("does NOT include /login or /signup (they are noindex per their page metadata)", async () => {
@@ -802,11 +815,17 @@ describe("entity lastmod tracks the corpus, not the daily figure", () => {
     // restamped every day for data that changes four times a year, which is a
     // lastmod Google discounts - and discounting it costs recrawl priority on
     // exactly the pages whose numbers actually did move.
+    //
+    // Since Oct 17 2026 the template's own day counts too (pageDate, the day
+    // the page shows): a redesign changes every entity page, and the corpus
+    // date alone would say it hadn't.
+    const template = (PAGE_DATES as Record<string, string>)["/perm-employers/[slug]"]!;
+    const expected = template > "2026-06-30" ? template : "2026-06-30";
     const entries = await entityEntries("employer", 0);
     expect(entries.length).toBeGreaterThan(0);
     for (const e of entries) {
-      expect(e.lastModified).toBe("2026-06-30");
-      expect(e.lastModified).not.toBe("2026-08-20");
+      expect(e.lastModified).toBe(expected);
+      if (expected !== "2026-08-20") expect(e.lastModified).not.toBe("2026-08-20");
     }
   });
 });

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit every public URL: status, title, description, data presence, glue.
+"""Audit every public URL: status, title, description, data presence, glue, dates.
 
 Reads the sitemap rather than a hand-kept list, because a page nobody
 remembered is exactly the page that breaks. Prints its target and its counts
@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import argparse
 import html as html_mod
+import json
+from datetime import date
 import re
 import os
 import sys
@@ -129,13 +131,75 @@ def prose_em_dashes(html: str) -> list[str]:
     return hits
 
 
-def audit(base: str, path: str) -> list[str]:
+# A page cached a little before or after its sitemap was built can carry a
+# day either side of the sitemap's; more than this and the two disagree.
+DATE_SLACK_DAYS = 2
+
+SOCIAL_TAGS = ("og:title", "og:description", "og:image", "og:url", "twitter:card")
+
+
+def page_dates(html: str) -> list[str]:
+    """Every dateModified the page's JSON-LD gives for the page itself.
+
+    The page's own node is a WebPage (every page) or an article type (guides,
+    posts, changelog). A Dataset's dateModified describes its data, not the
+    page, so it isn't read here.
+    """
+    found: list[str] = []
+    for raw in re.findall(r'<script[^>]*application/ld\+json[^>]*>(.*?)</script>', html, re.S):
+        try:
+            data = json.loads(html_mod.unescape(raw))
+        except ValueError:
+            continue
+        nodes = data.get("@graph", [data]) if isinstance(data, dict) else data
+        for node in nodes if isinstance(nodes, list) else [nodes]:
+            if not isinstance(node, dict):
+                continue
+            kind = node.get("@type")
+            kinds = kind if isinstance(kind, list) else [kind]
+            if any(k in ("WebPage", "Article", "BlogPosting", "TechArticle", "NewsArticle") for k in kinds):
+                d = node.get("dateModified")
+                if isinstance(d, str):
+                    found.append(d[:10])
+    return found
+
+
+def check_dates(path: str, html: str, lastmod: str | None) -> list[str]:
+    """The page's day: in its structured data, on the page, and in the sitemap.
+
+    Google shows a date beside a result when the page shows one and its
+    structured data says the same; the sitemap's lastmod should agree with
+    both (lib/pageDates.ts is where all three come from).
+    """
+    out: list[str] = []
+    modified = page_dates(html)
+    if not modified:
+        return [f"{path}: no dateModified for the page in its structured data"]
+    day = max(modified)
+    if path != "/" and f'dateTime="{day}"' not in html:
+        out.append(f"{path}: dateModified {day} isn't shown on the page")
+    if lastmod:
+        try:
+            gap = abs((date.fromisoformat(day) - date.fromisoformat(lastmod[:10])).days)
+        except ValueError:
+            gap = 0
+        if gap > DATE_SLACK_DAYS:
+            out.append(f"{path}: page says {day}, sitemap says {lastmod[:10]}")
+    return out
+
+
+def audit(base: str, path: str, lastmod: str | None = None) -> list[str]:
     url = base.rstrip("/") + path
     status, html = get(url)
     out: list[str] = []
     if status != 200:
         return [f"{path}: HTTP {status}"]
     width = display_width
+
+    out.extend(check_dates(path, html, lastmod))
+    for tag in SOCIAL_TAGS:
+        if not re.search(rf'<meta (?:property|name)="{re.escape(tag)}" content="[^"]+', html):
+            out.append(f"{path}: no {tag}")
 
     m = re.search(r"<title>(.*?)</title>", html, re.S)
     title = html_mod.unescape(m.group(1)).strip() if m else ""
@@ -185,6 +249,17 @@ def audit(base: str, path: str) -> list[str]:
     return out
 
 
+def url_lastmods(xml: str) -> dict[str, str]:
+    """Each <url>'s path and its <lastmod>, from one sitemap file."""
+    out: dict[str, str] = {}
+    for block in re.findall(r"<url>(.*?)</url>", xml, re.S):
+        loc = re.search(r"<loc>(.*?)</loc>", block)
+        mod = re.search(r"<lastmod>(.*?)</lastmod>", block)
+        if loc and mod:
+            out[re.sub(r"^https?://[^/]+", "", loc.group(1)) or "/"] = mod.group(1)
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="https://permtracker.app")
@@ -204,6 +279,7 @@ def main() -> int:
 
     # /sitemap.xml is a sitemap index: its <loc> values are child sitemaps, not
     # pages, so they are followed.
+    lastmods: dict[str, str] = {}
     if "<sitemapindex" in sm:
         children = re.findall(r"<loc>(.*?)</loc>", sm)
         print(f"sitemap index : {len(children)} child sitemaps")
@@ -221,8 +297,10 @@ def main() -> int:
             found = re.findall(r"<loc>(.*?)</loc>", cbody)
             print(f"  {child.rsplit('/', 1)[-1]:24s} {len(found):>6,} urls")
             locs.extend(found)
+            lastmods.update(url_lastmods(cbody))
     else:
         locs = re.findall(r"<loc>(.*?)</loc>", sm)
+        lastmods.update(url_lastmods(sm))
 
     paths = []
     for loc in locs:
@@ -244,7 +322,7 @@ def main() -> int:
 
     findings: list[str] = []
     with ThreadPoolExecutor(max_workers=6) as pool:
-        for res in pool.map(lambda p: audit(args.base, p), paths):
+        for res in pool.map(lambda p: audit(args.base, p, lastmods.get(p)), paths):
             findings.extend(res)
 
     print(f"findings       : {len(findings)}\n")

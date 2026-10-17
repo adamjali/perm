@@ -25,7 +25,9 @@ function routes(dir: string, out: Set<string> = new Set()): Set<string> {
 }
 
 describe("sitemap page dates", () => {
-  const asked = [...build.matchAll(/changed\("([^"]+)"\)/g)].map((m) => m[1]!);
+  // Each static page is dated through `at("/route")` (pageDate), the same
+  // function its "Updated" line reads.
+  const asked = [...build.matchAll(/\bat\("([^"]+)"\)/g)].map((m) => m[1]!);
 
   it("reads a date for a plausible number of pages", () => {
     expect(asked.length).toBeGreaterThan(70);

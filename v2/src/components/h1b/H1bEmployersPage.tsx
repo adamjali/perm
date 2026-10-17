@@ -13,6 +13,7 @@ import { firstThatFits } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
 import {
   defaultYear,
+  h1bAsOf,
   hasBasis,
   NATION,
   placeName,
@@ -25,6 +26,8 @@ import {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { getH1bSummary, getH1bView } from "@/lib/db/h1bRanks";
+import { pageDate } from "@/lib/pageDates";
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";
@@ -144,7 +147,10 @@ export async function H1bEmployersPage({ state }: { state: string }) {
     mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
   });
 
+  const updated = pageDate(state === NATION ? "/h1b-employers" : "/h1b-employers/[state]", { h1b: h1bAsOf(summary) });
   return (
+    <>
+    <SiteBreadcrumbs date={updated} />
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       {schemas.map((s, i) => (
@@ -242,5 +248,6 @@ export async function H1bEmployersPage({ state }: { state: string }) {
       </nav>{" "}
       <DataProvenance datasets={["lca-disclosure", "uscis-h1b-hub"]} />
     </div>
+    </>
   );
 }

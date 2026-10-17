@@ -20,14 +20,14 @@
 import { fetchQuery } from "convex/nextjs";
 
 import { api } from "@convex/_generated/api";
-import { getAllPosts } from "@/lib/content";
+import { getAllPosts, latestPostDate } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { getDisclosureStats } from "@/lib/db/publicData";
 import { DISAMBIGUATION } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
-import { MONTH_NAMES } from "@convex/lib/months";
+import { longDate, MONTH_NAMES } from "@convex/lib/months";
 
 const BASE_URL = SITE_URL;
 
@@ -470,6 +470,9 @@ export async function GET() {
     fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
   ]);
 
+  // The file changes when an article does and when DOL republishes.
+  const newest = [latestPostDate(), dol?.permAsOf ?? null].filter((d): d is string => !!d).sort().pop() ?? null;
+
   const grouped: Record<ContentType, typeof allPosts> = {
     blog: [],
     guides: [],
@@ -486,6 +489,7 @@ export async function GET() {
     "",
     DISAMBIGUATION,
     "",
+    ...(newest ? [`Last updated: ${longDate(newest)}.`, ""] : []),
     "Every figure on this site is measured from a named federal source and carries the window it was measured over. Nothing is modelled. Where the data cannot support a number, the site says so rather than estimating one: there is no per-case denial-risk score, and processing-time estimates are withheld for filing cohorts too young to measure.",
     "",
   ];
@@ -576,8 +580,11 @@ export async function GET() {
       // Every type has per-slug routes, changelog included: pointing
       // differently-titled entries at one URL would tell readers that all but
       // one of them were wrong.
+      // The article's own day beside it: an answer engine that quotes a
+      // guide can say how current it is.
+      const day = longDate(post.meta.updated ?? post.meta.date);
       lines.push(
-        `- [${post.meta.title}](${BASE_URL}/${type}/${post.slug}): ${post.meta.description}`,
+        `- [${post.meta.title}](${BASE_URL}/${type}/${post.slug})${day ? ` (updated ${day})` : ""}: ${post.meta.description}`,
       );
     }
     lines.push("");

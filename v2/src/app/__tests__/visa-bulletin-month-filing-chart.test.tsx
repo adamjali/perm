@@ -7,6 +7,9 @@ vi.mock("@/components/data/DataProvenance", () => ({
   DataProvenance: () => <div data-testid="provenance" />,
 }));
 vi.mock("@/components/tools/BulletinAlertForm", () => ({ BulletinAlertForm: () => null }));
+// The page's own "Updated" bar reads the date sources; not what this file is about.
+vi.mock("@/lib/db/dateSources", () => ({ getDateSources: async () => ({}) }));
+vi.mock("@/components/layout/SiteBreadcrumbs", () => ({ SiteBreadcrumbs: () => null }));
 
 import { getVisaBulletins } from "@/lib/db/publicData";
 import MonthPage from "../(site)/(public)/visa-bulletin/[month]/page";

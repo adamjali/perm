@@ -55,7 +55,10 @@ import {
   entityStaticParams,
 } from "@/lib/entityPage";
 import { employerHistoryCases, employerYears, workerFacets } from "@/lib/db/employerHistory";
-import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
+import { getDisclosureStats, getFreshness, liveOnlyLastChanged } from "@/lib/db/publicData";
+import { getDateSources } from "@/lib/db/dateSources";
+import { employerOwnDate, pageDate } from "@/lib/pageDates";
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
 import { EmployerWait } from "@/components/entities/EmployerWait";
 import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/db/employerWait";
@@ -273,8 +276,10 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
   const lines = programs ? [programs.pwd, programs.lca, programs.seasonal] : [];
   const open = lines.filter((l) => l && l.pending !== null);
   const pending = open.length ? open.reduce((n, l) => n + (l?.pending ?? 0), 0) : null;
+  const updated = employerOwnDate(record.lastChanged, await getDateSources());
   return (
     <>
+      <SiteBreadcrumbs date={updated} />
       {/* The breadcrumb bar ends at "Employers", so the trail ending in this
           page's own name is emitted here, as the published page does. */}
       <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, record.name)} />
@@ -558,8 +563,10 @@ export default async function EmployerPage({
         debarmentsForSlug(slug),
         warnForSlug(slug),
       ]);
+    const updated = employerOwnDate(await liveOnlyLastChanged(slug), await getDateSources());
     return (
       <>
+        <SiteBreadcrumbs date={updated} />
         <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, live.record.name)} />
         <UnpublishedEmployer
           record={live.record}
@@ -789,7 +796,10 @@ export default async function EmployerPage({
     { id: "notes", label: "Notes" },
   ];
 
+  const updated = pageDate("/perm-employers/[slug]", await getDateSources());
   return (
+    <>
+    <SiteBreadcrumbs date={updated} />
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={schema} />
 
@@ -1124,5 +1134,6 @@ export default async function EmployerPage({
         <DataProvenance datasets={pending ? ["perm-cases", "entities", "perm-case-status"] : ["perm-cases", "entities"]} />
       </Chapter>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
+import type { DateSources } from "@/lib/pageDates";
 import { isDataPath } from "@/lib/siteMap";
 import { CaseNextStep } from "./CaseNextStep";
 import { DataRail } from "./DataRail";
@@ -30,7 +31,7 @@ const OWN_LOOKUP: readonly RegExp[] = [
   /^\/perm-queue\/\d{4}-\d{2}/,
 ];
 
-export function DataShell({ children }: { children: React.ReactNode }) {
+export function DataShell({ children, sources }: { children: React.ReactNode; sources?: DateSources }) {
   const pathname = usePathname();
   // Off the data pages the trail sits above the page; on them it sits in the
   // content column, so the rail runs from the header down in one piece. Above
@@ -39,7 +40,7 @@ export function DataShell({ children }: { children: React.ReactNode }) {
   if (!isDataPath(pathname)) {
     return (
       <>
-        <SiteBreadcrumbs />
+        <SiteBreadcrumbs sources={sources} />
         {children}
       </>
     );
@@ -57,7 +58,7 @@ export function DataShell({ children }: { children: React.ReactNode }) {
           measure with mx-auto; beside the rail every page starts at the same
           edge, only its width differs. */}
       <div data-shell-column className="min-w-0 pb-16 lg:flex-1 lg:[&>.mx-auto]:ml-0 lg:[&>*>.mx-auto]:ml-0">
-        <SiteBreadcrumbs inColumn />
+        <SiteBreadcrumbs inColumn sources={sources} />
         {children}
         {OWN_LOOKUP.some((re) => re.test(pathname)) ? null : (
           <CaseNextStep question="Waiting on a PERM case?" source="data-page-end" className="mt-16 max-w-5xl" />

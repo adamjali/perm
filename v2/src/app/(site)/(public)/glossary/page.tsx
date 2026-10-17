@@ -25,6 +25,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { SITE_URL } from "@/lib/constants/site";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /**
  * The glossary: every term the site uses, defined once, each pointing at the
@@ -215,10 +216,13 @@ function TermChips({ slugs, names }: { slugs: readonly string[]; names: Map<stri
   return (
     <ul className="flex flex-wrap gap-2">
       {slugs.map((slug) => (
-        <li key={slug}>
+        <li key={slug} className="max-w-full">
           <a
             href={`#${slug}`}
-            className={buttonVariants({ variant: "outline", size: "default" })}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "default" }),
+              "h-auto min-h-11 max-w-full whitespace-normal text-left",
+            )}
           >
             {names.get(slug) ?? slug}
           </a>{" "}

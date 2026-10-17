@@ -95,6 +95,26 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
   return { slug, type, meta, content };
 }
 
+let newestPostDay: string | null | undefined;
+
+/**
+ * The newest article's published or updated day, or null with none. Read once
+ * per server process in production, where the files ship with the build; the
+ * dev server reads them each time, so a new post shows at once.
+ */
+export function latestPostDate(): string | null {
+  if (newestPostDay !== undefined && process.env.NODE_ENV === "production") return newestPostDay;
+  const posts = getAllPosts();
+  newestPostDay =
+    posts.length > 0
+      ? posts.reduce((acc, p) => {
+          const d = p.meta.updated ?? p.meta.date;
+          return d > acc ? d : acc;
+        }, posts[0]!.meta.date)
+      : null;
+  return newestPostDay;
+}
+
 /** Get all posts, optionally filtered by type. Sorted by date descending. */
 export function getAllPosts(type?: ContentType): PostSummary[] {
   const types: ContentType[] = type

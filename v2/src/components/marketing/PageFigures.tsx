@@ -14,17 +14,16 @@ import { cn } from "@/lib/utils";
  *
  * So each figure DRAWS THE THING THE PAGE IS ABOUT, and each is a different
  * shape because each page is about something different: lanes of a
- * trigger reaching an inbox, a case's dates laid on a track, and three routes
- * converging on one. The alternative - one house chart repeated - is the
+ * trigger reaching an inbox, and three routes converging on one. The alternative - one house chart repeated - is the
  * five-identical-cards defect from the homepage in another place.
  *
  * THEY ARE LABELLED, NOT HIDDEN. The reflex here is `aria-hidden`, on the
  * grounds that a decorative figure beside explanatory text adds nothing for a
  * screen reader. That is right for the homepage cards, whose figures are the
  * SHAPE of a number stated next to them. It is wrong here: each of these
- * carries information the prose does not - which triggers exist, that the
- * window closes at the earlier of two dates, that three routes reach one
- * inbox - so each is a `role="img"` with a sentence describing what it shows.
+ * carries information the prose does not - which triggers exist, that three
+ * routes reach one inbox - so each is a `role="img"` with a sentence
+ * describing what it shows.
  * Hiding content because it happens to be drawn is how a diagram becomes
  * decoration for some readers and evidence for others.
  *

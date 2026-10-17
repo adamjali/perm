@@ -25,12 +25,16 @@ import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { DataShell } from "@/components/tools/DataShell";
 import { AutoReveal } from "@/components/ui/auto-reveal";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { getDateSources } from "@/lib/db/dateSources";
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // The days the pages' figures last moved, for each page's "Updated" line
+  // and its WebPage date (lib/pageDates.ts). Small reads the pages share.
+  const sources = await getDateSources();
   return (
     <>
       <HashScrollHandler />
@@ -50,7 +54,7 @@ export default function PublicLayout({
             children untouched. */}
         {/* DataShell places the breadcrumb trail: above the page, or in the
             content column beside the rail on data pages. */}
-        <DataShell>{children}</DataShell>
+        <DataShell sources={sources}>{children}</DataShell>
       </main>
 
       <AutoReveal />

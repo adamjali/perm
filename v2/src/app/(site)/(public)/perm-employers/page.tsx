@@ -165,7 +165,7 @@ export default async function PermEmployersPage() {
                     ]
                       .filter(Boolean)
                       .join("\n")}
-                    className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
+                    className="grid grid-cols-1 pb-2 sm:grid-cols-[minmax(0,220px)_1fr] sm:items-center sm:gap-3 sm:pb-0">
                     <Link
                       href={`/perm-employers/${e.slug}`}
                       className="link flex min-h-[44px] min-w-0 items-center text-sm"
@@ -178,7 +178,7 @@ export default async function PermEmployersPage() {
                         className="h-6 shrink-0 border-input bg-primary border"
                         style={{
                           width: `${Math.max(4, (e.total / maxTotal) * 100)}%`,
-                          maxWidth: "calc(100% - 64px)",
+                          maxWidth: "calc(100% - 72px)",
                         }}
                       />
                       <span className="whitespace-nowrap font-mono text-sm font-bold tabular-nums">

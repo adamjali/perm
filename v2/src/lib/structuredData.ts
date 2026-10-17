@@ -140,7 +140,23 @@ export function getOrganizationSchema(baseUrl: string) {
       '@type': 'ContactPoint' as const,
       email: 'support@permtracker.app',
       contactType: 'customer support',
+      availableLanguage: ['English'],
     },
+    // The site covers the US labor certification and green card process, for
+    // people anywhere; "where" for a search engine is the US.
+    areaServed: { '@type': 'Country' as const, name: 'United States' },
+    // What the site is about, in the words people search: answer engines use
+    // these to decide which questions the organization is a source for.
+    knowsAbout: [
+      'PERM labor certification',
+      'Prevailing wage determination',
+      'H-1B labor condition application',
+      'H-2A and H-2B temporary labor certification',
+      'Visa bulletin',
+      'Employment-based green card',
+      'Form I-140',
+      'Form I-485',
+    ],
     // Every brand-owned surface that names the brand (Medium, Product Hunt),
     // each verified live. Brand-owned URLs only on the
     // Organization; the person is her own node below, with her own profile,

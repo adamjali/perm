@@ -41,6 +41,16 @@ export interface H1bYear {
   places: Record<string, H1bPlaceTotals>;
 }
 
+/**
+ * The newest day the rankings cover: the later of DOL's and USCIS's last days
+ * in the newest year. The pages' "Updated" day and their sitemap lastmod.
+ */
+export function h1bAsOf(summary: Pick<H1bSummary, "years"> | null | undefined): string | null {
+  const newest = summary?.years[0];
+  if (!newest) return null;
+  return [newest.lcaThrough, newest.uscisThrough].filter((d): d is string => !!d).sort().pop() ?? null;
+}
+
 export interface H1bSummary {
   /** Newest first. */
   years: H1bYear[];

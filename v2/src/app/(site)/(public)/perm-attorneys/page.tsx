@@ -144,7 +144,7 @@ export default async function PermAttorneysPage() {
                     ]
                       .filter(Boolean)
                       .join("\n")}
-                    className="grid grid-cols-[minmax(0,240px)_1fr] items-center gap-3">
+                    className="grid grid-cols-1 gap-1 sm:grid-cols-[minmax(0,240px)_1fr] sm:items-center sm:gap-3">
                     <p className="truncate text-sm font-bold">
                       {a.name}
                     </p>
@@ -154,7 +154,7 @@ export default async function PermAttorneysPage() {
                         className="h-6 shrink-0 border-input bg-primary border"
                         style={{
                           width: `${Math.max(4, (a.total / maxTotal) * 100)}%`,
-                          maxWidth: "calc(100% - 64px)",
+                          maxWidth: "calc(100% - 72px)",
                         }}
                       />
                       <span className="whitespace-nowrap font-mono text-sm font-bold tabular-nums">

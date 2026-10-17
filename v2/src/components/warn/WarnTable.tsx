@@ -29,8 +29,10 @@ export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
     sortValue: (r) => r.employerSlug,
     render: (r) =>
       r.employerSlug ? (
+        // "Their filings", not "PERM record": a notice can match an employer
+        // whose page holds only H-1B, wage-request or H-2A and H-2B filings.
         <Link href={`/perm-employers/${r.employerSlug}`} className="link">
-          PERM record
+          Their filings
         </Link>
       ) : null,
   },
