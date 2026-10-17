@@ -1108,3 +1108,31 @@ section's "Still to request" list.
 
 **Not yet:** `/guides/perm-recruitment-report-sample`, `/guides/perm-notice-of-filing-sample` and
 `/guides/perm-audit-file-index` are `published: false` until the attorney reviews them; they answer 404 until then.
+
+### Round, Saturday Oct 17 2026 (about 2:50 to 3:22 AM EDT)
+
+Worked the "Queue after the Oct 16 to 17 night changes" list top down; Google answered Quota Exceeded on #13.
+
+Requested (last crawl before the request):
+- `/perm-case-status` (Oct 16, 12:41 AM)
+- `/blog/best-immigration-case-management-tools` (Sep 25, 3:53 PM)
+- `/guides/employer-suspended-from-perm` (unknown to Google)
+- `/guides/perm-certified-what-next` (unknown to Google)
+- `/guides/when-does-the-visa-bulletin-come-out` (unknown to Google)
+- `/perm-processing-times` (Oct 16, 12:43 AM)
+- `/for-attorneys` (Oct 16, 12:47 AM)
+- `/perm-employers/google-llc` (Oct 16, 12:51 AM)
+- `/guides/how-the-perm-queue-works` (Sep 21, 3:26 PM)
+- `/blog/docketwise-alternatives-for-perm` (unknown to Google)
+- `/blog/immigration-software-pricing-2026` (unknown to Google)
+
+Skipped: `/` (crawled Oct 16, 9:38 PM, after its Oct 16 description change; tonight it gained only the WebPage date
+in its structured data, which the sitemap's lastmod carries).
+
+Quota Exceeded on `/guides/dol-average-vs-your-wait` (unknown to Google, not requested).
+
+Still to request: #13 to #50 of the list above, starting with `/guides/dol-average-vs-your-wait`, then the Oct 13 to 16
+section's "Still to request" list.
+
+Driving note: once the bar held focus (`activeElement` was INPUT) and the typed URL still didn't land, so Return
+gave "Something went wrong". Read `document.activeElement.value` after typing and press Return only when it holds the URL.
