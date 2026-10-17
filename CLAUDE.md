@@ -823,3 +823,30 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
 - **resend 6.32.1, svix 2.8.0, tailwind-merge 3.7.0, zod 4.6.5** (Convex deployed with them; Resend still returns `{error}`,
   Svix still refuses an unsigned or forged webhook with 401, checked live).
 - **A scrolling chart can open at its newest end** (`ChartTips startAtEnd`): a 141-month chart opened at FY2015 on a phone.
+
+## Oct 17 2026, in nine lines
+
+- **The PWD expiry limits a case only while recruitment hasn't begun inside it** (20 CFR 656.40(c) as BALCA read it in
+  Karl Storz, en banc 2011, and MPHASIS, 2015; the attorney confirmed): `pwdBearing` and `pwdStepLimit` in
+  `convex/lib/perm/dates/pwdValidity.ts` are the one place. Production windows were recomputed (`filingWindowRecompute`).
+- **The 180 days count a professional job's additional steps** (656.17(e)(1)(ii)); the notice of filing counts by its own
+  rule, 656.10(d)(3)(iv), and can't be the first recruitment step.
+- **Nothing pushes an iPhone's page sideways**: iOS Safari pans past `overflow-x: hidden` on `html`, so `body` clips
+  (`overflow: clip visible`, which keeps sticky working) and selects never pass their box (`@layer base`, or it beats
+  every utility). `no-sideways-pan.test.ts` holds both. Measure each element's own box: Chrome reports no overflow.
+- **Every public page says when it last changed, the same day everywhere** (`src/lib/pageDates.ts`): the sitemap's
+  lastmod, "Updated <day>" at the end of the breadcrumb line and a WebPage `dateModified` all read `pageDate`. The public
+  layout reads the data days once (`getDateSources`); employer pages, bulletin months and the H-1B rankings date
+  themselves and render their own bar, as articles do. `audit_all_pages.py` checks a page's three dates agree.
+- **Entity, group and bulletin-month lastmods take the template's day when it's newer** than their data, and the
+  homepage, the queue, the review stages, activity and under-review pages follow the sweep, whose figures they print.
+- **Employer pages answer "does it sponsor green cards"** from the year's filings (`sponsorSentence`), and say nothing
+  when the year holds none: that isn't proof an employer won't sponsor.
+- **40 new articles and 10 refreshed**, each with its own picture; three practice templates are `published: false`
+  until the attorney reviews them. A capture can be fitted whole (`"fit": "contain"`); capture data pages at 1000 wide
+  so the rail stays out.
+- **The disk filled mid-session** (the dev server's Turbopack cache, 6 GB): an edit written then silently didn't land,
+  and `.next/dev/prerender-manifest.json` was left corrupt (every page then 500s on JSON.parse; delete it). After a
+  full disk, re-check every edit made around it.
+- **The pre-push hook typechecks the working tree**, uncommitted edits included: an unfinished edit blocks pushing a
+  finished commit.
