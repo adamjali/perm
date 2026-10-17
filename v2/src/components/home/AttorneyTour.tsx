@@ -70,7 +70,7 @@ const SECTIONS: TourSection[] = [
     lead: "Enter the determination date and the wage expiration fills in. Start the job order and its end date, the notice period and the filing window follow.",
     facts: [
       "Every date checked against 20 CFR 656 as you type",
-      "An impossible date is stopped with the reason, such as a filing after the wage expires",
+      "An impossible date is stopped with the reason, such as a filing inside the 30-day quiet period",
       "Worked-out fields are marked, and yours to change",
     ],
     surface: "edit-case",

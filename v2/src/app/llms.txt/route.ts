@@ -164,7 +164,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/tools/perm-deadline-calculator",
     label: "PERM deadline calculator",
     blurb:
-      "The ETA-9089 filing window, recruitment timing and the quiet period, per 20 CFR 656.17, capped by the prevailing wage expiration.",
+      "The ETA-9089 filing window, recruitment timing and the quiet period, per 20 CFR 656.17, and whether the prevailing wage expiration still limits them (recruitment begun before the determination).",
   },
   {
     path: "/tools/pwd-calculator",
