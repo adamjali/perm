@@ -290,6 +290,17 @@ describe("the three programs", () => {
     expect(calendar.programSince.lca).toBeNull();
   });
 
+  it("counts a status pair two programs share once, so it's one chip", async () => {
+    mockDb({
+      perm: [],
+      pwd: [{ ts: ms("2026-10-07") + 3_600_000, n: 5, expiries: 0 }],
+      seasonal: [{ ts: ms("2026-10-07") + 3_600_000, n: 5, expiries: 0 }],
+      transitions: [{ from_status: "IN PROCESS", to_status: "DETERMINATION ISSUED", n: 5 }],
+    });
+    const day = await getChangeDay("2026-10-07");
+    expect(day?.transitions).toEqual([{ fromStatus: "IN PROCESS", toStatus: "DETERMINATION ISSUED", n: 10 }]);
+  });
+
   it("tags every row with the program it came from", async () => {
     mockDb({
       perm: [{ ts: ms("2026-09-03") + 60_000, n: 1, expiries: 0 }],

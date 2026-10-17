@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,11 @@ import { cn } from "@/lib/utils";
  *   - a tap shows it and keeps it until the next tap;
  *   - the chart is one tab stop, and the arrow keys step through the marks
  *     (Home and End jump, Escape closes), with the figure read out politely.
+ *
+ * A mark that has a page behind it carries it as `data-href`, and opens it the
+ * way people already try to: a click, a second tap on the mark a tap is
+ * showing, or Enter. Rage clicks on chart bars (Oct 2026, PostHog) were
+ * readers expecting exactly that, so no button or text is added for it.
  *
  * A chart still owns its accessible summary (an `aria-label` or a screen-reader
  * table); the tooltip adds detail, it isn't the only route to the numbers.
@@ -70,6 +76,15 @@ export function ChartTips({
   );
   const [shown, setShown] = useState<Shown | null>(null);
   const activeRef = useRef<Element | null>(null);
+  const router = useRouter();
+  const open = (el: Element | null, target?: EventTarget | null): boolean => {
+    // A real link or button inside the mark does its own job.
+    if (target instanceof Element && target.closest("a, button")) return false;
+    const href = el?.getAttribute("data-href");
+    if (!href) return false;
+    router.push(href);
+    return true;
+  };
 
   const hide = useCallback(() => {
     activeRef.current?.removeAttribute("data-tip-active");
@@ -140,12 +155,16 @@ export function ChartTips({
         if (e.pointerType === "mouse") hide();
       }}
       onPointerUp={(e) => {
-        // A tap shows a mark and keeps it until the next tap; a mouse already
-        // shows marks on hover, so its clicks change nothing.
-        if (e.pointerType === "mouse") return;
+        // A mouse already shows marks on hover, so its click opens the mark's
+        // page when it has one. A tap shows a mark and keeps it until the next
+        // tap; a second tap on the same mark opens its page.
         const el = markAt(e.target);
+        if (e.pointerType === "mouse") {
+          if (e.button === 0) open(el, e.target);
+          return;
+        }
         if (el && el !== activeRef.current) show(el);
-        else hide();
+        else if (!open(el, e.target)) hide();
       }}
       onKeyDown={(e) => {
         const keys: Record<string, number | "first" | "last"> = {
@@ -158,6 +177,10 @@ export function ChartTips({
         };
         if (e.key === "Escape") {
           hide();
+          return;
+        }
+        if (e.key === "Enter" && open(activeRef.current)) {
+          e.preventDefault();
           return;
         }
         const by = keys[e.key];

@@ -2020,6 +2020,10 @@ input[type="week"] {
   .chart-tips [data-tip] {
     cursor: default;
   }
+  /* A mark with a page behind it opens it on click (ChartTips). */
+  .chart-tips [data-href] {
+    cursor: pointer;
+  }
   .chart-tips [data-tip-active]:not(svg *) {
     outline: 2px solid var(--foreground);
     outline-offset: 1px;

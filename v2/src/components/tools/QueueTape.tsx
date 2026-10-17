@@ -122,6 +122,7 @@ export function QueueTape({
             return (
               <Fragment key={m}>{" "}
               <div
+                data-href={`/perm-queue/${m}`}
                 data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou)}
                 className={cn(
                   "relative flex h-16 items-end justify-center border-r border-foreground/10 pb-1 last:border-r-0",

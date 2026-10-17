@@ -465,7 +465,10 @@ export async function getChangeDay(
   );
 
   const changes: CaseChange[] = [];
-  const transitions: TransitionCount[] = [];
+  // One count per status pair across programs: wage requests and H-2A/H-2B
+  // filings both go "IN PROCESS" to "DETERMINATION ISSUED", and listed per
+  // program the pair showed twice (two chips, one filter, a duplicate key).
+  const byPair = new Map<string, TransitionCount>();
   for (const part of parts) {
     for (const row of part.rows) {
       changes.push({
@@ -483,9 +486,14 @@ export async function getChangeDay(
         filingDate: text(row.filing_date),
       });
     }
-    transitions.push(...part.transitions);
+    for (const t of part.transitions) {
+      const key = `${t.fromStatus}>${t.toStatus}`;
+      const held = byPair.get(key);
+      if (held) held.n += t.n;
+      else byPair.set(key, { ...t });
+    }
   }
-  transitions.sort((a, b) => b.n - a.n);
+  const transitions = [...byPair.values()].sort((a, b) => b.n - a.n);
 
   return {
     date,

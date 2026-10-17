@@ -20,6 +20,7 @@ import { coverageFor, daysInRange, type CoverageWindows } from "@/lib/dateCovera
 import type { ChangeCalendar, ChangeDayFeed } from "@/lib/db/changes";
 import type { DecidedFeed } from "@/lib/db/decidedDays";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { choiceVariants } from "@/components/ui/choice";
 
 /**
@@ -169,6 +170,20 @@ export function ChangeFeedBrowser({
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(25);
+  // A day bar in the daily pulse links here with `?day=YYYY-MM-DD`: open that
+  // day. Read through useUrlSearchParams, inside the page's
+  // SearchParamsBoundary, so the page itself stays static. Adjusted during
+  // render (not in an effect), so the first paint already shows the day.
+  const dayParam = useUrlSearchParams().get("day");
+  const [seenDayParam, setSeenDayParam] = useState<string | null>(null);
+  if (dayParam !== seenDayParam) {
+    setSeenDayParam(dayParam);
+    if (dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) && dayParam <= new Date().toISOString().slice(0, 10)) {
+      setDate(dayParam);
+      setRangeTo(dayParam);
+      setPage(0);
+    }
+  }
   // The decided half's own filters, over the rows already loaded.
   const [decidedFilters, setDecidedFilters] = useState<DecidedFilterState>({});
 

@@ -33,6 +33,7 @@ import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { OutcomeMix } from "@/components/activity/OutcomeMix";
 import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { getActivitySeries } from "@/lib/db/activity";
 import { getChangeActivity } from "@/lib/db/changes";
 import { getCoverageWindows, type CoverageWindows } from "@/lib/db/decidedDays";
@@ -228,7 +229,7 @@ export default async function DecisionActivityPage() {
       ) : null}
 
       {activity ? (
-        <section className="mt-10">
+        <section id="day" className="mt-10 scroll-mt-24">
           <h2 className="font-heading text-2xl font-bold">
             The cases DOL moved, day by day
           </h2>{" "}
@@ -263,11 +264,13 @@ export default async function DecisionActivityPage() {
               decided row carries DOL&apos;s own determination date.
             </p>
           </details>{" "}
-          <ChangeFeedBrowser
-            calendar={activity.calendar}
-            initialDay={activity.day}
-            windows={windows}
-          />{" "}
+          <SearchParamsBoundary>
+            <ChangeFeedBrowser
+              calendar={activity.calendar}
+              initialDay={activity.day}
+              windows={windows}
+            />
+          </SearchParamsBoundary>{" "}
 
           {/* WHERE THE SAME CASES LIVE, said plainly. A reader who has just
               found a case here has an obvious next question, and every one of

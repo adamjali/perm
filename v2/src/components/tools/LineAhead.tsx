@@ -52,6 +52,7 @@ export function LineAhead({
             <li
               className="grid grid-cols-[7.75rem_minmax(0,1fr)_4rem] items-center gap-x-3"
               data-tip={`${r.label}${r.own ? ", your own month, filed before you" : ""}\n${formatInt(r.n)} cases still in line`}
+              data-href={r.key.startsWith("before:") ? undefined : `/perm-queue/${r.key}`}
             >
               <span className={`font-mono text-sm ${r.own ? "font-semibold" : "text-soft"}`}>{r.label}</span>{" "}
               {/* Soft colours, no black or grey (round 3, Oct 15 2026): the

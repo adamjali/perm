@@ -154,6 +154,7 @@ export default async function PermEmployersPage() {
                 {topTen.map((e) => (
                   <div
                     key={e.name}
+                    data-href={`/perm-employers/${e.slug}`}
                     data-tip={[
                       e.name,
                       `#${e.rank} by filings`,

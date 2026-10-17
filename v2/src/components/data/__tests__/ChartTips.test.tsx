@@ -1,7 +1,26 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChartTips } from "../ChartTips";
+
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useRouter: () => ({ push, replace: vi.fn(), prefetch: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn() }),
+}));
+
+beforeEach(() => {
+  push.mockReset();
+});
+
+function linked() {
+  return render(
+    <ChartTips label="Decisions per day">
+      <div data-tip={"Mon, Sep 28\n712 decided"} data-href="/perm-decision-activity?day=2026-09-28#day" data-testid="a" />
+      <div data-tip={"Tue, Sep 29\n989 decided"} data-testid="b" />
+    </ChartTips>,
+  );
+}
 
 function chart() {
   return render(
@@ -54,5 +73,28 @@ describe("ChartTips", () => {
     expect(tip(container)?.textContent).toContain("712 decided");
     fireEvent.keyDown(group(), { key: "Escape" });
     expect(tip(container)).toBeNull();
+  });
+
+  it("opens a mark's page on a click, a second tap or Enter, and leaves a mark without one alone", () => {
+    const { container } = linked();
+    fireEvent.pointerUp(screen.getByTestId("a"), { pointerType: "mouse", button: 0 });
+    expect(push).toHaveBeenCalledWith("/perm-decision-activity?day=2026-09-28#day");
+
+    push.mockReset();
+    fireEvent.pointerUp(screen.getByTestId("a"), { pointerType: "touch" });
+    expect(push).not.toHaveBeenCalled();
+    expect(tip(container)?.textContent).toContain("712 decided");
+    fireEvent.pointerUp(screen.getByTestId("a"), { pointerType: "touch" });
+    expect(push).toHaveBeenCalledTimes(1);
+
+    push.mockReset();
+    fireEvent.pointerUp(screen.getByTestId("b"), { pointerType: "mouse", button: 0 });
+    fireEvent.pointerUp(screen.getByTestId("b"), { pointerType: "touch" });
+    fireEvent.pointerUp(screen.getByTestId("b"), { pointerType: "touch" });
+    expect(push).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(group(), { key: "Home" });
+    fireEvent.keyDown(group(), { key: "Enter" });
+    expect(push).toHaveBeenCalledWith("/perm-decision-activity?day=2026-09-28#day");
   });
 });

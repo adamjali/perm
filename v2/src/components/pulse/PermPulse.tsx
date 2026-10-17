@@ -195,6 +195,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
             {bars.map((b) => (
               <div
                 key={b.date}
+                data-href={`/perm-decision-activity?day=${b.date}#day`}
                 data-tip={`${dayLabel(b.date, { weekday: "short", month: "short", day: "numeric" })}\n${formatInt(b.total)} decided\n${formatInt(b.certified)} certified\n${formatInt(b.denied)} denied\n${formatInt(b.withdrawn)} withdrawn${holidayOf.has(b.date) ? `\n${holidayOf.get(b.date)}: DOL closed` : ""}`}
                 className={cn("flex flex-1 flex-col-reverse", b.date === day.date && "outline outline-2 outline-offset-1 outline-foreground")}
                 style={{ height: `${(b.total / max) * 100}%` }}

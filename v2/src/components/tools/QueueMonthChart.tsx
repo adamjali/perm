@@ -82,6 +82,7 @@ export function QueueMonthChart({
               <li
                 className="grid grid-cols-[6rem_1fr_2.75rem_4rem] items-center gap-2 sm:grid-cols-[9.5rem_1fr_3.5rem_5rem] sm:gap-3"
                 aria-label={`${label}: ${pct.toFixed(0)}% decided, ${formatInt(m.pending)} still pending${isFlagged ? ", far fewer cases were filed in this month" : ""}`}
+                data-href={`/perm-queue/${m.filingMonth}`}
                 data-tip={[
                   `Filed in ${label}`,
                   `${pct.toFixed(0)}% decided`,

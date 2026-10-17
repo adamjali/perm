@@ -133,6 +133,7 @@ export default async function PermAttorneysPage() {
                 {topTen.map((a) => (
                   <div
                     key={a.name}
+                    data-href={a.slug ? `/perm-attorneys/${a.slug}` : undefined}
                     data-tip={[
                       a.name,
                       `#${a.rank} by filings`,
