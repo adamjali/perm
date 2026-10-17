@@ -51,7 +51,6 @@ All cleanup runs via `convex/crons.ts`:
 | OpenRouter | Zero Data Retention (ZDR) | No |
 | Mistral AI | Per DPA terms | No |
 | Groq | Zero Data Retention (ZDR) | No |
-| Cerebras | Per DPA terms | No |
 
 ## Data Export
 

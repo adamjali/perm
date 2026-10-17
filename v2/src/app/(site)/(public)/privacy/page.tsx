@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 15, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 17, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -368,10 +368,6 @@ export default function PrivacyPage() {
               <li>
                 <strong>Groq</strong>: Fast AI inference on US-based Google Cloud
                 servers. Doesn’t use API data for training when ZDR is enabled.
-              </li>{" "}
-              <li>
-                <strong>Cerebras</strong>: Emergency fallback AI inference. Does
-                not use API data for model training.
               </li>
             </ul>{" "}
 
@@ -905,7 +901,7 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>AI Providers:</strong> Google Gemini, OpenRouter, Mistral
-                AI, Groq, and Cerebras for AI chat assistance (see Section 6)
+                AI, and Groq for AI chat assistance (see Section 6)
               </li>{" "}
               <li>
                 <strong>Search Providers:</strong> Tavily and Brave Search for AI
@@ -1001,8 +997,7 @@ export default function PrivacyPage() {
               <li>Google Gemini: Up to 55 days (abuse monitoring), then deleted</li>{" "}
               <li>OpenRouter: Not stored (Zero Data Retention)</li>{" "}
               <li>Mistral AI: Per their data processing terms</li>{" "}
-              <li>Groq: Not stored when ZDR is enabled</li>{" "}
-              <li>Cerebras: Per their data processing terms</li>
+              <li>Groq: Not stored when ZDR is enabled</li>
             </ul>{" "}
 
             <p className="text-soft leading-relaxed mt-4">
@@ -1059,6 +1054,13 @@ export default function PrivacyPage() {
                 support@permtracker.app
               </a>
               . We’ll respond within 30-45 days.
+            </p>{" "}
+            <p className="text-soft leading-relaxed mt-4">
+              These rights cover the information you give us and the data your
+              account holds. The case records and employer names the site shows
+              from the Department of Labor’s disclosure files and other federal
+              sources are public government records, not data you gave us. To
+              ask about one, write to the same address.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">

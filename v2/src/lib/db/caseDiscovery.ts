@@ -32,6 +32,7 @@
 
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { slugify } from "@/lib/entitySlug";
+import { shownName } from "@/lib/privacy/withheld";
 import { exec, one } from "./client";
 
 /**
@@ -81,6 +82,8 @@ export interface DolCaseRecord {
   jobTitle: string | null;
   submittedDate: string | null;
   visaType: string | null;
+  /** The employer's name is withheld (src/lib/privacy/withheld.ts): show the label, record nothing. */
+  withheld?: boolean;
 }
 
 /**
@@ -130,7 +133,10 @@ export async function askDol(caseNumber: string, f: typeof fetch = fetch): Promi
       rec: {
         caseNumber,
         caseStatus: hit.caseStatus,
-        employerName: hit.employerName ?? null,
+        // A withheld name stays withheld for every page and answer that reads
+        // DOL live (src/lib/privacy/withheld.ts).
+        employerName: shownName(hit.employerName, caseNumber),
+        withheld: shownName(hit.employerName, caseNumber) !== (hit.employerName ?? null),
         jobTitle: hit.jobTitle ?? null,
         submittedDate: hit.submittedDate ?? null,
         visaType: hit.visaType ?? null,
@@ -269,7 +275,9 @@ export async function discoverCaseOutcome(
     parseCaseNumber(caseNumber)?.filingDate ?? rec.submittedDate ?? null;
   const lastCheckedAt = now.toISOString();
 
-  try {
+  // A withheld employer's case is answered and never recorded: a recorded row
+  // would put the case back into the lists it was taken out of.
+  if (!rec.withheld) try {
     await exec(
       `INSERT OR IGNORE INTO perm_case_status
          (case_number, filing_date, current_status, is_final, is_disclosed,
@@ -300,7 +308,7 @@ export async function discoverCaseOutcome(
   // here is the name-derived fallback; the nightly perm_live_recent rebuild
   // re-stamps it with the canonical entity slug where one exists (they only
   // differ for merged spellings).
-  try {
+  if (!rec.withheld) try {
     await exec(
       `INSERT OR IGNORE INTO perm_live_recent
          (case_number, filing_date, status, is_final, employer_name,

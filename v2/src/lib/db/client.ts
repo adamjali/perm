@@ -27,6 +27,8 @@ import "server-only";
 // tracer does not copy the linux-arm64 add-on, so every read failed there.
 import { createClient, type Client } from "@libsql/client/http";
 
+import { withhold } from "@/lib/privacy/withheld";
+
 let client: Client | null = null;
 
 /**
@@ -190,7 +192,7 @@ export async function rows<T = Record<string, unknown>>(
     sql.slice(0, 80),
     { retryTransient: true },
   );
-  return rs.rows.map((r) => {
+  const out = rs.rows.map((r) => {
     const o: Record<string, unknown> = {};
     for (const c of rs.columns) {
       const v = (r as unknown as Record<string, unknown>)[c];
@@ -201,6 +203,9 @@ export async function rows<T = Record<string, unknown>>(
     }
     return o as T;
   });
+  // Every read passes here, so a name withheld at the person's request is
+  // taken out of every page, list, sitemap and API answer at once.
+  return withhold(out);
 }
 
 export async function one<T = Record<string, unknown>>(

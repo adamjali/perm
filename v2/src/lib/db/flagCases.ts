@@ -423,8 +423,10 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       parseCaseNumber(caseNumber)?.filingDate ?? rec.submittedDate?.slice(0, 10) ?? null;
     const nowIso = now.toISOString();
     const name = rec.employerName?.trim() || null;
-    const slug = name ? slugify(name) : null;
-    try {
+    // A withheld employer (src/lib/privacy/withheld.ts) gets no link and no
+    // recorded row, which would put the case back into the lists.
+    const slug = name && !rec.withheld ? slugify(name) : null;
+    if (!rec.withheld) try {
       await exec(
         `INSERT OR IGNORE INTO ${table}
            (case_number, filing_date, current_status, is_final, employer_name,

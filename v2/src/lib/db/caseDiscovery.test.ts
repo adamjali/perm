@@ -22,6 +22,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * cannot stop identity rotation, a cap on the shared resource can.
  */
 
+// A made-up withheld employer (src/lib/privacy/withheld.ts reads the list when
+// it loads, so it is set before anything is imported).
+vi.hoisted(() => {
+  process.env.WITHHELD_EMPLOYERS = "jane-q-example|Jane Q Example|Private household employer|G-100-26125-000077";
+});
+
 const execMock = vi.fn();
 const oneMock = vi.fn();
 vi.mock("./client", () => ({
@@ -127,6 +133,24 @@ describe("askDol tells a DOL answer from a DOL failure", () => {
 });
 
 describe("discoverCase", () => {
+  it("shows a withheld employer's case under its label and records nothing", async () => {
+    oneMock.mockResolvedValue({ n: 3 });
+    const hit = { value: [{ ...DOL_HIT.value[0], caseNumber: "G-100-26125-000077", employerName: "JANE Q EXAMPLE" }] };
+    const f = vi.fn().mockImplementation(() => ok(hit));
+    const answer = await askDol("G-100-26125-000077", f as never);
+    expect(answer.kind === "found" && answer.rec.employerName).toBe("Private household employer");
+    expect(answer.kind === "found" && answer.rec.withheld).toBe(true);
+    const outcome = await discoverCaseOutcome("G-100-26125-000077", f as never);
+    expect(outcome.found?.employerName).toBe("Private household employer");
+    expect(execMock.mock.calls.filter(([sql]) => String(sql).includes("INSERT OR IGNORE"))).toEqual([]);
+  });
+
+  it("withholds by case number when DOL prints another spelling", async () => {
+    const hit = { value: [{ ...DOL_HIT.value[0], caseNumber: "G-100-26125-000077", employerName: "J. Q. EXAMPLE" }] };
+    const answer = await askDol("G-100-26125-000077", vi.fn().mockImplementation(() => ok(hit)) as never);
+    expect(answer.kind === "found" && answer.rec.employerName).toBe("Private household employer");
+  });
+
   it("records a hit with is_final derived the ingest's way, and filing date from the number", async () => {
     oneMock.mockResolvedValue({ n: 3 }); // budget counter well under cap
     const f = vi.fn().mockImplementation(() => ok(DOL_HIT));
