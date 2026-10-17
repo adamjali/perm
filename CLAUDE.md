@@ -824,7 +824,7 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   Svix still refuses an unsigned or forged webhook with 401, checked live).
 - **A scrolling chart can open at its newest end** (`ChartTips startAtEnd`): a 141-month chart opened at FY2015 on a phone.
 
-## Oct 17 2026, in twelve lines
+## Oct 17 2026, in fourteen lines
 
 - **The PWD expiry limits a case only while recruitment hasn't begun inside it** (20 CFR 656.40(c) as BALCA read it in
   Karl Storz, en banc 2011, and MPHASIS, 2015; the attorney confirmed): `pwdBearing` and `pwdStepLimit` in
@@ -860,3 +860,8 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   `v2/docs/PRIVACY_REMOVALS.md`. The list lives only in `WITHHELD_EMPLOYERS` (server production.env, mirrored to a
   GitHub secret), never in this public repo: every read (`rows()`) drops what names it, a live answer shows a
   neutral label, and every deploy clears Cloudflare's copies of the pages it was on.
+- **Every 404 shows the site's header and footer.** Next renders a 404 inside the root layout alone, so production served
+  bare 404s; the root `not-found.tsx` draws them itself, and `(site)/not-found.tsx` answers a public page's `notFound()`
+  inside the site's own (the dev server renders that case in-layout, production didn't). `NotFoundBody` is shared.
+- **A support reply greets by first name** (`convex/lib/replyName.ts`, from the sender's display name; it had greeted
+  "Hi jane.doe,"). Pass `supportEmail:replyToEmail` the message alone: the email adds the greeting and the sign-off.
