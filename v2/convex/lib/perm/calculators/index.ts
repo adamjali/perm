@@ -15,6 +15,7 @@ export {
 export {
   calculateRecruitmentDeadlines,
   calculateStepDeadline,
+  calculateStepDeadlineUnderPwd,
   STEP_DEADLINE_CONFIGS,
   lastSundayOnOrBefore,
   calculateNoticeOfFilingEnd,

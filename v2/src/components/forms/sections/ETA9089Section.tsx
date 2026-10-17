@@ -12,7 +12,7 @@ import { useETA9089Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import { isRecruitmentComplete } from "@/lib/forms/date-constraints";
-import { getFirstRecruitmentDate, getLastRecruitmentDate, calculateFilingWindow } from "@/lib/perm";
+import { getFirstRecruitmentDate, getLastRecruitmentDate, calculateFilingWindow, pwdFilingLimitFromCase } from "@/lib/perm";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import { CharLimit } from "@/components/ui/char-limit";
 
@@ -101,7 +101,8 @@ function buildFilingWindowData(
   // they live in exactly one place. This used to re-derive them by hand
   // (last+30, min(first+180, pwd)); a raw re-derivation elsewhere in the app
   // once shipped filing dates barred by the PWD cap because it lacked that
-  // rule — hence one canonical calculator, never a second copy.
+  // rule, hence one canonical calculator, never a second copy. The caller
+  // passes the PWD only while it still limits the case (pwdFilingLimitFromCase).
   const window = calculateFilingWindow({
     firstRecruitmentDate,
     lastRecruitmentDate,
@@ -163,7 +164,7 @@ function buildFilingWindowData(
  *
  * Filing window rules (from perm_flow.md):
  * - Opens 30 days after the last recruitment step; closes 180 days after the first
- * - Must file before PWD expiration
+ * - Must file before PWD expiration only while the PWD still limits the case (pwdValidity.ts)
  *
  * RFI rules (from perm_flow.md):
  * - Received date must be after ETA 9089 filing date
@@ -246,7 +247,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   const windowData = buildFilingWindowData(
     lastRecruitDate,
     firstRecruitDate,
-    values.pwdExpirationDate,
+    pwdFilingLimitFromCase(values),
     recruitmentComplete
   );
 

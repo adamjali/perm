@@ -117,8 +117,10 @@ export interface RecruitmentCaseData {
   // Professional occupation flag
   isProfessionalOccupation: boolean;
 
-  // PWD expiration for window calculation
+  // PWD expiration for window calculation, and the determination date that
+  // decides whether it still caps the window (convex/lib/perm/dates/pwdValidity.ts)
   pwdExpirationDate?: string;
+  pwdDeterminationDate?: string;
 
   // Once the ETA 9089 is filed, the window no longer runs out on the case
   eta9089FilingDate?: string;

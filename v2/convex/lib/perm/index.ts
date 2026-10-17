@@ -122,6 +122,17 @@ export {
   getLastRecruitmentDate,
   calculateFilingWindowFromCase,
   getFilingWindowStatusFromCase,
+  // When the PWD still limits a case (20 CFR 656.40(c), Karl Storz, BALCA 2011)
+  type PwdBearing,
+  type PwdBearingInput,
+  getFirstRecruitmentStepForPwd,
+  pwdBearing,
+  pwdBearingFromCase,
+  pwdFilingLimit,
+  pwdFilingLimitFromCase,
+  type PwdStepLimit,
+  pwdStepLimit,
+  pwdStepLimitFromCase,
 } from './dates';
 
 // ============================================================================
@@ -139,6 +150,7 @@ export {
   // Recruitment
   calculateRecruitmentDeadlines,
   calculateStepDeadline,
+  calculateStepDeadlineUnderPwd,
   STEP_DEADLINE_CONFIGS,
   lastSundayOnOrBefore,
   calculateNoticeOfFilingEnd,

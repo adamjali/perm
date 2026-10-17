@@ -1,5 +1,6 @@
 import { parseISO, format, addDays, subDays } from 'date-fns';
 import { addBusinessDays, subtractBusinessDays, lastSundayOnOrBefore } from '../dates';
+import type { PwdStepLimit } from '../dates/pwdValidity';
 import {
   JOB_ORDER_MIN_DAYS,
   NOTICE_MIN_BUSINESS_DAYS,
@@ -79,7 +80,9 @@ export const STEP_DEADLINE_CONFIGS = [
  * Calculate a single recruitment step's deadline from optional inputs.
  *
  * Computes each constraint arm independently, returns the earlier.
- * This is the SINGLE SOURCE OF TRUTH for the min(first+X, pwd-Y) logic.
+ * This is the SINGLE SOURCE OF TRUTH for the min(first+X, pwd-Y) arithmetic.
+ * Pass the PWD only while it still limits the case (pwdValidity.ts); a case
+ * holder should call calculateStepDeadlineUnderPwd, which decides that.
  *
  * @param firstRecruitmentDate - ISO date string (optional)
  * @param pwdExpirationDate - ISO date string (optional)
@@ -105,6 +108,36 @@ export function calculateStepDeadline(
 
   if (fromRecruitment && fromPwd) return fromRecruitment <= fromPwd ? fromRecruitment : fromPwd;
   return fromRecruitment || fromPwd;
+}
+
+/**
+ * A recruitment step's deadline under the PWD rule in dates/pwdValidity.ts.
+ *
+ * - `none`: first + X only (recruitment began inside the PWD's validity, or
+ *   there's no PWD); undefined until recruitment has a first date.
+ * - `begin-by`: recruitment hasn't begun, so this step, which would begin it,
+ *   must start on or before the expiry (the last Sunday on or before it for an ad),
+ *   and no later than first + X when an earlier Notice of Filing set a first date.
+ * - `file-by`: min(first + X, expiry - Y), as before.
+ *
+ * `limitedBy` says which arm produced the date, for the form's hints.
+ */
+export function calculateStepDeadlineUnderPwd(
+  firstRecruitmentDate: string | undefined,
+  limit: PwdStepLimit,
+  config: { daysFromRecruitment: number; daysBeforePwd: number; isSunday: boolean }
+): { date: string | undefined; limitedBy: 'recruitment' | 'pwd' | 'pwd-begin' | undefined } {
+  const fromFirst = calculateStepDeadline(firstRecruitmentDate, undefined, config);
+  if (limit.kind === 'none') {
+    return { date: fromFirst, limitedBy: fromFirst ? 'recruitment' : undefined };
+  }
+  if (limit.kind === 'begin-by') {
+    const byExpiry = config.isSunday ? lastSundayOnOrBefore(limit.date) : limit.date;
+    if (fromFirst && fromFirst <= byExpiry) return { date: fromFirst, limitedBy: 'recruitment' };
+    return { date: byExpiry, limitedBy: 'pwd-begin' };
+  }
+  const date = calculateStepDeadline(firstRecruitmentDate, limit.date, config);
+  return { date, limitedBy: date && date === fromFirst ? 'recruitment' : 'pwd' };
 }
 
 /**

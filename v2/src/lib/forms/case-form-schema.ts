@@ -11,6 +11,9 @@ import {
   validateProfessionalMethods,
   type ValidationIssue as PermValidationIssue,
   getFirstRecruitmentDate,
+  getFirstRecruitmentStepForPwd,
+  pwdStepLimitFromCase,
+  calculateStepDeadlineUnderPwd,
   getLastRecruitmentDate,
   getMethodLatestDate,
   isISODateString,
@@ -464,68 +467,36 @@ function findSpecialMethodIndex(
  * Calculate maximum allowed date for recruitment methods.
  *
  * @param data - Form data
- * @param isSpecial - If true, use relaxed deadline: min(first+180, pwd).
- *                    If false, use normal deadline: min(first+150, pwd-30).
+ * @param isSpecial - If true, the relaxed deadline: first+180 (the PWD itself
+ *                    while it limits the case). If false, the normal one:
+ *                    first+150 (PWD-30 while it limits the case). The PWD rule
+ *                    is pwdStepLimitFromCase (convex/lib/perm/dates/pwdValidity.ts).
  */
 function calculateMethodMaxDate(
   data: CrossValidationData,
   isSpecial: boolean
 ): { date: Date; dateStr: string; reason: string } | null {
-  const recruitmentDates = [
-    data.jobOrderStartDate,
-    data.sundayAdFirstDate,
-    data.noticeOfFilingStartDate,
-  ].filter((d): d is string => !!d);
-
-  const firstRecruitmentDate = recruitmentDates.length > 0 ? recruitmentDates.sort()[0] : null;
-
-  // Special method: min(first+180, pwd) — can complete during quiet period
-  // Normal method: min(first+150, pwd-30)
   const daysFromFirst = isSpecial ? FILING_WINDOW_CLOSE_DAYS : RECRUITMENT_WINDOW_DAYS;
   const pwdBuffer = isSpecial ? 0 : PWD_RECRUITMENT_BUFFER_DAYS;
 
-  let maxDate: Date | null = null;
-  let reason = '';
+  const { date: dateStr, limitedBy } = calculateStepDeadlineUnderPwd(
+    getFirstRecruitmentDate(data),
+    pwdStepLimitFromCase(data),
+    { daysFromRecruitment: daysFromFirst, daysBeforePwd: pwdBuffer, isSunday: false },
+  );
+  if (!dateStr) return null;
 
-  if (firstRecruitmentDate) {
-    const maxFromFirst = new Date(firstRecruitmentDate);
-    maxFromFirst.setDate(maxFromFirst.getDate() + daysFromFirst);
-
-    if (data.pwdExpirationDate) {
-      const pwdMax = new Date(data.pwdExpirationDate);
-      if (pwdBuffer > 0) {
-        pwdMax.setDate(pwdMax.getDate() - pwdBuffer);
-      }
-      if (maxFromFirst <= pwdMax) {
-        maxDate = maxFromFirst;
-        reason = isSpecial
-          ? `${daysFromFirst} days from first recruitment (extended deadline)`
-          : `${daysFromFirst} days from first recruitment`;
-      } else {
-        maxDate = pwdMax;
-        reason = isSpecial
+  const extended = isSpecial ? ' (extended deadline)' : '';
+  const reason =
+    limitedBy === 'pwd-begin'
+      ? 'recruitment has to begin by the PWD expiration'
+      : limitedBy === 'pwd'
+        ? isSpecial
           ? 'PWD expiration (extended deadline)'
-          : `${pwdBuffer} days before PWD expiration`;
-      }
-    } else {
-      maxDate = maxFromFirst;
-      reason = isSpecial
-        ? `${daysFromFirst} days from first recruitment (extended deadline)`
-        : `${daysFromFirst} days from first recruitment`;
-    }
-  } else if (data.pwdExpirationDate) {
-    maxDate = new Date(data.pwdExpirationDate);
-    if (pwdBuffer > 0) {
-      maxDate.setDate(maxDate.getDate() - pwdBuffer);
-    }
-    reason = isSpecial
-      ? 'PWD expiration (extended deadline)'
-      : `${pwdBuffer} days before PWD expiration`;
-  }
+          : `${pwdBuffer} days before PWD expiration`
+        : `${daysFromFirst} days from first recruitment${extended}`;
 
-  if (!maxDate) return null;
-  const dateStr = maxDate.toISOString().split('T')[0] ?? '';
-  return { date: maxDate, dateStr, reason };
+  return { date: new Date(dateStr), dateStr, reason };
 }
 
 // ============================================================================
@@ -834,6 +805,7 @@ export function validateCaseForm(data: CaseFormData): CaseFormErrors {
       ...validationData,
       recruitment_start_date: recruitmentStartDate,
       recruitment_end_date: recruitmentEndDate,
+      pwd_recruitment_start_date: getFirstRecruitmentStepForPwd(data) ?? null,
     };
 
     const permResult = validateCase(fullValidationData);
@@ -846,6 +818,7 @@ export function validateCaseForm(data: CaseFormData): CaseFormErrors {
         pwdDeterminationDate: data.pwdDeterminationDate || null,
         pwdExpirationDate: data.pwdExpirationDate || null,
         firstRecruitmentDate: recruitmentStartDate,
+        firstPwdStep: getFirstRecruitmentStepForPwd(data) ?? null,
         methods: data.additionalRecruitmentMethods.map(m => ({
           method: m.method,
           date: m.date || '',

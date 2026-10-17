@@ -4,7 +4,7 @@ description: "Every PERM recruitment requirement under 20 CFR 656.17, with the t
 seoTitle: "The PERM Recruitment Checklist"
 seoDescription: "Every mandatory recruitment step for a PERM filing, the timing rule attached to each, and the ones that restart the clock."
 date: "2026-01-05"
-updated: "2026-08-28"
+updated: "2026-10-16"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/perm-recruitment-checklist.webp"
 imageAlt: "Section H of Form ETA-9089, where the employer records every recruitment step and its dates"
@@ -69,24 +69,26 @@ The 30-day floor applies to the **mandatory** steps. Additional steps for profes
 
 So one of your three additional steps can land inside the quiet period, and exactly one. This is a genuine bit of slack in an otherwise rigid schedule, and it’s the piece most checklists leave out. The 180-day ceiling still applies to all of them.
 
-### When the PWD expiration takes over
+### What the PWD expiration limits
 
-The 180-day clock isn’t the only ceiling. Your prevailing wage determination expires on its own schedule under [20 CFR 656.40](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40), and you must file while it’s still valid. Whichever comes first wins.
+Your prevailing wage determination expires on its own schedule under [20 CFR 656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40), and the rule there is that employers "file their applications or begin the recruitment period" within its validity. Either one is enough.
 
-On a case where the PWD was issued long before recruitment began, the PWD expiration is usually the binding constraint, and every deadline below tightens accordingly. This is why a case can look comfortably inside its 180 days and still be out of time.
+So the expiry is the day recruitment has to **begin** by. Once the first recruitment step (the job order or a Sunday ad, or an additional step for a professional role; the notice of filing doesn't count for this) falls on or after the determination date and on or before the expiry, the expiry stops limiting the case. The application can be filed after the PWD expires, as long as it's inside 180 days of that first step. The Board of Alien Labor Certification Appeals read the rule this way en banc in *Karl Storz Endoscopy-America* (2011-PER-00040, December 1, 2011).
+
+The expiry still binds in one case: recruitment that began **before** the determination was issued. Then the application has to be filed while the PWD is valid, and every deadline below tightens to fit before the expiry. Check with the attorney on the case before relying on a filing after the expiry.
 
 ## The latest each step can start
 
-The regulation gives you two numbers. Everything in this table is arithmetic on those two numbers plus the PWD expiration date. `first` means the first recruitment step; `PWDED` means the PWD expiration date.
+The regulation gives you two numbers. Everything in this table is arithmetic on those two numbers. `first` means the first recruitment step; `PWDED` means the PWD expiration date, which enters only when recruitment began before the determination date.
 
 <ComparisonTable
   headers={["Step", "Latest it can start", "Where the number comes from"]}
   rows={[
-    ["SWA job order", "min(first + 120, PWDED - 60)", "It has to run 30 days, then the 30-day wait, and filing still has to land inside the window. 30 + 30 = 60 days of tail."],
-    ["First Sunday ad", "min(first + 143, PWDED - 37)", "143 is 150 minus a week, because the second ad has to fall on a later Sunday."],
-    ["Second Sunday ad", "min(first + 150, PWDED - 30)", "Day 150 is the last date any mandatory step can run and still clear the 30-day wait inside 180 days."],
+    ["SWA job order", "first + 120 (PWDED - 60 if earlier and recruitment began before the determination)", "It has to run 30 days, then the 30-day wait, and filing still has to land inside the window. 30 + 30 = 60 days of tail."],
+    ["First Sunday ad", "first + 143 (PWDED - 37, likewise)", "143 is 150 minus a week, because the second ad has to fall on a later Sunday."],
+    ["Second Sunday ad", "first + 150 (PWDED - 30, likewise)", "Day 150 is the last date any mandatory step can run and still clear the 30-day wait inside 180 days."],
     ["Notice of filing", "10 business days back from the close of the window", "Business days, so weekends and federal holidays drop out. See below."],
-    ["ETA 9089 filing", "Opens at last step + 30, closes at min(first + 180, PWDED)", "The floor and the ceiling, applied directly."]
+    ["ETA 9089 filing", "Opens at last step + 30, closes at first + 180 (or PWDED, if earlier and recruitment began before the determination)", "The floor and the ceiling, applied directly."]
   ]}
 />
 
@@ -223,8 +225,8 @@ Per [20 CFR 656.17(e)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/
 - [ ] At most **one** additional step falling solely inside the last 30 days
 - [ ] SWA job order ran its full 30 days
 - [ ] Notice of filing ran 10 **business** days, holidays excluded
-- [ ] PWD still valid on the filing date (per [20 CFR 656.40](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40))
-- [ ] Checked which ceiling binds first: PWD expiration or the 180-day rule
+- [ ] First recruitment step on or after the determination date and on or before the PWD expiration (per [20 CFR 656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40))
+- [ ] If recruitment began before the determination date, filing before the PWD expiration
 
 ## Documentation Checklist
 
@@ -260,7 +262,7 @@ Four situations end a recruitment cycle rather than delay it. There’s no cure 
 
 1. **The 180-day window closes before filing.** Recruitment is stale and has to be redone in full.
 2. **A mandatory step lands after day 150.** The 30-day wait now pushes filing past the ceiling, so the outcome is the same as above even though the 180-day date hasn’t arrived yet.
-3. **The PWD expires before the ETA 9089 is filed.** If there isn’t enough time left to redo recruitment before expiry, the case needs a new prevailing wage determination first.
+3. **The PWD expires before recruitment begins.** Recruitment has to begin while the determination is valid, so the case needs a new prevailing wage determination first. (Recruitment begun before the determination date has a stricter limit: filing by the expiry.)
 4. **A step is documented but unprovable.** An ad that ran without a retained tear sheet, or a notice with no dated photographs, is a step you can’t evidence in an audit. It counts as not having happened.
 
 The first three are arithmetic and a calendar catches them. The fourth is the one that surfaces months later, during an audit, when the recruitment file gets opened for the first time since filing.

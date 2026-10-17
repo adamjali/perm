@@ -93,6 +93,8 @@ def main():
     routes = set(json.load(open("scripts/known-routes.json"))) if pathlib.Path("scripts/known-routes.json").exists() else set()
     # Real routes that are deliberately kept out of the sitemap (noindex).
     routes |= {"/signup", "/login", "/settings", "/dashboard", "/cases"}
+    # Changelog posts are articles too (the corrections log among them).
+    routes |= {f"/changelog/{p.stem}" for p in (ROOT / "content/changelog").glob("*.mdx")}
 
     print(f"scanned {len(files)} articles, {len(shots)} screenshots available")
     print(f"{len(ALLOWED)} classified false positive(s), each with a stated reason")

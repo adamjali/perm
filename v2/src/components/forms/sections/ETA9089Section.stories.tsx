@@ -27,7 +27,7 @@ ETA 9089 form section with filing window indicator.
 
 **Filing Window Rules:**
 - Not yet open: < 30 days after recruitment
-- Open: 30-180 days after recruitment, before PWD expiration
+- Open: 30-180 days after recruitment (and before PWD expiration only when recruitment began before the determination)
 - Closing soon: < 14 days remaining
 - Closed: > 180 days or past PWD expiration
         `,

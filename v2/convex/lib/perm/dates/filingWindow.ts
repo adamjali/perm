@@ -5,10 +5,12 @@
  *
  * Rules:
  * - Window OPENS: 30 days after LAST recruitment step ends
- * - Window CLOSES: 180 days after FIRST recruitment step starts
- *   (or PWD expiration date, whichever is earlier)
+ * - Window CLOSES: 180 days after FIRST recruitment step starts, or at the
+ *   PWD expiration only while the PWD still limits the case (pwdValidity.ts:
+ *   recruitment begun before the determination, after the expiry, or with no
+ *   determination date recorded; 20 CFR 656.40(c), Karl Storz, BALCA 2011)
  * - Recruitment must COMPLETE: 150 days after FIRST recruitment step starts
- *   (or 30 days before PWD expiration, whichever is earlier)
+ *   (or 30 days before that same PWD limit, whichever is earlier)
  *
  * @see convex/lib/perm/constants.ts - SINGLE SOURCE OF TRUTH for all constants
  * @see convex/lib/derivedCalculations.ts - Convex mutation orchestrator that calls these functions
@@ -16,6 +18,7 @@
  */
 
 import { differenceInDays, format, max, min, parseISO, isValid } from "date-fns";
+import { pwdFilingLimitFromCase } from "./pwdValidity";
 
 // ============================================================================
 // CONSTANTS - Imported from single source of truth
@@ -46,9 +49,9 @@ export {
 export interface FilingWindow {
   /** ISO date when window opens (recruitment end + 30 days) */
   opens: string;
-  /** ISO date when window closes (first recruitment + 180 days, or PWD expiration) */
+  /** ISO date when window closes (first recruitment + 180 days, or the PWD limit) */
   closes: string;
-  /** Whether PWD expiration truncates the window */
+  /** Whether the PWD expiration truncates the window (only while it still limits the case) */
   isPwdLimited: boolean;
 }
 
@@ -76,7 +79,8 @@ export interface FilingWindowInput {
   firstRecruitmentDate?: string;
   // Last recruitment date (latest of recruitment end dates)
   lastRecruitmentDate?: string;
-  // PWD expiration date (optional constraint)
+  // The PWD limit (optional constraint). Case-based callers pass pwdFilingLimitFromCase(),
+  // never the raw expiry: once recruitment began inside the validity period it doesn't cap.
   pwdExpirationDate?: string;
 }
 
@@ -354,10 +358,14 @@ export function calculateRecruitmentWindowFromCase(caseData: {
   sundayAdFirstDate?: string;
   jobOrderStartDate?: string;
   noticeOfFilingStartDate?: string;
+  additionalRecruitmentStartDate?: string;
+  additionalRecruitmentMethods?: Array<MethodDateFields>;
+  isProfessionalOccupation?: boolean;
+  pwdDeterminationDate?: string;
   pwdExpirationDate?: string;
 }): RecruitmentWindow | null {
   const firstRecruitmentDate = getFirstRecruitmentDate(caseData);
-  return calculateRecruitmentWindowCloses(firstRecruitmentDate, caseData.pwdExpirationDate);
+  return calculateRecruitmentWindowCloses(firstRecruitmentDate, pwdFilingLimitFromCase(caseData));
 }
 
 // ============================================================================
@@ -533,15 +541,17 @@ export function calculateFilingWindowFromCase(caseData: {
   jobOrderEndDate?: string;
   noticeOfFilingStartDate?: string;
   noticeOfFilingEndDate?: string;
+  additionalRecruitmentStartDate?: string;
   additionalRecruitmentEndDate?: string;
   additionalRecruitmentMethods?: Array<MethodDateFields>;
+  pwdDeterminationDate?: string;
   pwdExpirationDate?: string;
   isProfessionalOccupation?: boolean;
 }): FilingWindow | null {
   return calculateFilingWindow({
     firstRecruitmentDate: getFirstRecruitmentDate(caseData),
     lastRecruitmentDate: getLastRecruitmentDate(caseData, caseData.isProfessionalOccupation ?? false),
-    pwdExpirationDate: caseData.pwdExpirationDate,
+    pwdExpirationDate: pwdFilingLimitFromCase(caseData),
   });
 }
 
@@ -561,8 +571,10 @@ export function getFilingWindowStatusFromCase(
     jobOrderEndDate?: string;
     noticeOfFilingStartDate?: string;
     noticeOfFilingEndDate?: string;
+    additionalRecruitmentStartDate?: string;
     additionalRecruitmentEndDate?: string;
     additionalRecruitmentMethods?: Array<MethodDateFields>;
+    pwdDeterminationDate?: string;
     pwdExpirationDate?: string;
     isProfessionalOccupation?: boolean;
   },
@@ -572,7 +584,7 @@ export function getFilingWindowStatusFromCase(
     {
       firstRecruitmentDate: getFirstRecruitmentDate(caseData),
       lastRecruitmentDate: getLastRecruitmentDate(caseData, caseData.isProfessionalOccupation ?? false),
-      pwdExpirationDate: caseData.pwdExpirationDate,
+      pwdExpirationDate: pwdFilingLimitFromCase(caseData),
     },
     referenceDate
   );

@@ -24,7 +24,11 @@ describe("the example docket", () => {
     const d = exampleDocket();
     expect(d.window.opens).toBe(addDays(d.lastRecruitment, 30));
     expect(d.window.closes <= addDays(d.firstRecruitment, 180)).toBe(true);
-    expect(d.window.closes <= calculatePWDExpiration(EXAMPLE_CASE.pwdDeterminationDate)).toBe(true);
+    // Recruitment began inside the determination's validity, so its expiry
+    // doesn't cap the window (20 CFR 656.40(c), Karl Storz).
+    expect(EXAMPLE_CASE.jobOrderStartDate >= EXAMPLE_CASE.pwdDeterminationDate).toBe(true);
+    expect(EXAMPLE_CASE.jobOrderStartDate <= calculatePWDExpiration(EXAMPLE_CASE.pwdDeterminationDate)).toBe(true);
+    expect(d.window.isPwdLimited).toBe(false);
   });
 
   it("dates the I-140 deadline by the central rule", () => {

@@ -623,14 +623,39 @@ describe("per-step recruitment deadlines", () => {
       expect(deadline).toBeDefined();
     });
 
-    it("extracts per-step deadlines from PWD expiration alone", () => {
+    it("before recruitment begins, the PWD expiry stands alone as the day it has to begin by", () => {
       const caseData: CaseDataForDeadlines = {
         pwdExpirationDate: "2025-06-30",
-        // No recruitment dates — deadlines computed from PWD arm only
+        // No recruitment dates: no step deadline yet (20 CFR 656.40(c) asks
+        // only that recruitment BEGIN inside the validity period)
       };
       const result = extractActiveDeadlines(caseData, TODAY);
-      // Should have per-step deadlines derived from pwd-Y
-      expect(result.find((d) => d.type === "job_order_start_deadline")).toBeDefined();
+      expect(result.find((d) => d.type === "job_order_start_deadline")).toBeUndefined();
+      expect(result.find((d) => d.type === "pwd_expiration")?.date).toBe("2025-06-30");
+    });
+
+    it("recruitment begun inside the PWD's validity: step deadlines from the first step only", () => {
+      const caseData: CaseDataForDeadlines = {
+        pwdDeterminationDate: "2025-01-15",
+        pwdExpirationDate: "2025-06-30",
+        jobOrderStartDate: "2025-03-01",
+      };
+      const result = extractActiveDeadlines(caseData, "2025-03-02");
+      // first Sunday: last Sunday on or before first + 143 (Jul 22) = Jul 20. Under
+      // the old rule, min(that, pwd - 37 = May 24) rounded back to a Sunday = May 18
+      expect(result.find((d) => d.type === "first_sunday_ad_deadline")?.date).toBe("2025-07-20");
+      expect(result.find((d) => d.type === "pwd_expiration")).toBeUndefined();
+    });
+
+    it("recruitment begun before the determination: steps keep the PWD buffer", () => {
+      const caseData: CaseDataForDeadlines = {
+        pwdDeterminationDate: "2025-03-05",
+        pwdExpirationDate: "2025-06-30",
+        jobOrderStartDate: "2025-03-01",
+      };
+      const result = extractActiveDeadlines(caseData, "2025-03-06");
+      expect(result.find((d) => d.type === "first_sunday_ad_deadline")?.date).toBe("2025-05-18");
+      expect(result.find((d) => d.type === "pwd_expiration")?.date).toBe("2025-06-30");
     });
 
     it("extracts per-step deadlines from firstRecruitmentDate alone", () => {

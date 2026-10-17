@@ -63,6 +63,13 @@ describe("the system prompt's PERM rules match the app's own", () => {
     expect(text).toContain(phrase);
   });
 
+  it('states that recruitment begun inside the PWD frees the filing from its expiry (20 CFR 656.40(c))', () => {
+    expect(text).toContain('recruitment has to BEGIN by the expiry');
+    expect(text).toContain('Karl Storz');
+    expect(text).toContain("The Notice of Filing doesn't count as beginning recruitment");
+    expect(text).toContain('the PWD arm applies only while the PWD still limits the case');
+  });
+
   it('no longer states the wrong per-step days', () => {
     expect(text).not.toMatch(/within 14 days of first recruitment|within 90 days of first recruitment/);
     expect(text).not.toContain('30-180 days after recruitment ends');

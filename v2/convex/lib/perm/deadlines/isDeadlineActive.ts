@@ -20,6 +20,7 @@ import type {
 } from "./types";
 import { ALL_DEADLINE_TYPES, SUPERSESSION_REASONS } from "./types";
 import { isRecruitmentComplete } from "../recruitment/isRecruitmentComplete";
+import { pwdBearingFromCase } from "../dates/pwdValidity";
 
 // ============================================================================
 // MAIN SUPERSESSION CHECK
@@ -128,6 +129,14 @@ function checkPwdExpirationActive(
   // Superseded when ETA 9089 filed
   if (caseData.eta9089FilingDate) {
     return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_FILED };
+  }
+
+  // Superseded once recruitment began inside the validity period: 20 CFR
+  // 656.40(c) needs the filing OR the start of recruitment inside it, and the
+  // 180-day rule alone closes the window from then on (pwdValidity.ts). Before
+  // recruitment begins, the expiry is the day it has to begin by.
+  if (pwdBearingFromCase(caseData) === "began-inside") {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.RECRUITMENT_BEGAN_IN_VALIDITY };
   }
 
   return { isActive: true };

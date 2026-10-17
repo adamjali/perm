@@ -29,13 +29,13 @@ const STAKES = [
   {
     title: "Wage determination expiry",
     severity: "critical",
-    cost: "A prevailing wage determination expires under 20 CFR 656.40. File after it and the case starts over.",
-    handled: "Expiry worked out from the determination date under DOL's rules.",
+    cost: "A prevailing wage determination expires under 20 CFR 656.40(c). Recruitment has to begin before it does, or the case starts over.",
+    handled: "Expiry worked out from the determination date under DOL's rules, and the day recruitment has to begin by.",
   },
   {
     title: "ETA 9089 filing window",
     severity: "high",
-    cost: `It opens ${FILING_WINDOW_WAIT_DAYS} days after the last recruitment step and closes ${FILING_WINDOW_CLOSE_DAYS} days after the first, or when the wage determination expires if sooner. Miss it and recruitment is redone.`,
+    cost: `It opens ${FILING_WINDOW_WAIT_DAYS} days after the last recruitment step and closes ${FILING_WINDOW_CLOSE_DAYS} days after the first. Miss it and recruitment is redone.`,
     handled: "Open and close dates from the recruitment dates and the wage expiry.",
   },
   {

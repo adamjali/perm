@@ -48,6 +48,10 @@ const FAQS = [
     a: "Under 20 CFR 656.40(c) it depends on when it was issued. A determination issued between 2 April and 30 June is valid for 90 days. One issued between 1 July and 31 December runs to 30 June of the following year, and one issued between 1 January and 1 April runs to 30 June of the same year.",
   },
   {
+    q: "Can the ETA 9089 be filed after the wage determination expires?",
+    a: "Yes, if recruitment began while the determination was valid. 20 CFR 656.40(c) asks employers to file or begin recruitment within the validity period, and the Board of Alien Labor Certification Appeals read it that way in Karl Storz Endoscopy-America (2011). The window then closes 180 days after the first recruitment step. Recruitment begun before the determination was issued means filing by the expiration.",
+  },
+  {
     q: "How long does the notice of filing have to be posted?",
     a: "Ten consecutive business days, and it has to be completed inside the recruitment window rather than after it.",
   },

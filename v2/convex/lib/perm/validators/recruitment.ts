@@ -1,8 +1,10 @@
-import { parseISO, isBefore, isAfter, getDay, differenceInCalendarDays, isValid, addDays } from 'date-fns';
+import { parseISO, isBefore, isAfter, getDay, differenceInCalendarDays, isValid } from 'date-fns';
 import type { ValidationResult, ValidationIssue, CaseData } from '../types';
 import { createValidationResult } from '../types';
 import { countBusinessDays } from '../dates/businessDays';
 import { getMethodLatestDate } from '../dates/filingWindow';
+import { pwdStepLimit } from '../dates/pwdValidity';
+import { calculateStepDeadlineUnderPwd } from '../calculators/recruitment';
 import {
   JOB_ORDER_MIN_DAYS,
   NOTICE_MIN_BUSINESS_DAYS,
@@ -318,6 +320,12 @@ export interface ProfessionalMethodsInput {
   pwdDeterminationDate?: string | null;
   pwdExpirationDate?: string | null;
   firstRecruitmentDate?: string | null;
+  /**
+   * The first 20 CFR 656.17(e) step, the Notice of Filing left out
+   * (getFirstRecruitmentStepForPwd). Missing, firstRecruitmentDate stands in,
+   * the stricter reading.
+   */
+  firstPwdStep?: string | null;
   methods: Array<{
     method: string;
     date: string;
@@ -331,8 +339,10 @@ export interface ProfessionalMethodsInput {
  * Validate professional recruitment method-level dates (V-PROF rules).
  *
  * Per 20 CFR 656.17(e)(1)(ii), the latest-dated additional method (the "special" one)
- * may complete within the quiet period, getting a relaxed deadline: min(first+180, pwd).
- * Other methods use the normal deadline: min(first+150, pwd-30).
+ * may complete within the quiet period, getting a relaxed deadline: first+180.
+ * Other methods use the normal deadline: first+150. The PWD caps both only
+ * while it still limits the case (dates/pwdValidity.ts): pwd for the special
+ * method and pwd-30 for the others, or the expiry itself before recruitment begins.
  *
  * Rules enforced:
  * - V-PROF-01: Date range start must be after PWD determination date
@@ -352,28 +362,31 @@ export function validateProfessionalMethods(
 
   const { pwdDeterminationDate, pwdExpirationDate, firstRecruitmentDate, methods } = input;
 
-  const firstDate = firstRecruitmentDate ? parseISO(firstRecruitmentDate) : null;
-  const pwdMax = pwdExpirationDate ? parseISO(pwdExpirationDate) : null;
+  const limit = pwdStepLimit({
+    pwdDeterminationDate,
+    pwdExpirationDate,
+    firstPwdStep: input.firstPwdStep ?? firstRecruitmentDate,
+  });
+  const first = firstRecruitmentDate || undefined;
+  const asDate = (d: string | undefined) => (d && isValid(parseISO(d)) ? parseISO(d) : null);
 
-  // Normal max: min(first+150, pwd-30)
-  let normalMaxDate: Date | null = null;
-  if (firstDate && isValid(firstDate)) {
-    const maxFromFirst = addDays(firstDate, RECRUITMENT_WINDOW_DAYS);
-    const pwdCap = pwdMax && isValid(pwdMax) ? addDays(pwdMax, -PWD_RECRUITMENT_BUFFER_DAYS) : null;
-    normalMaxDate = pwdCap && pwdCap < maxFromFirst ? pwdCap : maxFromFirst;
-  } else if (pwdMax && isValid(pwdMax)) {
-    normalMaxDate = addDays(pwdMax, -PWD_RECRUITMENT_BUFFER_DAYS);
-  }
+  // Normal max: first+150, held 30 days before the PWD while it limits the case
+  const normalMaxDate = asDate(
+    calculateStepDeadlineUnderPwd(first, limit, {
+      daysFromRecruitment: RECRUITMENT_WINDOW_DAYS,
+      daysBeforePwd: PWD_RECRUITMENT_BUFFER_DAYS,
+      isSunday: false,
+    }).date,
+  );
 
-  // Special max: min(first+180, pwd)
-  let specialMaxDate: Date | null = null;
-  if (firstDate && isValid(firstDate)) {
-    const maxFromFirst = addDays(firstDate, FILING_WINDOW_CLOSE_DAYS);
-    const pwdCap = pwdMax && isValid(pwdMax) ? pwdMax : null;
-    specialMaxDate = pwdCap && pwdCap < maxFromFirst ? pwdCap : maxFromFirst;
-  } else if (pwdMax && isValid(pwdMax)) {
-    specialMaxDate = pwdMax;
-  }
+  // Special max: first+180, held to the PWD itself while it limits the case
+  const specialMaxDate = asDate(
+    calculateStepDeadlineUnderPwd(first, limit, {
+      daysFromRecruitment: FILING_WINDOW_CLOSE_DAYS,
+      daysBeforePwd: 0,
+      isSunday: false,
+    }).date,
+  );
 
   // Find the "special" method (latest-dated)
   const specialIndex = findSpecialMethodIndex(methods);

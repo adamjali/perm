@@ -40,6 +40,8 @@ export function validateCase(caseData: ValidationCaseData): ValidationResult {
     }),
     validateETA9089({
       recruitment_start_date: caseData.recruitment_start_date,
+      pwd_recruitment_start_date: caseData.pwd_recruitment_start_date,
+      pwd_determination_date: caseData.pwd_determination_date,
       recruitment_end_date: caseData.recruitment_end_date,
       eta9089_filing_date: caseData.eta9089_filing_date,
       pwd_expiration_date: caseData.pwd_expiration_date,

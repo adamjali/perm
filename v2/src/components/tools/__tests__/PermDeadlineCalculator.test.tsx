@@ -68,12 +68,22 @@ describe("PermDeadlineCalculator", () => {
     expect(screen.getByText("June 30, 2026")).toBeInTheDocument();
   });
 
-  it("caps the filing-window close at the PWD expiration and says so", () => {
+  it("recruitment begun inside the PWD's validity closes 180 days after the first step, past the expiry (20 CFR 656.40(c))", () => {
     render(<PermDeadlineCalculator />);
     setDate(/prevailing wage determination date/i, "2026-01-15"); // expires 2026-06-30
-    setDate(/first recruitment step/i, "2026-02-01"); // natural close 2026-07-31
-    // The PWD expires well before first + 180, so the close must be the
-    // expiration and the caption must explain the cap.
+    setDate(/first recruitment step/i, "2026-02-01"); // inside validity; first + 180 = 2026-07-31
+    // Karl Storz (BALCA en banc, 2011): begun inside validity, the expiry no
+    // longer limits the filing, so the close is first + 180.
+    expect(screen.getByText(/ETA-9089 filing window closes/i)).toBeInTheDocument();
+    expect(screen.getAllByText("July 31, 2026").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(/capped by the prevailing wage expiration/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/no longer limits the filing/i)).toBeInTheDocument();
+  });
+
+  it("recruitment begun before the determination caps the close at the PWD expiration and says so", () => {
+    render(<PermDeadlineCalculator />);
+    setDate(/prevailing wage determination date/i, "2026-01-15"); // expires 2026-06-30
+    setDate(/first recruitment step/i, "2026-01-10"); // before the determination; first + 180 = 2026-07-09
     expect(screen.getByText(/ETA-9089 filing window closes/i)).toBeInTheDocument();
     expect(screen.getAllByText("June 30, 2026").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText(/capped by the prevailing wage expiration/i)).toBeInTheDocument();
@@ -119,7 +129,9 @@ describe("PermDeadlineCalculator", () => {
       setDate(/prevailing wage determination date/i, "2025-01-10");
       setDate(/first recruitment step/i, "2025-04-20"); // + 180 = 2025-10-17
       expect(screen.getByText(/expired during the 2025 shutdown/i)).toBeInTheDocument();
-      expect(screen.getByText(/October 17, 2025/)).toBeInTheDocument();
+      // In the note and, since recruitment began inside the determination's
+      // validity, as the window's close too.
+      expect(screen.getAllByText(/October 17, 2025/).length).toBeGreaterThanOrEqual(1);
       expect(
         screen.getByText(/33 calendar day period/i),
       ).toBeInTheDocument();

@@ -237,12 +237,14 @@ describe('validateProfessionalMethods (V-PROF rules)', () => {
       expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(true);
     });
 
-    it('non-special method uses pwd-30 when firstRecruitmentDate is null', () => {
-      // With 2 methods, the non-special one gets normal max = pwd - 30
+    it('non-special method uses pwd-30 when firstRecruitmentDate is null and recruitment began before the determination', () => {
+      // With 2 methods, the non-special one gets normal max = pwd - 30 while the
+      // PWD still limits the case (first step Jan 10, before the Jan 15 determination)
       const result = validateProfessionalMethods({
         pwdDeterminationDate: '2024-01-15',
         pwdExpirationDate: '2024-06-01', // -30 = 2024-05-02
         firstRecruitmentDate: null,
+        firstPwdStep: '2024-01-10',
         methods: [
           {
             method: 'job_website_ad',
@@ -260,6 +262,20 @@ describe('validateProfessionalMethods (V-PROF rules)', () => {
       });
       // First method (non-special) endDate (May 15) > normalMax (May 2) → error
       expect(result.errors.some(e => e.ruleId === 'V-PROF-03' && e.field.includes('.0.'))).toBe(true);
+    });
+
+    it('no PWD buffer once recruitment began inside its validity (20 CFR 656.40(c))', () => {
+      const result = validateProfessionalMethods({
+        pwdDeterminationDate: '2024-01-15',
+        pwdExpirationDate: '2024-06-01',
+        firstRecruitmentDate: null,
+        firstPwdStep: '2024-02-01',
+        methods: [
+          { method: 'job_website_ad', date: '', startDate: '2024-02-01', endDate: '2024-05-15' },
+          { method: 'employer_website', date: '', startDate: '2024-02-01', endDate: '2024-05-20' },
+        ],
+      });
+      expect(result.errors.some(e => e.ruleId === 'V-PROF-03')).toBe(false);
     });
 
     it('skips V-PROF-05 when pwdDeterminationDate is null', () => {

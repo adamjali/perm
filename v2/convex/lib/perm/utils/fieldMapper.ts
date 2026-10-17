@@ -11,6 +11,7 @@
 
 import type { CaseData } from '../types';
 import type { CaseStatus, ProgressStatus } from '../statusTypes';
+import { getFirstRecruitmentStepForPwd } from '../dates/pwdValidity';
 
 /**
  * RFI/RFE entry structure from the database
@@ -51,6 +52,7 @@ export interface CamelCaseFields {
   jobOrderEndDate?: string | null;
   noticeOfFilingStartDate?: string | null;
   noticeOfFilingEndDate?: string | null;
+  additionalRecruitmentStartDate?: string | null;
 
   // Derived recruitment dates (from derivedCalculations)
   recruitmentStartDate?: string | null;
@@ -139,6 +141,7 @@ export function mapToValidatorFormat(fields: CamelCaseFields): CaseData {
     // Derived recruitment dates
     recruitment_start_date: fields.recruitmentStartDate || null,
     recruitment_end_date: fields.recruitmentEndDate || null,
+    pwd_recruitment_start_date: getFirstRecruitmentStepForPwd(fields) ?? null,
 
     // Professional occupation flag
     is_professional_occupation: fields.isProfessionalOccupation ?? false,

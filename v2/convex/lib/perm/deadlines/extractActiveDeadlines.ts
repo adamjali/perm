@@ -28,8 +28,8 @@ import {
   getTodayForDeadline,
   DEFAULT_USER_TIMEZONE,
 } from "./timezones";
-import { getFirstRecruitmentDate, subtractBusinessDays } from "../dates";
-import { calculateStepDeadline, STEP_DEADLINE_CONFIGS } from "../calculators/recruitment";
+import { getFirstRecruitmentDate, pwdStepLimitFromCase, subtractBusinessDays } from "../dates";
+import { calculateStepDeadlineUnderPwd, STEP_DEADLINE_CONFIGS } from "../calculators/recruitment";
 import { NOTICE_MIN_BUSINESS_DAYS } from "../constants";
 
 const log = loggers.deadline;
@@ -149,9 +149,10 @@ function extractSingleDeadline(
 /**
  * Extract per-step recruitment deadlines (job order, notice, Sunday ads).
  *
- * Uses calculateStepDeadline (central source of truth) which computes
- * each constraint arm independently — deadlines are returned even when
- * only firstRecruitmentDate or pwdExpirationDate is available.
+ * Uses calculateStepDeadlineUnderPwd, which applies the PWD rule in
+ * dates/pwdValidity.ts. Nothing is returned until recruitment has a first
+ * date: before that the PWD expiry is the day recruitment has to begin by,
+ * shown as its own deadline.
  */
 function extractPerStepDeadlines(
   caseData: CaseDataForDeadlines,
@@ -160,8 +161,8 @@ function extractPerStepDeadlines(
   const deadlines: ExtractedDeadline[] = [];
 
   const firstRecruit = getFirstRecruitmentDate(caseData);
-  const pwdExp = caseData.pwdExpirationDate;
-  if (!firstRecruit && !pwdExp) return deadlines;
+  if (!firstRecruit) return deadlines;
+  const pwdLimit = pwdStepLimitFromCase(caseData);
 
   // Map central config keys to deadline types
   const keyToType: Record<string, DeadlineType> = {
@@ -179,7 +180,7 @@ function extractPerStepDeadlines(
     if (!status.isActive) continue;
 
     try {
-      let date = calculateStepDeadline(firstRecruit, pwdExp, config);
+      let date = calculateStepDeadlineUnderPwd(firstRecruit, pwdLimit, config).date;
       if (!date) continue;
 
       // NOF start = subtract 10 business days from the notice deadline
@@ -276,9 +277,8 @@ export function shouldRemindForDeadline(
     case "notice_of_filing_start_deadline":
     case "first_sunday_ad_deadline":
     case "second_sunday_ad_deadline": {
-      // Per-step deadlines need first recruitment + PWD to compute dates
-      const first = getFirstRecruitmentDate(caseData);
-      return !!first && !!caseData.pwdExpirationDate;
+      // Per-step deadlines run from the first recruitment step
+      return !!getFirstRecruitmentDate(caseData);
     }
     case "i140_filing_deadline":
       return !!caseData.eta9089ExpirationDate;

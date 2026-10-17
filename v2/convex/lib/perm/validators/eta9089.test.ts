@@ -184,7 +184,12 @@ describe('validateETA9089', () => {
     });
   });
 
-  describe('V-ETA-03: ETA 9089 filing must be before PWD expiration date', () => {
+  describe('V-ETA-03: the PWD (20 CFR 656.40(c): file or begin recruitment within validity)', () => {
+    const v03 = (r: ReturnType<typeof validateETA9089>) => [
+      ...r.errors.filter((e) => e.ruleId === 'V-ETA-03'),
+      ...r.warnings.filter((e) => e.ruleId === 'V-ETA-03'),
+    ];
+
     it('should pass when filing is before PWD expiration', () => {
       // Filing Sep 30 must be within 180 days of start: Sep 30 - 180 = Apr 3
       // recruitment_end must be at most 30 days before filing: Sep 30 - 30 = Aug 31
@@ -201,28 +206,71 @@ describe('validateETA9089', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should fail when filing is on PWD expiration date', () => {
+    it('should pass when filing is on the PWD expiration date (its last valid day)', () => {
       const result = validateETA9089({
-        recruitment_start_date: '2026-01-01',
-        recruitment_end_date: '2026-01-15',
+        recruitment_start_date: '2027-01-02',
+        recruitment_end_date: '2027-05-01',
         eta9089_filing_date: '2027-06-30',
         pwd_expiration_date: '2027-06-30',
+        pwd_determination_date: '2027-01-01',
+        eta9089_certification_date: null,
+        eta9089_expiration_date: null,
+      });
+
+      expect(v03(result)).toHaveLength(0);
+    });
+
+    it('MPHASIS (2011-PER-00207): recruitment begun inside validity, filed 9 days after the expiry, passes', () => {
+      const result = validateETA9089({
+        recruitment_start_date: '2007-07-20',
+        recruitment_end_date: '2007-08-19',
+        eta9089_filing_date: '2007-10-19',
+        pwd_expiration_date: '2007-10-10',
+        pwd_determination_date: '2007-07-09',
+        pwd_recruitment_start_date: '2007-07-20',
+        eta9089_certification_date: null,
+        eta9089_expiration_date: null,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(v03(result)).toHaveLength(0);
+    });
+
+    it('Karl Storz (2011-PER-00040): recruitment begun before the determination, filed after the expiry, fails', () => {
+      const result = validateETA9089({
+        recruitment_start_date: '2009-03-04',
+        recruitment_end_date: '2009-04-03',
+        eta9089_filing_date: '2009-07-15',
+        pwd_expiration_date: '2009-06-30',
+        pwd_determination_date: '2009-03-10',
+        pwd_recruitment_start_date: '2009-03-04',
         eta9089_certification_date: null,
         eta9089_expiration_date: null,
       });
 
       expect(result.valid).toBe(false);
-      const v_eta_03_errors = result.errors.filter((e) => e.ruleId === 'V-ETA-03');
-      expect(v_eta_03_errors).toHaveLength(1);
-      expect(v_eta_03_errors[0]).toMatchObject({
-        ruleId: 'V-ETA-03',
-        severity: 'error',
-        field: 'eta9089_filing_date',
-      });
-      expect(v_eta_03_errors[0].message).toContain('before PWD expiration');
+      const errs = result.errors.filter((e) => e.ruleId === 'V-ETA-03');
+      expect(errs).toHaveLength(1);
+      expect(errs[0]).toMatchObject({ severity: 'error', field: 'eta9089_filing_date', regulation: '20 CFR § 656.40(c)' });
+      expect(errs[0].message).toContain('before the wage determination was issued');
     });
 
-    it('should fail when filing is after PWD expiration', () => {
+    it('an early Notice of Filing does not make recruitment begin before the determination', () => {
+      const result = validateETA9089({
+        recruitment_start_date: '2026-01-05', // the notice, before the Jan 15 determination
+        recruitment_end_date: '2026-03-03',
+        eta9089_filing_date: '2026-07-02',
+        pwd_expiration_date: '2026-06-30',
+        pwd_determination_date: '2026-01-15',
+        pwd_recruitment_start_date: '2026-02-01', // the job order
+        eta9089_certification_date: null,
+        eta9089_expiration_date: null,
+      });
+
+      expect(v03(result)).toHaveLength(0);
+    });
+
+    it('filed after the expiry with no determination date: a warning asking for it, never a block', () => {
       const result = validateETA9089({
         recruitment_start_date: '2026-01-01',
         recruitment_end_date: '2026-01-15',
@@ -232,10 +280,25 @@ describe('validateETA9089', () => {
         eta9089_expiration_date: null,
       });
 
-      expect(result.valid).toBe(false);
-      const v_eta_03_errors = result.errors.filter((e) => e.ruleId === 'V-ETA-03');
-      expect(v_eta_03_errors).toHaveLength(1);
-      expect(v_eta_03_errors[0].ruleId).toBe('V-ETA-03');
+      expect(result.errors.filter((e) => e.ruleId === 'V-ETA-03')).toHaveLength(0);
+      const w = result.warnings.filter((e) => e.ruleId === 'V-ETA-03');
+      expect(w).toHaveLength(1);
+      expect(w[0].message).toContain('determination date');
+    });
+
+    it('recruitment begun after the expiry fails', () => {
+      const result = validateETA9089({
+        recruitment_start_date: '2026-07-10',
+        recruitment_end_date: '2026-08-10',
+        eta9089_filing_date: '2026-09-15',
+        pwd_expiration_date: '2026-06-30',
+        pwd_determination_date: '2026-01-15',
+        pwd_recruitment_start_date: '2026-07-10',
+        eta9089_certification_date: null,
+        eta9089_expiration_date: null,
+      });
+
+      expect(result.errors.filter((e) => e.ruleId === 'V-ETA-03')).toHaveLength(1);
     });
 
     it('should skip validation when PWD expiration date is null', () => {

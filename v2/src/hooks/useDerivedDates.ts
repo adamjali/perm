@@ -13,6 +13,7 @@ import {
   FILING_WINDOW_WAIT_DAYS,
   FILING_WINDOW_CLOSE_DAYS,
   isValidISODate,
+  pwdFilingLimitFromCase,
 } from "@/lib/perm";
 
 export interface DerivedDatesInput {
@@ -31,6 +32,8 @@ export interface DerivedDatesInput {
   additionalRecruitmentMethods?: Array<{ date?: string }>;
   isProfessionalOccupation?: boolean;
   pwdExpirationDate?: string | null;
+  pwdDeterminationDate?: string | null;
+  additionalRecruitmentStartDate?: string | null;
 }
 
 export interface DerivedDatesOutput {
@@ -92,7 +95,8 @@ function calculateRecruitmentEndDate(data: DerivedDatesInput): string | null {
 // live-derivation feel responsive during data entry. The canonical
 // calculateFilingWindow requires BOTH dates and returns null otherwise — right
 // for a settled case, but it would blank a half-filled form. So the rule (the
-// canonical FILING_WINDOW_* day counts and the same min-with-PWD cap) is shared
+// canonical FILING_WINDOW_* day counts and the same min-with-PWD cap, applied
+// only while pwdFilingLimitFromCase says the PWD still limits the case) is shared
 // with the canonical; only the "compute each end alone" policy is local. Do not
 // "consolidate" these into calculateFilingWindow — that is a regression, not a
 // cleanup. The both-dates-present path (ETA9089Section) does use the canonical.
@@ -146,7 +150,7 @@ export function useDerivedDates(caseData: DerivedDatesInput | null | undefined):
       ),
       filingWindowCloses: toUndefined(
         caseData.filingWindowCloses ??
-          calculateFilingWindowCloses(recruitmentStartDate ?? null, caseData.pwdExpirationDate ?? null)
+          calculateFilingWindowCloses(recruitmentStartDate ?? null, pwdFilingLimitFromCase(caseData) ?? null)
       ),
       recruitmentWindowCloses: toUndefined(caseData.recruitmentWindowCloses),
     };

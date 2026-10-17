@@ -96,7 +96,7 @@ export type UrgencyLevel = UrgencyLevelExtended;
 // CONSTANTS
 // ============================================================================
 
-/** Build the 9-field input for calculateFilingWindowFromCase from NextUpCaseData. */
+/** Build the input for calculateFilingWindowFromCase from NextUpCaseData (the determination date decides whether the PWD still caps the window). */
 function buildFilingWindowInput(caseData: NextUpCaseData) {
   return {
     sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
@@ -107,6 +107,7 @@ function buildFilingWindowInput(caseData: NextUpCaseData) {
     noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
     additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
     pwdExpirationDate: caseData.pwdExpirationDate || undefined,
+    pwdDeterminationDate: caseData.pwdDeterminationDate || undefined,
     isProfessionalOccupation: !!caseData.isProfessionalOccupation,
   };
 }

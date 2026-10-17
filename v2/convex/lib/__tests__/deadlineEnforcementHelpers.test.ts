@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   checkDeadlineViolations,
+  mapCaseToEnforcementData,
   canRestartProcess,
   getRestartViability,
   generateClosureMessage,
@@ -48,14 +49,18 @@ describe("canRestartProcess", () => {
     expect(canRestartProcess(pwdExpiration, TODAY_ISO)).toBe(true);
   });
 
-  it("returns false when PWD has exactly 60 days remaining", () => {
-    const pwdExpiration = daysFromToday(60);
-    expect(canRestartProcess(pwdExpiration, TODAY_ISO)).toBe(false);
+  // A restart only has to BEGIN recruitment while the PWD is valid
+  // (20 CFR 656.40(c), Karl Storz), so any day of validity left is enough.
+  it("returns true when the PWD has 30 days remaining", () => {
+    expect(canRestartProcess(daysFromToday(30), TODAY_ISO)).toBe(true);
   });
 
-  it("returns false when PWD has less than 60 days remaining", () => {
-    const pwdExpiration = daysFromToday(30);
-    expect(canRestartProcess(pwdExpiration, TODAY_ISO)).toBe(false);
+  it("returns true on the PWD's last valid day", () => {
+    expect(canRestartProcess(daysFromToday(0), TODAY_ISO)).toBe(true);
+  });
+
+  it("returns false the day after the PWD expires", () => {
+    expect(canRestartProcess(daysFromToday(-1), TODAY_ISO)).toBe(false);
   });
 
   it("returns false when PWD has expired", () => {
@@ -80,9 +85,10 @@ describe("canRestartProcess", () => {
 // checkDeadlineViolations Tests - PWD Expiration
 
 describe("getRestartViability", () => {
-  it("distinguishes viable from not_viable by the 60-day threshold", () => {
+  it("distinguishes viable from not_viable by whether the PWD is still valid", () => {
     expect(getRestartViability(daysFromToday(91), TODAY_ISO)).toBe("viable");
-    expect(getRestartViability(daysFromToday(45), TODAY_ISO)).toBe("not_viable");
+    expect(getRestartViability(daysFromToday(45), TODAY_ISO)).toBe("viable");
+    expect(getRestartViability(daysFromToday(-1), TODAY_ISO)).toBe("not_viable");
   });
 
   // The whole point of the tri-state: a date we do not have is not the same
@@ -96,7 +102,7 @@ describe("getRestartViability", () => {
   });
 
   it("stays consistent with the boolean canRestartProcess", () => {
-    for (const d of [daysFromToday(91), daysFromToday(45), undefined, "invalid-date"]) {
+    for (const d of [daysFromToday(91), daysFromToday(45), daysFromToday(-1), undefined, "invalid-date"]) {
       expect(canRestartProcess(d, TODAY_ISO)).toBe(
         getRestartViability(d, TODAY_ISO) === "viable"
       );
@@ -185,7 +191,8 @@ describe("checkDeadlineViolations - unknown restart viability", () => {
     const violation = checkDeadlineViolations(
       createMinimalCase({
         caseStatus: "recruitment",
-        pwdExpirationDate: daysFromToday(45), // present, ≤60 days
+        pwdExpirationDate: daysFromToday(-5), // present, expired
+        pwdBearing: "began-inside", // so the 180-day window, not the PWD check, decides
         recruitmentStartDate: daysFromToday(-200),
         recruitmentComplete: false,
         recruitmentWindowCloses: daysFromToday(-10),
@@ -234,6 +241,49 @@ describe("checkDeadlineViolations - PWD Expiration", () => {
     const violation = checkDeadlineViolations(caseData, TODAY_ISO);
     expect(violation).toBeNull();
   });
+
+  // 20 CFR 656.40(c) as read in Karl Storz (BALCA en banc, 2011)
+  it("leaves the case open when recruitment began inside the PWD's validity", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "recruitment",
+        pwdExpirationDate: daysFromToday(-10),
+        pwdBearing: "began-inside",
+        filingWindowCloses: daysFromToday(60), // still open: first step + 180
+      }),
+      TODAY_ISO,
+    );
+    expect(violation).toBeNull();
+  });
+
+  it("closes when recruitment began before the determination, and says why", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({ caseStatus: "recruitment", pwdExpirationDate: daysFromToday(-10), pwdBearing: "began-before" }),
+      TODAY_ISO,
+    );
+    expect(violation!.type).toBe("pwd_expired");
+    expect(violation!.suggestedAction).toBe("close");
+    expect(violation!.reason).toMatch(/before the determination/);
+  });
+
+  it("asks for review, never closes, with no determination date on file", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({ caseStatus: "recruitment", pwdExpirationDate: daysFromToday(-10), pwdBearing: "determination-unknown" }),
+      TODAY_ISO,
+    );
+    expect(violation!.type).toBe("pwd_expired");
+    expect(violation!.suggestedAction).toBe("review");
+  });
+
+  it("mapCaseToEnforcementData works out the bearing from the case's own dates", () => {
+    const data = mapCaseToEnforcementData({
+      caseStatus: "recruitment",
+      pwdDeterminationDate: "2026-01-15",
+      pwdExpirationDate: "2026-06-30",
+      jobOrderStartDate: "2026-02-01",
+    } as Parameters<typeof mapCaseToEnforcementData>[0]);
+    expect(data.pwdBearing).toBe("began-inside");
+  });
 });
 
 // checkDeadlineViolations Tests - Recruitment Window
@@ -256,10 +306,25 @@ describe("checkDeadlineViolations - Recruitment Window", () => {
     expect(violation!.canRestart).toBe(true);
   });
 
-  it("returns recruitment_window_missed with close when PWD ≤60 days", () => {
+  it("returns recruitment_window_missed with restart when the PWD has 45 days left", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "recruitment",
+        pwdExpirationDate: daysFromToday(45),
+        recruitmentStartDate: daysFromToday(-200),
+        recruitmentWindowCloses: daysFromToday(-10),
+      }),
+      TODAY_ISO,
+    );
+    expect(violation!.type).toBe("recruitment_window_missed");
+    expect(violation!.suggestedAction).toBe("restart_recruitment");
+  });
+
+  it("returns recruitment_window_missed with close when the PWD has expired", () => {
     const caseData = createMinimalCase({
       caseStatus: "recruitment",
-      pwdExpirationDate: daysFromToday(45), // Only 45 days remaining - must close
+      pwdExpirationDate: daysFromToday(-5), // Expired - must close
+      pwdBearing: "began-inside",
       recruitmentStartDate: daysFromToday(-200),
       recruitmentWindowCloses: daysFromToday(-10), // Missed
       eta9089FilingDate: undefined,
@@ -427,10 +492,24 @@ describe("checkDeadlineViolations - Filing Window", () => {
     expect(violation!.canRestart).toBe(true);
   });
 
-  it("returns filing_window_missed with close when PWD ≤60 days", () => {
+  it("returns filing_window_missed with restart when the PWD has 30 days left", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({
+        caseStatus: "recruitment",
+        pwdExpirationDate: daysFromToday(30),
+        filingWindowCloses: daysFromToday(-5),
+      }),
+      TODAY_ISO,
+    );
+    expect(violation!.type).toBe("filing_window_missed");
+    expect(violation!.suggestedAction).toBe("restart_recruitment");
+  });
+
+  it("returns filing_window_missed with close when the PWD has expired", () => {
     const caseData = createMinimalCase({
       caseStatus: "recruitment",
-      pwdExpirationDate: daysFromToday(30), // Must close
+      pwdExpirationDate: daysFromToday(-2), // Expired - must close
+      pwdBearing: "began-inside",
       filingWindowCloses: daysFromToday(-5), // Missed
       eta9089FilingDate: undefined,
     });
@@ -499,10 +578,13 @@ describe("checkDeadlineViolations - ETA 9089 Expiration", () => {
     expect(violation!.canRestart).toBe(true);
   });
 
-  it("returns eta9089_expired with close when PWD ≤60 days", () => {
+  it("returns eta9089_expired with close when the PWD has expired and the filing window closed", () => {
     const caseData = createMinimalCase({
       caseStatus: "eta9089",
-      pwdExpirationDate: daysFromToday(45), // Must close
+      pwdExpirationDate: daysFromToday(-5), // Expired
+      pwdBearing: "began-inside",
+      eta9089FilingDate: daysFromToday(-300),
+      filingWindowCloses: daysFromToday(-100), // Can't refile
       eta9089CertificationDate: daysFromToday(-200),
       eta9089ExpirationDate: daysFromToday(-20), // Expired
       i140FilingDate: undefined,
@@ -784,7 +866,7 @@ describe("getTodayISO", () => {
 // Constants Tests
 
 describe("Constants", () => {
-  it("MIN_DAYS_FOR_RESTART is 60", () => {
-    expect(MIN_DAYS_FOR_RESTART).toBe(60);
+  it("MIN_DAYS_FOR_RESTART is 0: a restart only has to begin recruitment while the PWD is valid", () => {
+    expect(MIN_DAYS_FOR_RESTART).toBe(0);
   });
 });

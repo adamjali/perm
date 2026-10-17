@@ -356,8 +356,8 @@ export default defineSchema({
     recruitmentStartDate: v.optional(v.string()), // MIN of all start dates (first step)
     recruitmentEndDate: v.optional(v.string()),   // MAX of all end dates (last step)
     filingWindowOpens: v.optional(v.string()),    // recruitmentEnd + 30 days
-    filingWindowCloses: v.optional(v.string()),   // MIN(recruitmentStart + 180 days, pwdExpiration)
-    recruitmentWindowCloses: v.optional(v.string()), // MIN(recruitmentStart + 150 days, pwdExpiration - 30 days)
+    filingWindowCloses: v.optional(v.string()),   // recruitmentStart + 180 days; MIN with pwdExpiration only while the PWD limits the case (perm/dates/pwdValidity.ts)
+    recruitmentWindowCloses: v.optional(v.string()), // recruitmentStart + 150 days; MIN with pwdExpiration - 30 days likewise
 
     // Professional occupation
     isProfessionalOccupation: v.boolean(),

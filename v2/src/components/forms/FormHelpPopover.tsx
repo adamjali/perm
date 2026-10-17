@@ -170,7 +170,7 @@ export function FormHelpPanel() {
               Fields with an &ldquo;auto&rdquo; badge calculate automatically when you enter their trigger date:
             </p>
             <ul className="space-y-1 text-muted-foreground list-disc pl-4">
-              <li><strong className="text-foreground">PWD expiration</strong>: Determination date + 1 year</li>{" "}
+              <li><strong className="text-foreground">PWD expiration</strong>: determined Apr 2 to Jun 30, 90 days later; otherwise the next June 30 (20 CFR 656.40(c))</li>{" "}
               <li><strong className="text-foreground">Job order end</strong>: Start date + 30 calendar days</li>{" "}
               <li><strong className="text-foreground">NOF end</strong>: Start date + 10 business days (skips weekends & federal holidays)</li>{" "}
               <li><strong className="text-foreground">ETA 9089 expiration</strong>: Certification date + 179 days (the date DOL prints)</li>{" "}
@@ -185,7 +185,7 @@ export function FormHelpPanel() {
             <ul className="space-y-1.5 text-muted-foreground list-disc pl-4">
               <li>Enter the PWD determination date first, everything else depends on it</li>{" "}
               <li>The 30-day quiet period between recruitment and ETA 9089 filing is calculated automatically</li>{" "}
-              <li>Filing window = 180 days from first recruitment activity (or PWD expiration, whichever is earlier)</li>{" "}
+              <li>Filing window = 180 days from first recruitment activity. Recruitment has to begin before the PWD expires; once it has, the expiry no longer limits the filing</li>{" "}
               <li>Use the progress bar at the top to see how far along the case is</li>{" "}
               <li>Click any section header to open/close it, even if prerequisites aren&rsquo;t met</li>
             </ul>
@@ -198,7 +198,7 @@ export function FormHelpPanel() {
               <li><strong className="text-foreground">20 CFR § 656.17(d)</strong>: Job order: 30 calendar days minimum</li>{" "}
               <li><strong className="text-foreground">20 CFR § 656.10(d)</strong>: Notice of filing: 10 business days</li>{" "}
               <li><strong className="text-foreground">20 CFR § 656.17(e)</strong>: 30-day quiet period, 180-day filing window</li>{" "}
-              <li><strong className="text-foreground">20 CFR § 656.40</strong>: PWD validity: 1 year from determination</li>
+              <li><strong className="text-foreground">20 CFR § 656.40</strong>: PWD validity: 90 days, or the next June 30, depending on the determination date. Recruitment has to begin inside it</li>
             </ul>
           </section>
         </div>

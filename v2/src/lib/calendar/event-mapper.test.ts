@@ -90,10 +90,11 @@ describe("caseToCalendarEvents", () => {
       expect(pwd.allDay).toBe(true);
       expect(pwd.caseId).toBe("test-case-id");
       expect(pwd.stage).toBe("pwd");
-      // The central rules derive the recruitment "start by" dates from the PWD
-      // alone, as the dashboard shows them; the calendar now shows the same.
-      expect(events.map((e) => e.deadlineType)).toEqual(
-        expect.arrayContaining(["jobOrderStartDeadline", "noticeOfFilingStartDeadline", "firstSundayAdDeadline", "secondSundayAdDeadline"]),
+      // Before recruitment begins the PWD expiry is the one date that matters:
+      // recruitment has to begin by it (20 CFR 656.40(c)), and the step
+      // deadlines come from the first step once there is one, as on the dashboard.
+      expect(events.map((e) => e.deadlineType)).not.toEqual(
+        expect.arrayContaining(["jobOrderStartDeadline"]),
       );
     });
 

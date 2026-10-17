@@ -1,8 +1,9 @@
-import { parseISO, isBefore, isAfter, differenceInDays, formatISO, isValid } from 'date-fns';
+import { parseISO, isAfter, differenceInDays, formatISO, isValid } from 'date-fns';
 import type { ValidationResult, ValidationIssue, CaseData } from '../types';
 import { createValidationResult } from '../types';
 import { calculateETA9089Expiration } from '../calculators/eta9089';
 import { FILING_WINDOW_WAIT_DAYS, FILING_WINDOW_CLOSE_DAYS, ETA9089_EXPIRATION_DAYS } from '../constants';
+import { pwdBearing } from '../dates/pwdValidity';
 
 /**
  * Input data for ETA 9089 validation.
@@ -16,7 +17,8 @@ export type ETA9089ValidationInput = Pick<
   | 'pwd_expiration_date'
   | 'eta9089_certification_date'
   | 'eta9089_expiration_date'
->;
+> &
+  Partial<Pick<CaseData, 'pwd_determination_date' | 'pwd_recruitment_start_date'>>;
 
 /**
  * Validate ETA 9089 dates according to PERM regulations.
@@ -24,13 +26,15 @@ export type ETA9089ValidationInput = Pick<
  * Rules enforced:
  * - V-ETA-01: ETA 9089 filing must be at least 30 days after recruitment ends (last recruitment date)
  * - V-ETA-02: ETA 9089 filing must be within 180 days after recruitment starts (first recruitment date)
- * - V-ETA-03: ETA 9089 filing must be before PWD expiration date
+ * - V-ETA-03: the PWD (20 CFR 656.40(c)): file by its expiry unless recruitment
+ *   began inside its validity period (dates/pwdValidity.ts)
  * - V-ETA-04: ETA 9089 certification must be after filing date
  * - V-ETA-05: Warning if expiration doesn't match calculated value (180 days after certification)
  *
  * Filing window logic:
  * - OPENS: 30 days after LAST recruitment step ends (recruitment_end_date)
- * - CLOSES: 180 days after FIRST recruitment step starts (recruitment_start_date) OR PWD expiration (whichever is first)
+ * - CLOSES: 180 days after FIRST recruitment step starts (recruitment_start_date), or at
+ *   the PWD expiration while the PWD still limits the case (dates/pwdValidity.ts)
  *
  * @param input - ETA 9089 dates to validate
  * @returns Validation result with errors and warnings
@@ -113,7 +117,11 @@ export function validateETA9089(
     }
   }
 
-  // V-ETA-03: ETA 9089 filing must be before PWD expiration date (Either/Or Rule)
+  // V-ETA-03: 20 CFR 656.40(c), "file their applications or begin the
+  // recruitment period ... within the validity period". Recruitment begun
+  // inside validity (first 656.17(e) step on or after the determination, on or
+  // before the expiry) frees the filing from the expiry; the 180-day rule above
+  // still closes it. Karl Storz Endoscopy-America, BALCA en banc, 2011-PER-00040.
   if (eta9089_filing_date && pwd_expiration_date) {
     const filing = parseISO(eta9089_filing_date);
     const pwdExpiration = parseISO(pwd_expiration_date);
@@ -135,15 +143,40 @@ export function validateETA9089(
         field: 'pwd_expiration_date',
         message: `Invalid date format: ${pwd_expiration_date}`,
       });
-    } else if (!isBefore(filing, pwdExpiration)) {
-      errors.push({
-        ruleId: 'V-ETA-03',
-        severity: 'error',
-        field: 'eta9089_filing_date',
-        message:
-          'ETA 9089 filing must be before PWD expiration date (20 CFR § 656.40(c))',
-        regulation: '20 CFR § 656.40(c)',
+    } else if (isAfter(filing, pwdExpiration)) {
+      const bearing = pwdBearing({
+        pwdDeterminationDate: input.pwd_determination_date,
+        pwdExpirationDate: pwd_expiration_date,
+        firstPwdStep: input.pwd_recruitment_start_date ?? recruitment_start_date,
       });
+      if (bearing === 'began-before') {
+        errors.push({
+          ruleId: 'V-ETA-03',
+          severity: 'error',
+          field: 'eta9089_filing_date',
+          message:
+            'Recruitment began before the wage determination was issued, so the ETA 9089 must be filed by the PWD expiration (20 CFR § 656.40(c))',
+          regulation: '20 CFR § 656.40(c)',
+        });
+      } else if (bearing === 'began-after' || bearing === 'not-begun') {
+        errors.push({
+          ruleId: 'V-ETA-03',
+          severity: 'error',
+          field: 'eta9089_filing_date',
+          message:
+            'Recruitment has to begin while the wage determination is valid, or the ETA 9089 be filed by its expiration (20 CFR § 656.40(c))',
+          regulation: '20 CFR § 656.40(c)',
+        });
+      } else if (bearing === 'determination-unknown') {
+        warnings.push({
+          ruleId: 'V-ETA-03',
+          severity: 'warning',
+          field: 'eta9089_filing_date',
+          message:
+            'Filed after the PWD expiration. That is allowed only if recruitment began on or after the determination date, so add the determination date to check it (20 CFR § 656.40(c))',
+          regulation: '20 CFR § 656.40(c)',
+        });
+      }
     }
   }
 

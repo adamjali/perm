@@ -9,7 +9,8 @@
  * Rules (per 20 CFR 656.17):
  * - Filing window OPENS: 30 days after LAST recruitment step ends
  * - Filing window CLOSES: 180 days after FIRST recruitment step starts
- *   (or PWD expiration date, whichever is earlier)
+ *   (or PWD expiration date, whichever is earlier, only while the PWD still
+ *   limits the case: perm/dates/pwdValidity.ts)
  *
  * IMPORTANT: Additional recruitment dates (additionalRecruitmentEndDate, additionalRecruitmentMethods)
  * should ONLY be included if isProfessionalOccupation is true.
@@ -35,6 +36,7 @@ import {
   getMinDate,
 } from './dateValidation';
 import { getLastRecruitmentDate } from './perm/dates/filingWindow';
+import { pwdFilingLimitFromCase } from './perm/dates/pwdValidity';
 import { calculateI140FilingDeadline } from './perm/calculators/i140';
 
 // Re-export for backwards compatibility
@@ -71,8 +73,12 @@ export interface DerivedCalculationInput {
     subEntries?: Array<{ date: string }>;
   }>;
 
-  // PWD expiration date (optional constraint for filing window)
+  // PWD dates. The expiry limits the windows only while it still limits the
+  // case (convex/lib/perm/dates/pwdValidity.ts: 20 CFR 656.40(c) as the Board
+  // read it in Karl Storz, 2011): the determination date decides that.
   pwdExpirationDate?: string | null;
+  pwdDeterminationDate?: string | null;
+  additionalRecruitmentStartDate?: string | null;
 
   // Flag to determine if additional recruitment dates should be included
   isProfessionalOccupation: boolean;
@@ -89,9 +95,9 @@ export interface DerivedDates {
   recruitmentEndDate: string | null;
   /** recruitmentEndDate + 30 days */
   filingWindowOpens: string | null;
-  /** MIN(recruitmentStartDate + 180 days, pwdExpirationDate) */
+  /** MIN(recruitmentStartDate + 180 days, the PWD limit) */
   filingWindowCloses: string | null;
-  /** MIN(recruitmentStartDate + 150 days, pwdExpirationDate - 30 days) */
+  /** MIN(recruitmentStartDate + 150 days, the PWD limit - 30 days) */
   recruitmentWindowCloses: string | null;
 }
 
@@ -293,14 +299,10 @@ export function calculateDerivedDates(
   const recruitmentStartDate = calculateRecruitmentStartDate(input);
   const recruitmentEndDate = calculateRecruitmentEndDate(input);
   const filingWindowOpens = calculateFilingWindowOpens(recruitmentEndDate);
-  const filingWindowCloses = calculateFilingWindowCloses(
-    recruitmentStartDate,
-    input.pwdExpirationDate
-  );
-  const recruitmentWindowCloses = calculateRecruitmentWindowCloses(
-    recruitmentStartDate,
-    input.pwdExpirationDate
-  );
+  // The PWD expiry caps these only while it still limits the case.
+  const pwdLimit = pwdFilingLimitFromCase(input) ?? null;
+  const filingWindowCloses = calculateFilingWindowCloses(recruitmentStartDate, pwdLimit);
+  const recruitmentWindowCloses = calculateRecruitmentWindowCloses(recruitmentStartDate, pwdLimit);
 
   return {
     recruitmentStartDate,

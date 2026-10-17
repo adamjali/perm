@@ -286,8 +286,21 @@ describe("calculateNextDeadline", () => {
     ).toBeNull();
   });
 
-  it("returns PWD expiration deadline when available", () => {
-    // Recruitment done, ETA 9089 NOT yet filed → PWD expiration is relevant
+  it("returns PWD expiration deadline before recruitment begins", () => {
+    // No recruitment yet: the PWD expiry is the day it has to begin by
+    const result = calculateNextDeadline({
+      ...baseCaseData,
+      ...pwdDone,
+      caseStatus: "recruitment",
+      pwdExpirationDate: "2025-08-01",
+    });
+    expect(result).not.toBeNull();
+    expect(result!.label).toContain("PWD");
+  });
+
+  it("drops the PWD expiration once recruitment began inside its validity (20 CFR 656.40(c))", () => {
+    // Job order Feb 15, inside a determination of Feb 1: the filing window
+    // (Feb 15 + 180 = Aug 14) governs, though the PWD expires Aug 1.
     const result = calculateNextDeadline({
       ...baseCaseData,
       ...recruitmentDone,
@@ -295,7 +308,8 @@ describe("calculateNextDeadline", () => {
       pwdExpirationDate: "2025-08-01",
     });
     expect(result).not.toBeNull();
-    expect(result!.label).toContain("PWD");
+    expect(result!.label).not.toContain("PWD");
+    expect(result!.label).toMatch(/filing window closes/i);
   });
 
   it("returns RFI response deadline when active", () => {

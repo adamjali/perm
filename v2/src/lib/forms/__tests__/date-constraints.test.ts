@@ -14,11 +14,16 @@ import {
 // Helper to format dates consistently
 const formatDate = (date: Date) => format(date, "yyyy-MM-dd");
 
+// What the PWD holds a step to (pwdStepLimit in convex/lib/perm/dates/pwdValidity.ts)
+const NONE = { kind: "none" } as const;
+const fileBy = (date: string) => ({ kind: "file-by", date }) as const;
+const beginBy = (date: string) => ({ kind: "begin-by", date }) as const;
+
 describe("getRecruitmentFieldDeadline", () => {
   describe("notice of filing deadline (now dynamic via subtractBusinessDays)", () => {
     it("returns undefined from getRecruitmentFieldDeadline (NOF removed from config)", () => {
       // NOF is now computed via getNofStartDeadline using calculateRecruitmentDeadlines
-      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', "2024-02-01", undefined);
+      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', "2024-02-01", NONE);
       expect(result.maxDate).toBeUndefined();
     });
 
@@ -41,7 +46,7 @@ describe("getRecruitmentFieldDeadline", () => {
   describe("job order start deadline", () => {
     it("returns 120 days from first recruitment when no PWD expiration", () => {
       const firstRecruitment = "2024-02-01";
-      const result = getRecruitmentFieldDeadline('jobOrderStartDate', firstRecruitment, undefined);
+      const result = getRecruitmentFieldDeadline('jobOrderStartDate', firstRecruitment, NONE);
 
       const expected = formatDate(addDays(new Date(firstRecruitment + "T00:00:00"), 120));
       expect(result.maxDate).toBe(expected);
@@ -49,10 +54,17 @@ describe("getRecruitmentFieldDeadline", () => {
       expect(result.hint).toContain("must be posted 30 days before recruitment deadline");
     });
 
+    it("before recruitment begins, the step that begins it must start by the PWD expiry", () => {
+      const result = getRecruitmentFieldDeadline('jobOrderStartDate', undefined, beginBy("2024-05-01"));
+      expect(result.maxDate).toBe("2024-05-01");
+      expect(result.limitingFactor).toBe('pwd-begin');
+      expect(result.hint).toContain("recruitment has to begin by the PWD expiration");
+    });
+
     it("returns 60 days before PWD exp when earlier", () => {
       const firstRecruitment = "2024-02-01";
       const pwdExpiration = "2024-05-01"; // 60 days before = Mar 2
-      const result = getRecruitmentFieldDeadline('jobOrderStartDate', firstRecruitment, pwdExpiration);
+      const result = getRecruitmentFieldDeadline('jobOrderStartDate', firstRecruitment, fileBy(pwdExpiration));
 
       const expected = formatDate(subDays(new Date(pwdExpiration + "T00:00:00"), 60));
       expect(result.maxDate).toBe(expected);
@@ -64,7 +76,7 @@ describe("getRecruitmentFieldDeadline", () => {
   describe("Sunday ad deadlines (must be Sunday)", () => {
     it("first Sunday deadline is last Sunday on or before 143 days from recruitment", () => {
       const firstRecruitment = "2024-02-01";
-      const result = getRecruitmentFieldDeadline('sundayAdFirstDate', firstRecruitment, undefined);
+      const result = getRecruitmentFieldDeadline('sundayAdFirstDate', firstRecruitment, NONE);
 
       // 143 days from Feb 1 = Jun 23. If Jun 23 is not a Sunday, get the last Sunday before it
       const deadline143 = addDays(new Date(firstRecruitment + "T00:00:00"), 143);
@@ -77,7 +89,7 @@ describe("getRecruitmentFieldDeadline", () => {
 
     it("second Sunday deadline is last Sunday on or before 150 days from recruitment", () => {
       const firstRecruitment = "2024-02-01";
-      const result = getRecruitmentFieldDeadline('sundayAdSecondDate', firstRecruitment, undefined);
+      const result = getRecruitmentFieldDeadline('sundayAdSecondDate', firstRecruitment, NONE);
 
       // 150 days from Feb 1. If not Sunday, get the last Sunday before it
       const deadline150 = addDays(new Date(firstRecruitment + "T00:00:00"), 150);
@@ -91,7 +103,7 @@ describe("getRecruitmentFieldDeadline", () => {
 
   describe("edge cases", () => {
     it("returns undefined when no dates provided", () => {
-      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', undefined, undefined);
+      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', undefined, NONE);
 
       expect(result.maxDate).toBeUndefined();
       expect(result.limitingFactor).toBeUndefined();
@@ -100,12 +112,12 @@ describe("getRecruitmentFieldDeadline", () => {
 
     it("returns undefined for NOF from getRecruitmentFieldDeadline (handled dynamically)", () => {
       // NOF is no longer in the deadline config — it's computed by getNofStartDeadline
-      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', undefined, "2024-06-30");
+      const result = getRecruitmentFieldDeadline('noticeOfFilingStartDate', undefined, fileBy("2024-06-30"));
       expect(result.maxDate).toBeUndefined();
     });
 
     it("returns undefined for unknown field", () => {
-      const result = getRecruitmentFieldDeadline('unknownField', "2024-02-01", "2024-06-30");
+      const result = getRecruitmentFieldDeadline('unknownField', "2024-02-01", fileBy("2024-06-30"));
 
       expect(result.maxDate).toBeUndefined();
       expect(result.limitingFactor).toBeUndefined();
@@ -322,10 +334,22 @@ describe("getProfessionalDateConstraints", () => {
       expect(constraints.additionalRecruitmentStartDate.hint).toContain("recruitment deadline");
     });
 
-    it("uses 30 days before PWD expiration when earlier", () => {
-      const pwdExpiration = "2024-05-01"; // Will be earlier than 150 days from first recruitment
+    it("no PWD buffer once recruitment began inside the PWD's validity (20 CFR 656.40(c))", () => {
       const constraints = getProfessionalDateConstraints({
         pwdDeterminationDate: "2024-01-15",
+        sundayAdFirstDate: "2024-02-15",
+        jobOrderStartDate: "2024-02-01",
+        noticeOfFilingStartDate: "2024-03-01",
+        pwdExpirationDate: "2024-05-01",
+      });
+      // first (Feb 1) + 150, past the PWD expiry
+      expect(constraints.additionalRecruitmentStartDate.max).toBe("2024-06-30");
+    });
+
+    it("uses 30 days before PWD expiration when earlier and recruitment began before the determination", () => {
+      const pwdExpiration = "2024-05-01"; // Will be earlier than 150 days from first recruitment
+      const constraints = getProfessionalDateConstraints({
+        pwdDeterminationDate: "2024-02-05",
         sundayAdFirstDate: "2024-02-15",
         jobOrderStartDate: "2024-02-01",
         noticeOfFilingStartDate: "2024-03-01",

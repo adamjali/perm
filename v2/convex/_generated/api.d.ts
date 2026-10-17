@@ -55,6 +55,7 @@ import type * as dolProcessingTimes from "../dolProcessingTimes.js";
 import type * as emailLedger from "../emailLedger.js";
 import type * as emailPrefs from "../emailPrefs.js";
 import type * as employerAlerts from "../employerAlerts.js";
+import type * as filingWindowRecompute from "../filingWindowRecompute.js";
 import type * as firmClaims from "../firmClaims.js";
 import type * as googleAuth from "../googleAuth.js";
 import type * as googleCalendarActions from "../googleCalendarActions.js";
@@ -148,6 +149,7 @@ import type * as lib_perm_dates_filingWindow from "../lib/perm/dates/filingWindo
 import type * as lib_perm_dates_holidays from "../lib/perm/dates/holidays.js";
 import type * as lib_perm_dates_index from "../lib/perm/dates/index.js";
 import type * as lib_perm_dates_monthUtils from "../lib/perm/dates/monthUtils.js";
+import type * as lib_perm_dates_pwdValidity from "../lib/perm/dates/pwdValidity.js";
 import type * as lib_perm_deadlines_buildDeadlineInput from "../lib/perm/deadlines/buildDeadlineInput.js";
 import type * as lib_perm_deadlines_extractActiveDeadlines from "../lib/perm/deadlines/extractActiveDeadlines.js";
 import type * as lib_perm_deadlines_index from "../lib/perm/deadlines/index.js";
@@ -285,6 +287,7 @@ declare const fullApi: ApiFromModules<{
   emailLedger: typeof emailLedger;
   emailPrefs: typeof emailPrefs;
   employerAlerts: typeof employerAlerts;
+  filingWindowRecompute: typeof filingWindowRecompute;
   firmClaims: typeof firmClaims;
   googleAuth: typeof googleAuth;
   googleCalendarActions: typeof googleCalendarActions;
@@ -378,6 +381,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/dates/holidays": typeof lib_perm_dates_holidays;
   "lib/perm/dates/index": typeof lib_perm_dates_index;
   "lib/perm/dates/monthUtils": typeof lib_perm_dates_monthUtils;
+  "lib/perm/dates/pwdValidity": typeof lib_perm_dates_pwdValidity;
   "lib/perm/deadlines/buildDeadlineInput": typeof lib_perm_deadlines_buildDeadlineInput;
   "lib/perm/deadlines/extractActiveDeadlines": typeof lib_perm_deadlines_extractActiveDeadlines;
   "lib/perm/deadlines/index": typeof lib_perm_deadlines_index;

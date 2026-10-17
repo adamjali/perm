@@ -364,6 +364,8 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           jobOrderStartDate={values.jobOrderStartDate}
           noticeOfFilingStartDate={values.noticeOfFilingStartDate}
           isProfessionalOccupation={values.isProfessionalOccupation}
+          additionalRecruitmentStartDate={values.additionalRecruitmentStartDate}
+          additionalRecruitmentMethods={values.additionalRecruitmentMethods}
         />
 
         {/* ========== SUNDAY NEWSPAPER ADS ========== */}

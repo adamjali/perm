@@ -4,10 +4,13 @@
  * Pure functions for automatic deadline enforcement logic.
  * All functions are testable without database dependencies.
  *
- * Business Rules (per perm_flow.md lines 74-78):
- * 1. PWD expires before ETA 9089 filed → case closed
- * 2. 180-day recruitment window missed → restart recruitment if PWD >60 days, else close
- * 3. ETA 9089 filing window missed → restart recruitment if PWD >60 days, else close
+ * Business Rules (per perm_flow.md lines 74-78, with the PWD rule of
+ * 20 CFR 656.40(c) as read in perm/dates/pwdValidity.ts):
+ * 1. PWD expires before ETA 9089 filed → case closed, unless recruitment began
+ *    inside the PWD's validity (then the 180-day filing window governs); with
+ *    no determination date on file it's flagged for review, never closed
+ * 2. 180-day recruitment window missed → restart recruitment while the PWD is valid, else close
+ * 3. ETA 9089 filing window missed → restart recruitment while the PWD is valid, else close
  * 4. ETA 9089 certification expired → restart if possible, else close
  *
  * @see /perm_flow.md - Source of truth for business rules
@@ -38,13 +41,20 @@ import {
   isRecruitmentComplete,
   type RecruitmentCheckInput,
 } from "./perm/recruitment/isRecruitmentComplete";
+import { pwdBearingFromCase, type PwdBearing } from "./perm/dates/pwdValidity";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-/** Days before PWD expiration when restart is no longer viable */
-export const MIN_DAYS_FOR_RESTART = 60;
+/**
+ * Days of PWD validity a restart needs. Recruitment only has to BEGIN inside
+ * the validity period (20 CFR 656.40(c), Karl Storz, BALCA en banc 2011), so a
+ * restart is viable through the expiry day itself. It was 60 (a 30-day job
+ * order plus the 30-day quiet period before the expiry) under the stricter
+ * reading the app used until Oct 16 2026.
+ */
+export const MIN_DAYS_FOR_RESTART = 0;
 
 /** Map ViolationType to DeadlineNotificationType for email formatting. Single source of truth. */
 export const VIOLATION_TO_DEADLINE_TYPE: Record<ViolationType, DeadlineNotificationType> = {
@@ -115,6 +125,11 @@ export interface CaseDataForEnforcement {
 
   // PWD phase
   pwdExpirationDate?: string | null;
+  /**
+   * How the PWD bears on the case (pwdBearingFromCase). Absent, the PWD check
+   * keeps its old, stricter behavior: an expiry before filing closes the case.
+   */
+  pwdBearing?: PwdBearing;
 
   // Recruitment phase
   recruitmentStartDate?: string | null;
@@ -152,6 +167,7 @@ export function mapCaseToEnforcementData(
     caseStatus: caseDoc.caseStatus,
     deletedAt: caseDoc.deletedAt,
     pwdExpirationDate: caseDoc.pwdExpirationDate,
+    pwdBearing: pwdBearingFromCase(caseDoc as Parameters<typeof pwdBearingFromCase>[0]),
     recruitmentStartDate: caseDoc.recruitmentStartDate,
     recruitmentEndDate: caseDoc.recruitmentEndDate,
     // Computed from the raw recruitment fields on the doc rather than stored,
@@ -193,16 +209,16 @@ function daysBetween(fromISO: string, toISO: string): number | null {
 /**
  * Check if there's enough time to restart recruitment or ETA 9089.
  *
- * Per perm_flow.md: If PWD has 60 days or less remaining, case must close
- * because there isn't enough time to restart the process.
+ * A restart begins new recruitment, which only has to begin while the PWD is
+ * valid (20 CFR 656.40(c)), so it's viable through the expiry day.
  *
  * @param pwdExpirationDate - PWD expiration date (ISO string)
  * @param todayISO - Reference date (ISO string)
- * @returns true if >60 days until PWD expiration
+ * @returns true while the PWD hasn't expired
  *
  * @example
- * canRestartProcess("2024-12-31", "2024-10-01") // true (91 days)
- * canRestartProcess("2024-11-15", "2024-10-01") // false (45 days)
+ * canRestartProcess("2024-11-15", "2024-10-01") // true (45 days)
+ * canRestartProcess("2024-09-30", "2024-10-01") // false (expired yesterday)
  */
 export function canRestartProcess(
   pwdExpirationDate: string | null | undefined,
@@ -227,7 +243,7 @@ export function canRestartProcess(
  *
  * @param pwdExpirationDate - PWD expiration date (ISO string)
  * @param todayISO - Reference date (ISO string)
- * @returns "viable" (>60 days), "not_viable" (≤60 days), or "unknown" (no usable date)
+ * @returns "viable" (the PWD is valid today), "not_viable" (it has expired), or "unknown" (no usable date)
  */
 export function getRestartViability(
   pwdExpirationDate: string | null | undefined,
@@ -239,7 +255,7 @@ export function getRestartViability(
 
   if (daysRemaining === null) return "unknown";
 
-  return daysRemaining > MIN_DAYS_FOR_RESTART ? "viable" : "not_viable";
+  return daysRemaining >= MIN_DAYS_FOR_RESTART ? "viable" : "not_viable";
 }
 
 /**
@@ -262,7 +278,11 @@ function actionForViability(viability: RestartViability): SuggestedAction {
 /**
  * Check for PWD expiration violation.
  *
- * Rule: PWD expires before ETA 9089 filed → case must close
+ * Rule: PWD expires before ETA 9089 filed → case must close, unless recruitment
+ * began inside the PWD's validity (20 CFR 656.40(c), Karl Storz, BALCA en banc
+ * 2011): then the filing window (first step + 180 days) governs and
+ * checkFilingWindow decides. With no determination date on file the case can't
+ * be judged, so it's flagged for review and never closed.
  *
  * @param caseData - Case data for enforcement check
  * @param todayISO - Reference date (ISO string)
@@ -275,6 +295,7 @@ function checkPwdExpiration(
   // Only check if we have PWD expiration and ETA 9089 is NOT filed
   if (!isValidISODate(caseData.pwdExpirationDate)) return null;
   if (caseData.eta9089FilingDate) return null; // ETA 9089 already filed, PWD expiration doesn't matter
+  if (caseData.pwdBearing === "began-inside") return null; // the filing window governs
 
   const daysUntil = daysBetween(todayISO, caseData.pwdExpirationDate);
 
@@ -282,9 +303,23 @@ function checkPwdExpiration(
 
   // PWD has expired (past the date)
   if (daysUntil < 0) {
+    if (caseData.pwdBearing === "determination-unknown") {
+      return {
+        type: "pwd_expired",
+        reason: `PWD expired on ${caseData.pwdExpirationDate} and the ETA 9089 isn't filed. If recruitment began on or after the determination date the case can still be filed, so add that date to check.`,
+        suggestedAction: "review",
+        canRestart: false,
+      };
+    }
+    const why =
+      caseData.pwdBearing === "began-before"
+        ? " Recruitment began before the determination, so the ETA 9089 had to be filed by then."
+        : caseData.pwdBearing === "not-begun" || caseData.pwdBearing === "began-after"
+          ? " Recruitment didn't begin while it was valid."
+          : "";
     return {
       type: "pwd_expired",
-      reason: `PWD expired on ${caseData.pwdExpirationDate}. ETA 9089 was not filed before expiration.`,
+      reason: `PWD expired on ${caseData.pwdExpirationDate}. ETA 9089 was not filed before expiration.${why}`,
       suggestedAction: "close",
       canRestart: false, // PWD expired = must start entirely new PERM process
     };
@@ -297,8 +332,8 @@ function checkPwdExpiration(
  * Check for recruitment window missed violation.
  *
  * Rule: 180-day recruitment window missed →
- *   - If PWD has >60 days: can restart recruitment
- *   - If PWD has ≤60 days: case must close
+ *   - If the PWD is still valid: can restart recruitment
+ *   - If it has expired: case must close
  *
  * @param caseData - Case data for enforcement check
  * @param todayISO - Reference date (ISO string)
@@ -373,9 +408,10 @@ function checkRecruitmentWindow(
 /**
  * Check for ETA 9089 filing window missed violation.
  *
- * Rule: ETA 9089 filing window missed (180 days from first recruitment OR PWD expired) →
- *   - If PWD has >60 days: can restart recruitment
- *   - If PWD has ≤60 days: case must close
+ * Rule: ETA 9089 filing window missed (180 days from first recruitment, or the
+ * PWD expiry while it still limits the case) →
+ *   - If the PWD is still valid: can restart recruitment
+ *   - If it has expired: case must close
  *
  * @param caseData - Case data for enforcement check
  * @param todayISO - Reference date (ISO string)
@@ -413,7 +449,9 @@ function checkFilingWindow(
  * Check for ETA 9089 certification expiration violation.
  *
  * Rule: ETA 9089 certified but I-140 not filed within 180 days →
- *   - If within 180 days of first recruitment AND PWD valid: can restart ETA 9089
+ *   - If the filing window is still open, and the PWD is valid or recruitment
+ *     began inside its validity: can refile the ETA 9089
+ *   - Else, while the PWD is valid: restart recruitment
  *   - Otherwise: case must close
  *
  * @param caseData - Case data for enforcement check
@@ -445,7 +483,6 @@ function checkEta9089Expiration(
   if (daysUntil < 0) {
     // Check if we can restart ETA 9089 (need valid PWD and time)
     const viability = getRestartViability(caseData.pwdExpirationDate, todayISO);
-    const canRestart = viability === "viable";
 
     // Default via actionForViability, so an unknown PWD yields "review" rather
     // than "close" — this branch previously started at "close" and only moved
@@ -453,22 +490,24 @@ function checkEta9089Expiration(
     // closed the case here too.
     let suggestedAction: SuggestedAction = actionForViability(viability);
 
-    // Also need to be within recruitment filing window to restart ETA 9089
-    // If filing window is also closed, must restart recruitment entirely
-    if (canRestart) {
-      // Check if filing window is still open (filingWindowCloses is DOL-governed)
-      if (isValidISODate(caseData.filingWindowCloses)) {
-        const filingToday = dolTodayISO ?? todayISO;
-        const filingDaysUntil = daysBetween(filingToday, caseData.filingWindowCloses);
-        if (filingDaysUntil !== null && filingDaysUntil >= 0) {
-          suggestedAction = "restart_eta9089";
-        } else {
-          suggestedAction = "restart_recruitment";
-        }
-      } else {
-        suggestedAction = "restart_eta9089";
-      }
+    // Refiling the ETA 9089 needs the filing window still open
+    // (filingWindowCloses is DOL-governed). The PWD doesn't stand in the way of
+    // a refiling when recruitment began inside its validity (20 CFR 656.40(c)).
+    let windowOpen: boolean | null = null; // null: no window date on file
+    if (isValidISODate(caseData.filingWindowCloses)) {
+      const filingToday = dolTodayISO ?? todayISO;
+      const filingDaysUntil = daysBetween(filingToday, caseData.filingWindowCloses);
+      windowOpen = filingDaysUntil !== null && filingDaysUntil >= 0;
     }
+    const pwdAllowsRefiling = viability === "viable" || caseData.pwdBearing === "began-inside";
+
+    if (pwdAllowsRefiling && windowOpen !== false) {
+      suggestedAction = "restart_eta9089";
+    } else if (viability === "viable") {
+      // If filing window is also closed, must restart recruitment entirely
+      suggestedAction = "restart_recruitment";
+    }
+    const canRestart = suggestedAction === "restart_eta9089" || suggestedAction === "restart_recruitment";
 
     return {
       type: "eta9089_expired",
@@ -583,7 +622,11 @@ export function generateClosureMessage(
   // expiration date). Say so plainly rather than recommending a remedy we have
   // no basis for — and never imply the case was closed, because it wasn't.
   if (violation.suggestedAction === "review") {
-    return `Case for ${caseLabel} needs review: ${violation.reason} The PWD expiration date is missing, so we can't tell whether there's time to restart. This case has NOT been closed.`;
+    const missing =
+      violation.type === "pwd_expired"
+        ? ""
+        : " The PWD expiration date is missing, so we can't tell whether there's time to restart.";
+    return `Case for ${caseLabel} needs review: ${violation.reason}${missing} This case has NOT been closed.`;
   }
 
   // Case needs restart but isn't being closed

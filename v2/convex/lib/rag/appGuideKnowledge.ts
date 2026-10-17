@@ -934,9 +934,10 @@ Related: Notification Settings, Notifications Page`,
 Auto-Close Triggers:
 
 1. PWD Expiration Passed
-- If PWD expires before ETA 9089 is filed
-- Case must be closed; recruitment cannot continue
-- Must start new PERM process from scratch
+- If PWD expires before ETA 9089 is filed and recruitment didn't begin while it was valid (or began before the determination date)
+- Case must be closed; a new PWD is needed
+- Recruitment begun on or after the determination date and on or before the expiration keeps the case open: the ETA 9089 can still be filed within 180 days of the first recruitment step (20 CFR 656.40(c))
+- With no determination date on file the case is flagged for review, never closed
 
 2. 180-Day Recruitment Window Missed
 - If ETA 9089 not filed within 180 days of first recruitment
@@ -1136,7 +1137,7 @@ ETA 9089 Filing Window:
 - Countdown shows "Window opens in X days" before
 
 2. Window Closes
-- EARLIER of: 180 days after FIRST recruitment OR PWD expiration
+- 180 days after FIRST recruitment; the PWD expiration closes it earlier only when recruitment began before the determination date
 - Deadline shown prominently when window is open
 - Countdown shows days remaining
 
@@ -1168,11 +1169,11 @@ Dashboard Integration:
 30-180 Day Rule Explained:
 - Must wait 30 days after recruitment ends (cooling off period)
 - Must file within 180 days of first recruitment step
-- PWD expiration date may further limit the window
+- The PWD expiration limits the window only when recruitment began before the determination date (20 CFR 656.40(c), Karl Storz, BALCA en banc 2011)
 - System calculates the most restrictive deadline
 
 PWD Limited Cases:
-- When PWD expires before 180-day mark
+- Recruitment began before the determination date and the PWD expires before the 180-day mark
 - Window closes at PWD expiration instead
 - Flagged with special "PWD Limited" indicator
 - Requires faster action than standard timeline
@@ -1731,7 +1732,7 @@ Monitor: Dashboard shows "Ready to File" when window opens
 
 Stage 3: ETA 9089 Filing
 
-Window: Opens 30 days after last recruitment, closes at 180 days or PWD expiration
+Window: Opens 30 days after last recruitment, closes at 180 days (at the PWD expiration if that's earlier and recruitment began before the determination)
 Action: File ETA 9089 with DOL
 Track: Enter ETA 9089 filing date
 If RFI: Add RFI entry with received date, due date auto-calculates

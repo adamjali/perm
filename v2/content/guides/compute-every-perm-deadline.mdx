@@ -2,7 +2,7 @@
 title: "Compute every PERM deadline from one date"
 description: "Enter the prevailing wage determination date and your recruitment dates to get every dependent PERM deadline, including the cap hand arithmetic misses."
 date: "2026-09-03"
-updated: "2026-09-26"
+updated: "2026-10-16"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/compute-every-perm-deadline.webp"
 imageAlt: "The PERM deadline calculator: every date in a case computed from the wage determination and recruitment dates"
@@ -39,7 +39,7 @@ No account is needed for that, and if the number isn't already held here, the si
 <StepByStep>
 
 <Step title="The determination date">
-The only required input. On its own it gives you the date the determination expires, which is the outer limit on everything else.
+The only required input. On its own it gives you the date the determination expires, which is the day recruitment has to begin by.
 </Step>
 
 <Step title="The first recruitment step">
@@ -61,9 +61,9 @@ Optional. Needed only for the date the filing window opens, because that runs fr
 
 ## What comes back
 
-Each date carries two constraints, and the tool shows the earlier of the two. That second column is the part people leave out when they do this by hand.
+Each date is measured from recruitment. The wage expiry adds a second cap only when recruitment began before the determination was issued, and then the tool shows the earlier of the two.
 
-| The date | Measured from recruitment | Also capped by the wage expiry |
+| The date | Measured from recruitment | Also capped by the wage expiry, if recruitment began before the determination |
 |---|---|---|
 | Wage determination expires | not applicable | this is the expiry, under 656.40(c) |
 | State job order must start by | first step plus 120 days | 60 days before the expiry |
@@ -74,15 +74,15 @@ Each date carries two constraints, and the tool shows the earlier of the two. Th
 
 The wage expiry is not a fixed number of days, which is why it can't be done in your head. Under [656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40) a determination issued in July is good until 30 June of the following year, one issued in January is good until 30 June of that same year, and one issued in May lasts about 90 days. Same employer, same job, very different amount of room.
 
-## The rule a raw calculator misses
+## When the wage expiry closes the window
 
-The filing window closes at the **earlier** of two dates: 180 days after the first recruitment step, and the day the wage determination expires.
+[20 CFR 656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40) asks employers to "file their applications or begin the recruitment period" while the determination is valid. Either one is enough. So when the first recruitment step falls on or after the determination date and on or before its expiry, the filing window closes 180 days after that first step, even if that's after the determination expires. The Board of Alien Labor Certification Appeals read the rule this way en banc in *Karl Storz Endoscopy-America* (2011-PER-00040, December 1, 2011). The notice of filing doesn't count as beginning recruitment for this.
 
-Take the 180-day rule alone and you can produce a close date that sits weeks after the determination lapsed. That date looks fine. It is a day on which filing is already barred, and there is no version of the case where it works.
+The wage expiry closes the window early in one case: recruitment that began before the determination was issued. Then the window closes at the earlier of 180 days after the first step and the determination's expiry, and the tool says so on the date itself.
 
-So the tool computes both and prints the earlier one, and when the wage expiry is what closed the window it says so on the date itself rather than leaving you to notice. That matters because the two situations call for different responses. A window closed by the 180-day limit means the recruitment is stale. A window closed by the wage expiry means the recruitment is fine and the determination ran out first.
+The tool asks for the determination date, so it knows which case you're in. Check with the attorney on the case before relying on a filing after the expiry.
 
-We shipped the wrong version of this once, before the calculator was moved onto the same date functions the tracker itself uses.
+We've changed this rule twice. The calculator once ignored the wage expiry altogether, and from August to October 2026 it applied the expiry to every case, which was stricter than DOL. Both are recorded in the [corrections log](/changelog/corrections).
 
 ## When it warns instead of answering
 

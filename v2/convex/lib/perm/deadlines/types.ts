@@ -104,8 +104,10 @@ export interface CaseDataForDeadlines {
   progressStatus?: ProgressStatus;
   deletedAt?: number;
 
-  // PWD dates
+  // PWD dates (the determination date decides whether the expiry still limits
+  // the case: convex/lib/perm/dates/pwdValidity.ts)
   pwdExpirationDate?: string;
+  pwdDeterminationDate?: string;
 
   // ETA 9089 dates (for supersession checks)
   eta9089FilingDate?: string;
@@ -205,6 +207,7 @@ export const SUPERSESSION_REASONS = {
   FIRST_SUNDAY_AD_PLACED: "First Sunday ad has been placed",
   SECOND_SUNDAY_AD_PLACED: "Second Sunday ad has been placed",
   NO_FIRST_RECRUITMENT: "No recruitment activity started yet",
+  RECRUITMENT_BEGAN_IN_VALIDITY: "Recruitment began while the wage determination was valid",
   RECRUITMENT_COMPLETE: "All recruitment activities completed",
 } as const;
 

@@ -1,7 +1,7 @@
 ---
 title: "Corrections"
 description: "Every time this site published something wrong about its data, its process or the rules: what it said, what was true, and what changed."
-date: "2026-09-07"
+date: "2026-10-16"
 author: "PERM Tracker team"
 image: "/images/content/heroes/changelog/corrections.webp"
 imageAlt: "How the numbers are computed: six readings of one PERM average side by side"
@@ -18,6 +18,14 @@ was true, and says what changed so it can't recur.
 The bar for an entry is a reader who could have formed a false belief from the
 page; an internal bug alone doesn't qualify. A wrong number on a live page
 qualifies. A typo doesn't, and a design somebody disliked doesn't unless it misled.
+
+## The deadline calculator, the case tracker and the deadline guides · Oct 16, 2026
+
+**It said:** The ETA 9089 filing window always closes when the prevailing wage determination expires, if that comes before 180 days after the first recruitment step. The tracker would not save a filing dated after the expiry, and closed a case automatically when the determination expired before the filing.
+
+**What was true:** [20 CFR 656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40) asks employers to "file their applications or begin the recruitment period" while the determination is valid, and either is enough. Recruitment that begins on or after the determination date and on or before its expiry can be filed after the determination expires, inside the 180-day window. The Board of Alien Labor Certification Appeals read the rule this way en banc in *Karl Storz Endoscopy-America* (2011-PER-00040, December 1, 2011). The expiry still closes the window early when recruitment began before the determination was issued. The August 29 correction below fixed a calculator that ignored the expiry, and went too far the other way.
+
+**What changed:** One rule in the code decides when the determination still limits a case, and the calculator, the case form, the deadline reminders, the automatic closing and the guides all read it. The calculator asks for the determination date, so it can tell which case you're in. [See the corrected calculator](/tools/perm-deadline-calculator).
 
 ## The case status page · Sep 7, 2026
 

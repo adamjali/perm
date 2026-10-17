@@ -1,4 +1,11 @@
 PERM Workflow
+
+THE PWD RULE (corrected Oct 16 2026, confirmed by the attorney). 20 CFR 656.40(c): employers must "file their applications or begin the recruitment period ... within the validity period". BALCA en banc, Karl Storz Endoscopy-America (2011-PER-00040, Dec 1 2011): beginning means the first recruitment step, and recruitment begun before the determination means filing within validity. MPHASIS (2011-PER-00207, Aug 10 2015) was certified though filed 9 days after the PWD expired. So:
+	⁃	Recruitment has to BEGIN by pwded (job order, a Sunday ad, or a professional occupation's additional step; the notice of filing is not a recruitment step for this test).
+	⁃	First step on or after pwddd and on or before pwded: pwded no longer limits anything. Every "or N days before pwded" below drops away, and the ETA 9089 may be filed after pwded, within 180 days of the first step.
+	⁃	First step before pwddd, or no pwddd entered: the old rule stands. Each "or N days before pwded, whichever is first" applies, and the ETA 9089 must be filed by pwded.
+	⁃	First step after pwded: that PWD can't be used.
+	⁃	Code: convex/lib/perm/dates/pwdValidity.ts is the one place this lives.
 	1.	PWD application —> filing date —> PWD Status Filed
 	2.	PWD determination —> PWD Status Approved —> Really Recruitment Working on it
 	3.	Fill out recruitment —> Recruitment Working on it —> done becomes Recruitment Waiting period
@@ -71,10 +78,10 @@ Progress Status (its own tag no box no color)
 	6.	RFI/RFE
 
 Edge Cases:
-	1.	If at any point, pwd expires (before eta 9089 filed), a noti is sent with pop up on next log in and that case is closed/archived
-	2.	If at any point you miss the 180 day deadline for recruitment, must restart recruitment. If not enough time to do because of pwded (60 days or less) same as 1, with proper reasoning in noti
-	3.	If at any point you miss the eta 9089 expiration window (180 day deadline for recruitment), must restart recruitment. If not enough time to do because of pwded (60 days or less) same as 1, with proper reasoning in noti
-	4.	If at any point you miss Eta 9089 expiration date from the cert then you must restart eta 9089 filing if 180 days from start recruitment didn’t pass and pwded didn’t end, if either ended follow preivious workflow.  if too late then same as 1 with proper reasoning in noti
+	1.	If at any point, pwd expires (before eta 9089 filed), a noti is sent with pop up on next log in and that case is closed/archived. Not when recruitment began inside the PWD's validity (the 180-day window governs then); with no pwddd entered it's flagged for review, never closed (see THE PWD RULE)
+	2.	If at any point you miss the 180 day deadline for recruitment, must restart recruitment. If the PWD has expired (a restart only has to BEGIN recruitment while it's valid) same as 1, with proper reasoning in noti
+	3.	If at any point you miss the eta 9089 expiration window (180 day deadline for recruitment), must restart recruitment. If the PWD has expired same as 1, with proper reasoning in noti
+	4.	If at any point you miss Eta 9089 expiration date from the cert then you must restart eta 9089 filing if 180 days from start recruitment didn’t pass and pwded didn’t end (or recruitment began inside the PWD's validity), if either ended follow preivious workflow.  if too late then same as 1 with proper reasoning in noti
 
 Date Validation:
 	1.	pwd filing date cannot be in the future
@@ -88,14 +95,14 @@ Date Validation:
 	⁃	Job order end date must be at least 30 days after job order start (auto calculated dependent on job order start date with live realtime update/change but can be manually override for longer not less, should only recalculate if within the 30 days, if not can stay)
 	⁃	1st Sunday ad must be Sunday, has to be before the last Sunday (including it) that is still at least 143 days after first recruitment or 37 days before pwded whatever comes first (auto recalculates with first recruitment date and pwded date auto update realtime live)
 	⁃	2nd Sunday ad must be on Sunday, before the last Sunday (including) that is at least 150 days after first recruitment or 30 days before pwded whatever comes first (auto recalculates with first recruitment date and pwded date auto update realtime live)
-	5.	eta 9089 filing date must be after 30 days after last recruitment step and before 180 days passes from first recruitment step and before pwded
+	5.	eta 9089 filing date must be after 30 days after last recruitment step and before 180 days passes from first recruitment step, and before pwded only while pwded still limits the case (see THE PWD RULE)
 	6.	Eta 9089 cert date must be after filing date
 	7.	i-140 filing must be after cert date and before exp
 	8.	i-140 approval must be after filing
 
 Important:
-	⁃	Recruitment must finish within 180 days of it starting and before pwded
-	⁃	Eta9089 can only be filed 30 days after last recruitment step and before 180 days after first recruitment step or pwded whichever comes first
+	⁃	Recruitment must finish within 180 days of it starting, and BEGIN before pwded (see THE PWD RULE)
+	⁃	Eta9089 can only be filed 30 days after last recruitment step and before 180 days after first recruitment step, or pwded whichever comes first only while pwded still limits the case (see THE PWD RULE)
 	⁃	Sundays have to be at least one week apart on a Sunday
 	⁃	job order date has to be posted for 30 days
 

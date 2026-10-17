@@ -345,7 +345,9 @@ function planCaseCreate(args: CaseCreateArgs) {
     noticeOfFilingEndDate: args.noticeOfFilingEndDate,
     additionalRecruitmentEndDate: args.additionalRecruitmentEndDate,
     additionalRecruitmentMethods: args.additionalRecruitmentMethods,
+    additionalRecruitmentStartDate: args.additionalRecruitmentStartDate,
     pwdExpirationDate: args.pwdExpirationDate,
+    pwdDeterminationDate: args.pwdDeterminationDate,
     isProfessionalOccupation,
   });
 
@@ -695,6 +697,8 @@ function planCaseUpdate(caseDoc: Doc<"cases">, args: CaseUpdateArgs) {
     additionalRecruitmentEndDate: resolve(args.additionalRecruitmentEndDate, caseDoc.additionalRecruitmentEndDate),
     additionalRecruitmentMethods: args.additionalRecruitmentMethods ?? caseDoc.additionalRecruitmentMethods,
     pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc.pwdExpirationDate),
+    pwdDeterminationDate: resolve(args.pwdDeterminationDate, caseDoc.pwdDeterminationDate),
+    additionalRecruitmentStartDate: resolve(args.additionalRecruitmentStartDate, caseDoc.additionalRecruitmentStartDate),
     isProfessionalOccupation: args.isProfessionalOccupation ?? caseDoc.isProfessionalOccupation,
   };
 
@@ -2333,7 +2337,9 @@ export const importCases = mutation({
         noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
         additionalRecruitmentEndDate: caseData.additionalRecruitmentEndDate,
         additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
+        additionalRecruitmentStartDate: caseData.additionalRecruitmentStartDate,
         pwdExpirationDate: caseData.pwdExpirationDate,
+        pwdDeterminationDate: caseData.pwdDeterminationDate,
         isProfessionalOccupation,
       });
 

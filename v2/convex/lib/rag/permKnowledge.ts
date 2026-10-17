@@ -34,7 +34,7 @@ Date Validation Requirements:
 3. PWD determination date cannot be filled until filing date is entered
 4. PWD expiration date is auto-calculated based on determination date
 
-The PWD expiration date is critical because all recruitment activities must complete and the ETA 9089 must be filed before this date. If PWD expires before ETA 9089 is filed, the case must be closed and the entire process must restart with a new PWD application.
+The PWD expiration date is the day recruitment has to begin by. Under 20 CFR 656.40(c) employers must "file their applications or begin the recruitment period ... within the validity period", and the Board of Alien Labor Certification Appeals read it that way en banc in Karl Storz Endoscopy-America (2011-PER-00040, Dec 1 2011). Once the first recruitment step (the job order, a Sunday ad, or a professional occupation's additional step; the Notice of Filing doesn't count for this) falls on or after the determination date and on or before the expiration, the ETA 9089 may be filed after the PWD expires, within 180 days of that first step. In MPHASIS (2011-PER-00207, Aug 10 2015) an application filed 9 days after the PWD expired was certified on that basis. If recruitment began before the determination date, the ETA 9089 must be filed before the PWD expires. If recruitment never began while the PWD was valid, it can't be used and a new PWD is needed.
 
 Case Status: PWD status spans from filing date to determination date. Color: Blue.`,
     metadata: {
@@ -51,8 +51,8 @@ Case Status: PWD status spans from filing date to determination date. Color: Blu
 
 Recruitment Window:
 - Opens: PWD determination date (can start recruitment 30 days before determination in some cases)
-- Closes: Earlier of (180 days after first recruitment step) OR (PWD expiration date)
-- The PWD expiration date always takes precedence if it comes first
+- Closes: 180 days after the first recruitment step
+- The PWD expiration closes it earlier only when recruitment began before the determination date (or no determination date is on file); otherwise recruitment just has to begin by the expiration
 
 Three Required Recruitment Methods (for all PERM cases):
 1. Notice of Filing - Must be posted for 10 business days
@@ -79,13 +79,11 @@ Notice of Filing Rules:
 - End date is auto-calculated as start date + 10 business days but can be extended (not shortened)
 
 Deadline Calculation:
-The notice of filing deadline is the EARLIER of:
-- 150 days after the first recruitment step, OR
-- 30 days before PWD expiration date
+The notice of filing deadline is 150 days after the first recruitment step. While the PWD still limits the case (recruitment began before the determination date), it's the earlier of that and 30 days before the PWD expiration date. Before recruitment begins, the step that begins it has to start by the PWD expiration; once recruitment has begun inside the PWD's validity the PWD buffer no longer applies.
 
 This calculation accounts for:
 - 30-day waiting period after recruitment ends (required before filing ETA 9089)
-- Need to file ETA 9089 within 180 days of first recruitment AND before PWD expiration
+- Need to file ETA 9089 within 180 days of first recruitment (and before the PWD expiration only while the PWD still limits the case)
 
 Example: If first recruitment step was January 15 and PWD expires December 31:
 - Option A: January 15 + 150 days = June 14
@@ -111,14 +109,12 @@ Job Order Rules:
 - Must be posted in the state where the job is located
 
 Deadline Calculation:
-The job order start deadline is the EARLIER of:
-- 120 days after the first recruitment step, OR
-- 60 days before PWD expiration date
+The job order start deadline is 120 days after the first recruitment step. While the PWD still limits the case (recruitment began before the determination date), it's the earlier of that and 60 days before the PWD expiration date. Before recruitment begins, the step that begins it has to start by the PWD expiration; once recruitment has begun inside the PWD's validity the PWD buffer no longer applies.
 
 This calculation accounts for:
 - The 30-day minimum posting requirement
 - The 30-day waiting period after recruitment ends
-- Need to file within 180 days of first recruitment AND before PWD expiration
+- Need to file within 180 days of first recruitment (and before the PWD expiration only while the PWD still limits the case)
 
 Example: If first recruitment step was January 15 and PWD expires December 31:
 - Option A: January 15 + 120 days = May 15
@@ -139,13 +135,13 @@ The job order must include all required job information matching the ETA 9089 ap
 
 First Sunday Ad Rules:
 - Must be published on a Sunday
-- Deadline: The last Sunday that is at least 143 days after first recruitment OR 37 days before PWD expiration, whichever comes first
+- Deadline: The last Sunday on or before 143 days after first recruitment (also on or before 37 days before PWD expiration, whichever comes first, while the PWD still limits the case)
 - The 143-day calculation accounts for: 7 days until second ad + 30-day waiting period + 180-day total window
 
 Second Sunday Ad Rules:
 - Must be published on a Sunday
 - Must be at least 7 days after the first Sunday ad
-- Deadline: The last Sunday that is at least 150 days after first recruitment OR 30 days before PWD expiration, whichever comes first
+- Deadline: The last Sunday on or before 150 days after first recruitment (also on or before 30 days before PWD expiration, whichever comes first, while the PWD still limits the case)
 
 Example Timeline (first recruitment Jan 15, PWD expires Dec 31):
 - First Sunday ad deadline: Last Sunday on or before June 7 (Jan 15 + 143 days)
@@ -191,9 +187,9 @@ The professional occupation checkbox affects the recruitment completion check - 
     title: "ETA 9089 Filing Window and 30-Day Waiting Period",
     content: `The ETA 9089 is the actual PERM labor certification application filed with the Department of Labor. There is a strict filing window with both minimum and maximum timeframes.
 
-Filing Window Rules (20 CFR 656.40(c)(1)):
+Filing Window Rules (20 CFR 656.17(e), with the PWD rule of 20 CFR 656.40(c)):
 - Window OPENS: 30 days after the LAST recruitment step (mandatory waiting period)
-- Window CLOSES: EARLIER of (180 days after FIRST recruitment step) OR (PWD expiration date)
+- Window CLOSES: 180 days after the FIRST recruitment step. The PWD expiration closes it earlier only when recruitment began before the determination date (Karl Storz Endoscopy-America, BALCA en banc, 2011); recruitment begun inside the PWD's validity can be filed after the PWD expires
 
 The 30-Day Waiting Period:
 - Required before filing ETA 9089
@@ -211,13 +207,13 @@ Filing Window Calculation Example:
 Date Validation:
 - Filing date must be at least 30 days after last recruitment
 - Filing date must be within 180 days of first recruitment
-- Filing date must be before PWD expiration
+- Filing date may be after the PWD expiration only if recruitment began on or after the determination date and on or before the expiration
 
-Case Status: ETA 9089 status spans from 30 days after last recruitment to PWD expiration or 180 days (whichever is first). Color: Orange/Yellow when working.`,
+Case Status: ETA 9089 status spans from 30 days after last recruitment to 180 days after the first recruitment step (earlier, at the PWD expiration, if recruitment began before the determination). Color: Orange/Yellow when working.`,
     metadata: {
       source: "perm_flow.md",
       section: "eta9089-filing-window",
-      cfr: "20 CFR 656.40(c)(1)",
+      cfr: "20 CFR 656.17(e)",
     },
   },
 
@@ -349,7 +345,7 @@ Case Status Types:
 
 3. ETA 9089 (Orange, Yellow when working)
    - Trigger: 30-day waiting period complete
-   - Ends: PWD expiration or 180 days from first recruitment
+   - Ends: 180 days from first recruitment (the PWD expiration, if earlier, only when recruitment began before the determination)
    - Scope: Filing window through certification
 
 4. I-140 (Green)
@@ -423,20 +419,23 @@ The progress status depends on the case status - different progress states are r
   // Section 13: Edge Case - PWD Expiration
   {
     title: "Edge Case: PWD Expiration and Case Closure",
-    content: `If the PWD expires before the ETA 9089 is filed, the case must be closed and the entire PERM process must restart.
+    content: `If the PWD expires before the ETA 9089 is filed, what happens depends on when recruitment began (20 CFR 656.40(c); Karl Storz Endoscopy-America, BALCA en banc, 2011).
 
-PWD Expiration Scenario:
-- Condition: Current date passes PWD expiration date AND ETA 9089 is not yet filed
-- Result: Case is automatically closed/archived
+PWD Expiration Scenarios:
+- Recruitment began on or after the determination date and on or before the expiration: the PWD expiring doesn't end the case. The ETA 9089 can still be filed within 180 days of the first recruitment step, and the case stays open.
+- Recruitment began before the determination date: the ETA 9089 had to be filed by the expiration, so the case closes.
+- Recruitment never began while the PWD was valid: the PWD can't be used, so the case closes.
+- No determination date on file: the case is flagged for review and never closed automatically.
 - Notification: Pop-up on next login + email notification
 
 Closure Process:
 1. System detects PWD expiration date has passed
 2. Checks if ETA 9089 filing date exists
-3. If no filing date: Triggers auto-closure
-4. Notification sent with explanation
-5. Case status changes to Closed/Archived
-6. Progress status becomes "Not Applicable"
+3. Checks when recruitment began against the determination date and the expiration
+4. If no filing date and recruitment didn't begin inside the PWD's validity: Triggers auto-closure
+5. Notification sent with explanation
+6. Case status changes to Closed/Archived
+7. Progress status becomes "Not Applicable"
 
 Recovery:
 - Must start entirely new PERM process
@@ -450,7 +449,7 @@ Prevention Strategies:
 - ETA 9089 filing window status shows urgency
 - Clear deadline display on case view
 
-This is the most common reason for PERM case failure - always prioritize completing recruitment and filing ETA 9089 before PWD expiration.`,
+Start recruitment while the PWD is valid; once it has begun, the 180-day filing window is the deadline to watch.`,
     metadata: {
       source: "perm_flow.md",
       section: "edge-case-pwd-expiration",
@@ -460,31 +459,31 @@ This is the most common reason for PERM case failure - always prioritize complet
   // Section 14: Edge Case - Missed Deadlines
   {
     title: "Edge Case: Missed 180-Day Deadline and Restart Rules",
-    content: `Missing the 180-day recruitment deadline triggers specific restart scenarios depending on remaining time before PWD expiration.
+    content: `Missing the 180-day recruitment deadline triggers specific restart scenarios depending on whether the PWD is still valid.
 
 180-Day Deadline Miss Scenarios:
 
-Scenario 1: Missed but PWD still valid (60+ days remaining)
+Scenario 1: Missed but PWD still valid
 - Recruitment must restart from scratch
 - All previous recruitment is invalid
 - New first recruitment date starts new 180-day window
-- Must still complete before PWD expiration
+- The new recruitment has to begin before the PWD expires (20 CFR 656.40(c)); once it has, the PWD expiring doesn't cut the new window short
 
-Scenario 2: Missed and PWD expiring soon (less than 60 days remaining)
-- Cannot restart recruitment in time
+Scenario 2: Missed and PWD expired
+- Cannot restart recruitment under this PWD
 - Case must be closed/archived
 - Notification with explanation sent
 - Must start new PWD application
 
 Scenario 3: ETA 9089 filed but certification takes too long
 - If ETA 9089 expiration passes (certification + 179 days)
-- Must refile ETA 9089 if still within recruitment window and PWD valid
-- If recruitment window passed or PWD expired, case closes
+- Can refile the ETA 9089 while the 180-day filing window is open, if the PWD is valid or recruitment began inside its validity
+- Otherwise restart recruitment while the PWD is valid, or the case closes
 
 Detection and Notification:
 1. System monitors 180-day deadline from first recruitment
 2. If deadline passes without ETA 9089 filing:
-   - Check if 60+ days remain before PWD expiration
+   - Check whether the PWD is still valid
    - If yes: Notify to restart recruitment
    - If no: Auto-close case
 
@@ -514,7 +513,7 @@ Recruitment Stage Validation:
 9. Second Sunday ad: Must be on Sunday, at least 7 days after first
 
 ETA 9089 Stage Validation:
-10. Filing date: Must be 30+ days after last recruitment, before 180-day deadline and PWD expiration
+10. Filing date: Must be 30+ days after last recruitment and within the 180-day deadline; before the PWD expiration only if recruitment began before the determination date
 11. Certification date: Must be after filing date
 12. Expiration: Auto-calculated as certification + 179 days (the date DOL prints)
 
@@ -541,12 +540,13 @@ Cascade Logic: When upstream dates change, downstream dates auto-recalculate if 
 
 Recruitment Window Formula:
 - Opens: PWD determination date
-- Closes: EARLIER of (PWD expiration date - 30 days) OR (first recruitment + 150 days)
+- Closes: first recruitment + 150 days. While the PWD still limits the case (recruitment began before the determination date, or none is on file), the EARLIER of that and PWD expiration date - 30 days
 
-Why the -30 Days?
+Why the -30 Days, when it applies?
 - Must have 30-day waiting period after recruitment ends
-- ETA 9089 must be filed before PWD expires
-- So recruitment must end at least 30 days before PWD expiration
+- When recruitment began before the determination, the ETA 9089 must be filed before the PWD expires
+- So recruitment must end at least 30 days before PWD expiration in that case
+- Recruitment begun inside the PWD's validity can be filed after it expires (20 CFR 656.40(c), Karl Storz, BALCA en banc 2011), so the -30 days doesn't apply
 
 Why 150 Days?
 - Total window is 180 days from first recruitment step
@@ -561,12 +561,12 @@ Example Calculation:
 Option A (based on PWD): December 31 - 30 = December 1, 2024
 Option B (based on 180 rule): January 15 + 150 = June 14, 2024
 
-Recruitment window closes: June 14, 2024 (earlier date)
+Recruitment window closes: June 14, 2024 (recruitment began inside the PWD's validity, so Option A doesn't apply)
 
 Special Considerations:
-- If PWD expiration is close, it limits the recruitment window
-- Dashboard should show which constraint is limiting
-- "PWD Limited" flag indicates PWD expiration is the constraint
+- Before recruitment begins, the PWD expiration is the day it has to begin by
+- Once recruitment begins inside the PWD's validity, the PWD expiration no longer limits the window
+- "PWD Limited" flag indicates PWD expiration is the constraint (recruitment began before the determination)
 
 This window affects all recruitment deadline calculations (notice, job order, Sunday ads).`,
     metadata: {

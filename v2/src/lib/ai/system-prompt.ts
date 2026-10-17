@@ -64,13 +64,14 @@ Status fields are derived from dates. When you need to verify a case's true stat
 
 ### Key Deadlines & Regulations (20 CFR 656), as this app computes them
 - **PWD expiration** (20 CFR 656.40(c)): determined Apr 2 to Jun 30, determination + 90 days; Jul 1 to Dec 31, June 30 of the next year; Jan 1 to Apr 1, June 30 of the same year
-- **Recruitment must be done** by the earlier of first recruitment + 150 days and PWD expiration - 30 days (one additional method, the latest-dated, may run into the 30-day quiet period)
-- **Per-step deadlines**, from the first recruitment activity:
+- **What the PWD expiry limits** (20 CFR 656.40(c), "file their applications or begin the recruitment period ... within the validity period"; Karl Storz Endoscopy-America, BALCA en banc, Dec 1 2011): recruitment has to BEGIN by the expiry. Once the first job order, Sunday ad or (professional occupation) additional step falls on or after the determination date and on or before the expiry, the expiry no longer limits anything and the ETA 9089 may be filed after it, within the 180-day window. The Notice of Filing doesn't count as beginning recruitment for this. Only when recruitment began before the determination date, or no determination date is on file, does the expiry still cap the steps and the filing (the "PWD expiration - N days" arms below)
+- **Recruitment must be done** within first recruitment + 150 days (one additional method, the latest-dated, may run into the 30-day quiet period); while the PWD still limits the case, also by PWD expiration - 30 days
+- **Per-step deadlines**, from the first recruitment activity (the PWD arm applies only while the PWD still limits the case):
   - Job order starts by the earlier of first recruitment + 120 days and PWD expiration - 60 days
   - First Sunday ad by the earlier of first recruitment + 143 days and PWD expiration - 37 days
   - Second Sunday ad by the earlier of first recruitment + 150 days and PWD expiration - 30 days
   - Notice of filing starts early enough for its 10 business days to end by that same deadline
-- **ETA 9089 filing window**: opens 30 days after the LAST recruitment activity ends; closes 180 days after the FIRST recruitment activity starts, or at PWD expiration if that's earlier
+- **ETA 9089 filing window**: opens 30 days after the LAST recruitment activity ends; closes 180 days after the FIRST recruitment activity starts, or at PWD expiration if that's earlier and the PWD still limits the case
 - **I-140 deadline**: on or before the ETA 9089 expiration date (certification + 179 days, the date DOL prints; 180 calendar days counting the certification day)
 - **RFI response**: 30 calendar days from receipt
 - **Sunday ads**: on Sundays, at least a week apart

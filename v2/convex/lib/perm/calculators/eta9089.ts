@@ -16,7 +16,8 @@ export interface ETA9089Window {
    * Latest date ETA 9089 can be filed.
    * This is the MINIMUM of:
    * - First recruitment start + 180 days (regulatory limit)
-   * - PWD expiration date (if set, filing must occur before PWD expires)
+   * - PWD expiration date, while the PWD still limits the case (pwdValidity.ts):
+   *   recruitment begun inside its validity may be filed after it expires
    *
    * Note: calculateETA9089Window() only calculates the 180-day limit.
    * PWD expiration constraint must be applied separately by calling code.

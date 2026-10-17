@@ -60,6 +60,7 @@ export function exampleDocket(): Docket {
     noticeOfFilingStartDate: c.noticeOfFilingStartDate,
     noticeOfFilingEndDate,
     pwdExpirationDate,
+    pwdDeterminationDate: c.pwdDeterminationDate,
     isProfessionalOccupation: false,
   });
   if (!window) throw new Error("example case: no filing window");

@@ -18,8 +18,12 @@ import { ArrowSquareOutIcon, CalendarCheckIcon, InfoIcon, WarningIcon } from "@p
 
 import {
   calculatePWDExpiration,
-  calculateRecruitmentDeadlines,
+  calculateStepDeadlineUnderPwd,
   calculateFilingWindow,
+  pwdBearing,
+  pwdFilingLimit,
+  pwdStepLimit,
+  STEP_DEADLINE_CONFIGS,
 } from "@/lib/perm";
 import {
   SHUTDOWN_ANNOUNCED,
@@ -104,12 +108,28 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           label: "Prevailing wage determination expires",
           date: pwdExpiration,
           detail:
-            "20 CFR 656.40(c). Recruitment has to be under way before this date or the determination has to be requested again.",
+            "20 CFR 656.40(c). Recruitment has to begin by this date, or the application be filed by it. Once recruitment begins inside it, this date no longer limits the filing.",
         },
       ];
 
       if (DATE_RE.test(firstRecruitment)) {
-        const deadlines = calculateRecruitmentDeadlines(firstRecruitment, pwdExpiration);
+        // The wage determination limits the steps and the filing only while
+        // the central rule says so (convex/lib/perm/dates/pwdValidity.ts):
+        // recruitment begun inside its validity leaves the 180-day rule alone.
+        const pwd = { pwdDeterminationDate: pwdDate, pwdExpirationDate: pwdExpiration, firstPwdStep: firstRecruitment };
+        const bearing = pwdBearing(pwd);
+        const stepLimit = pwdStepLimit(pwd);
+        const step = (i: 0 | 1 | 2) =>
+          calculateStepDeadlineUnderPwd(firstRecruitment, stepLimit, STEP_DEADLINE_CONFIGS[i]).date ?? "";
+        const deadlines = {
+          notice_of_filing_deadline: step(1),
+          job_order_start_deadline: step(0),
+          first_sunday_ad_deadline: step(2),
+        };
+        if (bearing === "began-inside") {
+          rows[0]!.detail =
+            "20 CFR 656.40(c). Recruitment began inside this date, so it no longer limits the filing: the 180-day rule below closes the window.";
+        }
 
         // The date recruitment itself stops supporting a filing, uncapped by
         // the wage determination. That is a DIFFERENT quantity from the filing
@@ -150,7 +170,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // 20 CFR 656.40(c): recruitment has to begin during the
         // determination's validity. A first step after the expiration is not a
         // timeline, it is a problem, and the dates below it would be fiction.
-        if (firstRecruitment > pwdExpiration) {
+        if (bearing === "began-after") {
           warnings.push(
             `The first recruitment step is after the prevailing wage determination expires (${pwdExpiration}). Recruitment has to begin during the determination's validity, so these dates cannot support a filing as entered.`,
           );
@@ -167,18 +187,16 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           );
         } else {
           // The app's canonical model, not the raw calculator: the window
-          // CLOSES at the earlier of first + 180 and the PWD expiration.
-          // An earlier version called calculateETA9089Window directly, which
-          // knows nothing about the determination and happily reported a
-          // close date after the PWD had expired — a date on which filing is
-          // barred. calculateFilingWindow carries the cap and says when it
-          // applied, which is exactly the insight worth surfacing.
+          // CLOSES at first + 180, or at the PWD expiration while the PWD
+          // still limits the case (recruitment begun before the determination,
+          // pwdFilingLimit). calculateFilingWindow carries the cap and says
+          // when it applied, which is exactly the insight worth surfacing.
           const window = calculateFilingWindow({
             firstRecruitmentDate: firstRecruitment,
             // With no last step yet, the close is still knowable (it hangs on
             // the FIRST step); the open is not, so it is simply not shown.
             lastRecruitmentDate: hasLast ? lastRecruitment : firstRecruitment,
-            pwdExpirationDate: pwdExpiration,
+            pwdExpirationDate: pwdFilingLimit(pwd),
           });
           if (window) {
             diagram = {
@@ -199,7 +217,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               label: "ETA-9089 filing window closes",
               date: window.closes,
               detail: window.isPwdLimited
-                ? "Capped by the prevailing wage expiration, which lands before the usual 180-day limit. Filing after the determination expires is barred, so the window is shorter than recruitment alone would suggest."
+                ? "Capped by the prevailing wage expiration. Recruitment began before the determination was issued, so the application has to be filed while it's still valid (20 CFR 656.40(c))."
                 : "One hundred and eighty days after the first recruitment step. Recruitment older than this can’t support a filing.",
             });
             if (window.opens > window.closes) {

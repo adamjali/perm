@@ -125,7 +125,9 @@ export const fromDeletedCopy = internalMutation({
       noticeOfFilingEndDate: merged.noticeOfFilingEndDate,
       additionalRecruitmentEndDate: merged.additionalRecruitmentEndDate,
       additionalRecruitmentMethods: merged.additionalRecruitmentMethods,
+      additionalRecruitmentStartDate: merged.additionalRecruitmentStartDate,
       pwdExpirationDate: merged.pwdExpirationDate,
+      pwdDeterminationDate: merged.pwdDeterminationDate,
       isProfessionalOccupation: merged.isProfessionalOccupation,
     });
 

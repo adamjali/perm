@@ -51,3 +51,15 @@ export {
   calculateFilingWindowFromCase,
   getFilingWindowStatusFromCase,
 } from './filingWindow';
+export {
+  type PwdBearing,
+  type PwdBearingInput,
+  getFirstRecruitmentStepForPwd,
+  pwdBearing,
+  pwdBearingFromCase,
+  pwdFilingLimit,
+  pwdFilingLimitFromCase,
+  type PwdStepLimit,
+  pwdStepLimit,
+  pwdStepLimitFromCase,
+} from './pwdValidity';

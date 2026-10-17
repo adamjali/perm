@@ -2,7 +2,7 @@
 title: "The PERM deadlines that actually matter"
 description: "Four dates fix a PERM case: the wage determination expiry, the 30 to 180 day recruitment window, the quiet period, and the 180 days after certification."
 date: "2026-09-03"
-updated: "2026-09-29"
+updated: "2026-10-16"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/the-perm-deadlines-that-matter.webp"
 imageAlt: "The PERM Tracker Deadlines panel: overdue, this week, this month and later"
@@ -33,7 +33,7 @@ This is where the chain starts, and it's the one most often described wrongly. A
 | 1 July and 31 December | 30 June of the following year |
 | 1 January and 1 April | 30 June of the same year |
 
-So a determination issued in September is good for roughly nine months, and one issued in May is good for about three. Same employer, same job, wildly different amount of room to run recruitment in. If you've been told a wage determination lasts a year, that's the July-to-December case being repeated as if it were the rule.
+So a determination issued in September is good for roughly nine months, and one issued in May is good for about three. Same employer, same job, wildly different amount of room to begin recruitment. If you've been told a wage determination lasts a year, that's the July-to-December case being repeated as if it were the rule.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/the-perm-deadlines-that-matter-section-g.webp"
@@ -45,7 +45,9 @@ So a determination issued in September is good for roughly nine months, and one 
   step={1}
 />
 
-The application has to be filed while the determination is still valid. If it lapses first, the employer files a fresh ETA-9141 and rejoins DOL's wage queue. Recruitment already run has its own 180-day limit, and waiting out a new determination will usually eat it.
+Recruitment has to begin while the determination is still valid. The rule asks employers to "file their applications or begin the recruitment period" inside the validity period, and either one is enough: recruitment that began on or after the determination date can be filed after the determination expires, as long as it's inside the 180-day window. The Board of Alien Labor Certification Appeals read it that way en banc in *Karl Storz Endoscopy-America* (2011-PER-00040, December 1, 2011). Recruitment begun before the determination was issued is the exception, and has to be filed while the determination is valid.
+
+If the determination lapses before recruitment begins, the employer files a fresh ETA-9141 and rejoins DOL's wage queue. Check with the attorney on the case before relying on a filing after the expiry.
 
 ## What is the 30 to 180 day recruitment window?
 
@@ -56,7 +58,7 @@ The window for filing the application has two edges, and they're measured from t
 
 Subtract one from the other and you get the real constraint on recruitment itself: every step has to be finished by day 150, or the 30-day wait won't fit before the window shuts. Recruitment that runs long doesn't just delay the filing, it can close the window entirely.
 
-There's a second ceiling on top of that: the window also closes when the wage determination expires, whichever comes first. A close date worked out by hand from the 180-day rule alone can be a date on which filing is already barred.
+The wage determination adds a second ceiling in one situation only: when recruitment began before the determination was issued. Then the window also closes when the determination expires, whichever comes first. Recruitment begun inside the determination's validity isn't cut short by its expiry.
 
 ## Why the quiet period denies cases
 
@@ -80,7 +82,7 @@ Not all four are equally bad. This is what each one actually costs.
 
 | What you miss | What has to be done again | What survives |
 |---|---|---|
-| Wage determination expiry | The wage request, then the wait in DOL's wage queue. Recruitment usually has to be redone too, since its own 180 days runs while you wait | The filed priority date, if the application was already in |
+| Wage determination expiry, before recruitment begins | The wage request, then the wait in DOL's wage queue | Nothing yet: recruitment hadn't started |
 | 180 days from first recruitment | All recruitment: the job order, both Sunday ads, the notice of filing | The wage determination, if it's still valid |
 | The quiet period, by filing early | The application, after a denial. New filing date, so a new priority date | The recruitment, if it's still inside its 180 days |
 | 180 days after certification | Everything. Wage determination, recruitment, filing, priority date | Nothing from the PERM stage |
@@ -89,12 +91,12 @@ The pattern worth remembering: the two recruitment-side deadlines cost you work,
 
 ## Working them out
 
-The [deadline calculator](/tools/perm-deadline-calculator) runs the whole chain from the determination date, including the rule where the filing window closes at the earlier of first recruitment plus 180 days and the determination's own expiry.
+The [deadline calculator](/tools/perm-deadline-calculator) runs the whole chain from the determination date, including the rule for when the determination's expiry still closes the filing window early.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/the-perm-deadlines-that-matter-calculator-result.webp"
   alt="The deadline calculator with a determination on August 3, 2026 and recruitment from August 23 to September 20: wage validity, recruitment, quiet period and filing window drawn to scale"
-  caption="Three dates in, the whole chain out. The window closes February 19, 2027, 180 days after the first recruitment step, because that comes before the wage expires."
+  caption="Three dates in, the whole chain out. The window closes February 19, 2027, 180 days after the first recruitment step. Recruitment began inside the wage determination's validity, so its expiry doesn't limit the window."
   credit="Screenshot of permtracker.app, October 15, 2026"
   creditHref="/tools/perm-deadline-calculator"
   aspectRatio={1600 / 1645}

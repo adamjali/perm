@@ -18,6 +18,7 @@ import {
   calculateRecruitmentWindowCloses,
   getFirstRecruitmentDate,
 } from "../dates/filingWindow";
+import { pwdFilingLimitFromCase } from "../dates/pwdValidity";
 
 /** Every field optional and nullable, the way case data arrives from a page. */
 export type LooseDeadlineCaseData = {
@@ -43,14 +44,24 @@ export function buildDeadlineInput(c: LooseDeadlineCaseData): CaseDataForDeadlin
     additionalRecruitmentEndDate: date(c.additionalRecruitmentEndDate),
   };
   const pwdExpirationDate = date(c.pwdExpirationDate);
+  const pwdDeterminationDate = date(c.pwdDeterminationDate);
   const isProfessionalOccupation = c.isProfessionalOccupation || undefined;
   const additionalRecruitmentMethods = c.additionalRecruitmentMethods || undefined;
 
   const firstRecruit = getFirstRecruitmentDate(recruitment);
-  const recruitWindow = firstRecruit ? calculateRecruitmentWindowCloses(firstRecruit, pwdExpirationDate) : null;
+  // The PWD expiry caps the windows only while it still limits the case.
+  const pwdLimit = pwdFilingLimitFromCase({
+    ...recruitment,
+    additionalRecruitmentMethods,
+    pwdDeterminationDate,
+    pwdExpirationDate,
+    isProfessionalOccupation: !!isProfessionalOccupation,
+  });
+  const recruitWindow = firstRecruit ? calculateRecruitmentWindowCloses(firstRecruit, pwdLimit) : null;
   const filingWindow = calculateFilingWindowFromCase({
     ...recruitment,
     additionalRecruitmentMethods,
+    pwdDeterminationDate,
     pwdExpirationDate,
     isProfessionalOccupation: !!isProfessionalOccupation,
   });
@@ -64,6 +75,7 @@ export function buildDeadlineInput(c: LooseDeadlineCaseData): CaseDataForDeadlin
     progressStatus: c.progressStatus || undefined,
     deletedAt: c.deletedAt ?? undefined,
     pwdExpirationDate,
+    pwdDeterminationDate,
     eta9089FilingDate: date(c.eta9089FilingDate),
     eta9089CertificationDate: date(c.eta9089CertificationDate),
     eta9089ExpirationDate: date(c.eta9089ExpirationDate),

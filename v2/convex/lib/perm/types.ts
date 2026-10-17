@@ -151,6 +151,14 @@ export interface CaseData {
   notice_of_filing_end_date: string | null;
   recruitment_start_date: string | null; // MIN of all recruitment start dates (first step)
   recruitment_end_date: string | null;   // MAX of all recruitment end dates (last step)
+  /**
+   * The first 20 CFR 656.17(e) recruitment step, the Notice of Filing left out
+   * (getFirstRecruitmentStepForPwd). It decides whether the PWD expiry still
+   * limits the filing (dates/pwdValidity.ts). Optional so older builders keep
+   * compiling; when it's missing the validators fall back to
+   * recruitment_start_date, the stricter reading.
+   */
+  pwd_recruitment_start_date?: string | null;
   is_professional_occupation: boolean;
 
   // ETA 9089 dates
@@ -183,7 +191,7 @@ export interface CaseData {
  * Uses mapped types to ensure the value type matches the field's type in CaseData.
  */
 export type FieldChange = {
-  [K in keyof CaseData]: { field: K; value: CaseData[K] }
+  [K in keyof CaseData]-?: { field: K; value: Exclude<CaseData[K], undefined> }
 }[keyof CaseData];
 
 // Recruitment deadline output

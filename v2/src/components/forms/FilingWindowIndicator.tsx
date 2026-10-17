@@ -21,7 +21,7 @@ export interface FilingWindowData {
   daysUntilOpen?: number;
   /** Days remaining until the window closes */
   daysRemaining?: number;
-  /** Whether PWD expiration is the limiting factor for close date */
+  /** Whether PWD expiration is the limiting factor for close date (only while the PWD still limits the case) */
   isPwdLimited?: boolean;
   /** Whether the window is currently open */
   isOpen: boolean;
@@ -190,7 +190,7 @@ export function FilingWindowIndicator({ window, label, className }: FilingWindow
       {window.isPwdLimited && (
         <p className="flex items-start gap-2 text-sm text-data-warn-ink">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          This window closes early because the PWD expires first. The standard 180-day rule is limited by your PWD validity.
+          This window closes at the PWD expiration, before the 180-day mark: recruitment began before the determination date, or none is entered (20 CFR 656.40(c)).
         </p>
       )}
     </div>
