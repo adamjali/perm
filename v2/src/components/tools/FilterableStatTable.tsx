@@ -485,7 +485,8 @@ export function FilterableStatTable<T>({
             )}
           </p>
 
-          <div className="flex items-center gap-3">
+          {/* Wraps on a narrow phone: "Load all" and the rows picker ran 11px past a 320px screen. */}
+          <div className="flex flex-wrap items-center gap-3">
             {partial && !loading && loadAll ? (
               <button
                 type="button"
