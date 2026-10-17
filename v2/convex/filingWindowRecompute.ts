@@ -1,6 +1,8 @@
 /**
  * One-time: recompute every case's saved filing and recruitment windows under
- * the corrected PWD rule (convex/lib/perm/dates/pwdValidity.ts, Oct 16 2026).
+ * the corrected PWD rule (convex/lib/perm/dates/pwdValidity.ts, Oct 16 2026),
+ * and the saved first recruitment date, which now counts a professional
+ * occupation's additional steps (20 CFR 656.17(e)(1)(ii)).
  *
  * The windows are saved on each case when it's edited, and the deadline rules
  * prefer a saved value, so a case nobody edits would keep the old cap at the
@@ -23,7 +25,7 @@ import { calculateDerivedDates } from "./lib/derivedCalculations";
 import { scheduleCalendarSync } from "./lib/calendarSyncHelpers";
 import { recordError } from "./lib/errorRecording";
 
-const FIELDS = ["filingWindowOpens", "filingWindowCloses", "recruitmentWindowCloses"] as const;
+const FIELDS = ["recruitmentStartDate", "filingWindowOpens", "filingWindowCloses", "recruitmentWindowCloses"] as const;
 
 export const recompute = internalMutation({
   args: { dryRun: v.optional(v.boolean()) },

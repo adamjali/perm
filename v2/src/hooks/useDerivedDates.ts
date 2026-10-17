@@ -13,6 +13,7 @@ import {
   FILING_WINDOW_WAIT_DAYS,
   FILING_WINDOW_CLOSE_DAYS,
   isValidISODate,
+  getFirstRecruitmentDate,
   pwdFilingLimitFromCase,
 } from "@/lib/perm";
 
@@ -62,12 +63,8 @@ function findExtreme(dates: string[], type: "min" | "max"): string | null {
 }
 
 function calculateRecruitmentStartDate(data: DerivedDatesInput): string | null {
-  const dates = collectValidDates([
-    data.sundayAdFirstDate,
-    data.jobOrderStartDate,
-    data.noticeOfFilingStartDate,
-  ]);
-  return findExtreme(dates, "min");
+  // The canonical rule, a professional occupation's additional steps included
+  return getFirstRecruitmentDate(data) ?? null;
 }
 
 function calculateRecruitmentEndDate(data: DerivedDatesInput): string | null {

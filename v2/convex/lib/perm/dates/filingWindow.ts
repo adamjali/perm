@@ -18,7 +18,7 @@
  */
 
 import { differenceInDays, format, max, min, parseISO, isValid } from "date-fns";
-import { pwdFilingLimitFromCase } from "./pwdValidity";
+import { getFirstRecruitmentStepForPwd, pwdFilingLimitFromCase } from "./pwdValidity";
 
 // ============================================================================
 // CONSTANTS - Imported from single source of truth
@@ -431,20 +431,27 @@ export function getMethodLatestDate(method: MethodDateFields): string | undefine
 // ============================================================================
 
 /**
- * Extract first recruitment date from case data.
- * First = earliest of (first Sunday ad, job order start, notice of filing start)
+ * The date the filing window's 180 days run from: the earliest of the first
+ * 20 CFR 656.17(e) step (job order, first Sunday ad and, for a professional
+ * occupation, its additional steps: "None of the steps may have taken place
+ * more than 180 days prior to filing the application", 656.17(e)(1)(ii)) and
+ * the Notice of Filing, which isn't a recruitment step but has its own rule,
+ * "between 30 and 180 days before filing the application" (656.10(d)(3)(iv)).
+ * The PWD test uses the first step alone (pwdValidity.ts).
  *
  * @param data - Object with recruitment date fields
  * @returns ISO date string or undefined
  */
 export function getFirstRecruitmentDate(data: {
-  sundayAdFirstDate?: string;
-  jobOrderStartDate?: string;
-  noticeOfFilingStartDate?: string;
+  sundayAdFirstDate?: string | null;
+  jobOrderStartDate?: string | null;
+  noticeOfFilingStartDate?: string | null;
+  isProfessionalOccupation?: boolean | null;
+  additionalRecruitmentStartDate?: string | null;
+  additionalRecruitmentMethods?: ReadonlyArray<MethodDateFields> | null;
 }): string | undefined {
   const dates = [
-    data.sundayAdFirstDate,
-    data.jobOrderStartDate,
+    getFirstRecruitmentStepForPwd(data),
     data.noticeOfFilingStartDate,
   ].filter((d): d is string => !!d);
 

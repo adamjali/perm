@@ -35,7 +35,7 @@ import {
   addDaysToISOSafe,
   getMinDate,
 } from './dateValidation';
-import { getLastRecruitmentDate } from './perm/dates/filingWindow';
+import { getFirstRecruitmentDate, getLastRecruitmentDate } from './perm/dates/filingWindow';
 import { pwdFilingLimitFromCase } from './perm/dates/pwdValidity';
 import { calculateI140FilingDeadline } from './perm/calculators/i140';
 
@@ -119,24 +119,17 @@ export interface DerivedDates {
  * @returns ISO date string or null if no dates available
  */
 export function calculateRecruitmentStartDate(
-  input: Pick<
-    DerivedCalculationInput,
-    "sundayAdFirstDate" | "jobOrderStartDate" | "noticeOfFilingStartDate"
-  >
+  input: Pick<DerivedCalculationInput, "sundayAdFirstDate" | "jobOrderStartDate" | "noticeOfFilingStartDate"> &
+    Partial<
+      Pick<
+        DerivedCalculationInput,
+        "isProfessionalOccupation" | "additionalRecruitmentStartDate" | "additionalRecruitmentMethods"
+      >
+    >
 ): string | null {
-  const dates: string[] = [];
-
-  if (isValidISODate(input.sundayAdFirstDate)) {
-    dates.push(input.sundayAdFirstDate);
-  }
-  if (isValidISODate(input.jobOrderStartDate)) {
-    dates.push(input.jobOrderStartDate);
-  }
-  if (isValidISODate(input.noticeOfFilingStartDate)) {
-    dates.push(input.noticeOfFilingStartDate);
-  }
-
-  return getMinDate(dates);
+  // The canonical rule (perm/dates/filingWindow.ts): the notice or the first
+  // 656.17(e) step, a professional occupation's additional steps included.
+  return getFirstRecruitmentDate(input) ?? null;
 }
 
 /**

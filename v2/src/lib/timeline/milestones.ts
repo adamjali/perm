@@ -305,6 +305,9 @@ export function calculateRecruitmentExpiresDate(
     sundayAdFirstDate: caseData.sundayAdFirstDate ?? undefined,
     jobOrderStartDate: caseData.jobOrderStartDate ?? undefined,
     noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? undefined,
+    isProfessionalOccupation: caseData.isProfessionalOccupation,
+    additionalRecruitmentStartDate: caseData.additionalRecruitmentStartDate,
+    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
   });
 
   if (!firstRecruitmentDate) {

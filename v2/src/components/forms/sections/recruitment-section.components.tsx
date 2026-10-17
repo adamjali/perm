@@ -74,7 +74,6 @@ export function RecruitmentDeadlineIndicator({
   today.setHours(0, 0, 0, 0);
 
   // Central lib: first + 150, and PWD - 30 only while the PWD still limits the case
-  const firstDate = getFirstRecruitmentDate({ sundayAdFirstDate, jobOrderStartDate, noticeOfFilingStartDate });
   const caseDates = {
     pwdDeterminationDate,
     pwdExpirationDate,
@@ -84,6 +83,7 @@ export function RecruitmentDeadlineIndicator({
     additionalRecruitmentMethods,
     isProfessionalOccupation,
   };
+  const firstDate = getFirstRecruitmentDate({ ...caseDates, noticeOfFilingStartDate });
   const bearing = pwdBearingFromCase(caseDates);
   const pwdLimit = pwdFilingLimitFromCase(caseDates);
   const recWindow = firstDate ? calculateRecruitmentWindowCloses(firstDate, pwdLimit) : null;

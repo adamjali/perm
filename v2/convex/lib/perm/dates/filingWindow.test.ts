@@ -267,6 +267,24 @@ describe("filing-window", () => {
       });
       expect(result).toBe("2024-01-15");
     });
+
+    // 20 CFR 656.17(e)(1)(ii): "None of the steps may have taken place more
+    // than 180 days prior to filing the application."
+    it("counts a professional occupation's additional steps", () => {
+      const methods = [{ date: "2024-01-05" }, { startDate: "2024-01-08", endDate: "2024-02-08" }];
+      expect(
+        getFirstRecruitmentDate({ jobOrderStartDate: "2024-01-15", isProfessionalOccupation: true, additionalRecruitmentMethods: methods }),
+      ).toBe("2024-01-05");
+      expect(
+        getFirstRecruitmentDate({ jobOrderStartDate: "2024-01-15", isProfessionalOccupation: false, additionalRecruitmentMethods: methods }),
+      ).toBe("2024-01-15");
+    });
+
+    it("still counts the Notice of Filing, under its own 180-day rule (656.10(d)(3)(iv))", () => {
+      expect(
+        getFirstRecruitmentDate({ noticeOfFilingStartDate: "2024-01-10", jobOrderStartDate: "2024-01-15" }),
+      ).toBe("2024-01-10");
+    });
   });
 
   // ============================================================================

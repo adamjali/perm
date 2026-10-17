@@ -48,7 +48,7 @@ export function buildDeadlineInput(c: LooseDeadlineCaseData): CaseDataForDeadlin
   const isProfessionalOccupation = c.isProfessionalOccupation || undefined;
   const additionalRecruitmentMethods = c.additionalRecruitmentMethods || undefined;
 
-  const firstRecruit = getFirstRecruitmentDate(recruitment);
+  const firstRecruit = getFirstRecruitmentDate({ ...recruitment, isProfessionalOccupation, additionalRecruitmentMethods });
   // The PWD expiry caps the windows only while it still limits the case.
   const pwdLimit = pwdFilingLimitFromCase({
     ...recruitment,
