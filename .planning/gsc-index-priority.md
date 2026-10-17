@@ -1106,8 +1106,9 @@ section's "Still to request" list.
 49. `/tools/perm-timeline-calculator`, `/pwd-cases`, `/lca-cases` (retitled)
 50. `/glossary`, `/perm-attorneys`, `/perm-employers`, `/layoffs`, `/h1b-employers` (layout fixes, dates)
 
-**Not yet:** `/guides/perm-recruitment-report-sample`, `/guides/perm-notice-of-filing-sample` and
-`/guides/perm-audit-file-index` are `published: false` until the attorney reviews them; they answer 404 until then.
+**Live since Oct 17, about 5:45 AM EDT** (owner's call: the attorney reviews them on the site):
+`/guides/perm-recruitment-report-sample`, `/guides/perm-notice-of-filing-sample` and `/guides/perm-audit-file-index`.
+Request them first in the next round, before #13.
 
 ### Round, Saturday Oct 17 2026 (about 2:50 to 3:22 AM EDT)
 

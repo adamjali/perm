@@ -847,8 +847,8 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   the page cache empty, and Oct 16 to 17 had ten between 10:35 PM and 3:12 AM. Batch deploys at night.
 - **Employer pages answer "does it sponsor green cards"** from the year's filings (`sponsorSentence`), and say nothing
   when the year holds none: that isn't proof an employer won't sponsor.
-- **40 new articles and 10 refreshed**, each with its own picture; three practice templates are `published: false`
-  until the attorney reviews them. A capture can be fitted whole (`"fit": "contain"`); capture data pages at 1000 wide
+- **40 new articles and 10 refreshed**, each with its own picture; three practice templates went live the same morning
+  for the attorney to review on the site (owner's call). A capture can be fitted whole (`"fit": "contain"`); capture data pages at 1000 wide
   so the rail stays out.
 - **The disk filled mid-session** (the dev server's Turbopack cache, 6 GB): an edit written then silently didn't land,
   and `.next/dev/prerender-manifest.json` was left corrupt (every page then 500s on JSON.parse; delete it). After a
