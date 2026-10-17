@@ -183,6 +183,7 @@ import type * as lib_rag_ingest from "../lib/rag/ingest.js";
 import type * as lib_rag_permKnowledge from "../lib/rag/permKnowledge.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_reminderDigest from "../lib/reminderDigest.js";
+import type * as lib_replyName from "../lib/replyName.js";
 import type * as lib_sampleCase from "../lib/sampleCase.js";
 import type * as lib_sentry from "../lib/sentry.js";
 import type * as lib_serverDoor from "../lib/serverDoor.js";
@@ -415,6 +416,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rag/permKnowledge": typeof lib_rag_permKnowledge;
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/reminderDigest": typeof lib_reminderDigest;
+  "lib/replyName": typeof lib_replyName;
   "lib/sampleCase": typeof lib_sampleCase;
   "lib/sentry": typeof lib_sentry;
   "lib/serverDoor": typeof lib_serverDoor;
