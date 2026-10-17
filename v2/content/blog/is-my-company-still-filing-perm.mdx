@@ -1,32 +1,51 @@
 ---
-title: "Is my company still filing PERM? How to check"
-description: "Every PERM filing names its employer in a public record. How to read a company's filing history and pending cases, and what it can't tell you."
+title: "Is your employer still filing PERM? What DOL's live record shows"
+description: "How to check whether Amazon, Apple, Microsoft, Google or any employer is still filing PERM green card cases, from DOL's live record and published files."
 date: "2026-08-28"
-updated: "2026-09-03"
+updated: "2026-10-17"
 author: "PERM Tracker team"
 image: "/images/content/heroes/blog/is-my-company-still-filing-perm.webp"
 imageAlt: "DOL's PERM decisions day by day, with the newest day against the same weekday before it"
 imageCredit: "Screenshot of permtracker.app, October 15, 2026"
-tags: ["perm", "employers", "sponsorship", "data", "dol"]
+tags: ["perm", "employers", "sponsorship", "data", "dol", "microsoft", "amazon", "google"]
 category: "explainers"
-seoTitle: "Is My Company Still Filing PERM Cases?"
-seoDescription: "Every PERM filing is a public record naming the employer. How to check a company's filing history, and the lags that make it easy to misread."
+seoTitle: "Is My Company Still Filing PERM? How to Check"
+seoDescription: "Check whether a big employer is still filing PERM green card cases: its pending cases, newest filings and wage requests, from DOL's live record."
 published: true
 ---
 
-If you're waiting for an employer to start a PERM case, or wondering whether the ones they used to file have stopped, the record is public. Every PERM application names the sponsoring employer, and DOL publishes them.
+If you're on an H-1B at a large company, you've probably wondered whether it's still filing green card cases, especially after DOL put every pending PERM case of several big employers on hold in October 2026. The record is public. Every PERM application names its employer, and DOL's live case-status record shows each one from the day it's filed. Here's how to read it, with six big employers as of October 16, 2026.
 
-What the record answers is a counting question: how many cases this employer filed, when, and what happened to them. It does not answer a question about intent, and the difference between those two matters more here than anywhere else on this site.
+<Callout type="tip" title="The quick check">
+Open the employer on [PERM employers](/perm-employers) and read its "Right now" section: PERM cases pending, the newest filings, and prevailing wage requests still waiting. Those three say more about this year than any lifetime total.
+</Callout>
 
-## Where the record lives
+## Six big employers, October 16, 2026
 
-DOL publishes quarterly PERM disclosure files through its [Office of Foreign Labor Certification performance data](https://www.dol.gov/agencies/eta/foreign-labor/performance). Each row is one decided case: the employer's name, the job title, the offered wage, the worksite state, the filing and decision dates, and the outcome.
+<ComparisonTable
+  headers={["Employer", "PERM filed in the last 12 months", "PERM pending now", "Newest PERM filing on record", "Wage requests pending now"]}
+  rows={[
+    ["Amazon.com Services LLC", "1,273", "677", "October 15, 2026", "1,033"],
+    ["Microsoft Corporation", "617", "598, all on hold since October 8", "September 16, 2026", "315"],
+    ["Apple Inc.", "430", "259", "October 8, 2026", "608"],
+    ["Meta Platforms, Inc.", "26", "19, 7 of them at RFI", "May 8, 2026", "973"],
+    ["Google LLC", "15", "15", "September 25, 2026", "1,025"],
+    ["Intel Corporation", "none shown", "0", "none pending", "619"],
+  ]}
+/>
 
-PERM Tracker unions those quarterly files, de-duplicates by case number, and publishes the result per employer at [PERM employers](/perm-employers). As of August 2026 that's 259,489 decided cases, searchable by company name, with a page for every sponsor in the window.
+Read from each employer's page on this site, which reads DOL's case-status service daily. Big companies often file under more than one legal name: Amazon, for one, also files as Amazon Dev Center U.S., Amazon Web Services and Amazon Data Services, so one row is never the whole company.
 
-## What a company's page shows
+## What each column tells you
 
-Open a sponsor and you get its own record rather than an aggregate: total filings in the current disclosure window, how many were certified and how many denied, the approval rate, the median days its cases took, the median offered wage, the occupations it files for and the states it files in, and which law firms filed for it.
+- **PERM filed in the last 12 months.** The clearest single sign of current sponsorship.
+- **PERM pending now.** Cases DOL hasn't decided. A status other than analyst review, such as on hold or an RFI, is DOL's move on the case; the employer's page names who acted.
+- **Newest PERM filing on record.** The latest filing date DOL's record shows. A month or two with nothing new is common at any employer, so read it with the 12-month count.
+- **Wage requests pending now.** An employer has to get a prevailing wage determination before it can file a PERM, so these are often next year's PERMs. A large count beside few recent PERMs, as at Google LLC, Meta and Intel, means the earlier step is busy. It can't say how many will become PERM filings.
+
+## A hold isn't the employer stopping
+
+Microsoft's row needs a closer read. Its PERM cases were still being filed into September, with the newest on September 16, 2026. On October 8, DOL moved all 598 pending cases to APPLICATION ON HOLD, along with every pending case at Capgemini America and Tata Consultancy Services. That's DOL's action on cases already filed. DOL hasn't published a notice explaining it, and [employers under review](/perm-employers/under-review) counts the held cases every day.
 
 <ScreenshotFigure
   src="/images/content/figures/blog/is-my-company-still-filing-perm-years.webp"
@@ -37,49 +56,47 @@ Open a sponsor and you get its own record rather than an aggregate: total filing
   aspectRatio={1600 / 1386}
 />
 
+## Two records, two lags
 
-Below that sits the one module built from something other than history. DOL's disclosure files carry a decision date on every row and contain no pending cases at all, so a case still waiting appears in none of the counts above. PERM Tracker also scans DOL's per-case status search, which is the only place a pending case exists, and shows how many of that sponsor's cases are standing in the queue right now, which DOL stage each is in, and how long the oldest one has been waiting. As of August 2026 that scan covers about 414,000 cases, roughly 99,000 of them still pending.
+An employer's page joins two DOL sources, and each runs behind the present differently.
 
-## Two lags, or you'll misread it
+| | DOL's quarterly disclosure files | DOL's case-status record |
+|---|---|---|
+| Holds | Decided cases only, with the wage, job and worksite | Every case DOL indexes, pending included |
+| Reaches | June 30, 2026 for the newest file | Today |
+| Size on this site, October 16, 2026 | 373,939 cases decided in fiscal years 2024 to 2026 | 441,053 cases scanned, 90,338 still undecided |
 
-Both halves of that page are behind the present, in different ways and by different amounts.
+A PERM filed this year is in no disclosure file yet, because DOL hasn't decided it. <DolNow /> So the decided half always looks a year old at every employer in the country, and "nothing recent in the published files" means nothing on its own. The live half is where current filing shows up.
 
-**The disclosure files only contain decided cases.** A PERM filed last month is in no disclosure file, because DOL hasn't decided it. <DolNow /> So at every employer in the country the most recent year of filings is largely missing from the decided record. "Nothing recent in the disclosure files" is the normal state of every sponsor, and on its own it means nothing at all.
+## Check any employer in four steps
 
-**The pending scan is where recent filings appear first.** That's the half to read for current activity. A case filed this quarter shows up there as a pending case long before it reaches a disclosure file.
-
-Read them in that order and the page makes sense. Read the decided half alone and every company in America looks like it stopped filing a year ago.
-
-## What a pause looks like in the data
-
-At a sponsor that had been filing steadily, a pause shows up as an absence with a date on it: the pending cases all carry older filing months, nothing new appears behind them, and the gap between the newest pending filing month and today keeps growing. The decided record confirms the earlier pattern was real, and the pending record is where the stop is visible.
-
-That's a description of a data series. It is not a statement about the company. The record shows what was filed and when. It doesn't show a decision, a policy, or a plan.
-
-One matching caveat, and it's the mistake most likely to produce a false pause. DOL prints employer names as they were typed on the application, so one company can appear under several spellings, with its filings split across them. Before concluding that a sponsor stopped, search the company name in more than one form on [PERM employers](/perm-employers) and check whether the filings simply moved to a differently-spelled entry.
+<StepByStep>
+<Step number={1} title="Find every name it files under">
+Search the company on [PERM employers](/perm-employers), and try a shorter name. DOL prints names as they were typed, so filings can sit under several spellings and subsidiaries.
+</Step>
+<Step number={2} title="Read the live record first">
+On each page, "Right now" shows pending cases by DOL status, the newest filings and the wage requests waiting.
+</Step>
+<Step number={3} title="Then read the history">
+The decided figures show how many cases it filed, how many were certified, and for which jobs. The year-by-year chart shows whether filing slowed.
+</Step>
+<Step number={4} title="See the cases themselves">
+The [all-programs search](/case-search) lists the employer's PERM cases, wage requests and H-1B LCAs side by side, live and published together.
+</Step>
+</StepByStep>
 
 ## What this can't tell you
 
-- **Whether they'll file again.** Nothing in the data speaks to the future.
-- **Why the filings stopped.** A hiring freeze, a reorganization, a change of law firm, a shift to a different visa route, or a batch that hasn't reached a published file yet all look identical from outside.
-- **Whether you personally will be sponsored.** That's an internal decision about one role and one person, and it has no public record.
-- **Company policy of any kind.** Counts and dates are the whole of what's here.
-
-If you need an answer about your own case rather than about your employer's history, ask the employer. It's their filing to make, and the immigration contact or the outside firm they use is the person who knows.
-
-## Checking a specific company
-
-1. Search the name on [PERM employers](/perm-employers), and try more than one spelling.
-2. Read the pending queue module on their page for current activity, then the decided figures for history.
-3. Search [PERM case search](/perm-cases) by employer to see individual decided cases with wages, job titles and the days each took.
-4. If you already have a case number, [PERM case status](/perm-case-status) shows where DOL has that specific case today.
+- **Whether it'll file for you.** Sponsorship is a decision about one role and one person, and it leaves no public record until a filing exists.
+- **Why the numbers moved.** A hiring freeze, a change of law firm, a new legal name, or a batch that hasn't been filed yet can all look alike from outside.
+- **Company policy of any kind.** Counts and dates are the whole of what's here. If you need an answer about your own case, the employer's immigration team or its attorney knows, and nothing here is legal advice.
 
 ## Related
 
-- [Companies sponsoring the most green cards](/blog/companies-sponsoring-most-green-cards): the top of the same file
-- [PERM employers](/perm-employers): every sponsor, ranked and searchable
-- [How to read the PERM data](/guides/reading-the-perm-data): which page answers which question
-- [Methodology](/methodology): where each figure comes from and how it's computed
+- [Companies sponsoring the most green cards](/blog/companies-sponsoring-most-green-cards)
+- [Green card sponsors for your job](/guides/green-card-sponsors-for-your-job)
+- [Employer stopped filing PERMs](/guides/employer-stopped-filing-perms)
+- [The PERM queue in mid-October, in five numbers](/blog/perm-queue-october-2026)
 
 <ProductCTA
   title="Every sponsor in DOL's files"

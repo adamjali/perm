@@ -17,6 +17,7 @@ import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
+import { BulletinReleaseNow } from "@/components/content/BulletinReleaseNow";
 import { Lightbox } from "@/components/ui/lightbox";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
@@ -215,6 +216,8 @@ export const mdxComponents: MDXComponents = {
   OnHoldNow,
   // DOL's queue month and average, dated, so no article types a figure that ages.
   DolNow,
+  // When the next bulletin usually comes out, from the archive's captures.
+  BulletinReleaseNow,
 
   // Headings
   //

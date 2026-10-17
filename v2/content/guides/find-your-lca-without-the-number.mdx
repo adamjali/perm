@@ -1,0 +1,97 @@
+---
+title: "Find your LCA without the case number"
+description: "Your employer filed an H-1B LCA and didn't send the number. How to find it by company name, pending ones included, and what DOL's record shows."
+date: "2026-10-17"
+author: "PERM Tracker data desk"
+image: "/images/content/heroes/guides/find-your-lca-without-the-number.webp"
+imageAlt: "H-1B LCAs by the month they were filed: how many DOL has decided and how many still wait"
+imageCredit: "Screenshot of permtracker.app, October 17, 2026"
+tags: ["lca", "h-1b", "eta-9035", "case-number", "employer-search", "dol", "how-to"]
+category: "wages"
+seoTitle: "Find Your LCA Without a Case Number"
+seoDescription: "Check an H-1B LCA's status by company name: pending LCAs show by employer before DOL's quarterly file, with the job title, filing date and DOL status."
+featured: false
+published: true
+---
+
+If you're on an H-1B, changing employers, or counting the days left in a grace period, the labor condition application your employer filed is the first step you can check. Employers often don't share the number. You don't need it: an LCA is a public filing with DOL, and a pending one shows up under the employer's name here within days of being filed.
+
+<Callout type="stat" title="LCAs waiting at DOL" stat="7,586">
+LCAs DOL's case-status service showed as still in process on October 16, 2026, out of 472,543 this site has confirmed there. Decided LCAs with the wage offered: 3,754,961 in DOL's published files through June 30, 2026.
+</Callout>
+
+## Find it in four steps
+
+<StepByStep>
+<Step number={1} title="Search the employer's legal name">
+Open [Find an H-1B LCA](/lca-cases) and type the start of the name the company files under, such as "Microsoft" or "Infosys". A shorter name usually finds more, because DOL prints each name as it was typed on the form.
+</Step>
+<Step number={2} title="Narrow it if the employer files a lot">
+Add a word from your job title, and a filing month. A large employer can file thousands of LCAs a year, so the title and month are what bring yours to the top.
+</Step>
+<Step number={3} title="Open the row">
+Each result carries the case number, the job title, the filing date and DOL's current status. Pending ones read IN PROCESS.
+</Step>
+<Step number={4} title="Check the number and get an email">
+Paste the number into the [case lookup](/perm-case-status). It asks DOL live, and the page can email you when the status changes.
+</Step>
+</StepByStep>
+
+If you want everything the company has filed for you, the [all-programs search](/case-search) shows the LCA, the prevailing wage request and the PERM side by side. It counted 4,227,504 H-1B LCAs across DOL's live and published records on October 16, 2026.
+
+## Reading the number
+
+LCA case numbers come from the same running counter DOL uses for PERM and wage requests. The prefix says which visa the LCA supports:
+
+| Prefix | Visa |
+|---|---|
+| I-200 | H-1B |
+| I-201 | H-1B1, Chile |
+| I-202 | H-1B1, Singapore |
+| I-203 | E-3, Australia |
+
+After the prefix comes a five-digit day code (two digits of year, then the day of the year) and a six-digit serial. `I-200-26289-306324` was filed on day 289 of 2026, which is October 16.
+
+## How long an LCA takes
+
+[20 CFR 655.740(a)(1)](https://www.ecfr.gov/current/title-20/chapter-V/part-655/subpart-H/section-655.740) gives DOL's Certifying Officer 7 working days from the day the application is received to certify it or return it. That's why the waiting pile is so small:
+
+<ComparisonTable
+  headers={["Filed in", "Decided", "Still waiting at DOL"]}
+  rows={[
+    ["July 2026", "34,125", "0"],
+    ["August 2026", "34,834", "0"],
+    ["September 2026", "32,695", "0"],
+    ["October 2026, to the 16th", "8,875", "7,586"],
+  ]}
+/>
+
+Those counts are from DOL's case-status service as of October 16, 2026. An LCA that's been waiting much longer than seven working days is worth asking the employer about, since DOL returns an incomplete or inaccurate LCA and the employer then files a corrected one, which DOL treats as new under 655.740(a)(3).
+
+## What a pending LCA shows, and what it doesn't
+
+| On the record now | Arrives with DOL's quarterly file |
+|---|---|
+| Case number and visa | The wage offered and the prevailing wage |
+| Employer name, as DOL prints it | The worksite city and state |
+| Job title | The wage level and its source |
+| Filing date | The law firm |
+| DOL's status, checked at least twice a day | The decision date |
+
+DOL's newest published LCA file runs through June 30, 2026, so anything filed since then shows its wage only once the next file is out.
+
+## If you can't find it
+
+- **The employer files under another name.** A staffing firm or a subsidiary may be the employer of record. Try the parent's name and the name on your pay stub.
+- **It was filed today.** A name search reads this site's own copy, rebuilt twice a day. A case number is asked of DOL live, so the number finds it sooner.
+- **It's older than the record reaches.** The live record fills in earlier filings backwards, and very old ones may not be there yet. DOL's published files cover LCAs from fiscal year 2020 on.
+
+## A certified LCA isn't an approved H-1B
+
+DOL certifies the LCA; USCIS decides the H-1B petition afterwards, and it's a separate filing. If you're between jobs, the clock that matters is your status. Under [8 CFR 214.1(l)(2)](https://www.ecfr.gov/current/title-8/chapter-I/subchapter-B/part-214/section-214.1), an H-1B worker whose employment ends keeps status for up to 60 consecutive days, or until the authorized validity period ends if that's sooner, once in each validity period. DHS has proposed removing that grace period ([FR doc 2026-18631](https://www.federalregister.gov/documents/2026/09/11/2026-18631/eliminating-the-discretionary-60-day-grace-period)). It's a proposal: comments close November 10, 2026, and the current rule still applies. Your attorney can tell you what applies to you, and nothing here is legal advice.
+
+## Related
+
+- [How to look up an H-1B LCA by case number](/guides/look-up-an-lca-by-number)
+- [What an H-1B labor condition application is](/guides/what-an-lca-is)
+- [Find a case number you were never given](/guides/find-a-dol-case-number-by-employer)

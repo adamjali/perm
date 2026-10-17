@@ -1,0 +1,97 @@
+---
+title: "Why DOL's average wait isn't your wait"
+description: "DOL's average days, the month DOL is working, and your case's own estimate are three different numbers. What each measures and which one fits your case."
+date: "2026-10-17"
+author: "PERM Tracker data desk"
+image: "/images/content/heroes/guides/dol-average-vs-your-wait.webp"
+imageAlt: "How fast DOL's PERM queue has advanced, month by month, on permtracker.app"
+imageCredit: "Screenshot of permtracker.app, October 17, 2026"
+tags: ["perm", "processing-times", "queue", "estimate", "dol", "analyst-review"]
+category: "queue"
+seoTitle: "PERM Processing Time: DOL's Average Explained"
+seoDescription: "Why DOL's published PERM average, its analyst review month and a case's own estimate disagree, and which one to read for your filing date."
+featured: false
+published: true
+---
+
+If your employer filed a PERM application for you, you've probably seen three numbers that don't agree: DOL's average wait, the filing month DOL says it's working, and a date for your own case. They aren't competing guesses at one thing. Each measures something different, and only one of them is about your case.
+
+<Callout type="info" title="DOL's two figures, today">
+<DolNow />
+</Callout>
+
+## The three numbers, side by side
+
+| The number | What it measures | Where it comes from | What it's good for |
+|---|---|---|---|
+| DOL's average | Calendar days from filing to decision, averaged over the cases DOL decided in one month | DOL's [processing times page](https://flag.dol.gov/processingtimes) | How long finished cases took, slow ones included |
+| The month DOL is working | The filing month analyst review has reached | The same DOL page | Where the front of the line is today |
+| Your case's estimate | The cases ahead of yours in line, at the pace DOL has been deciding | Your case page on this site | When your own case is likely to be decided |
+
+DOL's average right now is <DolNow show="average" />. It's DOL's own figure, and a fair one. It just answers a question about the past.
+
+## Why the average runs long for a case at the front
+
+The average is taken over every case DOL decided in a month. That includes cases that sat in an RFI, on hold, in an audit or on appeal, because those get decided eventually too, and they take much longer. A handful of slow cases pulls an average up a lot.
+
+A case that stays in the ordinary queue, analyst review, moves in filing order. Its wait is set by how many cases are ahead of it and how fast DOL is deciding them. That's why a case near the front can be decided well before its filing date plus DOL's average.
+
+DOL's own disclosure files show the gap. In June 2026, the filing month at the middle of DOL's decisions was May 2025, and over the six months to June 2026 the front of the queue gained about 1.8 filing months for every calendar month that passed. When the front of the line moves faster than one filing month per month, an average of how long finished cases took runs behind it. The [processing times page](/perm-processing-times) charts both.
+
+## What a case's own estimate looks like
+
+Take a case filed on October 16, 2026. Every employer page on this site said the same thing that day: a new case joins the line behind 80,541 cases and would likely be decided around March 10, 2027, between February 18 and April 19, 2027. That date comes from counting the cases ahead in analyst review and dividing by the pace DOL has been deciding them.
+
+Or take a whole filing month. On October 16, 2026 the [January 2026 month](/perm-queue) looked like this:
+
+| January 2026 filings | Count |
+|---|---|
+| Applications filed | 11,642 |
+| Decided so far | 408 (3.5%) |
+| Still in analyst review | 10,004 |
+| On hold, at an RFI or on appeal | 1,230 |
+| Cases filed earlier and still undecided | 8,583 |
+
+At DOL's recent pace, the line reaches the end of January 2026 around November 11, 2026. The 1,230 cases outside the line won't follow that date: an RFI or a hold takes a case out of filing order, and [on hold](/guides/perm-application-on-hold-meaning) has no published clock.
+
+## How well the estimates have held
+
+An estimate is only worth reading if it's checked. Every night this site rebuilds the queue as it stood on earlier days and scores its dates against what DOL did. On October 16, 2026, the [estimate scorecard](/estimate-scorecard) read:
+
+<ComparisonTable
+  headers={["Test", "Result"]}
+  rows={[
+    ["Typical miss, 10,407 cases DOL decided September 25 to October 15, 2026", "4 days"],
+    ["Decided within a week of the date given", "76%"],
+    ["Decided inside the printed range, near the front of the line", "60% of 5,292 cases"],
+    ["Daily sample of pending cases, graded so far", "65, typically 5 days off"],
+  ]}
+/>
+
+Those results are for dates within about a month. The scorecard says plainly that dates further out haven't come due yet, so the long-range test hasn't really started. A date six months away is an estimate of the pace holding for six months, and nobody's tested that yet.
+
+## Which number to use
+
+<StepByStep>
+<Step number={1} title="For your own case, use your case's page">
+Put your case number into the [case lookup](/perm-case-status). It shows DOL's current status, where the case sits in line, and an estimated date with its range.
+</Step>
+<Step number={2} title="For the front of the line, use the month">
+DOL's analyst review month says whether DOL has reached your filing month. If it has passed your month and your case is still open, it's likely outside the ordinary queue, and the status will say why.
+</Step>
+<Step number={3} title="For the history, use the average">
+DOL's average is a fair answer to "how long did PERM take for cases decided recently?" It's a weak answer to "when will mine be decided?"
+</Step>
+</StepByStep>
+
+## What this can't tell you
+
+- Whether DOL will keep its current pace. The estimates assume it does, and the range is how much room that assumption gets.
+- When a case on hold or at an RFI will move. Those leave the ordinary line.
+- Anything specific to your filing. Your attorney sees the case itself, and nothing here is legal advice.
+
+## Related
+
+- [How accurate are PERM estimates](/guides/how-accurate-are-perm-estimates)
+- [Where your filing month sits](/guides/where-your-filing-month-sits)
+- [How the PERM queue works](/guides/how-the-perm-queue-works)

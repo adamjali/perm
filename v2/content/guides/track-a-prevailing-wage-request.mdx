@@ -2,7 +2,7 @@
 title: "How to track a prevailing wage request by case number"
 description: "Paste a P- number and see the Department of Labor's current status for a prevailing wage request, pending ones included, plus the wage once it's issued."
 date: "2026-09-03"
-updated: "2026-10-08"
+updated: "2026-10-17"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/track-a-prevailing-wage-request.webp"
 imageAlt: "Prevailing wage requests on permtracker.app: the requests waiting at DOL, the decided ones, and a search by employer"
@@ -15,10 +15,10 @@ featured: true
 published: true
 ---
 
-If you have a `P-` case number, you can check it here and see what the Department of Labor currently says about it. Pending requests included. This page walks through what you get and what you don't.
+If you have a `P-` case number, you can check it here and see what the Department of Labor currently says about it. Pending requests included. Here's what you get and what you don't.
 
 <Callout type="important" title="A common myth, worth clearing up first">
-You will read in a lot of places that DOL only shows prevailing wage cases to the public once they've been decided, so a pending request can't be tracked. That isn't right. DOL's case status system answers for pending requests too, and that's what this site reads.
+You'll read in a lot of places that DOL only shows prevailing wage cases to the public once they've been decided, so a pending request can't be tracked. That isn't right. DOL's case status system answers for pending requests too, and that's what this site reads.
 </Callout>
 
 ## What a prevailing wage request is
@@ -26,6 +26,31 @@ You will read in a lot of places that DOL only shows prevailing wage cases to th
 Before an employer can file a PERM application, it has to ask DOL what the job pays. That request is Form ETA-9141, and DOL's answer is the prevailing wage determination. It sets the minimum the employer must offer, and every date that follows is measured from it.
 
 The request gets its own case number, separate from the PERM case number that comes later. It starts with `P-100-`, like `P-100-26092-751498`.
+
+## How long DOL is taking right now
+
+<Callout type="stat" title="DOL's wage-request queue" stat={<DolNow show="pwdMonth" />}>
+<DolNow show="pwd" /> That's DOL's own published month for PERM requests using the standard OEWS wage survey, from its [processing times page](https://flag.dol.gov/processingtimes).
+</Callout>
+
+DOL publishes a month. Its case-status record shows the same queue by filing month, request by request, and it moves ahead of the published figure between updates. On October 16, 2026, the [wage request search](/pwd-cases) counted:
+
+<ComparisonTable
+  headers={["Filed in", "Decided", "Still waiting at DOL"]}
+  rows={[
+    ["April 2026", "16,884", "52"],
+    ["May 2026", "19,259", "77"],
+    ["June 2026", "17,524", "239"],
+    ["July 2026", "5,051", "11,644"],
+    ["August 2026", "507", "15,217"],
+    ["September 2026", "453", "14,656"],
+    ["October 2026, to the 16th", "154", "7,179"],
+  ]}
+/>
+
+So June's requests are almost all decided, and DOL had already worked through about three in ten of July's. A request filed in August or later is still behind most of July. In all, 49,081 wage requests were waiting at DOL that day.
+
+For one request, the lookup goes further than the month. It counts the PERM wage requests filed before yours that DOL still has in process and divides by how many DOL decides on a working day, which gives an estimated day and a range. Each day's estimate is written down before DOL decides, on the [estimate scorecard](/estimate-scorecard): on October 16, 2026 it held 18 such day estimates, none graded yet, and the older month-level estimate had been graded 23 times, typically 7 days from the middle of the month, with every decision inside the month it named.
 
 ## Look it up
 
@@ -96,7 +121,7 @@ On a pending request you can leave an email address and hear when DOL's status c
 
 - **Why** a determination came out at the level it did. DOL doesn't publish its reasoning.
 - Anything about a request DOL's system doesn't return, which includes very old filings.
-- The employer's internal plans. A wage determination is a legal step, not a commitment to file the PERM.
+- The employer's internal plans. A wage determination is a legal step; it doesn't commit anyone to file the PERM.
 
 ## Related
 

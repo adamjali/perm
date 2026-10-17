@@ -1,0 +1,79 @@
+---
+title: "What to ask a software vendor about your clients' data"
+description: "Questions to put to an immigration software vendor before client files go in: hosting, audit reports, access, exports and breach notice."
+date: "2026-10-17"
+author: "PERM Tracker team"
+image: "/images/content/heroes/blog/vendor-data-security-questions.webp"
+imageAlt: "How permtracker.app is run and secured, from its security page"
+imageCredit: "Screenshot of permtracker.app, October 17, 2026"
+tags: ["security", "software", "vendor", "client-data", "practitioner", "confidentiality"]
+category: "practice"
+seoTitle: "Immigration Software Security Questions"
+seoDescription: "A vendor security checklist for immigration firms: audit reports, encryption, access, exports, retention, breach notice and subprocessors, with sources."
+featured: false
+published: true
+---
+
+This is for immigration attorneys, firm administrators and paralegals who put clients' passports, addresses and work histories into software someone else runs. An immigration file carries passport numbers, birth dates and home addresses, so the questions below are worth asking before a vendor gets one, and again each year.
+
+<Callout type="important" title="The duty behind the questions">
+ABA Model Rule 1.6(c): "A lawyer shall make reasonable efforts to prevent the inadvertent or unauthorized disclosure of, or unauthorized access to, information relating to the representation of a client." Comment [18] weighs, among other factors, "the sensitivity of the information" and how likely a disclosure is without more safeguards. Your state's version of the rule is the one that binds you.
+</Callout>
+
+## Why this is a live question in 2026
+
+In letters dated April 3, 2026, Docketwise notified state attorneys general of a data security incident. Its notice letter, filed with California's Attorney General, says: "In October 2025, DocketWise suspected that the credentials to one of its third-party partner repositories may have been accessed." It goes on: "The forensic investigation subsequently confirmed that an unauthorized actor(s) used valid credentials to clone certain third-party partner repositories, some of which were used as part of a data migration pipeline for the DocketWise application; this application contained law firm records with your personal information."
+
+Washington's Attorney General lists the same notice:
+
+| Field on Washington's list | As listed |
+|---|---|
+| Date reported | 04/03/2026 |
+| Date of breach | 09/01/2025 |
+| Washingtonians affected | 689 |
+| Information compromised | Name; Social Security Number; Driver's License or Washington ID Card Number; Full Date of Birth; Passport Number; Medical Information |
+
+The letter filed in Washington says the people notified were offered "complimentary credit monitoring and identity restoration services for twenty-four (24) months through IDX." Both states publish their notices: California's [data breach list](https://oag.ca.gov/privacy/databreach/list) and Washington's [data breach notifications](https://www.atg.wa.gov/data-breach-notifications).
+
+We cite it for one detail: by the notice's own account, the data was reached through partner repositories used in a migration pipeline, outside the main application. Migration and partner tools are part of how most software is run, so the questions below ask about every company that touches the data, and the main application is only the first.
+
+## The questions
+
+<ComparisonTable
+  headers={["Ask", "What a useful answer looks like"]}
+  rows={[
+    ["Where is client data stored, and by whom?", "The hosting providers named, with the regions data sits in"],
+    ["Can we see an independent audit report?", "A current SOC 2 Type II report (or ISO 27001 certificate) for the vendor itself, available under NDA, plus the same for its hosts"],
+    ["Is data encrypted at rest and in transit?", "Yes to both, with the method named"],
+    ["How do our users sign in?", "Multi-factor sign-in or single sign-on available for every user, and enforced if you ask"],
+    ["Who at the vendor can see our files?", "Named roles, access granted only when needed, and every access logged"],
+    ["Which other companies touch the data?", "A list of subprocessors, including any migration, backup, AI or support tools, and notice before one is added"],
+    ["What happened in your last incident?", "A dated account of any incident, what was exposed and what changed"],
+    ["How fast will you tell us about a breach?", "A notice period written into the contract, in days"],
+    ["Can we export everything, in a usable format?", "Every case, document and date, on demand, without a fee to leave"],
+    ["What happens to our data when we leave?", "Deletion on request, with written confirmation and a stated time for backups to expire"]
+  ]}
+/>
+
+## Two PERM-specific points
+
+<StepByStep>
+<Step number={1} title="Retention has a floor">
+Under 20 CFR 656.10(f), the employer keeps a copy of each PERM application and all supporting documentation for 5 years from filing. If those records live in a vendor's system, ask how long the vendor keeps them, and make sure an export gives you everything an audit could ask for before a contract ends.
+</Step>
+<Step number={2} title="The audit file has to come out whole">
+An audit asks for the recruitment documentation the employer kept. Ask the vendor to export one closed case end to end, with every document and date, and check it before you need it.
+</Step>
+</StepByStep>
+
+## Ask the same of everyone
+
+Ask these of every vendor, including the small ones and the free ones. A vendor that answers in writing, with dates and documents, is easier to trust than one that answers with adjectives.
+
+PERM Tracker publishes its own answers on its [security page](/security): the hosts behind it and their audit reports, encryption, how sign-in works, how to report a vulnerability, and an incident record kept permanently. It holds PERM case dates and the documents a firm chooses to attach. Nothing here is legal advice; your bar's ethics guidance and your own counsel decide what's reasonable for your firm.
+
+## Related
+
+- [Immigration law software pricing in 2026](/blog/immigration-software-pricing-2026)
+- [Docketwise vs INSZoom vs LollyLaw vs eImmigration](/blog/docketwise-vs-inszoom-lollylaw-eimmigration)
+- [The PERM document checklist](/guides/perm-document-checklist), for what an audit file holds

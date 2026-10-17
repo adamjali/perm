@@ -128,7 +128,10 @@ def main() -> int:
                 fx, fy = s["tour"].get("focus", [0.5, 0.0])
                 im = crop43(Image.open(ROOT / "public" / "images" / "for-attorneys" / s["tour"]["file"]).convert("RGB"), fx, fy)
             elif "capture" in s:
-                im = crop43(Image.open(a.captures / f"{key}.png").convert("RGB"), 0.5, 0.0)
+                src = Image.open(a.captures / f"{key}.png").convert("RGB")
+                # "contain" keeps a wide chart whole on a plain ground; a 4:3
+                # crop from its middle cut both ends off.
+                im = fit43(src) if s["capture"].get("fit") == "contain" else crop43(src, 0.5, 0.0)
             else:
                 raise ValueError("no source")
         except Exception as e:  # noqa: BLE001 - report and carry on to the next

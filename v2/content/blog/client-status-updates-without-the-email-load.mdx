@@ -1,0 +1,84 @@
+---
+title: "PERM client status updates without the email load"
+description: "How a firm can let PERM clients read DOL's status for themselves: a free case lookup, an email when DOL moves the case, and a checker for the firm's site."
+date: "2026-10-17"
+author: "PERM Tracker team"
+image: "/images/content/heroes/blog/client-status-updates-without-the-email-load.webp"
+imageAlt: "The case-status box a firm can put on its own site, from permtracker.app"
+imageCredit: "Screenshot of permtracker.app, October 17, 2026"
+tags: ["perm", "client-communication", "case-status", "embed", "practitioner", "workflow"]
+category: "practice"
+seoTitle: "PERM Client Status Updates, Less Email"
+seoDescription: "Cut the \"any update?\" emails on PERM cases: send clients to DOL's status by case number, turn on change alerts, or put a free case checker on your site."
+featured: false
+published: true
+---
+
+This is for attorneys and paralegals who answer "any update on my PERM?" several times a day. Most of those emails ask for one thing DOL already publishes, the case's status, and the client can read it without you: by case number, for free, with an email when DOL moves the case.
+
+<Callout type="tip" title="What the client needs">
+Just the DOL case number. Current ones look like G-100-26125-868956; cases filed in 2022 and 2023 use a shorter form like A-23043-00641. It's on the ETA-9089 filing receipt. Prevailing wage, LCA, H-2A, H-2B and CW-1 numbers work in the same box.
+</Callout>
+
+## Which question goes where
+
+| The client asks | Where they can read the answer |
+|---|---|
+| Has DOL decided my case? | The [case lookup](/perm-case-status): DOL's status in plain English |
+| When will it be decided? | The same page: an estimated date, labelled as an estimate |
+| Where is DOL in the line? | The [queue page](/perm-queue), by filing month |
+| What does "RFI issued" mean? | [Every status, explained](/perm-case-statuses) |
+| How long does DOL take on average? | [Processing times](/perm-processing-times), from DOL's own figures |
+| Tell me when something happens | "Email me changes" on the case page |
+
+On the averages, DOL's own published figure today is <DolNow show="average" />, and the [processing times page](/perm-processing-times) carries its date.
+
+## Three ways to set it up
+
+<StepByStep>
+<Step number={1} title="Send the link once">
+At engagement, or when the ETA-9089 is filed, send the client the case number and permtracker.app/perm-case-status. The lookup needs no account.
+</Step>
+<Step number={2} title="Let them turn on the alert">
+On the case page, "Email me changes" sends them an email when DOL moves the case. They confirm by email first, and one click turns it off. A status change is emailed at once.
+</Step>
+<Step number={3} title="Or put the checker on your own site">
+The case checker runs inside any web page. It's free, and the code is on the [badges and embeds page](/badges#embeds) and in [For attorneys](/for-attorneys#for-your-site).
+</Step>
+</StepByStep>
+
+The checker is one iframe and a source line:
+
+```html
+<iframe src="https://permtracker.app/embed/case-status" title="Check a DOL case" width="100%" height="560" style="border:0;max-width:100%" loading="lazy"></iframe>
+<p style="margin:4px 0 0;font-size:13px">Source: <a href="https://permtracker.app/perm-case-status">PERM Tracker</a></p>
+```
+
+## A reply to keep on file
+
+For the emails that still come in, a pre-written answer saves the context switch. Adjust it to your firm's voice:
+
+> Thanks for checking in. Your PERM is with the Department of Labor under case number G-100-XXXXX-XXXXXX. You can see its current status any time at permtracker.app/perm-case-status, and turn on an email for when DOL moves it. DOL's own search is at flag.dol.gov/case-status-search. We'll be in touch as soon as there's anything you need to do.
+
+## What the client sees, and how current
+
+The status comes from DOL's own case-status search. Per the [case lookup](/perm-case-status), every case is read once a day, every undecided case at least twice a day (three times on weekdays), and cases with an alert on them every 5 minutes on weekdays and every half hour at night and at weekends. It's a sweep, so a case decided since the last read shows at DOL first, and DOL stays the authority for any single case. [DOL's own case status search](https://flag.dol.gov/case-status-search) answers the same question directly.
+
+## What it doesn't show
+
+- **Your firm's work.** Recruitment in progress, a draft RFI response, what you're waiting on from the client: DOL's record holds none of that.
+- **USCIS.** After certification the I-140 is with USCIS, and its receipt number isn't a DOL case number.
+- **Anything DOL hasn't published.** The wage, worksite and law firm on a pending case appear only once DOL publishes the case in its quarterly files.
+
+The lookup can answer the "has anything happened?" emails. The questions that need judgment still come to you.
+
+## For the firm's own side
+
+PERM Tracker's app is free and PERM-only: it works out each case's recruitment dates, filing window and I-140 deadline from the dates you enter, with reminders and calendar sync. It isn't a client portal, a forms tool or a billing system. More on [For attorneys](/for-attorneys).
+
+## Related
+
+- [Check a PERM case's status](/guides/check-perm-case-status), to send clients who want the walkthrough
+- [Find your DOL case number](/guides/find-your-dol-case-number), for clients who can't find it
+- [Tracking a case without an account](/guides/tracking-a-case-without-an-account)
+- [Free immigration case management software in 2026](/blog/free-immigration-case-management-software)

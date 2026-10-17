@@ -398,9 +398,12 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/accessibility`, lastModified: at("/accessibility"), images: [`${base}/og/accessibility.jpg`] },
   ];
 
+  // Each article's own header picture rides with it, as each static page's
+  // card does: every one is its own and credited (article-pictures.test.ts).
   const content: Entry[] = allPosts.map((post) => ({
     url: `${base}/${post.type}/${post.slug}`,
     lastModified: post.meta.updated ?? post.meta.date,
+    ...(post.meta.image?.startsWith("/") ? { images: [`${base}${post.meta.image}`] } : {}),
   }));
 
   return [...statics, ...(await browseEntries(sources)), ...content];

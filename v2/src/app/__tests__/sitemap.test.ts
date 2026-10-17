@@ -408,6 +408,17 @@ describe("sitemap.ts", () => {
     expect(blog!.lastModified).toBe("2099-03-04");
   });
 
+  it("lists each article's own header picture beside it", async () => {
+    const withPicture = mkPost("pictured", "guides", "2026-10-01");
+    withPicture.meta.image = "/images/content/heroes/guides/pictured.webp";
+    vi.mocked(getAllPosts).mockReturnValue([withPicture, mkPost("bare", "guides", "2026-10-01")]);
+    const entries = await pagesEntries();
+    expect(entries.find((e) => e.url.endsWith("/guides/pictured"))?.images).toEqual([
+      "https://permtracker.app/images/content/heroes/guides/pictured.webp",
+    ]);
+    expect(entries.find((e) => e.url.endsWith("/guides/bare"))?.images).toBeUndefined();
+  });
+
   it("homepage lastModified follows the status sweep, whose figures lead it", async () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2099-01-01")]);
     const entries = await sitemap();

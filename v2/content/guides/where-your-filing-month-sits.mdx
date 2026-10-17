@@ -2,7 +2,7 @@
 title: "See where your filing month sits"
 description: "Three pages answer three different questions about the PERM queue: where DOL is working, how fast it moves, and what it decided today."
 date: "2026-09-03"
-updated: "2026-10-11"
+updated: "2026-10-17"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/where-your-filing-month-sits.webp"
 imageAlt: "One filing month on permtracker.app: the share decided, by outcome, and where DOL has reached"
@@ -22,7 +22,7 @@ If you don't have the filing month to hand, the [case status lookup](/perm-case-
 
 Start at the [queue backlog page](/perm-queue). It opens with the filing month DOL says its analyst review is working, and the size of everything still behind it.
 
-At the last check, DOL published November 2025 as its analyst review position, and a per-case scan found 95,922 cases last seen undecided across 39 filing months, out of 414,357 scanned. DOL's disclosure files carry no pending rows at all, so that count can't come from them. It comes from reading cases against DOL's case status system in batches.
+<DolNow show="queue" /> The cases still undecided behind that month come from our own sweep of DOL's case status system, read in batches. DOL's disclosure files carry no pending rows at all, so that count can't come from them.
 
 <ScreenshotFigure
   src="/images/content/shots/queue.webp"
@@ -31,22 +31,15 @@ At the last check, DOL published November 2025 as its analyst review position, a
   step={1}
 />
 
-Find your month in that chart and open it. A month page gives the three numbers that matter for one case: how many applications carry that filing date, how many already have a decision, and how many older cases are still undecided in front of it. For November 2025 that's 15,034 filed, 2,645 decided, and 4,944 cases filed earlier still waiting.
+Find your month in that chart and open it. A month page gives the three numbers that matter for one case: how many applications carry that filing date, how many already have a decision, and how many older cases are still undecided in front of it. For November 2025, on October 11, 2026, that was 15,034 filed, 2,645 decided, and 4,944 cases filed earlier still waiting.
 
 That last figure is the queue ahead of you. It counts only cases DOL still has to decide, which is the only version that means anything.
 
 ## How fast is it moving
 
-The [processing times page](/perm-processing-times) is DOL's published position rather than our scan, refreshed from DOL's own page. There are four queue positions on it, and they don't move together.
+The [processing times page](/perm-processing-times) is DOL's published position rather than our scan, refreshed from DOL's own page. It carries four queue positions, analyst review, audit review and two for wage requests, and they don't move together. <DolNow show="pwd" />
 
-| Queue | Filing month DOL is working |
-|---|---|
-| Analyst review | November 2025 |
-| Audit review | December 2025 |
-| Prevailing wage, OEWS survey | April 2026 |
-| Prevailing wage, everything else | March 2026 |
-
-The same page carries the average time to a determination, 336 days for those DOL issued in August 2026, plus every queue reading DOL has published since we started keeping them.
+The same page carries DOL's average time to a determination, <DolNow show="average" />, plus every queue reading DOL has published since we started keeping them.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/where-your-filing-month-sits-monthly.webp"
