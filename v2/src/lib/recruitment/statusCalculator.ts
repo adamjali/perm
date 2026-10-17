@@ -2,7 +2,8 @@
  * Recruitment Status Calculator
  *
  * Calculates recruitment filing window status based on PERM regulations.
- * Per 20 CFR 656.17: ETA 9089 must be filed 30-180 days after recruitment ends.
+ * Per 20 CFR 656.17(e): the ETA 9089 can be filed 30 days after the last mandatory
+ * step and must be filed within 180 days of the first.
  */
 
 import { differenceInDays, parseISO, format } from "date-fns";

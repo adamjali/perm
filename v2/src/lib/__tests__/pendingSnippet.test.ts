@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ON_HOLD, pendingFollowOn, pendingSentence } from "@/lib/pendingSnippet";
+import { ON_HOLD, pendingSentence, whereTheyStand } from "@/lib/pendingSnippet";
 
 const counts = (pending: number, hold = 0) => ({
   pending,
@@ -37,10 +37,9 @@ describe("pendingSentence", () => {
   });
 });
 
-describe("pendingFollowOn", () => {
-  it("mentions the approval rate only when the page shows one", () => {
-    expect(pendingFollowOn(counts(5), true)).toBe("See where they stand, plus its approval rate, jobs and wages.");
-    expect(pendingFollowOn(counts(5), false)).toBe("See where they stand, plus its jobs and wages.");
-    expect(pendingFollowOn(counts(1), false)).toBe("See where it stands, plus its jobs and wages.");
+describe("whereTheyStand", () => {
+  it("agrees with the count", () => {
+    expect(whereTheyStand(counts(5))).toBe("where they stand");
+    expect(whereTheyStand(counts(1))).toBe("where it stands");
   });
 });

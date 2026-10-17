@@ -59,7 +59,7 @@ const STAGES: PERMStage[] = [
     badge: "3",
     title: "ETA 9089 Filing",
     description:
-      "File the PERM application 30-180 days after recruitment ends. Must file before PWD expires.",
+      "File the PERM application 30 days after the last recruitment step, within 180 days of the first. Must file before PWD expires.",
     color: "#D97706",
     meta: [{ text: "30-180 day window" }, { text: "6-12 months review" }],
   },

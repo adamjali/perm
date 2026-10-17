@@ -162,7 +162,7 @@ function buildFilingWindowData(
  * - RFI due date = received + 30 days (strict, not editable)
  *
  * Filing window rules (from perm_flow.md):
- * - Must file 30-180 days after recruitment ends
+ * - Opens 30 days after the last recruitment step; closes 180 days after the first
  * - Must file before PWD expiration
  *
  * RFI rules (from perm_flow.md):
@@ -266,7 +266,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             label="Filing date"
             name="eta9089FilingDate"
             error={errors?.eta9089FilingDate}
-            hint={filingHint || "Date ETA 9089 was filed (30-180 days after recruitment)"}
+            hint={filingHint || "Date ETA 9089 was filed (30+ days after the last step, within 180 days of the first)"}
             validationState={validationStates?.eta9089FilingDate}
           >
             <DateInput

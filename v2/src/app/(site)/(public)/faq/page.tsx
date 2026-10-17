@@ -108,7 +108,7 @@ const faqData = [
       {
         question: "What’s the ETA 9089 filing window?",
         answer:
-          "The ETA 9089 must be filed no earlier than 30 days after the end of all recruitment activities and no later than 180 days after recruitment ends. This 30-180 day filing window is a critical deadline: filing too early results in denial, and missing the 180-day cutoff means restarting recruitment entirely. PERM Tracker automatically calculates this window based on your recruitment end dates.",
+          "The ETA 9089 can be filed once 30 days have passed since the last mandatory recruitment step, and no later than 180 days after the first one: under 20 CFR 656.17(e), no mandatory step may be more than 180 days old on the day you file. Filing too early is a denial, and missing the end means starting recruitment over. PERM Tracker works out this window from your recruitment dates.",
       },
       {
         question: "How long do I have to file the I-140 after PERM certification?",

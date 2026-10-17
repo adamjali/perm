@@ -22,8 +22,8 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
-import { firstThatFits } from "@/lib/describe";
-import { pendingFollowOn, pendingSentence } from "@/lib/pendingSnippet";
+import { firstThatFits, seeCandidates } from "@/lib/describe";
+import { pendingSentence, whereTheyStand } from "@/lib/pendingSnippet";
 import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
@@ -474,11 +474,32 @@ export async function generateMetadata({
   // point read, the same one the page makes for its live band.
   const pending = await entityPending(KIND, found.canonicalSlug).catch(() => null);
   const waiting = pendingSentence(row.name, pending);
+  // What every page in this branch shows, most useful first. The jobs and
+  // places come from the nightly facets, which start at 3 filings
+  // (PAGE_FLOOR in scripts/build_entity_detail.py); a page under that has
+  // none, so the description doesn't promise them.
+  const hasWork = row.total >= 3;
+  const sees = [
+    ...(hasWork ? ["the jobs it files for", "where the work is"] : []),
+    "how long DOL takes",
+    "how it compares with other sponsors",
+  ];
   const description = firstThatFits([
     ...(waiting && pending
-      ? [`${waiting} ${pendingFollowOn(pending, reliability.ratePct != null)}`, waiting]
+      ? [
+          ...seeCandidates(waiting, [
+            whereTheyStand(pending),
+            "how long DOL takes",
+            ...(reliability.ratePct != null ? ["its approval rate"] : []),
+            ...(hasWork ? ["the jobs it files for"] : []),
+            ...(row.medianAnnualWage != null && row.medianAnnualWage > 0 ? ["what it pays"] : []),
+            "how it compares with other sponsors",
+          ], [", from DOL's own records", ", from DOL's records", ""]),
+          waiting,
+        ]
       : []),
-    `${head}${wage}. Jobs, wages and case status, from DOL's own records.`,
+    ...seeCandidates(`${head}${wage}.`, sees, [", from DOL's own records", ", from DOL's records", ""]),
+    ...seeCandidates(`${head}.`, sees, [", from DOL's own records", ", from DOL's records", ""]),
     `${head}${wage}, from DOL's own disclosure files.`,
     `${head}, from DOL's own disclosure files.`,
     `${head}.`,

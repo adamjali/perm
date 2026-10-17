@@ -28,8 +28,7 @@ export function pendingSentence(name: string, counts: PendingCounts | null): str
   return `${name} has ${formatInt(p)} PERM case${p === 1 ? "" : "s"} waiting with DOL${held}.`;
 }
 
-/** What the page shows about those cases, in the reader's terms. */
-export function pendingFollowOn(counts: PendingCounts, withRate: boolean): string {
-  const where = counts.pending === 1 ? "See where it stands" : "See where they stand";
-  return `${where}, plus ${withRate ? "its approval rate, jobs and wages" : "its jobs and wages"}.`;
+/** "where they stand", or "where it stands" for one case. */
+export function whereTheyStand(counts: PendingCounts): string {
+  return counts.pending === 1 ? "where it stands" : "where they stand";
 }

@@ -20,7 +20,7 @@ import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
-import { firstThatFits } from "@/lib/describe";
+import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
@@ -202,8 +202,15 @@ export async function generateMetadata({
   // The richest that fits 155 (lib/describe). No wage: the page itself says a
   // firm's median offered wage measures its clients' job mix, not the firm.
   const head = `${row.name}: ${formatInt(row.total)} PERM case${row.total === 1 ? "" : "s"}${ratePart}, ranked ${formatInt(row.rank)} by volume`;
+  // Who it files for, the jobs and the places come from the nightly facets,
+  // which start at 3 filings (PAGE_FLOOR in scripts/build_entity_detail.py).
+  const sees = [
+    ...(row.total >= 3 ? ["who it files for", "the jobs", "where the work is"] : []),
+    "how its cases ended",
+    "how it compares with other firms",
+  ];
   const description = firstThatFits([
-    `${head}. The jobs it files for, outcomes and how it ranks, from DOL's own records.`,
+    ...seeCandidates(`${head}.`, sees, [", from DOL's own records", ", from DOL's records", ""]),
     `${head}, from DOL's own disclosure files.`,
     `${head}.`,
   ]);

@@ -18,7 +18,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { FinePrint } from "@/components/data/FinePrint";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-import { firstThatFits } from "@/lib/describe";
+import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
 import { getLcaWageStats } from "@/lib/db/lcaWages";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -183,7 +183,16 @@ export async function generateMetadata({
   // The richest that fits 155 (lib/describe). No approval rate: this page
   // publishes a wage and no rate.
   const description = firstThatFits([
-    `${head}. Who files this job, what it pays and where, from DOL's own files.`,
+    ...seeCandidates(
+      `${head}.`,
+      [
+        "what it pays by year and by state",
+        // Facets start at 3 filings (PAGE_FLOOR in scripts/build_entity_detail.py).
+        ...(row.total >= 3 ? ["who files it", "where the work is"] : []),
+        "how it compares with other jobs",
+      ],
+      [", from DOL's own records", ", from DOL's records", ""],
+    ),
     `${head}, from DOL's own files.`,
     `${head}.`,
   ]);
