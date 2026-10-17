@@ -31,7 +31,7 @@ import { buttonVariants } from "@/components/ui/button";
  * a calculator on a page people arrive at to read a table.
  */
 
-const TITLE = "PERM Processing Time Calculator";
+const TITLE = "PERM Timeline and Processing Time Calculator";
 const DESCRIPTION =
   "Estimate when the Department of Labor will decide your PERM case, from DOL's own published queue data and disclosure files, with every source shown.";
 

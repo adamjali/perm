@@ -29,7 +29,7 @@ import { longDate } from "@convex/lib/months";
  * the last published quarter. The browser merges them, one row per case.
  */
 
-const TITLE = "PWD Case Search";
+const TITLE = "PWD Case Search and Status Tracking";
 const DESCRIPTION =
   "Find a prevailing wage request (ETA-9141) by employer, job title and filing month: DOL's live status for pending ones, the wage DOL set for decided ones.";
 

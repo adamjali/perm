@@ -18,7 +18,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
  */
 
 export const metadata: Metadata = withSocialCard({
-  title: "Free PERM Case Management for Attorneys",
+  title: "Free PERM Case Management App for Attorneys",
   description:
     "Enter a case's dates once and every PERM deadline, filing window and wage expiration is worked out, with reminders. Free for attorneys and their teams.",
   alternates: {
@@ -26,7 +26,7 @@ export const metadata: Metadata = withSocialCard({
   },
   openGraph: {
     ...openGraphBase,
-    title: "Free PERM Case Management for Attorneys | PERM Tracker",
+    title: "Free PERM Case Management App for Attorneys | PERM Tracker",
     description:
       "Every deadline computed per case, with reminders, calendar sync and a client-ready timeline. Free.",
     url: "/for-attorneys",

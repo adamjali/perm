@@ -21,7 +21,7 @@ import { longDate } from "@convex/lib/months";
  * plenty never see it, and nothing public lists them.
  */
 
-const TITLE = "LCA Case Search";
+const TITLE = "LCA Case Search and Status Tracking";
 const DESCRIPTION =
   "Find an H-1B labor condition application (ETA-9035) by employer, job title and filing month, with its current status, read daily from DOL's case status.";
 

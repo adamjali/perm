@@ -85,13 +85,13 @@ export const metadata: Metadata = withSocialCard({
   // "2026" answers the "perm processing times 2026" variant law-firm blogs
   // rank on. Update the
   // year in January.
-  title: "PERM Processing Times 2026 (DOL Data)",
+  title: "PERM Processing Times 2026, Tracked Daily",
   description:
     "PERM processing times now: the filing month DOL is deciding, average days to a decision, the audit and prevailing wage queues, with DOL's own as-of date.",
   alternates: { canonical: "/perm-processing-times" },
   openGraph: {
     ...openGraphBase,
-    title: "PERM Processing Times 2026 (DOL Data) | PERM Tracker",
+    title: "PERM Processing Times 2026, Tracked Daily | PERM Tracker",
     description:
       "DOL's published PERM and prevailing-wage queue positions, refreshed weekly and cited with DOL's own as-of date.",
     url: "/perm-processing-times",

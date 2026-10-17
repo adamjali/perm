@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ON_HOLD, pendingSentence, whereTheyStand } from "@/lib/pendingSnippet";
+import { ON_HOLD, pendingSentence, sponsorSentence, whereTheyStand } from "@/lib/pendingSnippet";
 
 const counts = (pending: number, hold = 0) => ({
   pending,
@@ -41,5 +41,19 @@ describe("whereTheyStand", () => {
   it("agrees with the count", () => {
     expect(whereTheyStand(counts(5))).toBe("where they stand");
     expect(whereTheyStand(counts(1))).toBe("where it stands");
+  });
+});
+
+describe("sponsorSentence", () => {
+  it("answers from the year's filings and names the newest", () => {
+    expect(sponsorSentence("Adobe Inc.", 412, "2026-10-02")).toBe(
+      "Adobe Inc. sponsors green cards: it filed 412 PERM cases in the last 12 months, the newest on October 2, 2026.",
+    );
+    expect(sponsorSentence("Acme", 1, null)).toBe("Acme sponsors green cards: it filed 1 PERM case in the last 12 months.");
+  });
+
+  it("says nothing without a filing in the year: that isn't proof it won't sponsor", () => {
+    expect(sponsorSentence("Acme", 0, "2026-10-02")).toBeNull();
+    expect(sponsorSentence("Acme", null)).toBeNull();
   });
 });

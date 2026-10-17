@@ -76,7 +76,7 @@ import { buttonVariants } from "@/components/ui/button";
  * to ask.
  */
 
-const TITLE = "Check Your PERM Case Status";
+const TITLE = "PERM Case Status: Check and Track a Case";
 const DESCRIPTION =
   "Look up a PERM case number: its status in plain English, how many undecided cases were filed before it, and the employer's own record with DOL.";
 

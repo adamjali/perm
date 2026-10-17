@@ -23,7 +23,7 @@ import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
-import { pendingSentence, whereTheyStand } from "@/lib/pendingSnippet";
+import { pendingSentence, sponsorSentence, whereTheyStand } from "@/lib/pendingSnippet";
 import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
@@ -155,6 +155,8 @@ interface Subject {
   denied: number;
   medianDays: number | null;
   medianAnnualWage: number | null;
+  /** PERM filings received in the last 365 days, published and live. */
+  recent12m: number | null;
 }
 
 /**
@@ -185,6 +187,7 @@ async function loadSubject(
     denied: row.denied,
     medianDays: row.medianDays,
     medianAnnualWage: row.medianAnnualWage,
+    recent12m: row.recent12m,
   } };
 }
 
@@ -522,6 +525,11 @@ export async function generateMetadata({
   });
 }
 
+/** The newest filing day among an employer's live cases, or null. */
+function newestFiled(cases: readonly { filingDate: string | null }[]): string | null {
+  return cases.map((c) => c.filingDate).filter((d): d is string => !!d).sort().pop() ?? null;
+}
+
 export default async function EmployerPage({
   params,
 }: {
@@ -808,7 +816,12 @@ export default async function EmployerPage({
       <ProfileHeader
         eyebrow={`PERM sponsor, #${formatInt(row.rank)} of ${formatInt(kindTotal)} by filings`}
         name={row.name}
-        answer={pendingSentence(row.name, pending)}
+        answer={[
+          sponsorSentence(row.name, row.recent12m, newestFiled(recentLive)),
+          pendingSentence(row.name, pending),
+        ]
+          .filter(Boolean)
+          .join(" ") || null}
         facts={facts}
         tags={tags}
         aside={
