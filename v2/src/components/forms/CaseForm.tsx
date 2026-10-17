@@ -802,8 +802,9 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
           </p>
         )}
         <div className="ml-auto flex items-center gap-2 md:gap-3">
-          <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling...">Cancel</Button>
-          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating}>Save case</Button>
+          {/* Narrower padding on a phone: at 320px the two large buttons ran 23px past the screen. */}
+          <Button type="button" variant="outline" size="lg" className="max-sm:px-3" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling...">Cancel</Button>
+          <Button type="submit" size="lg" className="max-sm:px-3" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating}>Save case</Button>
         </div>
       </div>
     </div>

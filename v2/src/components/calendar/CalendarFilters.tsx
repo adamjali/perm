@@ -262,12 +262,14 @@ export function CalendarFilters({
             variant="outline"
             size="sm"
             onClick={() => setIsCaseModalOpen(true)}
-            className="gap-2 min-h-[44px] flex-1 sm:flex-initial"
+            // min-w-0 and a truncating count: at 320px the count kept this
+            // button wide enough to push the filters toggle off the screen.
+            className="gap-2 min-h-[44px] min-w-0 flex-1 sm:flex-initial"
             data-testid="case-selection-btn"
           >
-            <FunnelSimpleIcon className="size-4" />
+            <FunnelSimpleIcon className="size-4 shrink-0" />
             <span>Cases</span>{" "}
-            <span className="text-muted-foreground">{selectionBadgeText}</span>
+            <span className="min-w-0 truncate text-muted-foreground">{selectionBadgeText}</span>
           </Button>
 
           {/* Expand/Collapse Filters Button - Right side on mobile */}
@@ -275,7 +277,7 @@ export function CalendarFilters({
             variant="ghost"
             size="sm"
             onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-            className="gap-2 min-h-[44px] sm:ml-auto sm:order-last"
+            className="gap-2 min-h-[44px] shrink-0 sm:ml-auto sm:order-last"
             aria-expanded={isFiltersExpanded}
             aria-label="Deadline filters"
             data-testid="toggle-filters-btn"
