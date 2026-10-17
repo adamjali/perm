@@ -20,6 +20,7 @@ import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { shouldForwardInbound } from "./lib/supportEmailForward";
 import { SITE_URL } from "./lib/links";
+import { replyGreetingName } from "./lib/replyName";
 import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 
@@ -267,13 +268,15 @@ export const replyToEmail = internalAction({
     supportEmailId: v.id("supportEmails"),
     replyBody: v.string(),
     fromName: v.optional(v.string()),
+    /** The name to greet; by default the sender's first name (replyGreetingName). */
+    recipientName: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ success: boolean; to: string; subject: string }> => {
     // Get the original email
     const original = await ctx.runQuery(
       internal.supportEmail.getEmailById,
       { id: args.supportEmailId }
-    ) as { fromEmail: string; toEmail: string; subject: string; messageId: string; references?: string } | null;
+    ) as { fromEmail: string; fromName?: string; toEmail: string; subject: string; messageId: string; references?: string } | null;
 
     if (!original) {
       throw new Error("Email not found");
@@ -299,8 +302,9 @@ export const replyToEmail = internalAction({
     const { render } = await import("@react-email/render");
     const { AdminEmail } = await import("../src/emails/AdminEmail");
 
-    // Extract recipient first name for greeting
-    const recipientName = original.fromEmail.split("@")[0] || "there";
+    // The template adds the greeting and sign-off, so the body is the message alone.
+    const recipientName = args.recipientName?.trim() || replyGreetingName(original.fromName, original.fromEmail);
+    const text = `Hi ${recipientName},\n\n${args.replyBody.trim()}\n\nBest regards,\nThe PERM Tracker team`;
 
     const html = await render(
       AdminEmail({
@@ -315,7 +319,7 @@ export const replyToEmail = internalAction({
       from: fromHeader,
       to: [original.fromEmail],
       subject: `Re: ${original.subject}`,
-      text: args.replyBody,
+      text,
       html,
       headers: {
         "In-Reply-To": original.messageId,

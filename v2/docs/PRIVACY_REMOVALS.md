@@ -45,7 +45,8 @@ So a request isn't a legal obligation today. The owner has chosen to honor them 
    page; then Clear snippet for any other page the person named. Check the Internet Archive too:
    `https://web.archive.org/cdx/search/cdx?url=permtracker.app/perm-employers/<slug>&output=json`. If it holds a
    copy, write to the Archive only with the owner's yes: that's an outward-facing message.
-5. **Reply** from support@ (`supportEmail:replyToEmail`, threaded), on the owner's yes for that message:
+5. **Reply** from support@ (`supportEmail:replyToEmail`, threaded), on the owner's yes for that message. Pass the
+   three paragraphs only: the email adds "Hi <first name>," and the sign-off itself.
 
    > Hi <first name>,
    >
