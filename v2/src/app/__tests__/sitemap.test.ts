@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import PAGE_DATES from "@/lib/sitemap/page-dates.json";
+import { changed } from "@/lib/pageDates";
 import type { PostSummary, ContentType } from "@/lib/content/types";
 
 // Mock the content layer so we control which "posts" the sitemap sees without
@@ -254,7 +255,7 @@ describe("sitemap.ts", () => {
     const entries = await sitemap();
     const byUrl = new Map(entries.map((e) => [e.url, e.lastModified]));
     // The later of the sweep's day and the month page's own last change.
-    const monthPage = (PAGE_DATES as Record<string, string>)["/perm-queue/[month]"]!;
+    const monthPage = changed("/perm-queue/[month]");
     const expected = monthPage > "2026-09-15" ? monthPage : "2026-09-15";
     expect(byUrl.get("https://permtracker.app/perm-queue/2025-11")).toBe(expected);
     expect(byUrl.get("https://permtracker.app/perm-queue/2025-12")).toBe(expected);
@@ -302,7 +303,7 @@ describe("sitemap.ts", () => {
     // same, through employerOwnDate), and only an undated row falls back to
     // the sweep's finish date. It used to be the sweep date on every URL, a
     // nightly timestamp.
-    const template = (PAGE_DATES as Record<string, string>)["/perm-employers/[slug]"]!;
+    const template = changed("/perm-employers/[slug]");
     const first = await liveEmployerEntries(0);
     expect(first[0]!.lastModified).toBe("2099-08-10");
     expect(first[1]!.lastModified).toBe("2099-08-11");
@@ -830,7 +831,7 @@ describe("entity lastmod tracks the corpus, not the daily figure", () => {
     // Since Oct 17 2026 the template's own day counts too (pageDate, the day
     // the page shows): a redesign changes every entity page, and the corpus
     // date alone would say it hadn't.
-    const template = (PAGE_DATES as Record<string, string>)["/perm-employers/[slug]"]!;
+    const template = changed("/perm-employers/[slug]");
     const expected = template > "2026-06-30" ? template : "2026-06-30";
     const entries = await entityEntries("employer", 0);
     expect(entries.length).toBeGreaterThan(0);

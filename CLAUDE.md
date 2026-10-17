@@ -824,7 +824,7 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   Svix still refuses an unsigned or forged webhook with 401, checked live).
 - **A scrolling chart can open at its newest end** (`ChartTips startAtEnd`): a 141-month chart opened at FY2015 on a phone.
 
-## Oct 17 2026, in nine lines
+## Oct 17 2026, in eleven lines
 
 - **The PWD expiry limits a case only while recruitment hasn't begun inside it** (20 CFR 656.40(c) as BALCA read it in
   Karl Storz, en banc 2011, and MPHASIS, 2015; the attorney confirmed): `pwdBearing` and `pwdStepLimit` in
@@ -840,6 +840,11 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   themselves and render their own bar, as articles do. `audit_all_pages.py` checks a page's three dates agree.
 - **Entity, group and bulletin-month lastmods take the template's day when it's newer** than their data, and the
   homepage, the queue, the review stages, activity and under-review pages follow the sweep, whose figures they print.
+  **A template's day is set by hand** (`TEMPLATE_DAY` in `src/lib/pageDates.ts`): move it only when a change alters
+  what every page it serves says. Git's day would re-date ~78,000 employer URLs on any shared-component commit.
+- **Googlebot crawls 25,000 to 45,000 pages a day since Oct 13** (about 3,500 before) and meets the 12-at-once search
+  limit: 15 to 19% refused on its busiest days, which is Search Console's "Server error (5xx)". Each deploy starts
+  the page cache empty, and Oct 16 to 17 had ten between 10:35 PM and 3:12 AM. Batch deploys at night.
 - **Employer pages answer "does it sponsor green cards"** from the year's filings (`sponsorSentence`), and say nothing
   when the year holds none: that isn't proof an employer won't sponsor.
 - **40 new articles and 10 refreshed**, each with its own picture; three practice templates are `published: false`

@@ -11,6 +11,7 @@ import {
   OWN_DATE,
   pageDate,
   routeOf,
+  TEMPLATE_DAY,
 } from "@/lib/pageDates";
 
 const dates = PAGE_DATES as Record<string, string>;
@@ -44,6 +45,30 @@ describe("pageDate", () => {
     expect(employerOwnDate("2099-05-05", { sweep: "2099-01-01" })).toBe("2099-05-05");
     expect(employerOwnDate(null, { sweep: "2099-01-01" })).toBe("2099-01-01");
     expect(employerOwnDate(null, {})).toBe(changed("/perm-employers/[slug]"));
+  });
+});
+
+describe("a template's day", () => {
+  const templates = Object.keys(dates).filter((r) => r.includes("[") && !r.startsWith("/cases"));
+
+  it("is set by hand for every public template", () => {
+    // A template left to git would take the day of any commit to anything it
+    // imports, and re-date every page it serves.
+    expect(templates.filter((r) => !(r in TEMPLATE_DAY))).toEqual([]);
+    expect(Object.keys(TEMPLATE_DAY).filter((r) => !(r in dates))).toEqual([]);
+  });
+
+  it("is the hand-set day, never the git day", () => {
+    for (const r of templates) expect(changed(r), r).toBe(TEMPLATE_DAY[r]);
+  });
+
+  it("is a date", () => {
+    for (const [r, day] of Object.entries(TEMPLATE_DAY)) expect(day, r).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("still gives way to newer figures", () => {
+    expect(pageDate("/perm-employers/[slug]", { corpus: "2099-01-01" })).toBe("2099-01-01");
+    expect(pageDate("/perm-employers/[slug]", { corpus: "2001-01-01" })).toBe(TEMPLATE_DAY["/perm-employers/[slug]"]);
   });
 });
 

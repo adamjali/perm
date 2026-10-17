@@ -9,10 +9,11 @@ import PAGE_DATES from "@/lib/sitemap/page-dates.json";
  * accurate", and shows a date beside a result only when the page shows one
  * and its structured data says the same.
  *
- * The date is the later of two days: the day anything the page renders from
- * last changed in git (page-dates.json, written at deploy by
- * scripts/page_dates.mjs; `[param]` keys stand for a template) and, for a page
- * that prints figures, the day those figures last moved (its source below).
+ * The date is the later of two days: the day the page's code last changed and,
+ * for a page that prints figures, the day those figures last moved (its source
+ * below). A single page's code day is its git day (page-dates.json, written at
+ * deploy by scripts/page_dates.mjs); a template's is set by hand in
+ * TEMPLATE_DAY.
  *
  * A plain module: the breadcrumb bar is a client component and reads it too.
  */
@@ -35,8 +36,44 @@ export type DateSources = { readonly [K in DateSource]?: string | null };
 /** For a route missing from page-dates.json: stale rather than false. */
 const FALLBACK = "2026-08-24";
 
-/** The day anything this route renders from last changed in git. */
+/**
+ * The day each template last changed what its pages say, set by hand.
+ *
+ * A `[param]` route serves thousands of pages (the employer template alone
+ * about 78,000 sitemap URLs), and git dates it by any commit to its files or
+ * their imports, so a spacing fix would tell Google every one of them changed.
+ * Google then asks for them all at once, faster than two CPUs build cold pages:
+ * from Oct 13 2026 it was turned away 15 to 19% of the time on its busiest days,
+ * and Search Console listed employer pages as "Server error (5xx)".
+ *
+ * Move a template's day when a change alters what each of its pages says (a new
+ * answer line, a new section, different figures), never for layout or styling.
+ * The figures' own day still moves the date by itself. Started from the git
+ * days live on Oct 17 2026, so nothing moved when this table replaced them.
+ */
+export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
+  "/blog/[slug]": "2026-10-09",
+  "/changelog/[slug]": "2026-10-01",
+  "/guides/[slug]": "2026-09-26",
+  "/h1b-employers/[state]": "2026-10-17",
+  "/perm-attorneys/[slug]": "2026-10-16",
+  "/perm-attorneys/browse/[letter]": "2026-10-15",
+  "/perm-cities/[slug]": "2026-10-16",
+  "/perm-countries/[slug]": "2026-10-16",
+  "/perm-employers/[slug]": "2026-10-17",
+  "/perm-employers/browse/[letter]": "2026-10-15",
+  "/perm-industries/[slug]": "2026-10-16",
+  "/perm-queue/[month]": "2026-10-16",
+  "/perm-rfi-audit/[stage]": "2026-10-17",
+  "/perm-wages/[slug]": "2026-10-16",
+  "/perm-wages/browse/[letter]": "2026-10-15",
+  "/visa-bulletin/[month]": "2026-10-17",
+  "/visa-bulletin/categories/[line]": "2026-10-16",
+};
+
+/** The day this route's code last changed: a template's hand-set day, else its git day. */
 export function changed(route: string): string {
+  if (route.includes("[")) return TEMPLATE_DAY[route] ?? FALLBACK;
   return (PAGE_DATES as Record<string, string>)[route] ?? FALLBACK;
 }
 
