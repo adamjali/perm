@@ -9,6 +9,7 @@ import type { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { citationRuns } from "@/lib/content/citationRuns";
 import { buttonVariants } from "@/components/ui/button";
 import { NavLink } from "@/components/ui/nav-link";
 import VideoPlayer from "@/components/content/VideoPlayer";
@@ -332,7 +333,17 @@ export const mdxComponents: MDXComponents = {
       className="bg-tint px-1.5 py-0.5 font-mono text-sm"
       {...props}
     >
-      {children}
+      {props.className === "language-document" && typeof children === "string"
+        ? citationRuns(children).map((run, i) =>
+            run.cite ? (
+              <span key={i} className="whitespace-nowrap">
+                {run.text}
+              </span>
+            ) : (
+              run.text
+            ),
+          )
+        : children}
     </code>
   ),
   pre: ({ children, ...props }) => (

@@ -1538,6 +1538,14 @@ body[data-scroll-locked] {
   margin: 1.5em 0;
 }
 
+/* A sample document (```document): its lines wrap to the box instead of
+   holding a fixed width, so the text fills the box on a wide screen and a
+   phone never scrolls it sideways. Its own line breaks and indents stay. */
+.prose-article pre:has(> code.language-document) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .prose-article pre code {
   background: none;
   border: none;
