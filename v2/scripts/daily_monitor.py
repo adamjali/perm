@@ -277,6 +277,9 @@ DEPLOY_PATH = ".github/workflows/oracle-deploy.yml"
 DEPLOY_STEPS = (("Build", "build"),
                 ("Wait for the full test suite to pass for this commit", "waiting for tests"),
                 ("Deploy to the idle copy, health-check, switch", "server"))
+# A deploy run that ended without this step running was held for the night
+# window or had nothing to ship (scripts/deploy_plan.py), and isn't a deploy.
+SHIP_STEP = DEPLOY_STEPS[-1][0]
 
 
 def minutes(start, end) -> float | None:
@@ -294,13 +297,18 @@ def typical(xs: list[float]) -> str:
 
 def speed_lines(runs: list[dict], deploy_steps: dict) -> tuple[str, list[str]]:
     """Pure: (summary, lines) for the test runs and deploys that passed in the
-    window. A deploy's time is from its push to the switch (the run's own
-    span); `deploy_steps` maps a run id to its steps, for the parts."""
+    window. A deploy's time is from its run's start to the switch; `deploy_steps`
+    maps a run id to its steps, for the parts and for whether it shipped (the
+    site goes live at night, so a push's run often builds and stops)."""
     def done(path):
         return [r for r in runs if r.get("path") == path and r.get("status") == "completed"
                 and r.get("conclusion") == "success"]
     tests = [m for r in done(TESTS_PATH) if (m := minutes(r.get("run_started_at") or r.get("created_at"), r.get("updated_at"))) is not None]
-    deploys = done(DEPLOY_PATH)
+    def skipped(r, name):
+        return any(st.get("name") == name and st.get("conclusion") == "skipped" for st in deploy_steps.get(r.get("id"), []))
+    runs_ok = done(DEPLOY_PATH)
+    deploys = [r for r in runs_ok if not skipped(r, SHIP_STEP)]
+    held = sum(1 for r in runs_ok if skipped(r, SHIP_STEP) and not skipped(r, "Build"))
     total = [m for r in deploys if (m := minutes(r.get("run_started_at") or r.get("created_at"), r.get("updated_at"))) is not None]
     lines = []
     if tests:
@@ -314,12 +322,15 @@ def speed_lines(runs: list[dict], deploy_steps: dict) -> tuple[str, list[str]]:
                   if (m := minutes(st.get("started_at"), st.get("completed_at"))) is not None]
             if xs:
                 parts.append(f"{label} {typical(xs)}")
-        lines.append(f"Deploys: {len(total)}, push to live typically {typical(total)} min (slowest {max(total):.1f})"
+        lines.append(f"Deploys: {len(total)}, run to live typically {typical(total)} min (slowest {max(total):.1f})"
                      + (f": {', '.join(parts)}" if parts else ""))
-        summary = f"Push to live typically {typical(total)} min" + (f", tests {typical(tests)} min" if tests else "")
+        summary = f"{len(total)} deploy{'s' if len(total) != 1 else ''}, run to live typically {typical(total)} min" \
+            + (f", tests {typical(tests)} min" if tests else "")
     else:
         lines.append("Deploys: none in the last 24 hours")
         summary = f"No deploys; tests typically {typical(tests)} min" if tests else "No deploys or test runs"
+    if held:
+        lines.append(f"Pushes built and held for the night deploy: {held}")
     return summary, lines
 
 

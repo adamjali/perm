@@ -413,7 +413,19 @@ def main() -> int:
                  {"name": "Wait for the full test suite to pass for this commit", "started_at": "2026-10-08T17:48:00Z", "completed_at": "2026-10-08T17:48:00Z"},
                  {"name": "Deploy to the idle copy, health-check, switch", "started_at": "2026-10-08T17:48:00Z", "completed_at": "2026-10-08T17:53:00Z"}]}
     ssum, slines = dm.speed_lines(sruns, steps)
-    check(ssum == "Push to live typically 10.0 min, tests 2.5 min", f"the speed summary ({ssum})")
+    check(ssum == "1 deploy, run to live typically 10.0 min, tests 2.5 min", f"the speed summary ({ssum})")
+    # A push held for the night builds and stops; a night run with nothing new
+    # builds nothing. Neither is a deploy, and only the first is counted as held.
+    held_runs = sruns + [
+        {"path": D, "status": "completed", "conclusion": "success", "id": 9, "run_started_at": "2026-10-08T19:00:00Z", "updated_at": "2026-10-08T19:06:00Z"},
+        {"path": D, "status": "completed", "conclusion": "success", "id": 10, "run_started_at": "2026-10-09T06:00:00Z", "updated_at": "2026-10-09T06:01:00Z"},
+    ]
+    held_steps = {**steps,
+                  9: [{"name": "Build", "conclusion": "success"}, {"name": "Deploy to the idle copy, health-check, switch", "conclusion": "skipped"}],
+                  10: [{"name": "Build", "conclusion": "skipped"}, {"name": "Deploy to the idle copy, health-check, switch", "conclusion": "skipped"}]}
+    hsum, hlines = dm.speed_lines(held_runs, held_steps)
+    check(hsum.startswith("1 deploy,") and "Pushes built and held for the night deploy: 1" in hlines,
+          f"held and empty runs aren't deploys ({hsum}; {hlines[-1]})")
     check("Tests: 2 runs, typically 2.5 min (slowest 3.0)" in slines, "a failed test run is not timed")
     check(any("build 4.0, waiting for tests 0.0, server 5.0" in x for x in slines), "the deploy's parts, by step name")
     deploy_yml = (HERE.parent.parent / ".github" / "workflows" / "oracle-deploy.yml").read_text()

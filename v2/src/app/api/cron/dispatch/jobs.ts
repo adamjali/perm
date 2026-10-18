@@ -94,6 +94,16 @@ export const CRON_JOBS: Record<string, CronJob> = {
     schedule: "50 7 * * *",
     description: "a full Convex export, sealed on the runner and copied to R2 by the server, nightly",
   },
+  // The site goes live once a night (scripts/deploy_plan.py): a push outside
+  // 1 to 5 AM Eastern builds and stops, and this run ships main if anything
+  // the site is built from changed since the live commit. 06:00 UTC is 2 AM
+  // EDT and 1 AM EST, inside the window either way.
+  "night-deploy": {
+    workflow: "oracle-deploy.yml",
+    inputs: { when: "night" },
+    schedule: "0 6 * * *",
+    description: "ships main to the site if it changed since the live commit, nightly",
+  },
 };
 
 /**
@@ -107,6 +117,7 @@ export const WORKFLOW_NAMES: Record<string, string> = {
   "ingest-health.yml": "Ingest health",
   "daily-monitor.yml": "Daily monitor",
   "convex-backup.yml": "Convex backup (sealed, to R2)",
+  "oracle-deploy.yml": "Oracle build and deploy",
 };
 
 /**
@@ -121,6 +132,7 @@ export function runTitle(job: CronJob): string {
   const name = WORKFLOW_NAMES[job.workflow] ?? job.workflow;
   if (job.inputs?.mode) return `${name}, ${job.inputs.mode}`;
   if (job.inputs?.quick === "true") return `${name} (hourly)`;
+  if (job.inputs?.when) return `${name}, ${job.inputs.when}`;
   return name;
 }
 

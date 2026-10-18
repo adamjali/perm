@@ -128,7 +128,7 @@ def main() -> int:
 
     wf = open(os.path.join(HERE, "..", "..", ".github", "workflows", "oracle-deploy.yml")).read()
     step = wf[wf.find("Drop Cloudflare's copies of pages a withheld name was on"):]
-    step = step[:step.find("- name: Close the tunnel")]
+    step = step[:step.find("- name:")]
     check("python3 scripts/withhold.py purge" in step and "secrets.WITHHELD_EMPLOYERS" in step,
           "every deploy runs the purge with the private list", f)
     check("echo" not in step and "set -x" not in step, "and prints nothing of it", f)

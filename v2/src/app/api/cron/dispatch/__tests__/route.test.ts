@@ -165,6 +165,13 @@ describe("the run titles agree with the workflows", () => {
         expect(yml, job.workflow).toContain(`run-name: ${WORKFLOW_NAMES[job.workflow]}, \${{ inputs.mode || 'pending' }}`);
         expect(runTitle(job)).toBe(`${WORKFLOW_NAMES[job.workflow]}, ${job.inputs.mode}`);
       }
+      // The night deploy's dispatch is titled by when it ships, so the
+      // duplicate guard can't mistake a push (titled by its commit) for it.
+      if (job.inputs?.when) {
+        expect(yml, job.workflow).toContain(`format('${WORKFLOW_NAMES[job.workflow]}, {0}', inputs.when || 'now')`);
+        expect(runTitle(job)).toBe(`${WORKFLOW_NAMES[job.workflow]}, ${job.inputs.when}`);
+        expect(yml, job.workflow).toMatch(new RegExp(`options: \\[[^\\]]*\\b${job.inputs.when}\\b`));
+      }
     }
   });
 });

@@ -80,6 +80,13 @@ read-only token), then `permtracker-deploy` starts the release on the idle copy,
 waits for `/api/health` and `/perm-queue` to answer, and only then points nginx
 at it. A failed health check leaves traffic where it was.
 
+**The site goes live at night** (owner's call, Oct 18 2026): a push outside 1 to 5 AM Eastern builds and stops,
+and `permtracker-cron@dispatch-night-deploy.timer` (06:00 UTC, 2 AM EDT, 1 AM EST; not `Persistent`, so a missed
+night never ships at midday) dispatches `when=night`, which ships main only if something the site is built from
+changed since the release the server is running (`scripts/deploy_plan.py` decides, and the run's plan step says
+why). An urgent fix: `gh workflow run oracle-deploy.yml -f when=now`. Each deploy empties the page cache, and on
+Oct 17 to 18 eight of the thirteen people shown the busy page came within an hour of one (fifteen deploys that Saturday).
+
 A deploy copies the release to `<release>.w2`, starts BOTH copies of the idle slot, checks both, warms them
 (the core pages and the 300 busiest employers, two at a time, 4 minutes at most), points nginx at both, then stops
 the old slot's second copy. A rollback switches to the other slot's first copy at once, then starts its second copy

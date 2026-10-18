@@ -30,7 +30,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
 | `pnpm test:run` | All 5 projects. Baseline 634 files / 9,026 tests (2026-10-08; 15.3 min on the old Mac while it swapped). GitHub runs it on every push and the deploy waits for it; run it locally for a broad change |
-| `pnpm check` | **The pre-push gate (owner, Oct 8 2026, 3:09 PM EDT)**: typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`, about 2 min). CI runs the whole suite and the deploy waits for it; deploy Convex only once that suite is green |
+| `pnpm check` | **The pre-push gate (owner, Oct 8 2026, 3:09 PM EDT)**: typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`, about 2 min). CI runs the whole suite and the deploy waits for it, and the site goes live with the 2 AM night run (`-f when=now` for an urgent fix); deploy Convex only once that suite is green |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -185,6 +185,12 @@ SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md)
 **Since Oct 8 2026 (owner's call) the local gate is `pnpm check`**, and the full suite runs on GitHub on
 every push: the site deploy waits for it (`oracle-deploy.yml`), and Convex is deployed only once it's
 green. The history below is why the full suite, not a subset, is what has to pass before production.
+
+**And since Oct 18 2026 (owner's call) the site goes live once a night.** A push outside 1 to 5 AM Eastern
+builds and stops; the server's 2 AM run ships main if the site changed (`scripts/deploy_plan.py`), and
+`gh workflow run oracle-deploy.yml -f when=now` ships at once. A Convex deploy doesn't empty the page cache,
+so it still goes once the suite is green, as long as the live site works against the new functions; when a
+Convex change needs the new site first, deploy it after the night run.
 
 ### Why not `pnpm test:fast`
 

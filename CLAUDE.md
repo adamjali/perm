@@ -902,3 +902,6 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   last through `compareNullsLast`; a table's columns come from `tableColumns` (`PRAGMA table_info`). Don't write a copy.
 - **The decided-day feed answers 503 with a reason when a read fails**; it had shown a failed read as a day DOL
   decided nothing.
+- **The site goes live once a night** (owner's call): a push outside 1 to 5 AM Eastern builds and stops, the server's
+  2 AM run ships main when the site changed (`scripts/deploy_plan.py`), and `gh workflow run oracle-deploy.yml -f when=now`
+  ships at once. Every deploy empties the page cache: 8 of 13 people shown "busy" on Oct 17 to 18 came within an hour of one.

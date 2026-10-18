@@ -1,4 +1,7 @@
 name: Oracle build and deploy
+# A push is titled by its commit; a dispatch by when it ships, which the
+# server's night timer reads to skip a duplicate (src/app/api/cron/dispatch/jobs.ts).
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Oracle build and deploy, {0}', inputs.when || 'now') || github.event.head_commit.message }}
 
 # Builds the site on GitHub's free ARM runner (4 cores, 16 GB; the Oracle
 # server is ARM too, so sharp and libsql get the right native binaries) and
@@ -10,6 +13,14 @@ name: Oracle build and deploy
 # /home/deploy/.ssh/authorized_keys there): run the deploy script, and open a
 # tunnel to the database port, which the build uses to prerender pages with
 # the READ-ONLY token.
+#
+# THE SITE GOES LIVE AT NIGHT (owner's call, Oct 18 2026; scripts/deploy_plan.py
+# decides and says why). Every deploy empties the page cache while crawlers keep
+# asking, and 8 of 13 people shown the busy page in 36 hours came within an hour
+# of one. A push outside 1 to 5 AM Eastern builds (so a broken build still shows
+# in the day) and stops there; the server's timer dispatches `when=night` at
+# 06:00 UTC, which ships main if the site changed since what's live. For an
+# urgent fix: `gh workflow run oracle-deploy.yml -f when=now`.
 
 on:
   push:
@@ -27,6 +38,12 @@ on:
       - "v2/docs/**"
       - ".github/workflows/test.yml"
   workflow_dispatch:
+    inputs:
+      when:
+        description: "now ships as soon as the tests pass; night ships only what changed since the live commit"
+        type: choice
+        options: [now, night]
+        default: now
 
 permissions:
   contents: read
@@ -71,43 +88,53 @@ jobs:
           # page by its last change in git (scripts/page_dates.mjs).
           fetch-depth: 0
           filter: blob:none
-      # What's live is the last commit a deploy finished, not the push's own
-      # previous commit: a deploy held by a red test leaves its changes
-      # unshipped, and the next deploy has to warm and purge those pages too.
-      # (Oct 9 2026: 678ffae8's deploy was held, 34e69945 compared only with
-      # 678ffae8, and Cloudflare kept serving the old employers-under-review
-      # page.) Falls back to the push's previous commit.
-      - name: Find the commit that is live now
+      - name: Set up the deploy key
         env:
-          GH_TOKEN: ${{ github.token }}
+          ORACLE_DEPLOY_KEY: ${{ secrets.ORACLE_DEPLOY_KEY }}
+          ORACLE_KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$ORACLE_DEPLOY_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$ORACLE_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # What's live comes from the server, not from the last successful run: a
+      # push held for the night succeeds too, and a deploy held by a red test
+      # leaves its changes unshipped, so the next one has to warm and purge
+      # those pages as well (Oct 9 2026: Cloudflare kept serving the old
+      # employers-under-review page). An unreadable answer falls back to the
+      # push's previous commit, and a night run then ships.
+      - name: Decide whether this run builds and ships
+        id: plan
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          EVENT: ${{ github.event_name }}
+          WHEN: ${{ inputs.when }}
           PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          LIVE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow oracle-deploy.yml --status success --limit 1 --json headSha -q '.[0].headSha' 2>/dev/null || true)
-          if [ -n "$LIVE" ] && git merge-base --is-ancestor "$LIVE" HEAD 2>/dev/null; then SINCE="$LIVE"; else SINCE="$PUSH_BEFORE"; fi
-          echo "comparing with ${SINCE:-nothing} (push before ${PUSH_BEFORE:-none}, last deployed ${LIVE:-unknown})"
-          echo "SINCE=$SINCE" >> "$GITHUB_ENV"
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o ConnectTimeout=20 "deploy@$ORACLE_HOST" status > "$RUNNER_TEMP/live-status.txt" 2>/dev/null || true
+          STATUS_FILE="$RUNNER_TEMP/live-status.txt" python3 scripts/deploy_plan.py
+          echo "SINCE=$(grep '^since=' "$GITHUB_OUTPUT" | tail -1 | cut -d= -f2)" >> "$GITHUB_ENV"
       - name: Install pnpm
+        if: steps.plan.outputs.build == 'true'
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           package_json_file: v2/package.json
       - name: Setup Node
+        if: steps.plan.outputs.build == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24.x
           cache: pnpm
           cache-dependency-path: v2/pnpm-lock.yaml
       - name: Install dependencies
+        if: steps.plan.outputs.build == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Open the database tunnel (read-only token, prerender only)
+        if: steps.plan.outputs.build == 'true'
         env:
-          ORACLE_DEPLOY_KEY: ${{ secrets.ORACLE_DEPLOY_KEY }}
-          ORACLE_KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
         run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$ORACLE_DEPLOY_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
-          printf '%s\n' "$ORACLE_KNOWN_HOSTS" > ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy -o BatchMode=yes -o ExitOnForwardFailure=yes \
             -o ServerAliveInterval=20 -f -N -L 18080:127.0.0.1:8080 "deploy@$ORACLE_HOST"
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18080/v2/pipeline -d '{}')
@@ -115,6 +142,7 @@ jobs:
           test "$code" = "401"
 
       - name: Date each page by its last change (the sitemap's lastmod)
+        if: steps.plan.outputs.build == 'true'
         run: node scripts/page_dates.mjs
 
       # TypeScript's incremental build info from the last deploy: the build's
@@ -126,6 +154,7 @@ jobs:
       # the rest of .next/cache either: its data cache holds saved answers for
       # up to a week, and a build that restored it would prerender old figures.
       - name: Restore TypeScript's build info from the last deploy
+        if: steps.plan.outputs.build == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: v2/.next/cache/.tsbuildinfo
@@ -134,6 +163,7 @@ jobs:
             next-tsbuildinfo-${{ runner.arch }}-${{ hashFiles('v2/pnpm-lock.yaml') }}-
 
       - name: Build
+        if: steps.plan.outputs.build == 'true'
         env:
           DATABASE_URL: http://127.0.0.1:18080
           DATABASE_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
@@ -143,6 +173,7 @@ jobs:
         run: pnpm build
 
       - name: Package the standalone server
+        if: steps.plan.outputs.build == 'true'
         env:
           BEFORE: ${{ env.SINCE }}
         run: |
@@ -165,6 +196,7 @@ jobs:
       # for this exact commit. A failed or cancelled suite stops the deploy
       # here, with the live site untouched.
       - name: Wait for the full test suite to pass for this commit
+        if: steps.plan.outputs.ship == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -182,6 +214,7 @@ jobs:
           echo "::error::the test suite had not finished 30 minutes after the build"; exit 1
 
       - name: Deploy to the idle copy, health-check, switch
+        if: steps.plan.outputs.ship == 'true'
         env:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
         run: |
@@ -195,6 +228,7 @@ jobs:
       # run (no "before"), and never fails the deploy; a refusal fails this
       # step, so it shows.
       - name: Drop Cloudflare's copies of the pages this push changed
+        if: steps.plan.outputs.ship == 'true'
         continue-on-error: true
         env:
           CF_PURGE_TOKEN: ${{ secrets.CF_PURGE_TOKEN }}
@@ -211,6 +245,7 @@ jobs:
       # showed one, on every deploy. Prints counts only, never a page, because
       # this log is public. Never fails the deploy; a refusal shows red here.
       - name: Drop Cloudflare's copies of pages a withheld name was on
+        if: steps.plan.outputs.ship == 'true'
         continue-on-error: true
         env:
           WITHHELD_EMPLOYERS: ${{ secrets.WITHHELD_EMPLOYERS }}
@@ -219,6 +254,25 @@ jobs:
           DATABASE_URL: http://127.0.0.1:18080
           DATABASE_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
         run: python3 scripts/withhold.py purge
+
+      # IndexNow (Bing, Yandex, Seznam, and the AI search products Bing's index
+      # feeds) hears which pages this deploy changed, and only those: its FAQ
+      # says "Submit only when content has changed". It runs here rather than
+      # in a workflow that waits for this one, because a run that succeeded no
+      # longer means a deploy: a push held for the night succeeds too. A manual
+      # run of indexnow.yml still sends every URL. Never fails the deploy.
+      - name: Tell IndexNow which pages this deploy changed
+        if: steps.plan.outputs.ship == 'true'
+        continue-on-error: true
+        env:
+          BEFORE: ${{ env.SINCE }}
+        run: |
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "no previous commit to compare with; skipping"; exit 0
+          fi
+          node scripts/gsc_queue.mjs --since "$BEFORE" --indexnow-list > "$RUNNER_TEMP/indexnow-urls.txt"
+          echo "$(wc -l < "$RUNNER_TEMP/indexnow-urls.txt" | tr -d ' ') page(s) changed since ${BEFORE::12}"
+          node scripts/indexnow.mjs --urls "$RUNNER_TEMP/indexnow-urls.txt"
 
       - name: Close the tunnel
         if: always()
