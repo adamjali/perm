@@ -103,7 +103,7 @@ def plan(event: str, when: str, hour: int, changed: list[str] | None) -> tuple[b
         return True, True, "the night run: ships what changed since the live commit"
     if hour in NIGHT_HOURS:
         return True, True, "a push inside the night window (1 to 5 AM Eastern): ships now"
-    return True, False, f"built only: the site goes live with the night run, {NIGHT_RUN}"
+    return True, False, f"held for the night run, {NIGHT_RUN}"
 
 
 def git(*args: str) -> str:
