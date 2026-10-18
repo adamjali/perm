@@ -17,7 +17,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from entity_identity import entity_key  # noqa: E402
-from lib_db import Database, insert_rows, query_rows  # noqa: E402
+from lib_db import Database, insert_rows, query_rows, stamp_freshness  # noqa: E402
 from lib_slugs import plan_aliases, plan_sticky_slugs, with_aliases  # noqa: E402
 
 SCHEMA = [
@@ -371,6 +371,19 @@ def main() -> int:
             log(f"  FATAL after swap: {table} holds {got:,}, expected {expect:,}")
             return 1
     log(f"  swapped in: perm_entities {total_entities:,}, perm_wage_stats {nw:,}")
+    # The row every employer, law firm and job page prints for its figures,
+    # dated by the newest decision they're built from. Only after a verified
+    # swap: nothing wrote it from Aug 26 2026, and those pages said "through
+    # Aug 26" for figures that ran to June 30 and were rebuilt in October.
+    try:
+        newest = str(db.scalar("SELECT max(decision_date) FROM perm_cases") or "")[:10]
+    except RuntimeError as exc:
+        newest = ""
+        log(f"  entities freshness not stamped: the case table can't be read ({exc})")
+    if newest:
+        stamp_freshness(db, "entities", as_of=newest,
+                        source="Derived from DOL's disclosure files", cadence="Rebuilt with each quarterly load",
+                        note=f"{total_entities:,} employers, firms and occupations", max_age_days=135)
     return 0
 
 

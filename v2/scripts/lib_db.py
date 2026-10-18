@@ -273,6 +273,12 @@ ET = ZoneInfo("America/New_York")
 MS_EPOCH_FLOOR = 10_000_000_000
 
 
+def et_today() -> str:
+    """Today's Eastern date, which every date the site shows is in: the runners
+    are on UTC, where after 8 PM Eastern it's already tomorrow."""
+    return et_date(time.time() * 1000) or ""
+
+
 def et_date(stamp) -> str | None:
     """An epoch stamp (milliseconds, seconds tolerated) as its Eastern date."""
     if stamp is None or stamp == "":
@@ -423,7 +429,7 @@ def stamp_freshness(
     )
     db.execute(
         "INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-        [dataset, as_of or time.strftime("%Y-%m-%d"), int(time.time() * 1000),
+        [dataset, as_of or et_today(), int(time.time() * 1000),
          source, cadence, note, max_age_days],
     )
 

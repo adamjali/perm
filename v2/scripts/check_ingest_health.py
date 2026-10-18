@@ -498,6 +498,46 @@ def check_wage_views(db) -> int:
     return bad
 
 
+# The rebuilds after the 4:10 AM full sweep (case-status-direct.yml) whose
+# tables the pages read directly: no doc or freshness row ages when one stops,
+# and a step that stops RUNNING is caught by no failed run either. Each must
+# have finished clean inside its budget, in days.
+NIGHTLY_BUILDERS = {
+    "build_entity_detail.py --live-recent-only": 3,
+    "build_employer_map.py": 3,
+    "build_sponsor_index.py": 3,
+    "build_lca_cities.py": 3,
+    "build_straggler_rates.py": 3,
+    "sync_published_live.py": 3,
+}
+
+
+def check_nightly_builders(db) -> int:
+    """Fail when a nightly rebuild has gone longer than its budget without a
+    clean run: the page it feeds keeps yesterday's figures without a word."""
+    names = list(NIGHTLY_BUILDERS)
+    try:
+        res = db.execute(
+            "SELECT script, MAX(finished_at) FROM ingest_runs WHERE status = 'ok' "
+            f"AND script IN ({','.join('?' * len(names))}) GROUP BY script", names)
+        last = {str(r[0]): int(r[1]) for r in rows_of(res) if r[1] is not None}
+    except RuntimeError as exc:
+        return unreadable("nightly builders", exc)
+    late = []
+    for script, budget in NIGHTLY_BUILDERS.items():
+        ms = last.get(script)
+        age = None if ms is None else (NOW_MS - ms) / 86_400_000
+        shown = "never" if age is None else f"{age:.1f}d ago"
+        print(f"nightly rebuild   : {script:42s} last clean {shown}")
+        if age is None or age > budget:
+            late.append(f"{script} ({shown}, budget {budget}d)")
+    if late:
+        print(f"\nNIGHTLY REBUILD HAS STOPPED for: {', '.join(late)}. The pages these "
+              "tables feed keep serving their last figures without saying so.")
+        return 1
+    return 0
+
+
 def check_gap_sweep(db) -> int:
     """Fail when the serial gap sweep has stopped running.
 
@@ -810,6 +850,7 @@ def main() -> int:
     yield_bad = check_discovery_yield(db)
     backfill_bad = check_backfill(db)
     gapsweep_bad = check_gap_sweep(db)
+    builders_bad = check_nightly_builders(db)
     watched_bad = check_watched(db)
     check_cap_streak(db)        # a warning only; see CAP_STREAK_RUNS
     check_unclassified_statuses(db)   # a warning only; see its docstring
@@ -858,11 +899,13 @@ def main() -> int:
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
-            or coverage_bad or gapsweep_bad or watched_bad or docs_bad or views_bad or handread_bad or unparseable):
+            or coverage_bad or gapsweep_bad or builders_bad or watched_bad or docs_bad or views_bad
+            or handread_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "
-          "gap sweep is re-asking what the walk skipped, no backfill has "
+          "gap sweep is re-asking what the walk skipped, every nightly rebuild "
+          "ran, no backfill has "
           "stalled, every precomputed doc is present and current, and lookup "
           "demand is at its normal rate.")
     return 0

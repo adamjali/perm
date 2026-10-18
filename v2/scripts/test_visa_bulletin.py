@@ -326,6 +326,29 @@ def main() -> int:
               not any("INSERT OR REPLACE INTO visa_bulletins" in q for q in held.sql),
               "stored the July fixture as October or June")
 
+        # A night with nothing new still stamps the freshness row: its source
+        # is what every bulletin page prints, and returning early left "via
+        # Internet Archive" there for two weeks (Oct 5 to 18 2026).
+        class AllHeld(Recorder):
+            def execute(self, sql, args=None, **kw):
+                self.sql.append(sql)
+                self.pairs = getattr(self, "pairs", []) + [(sql, args)]
+                if sql.startswith("SELECT bulletin_month, source_url"):
+                    return {"response": {"result": {"rows": [
+                        [{"type": "text", "value": "2026-07"}, {"type": "text", "value": vb.SAVED_PAGE_SOURCE}]]}}}
+                return {"response": {"result": {"rows": []}}}
+
+        quiet = AllHeld()
+        vb.Database = lambda: quiet
+        vb.fetch = lambda url, attempts=3: (
+            '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-july-2026.html">Jul</a>'
+            if url == vb.DIRECT_INDEX else page)
+        vb.ingest_direct(2)
+        stamped = [a for q, a in quiet.pairs if q.startswith("INSERT OR REPLACE INTO data_freshness")]
+        check("a night with nothing new still stamps the bulletin's freshness, with State as the source",
+              bool(stamped) and vb.FRESHNESS_SOURCE in str(stamped), str(quiet.sql)[-300:])
+        vb.Database = lambda: held
+
         # Old history we've never held (2005-2007 pages in a layout the
         # parser can't read) is the backfill's job, never the nightly run's.
         old_idx = idx + '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2007/visa-bulletin-for-may-2007.html">May 2007</a>'

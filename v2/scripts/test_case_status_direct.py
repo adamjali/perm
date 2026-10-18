@@ -535,6 +535,17 @@ def main() -> int:
     check("et_date keeps a late-evening EST event on its own day",
           csd.et_date(1799641800000) == "2027-01-10", csd.et_date(1799641800000))
 
+    # Today, as every stamp and doc dates itself: 11:30 PM EDT is already the
+    # next day on the runner's UTC clock, which dated pages a day ahead.
+    import lib_db
+    real_time = lib_db.time.time
+    try:
+        lib_db.time.time = lambda: 1790307000.0      # Sep 24 2026, 11:30 PM EDT
+        check("et_today is the Eastern day late in the evening, not UTC's tomorrow",
+              lib_db.et_today() == "2026-09-24", lib_db.et_today())
+    finally:
+        lib_db.time.time = real_time
+
     return 1 if failures else 0
 
 

@@ -40,7 +40,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_db import (  # noqa: E402
-    ET, Database, et_date, last_complete_sweep, query_rows, read_doc, record_run, record_sweep,
+    ET, Database, et_date, et_today, last_complete_sweep, query_rows, read_doc, record_run, record_sweep,
     run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from lib_housekeeping import prune as prune_old_rows  # noqa: E402
@@ -597,7 +597,7 @@ def write_review_stages(db) -> None:
             f"{pending_total:,} (a concurrent write landed mid-run)")
         return
 
-    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+    doc = {"asOf": et_today(), "source": SOURCE,
            "pendingTotal": pending_total, "stages": stages}
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
@@ -1000,7 +1000,7 @@ def write_sweep_coverage(db) -> None:
         log("NOT writing sweep_coverage: no complete sweep recorded yet")
         return
     doc = {
-        "asOf": time.strftime("%Y-%m-%d"),
+        "asOf": et_today(),
         "program": "perm",
         "source": SOURCE,
         "mode": sweep["mode"],
@@ -1059,7 +1059,7 @@ def write_stage_cohorts(db) -> None:
         log(f"NOT writing stage_cohorts: matrix {summed:,} != total {total:,}")
         return
 
-    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+    doc = {"asOf": et_today(), "source": SOURCE,
            "total": total, "rows": matrix}
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
@@ -1243,7 +1243,7 @@ def write_stage_stats(db) -> None:
         log("NOT writing stage_stats: no pending stages returned")
         return
 
-    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+    doc = {"asOf": et_today(), "source": SOURCE,
            "stages": sorted(stages, key=lambda r: -r["pending"]),
            "exits": sorted(moves, key=lambda r: -r["n"]),
            "durations": sorted(dur, key=lambda r: -r["entered"])}
@@ -1305,7 +1305,7 @@ def write_live_census(db) -> None:
             f"{no_filing:,} != total {total:,}")
         return
 
-    doc = {"asOf": time.strftime("%Y-%m-%d"), "totalCases": total,
+    doc = {"asOf": et_today(), "totalCases": total,
            "noFilingDate": no_filing, "source": SOURCE, "matrix": matrix}
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
@@ -1346,7 +1346,7 @@ def write_decided_percentiles(db) -> None:
     if not months:
         log("NOT writing decided_month_percentiles: perm_cases is empty here")
         return
-    doc = {"asOf": time.strftime("%Y-%m-%d"), "months": months}
+    doc = {"asOf": et_today(), "months": months}
     payload = json.dumps(doc, separators=(",", ":"))
     write_doc(db, "decided_month_percentiles", payload)
     log(f"wrote     decided_month_percentiles ({len(months)} months)")
@@ -1918,10 +1918,14 @@ def main() -> int:
         # green over a full pass (the only one that catches expirations) that
         # fails every night. The health check reads every data_freshness row,
         # so the full pass's own key is monitored automatically.
-        dataset = "perm-case-status-full" if args.full else "perm-case-status"
-        stamp_freshness(db, dataset, source=SOURCE, cadence="Daily",
-                        note=f"{n:,} cases", max_age_days=3)
-        log(f"stamped   {dataset}")
+        # The full pass checks every pending case too, so it also stamps the
+        # row the pages print: they had shown the afternoon pass's day the
+        # morning after a full pass had read everything (Oct 18 2026).
+        datasets = ["perm-case-status-full", "perm-case-status"] if args.full else ["perm-case-status"]
+        for dataset in datasets:
+            stamp_freshness(db, dataset, source=SOURCE, cadence="Daily",
+                            note=f"{n:,} cases", max_age_days=3)
+        log(f"stamped   {', '.join(datasets)}")
         # What this run looked at, and whether it got all the way round
         # (`sweep_is_complete`). A partial run still gets a row, since the audit
         # trail wants partial runs most of all; it just can't date a census.

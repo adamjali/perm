@@ -44,7 +44,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_db import (  # noqa: E402
-    Database, add_missing_columns, query_rows, record_run, stamp_freshness,
+    Database, add_missing_columns, et_today, query_rows, record_run, stamp_freshness,
 )
 
 API = "https://www.federalregister.gov/api/v1/documents.json"
@@ -285,11 +285,13 @@ def main() -> int:
     log(f"  wrote {written} new or changed rows; {held} held")
     # Freshness is the Register's own clock, not ours: `as_of` is the newest
     # document it holds, so a feed that keeps running against a stalled API
-    # goes stale on the health check instead of looking alive.
+    # goes stale on the health check instead of looking alive. Never past
+    # today: the Register lists a Monday's documents on the Friday before, and
+    # the pages printed "data through" tomorrow's date (Oct 18 2026).
     if newest:
         stamp_freshness(db, DATASET, source="federalregister.gov API",
                         cadence="Daily", note=f"{held} notices held; newest Register document {newest}",
-                        max_age_days=MAX_AGE_DAYS, as_of=newest)
+                        max_age_days=MAX_AGE_DAYS, as_of=min(newest, et_today()))
     record_run(db, "ingest_policy_notices.py", status="ok", rows_written=written,
                note=f"{len(rows)} in window, newest {newest}")
     return 0

@@ -433,6 +433,28 @@ def main() -> int:
 
     fresh = [("ok", 1400, 0.4), ("ok", 1500, 1.4), ("ok", 1200, 2.4),
              ("ok", 1300, 3.4), ("ok", 1100, 4.4)]
+    # Nightly rebuilds: judged on the age of their newest CLEAN run, so a step
+    # that stops running is caught as surely as one that fails.
+    class BuildDB:
+        def __init__(self, ages):
+            self.ages = ages             # script -> days since its newest ok run
+        def execute(self, sql, args=None):
+            assert "status = 'ok'" in sql, "judged on clean runs only"
+            rows = [[{"type": "text", "value": s},
+                     {"type": "integer", "value": str(int(health.NOW_MS - a * 86_400_000))}]
+                    for s, a in self.ages.items() if s in (args or [])]
+            return {"response": {"result": {"rows": rows}}}
+
+    builders_fresh = {s: 0.4 for s in health.NIGHTLY_BUILDERS}
+    check("nightly rebuilds: every one clean last night passes",
+          health.check_nightly_builders(BuildDB(builders_fresh)) == 0)
+    check("nightly rebuilds: the sponsor index 4 days old FAILS",
+          health.check_nightly_builders(BuildDB({**builders_fresh, "build_sponsor_index.py": 4.2})) == 1)
+    check("nightly rebuilds: one with no clean run on record FAILS",
+          health.check_nightly_builders(BuildDB({k: v for k, v in builders_fresh.items()
+                                                  if k != "build_lca_cities.py"})) == 1)
+    check("nightly rebuilds: an unreadable table FAILS", health.check_nightly_builders(Locked()) == 1)
+
     check("gap sweep: a daily run probing holes passes", health.check_gap_sweep(GapDB(fresh)) == 0)
     check("gap sweep: never run is not a failure (it is new)",
           health.check_gap_sweep(GapDB([])) == 0)
@@ -571,6 +593,7 @@ def check_capped_partial_is_not_broken() -> None:
 
 
 CHECKS = ("check_runs", "check_frontier", "check_discovery_yield", "check_backfill", "check_gap_sweep",
+          "check_nightly_builders",
           "check_watched", "check_lookup_demand", "check_coverage_stated", "check_precomputed_docs",
           "check_wage_views")
 

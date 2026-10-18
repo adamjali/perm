@@ -529,6 +529,10 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
     if not todo:
         log("nothing new: every linked month is already held from a primary source")
         if not dry_run:
+            # A night with nothing new still stamps (see the end of this
+            # function): returning before it left the archive route's "via
+            # Internet Archive" on every bulletin page from Oct 5 to Oct 18 2026.
+            stamp_bulletin_freshness(db, FRESHNESS_SOURCE)
             record_run(db, run_name, status="ok", rows_written=0, note="direct: nothing new")
         return 0
     stored = 0
