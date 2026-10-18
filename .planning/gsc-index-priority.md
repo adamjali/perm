@@ -1137,3 +1137,20 @@ section's "Still to request" list.
 
 Driving note: once the bar held focus (`activeElement` was INPUT) and the typed URL still didn't land, so Return
 gave "Something went wrong". Read `document.activeElement.value` after typing and press Return only when it holds the URL.
+
+## Queue after the Oct 18 deploys (2:50 and 4:14 AM EDT)
+
+From `node scripts/gsc_queue.mjs --since b75fc2fa`, which lists 55 pages because shared code changed (month and
+format helpers, entity links). Ordered by what a reader sees changed; the rest ride the sitemap's lastmod. Inspect
+first and skip any page crawled after 4:14 AM EDT Oct 18. These go after the "Still to request" list above.
+
+1. `/perm-recruitment` (new: where employers recruit, and when)
+2. `/sponsor-finder` (search by job, wage and timing; phone cards; Schedule A note)
+3. `/guides/green-card-sponsors-for-your-job` (the no-fee rule and the scam warning)
+4. `/case-search` (job filter on employer and state searches fixed; the form lives in the address)
+5. `/perm-wages/software-developers` (links to the finder and the case search; recruitment panels)
+6. `/perm-employers/google-llc` (recruitment panels)
+7. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp` (recruitment panels)
+8. `/guides/how-long-perm-recruitment-stays-valid` (live timing callout)
+9. `/contact` (says it isn't an employer and points to the finder)
+10. `/guides/perm-sunday-ads-additional-recruitment-steps` (one link)
