@@ -152,6 +152,20 @@ export default function ContactPage() {
           <p className="mt-2 text-muted-foreground">
             Goes to the same inbox as the address above. No account needed.
           </p>{" "}
+          {/* People abroad write here asking us for a job and a visa (Oct 17
+              2026, a truck driver). Say what we are before they type. */}
+          <p className="mt-3 border-l-2 border-border pl-3 text-muted-foreground">
+            PERM Tracker isn&apos;t an employer, so it can&apos;t offer jobs or sponsor visas. To find employers
+            that sponsor your kind of job, open the job&apos;s page under{" "}
+            <Link href="/perm-wages" className="link">
+              PERM wages by job
+            </Link>{" "}
+            and read &quot;Who files it&quot;, or use{" "}
+            <Link href="/sponsor-finder" className="link">
+              Find a sponsor
+            </Link>
+            .
+          </p>{" "}
           <div className="mt-6">
             <ContactForm />
           </div>
