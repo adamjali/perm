@@ -139,6 +139,38 @@ export function unpackRow(p: PackedRow): EntityRow {
 }
 
 /**
+ * Decided cases required before an approval rate is published.
+ *
+ * Chosen from the data, not from taste. Three measurements set it:
+ *
+ *  1. The field's own denial rate is 2.57% (`permDisclosure` risk baseline
+ *     over 248,158 decided cases). At that rate an entity with 29 decided
+ *     cases records a spotless file 47% of the time by chance alone
+ *     (0.9743^29). Below thirty, "no denials" is the coin landing heads.
+ *  2. It is also the modal outcome, so the figure carries no information:
+ *     3,336 of the first 4,000 employers have zero denials.
+ *  3. Thirty is where the 95% Wilson upper bound on a clean record's denial
+ *     rate first falls into single figures (11.4%). It is not where the rate
+ *     becomes trustworthy - that takes about 146 decided cases, which only
+ *     255 of 12,240 employers reach - it is where the number stops being
+ *     pure noise and starts being worth printing with a caveat.
+ *
+ * The same bar defines the comparison cohort in `fieldDistribution` in src/lib/db/entities.ts,
+ * and the page passes this constant in as that query's argument so the two
+ * cannot drift apart.
+ */
+export const MIN_DECIDED_FOR_RATE = 30;
+
+/**
+ * Decided cases required before a median is presented without a caveat.
+ *
+ * A median over four cases is two numbers, and one over three is the middle
+ * one. Lower than the rate bar on purpose: a median is not pinned against a
+ * boundary the way a near-100% rate is, so it degrades rather than inverting.
+ */
+export const MIN_DECIDED_FOR_MEDIAN = 10;
+
+/**
  * Approval rate over DECIDED cases, so withdrawals sit on neither side.
  *
  * Returns null rather than 0 when nothing was decided: an employer with one
@@ -151,6 +183,16 @@ export function approvalRate(r: {
 }): number | null {
   const decided = r.certified + r.denied;
   return decided === 0 ? null : r.certified / decided;
+}
+
+/** The rate a page may print: the approval rate, or null under MIN_DECIDED_FOR_RATE decided cases. */
+export function shownApprovalRate(r: { certified: number; denied: number }): number | null {
+  return r.certified + r.denied >= MIN_DECIDED_FOR_RATE ? approvalRate(r) : null;
+}
+
+/** A median a page may print: the value, or null under MIN_DECIDED_FOR_MEDIAN decided cases. */
+export function shownMedian(value: number | null, r: { certified: number; denied: number }): number | null {
+  return r.certified + r.denied >= MIN_DECIDED_FOR_MEDIAN ? value : null;
 }
 
 /**

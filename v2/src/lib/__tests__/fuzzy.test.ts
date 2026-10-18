@@ -52,7 +52,8 @@ describe("fuzzyScore", () => {
 
   it("allows no edits on a word too short to be a typo of anything in particular", () => {
     expect(fuzzyScore("ibx", "IBM")).toBeLessThan(0.6);
-    expect(fuzzyScore("ib", "IBM Corporation")).toBeGreaterThanOrEqual(0.9);
+    // Opening a word still matches, typo rules aside.
+    expect(fuzzyScore("ib", "IBM Corporation")).toBeGreaterThanOrEqual(FUZZY_MATCH_MIN);
   });
 
   it("answers 0 for an empty query rather than matching everything", () => {
@@ -107,6 +108,18 @@ describe("FuzzyIndex", () => {
     expect(index.search("amazn")[0]?.item.name).toBe("Amazon.com Services LLC");
     expect(index.search("microsfot")[0]?.item.name).toBe("Microsoft Corporation");
     expect(index.search("nvdia")[0]?.item.name).toBe("NVIDIA Corporation");
+  });
+
+  it("takes a whole word (its plural too) over a busier name where the letters only open a word", () => {
+    const jobs = new FuzzyIndex(
+      [
+        { name: "Farmworkers and Laborers, Crop, Nursery, and Greenhouse", n: 847 },
+        { name: "Registered Nurses", n: 9 },
+      ],
+      (j) => j.name,
+      (j) => j.n,
+    );
+    expect(jobs.search("nurse")[0]?.item.name).toBe("Registered Nurses");
   });
 
   it("finds a name typed with spaces it doesn't have", () => {

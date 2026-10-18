@@ -48,6 +48,10 @@ from collections import Counter, defaultdict
 from datetime import date, timedelta
 from xml.etree.ElementTree import iterparse
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from lib_wage import ANNUALIZE, PERM_BAND  # noqa: E402
+from lib_recruitment import COLUMNS as RECRUITMENT_COLUMNS, recruitment_fields  # noqa: E402
+
 PERFORMANCE_PAGE = "https://www.dol.gov/agencies/eta/foreign-labor/performance"
 EXCEL_EPOCH = date(1899, 12, 30)  # 1900 date system, including its leap-year bug
 
@@ -115,6 +119,9 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     "major": ["FOREIGN_WORKER_INFO_MAJOR"],
     "institution": ["FOREIGN_WORKER_INFO_INST", "FOREIGN_WORKER_INST_OF_ED"],
     "job_education": ["JOB_INFO_EDUCATION", "MINIMUM_EDUCATION"],
+    # Form 9089 Section H, where and when the employer recruited (new form only):
+    # scripts/lib_recruitment.py names the columns.
+    **RECRUITMENT_COLUMNS,
 }
 
 
@@ -172,13 +179,6 @@ STATE_NAMES = {
     "NORTHERN MARIANA ISLANDS": "MP",
 }
 
-ANNUALIZE = {
-    "YEAR": 1.0, "YR": 1.0, "ANNUAL": 1.0, "ANNUALLY": 1.0,
-    "HOUR": 2080.0, "HR": 2080.0, "HOURLY": 2080.0,
-    "WEEK": 52.0, "WK": 52.0, "WEEKLY": 52.0,
-    "MONTH": 12.0, "MTH": 12.0, "MONTHLY": 12.0,
-    "BI-WEEKLY": 26.0, "BIWEEKLY": 26.0, "BI WEEKLY": 26.0,
-}
 
 
 # The plausibility band. A value outside it is a typo or a unit mismatch, not a
@@ -187,8 +187,7 @@ ANNUALIZE = {
 # The exclusions are counted and reported, because silently dropping outliers
 # and silently keeping them look identical from outside. Keeping them is how a
 # $12 hourly wage read as an annual salary ends up as an occupation's P5.
-WAGE_MIN = 15_000
-WAGE_MAX = 1_000_000
+WAGE_MIN, WAGE_MAX = PERM_BAND
 WAGE_POLICY = "exclude-out-of-band"
 
 
@@ -281,7 +280,6 @@ def no(raw: str | None) -> bool:
 # mirroring it and one fixture file asserting both.
 from entity_identity import entity_key, identity_aliases  # noqa: E402
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_load_guard import Fingerprint  # noqa: E402
 from lib_gov_data import (  # noqa: E402
     SPREADSHEET_NS, column_index, fetch, log, read_shared_strings,
@@ -367,7 +365,7 @@ def norm_status(raw: str) -> str | None:
 PERM_TRACKED = (
     "case_status", "received_date", "decision_date", "employer_name",
     "job_title", "soc_code", "soc_title", "wage", "worksite_state", "attorney_name",
-    "naics", "worksite_city",
+    "naics", "worksite_city", "paper1", "job_order_start",
 )
 
 
@@ -418,6 +416,7 @@ class CaseWriter:
             "wage": wage, "wage_unit": "YEAR" if wage is not None else None,
             "worksite_state": row.get("state"), "attorney_name": row.get("attorneyName"),
             "naics": row.get("naics"), "worksite_city": row.get("worksiteCity"),
+            "paper1": row.get("paper1"), "job_order_start": row.get("jobOrderStart"),
         })
         self.by_status[status] += 1
         # A row with no resolvable state still counts nationally; it just has
@@ -861,6 +860,7 @@ def parse_file(
                         "naics": normalize_naics(rec.get("naics")),
                         "worksiteCity": " ".join((rec.get("worksite_city") or "").split())[:60] or None,
                         **worker_fields(rec),
+                        **recruitment_fields(rec, to_iso),
                     }
                 )
 

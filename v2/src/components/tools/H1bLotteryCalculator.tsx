@@ -20,7 +20,8 @@ import {
   type SiteLevel,
 } from "@/lib/h1bLotteryCalc";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
-import { seriesYearFor, SOC_RE, WAGE_SEARCH_PAGE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { seriesYearFor, WAGE_SEARCH_PAGE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 
@@ -179,7 +180,7 @@ export function H1bLotteryCalculator() {
 
   const offer = parseOffer(offerRaw);
   const ready =
-    SOC_RE.test(soc.trim()) && offer !== null && sites.every((s) => s.area !== "") && result.kind !== "loading";
+    SOC_CODE_RE.test(soc.trim()) && offer !== null && sites.every((s) => s.area !== "") && result.kind !== "loading";
 
   async function calculate(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -199,7 +200,7 @@ export function H1bLotteryCalculator() {
         unit,
         offer,
         seriesYear,
-        soc: soc.trim().slice(0, 7),
+        soc: socGroup(soc) ?? "",
         sites: answers.map((a) => ({ ...a, at: a.levels ? levelAtSite(offer, unit, a.levels) : null })),
       });
     } catch (err) {

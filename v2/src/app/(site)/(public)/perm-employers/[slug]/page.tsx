@@ -20,7 +20,7 @@ import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import { Fragment } from "react";
 import Link from "next/link";
-import { hasOwnPage } from "@/lib/entityPayload";
+import { hasOwnPage, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { pendingSentence, sponsorSentence, whereTheyStand } from "@/lib/pendingSnippet";
@@ -30,7 +30,6 @@ import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import {
   DisclosureNote,
   LimitsPanel,
-  MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
   ReliabilityBand,
@@ -67,7 +66,7 @@ import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
 import { WorkerMix } from "@/components/entities/WorkerMix";
-import { CityMix, IndustryMix, OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { CityMix, IndustryMix, OccupationMix, PartyMix, RecruitmentMix, StateMix } from "@/components/entities/FilingMakeup";
 import {
   absorbedCount,
   entityFacets,
@@ -119,6 +118,7 @@ import { phase } from "@/lib/db/debarments";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
 import { monthDay, shortDate } from "@convex/lib/months";
 import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -298,7 +298,7 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
         nextStep={
           <CaseNextStep
             question={`Waiting on a filing with ${record.name}?`}
-            searchHref={`/case-search?q=${encodeURIComponent(record.name)}`}
+            searchHref={caseSearchHref({ q: record.name })}
             searchLabel="Find it among their filings"
             numberKind="DOL"
             source="employer-page-other"
@@ -313,7 +313,7 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
               lca={record.lca ? programs.lca : null}
               seasonal={programs.seasonal}
               stages={null}
-              searchHref={`/case-search?q=${encodeURIComponent(record.name)}`}
+              searchHref={caseSearchHref({ q: record.name })}
               spellings={programs.match.basis === "map" ? programs.match.spellings : null}
             />
           ) : null
@@ -484,7 +484,7 @@ export async function generateMetadata({
   const waiting = pendingSentence(row.name, pending);
   // What every page in this branch shows, most useful first. The jobs and
   // places come from the nightly facets, which start at 3 filings
-  // (PAGE_FLOOR in scripts/build_entity_detail.py); a page under that has
+  // (FACET_FLOOR in scripts/build_entity_detail.py); a page under that has
   // none, so the description doesn't promise them.
   const hasWork = row.total >= 3;
   const sees = [
@@ -604,7 +604,7 @@ export default async function EmployerPage({
           nextStep={
             <CaseNextStep
               question={`Waiting on a case with ${live.record.name}?`}
-              searchHref={`/case-search?q=${encodeURIComponent(live.record.name)}`}
+              searchHref={caseSearchHref({ q: live.record.name })}
               searchLabel="Find it among their filings"
               extra={{ href: "#follow", label: "Or follow this employer by email" }}
               source="employer-page-live"
@@ -792,7 +792,9 @@ export default async function EmployerPage({
     topIndustry ? { label: "Industry", value: topIndustry.label, note: `NAICS ${topIndustry.codes[0]}` } : null,
   ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
 
-  const hasWork = Boolean(facets.occupation || facets.state || facets.attorney || facets.city || facets.industry);
+  const hasWork = Boolean(
+    facets.occupation || facets.state || facets.attorney || facets.city || facets.industry || facets.newspaper || facets.recruit_lead,
+  );
   const hasHistory = years.length > 0 || historyCases.length > 0 || Object.values(workers).some((r) => (r?.length ?? 0) > 0);
   const chapters: ChapterItem[] = [
     { id: "now", label: "Right now" },
@@ -827,7 +829,7 @@ export default async function EmployerPage({
         aside={
           <CaseNextStep
             question={`Waiting on a case with ${row.name}?`}
-            searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
+            searchHref={caseSearchHref({ q: row.name })}
             searchLabel="Find it among their filings"
             extra={{ href: "#follow", label: "Or follow this employer by email" }}
             source="employer-page"
@@ -919,7 +921,7 @@ export default async function EmployerPage({
             <p className="mt-3 text-sm">
               {recentLive.length > RECENT_LIVE_SHOWN ? `The ${RECENT_LIVE_SHOWN} newest. ` : ""}
               <Link
-                href={`/case-search?q=${encodeURIComponent(row.name)}`}
+                href={caseSearchHref({ q: row.name })}
                 className="link"
               >
                 Every filing by this employer
@@ -955,7 +957,7 @@ export default async function EmployerPage({
           seasonal={programs?.seasonal ?? null}
           stages={stageRow}
           logFrom={stagesDoc?.logFrom ?? null}
-          searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
+          searchHref={caseSearchHref({ q: row.name })}
           spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
         />{" "}
         {/* The two filings that come BEFORE a PERM, from the same daily DOL
@@ -1066,7 +1068,13 @@ export default async function EmployerPage({
                 hrefBase="/perm-attorneys"
               />
             ) : null}
-          </div>
+          </div>{" "}
+          <RecruitmentMix
+            papers={facets.newspaper}
+            steps={facets.recruit_step}
+            lead={facets.recruit_lead}
+            className="mt-4"
+          />
         </Chapter>
       ) : null}
 

@@ -4,6 +4,7 @@ import { fetchAllEntitiesServer } from "@/lib/entitySeed";
 import { searchByName } from "@/lib/db/entities";
 import { searchLiveOnlyEmployers } from "@/lib/db/liveEmployers";
 import { isEntityKind, packRow, type EntityPayload } from "@/lib/entityPayload";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 
 /**
  * The whole of one entity kind, in the compact wire format.
@@ -49,7 +50,7 @@ export async function GET(
   const url = new URL(_request.url);
   const q = url.searchParams.get("q");
   if (q !== null) {
-    const needle = q.slice(0, 120);
+    const needle = q.slice(0, SEARCH_TEXT_MAX);
     // TWO CORPORA, ONE QUESTION. `perm_entities` is built from DOL's
     // published quarterly files, so it only holds employers with a decided
     // case in a published quarter. `perm_live_recent` is everything the

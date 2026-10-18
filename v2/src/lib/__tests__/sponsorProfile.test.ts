@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { factSentence, parseFacts, parseParts, partBasis, partRank, partValue, type SponsorPart } from "../sponsorProfile";
+import { MIN_DECIDED_FOR_RATE } from "../entityPayload";
 
 const part = (over: Partial<SponsorPart>): SponsorPart => ({
   id: "perm_rate", label: "PERM approval rate", value: 0.9959, n: 736, pct: 0.259, of: 2179, ...over,
@@ -9,8 +10,9 @@ const part = (over: Partial<SponsorPart>): SponsorPart => ({
 describe("sponsor profile words", () => {
   it("prints a near-perfect rate to one decimal so 99.6% isn't rounded up to 100%", () => {
     expect(partValue(part({}))).toBe("99.6%");
-    expect(partValue(part({ value: 1 }))).toBe("100%");
-    expect(partValue(part({ value: 0.5 }))).toBe("50%");
+    // One decimal everywhere, as the employer page's own rate card prints it.
+    expect(partValue(part({ value: 1 }))).toBe("100.0%");
+    expect(partValue(part({ value: 0.5 }))).toBe("50.0%");
   });
 
   it("says what each figure counts, and the LCA detail window for the shares", () => {
@@ -22,9 +24,11 @@ describe("sponsor profile words", () => {
   });
 
   it("places it among the sponsors it was ranked against, with their count", () => {
-    expect(partRank(part({}))).toBe("Higher than 26% of the 2,179 sponsors with 20 or more decided cases.");
-    expect(partRank(part({ pct: 1 }))).toBe("At the top of the 2,179 sponsors with 20 or more decided cases.");
-    expect(partRank(part({ pct: 0 }))).toBe("At the bottom of the 2,179 sponsors with 20 or more decided cases.");
+    // The PERM rate is ranked among sponsors at the employer page's own floor.
+    const among = `the 2,179 sponsors with ${MIN_DECIDED_FOR_RATE} or more decided cases.`;
+    expect(partRank(part({}))).toBe(`Higher than 26% of ${among}`);
+    expect(partRank(part({ pct: 1 }))).toBe(`At the top of ${among}`);
+    expect(partRank(part({ pct: 0 }))).toBe(`At the bottom of ${among}`);
   });
 
   it("states a fact with its date", () => {

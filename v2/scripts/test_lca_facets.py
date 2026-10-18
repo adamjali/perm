@@ -12,6 +12,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import build_lca_facets as blf  # noqa: E402
+import lib_wage  # noqa: E402
 
 FAILURES: list[str] = []
 
@@ -215,19 +216,13 @@ check("the per-state query returns one row per state", len(view["byState"]) == 2
 check("MIN_FOR_MEDIAN read from wageStats.ts", blf.min_for_median() == 30,
       f"got {blf.min_for_median()}")
 
-# 6. The wage expression and band match the reader's.
-lca = (pathlib.Path(__file__).resolve().parents[1]
-       / "src" / "lib" / "db" / "lcaWages.ts").read_text()
-ts_wage = "".join(
-    lca[lca.index("export const ANNUAL_WAGE_SQL ="):lca.index("/** Rows outside")]
-    .split("=", 1)[1].replace('" +', "").replace('"', "").split()
-)
-check("ANNUAL_WAGE_SQL matches the reader",
-      "".join(blf.ANNUAL_WAGE_SQL.split()).rstrip(";") == ts_wage.rstrip(";"),
-      "python: " + " ".join(blf.ANNUAL_WAGE_SQL.split())[:60])
-check("wage band matches the reader",
-      "MIN_ANNUAL = 10_000" in lca and "MAX_ANNUAL = 1_500_000" in lca
-      and "BETWEEN 10000 AND 1500000" in blf.DEFAULT_WHERE)
+# 6. The wage expression is the shared one (src/lib/wageFormat.ts builds the
+#    same text from the same table; both are held to this fixture).
+fixture = (pathlib.Path(__file__).resolve().parent / "fixtures" / "annual_wage_sql.txt").read_text().strip()
+check("ANNUAL_WAGE_SQL is the shared expression", blf.ANNUAL_WAGE_SQL == fixture,
+      "python: " + blf.ANNUAL_WAGE_SQL[:60])
+check("the default view reads the shared band",
+      f"BETWEEN {lib_wage.FLAG_BAND[0]} AND {lib_wage.FLAG_BAND[1]}" in blf.DEFAULT_WHERE)
 
 print(f"\n{len(FAILURES)} failure(s)" + (": " + ", ".join(FAILURES) if FAILURES else ""))
 raise SystemExit(1 if FAILURES else 0)

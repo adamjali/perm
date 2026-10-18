@@ -8,6 +8,7 @@ import { publishedStatusLabel, wagePhrase, worksitePhrase } from "@/lib/seasonal
 import type { OtherEmployerRecord } from "@/lib/db/otherEmployers";
 import type { SeasonalEmployerCase } from "@/lib/db/seasonalEmployers";
 import { longDate } from "@convex/lib/months";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /**
  * An employer's page when it has no PERM record: its filings are H-1B LCAs,
@@ -194,7 +195,7 @@ export function OtherEmployer({
         <div >
           <h2 className="font-heading text-lg font-bold">Every filing under this name</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-            <Link href={`/case-search?q=${encodeURIComponent(record.name)}`} className="link">
+            <Link href={caseSearchHref({ q: record.name })} className="link">
               The case search
             </Link>{" "}
             holds them all, live and published together, with filters and a CSV.

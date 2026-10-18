@@ -30,32 +30,3 @@ export function naicsTitle(code: string | null | undefined): { code: string; tit
   }
   return null;
 }
-
-export interface NaicsSector {
-  /** A 2-digit code, or a range such as `31-33` where Census gives several codes one title. */
-  code: string;
-  title: string;
-}
-
-/**
- * The twenty sectors, in code order. Census gives Manufacturing three 2-digit
- * codes (31-33), Retail two (44-45) and Transportation two (48-49); each is
- * one choice here and filters on all its codes.
- */
-export function naicsSectors(): NaicsSector[] {
-  const twos = Object.keys(TITLES)
-    .filter((k) => k.length === 2)
-    .sort();
-  const out: NaicsSector[] = [];
-  for (const k of twos) {
-    const title = TITLES[k]![0];
-    const last = out[out.length - 1];
-    if (last && last.title === title) {
-      const first = last.code.slice(0, 2);
-      last.code = `${first}-${k}`;
-    } else {
-      out.push({ code: k, title });
-    }
-  }
-  return out;
-}

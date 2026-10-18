@@ -64,6 +64,8 @@
  * a bug report.
  */
 
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
+
 /** Which field leads the search. Exactly one, and the index follows from it. */
 export type LeadKind = "case" | "employer" | "firm" | "state" | "occupation" | "stage";
 /** The program a review stage belongs to; mirrors `Program` in the search without importing it. */
@@ -578,4 +580,32 @@ export const FIELD_RE = /^[\p{L}\p{N} .,'\u2019()&/-]+$/u;
 export function isFieldValue(v: string): boolean {
   const t = v.trim();
   return t.length > 0 && t.length <= MAX_FIELD && FIELD_RE.test(t);
+}
+
+/** One name a firm or occupation box resolved to, and the others it could mean. */
+export interface ResolvedEntity {
+  /** What the search keys on: a firm's slug, an occupation's SOC code. */
+  key: string;
+  /** The page's slug, which a "did you mean" choice sends back so it resolves to itself. */
+  slug: string;
+  name: string;
+  total: number;
+  /** The other close names, so the reader can pick a different one. */
+  alternatives: { slug: string; name: string; total: number }[];
+}
+
+export const CASE_SEARCH_PATH = "/case-search";
+
+/**
+ * A link into the case search, for any page that hands it a search: its words
+ * capped as the route caps them, the parameter names the search reads back.
+ */
+export function caseSearchHref(params: Partial<Record<"q" | "firm" | "occupation" | "state" | "stage", string>>): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    const t = (v ?? "").trim().slice(0, SEARCH_TEXT_MAX);
+    if (t) q.set(k, t);
+  }
+  const s = q.toString();
+  return s ? `${CASE_SEARCH_PATH}?${s}` : CASE_SEARCH_PATH;
 }

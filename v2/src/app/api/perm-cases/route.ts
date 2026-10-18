@@ -21,6 +21,7 @@ import {
   isLiveSort,
   listLiveCases,
 } from "@/lib/db/liveCases";
+import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 
 /**
  * The case browser's data, for a page with no ConvexProvider.
@@ -42,7 +43,6 @@ export const revalidate = 0;
 
 // Nothing DOL prints is anywhere near these. They exist so a caller cannot
 // hand us a megabyte and make us do work proportional to it.
-const MAX_TEXT = 120;
 const MAX_SLUG = 80;
 const MAX_CODE = 16;
 const MAX_CURSOR = 200;
@@ -117,7 +117,7 @@ export async function GET(request: Request) {
 
   if (action === "lookup") {
     const raw = p.get("caseNumber") ?? "";
-    if (!raw || raw.length > MAX_TEXT) return bad("caseNumber missing or too long");
+    if (!raw || raw.length > SEARCH_TEXT_MAX) return bad("caseNumber missing or too long");
     const row = await lookupByCaseNumber(raw);
     // The disclosure record when it exists; otherwise the live corpus, so a
     // case DOL has not published yet gets handed to its live status page
@@ -143,7 +143,7 @@ export async function GET(request: Request) {
     if (field !== "employer" && field !== "attorney") return bad("field must be employer or attorney");
     const text = p.get("text") ?? "";
     // Length BEFORE anything else touches it.
-    if (text.length < 2 || text.length > MAX_TEXT) return bad("text must be 2..120 chars");
+    if (text.length < SEARCH_TEXT_MIN || text.length > SEARCH_TEXT_MAX) return bad(`text must be ${SEARCH_TEXT_MIN}..${SEARCH_TEXT_MAX} chars`);
     const status = p.get("status");
     if (status && !isDisclosureOutcome(status)) return bad("unknown status");
     const state = p.get("state");
@@ -201,7 +201,7 @@ export async function GET(request: Request) {
     if (cursor && cursor.length > MAX_CURSOR) return bad("cursor too long");
     const order = p.get("order") === "oldest" ? "oldest" : "newest";
     const q = (p.get("q") ?? "").trim();
-    if (q && (q.length < 2 || q.length > MAX_TEXT)) return bad("q must be 2..120 chars");
+    if (q && (q.length < SEARCH_TEXT_MIN || q.length > SEARCH_TEXT_MAX)) return bad(`q must be ${SEARCH_TEXT_MIN}..${SEARCH_TEXT_MAX} chars`);
     const sortRaw = p.get("sort") ?? "filed";
     if (!isLiveSort(sortRaw)) return bad("sort must be filed, employer or status");
     const rawItems = Number(p.get("numItems") ?? LIVE_DEFAULT_ITEMS);

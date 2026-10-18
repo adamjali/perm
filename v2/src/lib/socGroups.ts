@@ -35,7 +35,7 @@ export const SOC_MAJOR_GROUPS: Record<string, string> = {
 };
 
 /** The major-group name for a SOC code, or null when the code is unreadable. */
-export function socGroup(code: string | null): string | null {
+export function socMajorGroup(code: string | null): string | null {
   if (!code) return null;
   const major = code.trim().slice(0, 2);
   return SOC_MAJOR_GROUPS[major] ?? null;

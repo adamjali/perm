@@ -2,11 +2,10 @@
 
 import { PendingLink } from "@/components/ui/pending-link";
 
-import { MIN_DECIDED_FOR_RATE } from "@/components/tools/EntityContext";
-import { approvalRate, type EntityRow } from "@/lib/entityPayload";
-import { socGroup } from "@/lib/socGroups";
+import { approvalRate, type EntityRow, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+import { socMajorGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
-import { formatDollars, formatInt } from "@/lib/format";
+import { formatApprovalRate, formatDollars, formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
 
 import type { CsvSpec, Facet, StatColumn } from "./FilterableStatTable";
@@ -20,7 +19,7 @@ import type { CsvSpec, Facet, StatColumn } from "./FilterableStatTable";
 
 function fmtPct(r: EntityRow): string {
   const a = approvalRate(r);
-  return a === null ? "—" : `${(a * 100).toFixed(1)}%`;
+  return a === null ? "—" : formatApprovalRate(a);
 }
 
 function fmtWage(n: number | null): string {
@@ -198,7 +197,7 @@ export const sizeFacet: Facet<EntityRow> = {
 export const socFacet: Facet<EntityRow> = {
   key: "family",
   label: "Job family",
-  value: (e) => socGroup(e.code),
+  value: (e) => socMajorGroup(e.code),
 };
 
 export const EMPLOYER_COLUMNS: StatColumn<EntityRow>[] = [

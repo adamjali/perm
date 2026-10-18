@@ -8,7 +8,7 @@ import { RecordShares, type RecordShare } from "@/components/data/RecordShares";
 import { FinePrint } from "@/components/data/FinePrint";
 import { UnifiedCaseSearch } from "@/components/tools/UnifiedCaseSearch";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { naicsSectors } from "@/lib/naicsTitles";
+import { SECTOR_GROUPS, sectorRange } from "@/lib/naicsSectors";
 import { getMeta } from "@/lib/db/cases";
 import { SLICE_CAP, getCaseFieldOptions, getPermHistoryYears } from "@/lib/db/caseSearchReads";
 import { formatInt } from "@/lib/format";
@@ -159,7 +159,7 @@ export default async function CaseSearchPage() {
           <UnifiedCaseSearch
             states={stateOptions}
             fiscalYears={fiscalYearOptions}
-            industries={naicsSectors()}
+            industries={SECTOR_GROUPS.map((g) => ({ code: sectorRange(g), title: g.label }))}
             fieldOptions={fieldOptions}
             publishedFrom={firstYear}
           />

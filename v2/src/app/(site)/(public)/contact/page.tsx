@@ -13,6 +13,7 @@ import Link from "next/link";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { ContactForm } from "./ContactForm";
 import { RoutingFigure } from "@/components/marketing/PageFigures";
+import { PATH as SPONSOR_FINDER_PATH } from "@/lib/sponsorFinder";
 import {
   BUG_REPORT_URL,
   FEATURE_REQUEST_URL,
@@ -155,13 +156,9 @@ export default function ContactPage() {
           {/* People abroad write here asking us for a job and a visa (Oct 17
               2026, a truck driver). Say what we are before they type. */}
           <p className="mt-3 border-l-2 border-border pl-3 text-muted-foreground">
-            PERM Tracker isn&apos;t an employer, so it can&apos;t offer jobs or sponsor visas. To find employers
-            that sponsor your kind of job, open the job&apos;s page under{" "}
-            <Link href="/perm-wages" className="link">
-              PERM wages by job
-            </Link>{" "}
-            and read &quot;Who files it&quot;, or use{" "}
-            <Link href="/sponsor-finder" className="link">
+            PERM Tracker isn&apos;t an employer, so it can&apos;t offer jobs or sponsor visas. To find employers that
+            file green card cases for your kind of job, use{" "}
+            <Link href={SPONSOR_FINDER_PATH} className="link">
               Find a sponsor
             </Link>
             .

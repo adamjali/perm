@@ -33,6 +33,7 @@ import { MS_PER_HOUR } from "@/lib/time";
 
 import { getEntityBySlug, getEntitySeed } from "./publicData";
 import { one, rows } from "./client";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 
 /**
  * One entity by slug. `null` means no such page, which callers turn into a 404.
@@ -429,7 +430,7 @@ export async function searchByName(
 ): Promise<EntityRow[]> {
   // Length cap before anything that walks the string; `text` is reachable
   // unauthenticated through /api/perm-entities/[kind]?q=.
-  if (text.length > 120) return [];
+  if (text.length > SEARCH_TEXT_MAX) return [];
   const needle = text.trim();
   if (needle.length < 2) return [];
   // 1,001: the API's export asks for one over its 1,000-row cap, and the

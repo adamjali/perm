@@ -18,6 +18,7 @@ const CONTROL = /<(Link|a|button|Button|input|select|textarea|PendingLink)\b|hre
 /** Boxes whose table holds a control the scan can't see, drawn by a helper. */
 const HOLDS_A_CONTROL_ELSEWHERE: Record<string, string> = {
   "src/components/tools/RateBars.tsx": "its header cells are sort buttons, drawn by a helper above the table",
+  "src/app/(site)/(public)/sponsor-finder/page.tsx": "each row's employer is a link, drawn by EmployerCell",
 };
 
 function sourceFiles(dir: string, out: string[] = []): string[] {

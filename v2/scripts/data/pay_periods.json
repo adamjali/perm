@@ -1,0 +1,13 @@
+{
+  "periods": [
+    { "label": "per year", "perYear": 1, "looksYearlyFrom": null, "spellings": ["YEAR", "YR", "ANNUAL", "ANNUALLY"] },
+    { "label": "per hour", "perYear": 2080, "looksYearlyFrom": 10000, "spellings": ["HOUR", "HR", "HOURLY"] },
+    { "label": "per week", "perYear": 52, "looksYearlyFrom": 40000, "spellings": ["WEEK", "WK", "WEEKLY"] },
+    { "label": "every two weeks", "perYear": 26, "looksYearlyFrom": 40000, "spellings": ["BI-WEEKLY", "BIWEEKLY", "BI WEEKLY"] },
+    { "label": "per month", "perYear": 12, "looksYearlyFrom": 40000, "spellings": ["MONTH", "MTH", "MONTHLY"] }
+  ],
+  "yearlyBands": {
+    "perm": [15000, 1000000],
+    "flag": [10000, 1500000]
+  }
+}

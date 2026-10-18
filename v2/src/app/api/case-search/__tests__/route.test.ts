@@ -21,8 +21,9 @@ vi.mock("@/lib/db/unifiedSearch", async () => {
   );
   return { ...real, unifiedSearch };
 });
-const searchByName = vi.fn();
-vi.mock("@/lib/db/entities", () => ({ searchByName }));
+const nameCandidates = vi.fn();
+const occupationChoices = vi.fn();
+vi.mock("@/lib/db/nameSuggest", () => ({ nameCandidates, occupationChoices }));
 
 const { GET } = await import("../route");
 const { UNIFIED_MAX } = await import("@/lib/db/unifiedSearch");
@@ -82,8 +83,10 @@ const row = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   unifiedSearch.mockReset();
   unifiedSearch.mockResolvedValue(result());
-  searchByName.mockReset();
-  searchByName.mockResolvedValue([]);
+  nameCandidates.mockReset();
+  nameCandidates.mockResolvedValue([]);
+  occupationChoices.mockReset();
+  occupationChoices.mockResolvedValue([]);
 });
 
 /** The `narrow` the route handed the search on its last call. */

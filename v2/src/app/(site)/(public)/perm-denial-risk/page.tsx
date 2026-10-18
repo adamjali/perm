@@ -20,7 +20,7 @@ import Link from "next/link";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { socGroup } from "@/lib/socGroups";
+import { socMajorGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
 import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/RateBars";
 import { DenialReach } from "@/components/tools/DenialReach";
@@ -219,7 +219,7 @@ export default async function PermDenialRiskPage() {
             rate,
             decided,
             denied: o.denied,
-            group: socGroup(o.code) ?? undefined,
+            group: socMajorGroup(o.code) ?? undefined,
           };
     })
     .filter((r): r is RateRow => r !== null);

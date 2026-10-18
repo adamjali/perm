@@ -9,6 +9,7 @@ import { failureFromError, type FetchFailure } from "@/lib/fetchFailure";
 import { rankFuzzy } from "@/lib/fuzzy";
 import type { SuggestKind } from "@/lib/search/suggestTypes";
 import { buttonVariants } from "@/components/ui/button";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 
 /**
  * The searchable, filterable, paged table every entity index stands on.
@@ -182,7 +183,7 @@ export function FilterableStatTable<T>({
   useEffect(() => {
     if (!queryFromUrl) return;
     const fromUrl = new URLSearchParams(window.location.search).get("q");
-    if (fromUrl) setQuery(fromUrl.slice(0, 120));
+    if (fromUrl) setQuery(fromUrl.slice(0, SEARCH_TEXT_MAX));
   }, [queryFromUrl]);
   const [sortKey, setSortKey] = useState(initialSort);
   const [sortDesc, setSortDesc] = useState(true);

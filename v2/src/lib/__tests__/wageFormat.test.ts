@@ -3,11 +3,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  ANNUAL_WAGE_SQL,
   annualised,
+  comparableWage,
   formatWage,
-  HOURLY_LOOKS_YEARLY,
+  HOURS_PER_YEAR,
   looksYearly,
-  PERIOD_LOOKS_YEARLY,
+  YEARLY_BAND,
 } from "../wageFormat";
 
 describe("formatWage", () => {
@@ -74,18 +76,31 @@ describe("a yearly salary under the wrong unit", () => {
     expect(annualised(39_999, "MONTH")).toBe(479_988);
   });
 
-  it("uses the same floors as the SQL that every average reads", () => {
-    const root = join(__dirname, "..", "..", "..");
-    const sources = [
-      readFileSync(join(root, "src/lib/db/lcaWages.ts"), "utf8"),
-      readFileSync(join(root, "scripts/build_lca_facets.py"), "utf8"),
-    ];
-    for (const src of sources) {
-      expect(src).toContain(`AND wage >= ${HOURLY_LOOKS_YEARLY} THEN NULL`);
-      expect(src).toContain(`AND wage >= ${PERIOD_LOOKS_YEARLY} THEN NULL`);
-    }
-    // Two copies in lcaWages.ts: the explorer's expression and the FLAG one.
-    expect(sources[0]!.match(/AND wage >= 40000 THEN NULL/g)).toHaveLength(2);
+  it("builds the same SQL as the data scripts, from the same table", () => {
+    const fixture = readFileSync(join(__dirname, "..", "..", "..", "scripts", "fixtures", "annual_wage_sql.txt"), "utf8").trim();
+    expect(ANNUAL_WAGE_SQL).toBe(fixture);
   });
 });
 
+
+describe("comparableWage", () => {
+  it("compares every row yearly: a PERM row is stored yearly, the others carry their unit", () => {
+    expect(comparableWage(120_000, null)).toBe(120_000);
+    expect(comparableWage(50, "HOUR")).toBe(50 * HOURS_PER_YEAR);
+    // $50 an hour is more pay than a $90,000 salary, which a raw sort hid.
+    expect(comparableWage(50, "HOUR")!).toBeGreaterThan(comparableWage(90_000, "YEAR")!);
+  });
+
+  it("has no figure for a wage that isn't pay for its unit", () => {
+    expect(comparableWage(95_000, "HOUR")).toBeNull();
+    expect(comparableWage(null, "YEAR")).toBeNull();
+  });
+});
+
+describe("the shared table", () => {
+  it("names DOL's year and the plausible bands", () => {
+    expect(HOURS_PER_YEAR).toBe(2080);
+    expect(YEARLY_BAND.flag).toEqual([10_000, 1_500_000]);
+    expect(YEARLY_BAND.perm).toEqual([15_000, 1_000_000]);
+  });
+});

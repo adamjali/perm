@@ -29,6 +29,7 @@ import { MS_PER_DAY } from "@/lib/time";
 
 import { one, rows } from "./client";
 import { wageView } from "./wageViews";
+import { socGroupClause } from "@/lib/socCode";
 import { getLiveCensus, type CensusMatrixRow } from "./liveCensus";
 
 interface EntityDbRow {
@@ -1144,8 +1145,9 @@ function wageWhere(f: WageFilters): { sql: string; args: unknown[] } {
     args.push(status);
   }
   if (f.socCode) {
-    parts.push("substr(soc_code, 1, 7) = ?");
-    args.push(f.socCode.trim().slice(0, 7));
+    const job = socGroupClause(f.socCode);
+    parts.push(job.sql);
+    args.push(...job.args);
   }
   if (f.state) {
     parts.push("state = ?");

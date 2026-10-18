@@ -22,6 +22,14 @@ export function formatPercent(ratio: number, digits: number): string {
 }
 
 /**
+ * An approval rate, always to one place, as every page prints it: 99.6% must
+ * never round to a clean "100%" that the record doesn't have.
+ */
+export function formatApprovalRate(ratio: number): string {
+  return formatPercent(ratio, 1);
+}
+
+/**
  * A share of a whole: "42%" from 10% up, "3.4%" below, so a small share never
  * rounds to a misleading "0%" and a large one carries no false precision.
  */

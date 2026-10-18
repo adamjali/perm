@@ -23,7 +23,7 @@ import {
   type UnifiedNarrow,
 } from "./caseSearchReads";
 import { naicsTitle } from "@/lib/naicsTitles";
-import { annualised } from "@/lib/wageFormat";
+import { comparableWage } from "@/lib/wageFormat";
 
 export { SLICE_CAP };
 import {
@@ -66,8 +66,8 @@ import {
  * route can serve. An employer lead reaches all six sources. A state or an
  * occupation lead reaches the three PUBLISHED halves - the live tables have no
  * worksite or occupation column at all, which is a fact about DOL's live
- * endpoint rather than a missing index. A firm lead reaches published PERM
- * alone, because PERM is the only program whose firm column has been ingested.
+ * endpoint rather than a missing index. A firm lead reaches every program's
+ * published file: the wage-request, LCA and seasonal files name the firm too.
  *
  * **One row per case.** A case can be in both halves of its program at once.
  */
@@ -189,15 +189,17 @@ const fromPermPublished = (r: PermSearchRow): UnifiedCase => ({
   employerSlug: r.employerSlug || null,
   jobTitle: r.jobTitle || null,
   wage: r.wage,
-  // The disclosure files store PERM wages already annualised, so there is no
-  // unit column to carry. Saying "per year" here would be inventing it.
+  // perm_cases stores the wage yearly already (the ingest converts it), so
+  // there is no unit column to carry. Saying "per year" here would be inventing it.
   wageUnit: null,
   state: r.state || null,
   firmName: r.attorneyName || null,
   firmSlug: r.attorneySlug || null,
   socCode: r.socCode || null,
   socTitle: r.socTitle || null,
-  days: r.days || null,
+  // A duration exists exactly when a receipt date does: the oldest history
+  // files print none. A same-day decision is 0 days, not unknown.
+  days: r.receivedDate ? r.days : null,
   ...(r.table === "perm_cases_history" ? { era: "history" as const } : {}),
   industryCode: r.extras?.naics ?? null,
   industryTitle: naicsTitle(r.extras?.naics)?.title ?? null,
@@ -560,16 +562,6 @@ async function addSeenDecided(rows: UnifiedCase[]): Promise<void> {
 }
 
 /**
- * The yearly figure a wage sort compares. PERM's file is already yearly; the
- * others are multiplied out from their unit, and a wage that looks like a
- * yearly salary under the wrong unit has no figure, so it sorts last.
- */
-function yearlyWage(r: UnifiedCase): number | null {
-  if (r.wage === null) return null;
-  return r.wageUnit ? annualised(r.wage, r.wageUnit) : r.wage;
-}
-
-/**
  * An order over the merged rows. A row without the sort key goes last in both
  * directions: "no wage published" is not a low wage, and ranking it first in an
  * ascending sort would read as one.
@@ -578,7 +570,7 @@ export function compareBy(order: SearchOrder): (a: UnifiedCase, b: UnifiedCase) 
   if (order === "filed-desc") return byNewestFiling;
   const [key, dir] = order.split("-") as ["filed" | "decided" | "wage" | "days", "asc" | "desc"];
   const get = (r: UnifiedCase): string | number | null =>
-    key === "filed" ? r.filedOn : key === "decided" ? r.decidedOn : key === "wage" ? yearlyWage(r) : r.days;
+    key === "filed" ? r.filedOn : key === "decided" ? r.decidedOn : key === "wage" ? comparableWage(r.wage, r.wageUnit) : r.days;
   const sign = dir === "asc" ? 1 : -1;
   return (a, b) => {
     const x = get(a);

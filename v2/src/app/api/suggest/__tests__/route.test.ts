@@ -5,8 +5,6 @@ const indexReady = vi.fn();
 vi.mock("@/lib/db/nameSuggest", () => ({
   indexReady: (...a: unknown[]) => indexReady(...a),
   SUGGEST_KINDS: ["employer", "attorney", "occupation"],
-  SUGGEST_MIN_LENGTH: 2,
-  SUGGEST_MAX_LENGTH: 80,
   suggestNames: (...a: unknown[]) => suggestNames(...a),
 }));
 
@@ -15,6 +13,7 @@ import { GET } from "../route";
 const s = (kind: string, name: string, score: number, cases = 10) => ({
   kind,
   name,
+  slug: name,
   href: `/x/${name}`,
   cases,
   score,

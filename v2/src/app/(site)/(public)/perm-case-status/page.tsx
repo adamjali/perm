@@ -44,6 +44,8 @@ import {
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/db/publicData";
 import { MoreText } from "@/components/data/MoreText";
 import { buttonVariants } from "@/components/ui/button";
+import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /**
  * One PERM case number in, everything we can honestly say about it out.
@@ -157,7 +159,7 @@ function todayUtc(): string {
  */
 function looksLikeName(input: string): boolean {
   const t = input.trim();
-  if (t.length < 2 || t.length > 120) return false;
+  if (t.length < SEARCH_TEXT_MIN || t.length > SEARCH_TEXT_MAX) return false;
   const letters = (t.match(/[A-Za-z]/g) ?? []).length;
   const digits = (t.match(/\d/g) ?? []).length;
   return letters >= 2 && letters > digits;
@@ -200,7 +202,7 @@ export default async function PermCaseStatusPage({
   // An employer name rather than a number: the search that can answer it,
   // with no stop on a "wrong shape" page first. The homepage box posts here.
   if (malformed && !looksLikeReceipt(typed) && looksLikeName(typed)) {
-    redirect(`/case-search?q=${encodeURIComponent(typed.trim().slice(0, 120))}`);
+    redirect(caseSearchHref({ q: typed }));
   }
   const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
 

@@ -3,6 +3,8 @@ import "server-only";
 import { cache } from "react";
 
 import { one, rows } from "./client";
+import { socGroup } from "@/lib/socCode";
+import { HOURS_PER_YEAR } from "@/lib/wageFormat";
 
 /**
  * The reference data beside the PERM record: what a job is (O*NET), what it
@@ -16,11 +18,6 @@ import { one, rows } from "./client";
  * stays out: these are additions to pages that stand on their own.
  */
 
-/** "15-1252.00" and "15-1252" are one occupation here. */
-export function soc7(code: string | null | undefined): string | null {
-  const c = (code ?? "").trim().slice(0, 7);
-  return /^\d{2}-\d{4}$/.test(c) ? c : null;
-}
 
 const num = (v: unknown): number | null => (v == null || v === "" ? null : Number(v));
 
@@ -54,7 +51,7 @@ export interface OnetForSoc {
 type OnetRow = { onet_code: string; title: string; description: string; job_zone: unknown; bright: string | null; detail: string };
 
 export const onetForSoc = cache(async (code: string): Promise<OnetForSoc | null> => {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   if (!soc) return null;
   const [got, ref] = await Promise.all([
     rows<OnetRow>(
@@ -141,7 +138,7 @@ const OEWS_COLS =
 
 /** The occupation's national pay, BLS's area 99. */
 export const marketPayNational = cache(async (code: string): Promise<MarketPay | null> => {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   if (!soc) return null;
   const r = await one<OewsRow>(`SELECT ${OEWS_COLS} FROM bls_oews WHERE soc7 = ? AND area = '99'`, [soc]).catch(() => null);
   return r ? marketPay(r) : null;
@@ -149,7 +146,7 @@ export const marketPayNational = cache(async (code: string): Promise<MarketPay |
 
 /** The occupation's pay in each of `areas` (OEWS area codes) that BLS published. */
 export async function marketPayIn(code: string, areas: string[]): Promise<MarketPay[]> {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   const list = [...new Set(areas.filter((a) => /^\d{2,7}$/.test(a)))].slice(0, 40);
   if (!soc || !list.length) return [];
   const got = await rows<OewsRow>(
@@ -163,7 +160,7 @@ export type MarketPayAt = MarketPay & { soc: string };
 
 /** One area's pay for each of `codes`. */
 export async function marketPayForArea(area: string, codes: string[]): Promise<MarketPayAt[]> {
-  const socs = [...new Set(codes.map(soc7).filter((s): s is string => !!s))].slice(0, 40);
+  const socs = [...new Set(codes.map(socGroup).filter((s): s is string => !!s))].slice(0, 40);
   if (!/^\d{2,7}$/.test(area) || !socs.length) return [];
   const got = await rows<OewsRow & { soc7: string }>(
     `SELECT soc7, ${OEWS_COLS} FROM bls_oews WHERE area = ? AND soc7 IN (${socs.map(() => "?").join(",")})`,
@@ -191,7 +188,7 @@ export interface Projection {
 }
 
 export const projectionFor = cache(async (code: string): Promise<Projection | null> => {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   if (!soc) return null;
   const r = await one<Record<string, unknown>>(
     "SELECT title, base_year, proj_year, emp_base, emp_proj, change_pct, openings, median_wage, education, experience, training FROM bls_projections WHERE soc7 = ?",
@@ -226,7 +223,7 @@ export interface DolBasis {
 
 /** DOL's Job Zone and education for the occupation's own O*NET code, newest wage year. */
 export const dolBasisFor = cache(async (code: string): Promise<DolBasis | null> => {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   if (!soc) return null;
   const r = await one<Record<string, unknown>>(
     "SELECT wage_year, job_zone, education, appendix_a FROM oflc_occupation_basis WHERE soc7 = ? ORDER BY wage_year DESC, onet_code LIMIT 1",
@@ -257,8 +254,6 @@ export function wageYearLabel(year: number): string {
   return `${year}-${String((year + 1) % 100).padStart(2, "0")}`;
 }
 
-/** DOL counts a wage year as 2,080 hours. */
-export const HOURS_PER_YEAR = 2080;
 
 /**
  * DOL's label on a row whose four levels are yearly amounts. Teachers,
@@ -299,7 +294,7 @@ function levelYear(r: Record<string, unknown>): WageLevelYear {
  * read" answer could never fire and an empty history was cached for a day.
  */
 export async function wageLevelHistory(code: string, area: string, collection: "alc" | "edc" = "alc"): Promise<WageLevelYear[]> {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   if (!soc || !/^\d{2,7}$/.test(area)) return [];
   const got = await rows<Record<string, unknown>>(
     "SELECT wage_year, l1, l2, l3, l4, label FROM oflc_wage_levels WHERE soc7 = ? AND area = ? AND collection = ? ORDER BY wage_year",
@@ -310,7 +305,7 @@ export async function wageLevelHistory(code: string, area: string, collection: "
 
 /** The newest wage year's four levels for each of `codes` in one area. */
 export async function wageLevelsForArea(area: string, codes: string[]): Promise<(WageLevelYear & { soc: string })[]> {
-  const socs = [...new Set(codes.map(soc7).filter((s): s is string => !!s))].slice(0, 40);
+  const socs = [...new Set(codes.map(socGroup).filter((s): s is string => !!s))].slice(0, 40);
   if (!/^\d{2,7}$/.test(area) || !socs.length) return [];
   const got = await rows<Record<string, unknown>>(
     `SELECT soc7, wage_year, l1, l2, l3, l4, label FROM oflc_wage_levels
@@ -441,7 +436,7 @@ export const priceParity = cache(async (fips: string): Promise<PriceParity | nul
 
 /** Our occupation page for each SOC code that has one: soc7 -> slug (the busiest row). */
 export async function occupationSlugs(codes: string[]): Promise<Map<string, string>> {
-  const socs = [...new Set(codes.map(soc7).filter((s): s is string => !!s))].slice(0, 40);
+  const socs = [...new Set(codes.map(socGroup).filter((s): s is string => !!s))].slice(0, 40);
   const out = new Map<string, string>();
   if (!socs.length) return out;
   const got = await rows<{ soc: string; slug: string }>(

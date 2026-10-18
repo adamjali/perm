@@ -9,6 +9,8 @@ export type SuggestKind = "employer" | "attorney" | "occupation";
 export interface NameSuggestion {
   kind: SuggestKind;
   name: string;
+  /** The page's slug, the name's key everywhere else on the site. */
+  slug: string;
   href: string;
   /** Filings behind the page, to tell two close names apart. */
   cases: number;

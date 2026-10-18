@@ -6,6 +6,17 @@
  * what window, and among how many sponsors.
  */
 
+import { formatApprovalRate, formatInt, formatShare } from "@/lib/format";
+import { MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+
+/**
+ * Positions, leveled LCAs or USCIS decisions a sponsor needs before an H-1B
+ * share or USCIS's rate is ranked (MIN_N in scripts/build_sponsor_index.py;
+ * test_sponsor_index.py holds the two equal). The PERM rate uses the employer
+ * page's own MIN_DECIDED_FOR_RATE.
+ */
+export const SPONSOR_SHARE_MIN = 20;
+
 export interface SponsorPart {
   id: "perm_rate" | "perm_recent" | "lca_24m" | "transfer_share" | "senior_share" | "uscis_rate";
   label: string;
@@ -26,8 +37,7 @@ export type SponsorFact =
   | { id: "willful"; lcas: number }
   | { id: "cap_exempt" };
 
-const pct = (x: number, digits = 0) => `${(x * 100).toFixed(digits)}%`;
-const int = (n: number) => Math.round(n).toLocaleString("en-US");
+const int = (n: number) => formatInt(Math.round(n));
 
 function monthYear(iso: string | null | undefined): string | null {
   const m = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null;
@@ -44,10 +54,10 @@ export function partValue(p: SponsorPart): string {
   switch (p.id) {
     case "perm_rate":
     case "uscis_rate":
-      return pct(p.value, p.value >= 0.9 && p.value < 1 ? 1 : 0);
+      return formatApprovalRate(p.value);
     case "transfer_share":
     case "senior_share":
-      return pct(p.value);
+      return formatShare(p.value);
     default:
       return int(p.value);
   }
@@ -72,15 +82,15 @@ export function partBasis(p: SponsorPart): string {
   }
 }
 
-/** Where it stands: "Higher than 72% of 2,179 sponsors with 20 or more decided cases." */
+/** Where it stands: "Higher than 72% of 2,179 sponsors with 30 or more decided cases." */
 export function partRank(p: SponsorPart): string {
   const among: Record<SponsorPart["id"], string> = {
-    perm_rate: "sponsors with 20 or more decided cases",
+    perm_rate: `sponsors with ${MIN_DECIDED_FOR_RATE} or more decided cases`,
     perm_recent: "sponsors that filed in the last 12 months",
     lca_24m: "sponsors with a certified LCA in the last 24 months",
-    transfer_share: "sponsors with 20 or more certified positions",
-    senior_share: "sponsors with 20 or more leveled LCAs",
-    uscis_rate: "sponsors with 20 or more USCIS decisions",
+    transfer_share: `sponsors with ${SPONSOR_SHARE_MIN} or more certified positions`,
+    senior_share: `sponsors with ${SPONSOR_SHARE_MIN} or more leveled LCAs`,
+    uscis_rate: `sponsors with ${SPONSOR_SHARE_MIN} or more USCIS decisions`,
   };
   const share = Math.round(p.pct * 100);
   const lead = share >= 100 ? "At the top of" : share <= 0 ? "At the bottom of" : `Higher than ${share}% of`;

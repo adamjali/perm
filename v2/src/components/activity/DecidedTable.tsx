@@ -10,16 +10,16 @@ import { PROGRAM_LABEL } from "@/lib/changeProgram";
 // runtime import of a "server-only" module.
 import type { DecidedCase } from "@/lib/db/decidedDays";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
+import { comparableWage } from "@/lib/wageFormat";
 import { CaseStatusChip } from "@/components/ui/badge";
 
 /**
  * A wage, with the period DOL quoted it per.
  *
- * NEVER ANNUALISED HERE. Multiplying an hourly rate by 2,080 assumes a
- * full-time year that the filing does not state, and the result would be
- * indistinguishable on the page from a salary DOL actually published. The unit
- * is printed instead, and PERM rows say nothing because `perm_cases` carries
- * no unit column at all.
+ * NEVER ANNUALISED ON THE PAGE. The amount is printed as DOL published it,
+ * with its unit (PERM rows say nothing: `perm_cases` stores the wage yearly
+ * and carries no unit). The SORT compares yearly figures (`comparableWage`),
+ * so an hourly rate isn't ranked against salaries as if it were one.
  */
 function wageText(c: DecidedCase): string {
   if (c.wage === null) return "";
@@ -50,7 +50,7 @@ export const DECIDED_COLUMNS: SortColumn<DecidedCase>[] = [
   { key: "soc", label: "Occupation", get: (r) => r.socTitle ?? r.socCode },
   { key: "state", label: "State", get: (r) => r.state },
   { key: "city", label: "City", get: (r) => r.worksiteCity },
-  { key: "wage", label: "Wage", descFirst: true, get: (r) => r.wage },
+  { key: "wage", label: "Wage", descFirst: true, get: (r) => comparableWage(r.wage, r.wageUnit) },
   { key: "firm", label: "Law firm", get: (r) => r.attorneyName },
   { key: "citizenship", label: "Citizenship", get: (r) => r.citizenship },
   { key: "visa", label: "Visa", get: (r) => r.visaClass },

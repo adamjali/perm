@@ -1,4 +1,5 @@
 import type { DecidedCase } from "@/lib/db/decidedDays";
+import { comparableWage } from "@/lib/wageFormat";
 
 /**
  * Filtering the decided half of `/perm-decision-activity`, in the browser.
@@ -79,8 +80,10 @@ export function applyDecidedFilters(
   const active = DECIDED_FILTER_FIELDS.filter((d) => f[d.key]);
   return rows.filter((r) => {
     for (const d of active) if (d.get(r) !== f[d.key]) return false;
-    if (f.wageMin !== undefined && (r.wage === null || r.wage < f.wageMin)) return false;
-    if (f.wageMax !== undefined && (r.wage === null || r.wage > f.wageMax)) return false;
+    // Yearly, so a bound compares an hourly offer with a salary fairly.
+    const yearly = comparableWage(r.wage, r.wageUnit);
+    if (f.wageMin !== undefined && (yearly === null || yearly < f.wageMin)) return false;
+    if (f.wageMax !== undefined && (yearly === null || yearly > f.wageMax)) return false;
     return true;
   });
 }

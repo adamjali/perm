@@ -15,13 +15,6 @@ describe("reference reads", () => {
     one.mockResolvedValue(null);
   });
 
-  it("reads a SOC code with or without its O*NET suffix, and nothing else", () => {
-    expect(ref.soc7("15-1252.00")).toBe("15-1252");
-    expect(ref.soc7(" 15-1252 ")).toBe("15-1252");
-    expect(ref.soc7("N/A")).toBeNull();
-    expect(ref.soc7(null)).toBeNull();
-  });
-
   it("names a wage year by the July that opened it", () => {
     expect(ref.wageYearLabel(2026)).toBe("2026-27");
     expect(ref.wageYearLabel(2099)).toBe("2099-00");

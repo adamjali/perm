@@ -32,6 +32,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from lib_wage import ANNUAL_WAGE_SQL, FLAG_BAND  # noqa: E402,F401
 from lib_db import Database, query_rows, record_run, write_doc  # noqa: E402
 
 DOC_KEY = "lca_filter_options"
@@ -55,22 +56,13 @@ def min_for_median() -> int:
     return int(m.group(1))
 
 
-# MUST STAY IN STEP WITH ANNUAL_WAGE_SQL AND THE BAND IN src/lib/db/lcaWages.ts.
-# Duplicated deliberately, the same way the entity slug rules are duplicated in
-# lib_slugs.py and entitySlug.ts: a doc built over a different population
-# than the fallback query reads is worse than no doc, because it is invisible.
-# An amount that can't be pay for its period (an hourly $10,000 or more, a
-# weekly, bi-weekly or monthly $40,000 or more) is a yearly salary under the
-# wrong unit, and reads as NULL, so it is in no figure.
-ANNUAL_WAGE_SQL = (
-    "CASE WHEN wage_unit = 'HOUR' AND wage >= 10000 THEN NULL "
-    "WHEN wage_unit IN ('WEEK', 'BI-WEEKLY', 'MONTH') AND wage >= 40000 THEN NULL "
-    "WHEN wage_unit = 'YEAR' THEN wage WHEN wage_unit = 'HOUR' THEN wage * 2080 "
-    "WHEN wage_unit = 'MONTH' THEN wage * 12 WHEN wage_unit = 'WEEK' THEN wage * 52 "
-    "WHEN wage_unit = 'BI-WEEKLY' THEN wage * 26 END"
-)
+# The yearly figure and the plausible band come from scripts/data/pay_periods.json
+# through lib_wage, the table the site's reader builds the same SQL from (both
+# held to scripts/fixtures/annual_wage_sql.txt): a doc built over a different
+# population than the fallback query reads is worse than no doc, because it is
+# invisible.
 DEFAULT_WHERE = (
-    f"wage IS NOT NULL AND wage > 0 AND ({ANNUAL_WAGE_SQL}) BETWEEN 10000 AND 1500000 "
+    f"wage IS NOT NULL AND wage > 0 AND ({ANNUAL_WAGE_SQL}) BETWEEN {FLAG_BAND[0]} AND {FLAG_BAND[1]} "
     "AND case_status = 'CERTIFIED'"
 )
 

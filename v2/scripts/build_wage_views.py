@@ -44,7 +44,8 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from build_lca_facets import ANNUAL_WAGE_SQL, bin_width, min_for_median  # noqa: E402
+from build_lca_facets import bin_width, min_for_median  # noqa: E402
+from lib_wage import ANNUAL_WAGE_SQL, FLAG_BAND  # noqa: E402
 from lib_db import Database, cell, query_rows, record_run  # noqa: E402
 
 # A selection at or above this many filings is precomputed. Below it the live
@@ -61,7 +62,7 @@ SOC, STATE, FY = 1, 2, 4
 
 # LCA rows outside this annual band are data defects, the same band as
 # lcaWages.ts (MIN_ANNUAL / MAX_ANNUAL) and build_lca_facets.py.
-LCA_MIN, LCA_MAX = 10_000, 1_500_000
+LCA_MIN, LCA_MAX = FLAG_BAND
 
 LCA_STATUS = {
     "CERTIFIED": "certified",

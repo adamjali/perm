@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import table from "../../../scripts/data/naics_titles.json";
-import { NAICS_SECTORS, naicsSectorTitle } from "../naicsSectors";
+import { NAICS_SECTORS, SECTOR_GROUPS, naicsSectorTitle, sectorGroup, sectorRange } from "../naicsSectors";
 
 /**
  * `naicsSectors.ts` is a hand-kept copy of the two-digit rows of the Census
@@ -22,5 +22,22 @@ describe("NAICS_SECTORS", () => {
     expect(naicsSectorTitle("541511")).toBe("Professional, Scientific, and Technical Services");
     expect(naicsSectorTitle("334413")).toBe("Manufacturing");
     expect(naicsSectorTitle("99")).toBeNull();
+  });
+});
+
+describe("SECTOR_GROUPS", () => {
+  it("offers one choice per Census title, spanning every code it has", () => {
+    expect(new Set(SECTOR_GROUPS.map((g) => g.label)).size).toBe(SECTOR_GROUPS.length);
+    expect(sectorGroup("31")).toMatchObject({ label: "Manufacturing", codes: ["31", "32", "33"] });
+    // Only a sector's first code names it, so one sector has one address.
+    expect(sectorGroup("32")).toBeNull();
+    expect(sectorGroup("99")).toBeNull();
+  });
+
+  it("writes a span as a range and a single code as itself", () => {
+    const manufacturing = sectorGroup("31");
+    const professional = sectorGroup("54");
+    expect(manufacturing && sectorRange(manufacturing)).toBe("31-33");
+    expect(professional && sectorRange(professional)).toBe("54");
   });
 });

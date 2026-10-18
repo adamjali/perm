@@ -11,12 +11,12 @@
  * DOL's, printed with the series it belongs to.
  */
 
+import { socGroup } from "@/lib/socCode";
+
 export const WAGE_SEARCH_URL = "https://flag.dol.gov/recaptcha/wageSearch";
 export const AREA_OPTIONS_URL = "https://flag.dol.gov/flag/api/getAreaOptions";
 export const WAGE_SEARCH_PAGE = "https://flag.dol.gov/wage-data/wage-search";
 
-/** "15-1252" or "15-1252.00": the SOC code DOL's search takes. */
-export const SOC_RE = /^\d{2}-\d{4}$|^\d{2}-\d{4}\.\d{2}$/;
 /** BLS area codes are numeric, up to six digits. */
 export const AREA_RE = /^\d{1,6}$/;
 
@@ -61,7 +61,7 @@ export function dolSearchYear(seriesYear: number): number {
 
 /** The body DOL's search posts. `bls_area` is a metro or non-metro area; counties need a different type. */
 export function wageSearchBody(soc: string, area: number, seriesYear: number): Record<string, unknown> {
-  return { collectionType: "alc", year: dolSearchYear(seriesYear), socCode: soc.slice(0, 7), area, areaType: "bls_area", rdFlag: "BOTH" };
+  return { collectionType: "alc", year: dolSearchYear(seriesYear), socCode: socGroup(soc), area, areaType: "bls_area", rdFlag: "BOTH" };
 }
 
 /**

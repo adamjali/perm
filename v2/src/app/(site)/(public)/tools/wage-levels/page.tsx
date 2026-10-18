@@ -5,7 +5,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { WageLevelsTool } from "@/components/tools/WageLevelsTool";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { SOC_RE } from "@/lib/wageLevels";
+import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 import { withSocialCard } from "@/lib/socialCard";
 
 /**
@@ -48,7 +48,7 @@ const FAQS = [
 
 export default async function WageLevelsPage({ searchParams }: { searchParams: Promise<{ soc?: string }> }) {
   const { soc } = await searchParams;
-  const initialSoc = soc && SOC_RE.test(soc) ? soc.slice(0, 7) : "";
+  const initialSoc = soc && SOC_CODE_RE.test(soc) ? socGroup(soc) ?? "" : "";
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,

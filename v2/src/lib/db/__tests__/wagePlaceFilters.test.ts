@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { WAGE_SECTORS, placeFilterRefusal, sectorCodes } from "@/lib/wagePlaceFilters";
+import { placeFilterRefusal, sectorCodes } from "@/lib/wagePlaceFilters";
 
 /**
  * The salary explorer's city and industry narrowings, at the SQL.
@@ -57,9 +57,9 @@ describe("the place-filter rule", () => {
     expect(placeFilterRefusal({ sector: "51", soc: "15-1252" })).toBeNull();
   });
 
-  it("offers one option per sector, spanning its codes", () => {
+  it("reads a sector by its first code, spanning every code it has", () => {
+    // One option per sector is SECTOR_GROUPS' rule, tested in naicsSectors.test.ts.
     expect(sectorCodes("44")).toEqual(["44", "45"]);
     expect(sectorCodes("45")).toBeNull();
-    expect(WAGE_SECTORS.filter((s) => s.label === "Manufacturing")).toHaveLength(1);
   });
 });

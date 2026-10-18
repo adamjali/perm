@@ -3,6 +3,7 @@ import type { FlagProgram, SearchFlagArgs } from "@/lib/db/flagCases";
 import { FLAG_DEFAULT_ITEMS, isFlagKind } from "@/lib/db/flagCases";
 import { MAX_TITLE_FILTER, SEARCH_MONTH_RE } from "@/lib/db/cases";
 import { isUnsettledMiss } from "@/lib/dolMiss";
+import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 
 /**
  * The GET handler for a FLAG program's cases (`/api/pwd-cases`,
@@ -14,7 +15,6 @@ import { isUnsettledMiss } from "@/lib/dolMiss";
  * every search one employer's slug range.
  */
 
-const MAX_TEXT = 120;
 const MAX_CURSOR = 200;
 
 function bad(msg: string) {
@@ -59,7 +59,7 @@ export function makeFlagCasesHandler(program: FlagProgram) {
 
     if (action === "search") {
       const text = p.get("text") ?? "";
-      if (text.length < 2 || text.length > MAX_TEXT) return bad("text must be 2..120 chars");
+      if (text.length < SEARCH_TEXT_MIN || text.length > SEARCH_TEXT_MAX) return bad(`text must be ${SEARCH_TEXT_MIN}..${SEARCH_TEXT_MAX} chars`);
       const args: SearchFlagArgs = {
         text,
         ...(title ? { title } : {}),

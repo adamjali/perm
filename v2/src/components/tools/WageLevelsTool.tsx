@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
-import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { seriesYearFor, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { SOC_CODE_RE } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 
@@ -169,7 +170,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
     };
   }, [stateName, seriesYear]);
 
-  const ready = SOC_RE.test(soc.trim()) && area !== "" && result.kind !== "loading";
+  const ready = SOC_CODE_RE.test(soc.trim()) && area !== "" && result.kind !== "loading";
 
   async function lookUp(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();

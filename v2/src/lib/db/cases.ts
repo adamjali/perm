@@ -22,7 +22,7 @@
  * |------------|------------------------|--------------------------------|-----------------------|
  * | all        | `by_decision`          | `by_status_decision`           | `idx_pc_decision` / `idx_pc_status_dec` |
  * | state      | `by_state_decision`    | `by_state_status_decision`     | `idx_pc_state_dec` / `idx_pc_state_st_dec` |
- * | occupation | `by_soc_decision`      | `by_soc_status_decision`       | `idx_pc_soc_dec` / `idx_pc_soc_st_dec` |
+ * | occupation | `by_soc_decision`      | `by_soc_status_decision`       | `idx_pc_socg_dec` / `idx_pc_socg_st_dec` |
  * | employer   | `by_employer_decision` | `by_employer_status_decision`  | `idx_pc_emp_dec` / `idx_pc_emp_st_dec` |
  * | law firm   | `by_attorney_decision` | `by_attorney_status_decision`  | `idx_pc_att_dec` / `idx_pc_att_st_dec` |
  *
@@ -35,6 +35,7 @@
  * check. These throw.
  */
 import "server-only";
+import { socGroupClause } from "@/lib/socCode";
 
 import { slugify } from "@/lib/entitySlug";
 
@@ -211,8 +212,8 @@ export const BROWSE_INDEXES = [
   "idx_pc_status_dec",
   "idx_pc_state_dec",
   "idx_pc_state_st_dec",
-  "idx_pc_soc_dec",
-  "idx_pc_soc_st_dec",
+  "idx_pc_socg_dec",
+  "idx_pc_socg_st_dec",
   "idx_pc_emp_dec",
   "idx_pc_emp_st_dec",
   "idx_pc_att_dec",
@@ -250,9 +251,13 @@ export function planCaseSql(filter: CaseFilter): CaseSqlPlan {
       args.push(filter.slice.state);
       break;
     case "occupation":
-      index = status === undefined ? "idx_pc_soc_dec" : "idx_pc_soc_st_dec";
-      conds.push("soc_code = ?");
-      args.push(filter.slice.socCode);
+      // One job, both spellings DOL prints, on the indexed group (src/lib/socCode.ts).
+      index = status === undefined ? "idx_pc_socg_dec" : "idx_pc_socg_st_dec";
+      {
+        const job = socGroupClause(filter.slice.socCode);
+        conds.push(job.sql);
+        args.push(...job.args);
+      }
       break;
     case "employer":
       index = status === undefined ? "idx_pc_emp_dec" : "idx_pc_emp_st_dec";

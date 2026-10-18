@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { FinePrint } from "@/components/data/FinePrint";
-import { hasOwnPage } from "@/lib/entityPayload";
+import { hasOwnPage, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
@@ -24,11 +24,13 @@ import { getLcaWageStats } from "@/lib/db/lcaWages";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
-import { socGroup } from "@/lib/socGroups";
+import { socMajorGroup } from "@/lib/socGroups";
+import { socGroup } from "@/lib/socCode";
+import { DEFAULT_FILTERS, finderHref } from "@/lib/sponsorFinder";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 import {
   DisclosureNote,
   LimitsPanel,
-  MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
   ReliabilityBand,
@@ -53,7 +55,7 @@ import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/db/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { CityMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { CityMix, PartyMix, RecruitmentMix, StateMix } from "@/components/entities/FilingMakeup";
 import { WorkerMix } from "@/components/entities/WorkerMix";
 import { workerFacets } from "@/lib/db/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/db/entityDetail";
@@ -187,7 +189,7 @@ export async function generateMetadata({
       `${head}.`,
       [
         "what it pays by year and by state",
-        // Facets start at 3 filings (PAGE_FLOOR in scripts/build_entity_detail.py).
+        // Facets start at 3 filings (FACET_FLOOR in scripts/build_entity_detail.py).
         ...(row.total >= 3 ? ["who files it", "where the work is"] : []),
         "how it compares with other jobs",
       ],
@@ -223,7 +225,7 @@ export default async function OccupationPage({
   // so crawlers are told exactly what these are while people get the page.
   // The first two digits of a SOC code are its major group, so this costs a
   // lookup rather than new data. `socGroups.ts` holds the one copy of it.
-  const group = socGroup(row.code);
+  const group = socMajorGroup(row.code);
   const prefix = row.code ? row.code.trim().slice(0, 2) : null;
 
   // The materialised wage cells are keyed by SOC code, so an occupation with
@@ -324,7 +326,7 @@ export default async function OccupationPage({
               </Link>{" "}
               {row.code ? (
                 <Link
-                  href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+                  href={`/tools/wage-levels?soc=${encodeURIComponent(socGroup(row.code) ?? "")}`}
                   className={buttonVariants({ variant: "outline", size: "lg" })}
                 >
                   DOL&apos;s wage levels for this job
@@ -472,8 +474,28 @@ export default async function OccupationPage({
             ) : null}
           </div>
         </section>
+      ) : null}{" "}
+      {socGroup(row.code) ? (
+        <ul className="mt-6 space-y-2 text-base">
+          <li>
+            <Link href={finderHref({ ...DEFAULT_FILTERS, job: row.slug })} className="link">
+              Every sponsor that files it, by state, approval rate, offered wage and time to a decision
+            </Link>{" "}
+          </li>{" "}
+          <li>
+            <Link href={caseSearchHref({ occupation: row.slug })} className="link">
+              Every filing for it, PERM, wage requests and H-1B, case by case
+            </Link>{" "}
+          </li>
+        </ul>
       ) : null}
 
+      <RecruitmentMix
+        papers={facets.newspaper}
+        steps={facets.recruit_step}
+        lead={facets.recruit_lead}
+        className="mt-6"
+      />{" "}
       <WorkerMix facets={workers} subject="occupation" />
       </Chapter>
 
@@ -538,7 +560,7 @@ export default async function OccupationPage({
               : ""}
             .{" "}
             <Link
-              href={`/lca-wages?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+              href={`/lca-wages?soc=${encodeURIComponent(socGroup(row.code) ?? "")}`}
               className="link"
             >
               By state and year in the salary explorer
@@ -559,7 +581,7 @@ export default async function OccupationPage({
             <>
               {" "}
               <Link
-                href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+                href={`/tools/wage-levels?soc=${encodeURIComponent(socGroup(row.code) ?? "")}`}
                 className="link"
               >
                 DOL&apos;s four wage levels for this job

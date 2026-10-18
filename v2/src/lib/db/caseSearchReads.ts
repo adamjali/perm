@@ -24,9 +24,10 @@ import {
   type FlagDisclosedRow,
 } from "./flagCases";
 import type { Lead, Outcome, WageSourceKey } from "@/lib/caseSearchPlan";
-import type { ChangeProgram } from "@/lib/changeProgram";
+import { PWD_VISA_CLASS, type ChangeProgram } from "@/lib/changeProgram";
 import { tableColumns } from "./tableColumns";
-import { FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
+import { ANNUAL_WAGE_SQL } from "@/lib/wageFormat";
+import { socGroup, socGroupClause } from "@/lib/socCode";
 import { programOf } from "@/lib/flagCaseNumber";
 
 /**
@@ -66,9 +67,9 @@ import { programOf } from "@/lib/flagCaseNumber";
  */
 
 /**
- * The non-PERM programs. `seasonal` is H-2A and H-2B (`H-300-`, `H-400-`,
- * `P-400-`): a live table only, because DOL's quarterly H-2A and H-2B files
- * are not loaded, so every published read for it answers empty.
+ * The non-PERM programs. `seasonal` is H-2A, H-2B and CW-1 (`H-300-`,
+ * `H-400-`, `JO-A-300-`, `C-500-`, `P-400-`, `P-500-`), live in
+ * `seasonal_case_status` and published in `seasonal_cases`.
  */
 export type FlagProgramKey = "pwd" | "lca" | "seasonal";
 
@@ -90,16 +91,11 @@ export interface UnifiedNarrow {
   /** Decision month, `YYYY-MM`, inclusive both ends. */
   decidedFrom?: string;
   decidedTo?: string;
-  /**
-   * A resolved `attorney_slug`. Published PERM only, because PERM is the only
-   * program whose firm column this site has ingested - not because DOL keeps
-   * it. `LAWFIRM_NAME_BUSINESS_NAME` is in the ETA-9035 and ETA-9141 FY2026 Q3
-   * record layouts too.
-   */
+  /** A resolved `attorney_slug`. Every program's published file names the firm. */
   firmSlug?: string;
   /** Two-letter worksite state. Published halves only. */
   state?: string;
-  /** SOC code, `15-1252.00`. Published halves only. */
+  /** SOC code in either spelling; read as its group (src/lib/socCode.ts). Published halves only. */
   socCode?: string;
   /** DOL fiscal year, `2025`. Published halves only. */
   fiscalYear?: string;
@@ -108,10 +104,10 @@ export interface UnifiedNarrow {
   wageMax?: number;
   /**
    * The employer's NAICS code, as a PREFIX: `54` is the sector, `5415` a
-   * group, `541511` one industry. Published PERM only, 2 to 6 digits.
+   * group, `541511` one industry, 2 to 6 digits. Every published file.
    */
   naics?: string;
-  /** Worksite city, compared case-insensitively. Published PERM only. */
+  /** Worksite city, compared case-insensitively. Every published file. */
   city?: string;
   /**
    * The worker's country of citizenship, of birth, and visa at filing, UPPER
@@ -771,13 +767,10 @@ async function readPermTable(
       restParams.push(narrow.state);
     }
     if (narrow.socCode) {
-      // THE GROUP, NOT AN EXACT MATCH, and the same rule the equality leads
-      // use. `perm_cases` holds 302,081 dotted codes and 71,858 bare ones, so
-      // `soc_code = '15-1252.00'` silently misses every bare row and
-      // `= '15-1252'` misses every dotted one. One needle must not answer
-      // differently depending on which box the reader filled.
-      restConds.push(`${SOC_GROUP_EXPR} = ?`);
-      restParams.push(narrow.socCode);
+      // One job, both spellings DOL prints, on the indexed group (src/lib/socCode.ts).
+      const job = socGroupClause(narrow.socCode);
+      restConds.push(job.sql);
+      restParams.push(...job.args);
     }
     if (narrow.fiscalYear) {
       // TEXT in perm_cases, INTEGER in the flag disclosure tables. Binding a
@@ -836,25 +829,12 @@ async function readPermTable(
     conds.push("state = ?");
     params.push(lead.value);
   } else if (lead.kind === "occupation") {
-    // THE 6-DIGIT GROUP, NOT AN EXACT MATCH, and this was a correctness bug
-    // rather than a performance one. `perm_cases` holds both spellings of the
-    // same occupation - 302,081 dotted (`15-1252.00`) and 71,858 bare
-    // (`15-1252`) - so `soc_code = ?` answers with whichever spelling the lead
-    // happened to resolve to and silently drops the other. Measured: SOC
-    // 13-2011 is 3,686 dotted plus 1,207 bare, so an exact match on the dotted
-    // form lost 24.7% of the accountants. 29-1141 lost 31%.
-    //
-    // `idx_pc_socg_dec` and `idx_pc_socg_st_dec` are on the same expression,
-    // so this stays a seek. The FLAG tables already did it this way; PERM was
-    // the odd one out.
-    // THE NEEDLE MUST BE THE GROUP TOO, not just the column. `substr(x, 1, 7)`
-    // yields `15-1252`, so binding the lead's own `15-1252.00` compares seven
-    // characters against ten and matches nothing at all. The FLAG path already
-    // resolved this with `socGroup`; a test caught PERM doing it wrong here.
-    const group = socGroup(lead.value);
-    if (!group) return empty;
-    conds.push(`${SOC_GROUP_EXPR} = ?`);
-    params.push(group);
+    // One job, both spellings DOL prints, on the indexed group (src/lib/socCode.ts).
+    // A lead that isn't a SOC code reads nothing: no query, and no forced index to fail.
+    if (!socGroup(lead.value)) return empty;
+    const job = socGroupClause(lead.value);
+    conds.push(job.sql);
+    params.push(...job.args);
   } else {
     return empty;
   }
@@ -875,8 +855,9 @@ async function readPermTable(
     params.push(narrow.state);
   }
   if (lead.kind !== "occupation" && narrow.socCode) {
-    conds.push(`${SOC_GROUP_EXPR} = ?`);
-    params.push(narrow.socCode);
+    const job = socGroupClause(narrow.socCode);
+    conds.push(job.sql);
+    params.push(...job.args);
   }
 
   // EVERY REMAINING FILTER IS PASSED THROUGH RATHER THAN STRIPPED.
@@ -1030,8 +1011,8 @@ export const FLAG_TABLES: Record<FlagProgramKey, FlagTables> = {
   pwd: {
     live: "pwd_case_status",
     published: "pwd_cases",
-    visaType: "PERM",
-    visaClass: "PERM",
+    visaType: PWD_VISA_CLASS,
+    visaClass: PWD_VISA_CLASS,
   },
   lca: { live: "lca_case_status", published: "lca_cases" },
   // DOL's H-2A, H-2B and CW-1 files share one table, the visa on each row.
@@ -1088,46 +1069,7 @@ export async function readFlagLive(
   );
 }
 
-/**
- * The 6-digit SOC group a code belongs to, or null when it is not a SOC code.
- *
- * THE THREE PROGRAMS SPELL THE OCCUPATION DIFFERENTLY, and an exact equality
- * across them matches nothing. Measured:
- *
- * | table | dotted `15-1252.00` | bare `15-1252` |
- * |---|---|---|
- * | `perm_cases` | 302,081 | 49,432 |
- * | `pwd_cases` | **0** | 614,015 |
- * | `lca_cases` | 434,314 | 3,182 |
- *
- * DOL's PW file publishes the 6-digit SOC and nothing finer, so the group is
- * the only key the three files share. An occupation lead resolved from
- * `perm_entities` arrives as either form (851 of its 1,410 occupation rows are
- * dotted) and is folded to the group before it reaches a flag table.
- *
- * THE COST OF THAT, STATED RATHER THAN HIDDEN: for a SOC group that O*NET
- * splits into detail occupations - `15-1299.08` and `15-1299.09` are different
- * jobs under one group - the wage-request and LCA halves answer at the group
- * level while the PERM half answers at the detail level. 62,007 of 434,314
- * dotted LCA rows carry a suffix other than `.00`, so it is roughly a seventh
- * of that table. There is no finer answer available: DOL does not publish one.
- */
-export function socGroup(code: string): string | null {
-  // `m?.[1] ?? null`, not `m ? m[1] : null`: `noUncheckedIndexedAccess` types
-  // a capture group as `string | undefined` even when the regex guarantees it.
-  return /^(\d{2}-\d{4})/.exec(code.trim())?.[1] ?? null;
-}
 
-/**
- * The indexed expression, written once.
- *
- * SQLite serves a filter on an expression from an index on that expression
- * only when the two parse to the same tree, so this constant and the
- * `CREATE INDEX` in `scripts/ingest_flag_disclosure.py` are one fact in two
- * files. Verified against production: the plan reads
- * `SEARCH pwd_cases USING INDEX pwd_cases_soc_dec (<expr>=?)`.
- */
-const SOC_GROUP_EXPR = "substr(soc_code, 1, 7)";
 
 /**
  * The index a lead rides on a published FLAG table, or null when that table
@@ -1214,15 +1156,10 @@ function flagRowNarrowing(narrow: UnifiedNarrow, leadKind: Lead["kind"]): { cond
     params.push(narrow.state);
   }
   if (leadKind !== "occupation" && narrow.socCode) {
-    // THE 6-DIGIT GROUP, not the code as typed. `pwd_cases` holds ZERO dotted
-    // SOC codes out of 634,638, so `soc_code = '15-1252.00'` matches nothing
-    // there and would report an employer as having filed no wage requests for
-    // an occupation they file constantly. See `socGroup`.
-    const group = socGroup(narrow.socCode);
-    if (group) {
-      conds.push(`${SOC_GROUP_EXPR} = ?`);
-      params.push(group);
-    }
+    // One job, both spellings DOL prints, on the indexed group (src/lib/socCode.ts).
+    const job = socGroupClause(narrow.socCode);
+    conds.push(job.sql);
+    params.push(...job.args);
   }
   if (narrow.fiscalYear) {
     // INTEGER here, TEXT in perm_cases. Two columns of the same name and two
@@ -1236,11 +1173,11 @@ function flagRowNarrowing(narrow: UnifiedNarrow, leadKind: Lead["kind"]): { cond
   // as "$100,000 per month". The expression annualises and reads a wrong-unit
   // amount as NULL, which no bound matches.
   if (narrow.wageMin !== undefined) {
-    conds.push(`(${FLAG_ANNUAL_WAGE_SQL}) >= ?`);
+    conds.push(`(${ANNUAL_WAGE_SQL}) >= ?`);
     params.push(narrow.wageMin);
   }
   if (narrow.wageMax !== undefined) {
-    conds.push(`(${FLAG_ANNUAL_WAGE_SQL}) <= ?`);
+    conds.push(`(${ANNUAL_WAGE_SQL}) <= ?`);
     params.push(narrow.wageMax);
   }
   // Industry and city, matched exactly as the PERM read matches them (a NAICS
@@ -1295,10 +1232,11 @@ export async function readFlagPublished(
       conds.push("attorney_slug = ?");
       params.push(lead.value);
     } else if (lead.kind === "occupation") {
-      const group = socGroup(lead.value);
-      if (!group) return empty;
-      conds.push(`${SOC_GROUP_EXPR} = ?`);
-      params.push(group);
+      // A lead that isn't a SOC code reads nothing: no query, and no forced index to fail.
+      if (!socGroup(lead.value)) return empty;
+      const job = socGroupClause(lead.value);
+      conds.push(job.sql);
+      params.push(...job.args);
     } else {
       return empty;
     }

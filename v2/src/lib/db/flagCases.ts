@@ -7,6 +7,7 @@ import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { LIVE_SEARCH_MAX, narrowingClauses } from "./cases";
 import { askDol, logBudgetRefusal, underDailyBudget, type DiscoveryMiss } from "./caseDiscovery";
 import { laterDate } from "./sweepCoverage";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 
 /**
  * One read layer for every non-PERM program DOL's case-status endpoint
@@ -178,7 +179,7 @@ export function parseDisclosureSummaryDoc(json: string, computedAt: number): Fla
  * searches so the two halves answer the same needle.
  */
 export function slugRange(text: string): { lo: string; hi: string } | null {
-  if (text.length > 120) return null;
+  if (text.length > SEARCH_TEXT_MAX) return null;
   const needle = slugify(text.trim());
   if (needle.length < 2) return null;
   const hi = needle.slice(0, -1) + String.fromCharCode(needle.charCodeAt(needle.length - 1) + 1);

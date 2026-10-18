@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { AREA_RE, parseWageRates, SOC_RE, WAGE_SEARCH_PAGE, WAGE_SEARCH_URL, wageSearchBody } from "@/lib/wageLevels";
+import { AREA_RE, parseWageRates, WAGE_SEARCH_PAGE, WAGE_SEARCH_URL, wageSearchBody } from "@/lib/wageLevels";
+import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 
 /**
  * GET /api/wage-levels?soc=15-1252&area=31080&year=2026
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   const area = (url.searchParams.get("area") ?? "").trim();
   const yearRaw = (url.searchParams.get("year") ?? "").trim();
   const year = Number(yearRaw);
-  if (!SOC_RE.test(soc) || !AREA_RE.test(area) || !/^\d{4}$/.test(yearRaw) || year < 2020 || year > 2035) {
+  if (!SOC_CODE_RE.test(soc) || !AREA_RE.test(area) || !/^\d{4}$/.test(yearRaw) || year < 2020 || year > 2035) {
     return NextResponse.json({ ok: false, message: "soc, area and year are required: an SOC code, a BLS area code and a series year." }, { status: 400 });
   }
 
@@ -42,12 +43,12 @@ export async function GET(req: Request) {
     const levels = parseWageRates(await res.json());
     if (!levels) {
       return NextResponse.json(
-        { ok: true, soc: soc.slice(0, 7), area: Number(area), seriesYear: year, levels: null, source: WAGE_SEARCH_PAGE, message: "DOL publishes no wage for that occupation in that area for that series." },
+        { ok: true, soc: socGroup(soc), area: Number(area), seriesYear: year, levels: null, source: WAGE_SEARCH_PAGE, message: "DOL publishes no wage for that occupation in that area for that series." },
         { headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400" } },
       );
     }
     return NextResponse.json(
-      { ok: true, soc: soc.slice(0, 7), area: Number(area), seriesYear: year, levels, source: WAGE_SEARCH_PAGE },
+      { ok: true, soc: socGroup(soc), area: Number(area), seriesYear: year, levels, source: WAGE_SEARCH_PAGE },
       { headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400" } },
     );
   } catch (e) {

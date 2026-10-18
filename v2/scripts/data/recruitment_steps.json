@@ -1,0 +1,130 @@
+{
+  "steps": [
+    {
+      "id": "job_fair",
+      "column": "JOB_FAIR",
+      "label": "Job fairs"
+    },
+    {
+      "id": "employer_website",
+      "column": "EMP_WEBSITE",
+      "label": "The employer's website"
+    },
+    {
+      "id": "job_search_website",
+      "column": "JOB_SEARCH",
+      "label": "Job search websites"
+    },
+    {
+      "id": "on_campus",
+      "column": "ON_CAMPUS",
+      "label": "On-campus recruiting"
+    },
+    {
+      "id": "trade_org",
+      "column": "TRADE_ORG",
+      "label": "Trade or professional organizations"
+    },
+    {
+      "id": "private_firm",
+      "column": "PRIVATE_EMP",
+      "label": "Private employment firms"
+    },
+    {
+      "id": "employee_referral",
+      "column": "EMP_REFERRAL",
+      "label": "Employee referral programs"
+    },
+    {
+      "id": "campus_placement",
+      "column": "CAMPUS_PLACEMENT",
+      "label": "Campus placement offices"
+    },
+    {
+      "id": "local_newspaper",
+      "column": "LOCAL_NEWSPAPER",
+      "label": "Local or ethnic newspapers"
+    },
+    {
+      "id": "radio_tv",
+      "column": "RADIO_AD",
+      "label": "Radio or TV ads"
+    }
+  ],
+  "notice": [
+    {
+      "id": "bargaining_rep",
+      "column": "NOTICE_POST_BARGAIN_REP",
+      "label": "Given to the bargaining representative"
+    },
+    {
+      "id": "posted",
+      "column": "NOTICE_POST_BARGAIN_REP_PHYSICAL",
+      "label": "Posted at the workplace"
+    },
+    {
+      "id": "electronic",
+      "column": "NOTICE_POST_BARGAIN_REP_ELECTRONIC",
+      "label": "Sent electronically"
+    },
+    {
+      "id": "in_house",
+      "column": "NOTICE_POST_BARGAIN_REP_INHOUSE",
+      "label": "In-house media"
+    },
+    {
+      "id": "private_household",
+      "column": "NOTICE_POST_BARGAIN_REP_PRIVATE",
+      "label": "In a private household"
+    },
+    {
+      "id": "not_posted",
+      "column": "NOTICE_POST_EMP_NOT_POSTED",
+      "label": "Not posted"
+    }
+  ],
+  "leadBands": [
+    {
+      "id": "under-30",
+      "from": 0,
+      "to": 29,
+      "label": "Under 30 days"
+    },
+    {
+      "id": "30-59",
+      "from": 30,
+      "to": 59,
+      "label": "30 to 59 days"
+    },
+    {
+      "id": "60-89",
+      "from": 60,
+      "to": 89,
+      "label": "60 to 89 days"
+    },
+    {
+      "id": "90-119",
+      "from": 90,
+      "to": 119,
+      "label": "90 to 119 days"
+    },
+    {
+      "id": "120-149",
+      "from": 120,
+      "to": 149,
+      "label": "120 to 149 days"
+    },
+    {
+      "id": "150-180",
+      "from": 150,
+      "to": 180,
+      "label": "150 to 180 days"
+    },
+    {
+      "id": "over-180",
+      "from": 181,
+      "to": null,
+      "label": "Over 180 days"
+    }
+  ]
+}

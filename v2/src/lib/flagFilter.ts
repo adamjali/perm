@@ -1,4 +1,5 @@
 import type { FlagDisclosedRow } from "@/lib/db/flagCases";
+import { comparableWage } from "@/lib/wageFormat";
 
 /**
  * Filters over one wage-request or LCA search's loaded rows.
@@ -72,7 +73,8 @@ export function passesFlagFilters(i: FlagFilterItem, f: FlagFilters): boolean {
     if (want && field.get(i) !== want) return false;
   }
   if (f.wageMin !== undefined || f.wageMax !== undefined) {
-    const w = i.file?.wage ?? null;
+    // Yearly, so "at least $100,000" keeps a $50-an-hour offer.
+    const w = comparableWage(i.file?.wage, i.file?.wageUnit);
     if (w === null) return false;
     if (f.wageMin !== undefined && w < f.wageMin) return false;
     if (f.wageMax !== undefined && w > f.wageMax) return false;

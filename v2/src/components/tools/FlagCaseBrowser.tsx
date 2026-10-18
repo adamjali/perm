@@ -12,7 +12,7 @@ import { formatMonth } from "@/lib/dolFormat";
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module. Keep the path on the `import type`.
 import type { FlagCaseRow, FlagDisclosedRow, FlagDisclosureSummary, FlagKind, FlagListPage, FlagSummary } from "@/lib/db/flagCases";
-import { formatWage } from "@/lib/wageFormat";
+import { comparableWage, formatWage } from "@/lib/wageFormat";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { mergeHalves } from "@/lib/flagMerge";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
@@ -146,7 +146,10 @@ function Rows({
           key: "wage",
           label: wageLabel ?? "Wage",
           descFirst: true,
-          get: (r) => wages?.get(r.caseNumber)?.wage ?? null,
+          get: (r) => {
+            const w = wages?.get(r.caseNumber);
+            return comparableWage(w?.wage, w?.wageUnit);
+          },
         },
         { key: "state", label: "State", get: (r) => wages?.get(r.caseNumber)?.worksiteState ?? null },
         { key: "firm", label: "Law firm", get: (r) => wages?.get(r.caseNumber)?.attorneyName ?? null },
@@ -255,7 +258,7 @@ function DisclosedRows({
       { key: "status", label: "Status", get: (r) => r.status },
       { key: "employer", label: "Employer", get: (r) => r.employerName },
       { key: "title", label: "Job title", get: (r) => r.jobTitle },
-      { key: "wage", label: wageLabel, descFirst: true, get: (r) => r.wage },
+      { key: "wage", label: wageLabel, descFirst: true, get: (r) => comparableWage(r.wage, r.wageUnit) },
       { key: "state", label: "State", get: (r) => r.worksiteState },
       { key: "soc", label: "Occupation", get: (r) => r.socTitle ?? r.socCode },
       { key: "firm", label: "Law firm", get: (r) => r.attorneyName },

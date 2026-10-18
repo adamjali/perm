@@ -19,7 +19,8 @@ import sys
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import build_wage_views as bwv  # noqa: E402
-from build_lca_facets import ANNUAL_WAGE_SQL, percentile_select, state_percentile_select  # noqa: E402
+from build_lca_facets import percentile_select, state_percentile_select  # noqa: E402
+from lib_wage import ANNUAL_WAGE_SQL, FLAG_BAND  # noqa: E402
 
 FAILS: list[str] = []
 
@@ -83,7 +84,7 @@ def live_where(program: str, status: str, soc: str, state: str, fy: str):
         if fy:
             where.append("fiscal_year = ?"); args.append(fy)
         return "perm_cases", "wage", "state", " AND ".join(where), args
-    where = [f"wage IS NOT NULL AND wage > 0 AND ({ANNUAL_WAGE_SQL}) BETWEEN 10000 AND 1500000"]
+    where = [f"wage IS NOT NULL AND wage > 0 AND ({ANNUAL_WAGE_SQL}) BETWEEN {FLAG_BAND[0]} AND {FLAG_BAND[1]}"]
     args = []
     if status == "certified":
         where.append("case_status = 'CERTIFIED'")

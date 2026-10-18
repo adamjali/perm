@@ -40,7 +40,11 @@ def seed() -> SqliteTurso:
         "cont_appr INTEGER, cont_den INTEGER, same_appr INTEGER, same_den INTEGER, conc_appr INTEGER, conc_den INTEGER, "
         "chg_appr INTEGER, chg_den INTEGER, amend_appr INTEGER, amend_den INTEGER)",
         "CREATE TABLE debarments (entity_slug TEXT, program TEXT, start_date TEXT, end_date TEXT)",
-        "CREATE TABLE perm_cases (case_number TEXT PRIMARY KEY, employer_slug TEXT, state TEXT)",
+        "CREATE TABLE perm_cases (case_number TEXT PRIMARY KEY, employer_slug TEXT, state TEXT, received_date TEXT, "
+        "soc_code TEXT, status TEXT, wage INTEGER, days INTEGER)",
+        "CREATE TABLE perm_entity_pending (kind TEXT, slug TEXT, pending INTEGER)",
+        "CREATE TABLE perm_live_recent (case_number TEXT PRIMARY KEY, employer_slug TEXT, filing_date TEXT, is_final INTEGER)",
+        "CREATE TABLE perm_live_only_index (slug TEXT PRIMARY KEY, name TEXT)",
         "CREATE TABLE warn_notices (employer_slug TEXT, notice_date TEXT, employees INTEGER)",
     ])
     # Three sponsors with 20+ decided cases (ranked), one with 5 (not ranked on the rate).
@@ -56,7 +60,21 @@ def seed() -> SqliteTurso:
     # A sponsor under the facet floor has no state facet; its cases name one.
     db.execute("DELETE FROM perm_entity_facets WHERE slug = 'tiny' AND facet = 'state'")
     for i, st in enumerate(["OR", "OR", "WA"]):
-        db.execute("INSERT INTO perm_cases VALUES (?,?,?)", [f"G-{i}", "tiny", st])
+        db.execute("INSERT INTO perm_cases VALUES (?,?,?,?,?,?,?,?)",
+                   [f"G-{i}", "tiny", st, "2026-01-0" + str(i + 1), "15-1252.00", "certified", 100_000 + i, 400 + i])
+    # alpha: two software cases (dotted and bare, one job), one nurse case, in two states.
+    for case, soc, st, status, wage, days in [
+        ("A-1", "15-1252.00", "CA", "certified", 150_000, 420),
+        ("A-2", "15-1252", "CA", "denied", 130_000, 500),
+        ("A-3", "29-1141.00", "TX", "withdrawn", 80_000, 30),
+    ]:
+        db.execute("INSERT INTO perm_cases VALUES (?,?,?,?,?,?,?,?)", [case, "alpha", st, "2025-06-01", soc, status, wage, days])
+    db.execute("INSERT INTO perm_entity_pending VALUES ('employer','alpha',7)")
+    db.execute("INSERT INTO perm_live_recent VALUES ('L-1','alpha','2026-09-30',0)")
+    # newco: every case still with DOL, so no published record at all.
+    db.execute("INSERT INTO perm_live_only_index VALUES ('newco','Newco LLC')")
+    for i, final in enumerate([0, 0, 1]):
+        db.execute("INSERT INTO perm_live_recent VALUES (?,?,?,?)", [f"L-n{i}", "newco", "2026-10-0" + str(i + 1), final])
     db.execute("INSERT INTO perm_entity_facets VALUES ('employer','gamma','industry','611310',20)")
     db.execute("INSERT INTO perm_entity_facets VALUES ('employer','gamma','industry','541511',5)")
     db.execute("INSERT INTO perm_entity_facets VALUES ('employer','alpha','industry','334413',50)")
@@ -122,10 +140,36 @@ def main() -> int:
 
     for ddl in bsi.DDL:
         db.execute(ddl)
-    first = bsi.write_diff(db, rows)
-    check("first write stores every sponsor", first, (4, 0))
-    again = bsi.write_diff(db, bsi.plan(bsi.read(db, TODAY), TODAY))
+    check("waiting now is the employer page's own queue band", by["alpha"]["pending_now"], 7)
+    check("the newest filing reads the live record too", by["alpha"]["latest_filed"], "2026-09-30")
+    check("an employer with no decided case yet is a sponsor",
+          (by["newco"]["live_only"], by["newco"]["name"], by["newco"]["pending_now"], by["newco"]["perm_recent"]),
+          (1, "Newco LLC", 2, 3))
+    check("and is ranked on nothing", json.loads(by["newco"]["parts"]), [])
+    check("the rate floor is the employer page's own", bsi.RATE_MIN_DECIDED, 30)
+
+    data = bsi.read(db, TODAY)
+    jobs = {tuple(r[:3]): dict(zip(bsi.JOB_COLS, r)) for r in bsi.plan_jobs(bsi.read_jobs(db, data["sponsors"]), data["sponsors"])}
+    sw = jobs[("15-1252", "CA", "alpha")]
+    check("one job, both spellings DOL prints", (sw["filed"], sw["certified"], sw["denied"]), (2, 1, 1))
+    check("medians by the ingest's own rule", (sw["median_wage"], sw["median_days"]), (140_000, 460))
+    check("every job, every state is the employer's whole record",
+          jobs[("", "", "alpha")]["filed"], 3)
+    check("every job in one state", jobs[("", "TX", "alpha")]["filed"], 1)
+    check("one job in every state", jobs[("29-1141", "", "alpha")]["filed"], 1)
+    check("a live-only sponsor has an every-job, every-state row and nothing else",
+          sorted(k for k in jobs if k[2] == "newco"), [("", "", "newco")])
+
+    first = bsi.write_diff(db, bsi.SPONSORS, rows)
+    check("first write stores every sponsor", first, (5, 0))
+    again = bsi.write_diff(db, bsi.SPONSORS, bsi.plan(bsi.read(db, TODAY), TODAY))
     check("an unchanged rebuild writes nothing", again, (0, 0))
+    for ddl in bsi.JOB_DDL:
+        db.execute(ddl)
+    want = bsi.plan_jobs(bsi.read_jobs(db, data["sponsors"]), data["sponsors"])
+    check("job rows written once", bsi.write_diff(db, bsi.JOBS, want)[0], len(want))
+    check("and not again", bsi.write_diff(db, bsi.JOBS, want), (0, 0))
+    check("a row that went is deleted", bsi.write_diff(db, bsi.JOBS, want[1:]), (0, 1))
     print(f"{len(FAILED)} failure(s)")
     return 1 if FAILED else 0
 

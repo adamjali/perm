@@ -217,7 +217,17 @@ export async function pendingLeaders(limit = 12): Promise<PendingLeader[]> {
 // What an entity's filings are made of
 // ---------------------------------------------------------------------------
 
-export type FacetKind = "occupation" | "state" | "attorney" | "employer" | "city" | "industry";
+export type FacetKind =
+  | "occupation"
+  | "state"
+  | "attorney"
+  | "employer"
+  | "city"
+  | "industry"
+  // Where and when it recruited (Form 9089 Section H; build_entity_detail.py).
+  | "newspaper"
+  | "recruit_step"
+  | "recruit_lead";
 
 export interface FacetRow {
   /** The facet entity's SLUG, or the two-letter code for a state. */
@@ -247,8 +257,9 @@ export type EntityFacets = Partial<Record<FacetKind, FacetRow[]>>;
  * is to print the code that tells them apart.
  *
  * `e.kind = f.facet` works because the three entity facets are named exactly
- * after the entity kinds. The state, city and industry facets match nothing
- * and come back null, which is correct: none of them is an entity here.
+ * after the entity kinds. Every other facet (state, city, industry and the
+ * recruitment ones) matches nothing and comes back null, which is correct:
+ * none of them is an entity here.
  */
 export async function entityFacets(kind: EntityKind, slug: string): Promise<EntityFacets> {
   const found = await rows<{

@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 
-import {
-  indexReady,
-  SUGGEST_KINDS,
-  SUGGEST_MAX_LENGTH,
-  SUGGEST_MIN_LENGTH,
-  suggestNames,
-  type NameSuggestion,
-  type SuggestKind,
-} from "@/lib/db/nameSuggest";
+import { indexReady, SUGGEST_KINDS, suggestNames } from "@/lib/db/nameSuggest";
+import type { NameSuggestion, SuggestKind } from "@/lib/search/suggestTypes";
+import { SEARCH_TEXT_MIN, SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 
 /**
  * GET /api/suggest?kind=employer|attorney|occupation|all&q=...
@@ -35,9 +29,9 @@ export async function GET(request: Request) {
   if (kind !== "all" && !SUGGEST_KINDS.includes(kind as SuggestKind)) {
     return NextResponse.json({ error: "kind must be employer, attorney, occupation or all" }, { status: 400 });
   }
-  if (q.length < SUGGEST_MIN_LENGTH || q.length > SUGGEST_MAX_LENGTH) {
+  if (q.length < SEARCH_TEXT_MIN || q.length > SUGGEST_MAX_LENGTH) {
     return NextResponse.json(
-      { error: `q must be ${SUGGEST_MIN_LENGTH} to ${SUGGEST_MAX_LENGTH} characters` },
+      { error: `q must be ${SEARCH_TEXT_MIN} to ${SUGGEST_MAX_LENGTH} characters` },
       { status: 400 },
     );
   }

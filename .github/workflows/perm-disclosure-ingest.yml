@@ -139,6 +139,9 @@ jobs:
           python3 scripts/reconcile_entity_aliases.py
           # 3. Derived from the freshly loaded perm_cases.
           python3 scripts/build_entity_detail.py
+          # Where and when employers recruit (Form 9089 Section H): the national
+          # and per-state figures /perm-recruitment and the filing-window guides read.
+          python3 scripts/build_recruitment.py
           # FY2024 onward of each employer's year-by-year record (FY2008 to
           # FY2023 were loaded once by perm-history-ingest.yml).
           python3 scripts/ingest_perm_history.py --current

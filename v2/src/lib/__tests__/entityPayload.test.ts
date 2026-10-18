@@ -7,7 +7,7 @@ import {
   unpackRow,
   type EntityRow,
 } from "../entityPayload";
-import { socGroup } from "../socGroups";
+import { socMajorGroup } from "../socGroups";
 import { stateName } from "../usStateNames";
 
 const FULL: EntityRow = {
@@ -88,17 +88,17 @@ describe("entityPayload", () => {
   });
 });
 
-describe("socGroup", () => {
+describe("socMajorGroup", () => {
   it("reads the major group out of the code", () => {
-    expect(socGroup("15-1252.00")).toBe("Computer and mathematical");
-    expect(socGroup("29-1141.00")).toBe("Healthcare practitioners");
-    expect(socGroup("51-3022.00")).toBe("Production");
+    expect(socMajorGroup("15-1252.00")).toBe("Computer and mathematical");
+    expect(socMajorGroup("29-1141.00")).toBe("Healthcare practitioners");
+    expect(socMajorGroup("51-3022.00")).toBe("Production");
   });
 
   it("returns null rather than a wrong bucket for what it cannot read", () => {
-    expect(socGroup(null)).toBeNull();
-    expect(socGroup("")).toBeNull();
-    expect(socGroup("99-9999.00")).toBeNull();
+    expect(socMajorGroup(null)).toBeNull();
+    expect(socMajorGroup("")).toBeNull();
+    expect(socMajorGroup("99-9999.00")).toBeNull();
   });
 });
 

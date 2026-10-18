@@ -85,16 +85,23 @@ function wordScore(q: string, c: string): number {
   return best;
 }
 
+/** A query that is a whole word of the name, and one that only opens a word. */
+const WHOLE_WORD = 0.95;
+const WORD_START = 0.85;
+
 function scoreNormalized(nq: string, nc: string): number {
   if (!nq || !nc) return 0;
   if (nc === nq) return 1;
 
-  // Contained at the start of a word: the strongest partial match.
+  // Contained at the start of a word: the strongest partial match. A whole word
+  // (its plural included: "nurse" is "Nurses", not "Nursery") is a clearly
+  // better match than the same letters opening a longer word, by more than the
+  // filing-count weight can make up, so "nurse" finds a nursing job and not a
+  // busier farm job "in a nursery".
   const at = nc.startsWith(nq) ? 0 : nc.indexOf(` ${nq}`) >= 0 ? nc.indexOf(` ${nq}`) + 1 : -1;
   if (at >= 0) {
-    const end = at + nq.length;
-    const wholeWord = end === nc.length || nc[end] === " ";
-    return 0.9 + (wholeWord ? 0.05 : 0) + 0.05 * (nq.length / nc.length);
+    const wholeWord = /^(?:e?s)?(?: |$)/.test(nc.slice(at + nq.length));
+    return (wholeWord ? WHOLE_WORD : WORD_START) + 0.05 * (nq.length / nc.length);
   }
 
   // Word by word.

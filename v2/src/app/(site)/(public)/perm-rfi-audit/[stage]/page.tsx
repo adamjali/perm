@@ -70,6 +70,7 @@ import {
 import { getFreshness } from "@/lib/db/publicData";
 import { formatInt } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /** Same window as the audit page this is a leaf of: the mirror moves daily. */
 export const revalidate = 86400;
@@ -376,7 +377,7 @@ export default async function StagePage({
                 </a>{" "}
                 or{" "}
                 <Link
-                  href={`/case-search?stage=${encodeURIComponent(stage)}`}
+                  href={caseSearchHref({ stage })}
                   className="link"
                 >
                   open this stage in case search

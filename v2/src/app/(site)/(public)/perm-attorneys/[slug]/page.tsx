@@ -18,7 +18,7 @@
 import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import Link from "next/link";
-import { hasOwnPage } from "@/lib/entityPayload";
+import { hasOwnPage, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
@@ -27,7 +27,6 @@ import { US_STATE_NAMES } from "@/lib/usStateNames";
 import {
   DisclosureNote,
   LimitsPanel,
-  MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
   ReliabilityBand,
@@ -67,7 +66,7 @@ import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { debarmentsForSlug, phase } from "@/lib/db/debarments";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
-import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { OccupationMix, PartyMix, RecruitmentMix, StateMix } from "@/components/entities/FilingMakeup";
 import {
   absorbedCount,
   entityFacets,
@@ -76,6 +75,7 @@ import {
   sizeBand,
 } from "@/lib/db/entityDetail";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -203,7 +203,7 @@ export async function generateMetadata({
   // firm's median offered wage measures its clients' job mix, not the firm.
   const head = `${row.name}: ${formatInt(row.total)} PERM case${row.total === 1 ? "" : "s"}${ratePart}, ranked ${formatInt(row.rank)} by volume`;
   // Who it files for, the jobs and the places come from the nightly facets,
-  // which start at 3 filings (PAGE_FLOOR in scripts/build_entity_detail.py).
+  // which start at 3 filings (FACET_FLOOR in scripts/build_entity_detail.py).
   const sees = [
     ...(row.total >= 3 ? ["who it files for", "the jobs", "where the work is"] : []),
     "how its cases ended",
@@ -325,7 +325,7 @@ export default async function AttorneyPage({
   if (programs?.pwd) tags.push({ text: `${formatInt(programs.pwd.filings)} wage requests`, href: "#programs", tone: "ink" });
   if (firmProfile) tags.push({ text: "In the firm's own words", href: "#firm", tone: "ink" });
 
-  const hasPractice = Boolean(facets.employer || facets.occupation || facets.state);
+  const hasPractice = Boolean(facets.employer || facets.occupation || facets.state || facets.newspaper || facets.recruit_lead);
   const hasPrograms = Boolean(programs && (programs.lca || programs.pwd || programs.seasonal));
   const chapters: ChapterItem[] = [
     ...(hasPractice ? [{ id: "practice", label: "The practice" }] : []),
@@ -351,7 +351,7 @@ export default async function AttorneyPage({
         aside={
           <CaseNextStep
             question={`Is ${row.name} handling your case?`}
-            searchHref={`/case-search?firm=${encodeURIComponent(row.name)}`}
+            searchHref={caseSearchHref({ firm: row.slug })}
             searchLabel="Find it among this firm's filings"
             source="firm-page"
           />
@@ -403,7 +403,13 @@ export default async function AttorneyPage({
             ) : null}
             {facets.occupation ? <OccupationMix rows={facets.occupation} total={row.total} /> : null}
             {facets.state ? <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" /> : null}
-          </div>
+          </div>{" "}
+          <RecruitmentMix
+            papers={facets.newspaper}
+            steps={facets.recruit_step}
+            lead={facets.recruit_lead}
+            className="mt-4"
+          />
         </Chapter>
       ) : null}
 

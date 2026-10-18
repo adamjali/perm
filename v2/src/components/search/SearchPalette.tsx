@@ -35,6 +35,8 @@ import { KIND_NOUN } from "@/lib/search/suggestTypes";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import type { EntityPayload } from "@/lib/entityPayload";
 import { trackPaletteSelected } from "@/lib/funnelEvents";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 export interface SearchArticle {
   title: string;
@@ -200,7 +202,7 @@ export function SearchPalette({
       const results = await Promise.all(
         ENTITY_KINDS.map(async ({ kind, base, label, plural }) => {
           try {
-            const needle = q.slice(0, 120);
+            const needle = q.slice(0, SEARCH_TEXT_MAX);
             const res = await fetch(
               `/api/perm-entities/${kind}?q=${encodeURIComponent(needle)}&limit=${PALETTE_PER_KIND}`,
             );
@@ -486,7 +488,7 @@ export function SearchPalette({
               value={`all programs ${query.trim()}`}
               onSelect={() =>
                 go(
-                  `/case-search?q=${encodeURIComponent(query.trim().slice(0, 120))}`,
+                  caseSearchHref({ q: query }),
                   `every filing by "${query.trim()}"`,
                 )
               }

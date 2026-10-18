@@ -10,6 +10,7 @@ import {
   wageYearLabel,
 } from "@/lib/db/reference";
 
+import { socGroup } from "@/lib/socCode";
 import { PayBands, type PayBand } from "./PayBands";
 
 /**
@@ -71,8 +72,8 @@ export async function CityReference({
   const levelBy = new Map(levels.map((l) => [l.soc, l]));
   const bands: PayBand[] = top
     .map((j): PayBand | null => {
-      const p = payBy.get(j.code.slice(0, 7));
-      const l = levelBy.get(j.code.slice(0, 7));
+      const p = payBy.get(socGroup(j.code) ?? "");
+      const l = levelBy.get(socGroup(j.code) ?? "");
       if (!p && !l) return null;
       return {
         key: j.code,

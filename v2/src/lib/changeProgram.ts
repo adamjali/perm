@@ -31,6 +31,14 @@ export function isChangeProgram(v: string): v is ChangeProgram {
   return (CHANGE_PROGRAMS as readonly string[]).includes(v);
 }
 
+/**
+ * A wage request means a PERM one on every page that lists them. DOL's PW file
+ * and its live record also hold H-1B, H-1B1, E-3, H-2B and CW-1 requests; each
+ * of those is read where its own program is, and a reader looking at an
+ * employer's wage requests is asking about its green card filings.
+ */
+export const PWD_VISA_CLASS = "PERM";
+
 export const PROGRAM_LABEL: Record<ChangeProgram, string> = {
   perm: "PERM",
   pwd: "Prevailing wage",

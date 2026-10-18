@@ -6,4 +6,6 @@
  * row is as it was. Measured Oct 15 2026: the links were 20px tall at 390 wide.
  */
 export const CASE_ROW = "flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-0 text-base sm:py-2";
-export const CASE_ROW_LINK = "link inline-flex min-h-11 items-center font-mono text-sm sm:min-h-0";
+/** A link that is a table row's tap target: 44px tall on a phone, its own height from `sm`. */
+export const ROW_LINK = "link inline-flex min-h-11 items-center sm:min-h-0";
+export const CASE_ROW_LINK = `${ROW_LINK} font-mono text-sm`;

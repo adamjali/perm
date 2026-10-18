@@ -15,7 +15,8 @@ import {
   type WagePercentiles,
 } from "@/lib/wageStats";
 import { cn } from "@/lib/utils";
-import { MAX_CITY, WAGE_SECTORS } from "@/lib/wagePlaceFilters";
+import { MAX_CITY } from "@/lib/wagePlaceFilters";
+import { SECTOR_GROUPS, sectorGroup } from "@/lib/naicsSectors";
 import { formatDollars, formatInt } from "@/lib/format";
 import { ScrollBox } from "@/components/ui/scroll-box";
 
@@ -222,7 +223,7 @@ export function SalaryExplorer({
     const occ = occupations.find((o) => o.value === soc)?.label;
     const parts = [occ ?? "All occupations", state || "every state", fy ? `FY${fy}` : "all years"];
     if (city) parts.splice(2, 0, city);
-    const sectorLabel = WAGE_SECTORS.find((x) => x.value === sector)?.label;
+    const sectorLabel = sectorGroup(sector)?.label;
     if (sectorLabel) parts.push(sectorLabel);
     return parts.join(" · ");
   }, [occupations, soc, state, fy, city, sector]);
@@ -350,13 +351,13 @@ export function SalaryExplorer({
                   <option value="">
                     {!state && !soc ? "Choose a state or an occupation first " : "Every industry "}
                   </option>
-                  {WAGE_SECTORS.map((x) => (
+                  {SECTOR_GROUPS.map((x) => (
                     <option key={x.value} value={x.value}>
                       {`${x.label} `}
                     </option>
                   ))}
                 </select>{" "}
-                <SelectedInFull label={WAGE_SECTORS.find((x) => x.value === sector)?.label} />
+                <SelectedInFull label={sectorGroup(sector)?.label} />
               </div>
             </>
           ) : null}

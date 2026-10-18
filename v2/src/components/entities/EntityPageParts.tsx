@@ -16,10 +16,10 @@ import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
 import {
-  MIN_DECIDED_FOR_MEDIAN,
   rateReliability,
   type RateReliability,
 } from "@/components/tools/EntityContext";
+import { MIN_DECIDED_FOR_MEDIAN } from "@/lib/entityPayload";
 
 
 // ============================================================================

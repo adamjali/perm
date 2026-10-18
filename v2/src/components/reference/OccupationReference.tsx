@@ -14,12 +14,12 @@ import {
   occupationSlugs,
   onetForSoc,
   projectionFor,
-  soc7,
   wageLevelHistory,
   wageYearLabel,
   type MarketPay,
 } from "@/lib/db/reference";
 
+import { socGroup } from "@/lib/socCode";
 import { PayBands, type PayBand } from "./PayBands";
 
 /**
@@ -76,7 +76,7 @@ export async function OccupationReference({
   permMedian: number | null;
   cities: FacetRow[];
 }) {
-  const soc = soc7(code);
+  const soc = socGroup(code);
   if (!soc) return null;
   const [onet, national, projection, basis, areas] = await Promise.all([
     onetForSoc(soc),
@@ -309,7 +309,7 @@ export async function OccupationReference({
             <p className="mt-4 max-w-3xl text-base">
               <span className="font-bold">Related jobs: </span>
               {main.related.map((r, i) => {
-                const slug = related.get(r.code.slice(0, 7));
+                const slug = related.get(socGroup(r.code) ?? "");
                 return (
                   <span key={r.code}>
                     {slug ? (

@@ -51,3 +51,30 @@ def naics_title(code: str | None) -> tuple[str, str] | None:
         if hit:
             return code[:n], hit[0]
     return None
+
+
+def sector_of(code: str | None) -> tuple[str, str] | None:
+    """(the sector's first two-digit code, its title) for any NAICS code, or None.
+
+    Census gives some sectors several two-digit codes and one title
+    (Manufacturing is 31, 32 and 33), so a sector is named by its first code,
+    the same grouping as SECTOR_GROUPS in src/lib/naicsSectors.ts.
+    """
+    if not code or len(code) < 2:
+        return None
+    return _sectors().get(code[:2])
+
+
+_SECTORS: dict[str, tuple[str, str]] | None = None
+
+
+def _sectors() -> dict[str, tuple[str, str]]:
+    """Each two-digit code -> (its sector's first code, title), built once."""
+    global _SECTORS
+    if _SECTORS is None:
+        first_by_title: dict[str, str] = {}
+        twos = sorted(k for k in _table() if len(k) == 2)
+        for k in twos:
+            first_by_title.setdefault(_table()[k][0], k)
+        _SECTORS = {k: (first_by_title[_table()[k][0]], _table()[k][0]) for k in twos}
+    return _SECTORS

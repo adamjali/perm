@@ -7,6 +7,7 @@ import type { WageOption } from "@/lib/db/publicData";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOffer as Placed } from "@/lib/wageStats";
 import { formatDollars } from "@/lib/format";
+import { HOURS_PER_YEAR } from "@/lib/wageFormat";
 import { buttonVariants } from "@/components/ui/button";
 
 /**
@@ -105,7 +106,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
   const annual = useMemo(() => {
     const v = Number(offer.replace(/[^0-9.]/g, ""));
     if (!(v > 0)) return null;
-    return unit === "hour" ? v * 2080 : v;
+    return unit === "hour" ? v * HOURS_PER_YEAR : v;
   }, [offer, unit]);
 
   const occupationLabel = occupations.find((o) => o.value === soc)?.label ?? "this occupation";

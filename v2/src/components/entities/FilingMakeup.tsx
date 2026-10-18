@@ -4,12 +4,14 @@ import Link from "next/link";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { FinePrint } from "@/components/data/FinePrint";
-import { MIN_DECIDED_FOR_RATE } from "@/components/tools/EntityContext";
+import { shownApprovalRate } from "@/lib/entityPayload";
+import { BarRows } from "@/components/data/BarRows";
+import { LEAD_BANDS } from "@/lib/recruitmentRecord";
 import { PlateLabel } from "@/components/tools/FigurePlate";
 import type { FacetRow } from "@/lib/db/entityDetail";
 import { stateName } from "@/lib/usStateNames";
 import { cn } from "@/lib/utils";
-import { formatInt } from "@/lib/format";
+import { formatApprovalRate, formatInt, formatShare } from "@/lib/format";
 
 /**
  * What an entity's filings are actually MADE OF.
@@ -43,11 +45,10 @@ import { formatInt } from "@/lib/format";
  * so the count is always printed and the rate only sometimes.
  */
 
-/** The approval rate, or null when the decided count cannot carry one. */
-function ratePct(row: FacetRow): number | null {
-  const decided = row.certified + row.denied;
-  if (decided < MIN_DECIDED_FOR_RATE) return null;
-  return (row.certified / decided) * 100;
+/** " · 98.4% approved" for a row whose decided cases carry a rate, else nothing. */
+function approvedNote(row: FacetRow): string {
+  const rate = shownApprovalRate(row);
+  return rate === null ? "" : ` · ${formatApprovalRate(rate)} approved`;
 }
 
 function Shell({
@@ -98,7 +99,7 @@ export function OccupationMix({
   if (!lead) return null;
   const rest = rows.slice(1);
   const leadShare = total > 0 ? (lead.n / total) * 100 : 0;
-  const leadRate = ratePct(lead);
+
   const shown = rows.reduce((a, r) => a + r.n, 0);
 
   return (
@@ -132,7 +133,7 @@ export function OccupationMix({
         {lead.code ? <>SOC {lead.code} &middot; </> : null}
         {formatInt(lead.n)} filings
         {leadShare >= 1 ? `, ${leadShare.toFixed(0)}% of everything they file` : null}
-        {leadRate != null ? ` · ${leadRate.toFixed(1)}% approved` : null}
+        {approvedNote(lead)}
       </p>
 
       {rest.length > 0 ? (
@@ -265,7 +266,6 @@ export function PartyMix({
     >
       <ol className="space-y-3">
         {rows.map((r, i) => {
-          const rate = ratePct(r);
           return (
             <Fragment key={r.key ?? r.label}>{" "}
               <li
@@ -285,7 +285,7 @@ export function PartyMix({
                   )}{" "}
                   <span className="mt-0.5 block font-mono text-sm tabular-nums text-muted-foreground">
                     {formatInt(r.n)} filings
-                    {rate != null ? ` · ${rate.toFixed(1)}% approved` : null}
+                    {approvedNote(r)}
                   </span>
                 </span>
               </li>
@@ -332,10 +332,7 @@ export function CityMix({
           <Fragment key={r.key ?? r.label}>
             {" "}
             <li
-              data-tip={(() => {
-                const rate = ratePct(r);
-                return `${r.label}\n${formatInt(r.n)} of ${formatInt(total)} filings${rate != null ? `\n${rate.toFixed(1)}% approved` : ""}`;
-              })()}
+              data-tip={`${r.label}\n${formatInt(r.n)} of ${formatInt(total)} filings${approvedNote(r).replace(" · ", "\n")}`}
             >
               <span className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
@@ -423,5 +420,76 @@ export function IndustryMix({
         </ul>
       ) : null}
     </Shell>
+  );
+}
+
+/**
+ * Where and when it recruited before filing, from DOL's own Form 9089 Section H
+ * (new-form cases, filed from June 2023): the newspapers that carried its
+ * Sunday ads, the additional steps a professional job needs, and how long
+ * before filing the first step ran. One count per case, and the panels only
+ * show the most common rows (`TOP_N` in scripts/build_entity_detail.py).
+ */
+export function RecruitmentMix({
+  papers = [],
+  steps = [],
+  lead = [],
+  className,
+}: {
+  papers?: FacetRow[];
+  steps?: FacetRow[];
+  lead?: FacetRow[];
+  className?: string;
+}) {
+  if (!papers.length && !steps.length && !lead.length) return null;
+  // Every case with a first step and a filing date falls in exactly one band.
+  const recorded = lead.reduce((a, r) => a + r.n, 0);
+  const byBand = new Map(lead.map((r) => [r.key, r.n]));
+  return (
+    <div className={cn("grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-3", className)}>
+      {papers.length ? (
+        <Shell
+          title="Newspapers it advertised in"
+          note="The newspaper or professional journal named for each case's two print ads, one count per paper per case, however the filer spelled it."
+        >
+          <BarRows
+            label="Cases by newspaper"
+            rows={papers.map((r) => ({ key: r.key ?? r.label, label: r.label, value: r.n, text: `${formatInt(r.n)} cases` }))}
+          />
+        </Shell>
+      ) : null}{" "}
+      {steps.length ? (
+        <Shell
+          title="Additional steps it used"
+          note={`The steps a professional job needs beyond the job order and the ads, by share of the ${formatInt(recorded)} cases whose record shows when recruiting began.`}
+        >
+          <BarRows
+            label="Additional recruitment steps"
+            rows={steps.map((r) => ({
+              key: r.key ?? r.label,
+              label: r.label,
+              value: r.n,
+              text: recorded > 0 ? formatShare(r.n / recorded) : formatInt(r.n),
+            }))}
+          />
+        </Shell>
+      ) : null}{" "}
+      {recorded > 0 ? (
+        <Shell
+          title="How long before filing it began"
+          note="Days from the first recruitment step to the filing. 20 C.F.R. § 656.17(e) puts the job order and ads 30 to 180 days before filing."
+        >
+          <BarRows
+            label="Cases by days from first step to filing"
+            rows={LEAD_BANDS.map((b) => ({
+              key: b.id,
+              label: b.label,
+              value: byBand.get(b.id) ?? 0,
+              text: formatShare((byBand.get(b.id) ?? 0) / recorded),
+            }))}
+          />
+        </Shell>
+      ) : null}
+    </div>
   );
 }

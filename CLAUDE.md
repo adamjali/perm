@@ -870,3 +870,26 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   for people waiting on their own case stay plain. `attorney-citations.test.ts` holds the rule; quoted regulation text is exempt.
 - **A sample document is a ```document fence**: it wraps to its box (it had filled the left half), and each section cite
   stays on one line (`citationRuns`).
+
+## Oct 18 2026: search by job, and one source for each search rule
+
+Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unification-2026-10-18.md).
+
+- **Find a sponsor searches by job** (`sponsor_jobs`, keyed soc, state, slug, where "" means every job or every state),
+  built by `scripts/build_sponsor_index.py` with the employer page's own figures and floors (`MIN_DECIDED_FOR_RATE` 30,
+  `MIN_DECIDED_FOR_MEDIAN` 10, in `src/lib/entityPayload.ts`). A search lands on `#answer`; a Schedule A job
+  (`isScheduleA`, `src/lib/socCode.ts`) says why DOL's files hold few of its cases. Phones get a card per sponsor.
+- **One SOC rule** (`socGroup`, `SOC_GROUP_SQL`, `socGroupClause`): an employer or state search filtered by job had bound
+  `15-1252.00` against the seven-character group and matched nothing.
+- **One pay-period table** (`scripts/data/pay_periods.json`) builds the yearly-wage SQL in TypeScript and Python, held to
+  `scripts/fixtures/annual_wage_sql.txt`; every wage filter and sort compares `comparableWage`, never DOL's raw amount.
+- **One name resolver** (`nameCandidates`, `occupationChoices`) for the case search and the finder, alternatives by slug;
+  a whole word, plural included, beats letters opening a longer word ("nurse" had meant a farm job in a nursery).
+- **/case-search keeps its whole form in the address**, and every link into it goes through `caseSearchHref`.
+- **Sectors** (`SECTOR_GROUPS`), **search text limits** (`src/lib/search/limits.ts`) and **`PWD_VISA_CLASS`** are one
+  constant each.
+- **DOL's recruitment record** (Form 9089 Section H, new form only) loads as unindexed `perm_cases` columns
+  (`scripts/lib_recruitment.py`, `scripts/data/recruitment_steps.json`); employer, law firm and occupation pages show the
+  newspapers, additional steps and lead time (`RecruitmentMix`), and `build_recruitment.py` writes
+  `perm_docs['recruitment_summary']` after each disclosure load.
+- **The sponsor guide states the no-fee rule** (20 CFR 656.12(b)) and USCIS's scam warning; there is no job board.

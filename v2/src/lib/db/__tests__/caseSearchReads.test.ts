@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Lead } from "@/lib/caseSearchPlan";
+import { ANNUAL_WAGE_SQL } from "@/lib/wageFormat";
 
 /**
  * The SQL the unified search emits, asserted statement by statement.
@@ -49,7 +50,6 @@ const {
   readPermStage,
   readFlagEmployerStage,
   readFlagStage,
-  socGroup,
   wageSourceCondition,
 } = await import("../caseSearchReads");
 
@@ -234,6 +234,11 @@ describe("readPermPublished, employer lead", () => {
     // The fiscal year is TEXT on this table and INTEGER on the flag files.
     // Binding the wrong storage class matches nothing and errors nowhere.
     expect(secondPass().args).toContain("2025");
+    // The occupation binds its GROUP, never the code as printed: binding
+    // `15-1252.00` against a seven-character group matched nothing, so a job
+    // filter on an employer or state search came back empty (until Oct 18 2026).
+    expect(secondPass().args).toContain("15-1252");
+    expect(secondPass().args).not.toContain("15-1252.00");
     // With filters the first pass widens to the slice cap rather than the
     // answer's own limit, so the filter has a window to work in.
     expect(firstPass().args.at(-1)).toBe(SLICE_CAP);
@@ -431,29 +436,6 @@ describe("readFlagLive", () => {
   });
 });
 
-describe("socGroup", () => {
-  // THE THREE PROGRAMS SPELL THE OCCUPATION DIFFERENTLY and an exact equality
-  // across them matches nothing: `pwd_cases` holds ZERO dotted codes out of
-  // 634,638, `lca_cases` holds 434,314 of them, and the leads resolved from
-  // `perm_entities` arrive in both forms. None of that shows in a result set -
-  // it shows as a program contributing no rows, which looks exactly like a
-  // program with no rows to contribute.
-  it.each([
-    ["15-1252.00", "15-1252"],
-    ["15-1299.09", "15-1299"],
-    ["49-3051", "49-3051"],
-    ["  15-1252.00  ", "15-1252"],
-  ])("folds %s to its 6-digit group", (code, group) => {
-    expect(socGroup(code)).toBe(group);
-  });
-
-  it("returns null for anything that is not a SOC code, rather than binding it", () => {
-    for (const junk of ["", "software", "15", "15-125", "'; DROP TABLE"]) {
-      expect(socGroup(junk)).toBeNull();
-    }
-  });
-});
-
 describe("flagLeadIndex", () => {
   // The pairing of lead to index IS the feature, and reading it back out of
   // the SQL would pass over two index names being swapped.
@@ -575,7 +557,8 @@ describe("readFlagPublished, employer lead", () => {
     // and kept a yearly salary filed as "$100,000 per month".
     await readFlagPublished("lca", employer, { wageMin: 100000, wageMax: 300000 }, 100);
     const sql = secondPass().sql;
-    expect(sql).toContain("WHEN wage_unit IN ('HOUR', 'HOURLY') THEN wage * 2080");
+    // The one yearly expression every wage filter shares, built from the pay-period table.
+    expect(sql).toContain(`(${ANNUAL_WAGE_SQL}) >= ?`);
     expect(sql).toMatch(/END\) >= \?/);
     expect(sql).toMatch(/END\) <= \?/);
     expect(sql).not.toMatch(/ AND wage >= \? /);

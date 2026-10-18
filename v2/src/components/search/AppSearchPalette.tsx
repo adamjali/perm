@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fuzzyScore } from "@/lib/fuzzy";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { formatProgressStatus } from "@convex/lib/notificationHelpers";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /** Cases shown in the box; the cases page holds every match. */
 const CASES_SHOWN = 8;
@@ -136,7 +137,7 @@ export function AppSearchPalette({ open, onOpenChange }: { open: boolean; onOpen
                 ) : (
                   <Command.Item
                     value="every-filing"
-                    onSelect={() => go(`/case-search?q=${encodeURIComponent(q)}`)}
+                    onSelect={() => go(caseSearchHref({ q }))}
                     className={ROW}
                   >
                     Every public filing for &ldquo;{q}&rdquo;

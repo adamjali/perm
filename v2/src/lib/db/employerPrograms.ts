@@ -5,7 +5,8 @@ import { cache } from "react";
 import { medianOffset, type ProgramLine } from "../employerPrograms";
 import { one } from "./client";
 import { employerMatch, type EmployerMatch } from "./employerSlugs";
-import { ANNUAL_WAGE_SQL, FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
+import { ANNUAL_WAGE_SQL, YEARLY_BAND } from "@/lib/wageFormat";
+import { PWD_VISA_CLASS } from "@/lib/changeProgram";
 
 /**
  * One employer's wage-request and LCA record, as counts and a median.
@@ -18,10 +19,7 @@ import { ANNUAL_WAGE_SQL, FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
  * not read here; the employer page already holds it from `perm_entities`.
  */
 
-/** The wage-request file spells its units more ways than the LCA file does. */
-const PWD_ANNUAL_WAGE_SQL = FLAG_ANNUAL_WAGE_SQL;
-const MIN_ANNUAL = 10_000;
-const MAX_ANNUAL = 1_500_000;
+const [MIN_ANNUAL, MAX_ANNUAL] = YEARLY_BAND.flag;
 
 interface Tables {
   published: string;
@@ -31,9 +29,9 @@ interface Tables {
 }
 
 const TABLES: Record<"perm" | "pwd" | "lca", Tables> = {
-  // The PERM file's wage is already annual (DOL normalises it at publication), so the expression is the column.
+  // perm_cases stores the wage yearly already (ingest_perm_disclosure.py converts it), so the expression is the column.
   perm: { published: "perm_cases", live: "", annual: "wage", visaType: null },
-  pwd: { published: "pwd_cases", live: "pwd_case_status", annual: PWD_ANNUAL_WAGE_SQL, visaType: "PERM" },
+  pwd: { published: "pwd_cases", live: "pwd_case_status", annual: ANNUAL_WAGE_SQL, visaType: PWD_VISA_CLASS },
   lca: { published: "lca_cases", live: "lca_case_status", annual: ANNUAL_WAGE_SQL, visaType: null },
 };
 

@@ -14,7 +14,7 @@ const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 vi.mock("../client", () => ({ rows, one }));
 
-const { LIVE_SEARCH_MAX, narrowingClauses, searchCases, searchLiveCases } = await import("../cases");
+const { LIVE_SEARCH_MAX, narrowingClauses, planCaseSql, searchCases, searchLiveCases } = await import("../cases");
 
 beforeEach(() => {
   rows.mockReset();
@@ -102,5 +102,19 @@ describe("searchCases (published half)", () => {
     expect(rows.mock.calls[0]![0]).toMatch(/FROM perm_cases INDEXED BY idx_pc_emp_dec WHERE/);
     await searchCases({ field: "attorney", text: "fragomen", status: "certified" });
     expect(rows.mock.calls[1]![0]).toMatch(/FROM perm_cases INDEXED BY idx_pc_att_dec WHERE/);
+  });
+});
+
+describe("planCaseSql, the occupation slice", () => {
+  it("reads one job in both spellings DOL prints, on the group's index", () => {
+    const dotted = planCaseSql({ slice: { kind: "occupation", socCode: "15-1252.00" } });
+    const bare = planCaseSql({ slice: { kind: "occupation", socCode: "15-1252" } });
+    expect(dotted.index).toBe("idx_pc_socg_dec");
+    expect(dotted.where).toContain("substr(soc_code, 1, 7) = ?");
+    expect(dotted.args).toEqual(["15-1252"]);
+    expect(bare.args).toEqual(dotted.args);
+    expect(planCaseSql({ slice: { kind: "occupation", socCode: "15-1252" }, status: "certified" }).index).toBe(
+      "idx_pc_socg_st_dec",
+    );
   });
 });

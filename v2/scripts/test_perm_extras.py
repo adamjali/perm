@@ -137,6 +137,62 @@ def facets_check() -> None:
     check("junk NAICS is dropped, not stored",
           not any(k[1] == "industry" and k[2] == "junk" for k in got))
 
+    # Recruitment: one paper under two spellings is one facet, labelled by the
+    # spelling filers used most; each step and the lead time are counted per case.
+    recr = {"employer_name": "ACME INC", "status": "certified", "state": "WA", "soc_code": "15-1252.00",
+            "soc_title": "Software Developers", "received_date": "2025-04-20", "job_order_start": "2025-01-05",
+            "ad1": "2025-01-05", "ad2": "2025-01-12",
+            "recr_steps": json.dumps({"job_search_website": ["2025-01-06", "2025-02-06"]})}
+    rows2 = ([dict(recr, paper1="The Seattle Times", paper2="The Seattle Times")] * 2
+             + [dict(recr, paper1="SEATTLE TIMES", paper2=None)])
+    cache2 = pathlib.Path(tempfile.mkdtemp()) / "cases.ndjson"
+    cache2.write_text("".join(json.dumps(r) + "\n" for r in rows2))
+    got2 = {(r[0], r[2], r[4]): (r[5], r[6]) for r in build_facets(None, maps, str(cache2))}
+    check("one paper, both spellings, the commoner label",
+          got2.get(("employer", "newspaper", "seattle times")) == ("The Seattle Times", 3))
+    check("each additional step, counted per case",
+          got2.get(("employer", "recruit_step", "job_search_website")) == ("Job search websites", 3))
+    check("how long before filing it began (105 days)",
+          got2.get(("employer", "recruit_lead", "90-119")) == ("90 to 119 days", 3))
+    check("occupations get them too",
+          ("occupation", "newspaper", "seattle times") in got2)
+
+
+def recruitment_check(db, incoming: list[dict]) -> None:
+    """DOL's Section H record: parsed from the file's own columns, then loaded
+    into perm_cases by a narrow UPDATE when it's all that changed."""
+    from ingest_perm_disclosure import to_iso
+    from lib_recruitment import paper_key, recruitment_fields
+
+    parsed = recruitment_fields({
+        "recr_supervised": "N", "job_order_start": "2025-01-05", "job_order_end": "2025-02-04",
+        "sunday_edition": "Y", "ad_type": "Newspaper of General Circulation",
+        "paper1": "The  Seattle Times", "ad1": "2025-01-05", "paper2": "The Seattle Times", "ad2": "2025-01-12",
+        "step_job_search_website_from": "2025-01-06", "step_job_search_website_to": "2025-02-06",
+        "step_employer_website_from": "1/6/2025", "notice_posted": "Y", "notice_electronic": "N",
+        "notice_not_posted": "N",
+    }, to_iso)
+    check("the ad, its paper and dates", (parsed["paper1"], parsed["ad1"], parsed["ad2"])
+          == ("The Seattle Times", "2025-01-05", "2025-01-12"))
+    check("each additional step's dates, any date format DOL prints", json.loads(parsed["recrSteps"]) == {
+        "employer_website": ["2025-01-06", None], "job_search_website": ["2025-01-06", "2025-02-06"]})
+    check("the notice methods marked Y, and only those", parsed["notice"] == "posted")
+    check("an old-form row has no record", recruitment_fields({}, to_iso)["recrSteps"] is None
+          and recruitment_fields({}, to_iso)["paper1"] is None)
+    check("one key per paper, whatever the spelling",
+          paper_key("THE SEATTLE TIMES") == paper_key("Seattle Times") == "seattle times"
+          and paper_key("The Mercury News (Bay Area News Group)") == "mercury news")
+
+    db.sql = []
+    with_recruitment = [dict(c, **parsed) if c["caseNumber"] == incoming[0]["caseNumber"] else c for c in incoming]
+    load(db, with_recruitment)
+    got = db.conn.execute("SELECT paper1, ad1, recr_steps, notice FROM perm_cases WHERE case_number = ?",
+                          [incoming[0]["caseNumber"]]).fetchone()
+    check("the record lands in perm_cases", got[0] == "The Seattle Times" and got[1] == "2025-01-05"
+          and got[3] == "posted")
+    check(f"by one narrow UPDATE, no row rewritten (saw {db.sql})",
+          db.sql.count("UPDATE") == 1 and db.sql.count("INSERT") == 0)
+
 
 def main() -> int:
     db = Recording()
@@ -178,6 +234,7 @@ def main() -> int:
     check("a code 2022 retired keeps its 2017 title", naics_title("511210")[1] == "Software Publishers")
 
     facets_check()
+    recruitment_check(db, incoming)
 
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0

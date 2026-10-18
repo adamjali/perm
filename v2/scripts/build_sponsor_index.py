@@ -11,7 +11,7 @@ refuses one).
 Parts, each with its count:
 
 * PERM approval rate: certified over certified plus denied, in DOL's current
-  files, at 20 or more decided cases.
+  files, at RATE_MIN_DECIDED (30) or more decided cases, the employer page's own bar.
 * PERM filings in the last 12 months (`recent_12m`).
 * H-1B LCAs certified in the last 24 months.
 * Transfers: the share of certified H-1B positions that were a change of
@@ -36,6 +36,19 @@ declaration, and a likely cap-exempt college or university.
 H-1B and USCIS rows reach a sponsor through `employer_page_map` (built first
 by scripts/build_employer_map.py), so a spelling counts on exactly one page.
 
+SPONSORS WITH NO DECIDED CASE YET. An employer whose PERM filings are all
+still with DOL has no published record, so nothing above can rank it, but it
+is sponsoring. It gets a row (`live_only` = 1) carrying what DOL's live record
+says, its filings and how many are waiting, and is left out of every rank.
+
+`sponsor_jobs` is the sponsor finder's other half: one row per sponsor, SOC
+occupation group and worksite state, from DOL's published files, with the
+rollups "every job" and "every state" (the empty string). Its figures are the
+employer page's own: every outcome counted, medians by `percentile` from
+ingest_perm_disclosure.py, so a sponsor's "every job, every state" row reads
+what its page reads. The live record names no occupation or worksite, so a
+pending case can't be placed in a job or a state; the finder says so.
+
 Usage:
     python3 scripts/build_sponsor_index.py            # rebuild the table
     python3 scripts/build_sponsor_index.py --dry-run  # read and report only
@@ -46,20 +59,28 @@ import argparse
 import datetime as dt
 import json
 import pathlib
+import re
 import sys
 import time
 from bisect import bisect_left, bisect_right
 from collections import defaultdict
+from typing import NamedTuple
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_db import Database, record_run, rows_of  # noqa: E402
+from build_entity_detail import RECENT_WINDOW_DAYS  # noqa: E402
+from ingest_perm_disclosure import percentile as value_at  # noqa: E402
+from lib_db import Database, add_missing_columns, record_run, rows_of  # noqa: E402
+from lib_naics import sector_of  # noqa: E402
 
 TABLE = "sponsor_index"
 COLS = [
     "slug", "name", "state", "sector", "sector_label", "cap_exempt", "perm_recent", "perm_decided", "perm_rate",
     "lca_24m", "transfer_share", "senior_share", "uscis_rate", "debarred", "warn_2y", "dependent",
-    "parts", "facts",
+    "parts", "facts", "live_only", "pending_now", "latest_filed",
 ]
+# Columns added after the table existed; ALTERed in before the first write.
+ADDED_COLS = {"live_only": "INTEGER NOT NULL DEFAULT 0", "pending_now": "INTEGER NOT NULL DEFAULT 0",
+              "latest_filed": "TEXT"}
 DDL = [
     f"""CREATE TABLE IF NOT EXISTS {TABLE} (
         slug TEXT PRIMARY KEY,
@@ -79,38 +100,67 @@ DDL = [
         warn_2y INTEGER NOT NULL,
         dependent INTEGER,
         parts TEXT NOT NULL,
-        facts TEXT NOT NULL)""",
+        facts TEXT NOT NULL,
+        live_only INTEGER NOT NULL DEFAULT 0,
+        pending_now INTEGER NOT NULL DEFAULT 0,
+        latest_filed TEXT)""",
     f"CREATE INDEX IF NOT EXISTS {TABLE}_recent ON {TABLE} (perm_recent DESC)",
     f"CREATE INDEX IF NOT EXISTS {TABLE}_state ON {TABLE} (state, perm_recent DESC)",
 ]
+
+JOB_TABLE = "sponsor_jobs"
+JOB_COLS = ["soc", "state", "slug", "filed", "certified", "denied", "median_wage", "median_days"]
+JOB_DDL = [
+    f"""CREATE TABLE IF NOT EXISTS {JOB_TABLE} (
+        soc TEXT NOT NULL,
+        state TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        filed INTEGER NOT NULL,
+        certified INTEGER NOT NULL,
+        denied INTEGER NOT NULL,
+        median_wage INTEGER,
+        median_days INTEGER,
+        PRIMARY KEY (soc, state, slug))""",
+    f"CREATE INDEX IF NOT EXISTS {JOB_TABLE}_filed ON {JOB_TABLE} (soc, state, filed DESC)",
+]
+# The rollup key in sponsor_jobs: "every job" in `soc`, "every state" in `state`.
+ANY = ""
+# The 50th percentile, by ingest_perm_disclosure.percentile (the employer page's own rule).
+MEDIAN = 50
+# A SOC detail group as the site keys it (`socGroup` in src/lib/socCode.ts).
+SOC_GROUP_RE = re.compile(r"^(\d{2}-\d{4})")
+# perm_cases rows read per request.
+CASE_PAGE = 50_000
+# A PERM approval rate needs this many decided cases: the employer page's own
+# bar (MIN_DECIDED_FOR_RATE in src/lib/entityPayload.ts, where the reasons are;
+# test_sponsor_index.py holds the two equal), so a sponsor shows a rate in the
+# finder exactly when its page does.
+RATE_MIN_DECIDED = 30
+# The H-1B shares and USCIS's rate need this many positions, LCAs or decisions.
 MIN_N = 20
 HIGHER_ED_NAICS = "611310"  # src/lib/capExempt.ts, which this mirrors
 CAP_EXEMPT_SHARE = 0.5
 WRITE_CHUNK = 300
+DELETE_CHUNK = 300
 WRITE_PAUSE_S = 0.4
 
-# NAICS two-digit sectors, from the Census Bureau's 2022 list (32 and 33 share 31's
-# name, 45 shares 44's, 49 shares 48's).
-SECTORS = {
-    "11": "Agriculture, forestry, fishing and hunting", "21": "Mining, oil and gas", "22": "Utilities",
-    "23": "Construction", "31": "Manufacturing", "32": "Manufacturing", "33": "Manufacturing",
-    "42": "Wholesale trade", "44": "Retail trade", "45": "Retail trade", "48": "Transportation and warehousing",
-    "49": "Transportation and warehousing", "51": "Information", "52": "Finance and insurance",
-    "53": "Real estate", "54": "Professional, scientific and technical services", "55": "Management of companies",
-    "56": "Administrative and support services", "61": "Educational services", "62": "Health care and social assistance",
-    "71": "Arts, entertainment and recreation", "72": "Accommodation and food services", "81": "Other services",
-    "92": "Public administration",
-}
-SECTOR_OF = {"32": "31", "33": "31", "45": "44", "49": "48"}
+class Part(NamedTuple):
+    """One ranked part of a sponsor's record. A part with a count field needs
+    `floor` of them; one without is ranked when its value is above zero."""
+    id: str
+    label: str
+    field: str
+    nfield: str | None
+    floor: int = 0
+
 
 PARTS = [
-    # id, label, field, minimum-n field, higher is ... (for the sentence)
-    ("perm_rate", "PERM approval rate", "perm_rate", "perm_decided"),
-    ("perm_recent", "PERM filings in the last 12 months", "perm_recent", None),
-    ("lca_24m", "H-1B LCAs certified in the last 24 months", "lca_24m", None),
-    ("transfer_share", "Share of H-1B positions that were transfers", "transfer_share", "positions"),
-    ("senior_share", "Share of H-1B LCAs at wage level III or IV", "senior_share", "leveled"),
-    ("uscis_rate", "USCIS H-1B approval rate, last 3 fiscal years", "uscis_rate", "uscis_n"),
+    Part("perm_rate", "PERM approval rate", "perm_rate", "perm_decided", RATE_MIN_DECIDED),
+    Part("perm_recent", "PERM filings in the last 12 months", "perm_recent", None),
+    Part("lca_24m", "H-1B LCAs certified in the last 24 months", "lca_24m", None),
+    Part("transfer_share", "Share of H-1B positions that were transfers", "transfer_share", "positions", MIN_N),
+    Part("senior_share", "Share of H-1B LCAs at wage level III or IV", "senior_share", "leveled", MIN_N),
+    Part("uscis_rate", "USCIS H-1B approval rate, last 3 fiscal years", "uscis_rate", "uscis_n", MIN_N),
 ]
 # Parts measured over the LCA detail window rather than the calendar.
 DETAIL_PARTS = {"transfer_share", "senior_share"}
@@ -134,14 +184,10 @@ def read(db: Database, today: dt.date) -> dict:
     sponsors: dict[str, dict] = {}
     for slug, name, total, cert, den, recent in rows_of(db.execute(
             "SELECT slug, name, total, certified, denied, recent_12m FROM perm_entities WHERE kind = 'employer'")):
-        sponsors[str(slug)] = {
-            "slug": str(slug), "name": str(name or slug), "perm_total": int(num(total)),
-            "certified": int(num(cert)), "denied": int(num(den)), "perm_recent": int(num(recent)),
-            "state": None, "state_n": 0,
-            "lca": 0, "positions": 0, "transfers": 0, "leveled": 0, "senior": 0,
-            "dep_yes": None, "dep_no": None, "willful": 0, "uscis_appr": 0, "uscis_den": 0,
-            "debarred": [], "warn": 0, "warn_workers": 0, "industry": defaultdict(int),
-        }
+        s = sponsors[str(slug)] = blank_sponsor(str(slug), str(name or slug))
+        s.update(perm_total=int(num(total)), certified=int(num(cert)), denied=int(num(den)),
+                 perm_recent=int(num(recent)), live_only=0)
+    read_live(db, sponsors, today)
     page_of: dict[str, str] = {}
     try:
         for src, page in rows_of(db.execute(
@@ -251,6 +297,66 @@ def read(db: Database, today: dt.date) -> dict:
     return {"sponsors": sponsors, "since": d24, "detail_from": detail_from if detail_to else None, "detail_to": detail_to}
 
 
+def blank_sponsor(slug: str, name: str) -> dict:
+    """A sponsor with every figure empty, live-only until a published record fills it."""
+    return {
+        "slug": slug, "name": name, "perm_total": 0, "certified": 0, "denied": 0, "perm_recent": 0,
+        "state": None, "state_n": 0,
+        "lca": 0, "positions": 0, "transfers": 0, "leveled": 0, "senior": 0,
+        "dep_yes": None, "dep_no": None, "willful": 0, "uscis_appr": 0, "uscis_den": 0,
+        "debarred": [], "warn": 0, "warn_workers": 0, "industry": defaultdict(int),
+        "live_only": 1, "pending_now": 0, "latest_filed": None,
+    }
+
+
+def read_live(db: Database, sponsors: dict, today: dt.date) -> None:
+    """What DOL's live record adds: who is waiting now, and the newest filing.
+
+    A published sponsor's waiting count is its employer page's queue band
+    (`perm_entity_pending`), so the two never differ. Its newest filing is the
+    later of its newest published receipt and its newest live filing. An
+    employer with live filings and no published record joins as `live_only`,
+    its count and recent filings read from `perm_live_recent` (every case of
+    such an employer is there, because none has been published).
+    """
+    try:
+        for slug, pending in rows_of(db.execute(
+                "SELECT slug, pending FROM perm_entity_pending WHERE kind = 'employer'")):
+            s = sponsors.get(str(slug))
+            if s is not None:
+                s["pending_now"] = int(num(pending))
+    except Exception as e:  # noqa: BLE001
+        if "no such table" not in str(e):
+            raise
+    for slug, newest in rows_of(db.execute(
+            "SELECT employer_slug, MAX(received_date) FROM perm_cases WHERE employer_slug <> '' GROUP BY employer_slug")):
+        s = sponsors.get(str(slug))
+        if s is not None and newest:
+            s["latest_filed"] = str(newest)[:10]
+    cutoff = (today - dt.timedelta(days=RECENT_WINDOW_DAYS)).isoformat()
+    try:
+        names = {str(slug): str(name) for slug, name in rows_of(db.execute(
+            "SELECT slug, name FROM perm_live_only_index"))}
+        live = rows_of(db.execute(
+            "SELECT employer_slug, SUM(1 - is_final), MAX(filing_date), SUM(CASE WHEN filing_date >= ? THEN 1 ELSE 0 END) "
+            "FROM perm_live_recent WHERE employer_slug <> '' GROUP BY employer_slug", [cutoff]))
+    except Exception as e:  # noqa: BLE001
+        if "no such table" not in str(e):
+            raise
+        return
+    for slug, pending, newest, recent in live:
+        slug = str(slug)
+        s = sponsors.get(slug)
+        if s is None:
+            if slug not in names:
+                continue
+            s = sponsors[slug] = blank_sponsor(slug, names[slug])
+            s["pending_now"] = int(num(pending))
+            s["perm_recent"] = int(num(recent))
+        if newest and (s["latest_filed"] is None or str(newest)[:10] > s["latest_filed"]):
+            s["latest_filed"] = str(newest)[:10]
+
+
 def percentile(sorted_vals: list[float], v: float) -> float:
     """Mid-rank: the share of the others below v, ties counted half."""
     if len(sorted_vals) <= 1:
@@ -276,41 +382,42 @@ def plan(data: dict, today: dt.date) -> list[list]:
         hi_ed = sum(n for k, n in s["industry"].items() if k.startswith(HIGHER_ED_NAICS))
         s["cap_exempt"] = 1 if coded and hi_ed / coded >= CAP_EXEMPT_SHARE else 0
         top = max(s["industry"].items(), key=lambda kv: (kv[1], kv[0]))[0] if s["industry"] else None
-        sector = SECTOR_OF.get(top[:2], top[:2]) if top else None
-        s["sector"] = sector if sector in SECTORS else None
-        s["sector_label"] = SECTORS.get(s["sector"]) if s["sector"] else None
+        sector = sector_of(top)
+        s["sector"], s["sector_label"] = sector if sector else (None, None)
         if s["dep_yes"] or s["dep_no"]:
             s["dependent"] = 1 if (s["dep_yes"] or "") > (s["dep_no"] or "") else 0
         else:
             s["dependent"] = None
 
-    def eligible(s: dict, field: str, nfield: str | None) -> bool:
-        v = s.get(field)
+    def eligible(s: dict, part: Part) -> bool:
+        if s["live_only"]:
+            return False
+        v = s.get(part.field)
         if v is None:
             return False
-        if nfield is None:
+        if part.nfield is None:
             return v > 0
-        return s.get(nfield, 0) >= MIN_N
+        return s.get(part.nfield, 0) >= part.floor
 
     peers: dict[str, list[float]] = {}
-    for pid, _label, field, nfield in PARTS:
-        peers[pid] = sorted(float(s[field]) for s in sponsors.values() if eligible(s, field, nfield))
+    for part in PARTS:
+        peers[part.id] = sorted(float(s[part.field]) for s in sponsors.values() if eligible(s, part))
 
     rows: list[list] = []
     for s in sorted(sponsors.values(), key=lambda s: s["slug"]):
         parts = []
-        for pid, label, field, nfield in PARTS:
-            if not eligible(s, field, nfield):
+        for part in PARTS:
+            if not eligible(s, part):
                 continue
-            v = float(s[field])
-            part = {
-                "id": pid, "label": label, "value": round(v, 4),
-                "n": int(s[nfield]) if nfield else int(v),
-                "pct": round(percentile(peers[pid], v), 4), "of": len(peers[pid]),
+            v = float(s[part.field])
+            ranked = {
+                "id": part.id, "label": part.label, "value": round(v, 4),
+                "n": int(s[part.nfield]) if part.nfield else int(v),
+                "pct": round(percentile(peers[part.id], v), 4), "of": len(peers[part.id]),
             }
-            if pid in DETAIL_PARTS:
-                part["from"], part["to"] = data["detail_from"], data["detail_to"]
-            parts.append(part)
+            if part.id in DETAIL_PARTS:
+                ranked["from"], ranked["to"] = data["detail_from"], data["detail_to"]
+            parts.append(ranked)
         facts = []
         for d in s["debarred"]:
             facts.append({"id": "debarred", "program": d["program"], "until": d["until"]})
@@ -328,45 +435,129 @@ def plan(data: dict, today: dt.date) -> list[list]:
             s["perm_decided"], r4(s["perm_rate"]), s["lca_24m"], r4(s["transfer_share"]), r4(s["senior_share"]),
             r4(s["uscis_rate"]), 1 if s["debarred"] else 0, s["warn"], s["dependent"],
             json.dumps(parts, separators=(",", ":")), json.dumps(facts, separators=(",", ":")),
+            s["live_only"], s["pending_now"], s["latest_filed"],
         ])
     return rows
 
 
-def norm(row: list) -> tuple:
-    ints = {"cap_exempt", "perm_recent", "perm_decided", "lca_24m", "debarred", "warn_2y"}
-    reals = {"perm_rate", "transfer_share", "senior_share", "uscis_rate"}
+class Spec(NamedTuple):
+    """A table this builder owns: its columns, how many lead the key, and the
+    columns whose stored value must be read back as a number to compare."""
+    table: str
+    cols: list[str]
+    key: int
+    ints: frozenset[str]
+    reals: frozenset[str]
+
+
+SPONSORS = Spec(TABLE, COLS, 1,
+                frozenset({"cap_exempt", "perm_recent", "perm_decided", "lca_24m", "debarred", "warn_2y", "dependent",
+                           "live_only", "pending_now"}),
+                frozenset({"perm_rate", "transfer_share", "senior_share", "uscis_rate"}))
+JOBS = Spec(JOB_TABLE, JOB_COLS, 3,
+            frozenset({"filed", "certified", "denied", "median_wage", "median_days"}), frozenset())
+
+
+def norm(spec: Spec, row: list) -> tuple:
+    """One shape for a stored row and a built one (libSQL returns numbers as strings)."""
     out = []
-    for c, v in zip(COLS, row):
+    for c, v in zip(spec.cols, row):
         if v is None:
             out.append(None)
-        elif c in ints or c == "dependent":
+        elif c in spec.ints:
             out.append(int(float(v)))
-        elif c in reals:
+        elif c in spec.reals:
             out.append(round(float(v), 4))
         else:
             out.append(str(v))
     return tuple(out)
 
 
-def write_diff(db: Database, want: list[list]) -> tuple[int, int]:
-    stored = {}
-    for r in rows_of(db.execute(f"SELECT {','.join(COLS)} FROM {TABLE}")):
-        n = norm(list(r))
-        stored[n[0]] = n
-    changed = [w for w in want if stored.get(w[0]) != norm(w)]
-    wanted = {w[0] for w in want}
+def stored_rows(db: Database, spec: Spec) -> dict[tuple, tuple]:
+    """Every stored row by key, read in pages of rowid so no one reply is large."""
+    out: dict[tuple, tuple] = {}
+    after = 0
+    while True:
+        page = rows_of(db.execute(
+            f"SELECT rowid, {','.join(spec.cols)} FROM {spec.table} WHERE rowid > ? ORDER BY rowid LIMIT ?",
+            [after, CASE_PAGE]))
+        for r in page:
+            n = norm(spec, list(r[1:]))
+            out[n[:spec.key]] = n
+        if len(page) < CASE_PAGE:
+            return out
+        after = int(num(page[-1][0]))
+
+
+def write_diff(db: Database, spec: Spec, want: list[list]) -> tuple[int, int]:
+    """Write only the rows that changed and delete the ones that went: a quiet
+    night costs a few writes, not one per row."""
+    stored = stored_rows(db, spec)
+    built = [norm(spec, w) for w in want]
+    changed = [w for w, n in zip(want, built) if stored.get(n[:spec.key]) != n]
+    wanted = {n[:spec.key] for n in built}
     gone = [k for k in stored if k not in wanted]
-    for i in range(0, len(gone), 500):
-        chunk = gone[i:i + 500]
-        db.execute(f"DELETE FROM {TABLE} WHERE slug IN ({','.join('?' for _ in chunk)})", chunk)
+    key_cols = ", ".join(spec.cols[:spec.key])
+    one_key = "(" + ",".join("?" * spec.key) + ")"
+    for i in range(0, len(gone), DELETE_CHUNK):
+        chunk = gone[i:i + DELETE_CHUNK]
+        db.execute(f"DELETE FROM {spec.table} WHERE ({key_cols}) IN (VALUES {','.join([one_key] * len(chunk))})",
+                   [v for k in chunk for v in k])
         time.sleep(WRITE_PAUSE_S)
-    marks = "(" + ",".join("?" * len(COLS)) + ")"
+    marks = "(" + ",".join("?" * len(spec.cols)) + ")"
     for i in range(0, len(changed), WRITE_CHUNK):
         chunk = changed[i:i + WRITE_CHUNK]
-        db.execute(f"INSERT OR REPLACE INTO {TABLE} ({','.join(COLS)}) VALUES " + ",".join([marks] * len(chunk)),
-                   [v for row in chunk for v in row])
+        db.execute(f"INSERT OR REPLACE INTO {spec.table} ({','.join(spec.cols)}) VALUES "
+                   + ",".join([marks] * len(chunk)), [v for row in chunk for v in row])
         time.sleep(WRITE_PAUSE_S)
     return len(changed), len(gone)
+
+
+def read_jobs(db: Database, sponsors: dict) -> dict[tuple, dict]:
+    """Each published case into its sponsor's buckets: its job and state, and
+    the "every job" and "every state" rollups. Read in pages of case number."""
+    buckets: dict[tuple, dict] = defaultdict(lambda: {"filed": 0, "certified": 0, "denied": 0, "wages": [], "days": []})
+    after = ""
+    while True:
+        page = rows_of(db.execute(
+            "SELECT case_number, employer_slug, soc_code, state, status, wage, days FROM perm_cases "
+            "WHERE case_number > ? AND employer_slug <> '' ORDER BY case_number LIMIT ?", [after, CASE_PAGE]))
+        for _case, slug, soc, state, status, wage, days in page:
+            if str(slug) not in sponsors:
+                continue
+            m = SOC_GROUP_RE.match(str(soc or "").strip())
+            socs = (m.group(1), ANY) if m else (ANY,)
+            states = (str(state), ANY) if state else (ANY,)
+            for g in socs:
+                for st in states:
+                    b = buckets[(g, st, str(slug))]
+                    b["filed"] += 1
+                    if status in ("certified", "denied"):
+                        b[status] += 1
+                    if wage not in (None, ""):
+                        b["wages"].append(int(num(wage)))
+                    if days not in (None, ""):
+                        b["days"].append(int(num(days)))
+        if len(page) < CASE_PAGE:
+            return buckets
+        after = str(page[-1][0])
+
+
+def plan_jobs(buckets: dict[tuple, dict], sponsors: dict) -> list[list]:
+    """The rows of sponsor_jobs. Pure, for the test.
+
+    A sponsor with no decided case yet gets an "every job, every state" row of
+    zeros, so the finder's one query shape reaches it when no job or state is
+    chosen; DOL's live record can't place it in either.
+    """
+    rows = [
+        [soc, state, slug, b["filed"], b["certified"], b["denied"],
+         value_at(b["wages"], MEDIAN), value_at(b["days"], MEDIAN)]
+        for (soc, state, slug), b in buckets.items()
+    ]
+    rows += [[ANY, ANY, slug, 0, 0, 0, None, None]
+             for slug, s in sponsors.items() if s["live_only"] and (ANY, ANY, slug) not in buckets]
+    return sorted(rows, key=lambda r: (r[0], r[1], r[2]))
 
 
 def main() -> int:
@@ -382,22 +573,32 @@ def main() -> int:
     today = dt.date.today()
     data = read(db, today)
     rows = plan(data, today)
-    log(f"sponsors {len(rows):,}; with an LCA in 24 months {sum(1 for r in rows if r[9]):,}; "
-        f"with a USCIS rate {sum(1 for r in rows if r[12] is not None):,}")
+    jobs = plan_jobs(read_jobs(db, data["sponsors"]), data["sponsors"])
+    by_col = {c: i for i, c in enumerate(COLS)}
+    log(f"sponsors {len(rows):,} ({sum(1 for r in rows if r[by_col['live_only']]):,} with no decided case yet); "
+        f"with an LCA in 24 months {sum(1 for r in rows if r[by_col['lca_24m']]):,}; "
+        f"with a USCIS rate {sum(1 for r in rows if r[by_col['uscis_rate']] is not None):,}; job rows {len(jobs):,}")
     if args.dry_run:
         by = {r[0]: r for r in rows}
         for slug in args.show:
             r = by.get(slug)
             log(f"  {slug}: {dict(zip(COLS, r)) if r else 'not a sponsor page'}")
         return 0
-    for ddl in DDL:
+    for ddl in DDL + JOB_DDL:
         db.execute(ddl)
-    changed, gone = write_diff(db, rows)
-    got = int(rows_of(db.execute(f"SELECT count(*) FROM {TABLE}"))[0][0] or 0)
-    ok = got == len(rows)
-    log(f"  {'ok ' if ok else 'MISMATCH'} {TABLE} {got:,} of {len(rows):,} ({changed:,} written, {gone:,} removed)")
-    record_run(db, "build_sponsor_index.py", status="ok" if ok else "failed", rows_written=changed,
-               note=f"{len(rows):,} sponsors ranked", started_at=started)
+    if add_missing_columns(db, TABLE, ADDED_COLS):
+        log(f"  added {TABLE} columns")
+    ok = True
+    written = 0
+    for spec, want in ((SPONSORS, rows), (JOBS, jobs)):
+        changed, gone = write_diff(db, spec, want)
+        got = int(rows_of(db.execute(f"SELECT count(*) FROM {spec.table}"))[0][0] or 0)
+        ok &= got == len(want)
+        written += changed
+        log(f"  {'ok ' if got == len(want) else 'MISMATCH'} {spec.table} {got:,} of {len(want):,} "
+            f"({changed:,} written, {gone:,} removed)")
+    record_run(db, "build_sponsor_index.py", status="ok" if ok else "failed", rows_written=written,
+               note=f"{len(rows):,} sponsors ranked, {len(jobs):,} job rows", started_at=started)
     return 0 if ok else 1
 
 

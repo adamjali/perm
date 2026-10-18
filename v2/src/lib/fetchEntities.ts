@@ -6,6 +6,7 @@ import {
   type LiveEmployerHit,
 } from "./entityPayload";
 import { failureFromResponse, FetchFailureError } from "@/lib/fetchFailure";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 
 /**
  * Fetch every row of one entity kind from the cached route handler.
@@ -68,7 +69,7 @@ export async function searchEntities(
   if (q.length < 2) return { rows: [], live: [], more: false, liveMore: false };
   const scope = opts.onlyLive ? "&scope=live" : "";
   const res = await fetch(
-    `/api/perm-entities/${kind}?q=${encodeURIComponent(q.slice(0, 120))}${scope}`,
+    `/api/perm-entities/${kind}?q=${encodeURIComponent(q.slice(0, SEARCH_TEXT_MAX))}${scope}`,
   );
   if (!res.ok) throw new FetchFailureError(await failureFromResponse(res));
   const payload = (await res.json()) as EntityPayload;

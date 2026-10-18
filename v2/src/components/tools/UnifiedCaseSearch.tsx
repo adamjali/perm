@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useId, useMemo, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
@@ -8,7 +8,7 @@ import { STAGE_PROGRAM_LABEL, searchStages } from "@/lib/searchStages";
 import { CaretRightIcon, CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { usePublicQuery } from "@/hooks/usePublicQuery";
-import { formatWage } from "@/lib/wageFormat";
+import { comparableWage, formatWage } from "@/lib/wageFormat";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
@@ -34,8 +34,12 @@ import {
   type FilterState,
   type Lead,
   type Outcome,
+  type ResolvedEntity,
   type SearchOrder,
   type WageSourceKey,
+  isOutcome,
+  isSearchOrder,
+  isWageSource,
 } from "@/lib/caseSearchPlan";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
@@ -130,6 +134,11 @@ const WORKER_PARAM: Record<CaseFieldKey, string> = {
   education: "edu",
   jobEducation: "jobedu",
 };
+/** Every parameter `buildParams` writes: what a link to this page may carry. */
+const SEARCH_PARAMS = new Set([
+  "q", "firm", "state", "occupation", "outcome", "title", "from", "to", "dfrom", "dto", "fy", "stage",
+  "wmin", "wmax", "programs", "naics", "city", ...Object.values(WORKER_PARAM), "wsrc", "order",
+]);
 const WORKER_PLACEHOLDER: Record<CaseFieldKey, string> = {
   citizenship: "e.g. India",
   birthCountry: "e.g. India",
@@ -175,19 +184,13 @@ const COLUMNS: SortColumn<UnifiedCase>[] = [
   { key: "occupation", label: "Occupation", get: (r) => r.socTitle },
   { key: "state", label: "State", get: (r) => r.state },
   { key: "firm", label: "Law firm", get: (r) => r.firmName },
-  { key: "wage", label: "Wage", descFirst: true, get: (r) => r.wage },
+  { key: "wage", label: "Wage", descFirst: true, get: (r) => comparableWage(r.wage, r.wageUnit) },
   { key: "filed", label: "Filed", descFirst: true, get: (r) => r.filedOn },
   { key: "decided", label: "Decided", descFirst: true, get: (r) => r.decidedOn },
   { key: "days", label: "Days", descFirst: true, get: (r) => r.days },
 ];
 
 
-interface ResolvedEntity {
-  key: string;
-  name: string;
-  total: number;
-  alternatives: { key: string; name: string; total: number }[];
-}
 
 interface SearchResponse {
   rows: UnifiedCase[];
@@ -479,44 +482,54 @@ export function UnifiedCaseSearch({
   /** The first fiscal year of published PERM cases the search reaches, once the history is loaded. */
   publishedFrom?: string | null;
 }) {
+  // THE FORM LIVES IN THE ADDRESS. Every box starts from its parameter (the
+  // route's own names, `buildParams` below), and every search writes the
+  // address back, so a search can be shared, bookmarked and reloaded. Pages
+  // hand searches in the same way: `?firm=` from a law firm's page, `?stage=`
+  // from the stage pages, `?occupation=` from an occupation's.
   const params = useUrlSearchParams();
-  const initial = params.get("q") ?? "";
-  // `?firm=` is how a law firm's page hands its own name to this search.
-  const initialFirm = (params.get("firm") ?? "").trim();
-  // `?stage=<slug>` is how the stage pages hand a cohort to this search.
+  const param = (k: string) => (params.get(k) ?? "").trim();
+  const month = (k: string) => (MONTH_RE.test(param(k)) ? param(k) : "");
+  const known = <T extends string, D>(k: string, ok: (v: string) => v is T, fallback: D): T | D => {
+    const v = param(k);
+    return ok(v) ? v : fallback;
+  };
+  const initial = param("q");
   const stageOptions = useMemo(() => searchStages(), []);
-  const initialStage = stageOptions.some((o) => o.slug === params.get("stage")) ? (params.get("stage") ?? "") : "";
+  const initialStage = stageOptions.some((o) => o.slug === param("stage")) ? param("stage") : "";
+  const initialNaics = param("naics");
+  const initialPrograms = param("programs").split(",").filter((x): x is Program => (ALL_PROGRAMS as string[]).includes(x));
   const uid = useId();
 
   // The lead fields.
   const [textInput, setTextInput] = useState(initial);
-  const [firmInput, setFirmInput] = useState(initialFirm);
-  const [stateInput, setStateInput] = useState("");
-  const [occInput, setOccInput] = useState("");
+  const [firmInput, setFirmInput] = useState(param("firm"));
+  const [stateInput, setStateInput] = useState(param("state"));
+  const [occInput, setOccInput] = useState(param("occupation"));
 
   // The narrowing fields.
-  const [outcome, setOutcome] = useState<Outcome | "">("");
-  const [titleInput, setTitleInput] = useState("");
-  const [fromInput, setFromInput] = useState("");
-  const [toInput, setToInput] = useState("");
-  const [dFromInput, setDFromInput] = useState("");
-  const [dToInput, setDToInput] = useState("");
-  const [fyInput, setFyInput] = useState("");
-  const [wMinInput, setWMinInput] = useState("");
-  const [wMaxInput, setWMaxInput] = useState("");
-  const [programs, setPrograms] = useState<Program[]>(ALL_PROGRAMS);
+  const [outcome, setOutcome] = useState<Outcome | "">(known("outcome", isOutcome, ""));
+  const [titleInput, setTitleInput] = useState(param("title"));
+  const [fromInput, setFromInput] = useState(month("from"));
+  const [toInput, setToInput] = useState(month("to"));
+  const [dFromInput, setDFromInput] = useState(month("dfrom"));
+  const [dToInput, setDToInput] = useState(month("dto"));
+  const [fyInput, setFyInput] = useState(param("fy"));
+  const [wMinInput, setWMinInput] = useState(param("wmin"));
+  const [wMaxInput, setWMaxInput] = useState(param("wmax"));
+  const [programs, setPrograms] = useState<Program[]>(initialPrograms.length ? initialPrograms : ALL_PROGRAMS);
   const [stageInput, setStageInput] = useState<string>(initialStage);
-  // The worker, job and industry fields: published PERM only.
-  const [industryInput, setIndustryInput] = useState("");
-  const [naicsInput, setNaicsInput] = useState("");
-  const [cityInput, setCityInput] = useState("");
-  const [worker, setWorker] = useState<Record<CaseFieldKey, string>>({
-    citizenship: "", birthCountry: "", visaClass: "", education: "", jobEducation: "",
-  });
+  // The worker, job and industry fields. A sector comes from the list; any other code was typed.
+  const [industryInput, setIndustryInput] = useState(industries.some((o) => o.code === initialNaics) ? initialNaics : "");
+  const [naicsInput, setNaicsInput] = useState(industries.some((o) => o.code === initialNaics) ? "" : initialNaics);
+  const [cityInput, setCityInput] = useState(param("city"));
+  const [worker, setWorker] = useState<Record<CaseFieldKey, string>>(
+    () => Object.fromEntries(WORKER_KEYS.map((k) => [k, param(WORKER_PARAM[k])])) as Record<CaseFieldKey, string>,
+  );
   const setWorkerField = (k: CaseFieldKey, v: string) => setWorker((cur) => ({ ...cur, [k]: v }));
   // Where an LCA's prevailing wage came from: published LCAs only.
-  const [wageSourceInput, setWageSourceInput] = useState<WageSourceKey | "">("");
-  const [orderInput, setOrderInput] = useState<SearchOrder>("filed-desc");
+  const [wageSourceInput, setWageSourceInput] = useState<WageSourceKey | "">(known("wsrc", isWageSource, ""));
+  const [orderInput, setOrderInput] = useState<SearchOrder>(known("order", isSearchOrder, "filed-desc"));
   const stageOption = useMemo(() => stageOptions.find((o) => o.slug === stageInput) ?? null, [stageOptions, stageInput]);
 
   const [query, setQuery] = useState({ search: initial.trim() ? initial.trim() : "", n: 0 });
@@ -524,15 +537,16 @@ export function UnifiedCaseSearch({
   // an empty form". An empty form submits an empty query string and the route
   // answers `needsLead`, so pressing Search with nothing filled in explains
   // itself instead of doing nothing at all.
-  const [submitted, setSubmitted] = useState<string | null>(
-    initial.trim() || initialStage || initialFirm
-      ? new URLSearchParams({
-          ...(initial.trim() ? { q: initial.trim() } : {}),
-          ...(initialFirm ? { firm: initialFirm } : {}),
-          ...(initialStage ? { stage: initialStage } : {}),
-        }).toString()
-      : null,
-  );
+  const [submitted, setSubmitted] = useState<string | null>(() => {
+    const asked = new URLSearchParams([...params.entries()].filter(([k]) => SEARCH_PARAMS.has(k)));
+    return asked.size ? asked.toString() : null;
+  });
+  // Every search writes the address, so what's on screen is what a link reopens.
+  useEffect(() => {
+    if (submitted === null) return;
+    const next = submitted ? `?${submitted}` : window.location.pathname;
+    if (`${window.location.search}` !== (submitted ? `?${submitted}` : "")) window.history.replaceState(null, "", next);
+  }, [submitted]);
 
   // A CASE NUMBER TYPED HERE MUST NOT BE RUN AS AN EMPLOYER NAME. Shape only:
   // a wrong digit still makes a well-formed number, so this changes what is
@@ -673,10 +687,11 @@ export function UnifiedCaseSearch({
    * NOT named `useAlternative`: a `use` prefix makes ESLint's rules-of-hooks
    * treat it as a hook, and calling it from a click handler is then an error.
    */
-  const applyAlternative = (kind: "firm" | "occupation", name: string) => {
-    if (kind === "firm") setFirmInput(name);
-    else setOccInput(name);
-    setSubmitted(buildParams(kind === "firm" ? { firm: name } : { occupation: name }));
+  // The box shows the name; the search carries the slug, so the choice resolves to exactly itself.
+  const applyAlternative = (kind: "firm" | "occupation", a: { slug: string; name: string }) => {
+    if (kind === "firm") setFirmInput(a.name);
+    else setOccInput(a.name);
+    setSubmitted(buildParams(kind === "firm" ? { firm: a.slug } : { occupation: a.slug }));
     setQuery((cur) => ({ ...cur, n: cur.n + 1 }));
   };
 
@@ -1462,10 +1477,10 @@ export function UnifiedCaseSearch({
               </p>{" "}
               <div className="mt-2 flex flex-wrap gap-2">
                 {data.resolved.firm.alternatives.map((a) => (
-                  <Fragment key={a.key}>
+                  <Fragment key={a.slug}>
                     <button
                       type="button"
-                      onClick={() => applyAlternative("firm", a.name)}
+                      onClick={() => applyAlternative("firm", a)}
                       className={buttonVariants({ variant: "outline", size: "default" })}
                     >
                       {a.name} ({formatInt(a.total)})
@@ -1490,10 +1505,10 @@ export function UnifiedCaseSearch({
           {data.resolved.occupation.alternatives.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {data.resolved.occupation.alternatives.map((a) => (
-                <Fragment key={a.key}>
+                <Fragment key={a.slug}>
                   <button
                     type="button"
-                    onClick={() => applyAlternative("occupation", a.name)}
+                    onClick={() => applyAlternative("occupation", a)}
                     className={buttonVariants({ variant: "outline", size: "default" })}
                   >
                     {a.name} ({formatInt(a.total)})

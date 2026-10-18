@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { one } from "./client";
+import { socGroup } from "@/lib/socCode";
 
 /**
  * Precomputed wage selections, one row per filter combination big enough to
@@ -61,7 +62,7 @@ export interface WageViewFilters {
  */
 export function wageViewKey(program: WageProgram, f: WageViewFilters): string {
   const status = f.status || "certified";
-  const soc = f.socCode ? f.socCode.trim().slice(0, 7) : "";
+  const soc = socGroup(f.socCode) ?? "";
   const state = f.state ? (program === "lca" ? f.state.toUpperCase() : f.state) : "";
   const fy = f.fiscalYear ? String(f.fiscalYear) : "";
   return `${program}|${status}|${soc}|${state}|${fy}`;

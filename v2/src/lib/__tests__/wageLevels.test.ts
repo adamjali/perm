@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_RE, dolSearchYear, parseAreaOptions, parseWageRates, seriesYearFor, SOC_RE, wageSearchBody } from "../wageLevels";
+import { AREA_RE, dolSearchYear, parseAreaOptions, parseWageRates, seriesYearFor, wageSearchBody } from "../wageLevels";
+import { SOC_CODE_RE } from "../socCode";
 
 // DOL's answer for 15-1252 in Los Angeles, series 2025, as probed on Sep 8 2026.
 const DOL = {
@@ -45,9 +46,9 @@ describe("wageLevels", () => {
   });
 
   it("validates the two inputs a stranger can send", () => {
-    expect(SOC_RE.test("15-1252")).toBe(true);
-    expect(SOC_RE.test("15-1252.00")).toBe(true);
-    expect(SOC_RE.test("15-1252; DROP")).toBe(false);
+    expect(SOC_CODE_RE.test("15-1252")).toBe(true);
+    expect(SOC_CODE_RE.test("15-1252.00")).toBe(true);
+    expect(SOC_CODE_RE.test("15-1252; DROP")).toBe(false);
     expect(AREA_RE.test("31080")).toBe(true);
     expect(AREA_RE.test("31080abc")).toBe(false);
   });

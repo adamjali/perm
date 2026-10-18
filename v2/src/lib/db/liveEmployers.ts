@@ -56,6 +56,7 @@ import type { LiveEmployerHit } from "@/lib/entityPayload";
 import { slugify } from "@/lib/entitySlug";
 
 import { one, rows } from "./client";
+import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 
 export type { LiveEmployerHit };
 
@@ -205,7 +206,7 @@ export async function searchLiveOnlyEmployers(
 ): Promise<LiveEmployerHit[]> {
   // Length cap FIRST: everything after it walks the string, and `text`
   // arrives from a stranger through /api/perm-entities/employer?q=.
-  if (text.length > 120) return [];
+  if (text.length > SEARCH_TEXT_MAX) return [];
   const range = slugPrefixRange(slugify(text.trim()));
   if (!range) return [];
   // 101: the route asks for one over what it shows, to know whether more match.

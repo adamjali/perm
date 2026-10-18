@@ -38,6 +38,9 @@ COLUMNS = [
     "naics", "worksite_city",
     "citizenship", "birth_country", "visa_class", "education", "major",
     "institution", "job_education",
+    # Form 9089 Section H (scripts/lib_recruitment.py), new-form cases only.
+    "recr_supervised", "job_order_start", "job_order_end", "sunday_edition", "ad_type",
+    "paper1", "ad1", "paper2", "ad2", "recr_steps", "notice",
 ]
 # The first CORE columns are the ones every load has carried since the table
 # was made. The two after them (the employer's NAICS code and the worksite city)
@@ -46,8 +49,8 @@ COLUMNS = [
 # every index.
 CORE = 15
 EXTRA = COLUMNS[CORE:]
-# 24 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
-# 12,000 - comfortably under, and large enough that the round trip dominates.
+# 35 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
+# 17,500 - comfortably under, and large enough that the round trip dominates.
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
 
@@ -78,7 +81,18 @@ SCHEMA = [
          education     TEXT,
          major         TEXT,
          institution   TEXT,
-         job_education TEXT
+         job_education TEXT,
+         recr_supervised TEXT,
+         job_order_start TEXT,
+         job_order_end TEXT,
+         sunday_edition TEXT,
+         ad_type       TEXT,
+         paper1        TEXT,
+         ad1           TEXT,
+         paper2        TEXT,
+         ad2           TEXT,
+         recr_steps    TEXT,
+         notice        TEXT
        )""",
 ]
 
@@ -181,6 +195,9 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
                 r.get("citizenship"), r.get("birthCountry"), r.get("visaClass"),
                 r.get("education"), r.get("major"), r.get("institution"),
                 r.get("jobEducation"),
+                r.get("recrSupervised"), r.get("jobOrderStart"), r.get("jobOrderEnd"),
+                r.get("sundayEdition"), r.get("adType"), r.get("paper1"), r.get("ad1"),
+                r.get("paper2"), r.get("ad2"), r.get("recrSteps"), r.get("notice"),
             )
 
 
@@ -379,7 +396,8 @@ def main() -> int:
 
 
 # Rows per narrow UPDATE. A row costs two parameters per EXTRA column plus one
-# in the IN list (19 with nine columns), so 200 rows is 3,800 parameters.
+# in the IN list (41 with twenty columns), so 200 rows is 8,200 parameters,
+# under SQLite's 32,766.
 NARROW_ROWS = 200
 
 FINGERPRINT_KEY = "perm_cases_fingerprint"

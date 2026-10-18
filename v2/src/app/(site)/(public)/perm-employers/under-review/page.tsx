@@ -31,6 +31,7 @@ import { getEmployerStages } from "@/lib/db/employerStages";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatInt, formatShare } from "@/lib/format";
 import { daysBetween } from "@/lib/time";
+import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /**
  * Employers by their PERM cases outside DOL's normal queue.
@@ -447,7 +448,7 @@ export default async function EmployersUnderReviewPage() {
               {formatInt(doc.employers.length)} employers. Search by name, sort any column, or
               download the table. Each name opens the employer&apos;s page; to see the
               cases themselves, open the{" "}
-              <Link href={`/case-search?stage=${searchStageSlug(HOLD_STATUS) ?? ""}`} className="link">
+              <Link href={caseSearchHref({ stage: searchStageSlug(HOLD_STATUS) ?? "" })} className="link">
                 case search with a stage selected
               </Link>{" "}
               and type the employer.

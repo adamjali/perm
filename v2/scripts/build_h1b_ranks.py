@@ -53,7 +53,7 @@ import time
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from build_lca_facets import ANNUAL_WAGE_SQL  # noqa: E402
+from lib_wage import ANNUAL_WAGE_SQL, FLAG_BAND  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 from lib_db import Database, read_doc, record_run, rows_of, write_doc  # noqa: E402
 
@@ -100,7 +100,6 @@ NATION = "US"
 TOP = 100
 TOP_SHARE = 10  # the "top ten hold X%" figure
 MIN_WAGES = 5  # a median of fewer filings is withheld
-WAGE_BAND = (10_000, 1_500_000)  # the salary explorer's band (build_lca_facets.DEFAULT_WHERE)
 FIRST_FY = 2009  # the Data Hub's first year
 KINDS = ("new", "cont", "same", "conc", "chg", "amend")
 WRITE_CHUNK = 300
@@ -197,7 +196,7 @@ def read_lca(db: Database, fy: int, page_of: dict[str, str]):
         dep[page][0] += num(dyes)
         dep[page][1] += num(dno)
         willful[page] += num(wil)
-    lo, hi = WAGE_BAND
+    lo, hi = FLAG_BAND
     for slug, st, w, n in rows_of(db.execute(
             f"SELECT employer_slug, worksite_state, ROUND({ANNUAL_WAGE_SQL}), COUNT(*) FROM lca_cases "
             f"WHERE {where} AND employer_slug IS NOT NULL AND wage IS NOT NULL AND wage > 0 "

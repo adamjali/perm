@@ -2,7 +2,10 @@ import "server-only";
 
 import { FuzzyIndex } from "@/lib/fuzzy";
 import type { NameSuggestion, SuggestKind } from "@/lib/search/suggestTypes";
+import { SEARCH_TEXT_MIN, SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 import { rows } from "./client";
+import { getBySlug } from "./entities";
+import { socGroup } from "@/lib/socCode";
 
 export type { NameSuggestion, SuggestKind };
 
@@ -147,22 +150,74 @@ export async function indexReady(kind: SuggestKind, waitMs: number): Promise<boo
   }
 }
 
-/** Shortest and longest query worth a guess. */
-export const SUGGEST_MIN_LENGTH = 2;
-export const SUGGEST_MAX_LENGTH = 80;
+
+/**
+ * How close a name must be to be offered: a little above the matcher's own
+ * floor (FUZZY_MATCH_MIN), because a "did you mean" that misleads is worse
+ * than none.
+ */
+const SUGGEST_MIN_SCORE = 0.7;
 
 /** The closest names to a query, best first. */
 export async function suggestNames(kind: SuggestKind, query: string, limit = 5): Promise<NameSuggestion[]> {
   const q = query.trim();
-  if (q.length < SUGGEST_MIN_LENGTH || q.length > SUGGEST_MAX_LENGTH) return [];
+  if (q.length < SEARCH_TEXT_MIN || q.length > SUGGEST_MAX_LENGTH) return [];
   const index = await indexFor(kind);
-  return index.search(q, { limit, min: 0.7 }).map(({ item, score, weighted }) => ({
+  return index.search(q, { limit, min: SUGGEST_MIN_SCORE }).map(({ item, score, weighted }) => ({
     kind,
     name: item.name,
+    slug: item.slug,
     href: `${BASE[kind]}/${item.slug}`,
     cases: item.n,
     // Weighted by filings, so a merge across kinds keeps the busier name first.
     score: Math.round((weighted ?? score) * 1000) / 1000,
     published: item.published,
   }));
+}
+
+/**
+ * The names a box's words can mean, best first: the page whose slug they are,
+ * then the closest names by the matcher. Every box that turns typed words into
+ * one employer, law firm or job reads this, so a "did you mean" choice, which
+ * carries its slug, resolves to exactly itself.
+ */
+export async function nameCandidates(kind: SuggestKind, text: string, limit: number): Promise<NameSuggestion[]> {
+  const q = text.trim();
+  if (!q) return [];
+  const [exact, close] = await Promise.all([getBySlug(kind, q), suggestNames(kind, q, limit)]);
+  const first: NameSuggestion[] = exact
+    ? [{ kind, name: exact.name, slug: exact.slug, href: `${BASE[kind]}/${exact.slug}`, cases: exact.total, score: 1, published: true }]
+    : [];
+  return [...first, ...close.filter((s) => s.slug !== exact?.slug)].slice(0, limit);
+}
+
+/** An occupation a box can mean, with the SOC group every search keys it on. */
+export interface OccupationChoice {
+  slug: string;
+  name: string;
+  cases: number;
+  /** The code as the page carries it, and its group (`15-1252`). */
+  code: string;
+  soc: string;
+}
+
+/**
+ * The occupations a box's words can mean, best first, one per SOC group: DOL
+ * prints one job under two codes (`29-1141` and `29-1141.00`), and both pages
+ * answer the same search, so offering both is offering one choice twice. A
+ * page whose code isn't a SOC code can't be searched by job and is left out.
+ */
+export async function occupationChoices(text: string, limit: number): Promise<OccupationChoice[]> {
+  const candidates = await nameCandidates("occupation", text, limit * 2);
+  const rows = await Promise.all(candidates.map((c) => getBySlug("occupation", c.slug)));
+  const seen = new Set<string>();
+  const out: OccupationChoice[] = [];
+  for (const [i, c] of candidates.entries()) {
+    const code = rows[i]?.code ?? "";
+    const soc = socGroup(code);
+    if (!soc || seen.has(soc)) continue;
+    seen.add(soc);
+    out.push({ slug: c.slug, name: c.name, cases: c.cases, code, soc });
+  }
+  return out.slice(0, limit);
 }

@@ -9,7 +9,6 @@ import {
   DisclosureNote,
   EntityDataGap,
   LimitsPanel,
-  MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
   ReliabilityBand,
@@ -21,6 +20,7 @@ import {
   wilsonUpperPct,
   type PeerEntity,
 } from "../EntityContext";
+import { MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
 
 /** DOL's measured denial rate over 248,158 decided cases in this window. */
 const BASELINE = 2.57;

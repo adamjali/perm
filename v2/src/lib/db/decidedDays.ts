@@ -6,6 +6,9 @@ import { keepLinkableSlugs } from "./entityLinks";
 // computed differently in two readers is an employer whose cases answer
 // differently depending on which page asked.
 import { slugRange } from "./flagCases";
+import { PWD_VISA_CLASS } from "@/lib/changeProgram";
+import { socGroupClause } from "@/lib/socCode";
+import { ANNUAL_WAGE_SQL } from "@/lib/wageFormat";
 import { CHANGE_PROGRAMS, type ChangeProgram } from "@/lib/changeProgram";
 // The pure half lives in a plain module so the browser can run the same
 // coverage arithmetic this file's queries are bounded by.
@@ -90,9 +93,9 @@ export interface DecidedCase {
   /** The law firm on the filing (all three programs). */
   attorneyName: string | null;
   attorneySlug: string | null;
-  /** Worksite city. PERM only. */
+  /** Worksite city, on every published file. */
   worksiteCity: string | null;
-  /** The employer's NAICS code. PERM only. */
+  /** The employer's NAICS code, on every published file. */
   naics: string | null;
   /** Worker's country of citizenship. PERM, DOL's old form only. */
   citizenship: string | null;
@@ -164,6 +167,8 @@ const PUBLISHED: Record<
     status: string;
     state: string;
     hasWageUnit: boolean;
+    /** The visa class the program's rows are limited to, when the file holds others too. */
+    visaClass?: string;
     /** Which optional narrows this program can be asked at all. */
     optional: readonly (keyof typeof OPTIONAL)[];
   }
@@ -180,6 +185,7 @@ const PUBLISHED: Record<
     status: "case_status",
     state: "worksite_state",
     hasWageUnit: true,
+    visaClass: PWD_VISA_CLASS,
     optional: ["city", "naics", "visaClass"],
   },
   lca: {
@@ -377,6 +383,10 @@ function narrowClause(
   const meta = PUBLISHED[program];
   const parts: string[] = [];
   const args: unknown[] = [];
+  if (meta.visaClass) {
+    parts.push("visa_class = ?");
+    args.push(meta.visaClass);
+  }
   if (n.employer) {
     // A PREFIX RANGE, NOT `LIKE`. LIKE is case-insensitive by default and so
     // cannot use an index on a BINARY-collated column; a range can. `null`
@@ -392,8 +402,9 @@ function narrowClause(
     args.push(n.state);
   }
   if (n.socCode) {
-    parts.push("soc_code = ?");
-    args.push(n.socCode);
+    const job = socGroupClause(n.socCode);
+    parts.push(job.sql);
+    args.push(...job.args);
   }
   if (n.attorney) {
     if (!cols.has("attorney_slug")) return "skip";
@@ -404,12 +415,15 @@ function narrowClause(
     parts.push(`${meta.status} = ?`);
     args.push(n.status);
   }
+  // Yearly figures, like the wage boxes everywhere else: PERM stores its wage
+  // yearly, the other files print the unit the employer pays in.
+  const yearly = meta.hasWageUnit ? `(${ANNUAL_WAGE_SQL})` : "wage";
   if (n.minWage !== undefined) {
-    parts.push("wage IS NOT NULL AND wage >= ?");
+    parts.push(`${yearly} >= ?`);
     args.push(n.minWage);
   }
   if (n.maxWage !== undefined) {
-    parts.push("wage IS NOT NULL AND wage <= ?");
+    parts.push(`${yearly} <= ?`);
     args.push(n.maxWage);
   }
   for (const key of Object.keys(OPTIONAL) as (keyof typeof OPTIONAL)[]) {

@@ -21,10 +21,11 @@ import {
   isWageSource,
   type FilterKey,
   type Outcome,
+  type ResolvedEntity,
 } from "@/lib/caseSearchPlan";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { searchStageFromSlug } from "@/lib/searchStages";
-import { searchByName } from "@/lib/db/entities";
+import { nameCandidates, occupationChoices } from "@/lib/db/nameSuggest";
 import type { UnifiedNarrow } from "@/lib/db/caseSearchReads";
 import {
   PROGRAMS,
@@ -35,6 +36,7 @@ import {
   type SearchOrder,
   type UnifiedSearchArgs,
 } from "@/lib/db/unifiedSearch";
+import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const STATE_RE = /^[A-Z]{2}$/;
@@ -42,18 +44,9 @@ const FY_RE = /^\d{4}$/;
 // Ahead of any comparison work: `v.string()`-scale input reaches a route
 // handler, and a length cap is the cheap guard that belongs before anything
 // that walks the string.
-const MAX_TEXT = 120;
-const MIN_TEXT = 2;
 /** Above any real annual wage, and small enough that a typo is refused. */
 const MAX_WAGE = 100_000_000;
 
-export interface ResolvedEntity {
-  key: string;
-  name: string;
-  total: number;
-  /** The other spellings DOL used, so the reader can pick a different one. */
-  alternatives: { key: string; name: string; total: number }[];
-}
 
 /** A month parameter, or null. Throws nothing: the caller reports the 400. */
 function month(p: URLSearchParams, key: string): { ok: true; value: string } | { ok: false } {
@@ -81,30 +74,31 @@ function wage(p: URLSearchParams, key: string): number | null | "bad" {
   return Math.round(n);
 }
 
+/** Names offered beside the one a box resolved to. */
+const ALTERNATIVES = 7;
+
 /**
- * Turn typed words into the key an index can seek on.
- *
- * `searchByName` is a substring LIKE over one entity kind - at most a few tens
- * of thousands of rows, measured at 42 ms - which is affordable precisely
- * because it is NOT run against the 374k-row case table. The top match is the
- * one with the most filings, which is the right default when DOL has spelled a
- * firm six ways and one spelling holds 48,165 of the 48,322 cases.
+ * Turn typed words into the key an index can seek on, through the site's name
+ * resolvers (the page's slug exactly, else the closest name by the matcher), so
+ * this box and the sponsor finder's job box answer the same words the same way.
+ * A firm keys on its slug; an occupation on its SOC code, one choice per group.
+ * A read that fails throws to the route's 503: a failed lookup is never "no match".
  */
 async function resolveEntity(
   kind: "attorney" | "occupation",
   text: string,
 ): Promise<ResolvedEntity | null> {
-  const found = await searchByName(kind, text, 8).catch(() => []);
-  const usable = found.filter((r) => (kind === "attorney" ? r.slug : r.code));
-  const top = usable[0];
+  const keyed =
+    kind === "attorney"
+      ? (await nameCandidates(kind, text, ALTERNATIVES + 1)).map((c) => ({
+          slug: c.slug, name: c.name, total: c.cases, key: c.slug,
+        }))
+      : (await occupationChoices(text, ALTERNATIVES + 1)).map((c) => ({
+          slug: c.slug, name: c.name, total: c.cases, key: c.code,
+        }));
+  const [top, ...rest] = keyed;
   if (!top) return null;
-  const keyOf = (r: (typeof usable)[number]) => (kind === "attorney" ? r.slug : (r.code ?? ""));
-  return {
-    key: keyOf(top),
-    name: top.name,
-    total: top.total,
-    alternatives: usable.slice(1).map((r) => ({ key: keyOf(r), name: r.name, total: r.total })),
-  };
+  return { ...top, alternatives: rest.map(({ slug, name, total }) => ({ slug, name, total })) };
 }
 
 export interface Resolved {
@@ -128,9 +122,9 @@ export async function planCaseSearch(
   opts: { maxLimit?: number } = {},
 ): Promise<CaseSearchRequest> {
   // Cheap shape guards first, in cost order: everything below walks a string.
-  const q = (p.get("q") ?? p.get("text") ?? "").trim().slice(0, MAX_TEXT);
-  const firmText = (p.get("firm") ?? "").trim().slice(0, MAX_TEXT);
-  const occText = (p.get("occupation") ?? "").trim().slice(0, MAX_TEXT);
+  const q = (p.get("q") ?? p.get("text") ?? "").trim().slice(0, SEARCH_TEXT_MAX);
+  const firmText = (p.get("firm") ?? "").trim().slice(0, SEARCH_TEXT_MAX);
+  const occText = (p.get("occupation") ?? "").trim().slice(0, SEARCH_TEXT_MAX);
   const title = (p.get("title") ?? "").trim().slice(0, 80);
   const state = (p.get("state") ?? "").trim().toUpperCase();
   const fy = (p.get("fy") ?? "").trim();
@@ -210,7 +204,7 @@ export async function planCaseSearch(
 
   const lead = chooseLead({
     ...(caseNumber ? { caseNumber } : {}),
-    ...(employer.length >= MIN_TEXT ? { employer } : {}),
+    ...(employer.length >= SEARCH_TEXT_MIN ? { employer } : {}),
     ...(firm ? { firmSlug: firm.key } : {}),
     ...(state ? { state } : {}),
     ...(occupation ? { socCode: occupation.key } : {}),

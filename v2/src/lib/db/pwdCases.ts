@@ -1,3 +1,4 @@
+import { PWD_VISA_CLASS } from "@/lib/changeProgram";
 import "server-only";
 import { makeFlagProgram } from "./flagCases";
 
@@ -60,11 +61,11 @@ export const pwd = makeFlagProgram({
   docKey: "pwd_live_summary",
   discoverySource: PWD_DISCOVERY_SOURCE,
   budgetPrefix: "pwd_discovery_budget_",
-  defaultVisaType: "PERM",
+  defaultVisaType: PWD_VISA_CLASS,
   // DOL's quarterly PW file: the determination itself, wage included.
   disclosureTable: "pwd_cases",
   disclosureDocKey: "flag_disclosure_summary_pw",
-  defaultVisaClass: "PERM",
+  defaultVisaClass: PWD_VISA_CLASS,
 });
 
 export const normalisePwdCaseNumber = pwd.normalise;

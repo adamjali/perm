@@ -39,13 +39,18 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
+from lib_recruitment import LEAD_BANDS, STEP_LABEL, case_papers, lead_band, step_starts, steps_of  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 from lib_db import (  # noqa: E402
     ET, Database, add_missing_columns, cell, et_date, insert_rows, record_run, rows_of,
     stamp_freshness, write_doc,
 )
 
-PAGE_FLOOR = 3          # mirrors MIN_TOTAL_FOR_PAGE in src/lib/entityPayload.ts
+# An entity gets facets from this many filings. Every entity has a page from one
+# (MIN_TOTAL_FOR_PAGE in src/lib/entityPayload.ts); a facet of one or two cases
+# would restate the cases themselves.
+FACET_FLOOR = 3
+LEAD_LABEL = {b["id"]: b["label"] for b in LEAD_BANDS}
 TOP_N = 6               # facet rows kept per entity per facet
 CHUNK = 400
 
@@ -732,7 +737,8 @@ def build_pending(db: Database, maps) -> list[dict]:
 
 def read_cases(db: Database, cache: str | None):
     cols = ["employer_name", "attorney_name", "soc_code", "soc_title", "status", "state",
-            "naics", "worksite_city"]
+            "naics", "worksite_city", "received_date", "paper1", "paper2", "job_order_start",
+            "ad1", "ad2", "recr_steps"]
     if cache:
         with open(cache) as f:
             for line in f:
@@ -810,6 +816,7 @@ def build_facets(db: Database, maps, cache) -> list[list]:
             row[1] += cert
             row[2] += den
 
+    paper_votes: dict[str, Counter] = defaultdict(Counter)
     n = 0
     for r in read_cases(db, cache):
         n += 1
@@ -832,7 +839,7 @@ def build_facets(db: Database, maps, cache) -> list[list]:
         # The occupation facet's key is the occupation's slug, not its SOC
         # code: it is a link target, and /perm-wages/[slug] is keyed on the
         # entity slug.
-        if e and e[1] >= PAGE_FLOOR:
+        if e and e[1] >= FACET_FLOOR:
             if o:
                 add("employer", e[0], "occupation", o[0], occ_label or code, cert, den)
             if state:
@@ -843,14 +850,31 @@ def build_facets(db: Database, maps, cache) -> list[list]:
                 add("employer", e[0], "city", ck, ck, cert, den)
             if naics:
                 add("employer", e[0], "industry", naics, naics, cert, den)
-        if a and a[1] >= PAGE_FLOOR:
+        if a and a[1] >= FACET_FLOOR:
             if e:
                 add("attorney", a[0], "employer", e[0], r["employer_name"], cert, den)
             if o:
                 add("attorney", a[0], "occupation", o[0], occ_label or code, cert, den)
             if state:
                 add("attorney", a[0], "state", state, state, cert, den)
-        if o and o[1] >= PAGE_FLOOR:
+        # Where and when it recruited (Form 9089 Section H, new-form cases): the
+        # newspapers, the additional steps, and how long before filing it began.
+        papers = case_papers(r)
+        for k, raw in papers.items():
+            paper_votes[k][raw] += 1
+        steps = steps_of(r.get("recr_steps"))
+        starts = step_starts(r)
+        lead = lead_band(r.get("received_date"), starts[0] if starts else None)
+        for kind, ent in (("employer", e), ("attorney", a), ("occupation", o)):
+            if not ent or ent[1] < FACET_FLOOR:
+                continue
+            for k, raw in papers.items():
+                add(kind, ent[0], "newspaper", k, raw, cert, den)
+            for step in steps:
+                add(kind, ent[0], "recruit_step", step, STEP_LABEL.get(step, step), cert, den)
+            if lead:
+                add(kind, ent[0], "recruit_lead", lead, lead, cert, den)
+        if o and o[1] >= FACET_FLOOR:
             if e:
                 add("occupation", o[0], "employer", e[0], r["employer_name"], cert, den)
             if state:
@@ -872,6 +896,10 @@ def build_facets(db: Database, maps, cache) -> list[list]:
                 label = labels.get(key, label)
             elif facet == "industry":
                 label = industry_label(key)
+            elif facet == "newspaper":
+                label = paper_votes[key].most_common(1)[0][0]
+            elif facet == "recruit_lead":
+                label = LEAD_LABEL.get(key, key)
             out.append([kind, slug, facet, pos, key, label, cnt, cert, den])
     log(f"  {len(out):,} facet rows")
     return out
