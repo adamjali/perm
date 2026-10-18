@@ -29,6 +29,8 @@ import { tableColumns } from "./tableColumns";
 import { ANNUAL_WAGE_SQL } from "@/lib/wageFormat";
 import { socGroup, socGroupClause } from "@/lib/socCode";
 import { programOf } from "@/lib/flagCaseNumber";
+import { fiscalYearSpan, shiftMonth } from "@convex/lib/months";
+import { LIKE_ESCAPE, likeContains } from "./like";
 
 /**
  * Every read the unified case search makes, and the index each one rides.
@@ -486,12 +488,14 @@ export type PermTable = "perm_cases" | "perm_cases_history";
 export const HISTORY_TABLE: PermTable = "perm_cases_history";
 
 /**
- * The first decision day `perm_cases` holds, FY2024's first day. Everything
- * decided before it is in `perm_cases_history` (FY2016 on) or nowhere, so a
- * date or fiscal-year filter that falls wholly on one side reads one table.
+ * The first fiscal year `perm_cases` holds. Everything decided before it is in
+ * `perm_cases_history` (FY2016 on) or nowhere, so a date or fiscal-year filter
+ * that falls wholly on one side reads one table. Its first decision day, and
+ * the history table's last, follow from it.
  */
-export const CURRENT_DECIDED_FROM = "2023-10-01";
 const CURRENT_FIRST_FY = 2024;
+export const CURRENT_DECIDED_FROM = `${fiscalYearSpan(CURRENT_FIRST_FY).from}-01`;
+export const HISTORY_DECIDED_LAST = `${fiscalYearSpan(CURRENT_FIRST_FY - 1).to}-30`;
 
 /**
  * The columns beyond the fifteen every published PERM row has always had.
@@ -642,7 +646,7 @@ export function extraNarrowing(
 export function fiscalYearMonths(fy: string | undefined): { from: string; to: string } | null {
   const n = Number(fy);
   if (!fy || !Number.isInteger(n) || n < 2000 || n > 2100) return null;
-  return { from: `${n - 1}-10`, to: `${n}-09` };
+  return fiscalYearSpan(n);
 }
 
 /** Whether a filter set can match anything in the current table, or in history. */
@@ -1581,19 +1585,13 @@ function stageNarrowing(narrow: UnifiedNarrow): { conds: string[]; params: (stri
   }
   if (narrow.to) {
     conds.push("c.filing_date < ?");
-    params.push(`${monthAfterYm(narrow.to)}-01`);
+    params.push(`${shiftMonth(narrow.to, 1)}-01`);
   }
   if (narrow.title) {
-    conds.push("c.job_title LIKE ? ESCAPE '\\'");
-    params.push(`%${narrow.title.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`);
+    conds.push(`c.job_title LIKE ? ${LIKE_ESCAPE}`);
+    params.push(likeContains(narrow.title));
   }
   return { conds, params };
-}
-
-function monthAfterYm(ym: string): string {
-  const y = Number(ym.slice(0, 4));
-  const m = Number(ym.slice(5, 7));
-  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
 }
 
 /**

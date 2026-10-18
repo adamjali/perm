@@ -20,7 +20,7 @@ import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import { Fragment } from "react";
 import Link from "next/link";
-import { hasOwnPage, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+import { hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { pendingSentence, sponsorSentence, whereTheyStand } from "@/lib/pendingSnippet";
@@ -144,7 +144,7 @@ function recentDay(iso: string): string {
 export const revalidate = 2592000;
 
 const KIND = "employer" as const;
-const BASE = "/perm-employers";
+const BASE = ENTITY_BASE.employer;
 
 interface Subject {
   slug: string;
@@ -783,7 +783,7 @@ export default async function EmployerPage({
   const topIndustry = facets.industry ? groupIndustries(facets.industry)[0] : undefined;
   const share = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its filings`;
   const facts: ProfileFact[] = ([
-    topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? `/perm-wages/${topOcc.key}` : undefined, note: share(topOcc.n) } : null,
+    topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? entityHref("occupation", topOcc.key) : undefined, note: share(topOcc.n) } : null,
     topCity
       ? { label: "Main worksite", value: topCity.label, note: share(topCity.n) }
       : topState
@@ -1030,7 +1030,7 @@ export default async function EmployerPage({
               <>
                 The employers filing the most PERM cases for{" "}
                 <Link
-                  href={`/perm-wages/${similar.occupation.slug}`}
+                  href={entityHref("occupation", similar.occupation.slug)}
                   className="link"
                 >
                   {similar.occupation.label}

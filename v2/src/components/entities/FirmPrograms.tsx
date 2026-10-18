@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { formatInt, formatShare } from "@/lib/format";
 import type { FirmProgramLine, FirmPrograms as FirmProgramsData } from "@/lib/db/firmPrograms";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * A law firm's H-1B, wage-request and H-2A, H-2B and CW-1 work, beside its
@@ -51,7 +52,7 @@ function Column({ label, noun, line }: { label: string; noun: string; line: Firm
                 {" "}
                 <li className="flex items-baseline gap-3 py-1.5 text-base">
                   {e.slug ? (
-                    <Link href={`/perm-employers/${e.slug}`} className="link min-w-0 truncate">
+                    <Link href={entityHref("employer", e.slug)} className="link min-w-0 truncate">
                       {e.name}
                     </Link>
                   ) : (

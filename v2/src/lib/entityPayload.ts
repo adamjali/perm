@@ -18,6 +18,17 @@ export function isEntityKind(v: string): v is EntityKind {
   return (ENTITY_KINDS as readonly string[]).includes(v);
 }
 
+/** Where each kind's pages live, and the one way a link to one is written. */
+export const ENTITY_BASE: Record<EntityKind, string> = {
+  employer: "/perm-employers",
+  attorney: "/perm-attorneys",
+  occupation: "/perm-wages",
+};
+
+export function entityHref(kind: EntityKind, slug: string): string {
+  return `${ENTITY_BASE[kind]}/${slug}`;
+}
+
 /** One row, as the app uses it. */
 export interface EntityRow {
   slug: string;

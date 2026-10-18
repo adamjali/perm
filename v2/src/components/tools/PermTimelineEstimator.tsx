@@ -64,6 +64,7 @@ import { formatInt } from "@/lib/format";
 import { trackEstimateShown } from "@/lib/funnelEvents";
 import { buttonVariants } from "@/components/ui/button";
 import { CaveatBox } from "@/components/ui/note";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
@@ -267,7 +268,7 @@ export function PermTimelineEstimator({
    * choice made elsewhere; the bare page is not.
    */
   const [filedOn, setFiledOn] = useState<string>(() =>
-    initialMonth && /^\d{4}-\d{2}$/.test(initialMonth) ? `${initialMonth}-15` : "",
+    initialMonth && ISO_MONTH_RE.test(initialMonth) ? `${initialMonth}-15` : "",
   );
 
   /** Nothing downstream may render an answer without one. */
@@ -323,7 +324,7 @@ export function PermTimelineEstimator({
       return;
     }
     const m = q.get("month");
-    if (m && /^\d{4}-\d{2}$/.test(m)) setFiledOn(`${m}-15`);
+    if (m && ISO_MONTH_RE.test(m)) setFiledOn(`${m}-15`);
     // No disable needed any more: this used to close over `options`, the
     // month list, and had to suppress the dependency warning. The field takes
     // any date, the list is gone, and the effect now closes over nothing but
@@ -527,7 +528,7 @@ export function PermTimelineEstimator({
     setCaseWarning(null);
     if (/^\d{4}-\d{2}-\d{2}$/.test(parsed.filingDate)) {
       setFiledOn(parsed.filingDate);
-    } else if (/^\d{4}-\d{2}$/.test(parsed.filingMonth)) {
+    } else if (ISO_MONTH_RE.test(parsed.filingMonth)) {
       setFiledOn(`${parsed.filingMonth}-15`);
     }
   }

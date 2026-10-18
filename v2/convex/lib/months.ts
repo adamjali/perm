@@ -3,6 +3,44 @@
  * emails and the backend all spell a month from the same list.
  */
 
+/** A month as every URL, form, table and query here writes it: `2026-03`, months 01 to 12 only. */
+export const ISO_MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+/**
+ * Shift a `YYYY-MM` by whole months, in integer arithmetic only. Never builds a
+ * Date: one made with `Date.UTC` and shown through a local-time formatter moves
+ * a month back everywhere west of UTC, which shipped a prevailing-wage estimate
+ * a month early until a test caught it.
+ */
+export function shiftMonth(month: string, delta: number): string {
+  return monthFromIndex(monthIndex(month) + delta);
+}
+
+/** A month as a whole number, so months subtract: `2026-01` less `2025-12` is 1. Reads any ISO date's month. */
+export function monthIndex(iso: string): number {
+  return Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) - 1;
+}
+
+/** The `YYYY-MM` a `monthIndex` stands for. */
+export function monthFromIndex(i: number): string {
+  const year = Math.floor(i / 12);
+  return `${year}-${String(i - year * 12 + 1).padStart(2, "0")}`;
+}
+
+/** The federal fiscal year starts in October: FY2026 runs October 2025 to September 2026. */
+export const FY_START_MONTH = 10;
+
+/** The federal fiscal year a `YYYY-MM` or an ISO date falls in. */
+export function fiscalYearOf(iso: string): number {
+  const year = Number(iso.slice(0, 4));
+  return Number(iso.slice(5, 7)) >= FY_START_MONTH ? year + 1 : year;
+}
+
+/** The months a fiscal year spans, first and last: FY2026 is 2025-10 to 2026-09. */
+export function fiscalYearSpan(fy: number): { from: string; to: string } {
+  return { from: shiftMonth(`${fy - 1}-${FY_START_MONTH}`, 0), to: shiftMonth(`${fy}-${FY_START_MONTH}`, -1) };
+}
+
 export const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",

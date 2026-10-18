@@ -21,7 +21,7 @@ import { isCurrentMethod, parseSupplyDivision, readMethods, readOurs, readRival,
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
 import { timingView, viewEstimate } from "@/lib/seasonalTiming";
 import { BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
-import { monthAfter, releaseEstimate } from "@/lib/bulletinReleaseEstimate";
+import { releaseEstimate } from "@/lib/bulletinReleaseEstimate";
 import { getSeasonalCheck, getSeasonalTiming } from "@/lib/db/seasonalTiming";
 import { exec, one, rows } from "@/lib/db/client";
 import { getPwdEstimatorData } from "@/lib/db/estimate";
@@ -32,6 +32,7 @@ import { getH2bGroupTiming } from "@/lib/db/h2bGroups";
 import { pickGroup } from "@/lib/h2bGroups";
 import { loadPermEstimateContext, estimatePermCase } from "@/lib/db/permEstimate";
 import { easternDay } from "@/lib/time";
+import { shiftMonth } from "@convex/lib/months";
 
 /**
  * The automatic scorecard: record a day's predictions, grade the ones DOL has
@@ -324,7 +325,7 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
 export async function predictBulletinRelease(recordedOn: string): Promise<NewPrediction[]> {
   const held = await one<{ m: string | null }>("SELECT MAX(bulletin_month) AS m FROM visa_bulletins").catch(() => null);
   if (!held?.m) return [];
-  const bulletin = monthAfter(String(held.m));
+  const bulletin = shiftMonth(String(held.m), 1);
   const est = releaseEstimate(bulletin, BULLETIN_FIRST_CAPTURES);
   if (!est || recordedOn > est.early) return [];
   return [

@@ -20,7 +20,7 @@
  * `scripts/measure_bulletin_captures.py`.
  */
 
-import { monthBefore } from "@/lib/bulletinNext";
+import { shiftMonth } from "@convex/lib/months";
 
 export interface FirstCapture {
   /** The bulletin, `YYYY-MM`. */
@@ -31,7 +31,7 @@ export interface FirstCapture {
 
 /** The day of the month before on which the bulletin was captured, or null when it wasn't captured in that month. */
 function dayInMonthBefore(c: FirstCapture): number | null {
-  return c.captured.slice(0, 7) === monthBefore(c.month) ? Number(c.captured.slice(8, 10)) : null;
+  return c.captured.slice(0, 7) === shiftMonth(c.month, -1) ? Number(c.captured.slice(8, 10)) : null;
 }
 
 /**

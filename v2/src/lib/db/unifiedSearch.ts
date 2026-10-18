@@ -34,6 +34,8 @@ import {
   type Lead,
   type SearchOrder,
 } from "@/lib/caseSearchPlan";
+import { CHANGE_PROGRAMS, type ChangeProgram } from "@/lib/changeProgram";
+import { compareNullsLast, type SortDir } from "@/lib/tableSort";
 
 /**
  * One search across every DOL filing this site holds.
@@ -72,16 +74,11 @@ import {
  * **One row per case.** A case can be in both halves of its program at once.
  */
 
-export type Program = "perm" | "pwd" | "lca" | "seasonal";
-export const PROGRAMS: readonly Program[] = ["perm", "pwd", "lca", "seasonal"];
-export function isProgram(v: string): v is Program {
-  return (PROGRAMS as readonly string[]).includes(v);
-}
 
 /** One row of the merged result, whatever program or half it came from. */
 export interface UnifiedCase {
   caseNumber: string;
-  program: Program;
+  program: ChangeProgram;
   /** "published" from DOL's quarterly files, "live" from the daily check. */
   half: "published" | "live";
   status: string;
@@ -139,7 +136,7 @@ export { SEARCH_ORDERS, isSearchOrder, type SearchOrder } from "@/lib/caseSearch
 export interface UnifiedSearchArgs {
   lead: Lead;
   narrow?: UnifiedNarrow;
-  programs?: readonly Program[];
+  programs?: readonly ChangeProgram[];
   limit?: number;
   order?: SearchOrder;
 }
@@ -237,7 +234,7 @@ const fromPermLive = (r: LiveCaseRow): UnifiedCase => ({
   days: null,
 });
 
-const fromFlagLive = (r: FlagCaseRow, program: Program): UnifiedCase => ({
+const fromFlagLive = (r: FlagCaseRow, program: ChangeProgram): UnifiedCase => ({
   caseNumber: r.caseNumber,
   program,
   half: "live",
@@ -274,7 +271,7 @@ function daysBetween(from: string | null, to: string | null): number | null {
   return Math.round((b - a) / MS_PER_DAY);
 }
 
-const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase => ({
+const fromFlagDisclosed = (r: FlagDisclosedRow, program: ChangeProgram): UnifiedCase => ({
   caseNumber: r.caseNumber,
   program,
   half: "published",
@@ -334,7 +331,7 @@ export interface UnifiedSearchResult {
    * the table describe the table. Counting the collected set instead would
    * print a number the reader cannot find on screen.
    */
-  counts: Record<Program, number>;
+  counts: Record<ChangeProgram, number>;
   /** More matched than are returned. */
   truncated: boolean;
   /**
@@ -484,7 +481,7 @@ export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSource
 const none = <T,>(): Promise<SliceResult<T>> => Promise.resolve({ rows: [], windowed: false });
 
 /** Each source in words, for the answer's `unread` list. */
-const SOURCE_WORDS: Record<Program, string> = {
+const SOURCE_WORDS: Record<ChangeProgram, string> = {
   perm: "PERM cases",
   pwd: "wage requests",
   lca: "H-1B LCAs",
@@ -506,7 +503,7 @@ export class SearchUnavailableError extends Error {
 function sourceReads() {
   const asked: string[] = [];
   const unread: string[] = [];
-  function read<T>(program: Program, half: "published" | "live", run: () => Promise<SliceResult<T>>) {
+  function read<T>(program: ChangeProgram, half: "published" | "live", run: () => Promise<SliceResult<T>>) {
     const label = `${half} ${SOURCE_WORDS[program]}`;
     asked.push(label);
     return run().catch((err: unknown) => {
@@ -541,7 +538,7 @@ function byNewestFiling(a: UnifiedCase, b: UnifiedCase): number {
  * qualifies.
  */
 async function addSeenDecided(rows: UnifiedCase[]): Promise<void> {
-  const byProgram = new Map<Program, string[]>();
+  const byProgram = new Map<ChangeProgram, string[]>();
   for (const r of rows) {
     if (r.half !== "live" || !r.isFinal || r.decidedOn) continue;
     const list = byProgram.get(r.program) ?? [];
@@ -571,15 +568,10 @@ export function compareBy(order: SearchOrder): (a: UnifiedCase, b: UnifiedCase) 
   const [key, dir] = order.split("-") as ["filed" | "decided" | "wage" | "days", "asc" | "desc"];
   const get = (r: UnifiedCase): string | number | null =>
     key === "filed" ? r.filedOn : key === "decided" ? r.decidedOn : key === "wage" ? comparableWage(r.wage, r.wageUnit) : r.days;
-  const sign = dir === "asc" ? 1 : -1;
+  const sign: SortDir = dir === "asc" ? 1 : -1;
   return (a, b) => {
-    const x = get(a);
-    const y = get(b);
-    if (x === null && y === null) return a.caseNumber < b.caseNumber ? 1 : -1;
-    if (x === null) return 1;
-    if (y === null) return -1;
-    if (x !== y) return (x < y ? -1 : 1) * sign;
-    return a.caseNumber < b.caseNumber ? 1 : -1;
+    // Missing values last; ties, and two missing, newest case number first.
+    return compareNullsLast(get(a), get(b), sign) || (a.caseNumber < b.caseNumber ? 1 : -1);
   };
 }
 
@@ -605,7 +597,7 @@ async function finish(
     (r) => ({ ...r, firmSlug: null }),
   );
   await addSeenDecided(rows);
-  const counts: Record<Program, number> = { perm: 0, pwd: 0, lca: 0, seasonal: 0 };
+  const counts: Record<ChangeProgram, number> = { perm: 0, pwd: 0, lca: 0, seasonal: 0 };
   for (const r of rows) counts[r.program] += 1;
   return {
     rows,
@@ -654,9 +646,9 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   const narrow: UnifiedNarrow =
     args.order === "decided-asc" ? { ...args.narrow, decidedOrder: "asc" } : (args.narrow ?? {});
   const skipped = skippedSources(narrow, args.lead);
-  const want = new Set<Program>(args.programs?.length ? args.programs : PROGRAMS);
+  const want = new Set<ChangeProgram>(args.programs?.length ? args.programs : CHANGE_PROGRAMS);
   const employer = args.lead.kind === "employer" ? args.lead.value : null;
-  const stage: { status: string; program: Program } | null =
+  const stage: { status: string; program: ChangeProgram } | null =
     args.lead.kind === "stage"
       ? { status: args.lead.value, program: args.lead.program }
       : (narrow.stage ?? null);
@@ -673,13 +665,13 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   const permOnly = permOnlyFilters(narrow);
   // And the other way: a prevailing wage source exists only in the LCA file.
   const lcaOnly = lcaOnlyFilters(narrow);
-  const wanted = (p: Program) =>
+  const wanted = (p: ChangeProgram) =>
     want.has(p) &&
     (stage === null || p === stage.program) &&
     (permOnly.length === 0 || p === "perm") &&
     (lcaOnly.length === 0 || p === "lca");
-  const askPublished = (p: Program) => wanted(p) && !skipped.published;
-  const askLive = (p: Program) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
+  const askPublished = (p: ChangeProgram) => wanted(p) && !skipped.published;
+  const askLive = (p: ChangeProgram) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
 
 
   const reads = sourceReads();

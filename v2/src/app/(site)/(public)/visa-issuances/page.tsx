@@ -27,9 +27,9 @@ import {
   employmentBy,
   issuanceSummary,
   monthName,
-  monthsBefore,
   type IssuanceGroup,
 } from "@/lib/db/visaIssuances";
+import { shiftMonth } from "@convex/lib/months";
 
 export const revalidate = 86400;
 
@@ -105,7 +105,7 @@ export default async function VisaIssuancesPage() {
       </div>
     );
   }
-  const yearFrom = monthsBefore(newest, 11);
+  const yearFrom = shiftMonth(newest, -11);
   const [byCountry, byPost] = await Promise.all([employmentBy("fsc", yearFrom, newest), employmentBy("post", yearFrom, newest)]);
   const sparkMonths = summary.months.slice(-SPARK_MONTHS);
   const latest = summary.byMonth[newest] ?? {};

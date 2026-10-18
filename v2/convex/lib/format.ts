@@ -37,6 +37,17 @@ export function formatShare(ratio: number): string {
   return formatPercent(ratio, ratio >= 0.1 ? 0 : 1);
 }
 
+/**
+ * `n` of `total` as a share that never rounds to a clean 0% or 100% the counts
+ * don't have: 1 of 5,172 is "under 0.1%", and 5,170 of 5,172 "over 99%".
+ */
+export function formatShareOf(n: number, total: number): string {
+  const text = formatShare(n / total);
+  if (n > 0 && /^0(\.0)?%$/.test(text)) return "under 0.1%";
+  if (n < total && /^100%$/.test(text)) return "over 99%";
+  return text;
+}
+
 /** 139026.51 to "$139,027". Whole dollars: a wage published to the cent is not a fact. */
 export function formatDollars(n: number): string {
   return `$${formatInt(Math.round(n))}`;

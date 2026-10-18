@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { MS_PER_DAY } from "@/lib/time";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { DataView, ScopeSelect } from "./DataView";
-import { MONTH_ABBR } from "@convex/lib/months";
+import { MONTH_ABBR, monthIndex } from "@convex/lib/months";
 
 /**
  * DOL's published queue position, drawn over our record of its snapshots.
@@ -143,12 +143,6 @@ export const PAD = { top: 18, right: 16, bottom: 40, left: 76 };
  */
 export const Y_LABEL_FONT_PX = 12;
 export const MONO_ADVANCE_EM = 0.6;
-
-/** Windows offered are per kind (KIND_COPY); only those the record can fill. */
-
-function monthIndex(month: string): number {
-  return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
-}
 
 function dayIndex(iso: string): number {
   return Date.parse(`${iso}T00:00:00Z`) / MS_PER_DAY;

@@ -35,6 +35,7 @@ import { DataView, ScopeSelect } from "@/components/tools/DataView";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { monthFromIndex, monthIndex } from "@convex/lib/months";
 
 export interface FrontierPoint {
   decisionMonth: string;
@@ -47,11 +48,6 @@ export interface FrontierProgressChartProps {
   /** The visitor's filing month, drawn as the target line. */
   filingMonth: string;
   className?: string;
-}
-
-/** `2026-08` to an absolute month index, for plotting only. */
-function monthIndex(month: string): number {
-  return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
 }
 
 // Plot geometry. Gutters exist so no label ever sits on the artwork.
@@ -103,8 +99,6 @@ function FrontierSvg({
     (v, i, a) => a.indexOf(v) === i,
   );
 
-  const toMonth = (idx: number) =>
-    `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
 
   // What the reader can interrogate: one point per month of determinations,
   // at the same coordinates the circles are drawn at, so the readout cannot
@@ -222,7 +216,7 @@ function FrontierSvg({
             fill="currentColor"
             fillOpacity="0.7"
           >
-            {formatMonthShort(toMonth(v))}
+            {formatMonthShort(monthFromIndex(v))}
           </text>
         ))}
 

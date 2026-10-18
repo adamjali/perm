@@ -128,12 +128,17 @@ export async function GET(request: Request): Promise<NextResponse> {
     ? Math.min(Math.max(1, Math.floor(raw)), DECIDED_ROW_CAP)
     : DECIDED_ROW_CAP;
 
-  const feed = await getDecidedFeed({
-    range: { from, to },
-    programs,
-    narrow,
-    cap,
-  });
+  let feed: Awaited<ReturnType<typeof getDecidedFeed>>;
+  try {
+    feed = await getDecidedFeed({ range: { from, to }, programs, narrow, cap });
+  } catch (err) {
+    // A read that failed is not a day DOL decided nothing: say so, and let the page offer a retry.
+    console.error("[decidedCases] failed", err);
+    return NextResponse.json(
+      { error: "DOL's decided cases couldn't be read just now. Try again in a minute." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   // A REFUSAL IS 400, NOT 200 WITH AN EMPTY LIST. `refused` means the request
   // was too expensive to serve, which is a different thing from a range that

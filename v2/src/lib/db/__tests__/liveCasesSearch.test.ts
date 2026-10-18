@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { likeContains, liveOrderBy, planLiveSql } from "../liveCases";
+import { likeContains } from "../like";
+import { liveOrderBy, planLiveSql } from "../liveCases";
 
 describe("planLiveSql with a search needle", () => {
   it("adds a contains-match over employer, case number and job title, after the month bounds", () => {

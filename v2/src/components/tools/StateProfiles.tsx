@@ -11,6 +11,7 @@ import { DataView } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type StatColumn } from "./FilterableStatTable";
 import { choiceVariants } from "@/components/ui/choice";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Concentration: the fact a choropleth structurally cannot show.
@@ -306,7 +307,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
               the entity page's own heading. */}
           {r.employerKey ? (
             <a
-              href={`/perm-employers/${r.employerKey}`}
+              href={entityHref("employer", r.employerKey)}
               className="link"
             >
               {r.employer}

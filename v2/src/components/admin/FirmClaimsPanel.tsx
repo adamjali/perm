@@ -18,6 +18,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { focusLabel } from "@/lib/firmProfile";
+import { entityHref } from "@/lib/entityPayload";
 
 export type FirmClaimsData = FunctionReturnType<typeof api.firmClaims.listForAdmin>;
 type Claim = FirmClaimsData["review"][number];
@@ -73,7 +74,7 @@ function ClaimCard({ c }: { c: Claim }) {
   return (
     <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={`/perm-attorneys/${c.slug}`} className="link font-heading text-lg">
+        <a href={entityHref("attorney", c.slug)} className="link font-heading text-lg">
           {c.firmName}
         </a>{" "}
         <span className="text-sm font-bold">{c.status.replace("_", " ")}</span>
@@ -190,7 +191,7 @@ function EditCard({ e }: { e: Edit }) {
   return (
     <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={`/perm-attorneys/${e.slug}`} className="link font-heading text-lg">
+        <a href={entityHref("attorney", e.slug)} className="link font-heading text-lg">
           {e.firmName}
         </a>{" "}
         <span className="text-sm font-bold">{e.before ? "changes" : "first profile"}</span>

@@ -17,12 +17,6 @@ describe("visa issuance reads", () => {
     one.mockResolvedValue(summary);
   });
 
-  it("counts months back across a year boundary", () => {
-    expect(iv.monthsBefore("2026-02", 11)).toBe("2025-03");
-    expect(iv.monthsBefore("2026-01", 1)).toBe("2025-12");
-    expect(iv.monthsBefore("2026-12", 0)).toBe("2026-12");
-  });
-
   it("names a month in words", () => {
     expect(iv.monthName("2026-02")).toBe("February 2026");
   });

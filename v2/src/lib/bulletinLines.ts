@@ -10,6 +10,7 @@
 
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { MS_PER_DAY } from "@/lib/time";
+import { fiscalYearOf } from "@convex/lib/months";
 
 /** Bulletin category code -> slug. A code with no entry gets no page. */
 const CATEGORY_SLUG: Record<string, string> = {
@@ -103,11 +104,6 @@ export interface FiscalYearMove {
   partial: boolean;
 }
 
-function fyOf(month: string): number {
-  const y = Number(month.slice(0, 4));
-  return Number(month.slice(5, 7)) >= 10 ? y + 1 : y;
-}
-
 /**
  * The line's history a fiscal year at a time, newest first: the October
  * bulletin against the September one, which is the year the State Department
@@ -116,7 +112,7 @@ function fyOf(month: string): number {
 export function fiscalYearMoves(states: ReadonlyArray<{ month: string; cutoff: Cutoff }>): FiscalYearMove[] {
   const byFy = new Map<number, Array<{ month: string; cutoff: Cutoff }>>();
   for (const s of states) {
-    const fy = fyOf(s.month);
+    const fy = fiscalYearOf(s.month);
     const list = byFy.get(fy) ?? [];
     list.push(s);
     byFy.set(fy, list);

@@ -41,6 +41,8 @@ import { slugify } from "@/lib/entitySlug";
 
 import { getCasesMeta } from "./publicData";
 import { one, rows } from "./client";
+import { ISO_MONTH_RE, shiftMonth } from "@convex/lib/months";
+import { LIKE_ESCAPE, likeContains } from "./like";
 
 export type DisclosureOutcome = "certified" | "denied" | "withdrawn";
 
@@ -449,14 +451,7 @@ export interface SearchCasesArgs {
  * The title uses LIKE with the wildcards escaped, because a stranger types
  * it; the months are a half-open range so December does not swallow 1 Jan.
  */
-export const SEARCH_MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 export const MAX_TITLE_FILTER = 80;
-
-function monthSuccessor(month: string): string {
-  const y = Number(month.slice(0, 4));
-  const m = Number(month.slice(5, 7));
-  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
-}
 
 /** Extra WHERE clauses for title and month filters, over the named date column. */
 export function narrowingClauses(
@@ -468,19 +463,18 @@ export function narrowingClauses(
   const title = (args.title ?? "").trim();
   if (title) {
     if (title.length > MAX_TITLE_FILTER) throw new Error("title filter too long");
-    const escaped = title.replace(/[\\%_]/g, (c) => `\\${c}`);
-    conds.push("job_title LIKE ? ESCAPE '\\'");
-    params.push(`%${escaped}%`);
+    conds.push(`job_title LIKE ? ${LIKE_ESCAPE}`);
+    params.push(likeContains(title));
   }
   if (args.from) {
-    if (!SEARCH_MONTH_RE.test(args.from)) throw new Error(`not a month: ${args.from}`);
+    if (!ISO_MONTH_RE.test(args.from)) throw new Error(`not a month: ${args.from}`);
     conds.push(`${dateColumn} >= ?`);
     params.push(`${args.from}-01`);
   }
   if (args.to) {
-    if (!SEARCH_MONTH_RE.test(args.to)) throw new Error(`not a month: ${args.to}`);
+    if (!ISO_MONTH_RE.test(args.to)) throw new Error(`not a month: ${args.to}`);
     conds.push(`${dateColumn} < ?`);
-    params.push(`${monthSuccessor(args.to)}-01`);
+    params.push(`${shiftMonth(args.to, 1)}-01`);
   }
   return { conds, params };
 }

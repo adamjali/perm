@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { choiceVariants } from "@/components/ui/choice";
+import { ISO_MONTH_RE } from "@convex/lib/months";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * The live half of the case corpus, browsable.
@@ -79,7 +81,7 @@ export function LiveCaseBrowser({
   // `?filed=YYYY-MM` is how the month pages hand a cohort to this list.
   const filedParam = params.get("filed");
   const initialMonth =
-    fixedMonth ?? (filedParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(filedParam) ? filedParam : "");
+    fixedMonth ?? (filedParam && ISO_MONTH_RE.test(filedParam) ? filedParam : "");
 
   const [kind, setKind] = useState<LiveKind>("all");
   const [month, setMonth] = useState<string>(initialMonth);
@@ -310,7 +312,7 @@ export function LiveCaseBrowser({
                     <td className="px-3 py-3">
                       {r.employerSlug ? (
                         <Link
-                          href={`/perm-employers/${r.employerSlug}`}
+                          href={entityHref("employer", r.employerSlug)}
                           className="link"
                         >
                           {r.employerName}

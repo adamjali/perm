@@ -34,6 +34,8 @@ const tableColumns = vi.fn(async (t: string) => columns[t] ?? new Set<string>())
 vi.mock("../tableColumns", () => ({ tableColumns }));
 
 const {
+  CURRENT_DECIDED_FROM,
+  HISTORY_DECIDED_LAST,
   OUTCOME_STATUSES,
   SLICE_CAP,
   flagLeadIndex,
@@ -1133,5 +1135,12 @@ describe("the prevailing wage source", () => {
       });
     }
     expect(rows).not.toHaveBeenCalled();
+  });
+});
+
+describe("the line between the current and the history table", () => {
+  it("falls between FY2023's last day and FY2024's first, from one fiscal year", () => {
+    expect(HISTORY_DECIDED_LAST).toBe("2023-09-30");
+    expect(CURRENT_DECIDED_FROM).toBe("2023-10-01");
   });
 });

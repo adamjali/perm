@@ -1,8 +1,8 @@
 import { BulletinRelease } from "@/components/bulletin/BulletinRelease";
 import { BULLETIN_CAPTURES_MEASURED, BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
-import { nextBulletinMonth } from "@/lib/bulletinNext";
 import { releaseByDay, releaseSummary } from "@/lib/bulletinRelease";
 import { getVisaBulletins } from "@/lib/db/publicData";
+import { shiftMonth } from "@convex/lib/months";
 
 /**
  * When the next visa bulletin usually comes out, for an article: the same
@@ -21,7 +21,7 @@ export async function BulletinReleaseNow() {
     <BulletinRelease
       rows={releaseByDay(BULLETIN_FIRST_CAPTURES)}
       summary={summary}
-      next={nextBulletinMonth(newest)}
+      next={shiftMonth(newest, 1)}
       measured={BULLETIN_CAPTURES_MEASURED}
     />
   );

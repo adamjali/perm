@@ -43,8 +43,6 @@ import { BulletinRelease } from "@/components/bulletin/BulletinRelease";
 import { BULLETIN_CAPTURES_MEASURED, BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
 import { releaseByDay, releaseSummary } from "@/lib/bulletinRelease";
 import {
-  monthBefore,
-  nextBulletinMonth,
   sameMonthMoves,
   summariseMoves,
   type SameMonthMove,
@@ -52,7 +50,7 @@ import {
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { MoreText } from "@/components/data/MoreText";
 import { ScrollBox } from "@/components/ui/scroll-box";
-import { MONTH_NAMES } from "@convex/lib/months";
+import { MONTH_NAMES, shiftMonth } from "@convex/lib/months";
 
 const TITLE = "The Next Visa Bulletin, From Every Past One";
 const DESCRIPTION =
@@ -199,7 +197,7 @@ export default async function VisaBulletinPage() {
   }
 
   const last = series[series.length - 1]!;
-  const next = nextBulletinMonth(last.bulletinMonth);
+  const next = shiftMonth(last.bulletinMonth, 1);
   const targetMonth = Number(next.slice(5, 7));
   const isFiscalStart = targetMonth === 10;
   // When a bulletin comes out, from each one's FIRST archive capture (a floor
@@ -331,7 +329,7 @@ export default async function VisaBulletinPage() {
             What the {monthLabel(last.bulletinMonth)} bulletin did
           </h2>{" "}
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
-            Final action dates, each measured against {monthLabel(monthBefore(last.bulletinMonth))}.
+            Final action dates, each measured against {monthLabel(shiftMonth(last.bulletinMonth, -1))}.
           </p>{" "}
           <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <li className="inline-flex items-center gap-1.5">

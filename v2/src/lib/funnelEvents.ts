@@ -6,6 +6,7 @@ import { analytics } from "@/lib/analytics";
 import type { AlertSignupKind } from "@/lib/alertSignupEvent";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt } from "@/lib/uscis/receipt";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 /**
  * The funnel's events: what people look up, how they search, whether they see
@@ -20,7 +21,6 @@ import { looksLikeReceipt } from "@/lib/uscis/receipt";
 
 export type QueryShape = "empty" | "case" | "case-undashed" | "receipt" | "month" | "name";
 
-const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** A case number typed without its dashes: G10026254230507, JOA30026271264525. */
 const UNDASHED = /^(?:[A-Z]|JOA)\d{14,}$/;
 
@@ -28,7 +28,7 @@ const UNDASHED = /^(?:[A-Z]|JOA)\d{14,}$/;
 export function queryShape(raw: string): QueryShape {
   const q = raw.trim();
   if (q.length === 0) return "empty";
-  if (MONTH.test(q)) return "month";
+  if (ISO_MONTH_RE.test(q)) return "month";
   if (looksLikeReceipt(q)) return "receipt";
   if (normaliseCaseNumber(q) !== null) return "case";
   // The site's rule wants the dashes; counting these shows how often people

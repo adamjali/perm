@@ -34,6 +34,7 @@
 
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * A global cap on the shared resource, not a per-caller one.
@@ -100,7 +101,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     // form. The pattern form invalidates all 12,240 published pages AND all
     // 21,495 live-only ones in one call, which is the catastrophic version of
     // this endpoint rather than a shortcut.
-    revalidatePath(`/perm-employers/${slug}`);
+    revalidatePath(entityHref("employer", slug));
   }
 
   return NextResponse.json({

@@ -11,8 +11,9 @@
  */
 
 import { formatDollars } from "@/lib/format";
+import type { ChangeProgram } from "@/lib/changeProgram";
 
-export type EmployerProgramKey = "perm" | "pwd" | "lca" | "seasonal";
+export type EmployerProgramKey = ChangeProgram;
 
 export interface ProgramLine {
   program: EmployerProgramKey;
@@ -37,12 +38,6 @@ export interface ProgramLine {
 /** Below this many wages a median is one or two offers, not a figure. */
 export const WAGE_FLOOR = 10;
 
-export const PROGRAM_LABEL: Record<EmployerProgramKey, string> = {
-  perm: "PERM (green card)",
-  pwd: "Prevailing wage requests",
-  lca: "H-1B labor condition applications",
-  seasonal: "H-2A, H-2B and CW-1 (seasonal work)",
-};
 
 /** The middle row of `n` rows sorted ascending, as an OFFSET. */
 export function medianOffset(n: number): number {

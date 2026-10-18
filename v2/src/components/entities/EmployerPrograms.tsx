@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { breakdownParts, holdSincePhrase, type EmployerStageRow } from "@/lib/employerStages";
 import { FinePrint } from "@/components/data/FinePrint";
-import { PROGRAM_LABEL, WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine } from "@/lib/employerPrograms";
+import { PROGRAM_TITLE } from "@/lib/changeProgram";
+import { WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine } from "@/lib/employerPrograms";
 import { formatDollars, formatInt, formatShare } from "@/lib/format";
 
 /**
@@ -60,7 +61,7 @@ export function EmployerPrograms({
             key={l.program}
             className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem] sm:items-baseline sm:gap-x-4"
           >
-            <dt className="text-base font-bold">{PROGRAM_LABEL[l.program]}</dt>{" "}
+            <dt className="text-base font-bold">{PROGRAM_TITLE[l.program]}</dt>{" "}
             <dd className="tabular-nums sm:text-right">
               <span className="font-heading text-lg font-bold">{formatInt(l.published)}</span>{" "}
               <span className="text-sm text-muted-foreground">published</span>

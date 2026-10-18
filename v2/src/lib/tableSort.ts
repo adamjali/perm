@@ -1,5 +1,5 @@
 /**
- * Sorting a table of DOL rows, shared because there are now two callers.
+ * Sorting a table of DOL rows: every sort on the site that meets a missing value.
  *
  * NULL SORTS LAST IN BOTH DIRECTIONS, and that is the only opinion in here.
  * A case with no wage is not the cheapest one, it is one DOL has not published
@@ -24,19 +24,26 @@ export interface SortState {
   dir: SortDir;
 }
 
+/**
+ * Two values in `dir` order, a missing one (null or empty) last whichever way.
+ * The missing check sits above the direction on purpose: negating a comparator
+ * that puts null after turns it into null FIRST on a descending sort, which is
+ * how "no data" once topped a column sorted by median days and read as the
+ * fastest employer on the page.
+ */
+export function compareNullsLast(x: string | number | null, y: string | number | null, dir: SortDir): number {
+  const xEmpty = x === null || x === "";
+  const yEmpty = y === null || y === "";
+  if (xEmpty) return yEmpty ? 0 : 1;
+  if (yEmpty) return -1;
+  if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+  return String(x).localeCompare(String(y)) * dir;
+}
+
 export function sortRows<T>(rows: T[], columns: SortColumn<T>[], state: SortState): T[] {
   const col = columns.find((c) => c.key === state.key);
   if (!col) return rows;
-  return [...rows].sort((a, b) => {
-    const x = col.get(a);
-    const y = col.get(b);
-    const xEmpty = x === null || x === "";
-    const yEmpty = y === null || y === "";
-    if (xEmpty) return yEmpty ? 0 : 1;
-    if (yEmpty) return -1;
-    if (typeof x === "number" && typeof y === "number") return (x - y) * state.dir;
-    return String(x).localeCompare(String(y)) * state.dir;
-  });
+  return [...rows].sort((a, b) => compareNullsLast(col.get(a), col.get(b), state.dir));
 }
 
 /**

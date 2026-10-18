@@ -37,6 +37,7 @@ import type { EntityPayload } from "@/lib/entityPayload";
 import { trackPaletteSelected } from "@/lib/funnelEvents";
 import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
+import { entityHref } from "@/lib/entityPayload";
 
 export interface SearchArticle {
   title: string;
@@ -224,7 +225,7 @@ export function SearchPalette({
               if (!h.slug) continue;
               rows.push({
                 name: h.name,
-                href: `/perm-employers/${h.slug}`,
+                href: entityHref("employer", h.slug),
                 total: h.cases,
                 kindLabel: "Employer, not published yet",
               });

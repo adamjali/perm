@@ -1,5 +1,6 @@
 import { differenceInCalendarMonths, parseISO } from 'date-fns';
-import { addMonths, monthStart, monthsBetween } from '../dates/monthUtils';
+import { monthStart, monthsBetween } from '../dates/monthUtils';
+import { shiftMonth } from '../../months';
 import { addBusinessDays, subtractBusinessDays } from '../dates/businessDays';
 import { isBusinessDay } from '../dates/holidays';
 import { boundRange, COLLAPSE_FRACTION, type MeasuredRangeRow } from './decisionPace';
@@ -126,7 +127,7 @@ export function estimatePwdQueue(input: PwdQueueInput): PwdQueueEstimate {
     const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
     // Months past the start of the as-of month: Sep 30 is 1.0, Sep 15 is 0.5.
     const into = day / daysInMonth + estimatedMonthsRemaining;
-    estimatedMonth = addMonths(asOfMonth, Math.max(0, Math.ceil(into - 1e-9) - 1));
+    estimatedMonth = shiftMonth(asOfMonth, Math.max(0, Math.ceil(into - 1e-9) - 1));
   } else {
     caveats.push(
       'How fast DOL clears the prevailing wage backlog is not something it publishes, and we will not guess at it. The count of requests ahead is exact; the wait it implies is not shown until the rate can be measured from DOL’s own figures over time.',

@@ -8,6 +8,7 @@ import type { StageCase } from "@/lib/db/rfi";
 import { formatInt } from "@/lib/format";
 import { MS_PER_DAY } from "@/lib/time";
 import { SITE_URL } from "@/lib/constants/site";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Every case at a review stage, browsable.
@@ -62,7 +63,7 @@ const COLUMNS: StatColumn<StageCase>[] = [
     sortValue: (r) => r.employer,
     render: (r) =>
       r.employer && r.employerSlug ? (
-        <Link href={`/perm-employers/${r.employerSlug}`} className="link">
+        <Link href={entityHref("employer", r.employerSlug)} className="link">
           {r.employer}
         </Link>
       ) : (

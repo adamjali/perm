@@ -6,6 +6,7 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import type { PendingLeader } from "@/lib/db/entityDetail";
 import { formatInt } from "@/lib/format";
 import { longDate } from "@convex/lib/months";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Who has the most cases waiting on DOL right now.
@@ -66,7 +67,7 @@ export function PendingLeaderboard({
               <div className="grid grid-cols-1 gap-x-4 gap-y-1 [&>*]:min-w-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)] sm:items-baseline">
                 <p className="text-sm font-bold leading-snug">
                   <Link
-                    href={`/perm-employers/${l.slug}`}
+                    href={entityHref("employer", l.slug)}
                     className="link"
                   >
                     {l.name}

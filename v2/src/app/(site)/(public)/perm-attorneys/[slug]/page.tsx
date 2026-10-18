@@ -18,7 +18,7 @@
 import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import Link from "next/link";
-import { hasOwnPage, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+import { hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
@@ -92,7 +92,7 @@ import { caseSearchHref } from "@/lib/caseSearchPlan";
 export const revalidate = 2592000;
 
 const KIND = "attorney" as const;
-const BASE = "/perm-attorneys";
+const BASE = ENTITY_BASE.attorney;
 
 interface Subject {
   slug: string;
@@ -313,9 +313,9 @@ export default async function AttorneyPage({
   const topClient = facets.employer?.[0];
   const facts: ProfileFact[] = ([
     topClient
-      ? { label: "Biggest client", value: topClient.label, href: topClient.key ? `/perm-employers/${topClient.key}` : undefined, note: share(topClient.n) }
+      ? { label: "Biggest client", value: topClient.label, href: topClient.key ? entityHref("employer", topClient.key) : undefined, note: share(topClient.n) }
       : null,
-    topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? `/perm-wages/${topOcc.key}` : undefined, note: share(topOcc.n) } : null,
+    topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? entityHref("occupation", topOcc.key) : undefined, note: share(topOcc.n) } : null,
     where ? { label: "Filed from", value: where, note: "The address on its filings" } : null,
   ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
 

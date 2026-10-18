@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { BulletinMonth } from "@/lib/perm";
 import {
   monthsToReach,
-  nextBulletinMonth,
   sameMonthMoves,
   summariseMoves,
   scenarioMonths,
@@ -23,13 +22,6 @@ const SERIES: BulletinMonth[] = [
   month("2025-10", { EB2: { india: "01OCT12", china: "01DEC20", worldwide: "01JAN24" } }),
   month("2026-09", { EB2: { india: "01FEB13", china: "01FEB21", worldwide: "C" } }),
 ];
-
-describe("nextBulletinMonth", () => {
-  it("rolls the calendar, including the year boundary", () => {
-    expect(nextBulletinMonth("2026-09")).toBe("2026-10");
-    expect(nextBulletinMonth("2026-12")).toBe("2027-01");
-  });
-});
 
 describe("sameMonthMoves", () => {
   it("lists every October in the series with the September before it", () => {

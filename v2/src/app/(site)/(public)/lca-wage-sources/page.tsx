@@ -10,6 +10,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getWageSources } from "@/lib/db/wageSources";
 import { splitYears } from "@/lib/wageSourceYears";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Where an H-1B's prevailing wage comes from. Under 20 CFR 655.731(a)(2) a
@@ -193,7 +194,7 @@ export default async function LcaWageSourcesPage() {
                   {" "}
                   <li className="flex items-baseline gap-3 py-2 text-base">
                     {e.slug ? (
-                      <Link href={`/perm-employers/${e.slug}`} className="link min-w-0 truncate">
+                      <Link href={entityHref("employer", e.slug)} className="link min-w-0 truncate">
                         {e.name}
                       </Link>
                     ) : (

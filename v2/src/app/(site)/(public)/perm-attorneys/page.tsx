@@ -27,6 +27,7 @@ import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
+import { entityHref } from "@/lib/entityPayload";
 const TITLE = "PERM Law Firms by Cases and Approval Rate";
 const DESCRIPTION =
   "Compare every immigration law firm filing PERM cases by cases filed, approval rate and processing time, from DOL's own disclosure data.";
@@ -90,7 +91,7 @@ export default async function PermAttorneysPage() {
                 {
                   label: "Files the most",
                   value: leader.name,
-                  ...(leader.slug ? { href: `/perm-attorneys/${leader.slug}` } : {}),
+                  ...(leader.slug ? { href: entityHref("attorney", leader.slug) } : {}),
                   note: `${formatInt(leader.total)} filings`,
                 },
               ]
@@ -133,7 +134,7 @@ export default async function PermAttorneysPage() {
                 {topTen.map((a) => (
                   <div
                     key={a.name}
-                    data-href={a.slug ? `/perm-attorneys/${a.slug}` : undefined}
+                    data-href={a.slug ? entityHref("attorney", a.slug) : undefined}
                     data-tip={[
                       a.name,
                       `#${a.rank} by filings`,

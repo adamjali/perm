@@ -4,7 +4,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import { GreenCardLine, formatYears, roundPeople } from "../GreenCardLine";
 import { lineSnapshot, twoLines } from "@/lib/__tests__/greenCardLine.fixture";
-import { estimateLine, monthIndex } from "@/lib/greenCardLine";
+import { estimateLine } from "@/lib/greenCardLine";
+import { monthIndex } from "@convex/lib/months";
 import { plausibleRange } from "@/lib/greenCardLineCompare";
 import { rangeText } from "../GreenCardLine";
 

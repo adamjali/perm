@@ -5,6 +5,7 @@ import { stageMeta } from "@/components/rfi/stageMeta";
 import { HOLD_STATUS, holdSincePhrase, longDate } from "@/lib/employerStages";
 import { getEmployerStages } from "@/lib/db/employerStages";
 import { formatInt, formatShare } from "@/lib/format";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * The on-hold guide's numbers, read live from the census the sweep writes.
@@ -82,7 +83,7 @@ export async function OnHoldNow() {
                 <Fragment key={e.slug ?? e.name}>
                   <li>
                     {e.slug ? (
-                      <Link href={`/perm-employers/${e.slug}`} className="link">
+                      <Link href={entityHref("employer", e.slug)} className="link">
                         {e.name}
                       </Link>
                     ) : (

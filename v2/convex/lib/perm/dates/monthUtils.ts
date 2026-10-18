@@ -1,4 +1,5 @@
 import { differenceInCalendarMonths, parseISO } from 'date-fns';
+import { ISO_MONTH_RE } from '../../months';
 
 /**
  * `YYYY-MM` month arithmetic.
@@ -13,13 +14,9 @@ import { differenceInCalendarMonths, parseISO } from 'date-fns';
  * copy of `MONTH_RE` and `monthStart`.
  */
 
-/** A zero-padded year and month, e.g. `2026-08`. */
-export const MONTH_PATTERN = /^\d{4}-\d{2}$/;
-
+/** A zero-padded year and month, e.g. `2026-08`, months 01 to 12. */
 export function isValidMonth(value: string): boolean {
-  if (!MONTH_PATTERN.test(value)) return false;
-  const month = Number(value.slice(5, 7));
-  return month >= 1 && month <= 12;
+  return ISO_MONTH_RE.test(value);
 }
 
 /**
@@ -55,18 +52,3 @@ export function monthsBetween(
   return differenceInCalendarMonths(monthStart(to, toField), monthStart(from, fromField));
 }
 
-/**
- * Shift a `YYYY-MM` by whole months, in integer arithmetic only.
- *
- * Deliberately never builds a Date. Constructing one with `Date.UTC` and
- * rendering it through a local-time formatter shifts the answer back a month
- * everywhere west of UTC, which shipped a prevailing-wage estimate one month
- * early until a test caught it.
- */
-export function addMonths(month: string, delta: number): string {
-  const year = Number(month.slice(0, 4));
-  const zeroBased = Number(month.slice(5, 7)) - 1 + delta;
-  const targetYear = year + Math.floor(zeroBased / 12);
-  const targetMonth = ((zeroBased % 12) + 12) % 12;
-  return `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}`;
-}

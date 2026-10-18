@@ -6,7 +6,7 @@ import { EmployerComparePicker } from "@/components/entities/EmployerComparePick
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { approvalRate } from "@/lib/entityPayload";
+import { approvalRate, entityHref } from "@/lib/entityPayload";
 import { wilsonInterval } from "@/lib/wageLadder";
 import { stateName } from "@/lib/usStateNames";
 import { entityFacets, entityPending, resolveEntity, type EntityFacets, type EntityPending, type ResolvedEntity } from "@/lib/db/entityDetail";
@@ -197,7 +197,7 @@ export default async function CompareEmployersPage({
                 {[left, right].map((s) => (
                   <Fragment key={s.entity.canonicalSlug}>
                     <th scope="col" className="px-4 py-3 text-left">
-                      <Link href={`/perm-employers/${s.entity.canonicalSlug}`} className="link font-heading text-base">
+                      <Link href={entityHref("employer", s.entity.canonicalSlug)} className="link font-heading text-base">
                         {s.entity.row.name}
                       </Link>{" "}
                     </th>

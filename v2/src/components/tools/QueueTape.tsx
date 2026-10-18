@@ -2,7 +2,7 @@ import { Fragment, type CSSProperties } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
-import { MONTH_ABBR, MONTH_NAMES } from "@convex/lib/months";
+import { MONTH_ABBR, MONTH_NAMES, shiftMonth } from "@convex/lib/months";
 
 /**
  * The queue, drawn as a measuring tape.
@@ -40,12 +40,6 @@ export interface QueueTapeProps {
   className?: string;
 }
 
-function addMonths(month: string, n: number): string {
-  const [y, m] = month.split("-").map(Number);
-  const total = (y ?? 0) * 12 + ((m ?? 1) - 1) + n;
-  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
-}
-
 function longLabel(month: string): string {
   const [y, m] = month.split("-").map(Number);
   return `${MONTH_NAMES[(m ?? 1) - 1]} ${y ?? 0}`;
@@ -78,7 +72,7 @@ export function QueueTape({
 }: QueueTapeProps) {
   const months: string[] = [];
   for (let i = -monthsBehind; i <= monthsAhead; i += 1) {
-    months.push(addMonths(frontierMonth, i));
+    months.push(shiftMonth(frontierMonth, i));
   }
 
   // BOTH FLAGS USED THE SAME `-top-7 left-1/2 -translate-x-1/2`, so when the

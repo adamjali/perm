@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { FinePrint } from "@/components/data/FinePrint";
-import { hasOwnPage, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+import { hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
@@ -80,7 +80,7 @@ import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 export const revalidate = 2592000;
 
 const KIND = "occupation" as const;
-const BASE = "/perm-wages";
+const BASE = ENTITY_BASE.occupation;
 /**
  * DOL leaves the job-title cell unusable on 15 of the 762 occupation rows and
  * prints "N/A". Those rows are real filings with real SOC codes, so the pages
@@ -283,7 +283,7 @@ export default async function OccupationPage({
   const shareOf = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its filings`;
   const facts: ProfileFact[] = ([
     topEmp
-      ? { label: "Biggest sponsor", value: topEmp.label, href: topEmp.key ? `/perm-employers/${topEmp.key}` : undefined, note: shareOf(topEmp.n) }
+      ? { label: "Biggest sponsor", value: topEmp.label, href: topEmp.key ? entityHref("employer", topEmp.key) : undefined, note: shareOf(topEmp.n) }
       : null,
     topState ? { label: "Busiest state", value: topState.label, note: shareOf(topState.n) } : null,
     group ? { label: "Major group", value: group, note: row.code ? `SOC ${row.code.trim().slice(0, 2)}` : undefined } : null,

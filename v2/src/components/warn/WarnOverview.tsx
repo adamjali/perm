@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { ChartTips } from "@/components/data/ChartTips";
 import { formatInt } from "@/lib/format";
 import type { WarnNotice } from "@/lib/db/warn";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * The notices matched to a sponsor, drawn two ways before the table: by the
@@ -109,7 +110,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                   className="grid grid-cols-[minmax(0,11rem)_minmax(0,1fr)_4.5rem] items-center gap-3 [&>*]:min-w-0"
                 >
                   <Link
-                    href={`/perm-employers/${s.slug}`}
+                    href={entityHref("employer", s.slug)}
                     className="link block truncate py-3 text-sm leading-5 sm:py-0"
                   >
                     {s.name}

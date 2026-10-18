@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { formatInt, formatShare } from "@/lib/format";
 import type { LcaCity } from "@/lib/db/lcaCities";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * A city's H-1B record beside its PERM one: how many LCAs name a worksite
@@ -28,8 +29,8 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
       </p>{" "}
       <div className="mt-5 grid grid-cols-1 gap-8 sm:grid-cols-2 [&>*]:min-w-0">
         {[
-          { label: "Employers", items: city.employers.map((e) => ({ key: e.slug ?? e.name, text: e.name, href: e.slug ? `/perm-employers/${e.slug}` : null, n: e.n })) },
-          { label: "Jobs", items: city.occupations.map((o) => ({ key: o.code, text: o.title, href: o.slug ? `/perm-wages/${o.slug}` : null, n: o.n })) },
+          { label: "Employers", items: city.employers.map((e) => ({ key: e.slug ?? e.name, text: e.name, href: e.slug ? entityHref("employer", e.slug) : null, n: e.n })) },
+          { label: "Jobs", items: city.occupations.map((o) => ({ key: o.code, text: o.title, href: o.slug ? entityHref("occupation", o.slug) : null, n: o.n })) },
         ].map((col) =>
           col.items.length ? (
             <div key={col.label}>

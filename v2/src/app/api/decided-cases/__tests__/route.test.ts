@@ -139,6 +139,14 @@ describe("a refusal is distinguishable from an empty range", () => {
     await expect(r.json()).resolves.toEqual({ error: "too wide" });
   });
 
+  it("503s with a reason when the records can't be read, never an empty day", async () => {
+    getDecidedFeed.mockRejectedValue(new Error("database query deadline"));
+    const r = await GET(get("from=2025-03-12"));
+    expect(r.status).toBe(503);
+    expect(r.headers.get("cache-control")).toBe("no-store");
+    await expect(r.json()).resolves.toMatchObject({ error: expect.stringMatching(/couldn't be read/) });
+  });
+
   it("200s on a valid range that simply holds nothing", async () => {
     getDecidedFeed.mockResolvedValue(feed({ cases: [] }));
     const r = await GET(get("from=2025-03-12"));

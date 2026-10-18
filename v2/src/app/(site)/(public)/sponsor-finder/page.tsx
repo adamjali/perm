@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
 import { ROW_LINK } from "@/components/entities/caseRows";
 import { findSponsors, resolveJob, type FinderRow, type JobPick } from "@/lib/db/sponsorFinder";
-import { MIN_DECIDED_FOR_MEDIAN, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+import { MIN_DECIDED_FOR_MEDIAN, MIN_DECIDED_FOR_RATE, entityHref } from "@/lib/entityPayload";
 import { formatApprovalRate, formatDollars, formatInt } from "@/lib/format";
 import { SECTOR_GROUPS } from "@/lib/naicsSectors";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -101,7 +101,7 @@ function employerNotes(r: FinderRow): string[] {
 function EmployerCell({ r, jobSlug }: { r: FinderRow; jobSlug: string | null }) {
   return (
     <>
-      <Link href={`/perm-employers/${r.slug}`} className={ROW_LINK}>
+      <Link href={entityHref("employer", r.slug)} className={ROW_LINK}>
         {r.name}
       </Link>{" "}
       {employerNotes(r).map((n) => (

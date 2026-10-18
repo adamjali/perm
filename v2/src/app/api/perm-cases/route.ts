@@ -4,7 +4,6 @@ import {
   DEFAULT_PAGE_ITEMS,
   MAX_SEARCH_RESULTS,
   MAX_TITLE_FILTER,
-  SEARCH_MONTH_RE,
   isDisclosureOutcome,
   listCases,
   lookupByCaseNumber,
@@ -16,12 +15,12 @@ import {
 } from "@/lib/db/cases";
 import {
   LIVE_DEFAULT_ITEMS,
-  MONTH_RE,
   isLiveKind,
   isLiveSort,
   listLiveCases,
 } from "@/lib/db/liveCases";
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 /**
  * The case browser's data, for a page with no ConvexProvider.
@@ -154,7 +153,7 @@ export async function GET(request: Request) {
     if (title.length > MAX_TITLE_FILTER) return bad("title filter too long");
     const from = p.get("from") ?? "";
     const to = p.get("to") ?? "";
-    if ((from && !SEARCH_MONTH_RE.test(from)) || (to && !SEARCH_MONTH_RE.test(to))) {
+    if ((from && !ISO_MONTH_RE.test(from)) || (to && !ISO_MONTH_RE.test(to))) {
       return bad("from and to must be YYYY-MM");
     }
     const narrow = {
@@ -196,7 +195,7 @@ export async function GET(request: Request) {
     const kind = p.get("kind") ?? "all";
     if (!isLiveKind(kind)) return bad("kind must be pending, decided or all");
     const month = p.get("month");
-    if (month && !MONTH_RE.test(month)) return bad("month must be YYYY-MM");
+    if (month && !ISO_MONTH_RE.test(month)) return bad("month must be YYYY-MM");
     const cursor = p.get("cursor");
     if (cursor && cursor.length > MAX_CURSOR) return bad("cursor too long");
     const order = p.get("order") === "oldest" ? "oldest" : "newest";

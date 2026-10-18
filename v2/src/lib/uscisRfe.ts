@@ -10,7 +10,7 @@
  * reading that means the same thing in every year.
  */
 
-import { MONTH_ABBR, MONTH_NAMES } from "@convex/lib/months";
+import { FY_START_MONTH, MONTH_ABBR, MONTH_NAMES } from "@convex/lib/months";
 
 /** One visa's month, as `scripts/ingest_uscis_rfe.py` stored it. */
 export interface RfeMonth {
@@ -58,7 +58,7 @@ export const FY_MONTHS = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 /** The calendar year a fiscal month falls in: October to December are the year before. */
 export function calendarYear(fy: number, month: number): number {
-  return month >= 10 ? fy - 1 : fy;
+  return month >= FY_START_MONTH ? fy - 1 : fy;
 }
 
 /** `2025-10` for October of FY2026. */

@@ -32,6 +32,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { formatInt, formatShare } from "@/lib/format";
 import { daysBetween } from "@/lib/time";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Employers by their PERM cases outside DOL's normal queue.
@@ -163,7 +164,7 @@ export default async function EmployersUnderReviewPage() {
             </span>{" "}
             <span className="min-w-0">
               {m.slug ? (
-                <Link href={`/perm-employers/${m.slug}`} className="link">
+                <Link href={entityHref("employer", m.slug)} className="link">
                   {m.name}
                 </Link>
               ) : (
@@ -214,8 +215,8 @@ export default async function EmployersUnderReviewPage() {
                 DOL publishes no reason with a status change. Held cases stay filed and wait outside the ordinary line.
               </p>{" "}
               <div className="mt-5 flex flex-wrap gap-3">
-                {followFirst ? (
-                  <Link href={`/perm-employers/${followFirst.slug}#follow`} className={BUTTON}>
+                {followFirst?.slug ? (
+                  <Link href={`${entityHref("employer", followFirst.slug)}#follow`} className={BUTTON}>
                     {`Follow ${followFirst.name}`}
                   </Link>
                 ) : null}{" "}
@@ -249,7 +250,7 @@ export default async function EmployersUnderReviewPage() {
                       <span className="min-w-0">
                         <span className="block font-bold [overflow-wrap:anywhere]">
                           {r.slug ? (
-                            <Link href={`/perm-employers/${r.slug}`} className="link">
+                            <Link href={entityHref("employer", r.slug)} className="link">
                               {r.name}
                             </Link>
                           ) : (
@@ -349,7 +350,7 @@ export default async function EmployersUnderReviewPage() {
                   <span className="font-mono text-sm text-muted-foreground">{i + 1}</span>{" "}
                   <span>
                     {r.slug ? (
-                      <Link href={`/perm-employers/${r.slug}`} className="link">
+                      <Link href={entityHref("employer", r.slug)} className="link">
                         {r.name}
                       </Link>
                     ) : (
@@ -375,7 +376,7 @@ export default async function EmployersUnderReviewPage() {
                     <span className="font-heading text-lg font-bold tabular-nums">{formatShare(r.share)}</span>{" "}
                     {r.slug ? (
                       <Link
-                        href={`/perm-employers/${r.slug}#follow`}
+                        href={`${entityHref("employer", r.slug)}#follow`}
                         className="link inline-flex min-h-[44px] items-center text-sm"
                         aria-label={`Follow ${r.name}`}
                       >
@@ -405,7 +406,7 @@ export default async function EmployersUnderReviewPage() {
                   <span className="font-mono text-sm text-muted-foreground">{i + 1}</span>{" "}
                   <span>
                     {r.slug ? (
-                      <Link href={`/perm-employers/${r.slug}`} className="link">
+                      <Link href={entityHref("employer", r.slug)} className="link">
                         {r.name}
                       </Link>
                     ) : (
@@ -427,7 +428,7 @@ export default async function EmployersUnderReviewPage() {
                     <span className="font-heading text-lg font-bold tabular-nums">{formatShare(r.share)}</span>{" "}
                     {r.slug ? (
                       <Link
-                        href={`/perm-employers/${r.slug}#follow`}
+                        href={`${entityHref("employer", r.slug)}#follow`}
                         className="link inline-flex min-h-[44px] items-center text-sm"
                         aria-label={`Follow ${r.name}`}
                       >

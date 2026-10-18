@@ -32,6 +32,7 @@ import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
+import { entityHref } from "@/lib/entityPayload";
 const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
   "Every company that filed a PERM case: volume, approval rate and median days per sponsor, searchable and sortable, from DOL's own disclosure files.";
@@ -89,10 +90,10 @@ export default async function PermEmployersPage() {
   const figures: IndexFigure[] = [
     { label: "Sponsors in DOL's published files", value: formatInt(employerCount), note: "Each with its own page" },
     ...(busiest
-      ? [{ label: "Files the most", value: busiest.name, href: `/perm-employers/${busiest.slug}`, note: `${formatInt(busiest.total)} filings` }]
+      ? [{ label: "Files the most", value: busiest.name, href: entityHref("employer", busiest.slug), note: `${formatInt(busiest.total)} filings` }]
       : []),
     ...(mostWaiting
-      ? [{ label: "Most cases waiting now", value: mostWaiting.name, href: `/perm-employers/${mostWaiting.slug}`, note: `${formatInt(mostWaiting.pending)} waiting on DOL` }]
+      ? [{ label: "Most cases waiting now", value: mostWaiting.name, href: entityHref("employer", mostWaiting.slug), note: `${formatInt(mostWaiting.pending)} waiting on DOL` }]
       : []),
   ];
   const chapters: ChapterItem[] = [
@@ -154,7 +155,7 @@ export default async function PermEmployersPage() {
                 {topTen.map((e) => (
                   <div
                     key={e.name}
-                    data-href={`/perm-employers/${e.slug}`}
+                    data-href={entityHref("employer", e.slug)}
                     data-tip={[
                       e.name,
                       `#${e.rank} by filings`,
@@ -167,7 +168,7 @@ export default async function PermEmployersPage() {
                       .join("\n")}
                     className="grid grid-cols-1 pb-2 sm:grid-cols-[minmax(0,220px)_1fr] sm:items-center sm:gap-3 sm:pb-0">
                     <Link
-                      href={`/perm-employers/${e.slug}`}
+                      href={entityHref("employer", e.slug)}
                       className="link flex min-h-[44px] min-w-0 items-center text-sm"
                     >
                       <span className="truncate">{e.name}</span>

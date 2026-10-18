@@ -60,10 +60,24 @@ wage, timing, tables, duplicates). Each item below is checked off only when its 
 - [x] Sectors: `SECTOR_GROUPS` (src/lib/naicsSectors.ts) for the sponsor finder, the salary
       explorer and the case search; Python names sectors from the Census file (`sector_of`).
 - [x] Search text limits (src/lib/search/limits.ts): the 120-character cap in nine places.
-- [ ] Still to merge: status vocabularies, program tables and labels, entity base paths, month
-      regex and next-month helpers, fiscal-year helpers, the current/history boundary, LIKE
-      escaping, nulls-last sorting, duplicate filter lists, duplicate column lists, the 8 inline
-      `toFixed(1)}%` shares.
+- [x] Program lists and names: `CHANGE_PROGRAMS`, `PROGRAM_LABEL` (short) and `PROGRAM_TITLE`
+      (long) in src/lib/changeProgram.ts; the case search's and the employer page's copies removed.
+- [x] Months (convex/lib/months.ts): `ISO_MONTH_RE` (16 copies), `shiftMonth`, `monthIndex`,
+      `monthFromIndex` (10 copies of next, previous and index-to-month), `fiscalYearOf`,
+      `fiscalYearSpan`, `FY_START_MONTH` (4 copies). The current/history line is one fiscal year
+      (`CURRENT_FIRST_FY`), with both boundary days derived.
+- [x] Entity links: `ENTITY_BASE` and `entityHref` (src/lib/entityPayload.ts); 59 hand-built links
+      and four kind-to-path tables.
+- [x] `likeContains` and `LIKE_ESCAPE` (src/lib/db/like.ts), four copies.
+- [x] `compareNullsLast` (src/lib/tableSort.ts), three copies.
+- [x] One column reader (`tableColumns`, by `PRAGMA table_info`, which the read-only token allows):
+      the decided feed's copy took any error for "no columns".
+- [x] The duplicate PERM-only filter list (`OLD_FORM_FILTERS`, unused) removed.
+- [x] Found on the way: the decided-day feed answered a failed read as an empty day; it answers
+      503 with a reason now.
+- [x] Checked, left: status sets are one per program, each held to the Python ingest by a test.
+      The remaining one-decimal `%` strings format figures already in percent (tooltips, intervals),
+      not ratios, so `formatPercent` doesn't fit them as is.
 
 ## Recruitment (attorney-facing)
 

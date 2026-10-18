@@ -13,6 +13,7 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 /**
  * One localized guide: the page body every `/zh`, `/es`, `/pt-br`, `/ko` and
@@ -46,7 +47,7 @@ const card = "bg-tint p-5 border-2 shadow-hard border-border";
 const h2 = "scroll-mt-24 font-heading text-2xl font-bold sm:text-3xl";
 
 function month(ym: string | null, intl: string): string | null {
-  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
+  if (!ym || !ISO_MONTH_RE.test(ym)) return null;
   return new Date(`${ym}-15T12:00:00Z`).toLocaleDateString(intl, { year: "numeric", month: "long", timeZone: "UTC" });
 }
 

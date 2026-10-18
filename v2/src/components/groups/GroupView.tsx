@@ -8,6 +8,7 @@ import { YearBars, type YearCount } from "@/components/entities/YearBars";
 import { GROUP_PATH, type GroupDetail, type GroupKind, type GroupSummary } from "@/lib/db/groups";
 import { stateName } from "@/lib/usStateNames";
 import { formatInt } from "@/lib/format";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * One city's, industry's or country's PERM record: the headline counts, the
@@ -110,7 +111,7 @@ export function GroupView({
             key: e.slug ?? `name:${e.name}`,
             n: e.n,
             label: e.slug ? (
-              <Link href={`/perm-employers/${e.slug}`} className="link">
+              <Link href={entityHref("employer", e.slug)} className="link">
                 {e.name}
               </Link>
             ) : (
@@ -130,7 +131,7 @@ export function GroupView({
             key: o.code,
             n: o.n,
             label: o.slug ? (
-              <Link href={`/perm-wages/${o.slug}`} className="link">
+              <Link href={entityHref("occupation", o.slug)} className="link">
                 {occName(o)}
               </Link>
             ) : (

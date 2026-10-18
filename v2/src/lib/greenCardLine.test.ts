@@ -7,9 +7,9 @@ import {
   approvedByPriorityDate,
   estimateLine,
   lagMonths,
-  monthIndex,
   pendingByPriorityDate,
 } from "./greenCardLine";
+import { monthIndex } from "@convex/lib/months";
 import { lineSnapshot } from "./__tests__/greenCardLine.fixture";
 
 /** The shared made-up EB-3 Other Workers line; see the fixture for its numbers. */

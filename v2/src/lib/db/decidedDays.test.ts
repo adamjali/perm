@@ -59,7 +59,8 @@ vi.mock("./flagCases", () => ({
   slugRange: (s: string) => (s.length >= 2 ? { lo: s, hi: `${s}~` } : null),
 }));
 
-import { getCoverageWindows, getDecidedFeed, resetColumnCache } from "./decidedDays";
+import { getCoverageWindows, getDecidedFeed } from "./decidedDays";
+import { forgetTableColumns } from "./tableColumns";
 
 function row(n: string, date: string, extra: Record<string, unknown> = {}) {
   return { case_number: n, status: "certified", case_status: "Certified", decision_date: date, ...extra };
@@ -67,7 +68,7 @@ function row(n: string, date: string, extra: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   asked.length = 0;
-  resetColumnCache();
+  forgetTableColumns();
   for (const k of Object.keys(DATA)) delete DATA[k];
 });
 

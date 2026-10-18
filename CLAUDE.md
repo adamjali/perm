@@ -893,3 +893,8 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   newspapers, additional steps and lead time (`RecruitmentMix`), and `build_recruitment.py` writes
   `perm_docs['recruitment_summary']` after each disclosure load.
 - **The sponsor guide states the no-fee rule** (20 CFR 656.12(b)) and USCIS's scam warning; there is no job board.
+- **Month and fiscal-year arithmetic lives in `convex/lib/months.ts`** (`ISO_MONTH_RE`, `shiftMonth`, `monthIndex`,
+  `fiscalYearOf`, `fiscalYearSpan`); entity links in `entityHref`; LIKE in `src/lib/db/like.ts`; missing values sort
+  last through `compareNullsLast`; a table's columns come from `tableColumns` (`PRAGMA table_info`). Don't write a copy.
+- **The decided-day feed answers 503 with a reason when a read fails**; it had shown a failed read as a day DOL
+  decided nothing.

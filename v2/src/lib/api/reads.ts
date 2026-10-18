@@ -26,6 +26,7 @@ import { lca } from "@/lib/db/lcaCases";
 import { lookupSeasonalPosting, lookupSeasonalRecord, seasonal } from "@/lib/db/seasonalCases";
 import { estimatePermCase, loadPermEstimateContext } from "@/lib/db/permEstimate";
 import { rfiEnteredOn } from "@/lib/db/rfiClock";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 export interface ApiMeta {
   /** Who published the underlying records. */
@@ -284,10 +285,9 @@ export async function readQueue(): Promise<ReadResult<Record<string, unknown>>> 
 /* Visa bulletin                                                       */
 /* ------------------------------------------------------------------ */
 
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export async function readBulletin(month?: string | null): Promise<ReadResult<Record<string, unknown>>> {
-  if (month && !MONTH_RE.test(month)) return bad("month must look like 2026-10.");
+  if (month && !ISO_MONTH_RE.test(month)) return bad("month must look like 2026-10.");
   const cols = "bulletin_month, source_url, final_action, dates_for_filing, family_final_action, family_dates_for_filing";
   const r = month
     ? await one<Record<string, string | null>>(`SELECT ${cols} FROM visa_bulletins WHERE bulletin_month = ?`, [month])

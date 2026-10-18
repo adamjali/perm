@@ -2,7 +2,7 @@
 
 import { PendingLink } from "@/components/ui/pending-link";
 
-import { approvalRate, type EntityRow, MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
+import { approvalRate, MIN_DECIDED_FOR_RATE, entityHref, type EntityRow } from "@/lib/entityPayload";
 import { socMajorGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
 import { formatApprovalRate, formatDollars, formatInt } from "@/lib/format";
@@ -233,7 +233,7 @@ export const OCCUPATION_COLUMNS: StatColumn<EntityRow>[] = [
     render: (e) => (
       <span className="font-bold">
         <PendingLink
-          href={`/perm-wages/${e.slug}`}
+          href={entityHref("occupation", e.slug)}
           className="link"
         >
           {e.name}

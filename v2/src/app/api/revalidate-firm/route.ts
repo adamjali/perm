@@ -13,6 +13,7 @@
 
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { entityHref } from "@/lib/entityPayload";
 
 /** Firm slugs as `slugify` makes them, with room to spare. */
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
@@ -28,6 +29,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (typeof slug !== "string" || slug.length > 120 || !SLUG_RE.test(slug)) {
     return NextResponse.json({ error: "Expected { slug: string }" }, { status: 400 });
   }
-  revalidatePath(`/perm-attorneys/${slug}`);
-  return NextResponse.json({ revalidated: `/perm-attorneys/${slug}`, now: Date.now() });
+  revalidatePath(entityHref("attorney", slug));
+  return NextResponse.json({ revalidated: entityHref("attorney", slug), now: Date.now() });
 }

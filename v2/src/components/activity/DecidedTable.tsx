@@ -12,6 +12,7 @@ import type { DecidedCase } from "@/lib/db/decidedDays";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { comparableWage } from "@/lib/wageFormat";
 import { CaseStatusChip } from "@/components/ui/badge";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * A wage, with the period DOL quoted it per.
@@ -120,7 +121,7 @@ export function DecidedTable({
               <td className="px-3 py-3 font-bold">
                 {c.employerSlug ? (
                   <Link
-                    href={`/perm-employers/${c.employerSlug}`}
+                    href={entityHref("employer", c.employerSlug)}
                     className="link"
                   >
                     {c.employerName}
@@ -146,7 +147,7 @@ export function DecidedTable({
               <td className="px-3 py-3 text-sm text-soft">
                 {c.attorneySlug ? (
                   <Link
-                    href={`/perm-attorneys/${c.attorneySlug}`}
+                    href={entityHref("attorney", c.attorneySlug)}
                     className="link"
                   >
                     {c.attorneyName}

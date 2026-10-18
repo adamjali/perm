@@ -4,14 +4,14 @@ import Link from "next/link";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { FinePrint } from "@/components/data/FinePrint";
-import { shownApprovalRate } from "@/lib/entityPayload";
+import { entityHref, shownApprovalRate } from "@/lib/entityPayload";
 import { BarRows } from "@/components/data/BarRows";
 import { LEAD_BANDS } from "@/lib/recruitmentRecord";
 import { PlateLabel } from "@/components/tools/FigurePlate";
 import type { FacetRow } from "@/lib/db/entityDetail";
 import { stateName } from "@/lib/usStateNames";
 import { cn } from "@/lib/utils";
-import { formatApprovalRate, formatInt, formatShare } from "@/lib/format";
+import { formatApprovalRate, formatInt, formatShareOf } from "@/lib/format";
 
 /**
  * What an entity's filings are actually MADE OF.
@@ -120,7 +120,7 @@ export function OccupationMix({
       <p className="font-heading text-2xl font-bold leading-tight">
         {lead.key ? (
           <Link
-            href={`/perm-wages/${lead.key}`}
+            href={entityHref("occupation", lead.key)}
             className="link"
           >
             {lead.label}
@@ -146,7 +146,7 @@ export function OccupationMix({
                 <span className="min-w-0 flex-1 text-sm font-bold leading-snug">
                   {r.key ? (
                     <Link
-                      href={`/perm-wages/${r.key}`}
+                      href={entityHref("occupation", r.key)}
                       className="link"
                     >
                       {r.label}
@@ -461,7 +461,7 @@ export function RecruitmentMix({
       {steps.length ? (
         <Shell
           title="Additional steps it used"
-          note={`The steps a professional job needs beyond the job order and the ads, by share of the ${formatInt(recorded)} cases whose record shows when recruiting began.`}
+          note="The steps a professional job needs beyond the job order and the ads, by the number of cases that name each."
         >
           <BarRows
             label="Additional recruitment steps"
@@ -469,7 +469,7 @@ export function RecruitmentMix({
               key: r.key ?? r.label,
               label: r.label,
               value: r.n,
-              text: recorded > 0 ? formatShare(r.n / recorded) : formatInt(r.n),
+              text: `${formatInt(r.n)} cases`,
             }))}
           />
         </Shell>
@@ -485,7 +485,7 @@ export function RecruitmentMix({
               key: b.id,
               label: b.label,
               value: byBand.get(b.id) ?? 0,
-              text: formatShare((byBand.get(b.id) ?? 0) / recorded),
+              text: formatShareOf(byBand.get(b.id) ?? 0, recorded),
             }))}
           />
         </Shell>

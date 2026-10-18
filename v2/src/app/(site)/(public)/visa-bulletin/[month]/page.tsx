@@ -43,12 +43,12 @@ import { bulletinMonthDate } from "@/lib/pageDates";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 // A bulletin changes once a month; a day bounds any re-parse far below that.
 export const revalidate = 86400;
 export const dynamicParams = true;
 
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PRERENDERED_MONTHS = 24;
 /** The first bulletin with EB-5 set-aside rows; mirrors SET_ASIDES_FROM in the ingest. */
 const SET_ASIDES_FROM = "2022-05";
@@ -106,7 +106,7 @@ export async function generateMetadata({
   params: Promise<{ month: string }>;
 }): Promise<Metadata> {
   const { month } = await params;
-  if (!MONTH_RE.test(month)) notFound();
+  if (!ISO_MONTH_RE.test(month)) notFound();
   const loaded = await load(month);
   if (!loaded) notFound();
   const label = bulletinMonthLabel(month);
@@ -307,7 +307,7 @@ export default async function BulletinMonthPage({
   params: Promise<{ month: string }>;
 }) {
   const { month } = await params;
-  if (!MONTH_RE.test(month)) notFound();
+  if (!ISO_MONTH_RE.test(month)) notFound();
   const loaded = await load(month);
   if (!loaded) notFound();
   const { current, prev, prevMonth, nextMonth, newestMonth, sourceUrl } = loaded;

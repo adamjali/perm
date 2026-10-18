@@ -28,17 +28,15 @@ import { searchStageFromSlug } from "@/lib/searchStages";
 import { nameCandidates, occupationChoices } from "@/lib/db/nameSuggest";
 import type { UnifiedNarrow } from "@/lib/db/caseSearchReads";
 import {
-  PROGRAMS,
   UNIFIED_MAX,
-  isProgram,
   isSearchOrder,
-  type Program,
   type SearchOrder,
   type UnifiedSearchArgs,
 } from "@/lib/db/unifiedSearch";
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
+import { CHANGE_PROGRAMS, isChangeProgram, type ChangeProgram } from "@/lib/changeProgram";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const STATE_RE = /^[A-Z]{2}$/;
 const FY_RE = /^\d{4}$/;
 // Ahead of any comparison work: `v.string()`-scale input reaches a route
@@ -52,7 +50,7 @@ const MAX_WAGE = 100_000_000;
 function month(p: URLSearchParams, key: string): { ok: true; value: string } | { ok: false } {
   const raw = (p.get(key) ?? "").trim();
   if (!raw) return { ok: true, value: "" };
-  return MONTH_RE.test(raw) ? { ok: true, value: raw } : { ok: false };
+  return ISO_MONTH_RE.test(raw) ? { ok: true, value: raw } : { ok: false };
 }
 
 /**
@@ -186,7 +184,7 @@ export async function planCaseSearch(
   // parameter is a filter, and a typo that returns "no results for that
   // filter" is easier to understand than a 400 on a search that half worked.
   const asked = (p.get("programs") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-  const programs: Program[] = asked.length ? asked.filter(isProgram) : [...PROGRAMS];
+  const programs: ChangeProgram[] = asked.length ? asked.filter(isChangeProgram) : [...CHANGE_PROGRAMS];
 
   const maxLimit = Math.min(opts.maxLimit ?? UNIFIED_MAX, UNIFIED_MAX);
   const rawLimit = Number(p.get("limit") ?? maxLimit);

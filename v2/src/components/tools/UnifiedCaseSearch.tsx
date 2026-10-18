@@ -44,7 +44,8 @@ import {
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
-import type { Program, UnifiedCase } from "@/lib/db/unifiedSearch";
+import type { UnifiedCase } from "@/lib/db/unifiedSearch";
+import { CHANGE_PROGRAMS, PROGRAM_LABEL, isChangeProgram, type ChangeProgram } from "@/lib/changeProgram";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/db/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
@@ -55,6 +56,8 @@ import { seasonalForm } from "@/lib/seasonalForms";
 import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";
 import { CaseStatusChip } from "@/components/ui/badge";
+import { ISO_MONTH_RE } from "@convex/lib/months";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -102,29 +105,21 @@ import { CaseStatusChip } from "@/components/ui/badge";
  * both, and the answer names the filters that narrowed it to one program.
  */
 
-const PROGRAM_LABEL: Record<Program, string> = {
-  perm: "PERM",
-  pwd: "Wage request",
-  lca: "H-1B LCA",
-  seasonal: "H-2A, H-2B, CW-1",
-};
 
 /** A row's program, naming the seasonal form ("H-2A job order") where the number says which. */
-function rowProgramLabel(r: { program: Program; caseNumber: string }): string {
+function rowProgramLabel(r: { program: ChangeProgram; caseNumber: string }): string {
   return (r.program === "seasonal" ? seasonalForm(r.caseNumber)?.label : undefined) ?? PROGRAM_LABEL[r.program];
 }
 
-const PROGRAM_BLURB: Record<Program, string> = {
+const PROGRAM_BLURB: Record<ChangeProgram, string> = {
   perm: "The labor certification itself (ETA-9089).",
   pwd: "The wage DOL sets before the PERM (ETA-9141).",
   lca: "The H-1B labor condition application (ETA-9035).",
   seasonal: "Seasonal and CNMI work: H-2A, H-2B and CW-1 applications, wage requests and job orders, live and from DOL's quarterly files.",
 };
 
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** A typed NAICS code. A sector range comes only from the list. */
 const NAICS_CODE_RE = /^\d{2,6}$/;
-const ALL_PROGRAMS: Program[] = ["perm", "pwd", "lca", "seasonal"];
 const WORKER_KEYS: CaseFieldKey[] = ["citizenship", "birthCountry", "visaClass", "education", "jobEducation"];
 /** The route's parameter for each worker and job field. */
 const WORKER_PARAM: Record<CaseFieldKey, string> = {
@@ -194,7 +189,7 @@ const COLUMNS: SortColumn<UnifiedCase>[] = [
 
 interface SearchResponse {
   rows: UnifiedCase[];
-  counts: Record<Program, number>;
+  counts: Record<ChangeProgram, number>;
   truncated: boolean;
   capped: boolean;
   windowed: boolean;
@@ -346,7 +341,7 @@ function PhoneRow({ r }: { r: UnifiedCase }) {
       </div>{" "}
       <p className="text-base">
         {r.employerSlug && r.program === "perm" ? (
-          <Link href={`/perm-employers/${r.employerSlug}`} className="link">
+          <Link href={entityHref("employer", r.employerSlug)} className="link">
             {r.employerName ?? "Employer not given"}
           </Link>
         ) : (
@@ -384,7 +379,7 @@ const NO_LEAD_SHORT = "Search by employer, case number, law firm, state or occup
  * number per program, each with the way a status reads. Serials end in zeros
  * so none can be taken for somebody's actual case.
  */
-const GHOST_ROWS: { program: Program; number: string; open: boolean }[] = [
+const GHOST_ROWS: { program: ChangeProgram; number: string; open: boolean }[] = [
   { program: "perm", number: "G-100-26201-000000", open: true },
   { program: "pwd", number: "P-100-26140-000000", open: false },
   { program: "lca", number: "I-200-26188-000000", open: false },
@@ -489,7 +484,7 @@ export function UnifiedCaseSearch({
   // from the stage pages, `?occupation=` from an occupation's.
   const params = useUrlSearchParams();
   const param = (k: string) => (params.get(k) ?? "").trim();
-  const month = (k: string) => (MONTH_RE.test(param(k)) ? param(k) : "");
+  const month = (k: string) => (ISO_MONTH_RE.test(param(k)) ? param(k) : "");
   const known = <T extends string, D>(k: string, ok: (v: string) => v is T, fallback: D): T | D => {
     const v = param(k);
     return ok(v) ? v : fallback;
@@ -498,7 +493,7 @@ export function UnifiedCaseSearch({
   const stageOptions = useMemo(() => searchStages(), []);
   const initialStage = stageOptions.some((o) => o.slug === param("stage")) ? param("stage") : "";
   const initialNaics = param("naics");
-  const initialPrograms = param("programs").split(",").filter((x): x is Program => (ALL_PROGRAMS as string[]).includes(x));
+  const initialPrograms = param("programs").split(",").filter(isChangeProgram);
   const uid = useId();
 
   // The lead fields.
@@ -517,7 +512,7 @@ export function UnifiedCaseSearch({
   const [fyInput, setFyInput] = useState(param("fy"));
   const [wMinInput, setWMinInput] = useState(param("wmin"));
   const [wMaxInput, setWMaxInput] = useState(param("wmax"));
-  const [programs, setPrograms] = useState<Program[]>(initialPrograms.length ? initialPrograms : ALL_PROGRAMS);
+  const [programs, setPrograms] = useState<ChangeProgram[]>(initialPrograms.length ? initialPrograms : [...CHANGE_PROGRAMS]);
   const [stageInput, setStageInput] = useState<string>(initialStage);
   // The worker, job and industry fields. A sector comes from the list; any other code was typed.
   const [industryInput, setIndustryInput] = useState(industries.some((o) => o.code === initialNaics) ? initialNaics : "");
@@ -628,7 +623,7 @@ export function UnifiedCaseSearch({
   const [expanded, setExpanded] = useState<{ key: string; n: number } | null>(null);
   const visible = Math.min(expanded && expanded.key === pageKey ? expanded.n : PAGE_ROWS, shown.length);
 
-  const toggleProgram = (p: Program) => {
+  const toggleProgram = (p: ChangeProgram) => {
     setPrograms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
   };
 
@@ -644,15 +639,15 @@ export function UnifiedCaseSearch({
     if (occValue) s.set("occupation", occValue);
     if (outcome && outcomes.includes(outcome)) s.set("outcome", outcome);
     if (titleInput.trim()) s.set("title", titleInput.trim());
-    if (MONTH_RE.test(fromInput)) s.set("from", fromInput);
-    if (MONTH_RE.test(toInput)) s.set("to", toInput);
-    if (MONTH_RE.test(dFromInput)) s.set("dfrom", dFromInput);
-    if (MONTH_RE.test(dToInput)) s.set("dto", dToInput);
+    if (ISO_MONTH_RE.test(fromInput)) s.set("from", fromInput);
+    if (ISO_MONTH_RE.test(toInput)) s.set("to", toInput);
+    if (ISO_MONTH_RE.test(dFromInput)) s.set("dfrom", dFromInput);
+    if (ISO_MONTH_RE.test(dToInput)) s.set("dto", dToInput);
     if (fyInput) s.set("fy", fyInput);
     if (stageInput && can.stage.on) s.set("stage", stageInput);
     if (wMinInput.trim()) s.set("wmin", wMinInput.trim());
     if (wMaxInput.trim()) s.set("wmax", wMaxInput.trim());
-    if (programs.length && programs.length < ALL_PROGRAMS.length) {
+    if (programs.length && programs.length < CHANGE_PROGRAMS.length) {
       s.set("programs", programs.join(","));
     }
     // A typed code wins over the sector list; a malformed one is named in the
@@ -717,7 +712,7 @@ export function UnifiedCaseSearch({
     [outcome, stageInput, titleInput.trim(), fromInput, toInput, fyInput, dFromInput, dToInput, wMinInput.trim(), wMaxInput.trim()].filter(
       Boolean,
     ).length +
-    (programs.length < ALL_PROGRAMS.length ? 1 : 0) +
+    (programs.length < CHANGE_PROGRAMS.length ? 1 : 0) +
     (orderInput !== "filed-desc" ? 1 : 0);
   const placeCount = [industryInput || naicsInput.trim(), cityInput.trim(), ...WORKER_KEYS.map((k) => worker[k].trim())].filter(
     Boolean,
@@ -729,7 +724,7 @@ export function UnifiedCaseSearch({
   /**
    * Date boxes holding something that is not a month.
    *
-   * `buildParams` only sets a date when `MONTH_RE` matches, so anything else
+   * `buildParams` only sets a date when `ISO_MONTH_RE` matches, so anything else
    * is discarded without a word - and on Firefox, where `input type="month"`
    * is still a plain text box, typing a date the way a person writes one is
    * the NORMAL outcome, not an edge case. A filter that vanishes in silence is
@@ -743,7 +738,7 @@ export function UnifiedCaseSearch({
       ["Decided to", dToInput],
     ] as const
   )
-    .filter(([, v]) => v.trim() !== "" && !MONTH_RE.test(v))
+    .filter(([, v]) => v.trim() !== "" && !ISO_MONTH_RE.test(v))
     .map(([label]) => label);
 
   /** Worker, job and industry boxes holding something the search would refuse. */
@@ -1010,7 +1005,7 @@ export function UnifiedCaseSearch({
                      read from `caniuse-lite` in this repo rather than from
                      memory), so it falls back to Text state - with no picker,
                      no format hint, and nothing to say what is expected. The
-                     value is then matched against MONTH_RE and silently
+                     value is then matched against ISO_MONTH_RE and silently
                      dropped if it does not fit, which is the worst of both:
                      the reader types "March 2026", presses Search, and the
                      filter quietly does not exist. The placeholder and the
@@ -1038,7 +1033,7 @@ export function UnifiedCaseSearch({
                      read from `caniuse-lite` in this repo rather than from
                      memory), so it falls back to Text state - with no picker,
                      no format hint, and nothing to say what is expected. The
-                     value is then matched against MONTH_RE and silently
+                     value is then matched against ISO_MONTH_RE and silently
                      dropped if it does not fit, which is the worst of both:
                      the reader types "March 2026", presses Search, and the
                      filter quietly does not exist. The placeholder and the
@@ -1087,7 +1082,7 @@ export function UnifiedCaseSearch({
                      read from `caniuse-lite` in this repo rather than from
                      memory), so it falls back to Text state - with no picker,
                      no format hint, and nothing to say what is expected. The
-                     value is then matched against MONTH_RE and silently
+                     value is then matched against ISO_MONTH_RE and silently
                      dropped if it does not fit, which is the worst of both:
                      the reader types "March 2026", presses Search, and the
                      filter quietly does not exist. The placeholder and the
@@ -1115,7 +1110,7 @@ export function UnifiedCaseSearch({
                      read from `caniuse-lite` in this repo rather than from
                      memory), so it falls back to Text state - with no picker,
                      no format hint, and nothing to say what is expected. The
-                     value is then matched against MONTH_RE and silently
+                     value is then matched against ISO_MONTH_RE and silently
                      dropped if it does not fit, which is the worst of both:
                      the reader types "March 2026", presses Search, and the
                      filter quietly does not exist. The placeholder and the
@@ -1172,7 +1167,7 @@ export function UnifiedCaseSearch({
             <div className="mt-4">
               <span className="mb-2 block text-sm font-bold">{FILTER_LABEL.programs}</span>{" "}
               <div className="flex flex-wrap gap-2">
-                {ALL_PROGRAMS.map((p) => (
+                {CHANGE_PROGRAMS.map((p) => (
                   <Fragment key={p}>
                     <button
                       type="button"
@@ -1651,7 +1646,7 @@ export function UnifiedCaseSearch({
                   bare number here would read as this employer's whole record
                   when it is the newest slice of it. */}
               Shown:{" "}
-              {ALL_PROGRAMS.filter((p) => data.counts[p] > 0)
+              {CHANGE_PROGRAMS.filter((p) => data.counts[p] > 0)
                 .map((p) => `${formatInt(data.counts[p])} ${PROGRAM_LABEL[p]}`)
                 .join(" · ")}
             </p>{" "}
@@ -1711,7 +1706,7 @@ export function UnifiedCaseSearch({
                     <td className="px-3 py-3 text-sm">
                       {r.employerSlug && r.program === "perm" ? (
                         <Link
-                          href={`/perm-employers/${r.employerSlug}`}
+                          href={entityHref("employer", r.employerSlug)}
                           className="link"
                         >
                           {r.employerName ?? "—"}
@@ -1729,7 +1724,7 @@ export function UnifiedCaseSearch({
                     <td className="px-3 py-3 text-sm">
                       {r.firmSlug && r.firmName ? (
                         <Link
-                          href={`/perm-attorneys/${r.firmSlug}`}
+                          href={entityHref("attorney", r.firmSlug)}
                           className="link"
                         >
                           {r.firmName}

@@ -12,8 +12,8 @@
  * Plain module, pure functions.
  */
 
-import { monthBefore } from "@/lib/bulletinNext";
 import { releaseByDay, type FirstCapture } from "@/lib/bulletinRelease";
+import { shiftMonth } from "@convex/lib/months";
 
 export interface ReleaseEstimate {
   /** The bulletin, `YYYY-MM`. */
@@ -26,13 +26,6 @@ export interface ReleaseEstimate {
 
 const MIN_MONTHS = 6;
 
-/** The month after `ym`. */
-export function monthAfter(ym: string): string {
-  const [y, m] = ym.split("-").map(Number) as [number, number];
-  const next = m === 12 ? [y + 1, 1] : [y, m + 1];
-  return `${next[0]}-${String(next[1]).padStart(2, "0")}`;
-}
-
 export function releaseEstimate(bulletin: string, captures: readonly FirstCapture[]): ReleaseEstimate | null {
   const rows = releaseByDay(captures);
   const of = rows[30]?.of ?? 0;
@@ -40,7 +33,7 @@ export function releaseEstimate(bulletin: string, captures: readonly FirstCaptur
   const by = (share: number) => rows.find((r) => r.captured >= share * r.of)?.day ?? null;
   const [d25, d50, d75] = [by(0.25), by(0.5), by(0.75)];
   if (d25 === null || d50 === null || d75 === null) return null;
-  const month = monthBefore(bulletin);
+  const month = shiftMonth(bulletin, -1);
   const [y, m] = month.split("-").map(Number) as [number, number];
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const day = (d: number) => `${month}-${String(Math.min(d, last)).padStart(2, "0")}`;

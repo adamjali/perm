@@ -16,11 +16,11 @@ import { rows } from "./client";
  * Asking first turns an absent column into NULL in the row and "no match" for
  * a filter on it, and an absent table into a half that contributes nothing.
  *
- * `SELECT * ... LIMIT 1`, not `PRAGMA table_info`: production reads through a
- * READ-ONLY token, and a plain SELECT is the one statement shape certain to be
- * allowed there. It costs one row read, once per cache window per instance.
- * An empty table answers with no row and so no column names, which reads as
- * "unknown"; every caller treats unknown as "assume nothing beyond the base".
+ * `PRAGMA table_info`, which the site's read-only token is allowed (checked on
+ * production, Oct 18 2026): it names an empty table's columns too, which a
+ * sample row couldn't, and answers no rows, not an error, for a table that
+ * doesn't exist. Every reader that asks whether a column has arrived uses this
+ * one (the decided-cases feed had its own, which took any error for "none").
  *
  * A failed read is not cached: a transient error must not hide a table for the
  * next ten minutes. And only "no such table" answers an empty set; any other
@@ -36,11 +36,10 @@ export function tableColumns(table: string): Promise<Set<string>> {
   if (!/^[a-z_]+$/.test(table)) throw new Error(`not a table name: ${table}`);
   const hit = cache.get(table);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.cols;
-  const cols = rows<Record<string, unknown>>(`SELECT * FROM ${table} LIMIT 1`)
-    .then((r) => new Set(r[0] ? Object.keys(r[0]) : []))
+  const cols = rows<{ name: string }>(`PRAGMA table_info(${table})`)
+    .then((r) => new Set(r.map((c) => String(c.name))))
     .catch((err: unknown) => {
       cache.delete(table);
-      if (/no such table/i.test(String(err instanceof Error ? err.message : err))) return new Set<string>();
       throw err;
     });
   cache.set(table, { at: Date.now(), cols });

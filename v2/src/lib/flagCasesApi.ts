@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import type { FlagProgram, SearchFlagArgs } from "@/lib/db/flagCases";
 import { FLAG_DEFAULT_ITEMS, isFlagKind } from "@/lib/db/flagCases";
-import { MAX_TITLE_FILTER, SEARCH_MONTH_RE } from "@/lib/db/cases";
+import { MAX_TITLE_FILTER } from "@/lib/db/cases";
 import { isUnsettledMiss } from "@/lib/dolMiss";
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 /**
  * The GET handler for a FLAG program's cases (`/api/pwd-cases`,
@@ -52,7 +53,7 @@ export function makeFlagCasesHandler(program: FlagProgram) {
     if (title.length > MAX_TITLE_FILTER) return bad("title filter too long");
     const from = p.get("from") ?? "";
     const to = p.get("to") ?? "";
-    if ((from && !SEARCH_MONTH_RE.test(from)) || (to && !SEARCH_MONTH_RE.test(to))) {
+    if ((from && !ISO_MONTH_RE.test(from)) || (to && !ISO_MONTH_RE.test(to))) {
       return bad("from and to must be YYYY-MM");
     }
     const visa = p.get("visa") === "all" ? "all" : "default";
@@ -81,7 +82,7 @@ export function makeFlagCasesHandler(program: FlagProgram) {
     const kind = p.get("kind") ?? "all";
     if (!isFlagKind(kind)) return bad("kind must be pending, decided or all");
     const month = p.get("month");
-    if (month && !SEARCH_MONTH_RE.test(month)) return bad("month must be YYYY-MM");
+    if (month && !ISO_MONTH_RE.test(month)) return bad("month must be YYYY-MM");
     const cursor = p.get("cursor");
     if (cursor && cursor.length > MAX_CURSOR) return bad("cursor too long");
     const order = p.get("order") === "oldest" ? "oldest" : "newest";

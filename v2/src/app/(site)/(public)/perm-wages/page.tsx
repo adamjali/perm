@@ -43,6 +43,7 @@ import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatDollars } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
+import { entityHref } from "@/lib/entityPayload";
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
   "What PERM cases pay: the full wage ladder by occupation, with volume and approval rates, from DOL's own disclosure files.";
@@ -215,7 +216,7 @@ export default async function PermWagesPage() {
                 ladders={ladders}
                 href={(l) => {
                   const slug = slugByCode.get(l.key);
-                  return slug ? `/perm-wages/${slug}` : null;
+                  return slug ? entityHref("occupation", slug) : null;
                 }}
               />
             </FigurePlate>

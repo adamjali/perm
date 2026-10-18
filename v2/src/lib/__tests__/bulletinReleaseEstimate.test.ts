@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { monthAfter, releaseEstimate } from "../bulletinReleaseEstimate";
+import { releaseEstimate } from "../bulletinReleaseEstimate";
 
 describe("releaseEstimate", () => {
   // Eight bulletins first captured on the 4th, 8th, 10th, 12th, 14th, 16th,
@@ -23,8 +23,4 @@ describe("releaseEstimate", () => {
     expect(releaseEstimate("2026-11", captures.slice(0, 5))).toBeNull();
   });
 
-  it("steps across a year", () => {
-    expect(monthAfter("2026-12")).toBe("2027-01");
-    expect(monthAfter("2026-10")).toBe("2026-11");
-  });
 });

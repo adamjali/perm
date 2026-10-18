@@ -21,6 +21,7 @@ import {
 
 import { socGroup } from "@/lib/socCode";
 import { PayBands, type PayBand } from "./PayBands";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * The occupation outside PERM: what O*NET says the job is and takes, what BLS
@@ -313,7 +314,7 @@ export async function OccupationReference({
                 return (
                   <span key={r.code}>
                     {slug ? (
-                      <Link href={`/perm-wages/${slug}`} className="link">
+                      <Link href={entityHref("occupation", slug)} className="link">
                         {r.title}
                       </Link>
                     ) : (

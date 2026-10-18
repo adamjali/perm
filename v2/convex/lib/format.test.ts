@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDollars, formatInt, formatPercent, formatShare } from "./format";
+import { formatDollars, formatInt, formatPercent, formatShare, formatShareOf } from "./format";
 
 describe("formatInt", () => {
   it("groups digits the US way", () => {
@@ -37,5 +37,15 @@ describe("formatDollars", () => {
   it("rounds to whole dollars and groups digits", () => {
     expect(formatDollars(139_026.51)).toBe("$139,027");
     expect(formatDollars(65)).toBe("$65");
+  });
+});
+
+describe("formatShareOf", () => {
+  it("never rounds to a clean 0% or 100% the counts don't have", () => {
+    expect(formatShareOf(1, 5172)).toBe("under 0.1%");
+    expect(formatShareOf(5170, 5172)).toBe("over 99%");
+    expect(formatShareOf(0, 5172)).toBe("0.0%");
+    expect(formatShareOf(5172, 5172)).toBe("100%");
+    expect(formatShareOf(1737, 5172)).toBe("34%");
   });
 });

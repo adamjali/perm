@@ -39,6 +39,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { monthDay } from "@convex/lib/months";
 import { cn } from "@/lib/utils";
 import { CaveatBox } from "@/components/ui/note";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -60,7 +61,6 @@ import { CaveatBox } from "@/components/ui/note";
  * product exists on the correct side of.
  */
 
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export async function generateMetadata({
   params,
@@ -74,7 +74,7 @@ export async function generateMetadata({
   // notFound() can never change the status. The backlog read dedupes with
   // the page's own (getLiveCensus is React-cached), so this costs no extra
   // query.
-  if (!MONTH_RE.test(month)) notFound();
+  if (!ISO_MONTH_RE.test(month)) notFound();
   const peek = await getMonthBacklog(month);
   if (!peek || peek.total === 0) notFound();
   const label = formatMonth(month) ?? month;
@@ -125,7 +125,7 @@ export default async function CohortPage({
   const { month } = await params;
   // Shape-checked before the query: the month goes into SQL, and a route
   // segment is caller input however ordinary it looks.
-  if (!MONTH_RE.test(month)) notFound();
+  if (!ISO_MONTH_RE.test(month)) notFound();
 
   // `getEstimatorData` is heavier than this page strictly needs: it also
   // hydrates the entity heads for the timeline calculator, and only DOL's

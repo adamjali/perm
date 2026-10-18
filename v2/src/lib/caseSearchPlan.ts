@@ -191,19 +191,7 @@ export function isWageSource(v: string): v is WageSourceKey {
   return Object.prototype.hasOwnProperty.call(WAGE_SOURCES, v);
 }
 
-/**
- * The filters DOL fills only on cases filed on its OLD ETA-9089 (the worker's
- * details moved to an appendix of the form in use since mid-2023, which DOL
- * does not publish). Said on the page next to the controls.
- */
-export const OLD_FORM_FILTERS: readonly FilterKey[] = [
-  "citizenship",
-  "birthCountry",
-  "visaClass",
-  "education",
-  "jobEducation",
-];
-
+/** What the page says beside the PERM-only controls: why most cases leave them blank. */
 export const OLD_FORM_NOTE =
   "DOL publishes the worker's citizenship, education and visa for cases filed on its old form " +
   "(decided through FY2024); the form in use since mid-2023 doesn't carry them.";

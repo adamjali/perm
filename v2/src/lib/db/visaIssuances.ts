@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { one, rows } from "./client";
+import { shiftMonth } from "@convex/lib/months";
 
 /**
  * The State Department's monthly immigrant visa issuances, as loaded by
@@ -74,13 +75,6 @@ export async function countryByMonth(group: string, from: string): Promise<{ mon
   return got.map((r) => ({ month: r.month, category: r.category, n: Number(r.n) }));
 }
 
-/** YYYY-MM a number of months before `month`. */
-export function monthsBefore(month: string, n: number): string {
-  const [y, m] = month.split("-").map(Number) as [number, number];
-  const t = y * 12 + (m - 1) - n;
-  return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}`;
-}
-
 /** "February 2026". */
 export function monthName(month: string): string {
   const [y, m] = month.split("-").map(Number) as [number, number];
@@ -127,7 +121,7 @@ export async function lineIssuance(bulletinCategory: string, country: string): P
   const summary = await issuanceSummary();
   if (!category || !summary?.newest) return null;
   const to = summary.newest;
-  const from = monthsBefore(to, 11);
+  const from = shiftMonth(to, -11);
   const got = await rows<{ group_key: string; month: string; n: unknown }>(
     `SELECT group_key, month, sum(n) AS n FROM visa_issuances
      WHERE dim = 'fsc' AND category = ? AND month >= ? AND month <= ? GROUP BY group_key, month`,

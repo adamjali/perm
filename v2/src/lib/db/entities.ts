@@ -34,6 +34,7 @@ import { MS_PER_HOUR } from "@/lib/time";
 import { getEntityBySlug, getEntitySeed } from "./publicData";
 import { one, rows } from "./client";
 import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
+import { LIKE_ESCAPE, likeContains } from "./like";
 
 /**
  * One entity by slug. `null` means no such page, which callers turn into a 404.
@@ -442,11 +443,11 @@ export async function searchByName(
   // `%` and `_` are LIKE wildcards, so a visitor typing one would otherwise
   // widen their own search silently. Escaped, with the escape character
   // itself escaped first or it would eat the escapes that follow.
-  const pattern = `%${needle.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const pattern = likeContains(needle);
 
   const found = await rows<EntityDbRow>(
     `SELECT ${ENTITY_ROW_COLS} FROM perm_entities ` +
-      "WHERE kind = ? AND name LIKE ? ESCAPE '\\' ORDER BY rank LIMIT ?",
+      `WHERE kind = ? AND name LIKE ? ${LIKE_ESCAPE} ORDER BY rank LIMIT ?`,
     [kind, pattern, take],
   );
   return found.map(toEntityRow);

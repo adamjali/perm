@@ -6,6 +6,7 @@ import { SEARCH_TEXT_MIN, SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 import { rows } from "./client";
 import { getBySlug } from "./entities";
 import { socGroup } from "@/lib/socCode";
+import { ENTITY_BASE } from "@/lib/entityPayload";
 
 export type { NameSuggestion, SuggestKind };
 
@@ -33,11 +34,6 @@ interface NameRow {
   published: boolean;
 }
 
-const BASE: Record<SuggestKind, string> = {
-  employer: "/perm-employers",
-  attorney: "/perm-attorneys",
-  occupation: "/perm-wages",
-};
 
 /**
  * Each source is read in windows of its rank, which every one of these
@@ -167,7 +163,7 @@ export async function suggestNames(kind: SuggestKind, query: string, limit = 5):
     kind,
     name: item.name,
     slug: item.slug,
-    href: `${BASE[kind]}/${item.slug}`,
+    href: `${ENTITY_BASE[kind]}/${item.slug}`,
     cases: item.n,
     // Weighted by filings, so a merge across kinds keeps the busier name first.
     score: Math.round((weighted ?? score) * 1000) / 1000,
@@ -186,7 +182,7 @@ export async function nameCandidates(kind: SuggestKind, text: string, limit: num
   if (!q) return [];
   const [exact, close] = await Promise.all([getBySlug(kind, q), suggestNames(kind, q, limit)]);
   const first: NameSuggestion[] = exact
-    ? [{ kind, name: exact.name, slug: exact.slug, href: `${BASE[kind]}/${exact.slug}`, cases: exact.total, score: 1, published: true }]
+    ? [{ kind, name: exact.name, slug: exact.slug, href: `${ENTITY_BASE[kind]}/${exact.slug}`, cases: exact.total, score: 1, published: true }]
     : [];
   return [...first, ...close.filter((s) => s.slug !== exact?.slug)].slice(0, limit);
 }

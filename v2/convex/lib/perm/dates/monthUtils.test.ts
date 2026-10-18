@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, isValidMonth, monthStart, monthsBetween } from './monthUtils';
+import { isValidMonth, monthStart, monthsBetween } from './monthUtils';
+import { fiscalYearOf, fiscalYearSpan, monthFromIndex, monthIndex, shiftMonth } from '../../months';
 
 describe('isValidMonth', () => {
   it.each(['2026-01', '2026-12', '1999-08'])('accepts %s', (m) => {
@@ -40,7 +41,7 @@ describe('monthsBetween', () => {
   });
 });
 
-describe('addMonths', () => {
+describe('shiftMonth', () => {
   it.each([
     ['2026-05', 4, '2026-09'],
     ['2026-01', 0, '2026-01'],
@@ -50,12 +51,30 @@ describe('addMonths', () => {
     ['2026-06', 24, '2028-06'],
     ['2026-06', -24, '2024-06'],
   ])('%s + %i = %s', (month, delta, expected) => {
-    expect(addMonths(month, delta)).toBe(expected);
+    expect(shiftMonth(month, delta)).toBe(expected);
   });
 
   it('never routes through a Date, so it is timezone-independent', () => {
     // The regression this guards: Date.UTC(2026, 8, 1) rendered through a
     // local-time formatter returns "2026-08" west of UTC.
-    expect(addMonths('2026-05', 4)).toBe('2026-09');
+    expect(shiftMonth('2026-05', 4)).toBe('2026-09');
+  });
+});
+
+describe('fiscalYearOf and fiscalYearSpan', () => {
+  it('starts the federal year in October', () => {
+    expect(fiscalYearOf('2025-09')).toBe(2025);
+    expect(fiscalYearOf('2025-10')).toBe(2026);
+    expect(fiscalYearOf('2026-02-12')).toBe(2026);
+    expect(fiscalYearSpan(2026)).toEqual({ from: '2025-10', to: '2026-09' });
+  });
+});
+
+describe('monthIndex and monthFromIndex', () => {
+  it('count months across a year, and read back', () => {
+    expect(monthIndex('2026-01') - monthIndex('2025-12')).toBe(1);
+    expect(monthIndex('2024-11-01')).toBe(monthIndex('2024-11'));
+    expect(monthFromIndex(monthIndex('2025-12') + 1)).toBe('2026-01');
+    expect(monthFromIndex(monthIndex('2026-01') - 13)).toBe('2024-12');
   });
 });

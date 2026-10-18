@@ -10,6 +10,7 @@ import { rankFuzzy } from "@/lib/fuzzy";
 import type { SuggestKind } from "@/lib/search/suggestTypes";
 import { buttonVariants } from "@/components/ui/button";
 import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
+import { compareNullsLast } from "@/lib/tableSort";
 
 /**
  * The searchable, filterable, paged table every entity index stands on.
@@ -124,30 +125,6 @@ export interface FilterableStatTableProps<T> {
 /** `0` means every row on one page: the "show all" a reader asks for when a cohort is a few thousand rows. */
 const PAGE_SIZES = [25, 50, 100, 250, 0] as const;
 
-/**
- * Order two cells, nulls ALWAYS last.
- *
- * The null handling has to live here, above the direction flip, rather than
- * inside a comparator whose result gets negated: negating "null goes after"
- * turns it into "null goes first" on a descending sort, which is how "no
- * data" ends up at the top of a column sorted by median days, reading as the
- * fastest employer on the page. A missing median is not a low median.
- */
-function compare(
-  a: number | string | null,
-  b: number | string | null,
-  desc: boolean,
-): number {
-  if (a === null && b === null) return 0;
-  if (a === null) return 1;
-  if (b === null) return -1;
-  const cmp =
-    typeof a === "number" && typeof b === "number"
-      ? a - b
-      : String(a).localeCompare(String(b));
-  return desc ? -cmp : cmp;
-}
-
 function toCsv<T>(spec: CsvSpec<T>, rows: T[]): string {
   const cell = (v: string | number | null): string => {
     if (v === null) return "";
@@ -226,7 +203,7 @@ export function FilterableStatTable<T>({
 
     const col = columns.find((c) => c.key === sortKey) ?? columns[0];
     if (col) {
-      out.sort((a, b) => compare(col.sortValue(a), col.sortValue(b), sortDesc));
+      out.sort((a, b) => compareNullsLast(col.sortValue(a), col.sortValue(b), sortDesc ? -1 : 1));
     }
     return out;
   }, [working, columns, query, sortKey, sortDesc, searchText, facets, facetValues]);

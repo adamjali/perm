@@ -3,6 +3,7 @@ import type { FieldWait, RankedEmployerWait } from "@/lib/db/employerWait";
 import { cn } from "@/lib/utils";
 import { MoreText } from "@/components/data/MoreText";
 import { formatInt } from "@/lib/format";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Which sponsors' cases DOL has been deciding fastest and slowest lately.
@@ -45,7 +46,7 @@ function Column({
             key: r.slug,
             label: (
               <a
-                href={`/perm-employers/${r.slug}`}
+                href={entityHref("employer", r.slug)}
                 translate="no"
                 className="link"
               >

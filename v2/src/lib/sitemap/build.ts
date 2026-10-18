@@ -8,7 +8,7 @@ import {
   browseHref,
   type BrowseBucket,
 } from "@/lib/entityBrowse";
-import { type EntityKind } from "@/lib/entityPayload";
+import { ENTITY_BASE, entityHref, type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
 import { browseCounts } from "@/lib/db/entityBrowse";
 import { getBacklogCensus } from "@/lib/db/backlog";
@@ -77,12 +77,6 @@ export interface Entry {
 /** Children stay well under any limit in play: 5,000 URLs is ~550 KB. */
 export const SITEMAP_CHUNK = 5000;
 
-/** Kind -> the URL segment its detail pages live under. */
-const KIND_PATH: Record<EntityKind, string> = {
-  employer: "perm-employers",
-  attorney: "perm-attorneys",
-  occupation: "perm-wages",
-};
 
 /**
  * A per-kind floor for the catastrophic-loss guard.
@@ -532,9 +526,9 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
   // The CORPUS date, not the processing-times one (see corpusAsOf), or the
   // template's own day when that's newer: pageDate, as the page shows it.
   const corpus = (await corpusAsOf()) ?? (await permAsOf());
-  const lastModified = pageDate(`/${KIND_PATH[kind]}/[slug]`, { corpus });
+  const lastModified = pageDate(`${ENTITY_BASE[kind]}/[slug]`, { corpus });
   return slugs.map((slug) => ({
-    url: `${base}/${KIND_PATH[kind]}/${slug}`,
+    url: `${base}${entityHref(kind, slug)}`,
     lastModified,
   }));
 }

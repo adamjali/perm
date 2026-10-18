@@ -24,6 +24,9 @@ import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { fiscalYearSpan, ISO_MONTH_RE } from "@convex/lib/months";
+import { entityHref } from "@/lib/entityPayload";
+import { compareNullsLast } from "@/lib/tableSort";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
 const EMPTY_ROWS: CaseRow[] = [];
@@ -132,12 +135,11 @@ const STATUS_LABEL: Record<Status, string> = {
 // that gate reads the attributes on the tag, so a class list hidden in a
 // constant is invisible to it and passes for the wrong reason.
 /** What the month inputs must hold before a filter is sent. */
-const MONTH_INPUT_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /** A month from the URL, or nothing: a hand-edited `from=` never reaches a query. */
 function urlMonth(raw: string | null): string {
   const v = (raw ?? "").trim();
-  return MONTH_INPUT_RE.test(v) ? v : "";
+  return ISO_MONTH_RE.test(v) ? v : "";
 }
 
 /**
@@ -149,8 +151,8 @@ function urlMonth(raw: string | null): string {
  */
 function unreadMonthLabels(from: string, to: string): string[] {
   return [
-    ...(from && !MONTH_INPUT_RE.test(from) ? ["Filed from"] : []),
-    ...(to && !MONTH_INPUT_RE.test(to) ? ["Filed to"] : []),
+    ...(from && !ISO_MONTH_RE.test(from) ? ["Filed from"] : []),
+    ...(to && !ISO_MONTH_RE.test(to) ? ["Filed to"] : []),
   ];
 }
 
@@ -172,19 +174,13 @@ function fmtWage(n: number | null): string {
  * would have needed an index of its own.
  */
 function fiscalYearRange(fy: string): { from: string; to: string } {
-  const year = Number(fy);
-  return { from: `${year - 1}-10-01`, to: `${year}-09-30` };
+  const { from, to } = fiscalYearSpan(Number(fy));
+  return { from: `${from}-01`, to: `${to}-30` };
 }
 
 /** Nulls last in both directions: a missing wage is not a cheap one. */
 function compareRows(a: CaseRow, b: CaseRow, key: SortKey, asc: boolean): number {
-  const av = a[key];
-  const bv = b[key];
-  if (av === null && bv === null) return 0;
-  if (av === null) return 1;
-  if (bv === null) return -1;
-  const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
-  return asc ? cmp : -cmp;
+  return compareNullsLast(a[key], b[key], asc ? 1 : -1);
 }
 
 export function CaseBrowser({
@@ -820,8 +816,8 @@ export function CaseBrowser({
             setNameQuery(name);
             setNarrow({
               title,
-              from: MONTH_INPUT_RE.test(from) ? from : "",
-              to: MONTH_INPUT_RE.test(to) ? to : "",
+              from: ISO_MONTH_RE.test(from) ? from : "",
+              to: ISO_MONTH_RE.test(to) ? to : "",
             });
             setNameSubmit((s) => s + 1);
           }}
@@ -1177,7 +1173,7 @@ function CaseTable({
             <td className="px-3 py-3">
               {r.employerSlug ? (
                 <Link
-                  href={`/perm-employers/${r.employerSlug}`}
+                  href={entityHref("employer", r.employerSlug)}
                   // On a phone card the employer and firm links sit one above
                   // the other; each keeps a 24px target (WCAG 2.5.8).
                   className="link max-sm:inline-flex max-sm:min-h-6 max-sm:items-center"
@@ -1193,7 +1189,7 @@ function CaseTable({
                   <span className="block text-sm text-muted-foreground">
                     {r.attorneySlug ? (
                       <Link
-                        href={`/perm-attorneys/${r.attorneySlug}`}
+                        href={entityHref("attorney", r.attorneySlug)}
                         className="link max-sm:inline-flex max-sm:min-h-6 max-sm:items-center"
                       >
                         {r.attorneyName}

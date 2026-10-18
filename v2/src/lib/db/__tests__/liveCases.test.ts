@@ -21,7 +21,6 @@ const {
   LIVE_MAX_ITEMS,
   isLiveKind,
   listLiveCases,
-  monthAfter,
   parseLiveRemainderDoc,
   planLiveSql,
 } = await import("../liveCases");
@@ -48,14 +47,6 @@ describe("planLiveSql", () => {
     for (const bad of ["2025-13", "2025-1", "202512", "abc", "2025-12-01", "2025-00"]) {
       expect(() => planLiveSql("all", bad), bad).toThrow();
     }
-  });
-});
-
-describe("monthAfter", () => {
-  it("rolls the year", () => {
-    expect(monthAfter("2025-12")).toBe("2026-01");
-    expect(monthAfter("2026-01")).toBe("2026-02");
-    expect(monthAfter("2026-09")).toBe("2026-10");
   });
 });
 

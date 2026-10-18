@@ -17,6 +17,7 @@ import { EASTERN_TIMEZONE, MS_PER_HOUR } from "@/lib/time";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import type { api } from "@convex/_generated/api";
 import { between } from "./elapsed";
+import { entityHref } from "@/lib/entityPayload";
 
 export type Delivery = FunctionReturnType<typeof api.adminDelivery.getDelivery>;
 
@@ -245,7 +246,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           <ol className="mt-4 divide-y divide-border border-y-2 border-border">
             {data.follows.top.map((f) => (
               <li key={f.slug} className="flex items-baseline justify-between gap-3 py-2 text-sm">
-                <Link href={`/perm-employers/${f.slug}`} className="link min-w-0 [overflow-wrap:anywhere]">
+                <Link href={entityHref("employer", f.slug)} className="link min-w-0 [overflow-wrap:anywhere]">
                   {f.name}
                 </Link>{" "}
                 <span className="tabular-nums">{`${formatInt(f.followers)} following`}</span>

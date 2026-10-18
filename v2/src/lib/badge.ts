@@ -1,4 +1,5 @@
 import { MONTH_ABBR } from "@convex/lib/months";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 /**
  * The badges: one small image per figure, rendered from data this site already
  * holds and regenerated once a day.
@@ -28,7 +29,7 @@ export type BadgeTheme = (typeof BADGE_THEMES)[number];
 
 /** "2025-11" -> "Nov 2025"; anything else -> null. */
 export function shortMonth(ym: string | null | undefined): string | null {
-  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
+  if (!ym || !ISO_MONTH_RE.test(ym)) return null;
   const m = Number(ym.slice(5, 7));
   const name = MONTH_ABBR[m - 1];
   return name ? `${name} ${ym.slice(0, 4)}` : null;

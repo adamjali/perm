@@ -2,6 +2,8 @@ import "server-only";
 import { cache } from "react";
 import { MS_PER_DAY } from "@/lib/time";
 import { one, rows } from "./client";
+import { ISO_MONTH_RE, shiftMonth } from "@convex/lib/months";
+import { LIKE_ESCAPE, likeContains } from "./like";
 
 /**
  * The live remainder as a BROWSABLE list, and its summary.
@@ -39,16 +41,6 @@ export function isLiveKind(v: string): v is LiveKind {
 }
 
 /** `YYYY-MM`, with a real month. `2025-13` and `2025-1` are not months. */
-export const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-/** `2025-12` -> `2026-01`. The upper bound of a half-open month range. */
-export function monthAfter(month: string): string {
-  const y = Number(month.slice(0, 4));
-  const m = Number(month.slice(5, 7));
-  const ny = m === 12 ? y + 1 : y;
-  const nm = m === 12 ? 1 : m + 1;
-  return `${ny}-${String(nm).padStart(2, "0")}`;
-}
 
 export interface LivePlan {
   /** Everything after WHERE. Never empty: "1" when nothing filters. */
@@ -64,11 +56,6 @@ export interface LivePlan {
  * for a date column, but this one is compared as text and a later ingest
  * could carry a timestamp; the half-open form is correct under both.
  */
-/** LIKE with the two wildcards escaped, so a typed `%` matches a percent sign. */
-export function likeContains(text: string): string {
-  return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-}
-
 export function planLiveSql(kind: LiveKind, month: string | null | undefined, q?: string | null): LivePlan {
   const conds: string[] = [];
   const params: (string | number)[] = [];
@@ -80,16 +67,16 @@ export function planLiveSql(kind: LiveKind, month: string | null | undefined, q?
     params.push(1);
   }
   if (month) {
-    if (!MONTH_RE.test(month)) throw new Error(`not a month: ${month}`);
+    if (!ISO_MONTH_RE.test(month)) throw new Error(`not a month: ${month}`);
     conds.push("filing_date >= ?", "filing_date < ?");
-    params.push(`${month}-01`, `${monthAfter(month)}-01`);
+    params.push(`${month}-01`, `${shiftMonth(month, 1)}-01`);
   }
   const needle = (q ?? "").trim();
   if (needle) {
     // Bounded by the month (or kind) predicate that precedes it: the scan
     // is over one month's rows, never the whole remainder.
     const like = likeContains(needle);
-    conds.push("(employer_name LIKE ? ESCAPE '\\' OR case_number LIKE ? ESCAPE '\\' OR job_title LIKE ? ESCAPE '\\')");
+    conds.push(`(employer_name LIKE ? ${LIKE_ESCAPE} OR case_number LIKE ? ${LIKE_ESCAPE} OR job_title LIKE ? ${LIKE_ESCAPE})`);
     params.push(like, like, like);
   }
   return { where: conds.length ? conds.join(" AND ") : "1", params };

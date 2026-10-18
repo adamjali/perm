@@ -1,5 +1,7 @@
 /**
- * The FLAG programs the change feed covers, and what to call them.
+ * The four FLAG program families the site reads (the change feed, the case
+ * search, employer pages), and what to call them. The one list and the one set
+ * of names: nothing else defines either.
  *
  * A PLAIN MODULE, NOT AN EXPORT FROM `db/changes`. That module is
  * `server-only`, so a value import of it from a client component is a build
@@ -39,11 +41,20 @@ export function isChangeProgram(v: string): v is ChangeProgram {
  */
 export const PWD_VISA_CLASS = "PERM";
 
+/** A program's name where a row or a tag names it. */
 export const PROGRAM_LABEL: Record<ChangeProgram, string> = {
   perm: "PERM",
-  pwd: "Prevailing wage",
+  pwd: "Wage request",
   lca: "H-1B LCA",
   seasonal: "H-2A, H-2B and CW-1",
+};
+
+/** A program's name where a heading or a list introduces it. */
+export const PROGRAM_TITLE: Record<ChangeProgram, string> = {
+  perm: "PERM (green card)",
+  pwd: "Prevailing wage requests",
+  lca: "H-1B labor condition applications",
+  seasonal: "H-2A, H-2B and CW-1 (seasonal work)",
 };
 
 /** The case-number prefixes DOL issues for each, for the reader's orientation. */

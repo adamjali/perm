@@ -54,6 +54,7 @@ import type { CohortMonth } from "@/lib/liveQueue";
 import { cn } from "@/lib/utils";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 import { formatInt } from "@/lib/format";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Everything this project can honestly say about one case, arranged.
@@ -1168,7 +1169,7 @@ function EmployerRecord({
             </>
           )}{" "}
           <Link
-            href={`/perm-employers/${employer.slug}`}
+            href={entityHref("employer", employer.slug)}
             className="link"
           >
             Everything published about {employer.name}

@@ -2,13 +2,12 @@
 
 import { useEffect, useId, useState } from "react";
 
-import { monthBefore } from "@/lib/bulletinNext";
 import { ordinal, type ReleaseSummary } from "@/lib/bulletinRelease";
 import { ChartHit } from "@/components/data/ChartHit";
 import { ChartTips } from "@/components/data/ChartTips";
 import { MoreText } from "@/components/data/MoreText";
 import { easternDay } from "@/lib/time";
-import { MONTH_NAMES, monthYear } from "@convex/lib/months";
+import { MONTH_NAMES, monthYear, shiftMonth } from "@convex/lib/months";
 
 function monthName(ym: string): string {
   return monthYear(ym) ?? ym;
@@ -38,7 +37,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
     if (!todayProp) setToday(easternDay());
   }, [todayProp]);
 
-  const prior = monthBefore(next);
+  const prior = shiftMonth(next, -1);
   const priorName = MONTH_NAMES[Number(prior.slice(5, 7)) - 1] ?? "";
   const waiting = today !== null && today.slice(0, 7) === prior;
   const todayDay = waiting ? Number(today!.slice(8, 10)) : null;

@@ -11,19 +11,7 @@
  */
 import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey, type Cutoff } from "@/lib/perm";
 import { MS_PER_DAY } from "@/lib/time";
-import { MONTH_NAMES, shortDate } from "@convex/lib/months";
-
-export function nextBulletinMonth(lastMonth: string): string {
-  const [y, m] = lastMonth.split("-").map(Number) as [number, number];
-  const next = m === 12 ? [y + 1, 1] : [y, m + 1];
-  return `${next[0]}-${String(next[1]).padStart(2, "0")}`;
-}
-
-export function monthBefore(ym: string): string {
-  const [y, m] = ym.split("-").map(Number) as [number, number];
-  const prev = m === 1 ? [y - 1, 12] : [y, m - 1];
-  return `${prev[0]}-${String(prev[1]).padStart(2, "0")}`;
-}
+import { MONTH_NAMES, shiftMonth, shortDate } from "@convex/lib/months";
 
 export type MoveKind =
   | "advanced"
@@ -136,7 +124,7 @@ export function sameMonthMoves(
   const out: SameMonthMove[] = [];
   for (const b of [...bulletins].sort((a, z) => a.bulletinMonth.localeCompare(z.bulletinMonth))) {
     if (Number(b.bulletinMonth.slice(5, 7)) !== targetMonth) continue;
-    const prev = byMonth.get(monthBefore(b.bulletinMonth));
+    const prev = byMonth.get(shiftMonth(b.bulletinMonth, -1));
     if (!prev) continue;
     const from = cutoffOf(prev, chart, category, country);
     const to = cutoffOf(b, chart, category, country);

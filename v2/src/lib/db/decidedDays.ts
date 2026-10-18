@@ -20,6 +20,8 @@ import {
   type CoverageWindows,
   type DecidedNarrow,
 } from "@/lib/dateCoverage";
+import { tableColumns } from "./tableColumns";
+import { HISTORY_DECIDED_LAST } from "./caseSearchReads";
 
 export * from "@/lib/dateCoverage";
 
@@ -148,7 +150,7 @@ export const RANGE_MAX_DAYS_UNINDEXED = 92;
  * The narrows that live in an optional column, and the column each reads.
  * `citizenship` and `education` exist on PERM rows only; `city` and `naics`
  * on every published file since the Oct 7 2026 backfill; `visa_class` on all. A table that has not gained a column yet (a load
- * still to run) is detected by `columnsOf` and treated as not carrying it.
+ * still to run) is detected by `tableColumns` and treated as not carrying it.
  */
 const OPTIONAL: Record<"city" | "naics" | "citizenship" | "visaClass" | "education", string> = {
   city: "worksite_city",
@@ -205,44 +207,11 @@ const PUBLISHED: Record<
   },
 };
 
-/**
- * The last decision date `perm_cases_history` can hold (FY2023's end). The
- * current table starts the next day, so a range entirely after this never
- * asks the history table at all.
- */
-export const PERM_HISTORY_LAST = "2023-09-30";
 
-/**
- * A table's columns, from its schema. `PRAGMA table_info` reads the schema,
- * not the rows, so it costs no row reads; memoised per process for
- * ten minutes so a busy page asks once.
- *
- * WHY PROBE AT ALL. The optional columns arrive with loads that run on their
- * own schedule. Selecting a column a table doesn't have yet is an error, and
- * the feed catches errors as "no rows", so a deploy that landed before its
- * load would have emptied the PERM half without a word.
- */
-const columnCache = new Map<string, { at: number; cols: Promise<Set<string>> }>();
-
-export function columnsOf(table: string): Promise<Set<string>> {
-  const hit = columnCache.get(table);
-  if (hit && Date.now() - hit.at < 600_000) return hit.cols;
-  const cols = rows<{ name: string }>(`PRAGMA table_info(${table})`)
-    .then((r) => new Set(r.map((c) => String(c.name))))
-    .catch(() => new Set<string>());
-  columnCache.set(table, { at: Date.now(), cols });
-  return cols;
-}
-
-/** Test seam: forget the memoised schemas. */
-export function resetColumnCache(): void {
-  columnCache.clear();
-}
-
-/** The tables a program's range touches, newest first. */
+/** The tables a program's range touches, newest first: a range wholly after the history table's last day never asks it. */
 function tablesFor(program: ChangeProgram, range: DateRange): string[] {
   const meta = PUBLISHED[program];
-  return meta.tables.filter((t) => t !== "perm_cases_history" || range.from <= PERM_HISTORY_LAST);
+  return meta.tables.filter((t) => t !== "perm_cases_history" || range.from <= HISTORY_DECIDED_LAST);
 }
 
 /**
@@ -545,11 +514,12 @@ export async function getDecidedFeed(args: {
     };
   }
 
+  // A failed read throws: an empty answer would read as a day DOL decided nothing.
   const fetched = await Promise.all(
     programs.map(async (p) => {
       const perTable = await Promise.all(
         tablesFor(p, range).map(async (table) => {
-          const cols = await columnsOf(table);
+          const cols = await tableColumns(table);
           const clause = narrowClause(p, narrow, cols);
           if (clause === "refuse" || clause === "skip") return [] as Record<string, unknown>[];
           const { sql, args: nArgs } = clause;
@@ -559,7 +529,7 @@ export async function getDecidedFeed(args: {
               ORDER BY decision_date DESC, case_number DESC
               LIMIT ?`,
             [range.from, range.to, ...nArgs, cap + 1],
-          ).catch(() => []);
+          );
         }),
       );
       // Two tables for PERM are merged newest first before the cap applies,
@@ -622,7 +592,7 @@ async function countDay(
   await Promise.all(
     programs.map(async (p) => {
       for (const table of tablesFor(p, { from: date, to: date })) {
-        const cols = await columnsOf(table);
+        const cols = await tableColumns(table);
         const clause = narrowClause(p, narrow, cols);
         if (clause === "refuse" || clause === "skip") continue;
         const { sql, args } = clause;
@@ -630,7 +600,7 @@ async function countDay(
           `SELECT COUNT(*) AS n FROM ${table}
             WHERE decision_date >= ? AND decision_date <= ?${sql}`,
           [date, date, ...args],
-        ).catch(() => []);
+        );
         out[p] += Number(r[0]?.n ?? 0);
       }
     }),

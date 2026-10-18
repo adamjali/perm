@@ -6,6 +6,7 @@ import { FilterableStatTable, type Facet, type StatColumn } from "@/components/t
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { WarnNotice } from "@/lib/db/warn";
 import { shortDate } from "@convex/lib/months";
+import { entityHref } from "@/lib/entityPayload";
 
 const long = (iso: string) => shortDate(iso) ?? iso;
 
@@ -31,7 +32,7 @@ export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
       r.employerSlug ? (
         // "Their filings", not "PERM record": a notice can match an employer
         // whose page holds only H-1B, wage-request or H-2A and H-2B filings.
-        <Link href={`/perm-employers/${r.employerSlug}`} className="link">
+        <Link href={entityHref("employer", r.employerSlug)} className="link">
           Their filings
         </Link>
       ) : null,

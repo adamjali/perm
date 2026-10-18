@@ -12,6 +12,7 @@ import {
 
 import { socGroup } from "@/lib/socCode";
 import { PayBands, type PayBand } from "./PayBands";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Where a worksite city sits and what the jobs filed there pay in its metro.
@@ -191,7 +192,7 @@ export async function CityReference({
                     <tr key={b.key} className="border-b border-border/60">
                       <td className="py-2 pr-4">
                         {job?.slug ? (
-                          <Link href={`/perm-wages/${job.slug}`} className="link">
+                          <Link href={entityHref("occupation", job.slug)} className="link">
                             {b.label}
                           </Link>
                         ) : (

@@ -7,6 +7,7 @@ import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "
 import { HOLD_STATUS, longDate, type EmployerStageRow } from "@/lib/employerStages";
 import { formatInt, formatShare } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Every employer with pending PERM cases, by how many sit outside DOL's
@@ -77,7 +78,7 @@ function columns(logFrom: string | null): StatColumn<EmployerStageRow>[] {
       sortValue: (r) => r.name,
       render: (r) =>
         r.slug ? (
-          <Link href={`/perm-employers/${r.slug}`} className="link">
+          <Link href={entityHref("employer", r.slug)} className="link">
             {r.name}
           </Link>
         ) : (

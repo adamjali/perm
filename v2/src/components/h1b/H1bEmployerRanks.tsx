@@ -30,6 +30,7 @@ import {
 } from "@/lib/h1bRanks";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { choiceVariants } from "@/components/ui/choice";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * The ranked list on /h1b-employers and its state pages.
@@ -134,7 +135,7 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
       </span>{" "}
       <div className="min-w-0">
         {r.linked ? (
-          <Link href={`/perm-employers/${r.slug}`} className="link text-base [overflow-wrap:anywhere] lg:text-lg">
+          <Link href={entityHref("employer", r.slug)} className="link text-base [overflow-wrap:anywhere] lg:text-lg">
             {r.name}
           </Link>
         ) : (

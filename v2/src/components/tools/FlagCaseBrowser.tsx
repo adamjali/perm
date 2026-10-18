@@ -34,6 +34,7 @@ import { formText } from "@/lib/forms/formText";
 import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";
 import { CaseStatusChip } from "@/components/ui/badge";
+import { ISO_MONTH_RE } from "@convex/lib/months";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -109,7 +110,6 @@ export const SEASONAL_PROGRAM: FlagBrowserProgram = {
 };
 
 
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PAGE_SIZE = 50;
 
 const CONTROL =
@@ -572,8 +572,8 @@ export function FlagCaseBrowser({
               return;
             }
             const unread = [
-              ...(from && !MONTH_RE.test(from) ? ["Filed from"] : []),
-              ...(to && !MONTH_RE.test(to) ? ["Filed to"] : []),
+              ...(from && !ISO_MONTH_RE.test(from) ? ["Filed from"] : []),
+              ...(to && !ISO_MONTH_RE.test(to) ? ["Filed to"] : []),
             ];
             setSearchNote(
               unread.length > 0
@@ -583,8 +583,8 @@ export function FlagCaseBrowser({
             setQuery((q) => ({
               employer,
               title,
-              from: MONTH_RE.test(from) ? from : "",
-              to: MONTH_RE.test(to) ? to : "",
+              from: ISO_MONTH_RE.test(from) ? from : "",
+              to: ISO_MONTH_RE.test(to) ? to : "",
               allVisas: allVisasInput,
               n: q.n + 1,
             }));

@@ -42,6 +42,7 @@
 
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { DAYS_PER_MONTH } from "@/lib/time";
+import { FY_START_MONTH, monthFromIndex, monthIndex } from "@convex/lib/months";
 
 // ---------------------------------------------------------------------------
 // Vocabulary
@@ -243,17 +244,6 @@ export interface LineSnapshot {
 // Months
 // ---------------------------------------------------------------------------
 
-/** `YYYY-MM[-DD]` to a month index; January 2000 is 24000. */
-export function monthIndex(s: string): number {
-  return Number(s.slice(0, 4)) * 12 + (Number(s.slice(5, 7)) - 1);
-}
-
-export function monthLabelOf(i: number): string {
-  const y = Math.floor(i / 12);
-  const m = (i % 12) + 1;
-  return `${y}-${String(m).padStart(2, "0")}`;
-}
-
 /** The first month of receipt fiscal year `fy`: October of the year before. */
 function fyStart(fy: number): number {
   return (fy - 1) * 12 + 9;
@@ -263,8 +253,8 @@ function fyStart(fy: number): number {
 function fyQuarterOf(i: number): { fy: number; q: number } {
   const y = Math.floor(i / 12);
   const m = (i % 12) + 1;
-  const fy = m >= 10 ? y + 1 : y;
-  const q = Math.floor(((m - 10 + 12) % 12) / 3) + 1;
+  const fy = m >= FY_START_MONTH ? y + 1 : y;
+  const q = Math.floor(((m - FY_START_MONTH + 12) % 12) / 3) + 1;
   return { fy, q };
 }
 
@@ -650,7 +640,7 @@ export function estimateLine(input: LineInput, snap: LineSnapshot): LineResult {
   const histogram: Array<{ month: string; people: number }> = [];
   for (let i = cut; i < pd; i += 1) {
     const people = ((a.approvedMid.get(i) ?? 0) + (a.pendingMid.get(i) ?? 0)) * famMid;
-    histogram.push({ month: monthLabelOf(i), people });
+    histogram.push({ month: monthFromIndex(i), people });
   }
 
   const perYear = snap.supply?.perYear[category]?.[country] ?? null;

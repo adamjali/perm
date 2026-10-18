@@ -1,4 +1,5 @@
 import type { BadgeSpec, BadgeTheme } from "@/lib/badge";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * A law firm's badge for its own site: a link to its page here, with the
@@ -18,7 +19,7 @@ export function parseFirmBadgeFile(file: string): { slug: string; theme: BadgeTh
 }
 
 export function firmPagePath(slug: string): string {
-  return `/perm-attorneys/${slug}`;
+  return entityHref("attorney", slug);
 }
 
 export function firmBadgeSpec(name: string, slug: string, verified: boolean): BadgeSpec {

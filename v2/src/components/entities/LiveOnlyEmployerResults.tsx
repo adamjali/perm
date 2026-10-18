@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { LiveEmployerHit } from "@/lib/entityPayload";
 import { formatInt } from "@/lib/format";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Employers the published files have never named.
@@ -58,7 +59,7 @@ export function LiveOnlyEmployerResults({
           <Fragment key={h.slug}>{" "}
           <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5">
             <Link
-              href={`/perm-employers/${h.slug}`}
+              href={entityHref("employer", h.slug)}
               className="link"
             >
               {h.name}
