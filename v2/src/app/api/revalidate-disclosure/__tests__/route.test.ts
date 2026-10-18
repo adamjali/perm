@@ -17,7 +17,7 @@ import { DISCLOSURE_PAGES } from "../paths";
 const PUBLIC = join(process.cwd(), "src/app/(site)/(public)");
 
 /** Modules whose data comes from a quarterly disclosure file. */
-const QUARTERLY = ["wages", "states", "wageBands", "entities", "entityDetail"];
+const QUARTERLY = ["wages", "states", "wageBands", "entities", "entityDetail", "recruitment"];
 
 /** A week. Anything on this list must be on a long window, or the list is moot. */
 const LONG_WINDOW = 604800;

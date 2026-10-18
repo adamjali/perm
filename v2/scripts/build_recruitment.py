@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Where and when PERM employers recruit, from DOL's own Form 9089 Section H.
 
-Writes `perm_docs['recruitment_summary']`, for a national recruitment page and
-the filing-window guides (neither reads it yet): how many cases carry the
-record, the share using each additional step and each notice method, the
-newspapers that carry the most Sunday ads (nationally and in each state), and
-how long before filing the recruiting began and ended. Each employer's, law firm's and occupation's own
-figures are facets, built by build_entity_detail.py in the same pass as their
-others.
+Writes `perm_docs['recruitment_summary']`, which /perm-recruitment reads: how
+many cases carry the record, the share using each additional step and each
+notice method, the newspapers that carry the most Sunday ads (nationally and
+in each state), and how long before filing the recruiting began and ended.
+Each employer's, law firm's and occupation's own figures are facets, built by
+build_entity_detail.py in the same pass as their others.
 
 Every figure counts decided cases DOL published (`perm_cases`), and only the
 new form (filed from June 2023) carries the record; the old form's columns are
@@ -152,8 +151,7 @@ def main() -> int:
         record_run(db, "build_recruitment.py", status="ok", rows_written=0,
                    note="no recruitment record loaded yet", started_at=started)
         return 0
-    # check_precomputed_docs in check_ingest_health.py watches a doc only once a
-    # page reads it; add this key there with the page that does.
+    # The doc's age is watched by check_precomputed_docs in check_ingest_health.py.
     write_doc(db, DOC_KEY, doc)
     record_run(db, "build_recruitment.py", status="ok", rows_written=1,
                note=f"{doc['cases']:,} cases summarised", started_at=started)

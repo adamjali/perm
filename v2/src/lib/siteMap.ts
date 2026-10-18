@@ -51,6 +51,7 @@ export type DataSection =
   | "employers"
   | "attorneys"
   | "sponsor-finder"
+  | "recruitment"
   | "compare-employers"
   | "h1b-employers"
   | "opt-employers"
@@ -145,6 +146,7 @@ export const SECTIONS: DataNavSection[] = [
 
   s("risk", "Approvals and denials", "Denial rates", "/perm-denial-risk"),
   s("rfi-audit", "Approvals and denials", "RFI and audits", "/perm-rfi-audit"),
+  s("recruitment", "Approvals and denials", "PERM recruitment", "/perm-recruitment"),
   s("uscis-rfe", "Approvals and denials", "USCIS RFE rates", "/uscis-rfe-rates"),
   s("by-state", "Approvals and denials", "By state", "/perm-by-state"),
   s("by-city", "Approvals and denials", "By city", "/perm-cities"),

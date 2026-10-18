@@ -45,4 +45,5 @@ export const DISCLOSURE_PAGES = [
   "/h1b-employers",
   "/tools/compare-my-offer",
   "/tools/i140-trends",
+  "/perm-recruitment",
 ] as const;

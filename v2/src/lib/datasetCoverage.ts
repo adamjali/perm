@@ -19,7 +19,7 @@
 export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   // --- DOL quarterly disclosure files: decided only -----------------------
   "perm-cases":
-    "Decided PERM cases only. A case still waiting is not in here, so counts and durations describe finished cases, not the queue.",
+    "Decided PERM cases only. A case still waiting isn't in here, so counts and durations describe finished cases.",
   "pw-disclosure":
     "Decided prevailing wage requests only, with the wage DOL determined. Pending requests are absent.",
   "lca-disclosure":

@@ -83,9 +83,11 @@ wage, timing, tables, duplicates). Each item below is checked off only when its 
 
 - [x] The loader, the columns, the facets and the national doc built and tested (`lib_recruitment.py`,
       `build_recruitment.py`, `RecruitmentMix` on employer, law firm and occupation pages).
-- [ ] DOL's Form 9089 Section H columns loaded on production (a disclosure load after the push).
-- [ ] Employer, occupation and national figures; a where-employers-advertise page; timing in the
-      filing-window guides.
+- [x] DOL's Form 9089 Section H columns loaded on production (Oct 18, 3:16 AM EDT: 281,637 rows
+      filled, 276,788 cases with a record, facets and the national doc written).
+- [x] `/perm-recruitment`: the national page (timing chart against the rule's window, steps,
+      notice, newspapers nationally and by state), registered everywhere, with its own card.
+- [ ] Timing in the filing-window guides (an MDX component reading the same doc).
 
 ## Content
 

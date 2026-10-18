@@ -891,7 +891,11 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
 - **DOL's recruitment record** (Form 9089 Section H, new form only) loads as unindexed `perm_cases` columns
   (`scripts/lib_recruitment.py`, `scripts/data/recruitment_steps.json`); employer, law firm and occupation pages show the
   newspapers, additional steps and lead time (`RecruitmentMix`), and `build_recruitment.py` writes
-  `perm_docs['recruitment_summary']` after each disclosure load.
+  `perm_docs['recruitment_summary']` after each disclosure load. **Loaded Oct 18, 3:16 AM EDT**: 276,788 cases carry the
+  record. **`/perm-recruitment`** shows it nationally (timing against the 30-to-180-day window, steps, notice, newspapers
+  by state); the health check watches the doc at 100 days.
+- **`BarRows` gives every row's figure one width**, so every bar's track is the same length and bars compare.
+- **Every share of a count goes through `formatShareOf`**, which never prints a clean 0% or 100% the counts don't have.
 - **The sponsor guide states the no-fee rule** (20 CFR 656.12(b)) and USCIS's scam warning; there is no job board.
 - **Month and fiscal-year arithmetic lives in `convex/lib/months.ts`** (`ISO_MONTH_RE`, `shiftMonth`, `monthIndex`,
   `fiscalYearOf`, `fiscalYearSpan`); entity links in `entityHref`; LIKE in `src/lib/db/like.ts`; missing values sort

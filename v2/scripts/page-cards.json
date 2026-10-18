@@ -616,6 +616,20 @@
   ]
  },
  {
+  "slug": "perm-recruitment",
+  "path": "/perm-recruitment",
+  "title": "Where PERM employers recruit",
+  "label": "Sunday ads, the newspapers by state, additional steps and timing, from DOL's records.",
+  "shot": "perm-recruitment.png",
+  "crop": [
+   0,
+   0,
+   1504,
+   1028
+  ],
+  "from": "How long before filing"
+ },
+ {
   "slug": "ead-extension",
   "path": "/tools/ead-extension",
   "title": "Was my work permit extended?",

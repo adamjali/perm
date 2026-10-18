@@ -399,6 +399,8 @@ PRECOMPUTED_DOCS = {
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),
+    # Rebuilt with each PERM disclosure load (quarterly, checked monthly).
+    "recruitment_summary": (100, "the national PERM recruitment page"),
     "alphabet": (100, "the employer-initial chart on /perm-queue (no longer in any estimate)"),
     # Rebuilt after every sweep, daily and weekly respectively.
     "recent_decision_wait": (3, "the employer pages' wait section and the fastest/slowest view"),

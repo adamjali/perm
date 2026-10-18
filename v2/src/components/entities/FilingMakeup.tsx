@@ -489,7 +489,12 @@ export function RecruitmentMix({
             }))}
           />
         </Shell>
-      ) : null}
+      ) : null}{" "}
+      <p className="text-base lg:col-span-3">
+        <Link href="/perm-recruitment" className="link">
+          Where every PERM employer recruits
+        </Link>
+      </p>
     </div>
   );
 }

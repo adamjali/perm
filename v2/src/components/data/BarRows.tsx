@@ -90,7 +90,8 @@ export function BarRows({
                 ) : null}
               </div>
             </div>
-            <span className="whitespace-nowrap font-mono text-base font-bold tabular-nums">
+            {/* One width for every row's figure, so every bar's track is the same length and the bars compare. */}
+            <span className="min-w-[7rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums">
               {r.value === null ? "withheld" : r.text}
             </span>
           </li>

@@ -307,7 +307,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/sponsor-finder",
     label: "Green card sponsor finder",
-    blurb: "Employers that file PERM cases, filtered by state, industry, recent filing, approval rate, how often their H-1B hires are transfers, and likely cap-exempt status. Each links to its full record.",
+    blurb: "Employers that file PERM cases for a job, typed in plain words: each employer's filings, approval rate, median offered wage and typical time to a decision for that job and state, filtered and sorted by any of them, and by industry, cases waiting with DOL now, H-1B transfers and likely cap-exempt status. Each links to its full record.",
+  },
+  {
+    path: "/perm-recruitment",
+    label: "PERM recruitment: ads, steps and timing",
+    blurb: "Where PERM employers recruit and how long before filing, from DOL's Form 9089 Section H over every decided case filed on the current form: the Sunday ads and the newspapers by state, the additional steps, the notice of filing, and the days from each step to filing.",
   },
   {
     path: "/opt-employers",

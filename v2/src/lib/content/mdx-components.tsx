@@ -18,6 +18,7 @@ import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
+import { RecruitmentNow } from "@/components/content/RecruitmentNow";
 import { BulletinReleaseNow } from "@/components/content/BulletinReleaseNow";
 import { Lightbox } from "@/components/ui/lightbox";
 import { ScrollBox } from "@/components/ui/scroll-box";
@@ -217,6 +218,8 @@ export const mdxComponents: MDXComponents = {
   OnHoldNow,
   // DOL's queue month and average, dated, so no article types a figure that ages.
   DolNow,
+  // How far ahead of filing employers start, from DOL's record (live).
+  RecruitmentNow,
   // When the next bulletin usually comes out, from the archive's captures.
   BulletinReleaseNow,
 

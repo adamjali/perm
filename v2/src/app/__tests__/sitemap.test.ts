@@ -542,14 +542,13 @@ describe("sitemap.ts", () => {
     const home = entries.find((e) => e.url === "https://permtracker.app/");
     expect(home).toBeDefined();
 
+    // The homepage's own git date, a fact, which is today only on a day it
+    // changed; asserting "not today" failed on exactly those days.
     const stamped = String(home!.lastModified);
-    const todayUtc = new Date().toISOString().slice(0, 10);
-    const tomorrowUtc = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
-    expect(stamped).not.toBe(todayUtc);
-    expect(stamped).not.toBe(tomorrowUtc);
+    expect(stamped).toBe((PAGE_DATES as Record<string, string>)["/"]);
     // And never in the future, whichever day this test runs.
-    expect(stamped <= todayUtc).toBe(true);
-    expect(stamped).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const tomorrowUtc = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    expect(stamped < tomorrowUtc).toBe(true);
   });
 
   it("REFUSES to emit when the entity read comes back nearly empty", async () => {
