@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "../exceptionNoise";
+import { fromBrowserExtension, fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "../exceptionNoise";
 
 const frames = (...fns: string[]) => ({ $exception_list: [{ stacktrace: { frames: fns.map((f) => ({ function: f })) } }] });
 
@@ -63,5 +63,24 @@ describe("fromInjectedPageScript", () => {
     expect(fromInjectedPageScript({ $exception_list: [{}] }, CHROME_IOS)).toBe(false);
     expect(fromInjectedPageScript(at(""), CHROME_IOS)).toBe(false);
     expect(fromInjectedPageScript(undefined, CHROME_IOS)).toBe(false);
+  });
+});
+
+describe("fromBrowserExtension", () => {
+  const ex = (...files: string[]) => ({ $exception_list: [{ stacktrace: { frames: files.map((filename) => ({ filename })) } }] });
+  const honey =
+    "file:///Applications/PayPal%20Honey.app/Contents/PlugIns/Extension.appex/Contents/Resources/Honey.safariextension/h0.js";
+
+  it("drops an error thrown wholly inside an extension's own files", () => {
+    expect(fromBrowserExtension(ex(honey, honey))).toBe(true);
+    expect(fromBrowserExtension(ex("chrome-extension://abcdefghijklmnopabcdefghijklmnop/content.js"))).toBe(true);
+    expect(fromBrowserExtension(ex("safari-web-extension://A1B2/script.js"))).toBe(true);
+  });
+
+  it("keeps an error with any frame of ours, or no frames at all", () => {
+    expect(fromBrowserExtension(ex(honey, "https://permtracker.app/_next/static/chunks/app.js"))).toBe(false);
+    expect(fromBrowserExtension(ex("https://permtracker.app/_next/static/chunks/app.js"))).toBe(false);
+    expect(fromBrowserExtension({ $exception_list: [] })).toBe(false);
+    expect(fromBrowserExtension(undefined)).toBe(false);
   });
 });

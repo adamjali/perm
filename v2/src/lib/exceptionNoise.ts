@@ -62,3 +62,17 @@ export function fromInjectedPageScript(props: Record<string, unknown> | undefine
     return !path.startsWith("/_next/") && !/\.m?js$/.test(path);
   });
 }
+
+/** A browser extension's own script: Chrome's, Firefox's and Safari's (packaged as an app on a Mac). */
+const EXTENSION_FILE = /^(?:chrome|moz|safari|safari-web)-extension:\/\/|^file:\/\/.*\.(?:safariextension|appex)\//;
+
+/**
+ * True when every frame of an exception is in a browser extension's own file,
+ * so nothing of this site's code ran: PayPal Honey's Safari extension threw
+ * "UnavailableError" from its own script on two pages on Oct 18 2026, and it
+ * tripped the new-error-type alert. An error with even one frame of ours still reports.
+ */
+export function fromBrowserExtension(props: Record<string, unknown> | undefined): boolean {
+  const frames = ((props?.$exception_list as ExceptionList | undefined) || []).flatMap((e) => e.stacktrace?.frames || []);
+  return frames.length > 0 && frames.every((f) => EXTENSION_FILE.test(f.filename || ""));
+}

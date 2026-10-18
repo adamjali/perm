@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isValidMonth, monthStart, monthsBetween } from './monthUtils';
-import { fiscalYearOf, fiscalYearSpan, monthFromIndex, monthIndex, shiftMonth } from '../../months';
+import { fiscalYearOf, fiscalYearSpan, monthFromIndex, monthIndex, monthTick, shiftMonth } from '../../months';
 
 describe('isValidMonth', () => {
   it.each(['2026-01', '2026-12', '1999-08'])('accepts %s', (m) => {
@@ -76,5 +76,13 @@ describe('monthIndex and monthFromIndex', () => {
     expect(monthIndex('2024-11-01')).toBe(monthIndex('2024-11'));
     expect(monthFromIndex(monthIndex('2025-12') + 1)).toBe('2026-01');
     expect(monthFromIndex(monthIndex('2026-01') - 13)).toBe('2024-12');
+  });
+});
+
+describe('monthTick', () => {
+  it('writes a year so it cannot read as a day', () => {
+    expect(monthTick('2025-06')).toBe('Jun ’25');
+    expect(monthTick('2026-01-15')).toBe('Jan ’26');
+    expect(monthTick('nope')).toBeNull();
   });
 });

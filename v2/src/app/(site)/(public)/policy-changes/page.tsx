@@ -134,7 +134,7 @@ export default async function PolicyChangesPage() {
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {feed.register.length} {feed.register.length === 1 ? "document" : "documents"}
-              {ledger.earliest ? ` as of ${monthYear(ledger.earliest)}` : ""}. Open one to see the abstract, the
+              {ledger.earliest ? ` since ${monthYear(ledger.earliest)}` : ""}. Open one to see the abstract, the
               effective date and a link to the published document.
             </p>{" "}
             <div className="mt-6 border-2 border-border bg-card shadow-hard-sm">

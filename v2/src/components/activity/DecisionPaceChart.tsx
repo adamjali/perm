@@ -3,7 +3,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { segments, toWeeks, weekStart, type ActivityDay } from "@/lib/activityStats";
 import { formatInt } from "@/lib/format";
-import { MONTH_ABBR, shortDate } from "@convex/lib/months";
+import { monthTick, shortDate } from "@convex/lib/months";
 
 /**
  * Decisions per week across the whole record, drawn with its holes intact.
@@ -65,11 +65,6 @@ export interface PaceAnnotation {
 
 function weekLabel(iso: string): string {
   return `Week of ${shortDate(iso) ?? iso}`;
-}
-
-function monthLabel(iso: string): string {
-  const [y, m] = iso.split("-");
-  return `${MONTH_ABBR[Number(m) - 1]} ${y!.slice(2)}`;
 }
 
 export function DecisionPaceChart({
@@ -153,7 +148,7 @@ export function DecisionPaceChart({
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full min-w-[44rem]"
           role="img"
-          aria-label={`Decisions per week from ${monthLabel(weekNames[0] ?? "")} to ${monthLabel(weekNames[weekNames.length - 1] ?? "")}, peaking at ${max.toLocaleString("en-US")} in one week. A week DOL decided nothing is drawn at zero; a break in the line separates two different sources rather than marking a stoppage.`}
+          aria-label={`Decisions per week from ${(monthTick(weekNames[0] ?? "") ?? weekNames[0] ?? "")} to ${(monthTick(weekNames[weekNames.length - 1] ?? "") ?? weekNames[weekNames.length - 1] ?? "")}, peaking at ${max.toLocaleString("en-US")} in one week. A week DOL decided nothing is drawn at zero; a break in the line separates two different sources rather than marking a stoppage.`}
         >
           {yTicks.map((v) => (
             <g key={v}>
@@ -239,7 +234,7 @@ export function DecisionPaceChart({
               fill="var(--muted-foreground)"
               className="font-mono"
             >
-              {monthLabel(weekNames[i] ?? "")}
+              {(monthTick(weekNames[i] ?? "") ?? weekNames[i] ?? "")}
             </text>
           ))}
           {plotted.map((p) => (

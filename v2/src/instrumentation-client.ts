@@ -23,7 +23,7 @@ import {
 } from "@/lib/analytics";
 import { edgeCountry } from "@/lib/edgeCountry";
 import { chunkDiagnostics, isMissingModule } from "@/components/error/recovery";
-import { fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
+import { fromBrowserExtension, fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
 import { scrubClickEvent } from "@/lib/analyticsRedact";
 import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 
@@ -246,6 +246,8 @@ function startPostHog(key: string, country: string | null): void {
           if (fromInjectedBridge(msg)) return null;
           // Chrome for iPhone's own Translate and form scripts.
           if (fromInjectedPageScript(event.properties, navigator.userAgent)) return null;
+          // A browser extension's own script, with no frame of ours.
+          if (fromBrowserExtension(event.properties)) return null;
         }
         return event;
       },

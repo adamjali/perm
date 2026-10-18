@@ -87,3 +87,15 @@ export function monthYear(ym: string | null | undefined): string | null {
   const name = m ? MONTH_NAMES[Number(m[2]) - 1] : undefined;
   return m && name ? `${name} ${m[1]}` : null;
 }
+
+/**
+ * "2025-06" to "Jun ’25", for a chart tick where a full year won't fit. The
+ * apostrophe is the point: "Jun 25" reads as the 25th of June. Takes any ISO
+ * date's month; null for anything else.
+ */
+export function monthTick(iso: string | null | undefined): string | null {
+  const m = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null;
+  const name = m ? MONTH_ABBR[Number(m[2]) - 1] : undefined;
+  return m && name ? `${name} \u2019${m[1]!.slice(2)}` : null;
+}
+

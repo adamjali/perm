@@ -2,7 +2,7 @@ import { Fragment, type CSSProperties } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
-import { MONTH_ABBR, MONTH_NAMES, shiftMonth } from "@convex/lib/months";
+import { MONTH_NAMES, monthTick, shiftMonth } from "@convex/lib/months";
 
 /**
  * The queue, drawn as a measuring tape.
@@ -54,11 +54,6 @@ function tipFor(month: string, offset: number, isYou: boolean): string {
         ? "DOL is deciding these filings now"
         : `${offset} ${offset === 1 ? "month" : "months"} behind where DOL is`;
   return `${longLabel(month)}\n${state}${isYou ? "\nYour filing month" : ""}`;
-}
-
-function label(month: string): string {
-  const [y, m] = month.split("-").map(Number);
-  return `${MONTH_ABBR[(m ?? 1) - 1]} ${String(y ?? 0).slice(2)}`;
 }
 
 export function QueueTape({
@@ -150,7 +145,7 @@ export function QueueTape({
                       !isFrontier && !isYou && "sr-only",
                   )}
                 >
-                  {label(m)}
+                  {(monthTick(m) ?? m)}
                 </span>
                 {/* Real space: the flag span is adjacent to the label span
                     and would glue for every DOM extractor. */}

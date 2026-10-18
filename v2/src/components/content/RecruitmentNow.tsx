@@ -12,7 +12,11 @@ import { formatInt } from "@/lib/format";
  * sentence points at the page that carries it, and says nothing it can't know.
  */
 export async function RecruitmentNow() {
-  const doc = await getRecruitmentSummary().catch(() => null);
+  const doc = await getRecruitmentSummary().catch((err: unknown) => {
+    // The guide still reads without the figure; the log says it was missing.
+    console.error("[recruitmentNow] summary unreadable", err);
+    return null;
+  });
   const first = doc?.lead.firstStep;
   const page = (
     <Link href="/perm-recruitment" className="link">

@@ -1,7 +1,7 @@
 import { businessDayPace, type DailyTotal } from "@/lib/dolPace";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
-import { MONTH_ABBR, monthYear } from "@convex/lib/months";
+import { monthTick, monthYear, shortDate } from "@convex/lib/months";
 
 /**
  * How much work DOL has actually been clearing, week by week.
@@ -53,20 +53,9 @@ function weekStart(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** "14 Jul 2025", for the readout, where a month alone would be ambiguous. */
-function longDay(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${Number(d)} ${MONTH_ABBR[Number(m) - 1]} ${y}`;
-}
-
 /** "July 2025", for a month's readout. */
 function monthLong(iso: string): string {
   return monthYear(iso.slice(0, 7)) ?? iso;
-}
-
-function shortLabel(iso: string): string {
-  const [y, m] = iso.split("-");
-  return `${MONTH_ABBR[Number(m) - 1]} ${y!.slice(2)}`;
 }
 
 export function DailyDecisionsChart({ points, className }: DailyDecisionsChartProps) {
@@ -104,7 +93,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
   const hover: HoverPoint[] = weeks.map(([w, v], i) => ({
     x: x(i),
     y: y(v),
-    label: monthly ? monthLong(w) : `Week of ${longDay(w)}`,
+    label: monthly ? monthLong(w) : `Week of ${(shortDate(w) ?? w)}`,
     value: `${v.toLocaleString("en-US")} decisions`,
   }));
   const yTicks = [0, max / 2, max];
@@ -123,7 +112,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full min-w-[44rem]"
           role="group"
-          aria-label={`Decisions per ${unit} from ${shortLabel(first)} to ${shortLabel(last)}, peaking at ${max.toLocaleString("en-US")}`}
+          aria-label={`Decisions per ${unit} from ${(monthTick(first) ?? first)} to ${(monthTick(last) ?? last)}, peaking at ${max.toLocaleString("en-US")}`}
         >
           {yTicks.map((v) => (
             <g key={v}>
@@ -166,7 +155,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
               fill="var(--muted-foreground)"
               className="font-mono"
             >
-              {shortLabel(weeks[i]![0])}
+              {(monthTick(weeks[i]![0]) ?? weeks[i]![0])}
             </text>
           ))}
           <ChartHoverLayer
