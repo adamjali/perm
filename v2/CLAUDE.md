@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
-> **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-10-10
+> **Stack:** Next.js 16.4 + Convex 1.46 + React 19.2 + AI SDK 7 + libSQL (self-hosted sqld) + TypeScript 6 (strict)
+> **Status:** Production | **Last Updated:** 2026-10-18
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -9929,3 +9929,45 @@ the week before overshot on the last start day.
 **A `.pyc` kept a probe's mutation again**: a one-digit swap restored in the same second left the mutated
 bytecode, and two later probes went red for the wrong reason. Clear `scripts/__pycache__` before and after
 every Python probe.
+
+## Oct 18 2026: the site goes live at night, and the parts that had to move with it
+
+**Why.** Every deploy starts the page cache empty, and Googlebot and the AI search crawlers keep asking while it
+refills, on two CPUs. On Oct 17 to 18, 8 of the 13 people shown the busy page came within an hour of a deploy, and
+Saturday had 15 deploys. Owner's call, Oct 18: one a night.
+
+**How it decides.** `scripts/deploy_plan.py`, run by `oracle-deploy.yml`'s "Decide whether this run builds and ships"
+step (`test_deploy_plan.py`, probed by mutation):
+
+| run | builds | ships |
+|---|---|---|
+| a push outside 1 to 5 AM Eastern | yes, so a broken build shows in the day | no ("held for the night run") |
+| a push inside the window | yes | yes |
+| `when=night` (the server's `permtracker-cron@dispatch-night-deploy`, 06:00 UTC) | only if site files changed since what's live | then yes |
+| `when=now` (by hand: `gh workflow run oracle-deploy.yml -f when=now`) | yes | yes |
+
+- **What's live comes from the server** (`ssh deploy@<host> status`, the active slot's release `<sha12>-<run>`), never
+  from "the last successful run": a held push succeeds too. `IGNORED` mirrors the workflow's `paths-ignore`, held equal
+  by the test. The diff uses `--no-renames`, so the blob-less checkout never fetches file contents.
+- **Everything that read "a deploy run succeeded" as "it shipped" moved.** IndexNow's changed-pages send is a step in
+  the deploy run (`indexnow.yml` is the manual full send only); the morning report counts a run as a deploy only when
+  its deploy step ran, and lists "Pushes built and held for the night deploy" (`speed_lines`).
+- **The night job is titled `Oracle build and deploy, night`** (`run-name`), so the dispatcher's duplicate guard can't
+  take a push (titled by its commit) for it; `route.test.ts` holds the title and the input to the YAML.
+- **The timer isn't `Persistent`**: a night missed while the server was down waits for the next night instead of
+  shipping at midday.
+- **The first night needed one-time triggers**, because the route the timer calls ships with the deploy that adds it:
+  `permtracker-first-night-deploy` dispatched straight to GitHub at 06:00 UTC Oct 19 with the server's dispatch token,
+  and `permtracker-night-deploy-enable` switched the permanent timer on at 06:01 (before the 06:30 reboot window, since
+  a transient timer doesn't survive a reboot). Both are named `permtracker-*` so the alarm emails if either fails.
+- **Convex still deploys once the suite is green**: it doesn't touch the page cache. When a Convex change needs the
+  new site first, deploy it after the night run.
+
+**Freshness stamps, the same day.** `et_today()` (`scripts/lib_db.py`) dates every stamp and sweep doc by the Eastern
+day; the bulletin's direct read stamps on a night with nothing new; the entity load stamps `entities`; the full sweep
+stamps both `perm-case-status-full` and `perm-case-status`; the Federal Register feed is capped at today; and
+`check_nightly_builders` fails a nightly rebuild with no clean run in 3 days.
+
+**Two shell traps that hit while building it** (both in `~/.claude/reference/machine-and-tools.md`): an unquoted
+heredoc runs every backtick inside it (a note's `gh workflow run ... -f when=now` fired a deploy request GitHub refused
+only because the input wasn't live yet), and zsh never splits `$var` into words, so `set -- $r` left a poll waiting forever.

@@ -70,7 +70,9 @@ catch the commonest cause, a rate-limit zone whose key changed (`limit_req "x" u
 it used the "$b" key` in `/var/log/nginx/error.log`). Measured Sep 29 2026. Rename the zone instead, and count a
 reload only when new worker processes appear: `permtracker-deploy` does exactly that before it records a traffic
 switch (`reload_nginx`). Install scripts at the path their unit names (`grep ExecStart`): a prune script copied
-to `/usr/local/sbin` while the timer ran `/usr/local/bin` would have kept the old budget.
+to `/usr/local/sbin` while the timer ran `/usr/local/bin` would have kept the old budget. Keep a replaced
+script's old copy in `/var/backups/permtracker-old-scripts/` (root 700), away from the live one: nine
+`*.bak` copies sat on the command path until Oct 18 2026. Git holds every version anyway.
 
 ## Deploy, roll back, see the state
 
@@ -199,7 +201,10 @@ old is touched, and nothing goes unless the copy just uploaded is the newest
 listed (`lib/r2_keep.py`, `test_r2_keep.py`). The bucket's own "delete after
 15 days" rule was removed Oct 5 2026: a dead server uploads nothing, so it
 would have emptied the bucket 15 days later. The bucket's size against the
-free 10 GB is `backups/OFFSITE_SIZE`, which the morning report reads.
+free 10 GB is `backups/OFFSITE_SIZE`, which the morning report reads. Measured Oct 18 2026: 55 objects,
+6.2 GB, the steady size (15 nightly and 3 monthly copies of each of the three kinds; a database dump is
+about 390 MB, the server and Convex copies about 13 and 14 MB). It grows only as the dump grows, and the
+morning report warns before the free 10 GB.
 
 **Rebuilding elsewhere** (never rehearsed yet): copy the newest `db/`,
 `server/` and `convex/` objects from R2 to the owner's Mac; on the new Linux

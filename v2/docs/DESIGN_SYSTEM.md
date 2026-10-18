@@ -149,6 +149,8 @@ work so the server and every browser print the same day
   colour for the reader's own thing (their case, DOL's current month), status and
   stage colours only where they mean something, a readout on hover, focus and tap
   (`ChartTips`). SVG `<text>` carries a trailing space so labels don't glue.
+- **A month tick says it's a month:** "Jun ’25" from `monthTick` (`convex/lib/months.ts`);
+  "Jun 25" reads as a day. A readout names a day with `shortDate`.
 - **Every figure carries its date** and names its source (`DataProvenance`).
 
 ## Motion

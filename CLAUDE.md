@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-10
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-18
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **634 files / 9,026 tests across 5 vitest
@@ -54,9 +54,14 @@ Key: `/gsd:feature`, `/gsd:quick`, `/gsd:map-codebase`, `/gsd:help`
 
 ## Deployment
 
-Push to main triggers auto-deploy:
-- **Vercel:** Frontend rebuild
-- **Convex:** `npx convex deploy -y` (manual, from `v2/`)
+The site runs on an Oracle server behind Cloudflare (since Sep 28 2026; runbook
+[`v2/scripts/oracle/README.md`](v2/scripts/oracle/README.md)). Vercel is retired.
+
+- **Site:** a push to `main` runs `Oracle build and deploy`. It builds at once, and
+  goes live only in the 1 to 5 AM Eastern window (the server's 2 AM run ships main
+  when the site changed; `gh workflow run oracle-deploy.yml -f when=now` for an
+  urgent fix). Every deploy empties the page cache, so they're batched.
+- **Convex:** `npx convex deploy -y` from `v2/`, by hand, once GitHub's suite is green.
 
 ### Project Names (avoid confusion)
 
@@ -64,11 +69,12 @@ Push to main triggers auto-deploy:
 |---------|------|-------|
 | GitHub repo | `perm` | See remote origin |
 | Local folder | `perm-tracker/v2/` | All code lives in `v2/` |
-| Vercel project | `perm` | Deploys from `v2/`, hosts `permtracker.app` |
+| Oracle server | `ssh permtracker` | the site, the database (sqld), nginx, the timers |
+| Cloudflare | `permtracker.app` zone | DNS, the tunnel `permtracker-oracle`, R2 backups, the mail Worker |
 | Convex prod | See `.env.local` | `npx convex deploy -y` from `v2/` |
 | Convex dev | See `.env.local` | `npx convex dev` from `v2/` |
 
-**Always run commands from `v2/` directory.** Claude is always launched from `v2/`. Vercel CLI is linked to project "perm" via `v2/.vercel/project.json`.
+**Always run commands from `v2/` directory.** Claude is always launched from `v2/`.
 
 ---
 
@@ -905,3 +911,27 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
 - **The site goes live once a night** (owner's call): a push outside 1 to 5 AM Eastern builds and stops, the server's
   2 AM run ships main when the site changed (`scripts/deploy_plan.py`), and `gh workflow run oracle-deploy.yml -f when=now`
   ships at once. Every deploy empties the page cache: 8 of 13 people shown "busy" on Oct 17 to 18 came within an hour of one.
+
+## Oct 18 2026 (afternoon): every date checked, and what would survive losing the server
+
+- **A source's date is checked at the source before it's called wrong.** The dashboard's "as of October 5" was DOL's
+  own stamp (DOL's page read "PERM Processing Times (as of 10/05/2026)" on Oct 18); State's newest issuance month
+  really is February 2026. A page's "Updated" day is the git day of its inputs, so a shared-helper refactor moves many.
+- **Every freshness stamp moves when its data does, on the Eastern day** (`et_today()` in `scripts/lib_db.py`; GitHub's
+  runners are on UTC, which is tomorrow after 8 PM Eastern). The bulletin's daily read had returned before stamping on a
+  quiet night (every bulletin page said "via Internet Archive" from Oct 5); the entity load stamps the row entity pages
+  print (nothing had since Aug 26); the 4:10 AM sweep stamps the row the pages print as well as its own; the Federal
+  Register feed is never dated past today.
+- **The health check fails when a nightly rebuild has no clean run in 3 days** (`check_nightly_builders`: the sponsor
+  index, the employer map, cities, the live remainder, straggler rates, the published-to-live sync).
+- **A month tick reads "Jun ’25" through `monthTick`**: "Jun 25" reads as June 25.
+- **Errors from browser extensions are dropped** (`fromBrowserExtension` in `src/lib/exceptionNoise.ts`: chrome, moz and
+  Safari extension URLs; the morning report's new error was PayPal Honey's Safari extension).
+- **Server load, Oct 18:** about 142,000 requests a day reach the server, roughly 1 in 10 from people. Googlebot is 19%,
+  the AI search crawlers 35% (OpenAI 16k, Perplexity 10k, Apple 8.7k), and browser-looking requests 45%, mostly the
+  scraper on about 7,000 addresses. CPU is the limit (2 CPUs is Oracle's free cap for the whole account, read on
+  Oracle's page); memory and disk aren't. Read the busy-page count against deploy times before calling the server small.
+- **If the server were lost, nothing but up to a day of the public database goes with it**, checked Oct 18: every
+  installed script, unit, drop-in and nginx file matched the repo byte for byte, and the owner's key opened that night's
+  sealed server and Convex copies. R2 holds a steady ~6.2 of its free 10 GB (15 nightly copies and 3 monthly of each
+  kind), growing only as the database dump grows. The rebuild itself is still unrehearsed.
