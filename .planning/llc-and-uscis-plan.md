@@ -21,7 +21,24 @@ it); ship the bulletin month strip; the manager consented to being named.
 | seven USCIS guides | built (Track C) |
 | privacy policy: USCIS lookups section | shipped in this batch (see below) |
 | accessibility statement `/accessibility` | shipped in this batch; the USCIS gate asks for Section 508 |
-| reminders | due-check routine: Check 4 (LLC approval, Sep 24 to Oct 21), Check 5 (FL annual report, Jan 1 to May 1 yearly from 2027), Check 6 (Northwest renewal, Aug 15 to Sep 22 yearly from 2027) |
+| reminders | the "LLC Deadline Reminders" routine (Mondays 9 AM EDT): the rename on Sunbiz, the FL annual report (Jan 1 to May 1 yearly from 2027), the Northwest renewal (each September) |
+| rename to Asolys LLC | articles of amendment mailed Oct 8 2026; Sunbiz still PERM TRACKER LLC on Oct 18 with Florida's queue at receipts of Sep 30 to Oct 1, so it lands about Oct 28 to Nov 2. Ask the amendments desk (AmendmentsCorpHelp@dos.fl.gov, 850-245-6000, document L26000495521) if nothing shows by about Nov 4 |
+
+## Gate R: the day Sunbiz shows ASOLYS LLC (owner's yes for every step below, Oct 18 2026)
+
+1. **Read Sunbiz**: the name, the amendment in "Events", the document number (unchanged, L26000495521).
+2. **Register "PERM Tracker" as Asolys LLC's fictitious name** (Fla. Stat. 865.09: required before doing business
+   under it, $50, one newspaper ad in the county, good to Dec 31 of the 5th year). The owner files; show the form first.
+3. **The site, in one change**: `LEGAL_NAME` in `src/lib/constants/about.ts` becomes "Asolys LLC", so the Terms,
+   Privacy, API terms, About, accessibility page, footer, email footer and Settings follow; the Terms read
+   "Asolys LLC, doing business as PERM Tracker"; the Organization keeps `name` "PERM Tracker" with `legalName`
+   "Asolys LLC" (Google: the registered legal name "if applicable and different from the name property").
+   **Add one line to the About page and the footer** (owner's yes, Oct 18): "PERM Tracker is a trade name of Asolys
+   LLC, a Florida company managed by immigration attorney" plus the name from `SABRINA`, never typed twice.
+   `legal-name.test.ts` holds them together; set both legal pages' "Last Updated" to that day.
+4. **Then the money order**: EIN, Mercury, and TWO Stripe accounts under one login (Stripe requires separate
+   accounts for businesses that operate independently): PERM Tracker, whose public name and statement line read
+   PERM TRACKER, and the Asolys agency. Both are Asolys LLC.
 
 ## Gate A: the state files the Articles
 
