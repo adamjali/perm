@@ -926,7 +926,9 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   index, the employer map, cities, the live remainder, straggler rates, the published-to-live sync).
 - **A month tick reads "Jun ’25" through `monthTick`**: "Jun 25" reads as June 25.
 - **Errors from browser extensions are dropped** (`fromBrowserExtension` in `src/lib/exceptionNoise.ts`: chrome, moz and
-  Safari extension URLs; the morning report's new error was PayPal Honey's Safari extension).
+  Safari extension URLs; the morning report's new error was PayPal Honey's Safari extension), and `fromExtensionMessage`
+  drops Mobile Safari's stackless ones by their words (the extension messaging API, which the site never calls, and one
+  iPhone extension's `self.smartRules`; it set off the 1:27 AM EDT Oct 19 alert).
 - **Server load, Oct 18:** about 142,000 requests a day reach the server, roughly 1 in 10 from people. Googlebot is 19%,
   the AI search crawlers 35% (OpenAI 16k, Perplexity 10k, Apple 8.7k), and browser-looking requests 45%, mostly the
   scraper on about 7,000 addresses. CPU is the limit (2 CPUs is Oracle's free cap for the whole account, read on

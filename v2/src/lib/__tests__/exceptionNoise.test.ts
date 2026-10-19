@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { fromBrowserExtension, fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "../exceptionNoise";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+
+import {
+  fromBrowserExtension,
+  fromExtensionMessage,
+  fromInjectedBridge,
+  fromInjectedPageScript,
+  fromServiceWorkerRegister,
+} from "../exceptionNoise";
 
 const frames = (...fns: string[]) => ({ $exception_list: [{ stacktrace: { frames: fns.map((f) => ({ function: f })) } }] });
 
@@ -82,5 +91,42 @@ describe("fromBrowserExtension", () => {
     expect(fromBrowserExtension(ex("https://permtracker.app/_next/static/chunks/app.js"))).toBe(false);
     expect(fromBrowserExtension({ $exception_list: [] })).toBe(false);
     expect(fromBrowserExtension(undefined)).toBe(false);
+  });
+});
+
+describe("fromExtensionMessage", () => {
+  it("drops errors that name the extension messaging API or the iPhone extension's variables", () => {
+    expect(fromExtensionMessage("Invalid call to runtime.sendMessage(). Tab not found.")).toBe(true);
+    expect(fromExtensionMessage("Could not establish connection: runtime.connect failed")).toBe(true);
+    expect(fromExtensionMessage("Cannot read properties of undefined (reading 'id') at chrome.runtime")).toBe(true);
+    expect(
+      fromExtensionMessage(
+        "self.smartRules.filter is not a function. (In 'self.smartRules.filter(item => {return item && item.url != self.curSiteRule.url})', 'self.smartRules.filter' is undefined)",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps ordinary errors, and words that only look alike", () => {
+    expect(fromExtensionMessage("Cannot read properties of undefined (reading 'call')")).toBe(false);
+    expect(fromExtensionMessage("smartRulesEngine failed")).toBe(false);
+    expect(fromExtensionMessage("runtime.sendMessages is not defined")).toBe(false);
+    expect(fromExtensionMessage("")).toBe(false);
+  });
+
+  it("names APIs this site's own code never calls, so the filter can't hide one of ours", () => {
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const p = join(dir, name);
+        if (statSync(p).isDirectory()) walk(p);
+        else if (/\.(ts|tsx|js|mjs)$/.test(name) && !/\.test\.tsx?$/.test(name) && !p.endsWith("exceptionNoise.ts")) files.push(p);
+      }
+    };
+    walk(join(process.cwd(), "src"));
+    expect(files.length).toBeGreaterThan(500);
+    const hits = files.filter((f) =>
+      /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\b(?:smartRules|curSiteRule)\b/.test(readFileSync(f, "utf8")),
+    );
+    expect(hits).toEqual([]);
   });
 });

@@ -76,3 +76,18 @@ export function fromBrowserExtension(props: Record<string, unknown> | undefined)
   const frames = ((props?.$exception_list as ExceptionList | undefined) || []).flatMap((e) => e.stacktrace?.frames || []);
   return frames.length > 0 && frames.every((f) => EXTENSION_FILE.test(f.filename || ""));
 }
+
+/**
+ * True when an error's own words name an extension's API or one extension's
+ * known variables, for the errors Mobile Safari reports with no stack at all,
+ * which `fromBrowserExtension` can't place. The extension messaging API
+ * (`runtime.sendMessage`, `runtime.connect`, `chrome.runtime`, `browser.runtime`:
+ * 8 visits in the month to Oct 18 2026, "Invalid call to runtime.sendMessage().
+ * Tab not found.") is one this site never calls, which exceptionNoise.test.ts
+ * holds. `self.smartRules` and `self.curSiteRule` are an iPhone extension's own
+ * (2 visits from Oct 14; one tripped the new-error-type alert at 1:27 AM EDT
+ * Oct 19); neither name is in this site's source or build.
+ */
+export function fromExtensionMessage(msg = ""): boolean {
+  return /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\bself\.(?:smartRules|curSiteRule)\b/.test(msg);
+}

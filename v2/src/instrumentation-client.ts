@@ -23,7 +23,13 @@ import {
 } from "@/lib/analytics";
 import { edgeCountry } from "@/lib/edgeCountry";
 import { chunkDiagnostics, isMissingModule } from "@/components/error/recovery";
-import { fromBrowserExtension, fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
+import {
+  fromBrowserExtension,
+  fromExtensionMessage,
+  fromInjectedBridge,
+  fromInjectedPageScript,
+  fromServiceWorkerRegister,
+} from "@/lib/exceptionNoise";
 import { scrubClickEvent } from "@/lib/analyticsRedact";
 import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 
@@ -248,6 +254,8 @@ function startPostHog(key: string, country: string | null): void {
           if (fromInjectedPageScript(event.properties, navigator.userAgent)) return null;
           // A browser extension's own script, with no frame of ours.
           if (fromBrowserExtension(event.properties)) return null;
+          // An extension's API or variables named in the message (Mobile Safari sends no stack).
+          if (fromExtensionMessage(msg)) return null;
         }
         return event;
       },
