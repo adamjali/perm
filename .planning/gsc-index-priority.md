@@ -1154,3 +1154,53 @@ first and skip any page crawled after 4:14 AM EDT Oct 18. These go after the "St
 8. `/guides/how-long-perm-recruitment-stays-valid` (live timing callout)
 9. `/contact` (says it isn't an employer and points to the finder)
 10. `/guides/perm-sunday-ads-additional-recruitment-steps` (one link)
+
+### Round, Monday Oct 19 2026 (about 10:30 to 11:00 AM EDT)
+
+Worked the Oct 18 list's served-markup changes first, then the three templates, then pages that changed after
+their last crawl. Google answered Quota Exceeded on the 12th request.
+
+Requested (last crawl before the request):
+- `/sponsor-finder` (Oct 15, 11:38 PM)
+- `/case-search` (Oct 16, 12:54 AM)
+- `/guides/green-card-sponsors-for-your-job` (Oct 17, 7:46 AM)
+- `/guides/how-long-perm-recruitment-stays-valid` (Oct 17, 7:46 AM)
+- `/guides/perm-recruitment-report-sample` (Oct 17, 7:46 AM; changed 2:16 PM that day)
+- `/guides/perm-notice-of-filing-sample` (Oct 17, 7:46 AM; changed 2:16 PM)
+- `/guides/perm-audit-file-index` (Oct 17, 7:46 AM; changed 2:16 PM)
+- `/perm-employers/google-llc` (Oct 17, 7:41 AM)
+- `/perm-wages/software-developers` (Oct 14, 1:09 PM)
+- `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp` (Oct 14, 3:54 AM)
+- `/guides/eta-9089-expiration-and-i140-deadline` (Oct 17, 7:46 AM; changed 2:42 PM)
+
+Skipped, crawled after their last change: `/perm-recruitment` (Oct 18, 7:59 AM), `/guides/dol-average-vs-your-wait`
+(Oct 17, 7:46 AM), `/guides/perm-audit-response` (Oct 18, 7:36 PM).
+
+Quota Exceeded on `/guides/perm-employer-questionnaire` (Oct 17, 7:46 AM; changed 2:42 PM; not requested).
+
+**Google crawled most of the Oct 16 to 17 articles on its own at Oct 17, 7:41 to 7:46 AM**, so "Still to request" is
+now only the pages that changed after that crawl (commit times from `git log -1 -- content/<path>.mdx`): the Oct 17
+afternoon citation pass and the Oct 18 link.
+
+Still to request, in order:
+1. `/guides/perm-employer-questionnaire`
+2. `/guides/perm-business-necessity`
+3. `/guides/perm-layoff-rule-for-employers`
+4. `/guides/special-handling-university-teachers`
+5. `/blog/docketwise-vs-inszoom-lollylaw-eimmigration`
+6. `/blog/vendor-data-security-questions`
+7. `/blog/perm-attorney-fees-employer-must-pay`
+8. `/guides/perm-sunday-ads-additional-recruitment-steps` (changed Oct 18, 4:01 AM)
+9. `/contact` (Oct 18 list)
+
+Driving notes: never send a focus batch and a typing batch in parallel. When the first errored ("Couldn't determine
+which page"), the second typed the URL into the open dialog's Dismiss button; no Return followed, so nothing ran.
+That error hits about every other browser call this session and nothing in the batch runs; re-send the same batch.
+
+## Queue after the Oct 19 night deploy (319340a2, about 2 AM EDT)
+
+`node scripts/gsc_queue.mjs --since b4205031`: the month-tick fix on every chart (labels read as months). Low
+priority, since nothing a searcher reads changed; the sitemap's lastmod carries them. Request only after the list
+above, and only a page crawled before Oct 19, 2 AM EDT:
+`/`, `/perm-case-status`, `/perm-cases`, `/perm-decision-activity`, `/perm-processing-times`, `/policy-changes`,
+`/seasonal-cases`, `/tools`.
