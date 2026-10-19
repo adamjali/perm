@@ -154,6 +154,7 @@ def main() -> int:
               (s["keep"] / "data").exists() and (s["keep"] / "wallog").exists() and not (s["dir"] / "wallog").exists())
         check("the database and its lock are started again", (root / "running-8080").exists()
               and "start permtracker-dbcache permtracker-watchdog.timer" in (root / "systemctl.log").read_text())
+        check("the integrity check runs once it's back, and passes", "done: quick_check ok" in r.stdout, r.stdout[-200:])
 
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)

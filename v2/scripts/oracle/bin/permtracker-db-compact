@@ -11,9 +11,9 @@
 # which rebuilds its log from the file (66 s for 2.47 GB, measured Oct 19).
 #
 # The site can't read or write the database while this runs. Rehearsed Oct 19
-# 2026 on a copy: drop 171 s, vacuum 495 s, 6.83 GB down to 3.82 GB; the disk
+# 2026 on a copy: drop 171 s, vacuum 495 s, 6.83 GB down to 3.82 GB, quick_check 644 s; the disk
 # moves about 74 MB/s (Oracle's balanced rate for 150 GB), so with the rollback
-# copy, the check and sqld rebuilding its log, expect 17 to 19 minutes offline.
+# copy, and sqld rebuilding its log, expect about 16 minutes offline (the check runs after).
 # Run it in the night window, after the deploy and before the 3:15 AM backup.
 # Root only.
 #
@@ -117,12 +117,11 @@ con.execute("PRAGMA secure_delete = OFF")
 t = time.time(); con.execute(f"DROP TABLE {retired}"); print(f"  drop {time.time() - t:.0f}s", file=sys.stderr, flush=True)
 t = time.time(); con.execute("VACUUM"); print(f"  vacuum {time.time() - t:.0f}s", file=sys.stderr, flush=True)
 con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-ok = con.execute("PRAGMA quick_check").fetchone()[0]
 after = con.execute(sample).fetchone()[0]
-print(f"  quick_check {ok}; sample {before} -> {after}", file=sys.stderr, flush=True)
+print(f"  sample {before} -> {after}", file=sys.stderr, flush=True)
 con.close()
 print(before)
-sys.exit(0 if ok == "ok" and before == after else 1)
+sys.exit(0 if before == after else 1)
 PY
 )
 # An empty write-ahead file is all a clean close leaves; one with pages in it
@@ -136,4 +135,10 @@ after=$(q 8080 "$SAMPLE")
 [ "$after" = "$before" ] || { LOG "sample differs after: $after (before $before)"; false; }
 trap - ERR
 systemctl start permtracker-dbcache permtracker-watchdog.timer
-LOG "done: database back after $(( $(date +%s) - t0 )) s offline; sample $after; original still in $KEEP"
+LOG "back: database answered after $(( $(date +%s) - t0 )) s offline; sample $after; original still in $KEEP"
+# The full integrity check reads the whole file (644 s for 3.8 GB in the
+# rehearsal), so it runs with the site back up, read-only beside sqld, as the
+# Oct 15 2026 check did. A failure here is the owner's call: the original is
+# still in $KEEP, but the site has written to the new file since.
+ok=$(sudo -u permtracker env nice -n 10 python3 -c 'import sqlite3, sys; print(sqlite3.connect(f"file:{sys.argv[1]}?mode=ro", uri=True).execute("PRAGMA quick_check").fetchone()[0])' "$D/data" 2>&1 || true)
+if [ "$ok" = ok ]; then LOG "done: quick_check ok"; else LOG "quick_check says: $ok"; exit 4; fi
