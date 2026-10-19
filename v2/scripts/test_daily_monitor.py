@@ -375,6 +375,61 @@ def main() -> int:
     check(v(doc(busySeen=busy(4, [(25, 6), (26, 0), (27, 5), (28, 4)])), now_ms)["status"] == "ok",
           "a quiet day in between breaks the streak")
 
+    # The busy hours, set against deploy switches (Oct 19 2026).
+    hrs = [{"hour": "2026-09-28T06:00:00Z", "busyPeople": 8}, {"hour": "2026-09-28T09:00:00Z", "busyPeople": 4}]
+    b12 = busy(12, [(28, 12)])
+    b12["busyHours"] = hrs
+    def ms(*a):
+        return int(dt.datetime(*a, tzinfo=dt.timezone.utc).timestamp() * 1000)
+    near = dm.server_verdict(doc(busySeen=b12), now_ms, [ms(2026, 9, 28, 6, 20)])
+    check(near["status"] == "warn" and any("8 of them within an hour of a deploy" in ln for ln in near["lines"]),
+          "busy people mostly in a deploy's hour are put down to the deploy")
+    check(any(ln == "By hour (Eastern): Mon 2 AM 8, Mon 5 AM 4" for ln in near["lines"]), "the hours are named, Eastern")
+    far = dm.server_verdict(doc(busySeen=b12), now_ms, [ms(2026, 9, 27, 18, 0)])
+    check(any("the most around Mon 2 AM (none near a deploy): the server is too small" in ln for ln in far["lines"]),
+          "busy people away from any deploy still say the server is too small, and when")
+    blind = dm.server_verdict(doc(busySeen=b12), now_ms, None)
+    check(any("the most around Mon 2 AM: the server is too small" in ln for ln in blind["lines"]),
+          "no deploy record says nothing about deploys")
+    check(any(ln.startswith("12 people were shown \"busy\" in 24 h: the server is too small")
+              for ln in v(doc(busySeen=busy(12, [(28, 12)])), now_ms)["lines"]),
+          "a doc from before the hours keeps the plain sentence")
+    steps = {1: [{"name": "Build", "conclusion": "success", "completed_at": "2026-10-19T06:05:00Z"},
+                 {"name": dm.SHIP_STEP, "conclusion": "success", "completed_at": "2026-10-19T06:11:20Z"}],
+             2: [{"name": dm.SHIP_STEP, "conclusion": "skipped", "completed_at": "2026-10-18T14:30:00Z"}]}
+    check(dm.switch_times(steps) == [ms(2026, 10, 19, 6, 11, 20)], "only a run whose ship step ran has a switch time")
+
+    # The database's RAM lock (Oct 19 2026: off since Oct 9, unnoticed).
+    on = {"permtracker-dbcache": "active"}
+    off_line = dm.ram_lock_line(on, {"dbDataBytes": 6_682_112_000, "lockedMb": 0})
+    check(off_line is not None and "6.7 GB" in off_line and "6 GB cap" in off_line, "a database over the lock cap is said")
+    check(dm.ram_lock_line(on, {"dbDataBytes": 3_000_000_000, "lockedMb": 2900}) is None, "a locked database says nothing")
+    check(dm.ram_lock_line(on, {"dbDataBytes": 6_682_112_000}) is None, "no locked figure, no claim")
+    script = (HERE / "oracle" / "bin" / "permtracker-dbcache").read_text()
+    check("$((6*1024*1024*1024))" in script and dm.DBCACHE_CAP_BYTES == 6 * 1024 ** 3,
+          "the report's cap is the lock script's cap")
+
+    # Traffic against the same weekday (Oct 19 2026: a Sunday read as a drop).
+    views = {}
+    d0 = dt.date(2026, 9, 14)
+    for i in range(35):
+        day = d0 + dt.timedelta(days=i)
+        views[day.isoformat()] = 3400 if day.weekday() == 6 else 7100
+    prior, usual = dm.usual_prior(views, "2026-10-18")
+    check(usual == "Sunday" and prior == [3400] * 4, f"a Sunday is judged against Sundays ({usual}, {prior})")
+    check(dm.spike_note(3409, prior, "pageviews", drop=True, usual=usual) is None, "an ordinary Sunday isn't a drop")
+    check(dm.spike_note(1500, prior, "pageviews", drop=True, usual=usual).endswith(
+          "of the usual Sunday (1.50K pageviews against a median of 3.40K)"), "a real drop names the weekday")
+    week = [v7 for k, v7 in sorted(views.items()) if k < "2026-10-18"][-7:]
+    check(dm.spike_note(3409, week, "pageviews", drop=True) is not None, "control: against every day the Sunday read as a drop")
+    few = {k: v7 for k, v7 in views.items() if k >= "2026-10-05"}
+    check(dm.usual_prior(few, "2026-10-18")[1] == "day", "under three of that weekday falls back to the week")
+
+    # A slow page is timed again.
+    cold = dm.slow_verdict("/llms.txt", 8700, 300)
+    check(cold == ("/llms.txt 8.7s on the first load, 0.3s once cached", False), f"slow once, fast after, doesn't warn: {cold}")
+    check(dm.slow_verdict("/x", 8700, 5200)[1] and dm.slow_verdict("/x", 8700, None)[1], "slow twice, or no second answer, warns")
+
     data_section_reads_the_scorecard_alarms()
     long_lines_end_at_a_sentence()
     busy_replies_are_tried_again()

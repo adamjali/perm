@@ -937,3 +937,11 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   installed script, unit, drop-in and nginx file matched the repo byte for byte, and the owner's key opened that night's
   sealed server and Convex copies. R2 holds a steady ~6.2 of its free 10 GB (15 nightly copies and 3 monthly of each
   kind), growing only as the database dump grows. The rebuild itself is still unrehearsed.
+- **The morning report's three Oct 19 warnings, read and fixed.** A Sunday is judged against earlier Sundays
+  (`usual_prior`; it had read as "48% of the usual day"); a page slow on its first request is timed again and
+  warns only if slow twice (`slow_verdict`); and busy-page people are listed by hour (`busyHours` from
+  `permtracker-health`) and set against deploy switches, so the warning says whether a deploy or traffic did it.
+  On Oct 18 it was traffic, Sunday 4 to 7 PM (PerplexityBot about 180 a minute, partly unverified, plus two
+  scraper labels), none near a deploy. **The database RAM lock had been off since Oct 9** (the data file passed
+  its 6 GB cap) and nothing said so; the report does now (`ram_lock_line`).
+

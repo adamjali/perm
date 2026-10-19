@@ -118,11 +118,12 @@ def http_json(url: str, headers=None, data=None, timeout=45, waits=RETRY_WAITS):
             time.sleep(min(int(asked), 30) if asked.isdigit() else wait)
 
 
-def spike_note(today: float, prior: list[float], unit: str, *, drop: bool = False) -> str | None:
+def spike_note(today: float, prior: list[float], unit: str, *, drop: bool = False, usual: str = "day") -> str | None:
     """A sentence when `today` is far from the median of `prior`, else None.
 
     Needs at least three prior days, or a single odd day would be its own
     baseline. `drop` also flags a fall (traffic); cost only flags a rise.
+    `usual` names what `prior` is ("day", or a weekday when it's the same weekday).
     """
     base = [p for p in prior if p is not None]
     if len(base) < 3:
@@ -132,9 +133,9 @@ def spike_note(today: float, prior: list[float], unit: str, *, drop: bool = Fals
         return None
     ratio = today / med
     if ratio >= SPIKE:
-        return f"{ratio:.1f}x the usual day ({fmt(today)} {unit} against a median of {fmt(med)})"
+        return f"{ratio:.1f}x the usual {usual} ({fmt(today)} {unit} against a median of {fmt(med)})"
     if drop and ratio <= DROP:
-        return f"{ratio:.0%} of the usual day ({fmt(today)} {unit} against a median of {fmt(med)})"
+        return f"{ratio:.0%} of the usual {usual} ({fmt(today)} {unit} against a median of {fmt(med)})"
     return None
 
 
@@ -282,6 +283,16 @@ DEPLOY_STEPS = (("Build", "build"),
 SHIP_STEP = DEPLOY_STEPS[-1][0]
 
 
+def switch_times(deploy_steps: dict) -> list[int]:
+    """Epoch ms at which each deploy's ship step finished, for runs that shipped."""
+    out = []
+    for steps in deploy_steps.values():
+        for st in steps:
+            if st.get("name") == SHIP_STEP and st.get("conclusion") == "success" and st.get("completed_at"):
+                out.append(int(dt.datetime.fromisoformat(st["completed_at"].replace("Z", "+00:00")).timestamp() * 1000))
+    return sorted(out)
+
+
 def minutes(start, end) -> float | None:
     try:
         a = dt.datetime.fromisoformat(str(start).replace("Z", "+00:00"))
@@ -334,6 +345,12 @@ def speed_lines(runs: list[dict], deploy_steps: dict) -> tuple[str, list[str]]:
     return summary, lines
 
 
+# When each deploy in the window put its release live (its ship step's end),
+# filled by speed_section for the server section's busy line.
+DEPLOY_SWITCH_MS: list[int] = []
+SPEED_READ: list[bool] = []
+
+
 def speed_section(since: dt.datetime) -> dict:
     runs = runs_since(since)
     steps = {}
@@ -341,6 +358,8 @@ def speed_section(since: dt.datetime) -> dict:
         if r.get("path") == DEPLOY_PATH and r.get("conclusion") == "success":
             d = http_json(f"https://api.github.com/repos/{REPO}/actions/runs/{r['id']}/jobs", gh_headers())
             steps[r["id"]] = [st for j in d.get("jobs", []) for st in j.get("steps", [])]
+    DEPLOY_SWITCH_MS[:] = switch_times(steps)
+    SPEED_READ[:] = [True]
     summary, lines = speed_lines(runs, steps)
     return section("speed", "How long things take (24 h)", "ok", summary, lines)
 
@@ -402,28 +421,52 @@ def domain_days(domain: str) -> int | None:
     return None
 
 
+# A page slower than this is timed once more. One slow first load is usually a
+# copy nobody had asked for since the cache refreshed (Oct 19 2026: /llms.txt
+# 8.7 s at 7:30 AM, 0.3 s minutes later); a page slow twice is slow.
+SLOW_PAGE_MS = 4000
+
+
+def probe(path: str) -> tuple[object, float]:
+    """One request: (status code or error name, milliseconds)."""
+    t0 = time.monotonic()
+    try:
+        req = urllib.request.Request(SITE + path, headers={"User-Agent": "permtracker-daily-monitor"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            code = r.status
+            r.read(1)
+    except urllib.error.HTTPError as e:
+        code = e.code
+    except Exception as e:  # noqa: BLE001 - a probe reports, it never raises
+        code = type(e).__name__
+    return code, (time.monotonic() - t0) * 1000
+
+
+def slow_verdict(path: str, first_ms: float, again_ms: float | None) -> tuple[str, bool]:
+    """(what to say, whether to warn) for a page slow on its first request."""
+    if again_ms is not None and again_ms <= SLOW_PAGE_MS:
+        return f"{path} {first_ms / 1000:.1f}s on the first load, {again_ms / 1000:.1f}s once cached", False
+    again = "no answer" if again_ms is None else f"{again_ms / 1000:.1f}s"
+    return f"{path} {first_ms / 1000:.1f}s, and {again} again", True
+
+
 def site_section() -> dict:
-    lines, statuses, slow = [], [], []
+    lines, statuses, slow, cold = [], [], [], []
     for path in PROBES:
-        t0 = time.monotonic()
-        try:
-            req = urllib.request.Request(SITE + path, headers={"User-Agent": "permtracker-daily-monitor"})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                code = r.status
-                r.read(1)
-        except urllib.error.HTTPError as e:
-            code = e.code
-        except Exception as e:  # noqa: BLE001 - a probe reports, it never raises
-            code = type(e).__name__
-        ms = (time.monotonic() - t0) * 1000
+        code, ms = probe(path)
         if code != 200:
             lines.append(f"{path} answered {code}")
             statuses.append("fail")
-        elif ms > 4000:
-            slow.append(f"{path} {ms / 1000:.1f}s")
+        elif ms > SLOW_PAGE_MS:
+            time.sleep(3)
+            code2, ms2 = probe(path)
+            text, warn = slow_verdict(path, ms, ms2 if code2 == 200 else None)
+            (slow if warn else cold).append(text)
     if slow:
         lines.append("Slow: " + ", ".join(slow))
         statuses.append("warn")
+    if cold:
+        lines.append("Slow only on the first load: " + ", ".join(cold))
     try:
         c = cert_days("permtracker.app")
         lines.append(f"HTTPS certificate: {c} days left")
@@ -595,7 +638,7 @@ def traffic_section() -> dict:
     q = ("SELECT d, sum(v) AS views, count() AS visitors, countIf(v > 1 OR m > 0) AS people FROM ("
          "SELECT toDate(toTimeZone(timestamp, 'America/New_York')) AS d, person_id, count() AS v, "
          "countIf(properties.$device_type = 'Mobile') AS m FROM events WHERE event = '$pageview' "
-         "AND timestamp > now() - INTERVAL 9 DAY GROUP BY d, person_id) GROUP BY d ORDER BY d")
+         "AND timestamp > now() - INTERVAL 36 DAY GROUP BY d, person_id) GROUP BY d ORDER BY d")
     d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
                   {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                   json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())
@@ -605,12 +648,12 @@ def traffic_section() -> dict:
     if yday not in by:
         return section("traffic", "Traffic", "unknown", "no pageviews recorded for yesterday")
     views, visitors, people = by[yday]
-    prior = [by[k][0] for k in sorted(by) if k < yday][-7:]
+    prior, usual = usual_prior({k: v[0] for k, v in by.items()}, yday)
     lines = [f"Yesterday: {views:,} pageviews by {visitors:,} visitors",
              f"About {people:,} of them likely people (on a phone, or read more than one page); "
              "most of the rest are single-page crawler visits"]
     status = "ok"
-    note = spike_note(views, prior, "pageviews", drop=True)
+    note = spike_note(views, prior, "pageviews", drop=True, usual=usual)
     if note:
         lines.append("Unusual: " + note)
         status = "warn"
@@ -713,6 +756,18 @@ MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
 # a healthy engine (Oct 11 2026: 6.1 GB of data, 2.3 GB of log, 11 GB of
 # snapshots).
 SQLD_LOG_CAP_BYTES = 4096 * 1_000_000
+def usual_prior(views_by_day: dict[str, float], day: str) -> tuple[list[float], str]:
+    """What a day's traffic is judged against: the same weekday over the four
+    weeks before (a Sunday runs at about half a weekday, so against every day
+    each Sunday read as a drop: Oct 19 2026, "48% of the usual day"), or the
+    seven days before when fewer than three of that weekday are held."""
+    wd = dt.date.fromisoformat(day).weekday()
+    same = [v for k, v in sorted(views_by_day.items()) if k < day and dt.date.fromisoformat(k).weekday() == wd][-4:]
+    if len(same) >= 3:
+        return same, dt.date.fromisoformat(day).strftime("%A")
+    return [v for k, v in sorted(views_by_day.items()) if k < day][-7:], "day"
+
+
 SQLD_LOG_SLACK = 1.25
 # The page-cache cap (permtracker-prune) runs every 30 minutes; two hours
 # without a run means it stopped, and the disk fills at crawl speed without it.
@@ -744,7 +799,26 @@ def repo_timers() -> list[str]:
     return sorted(p.name for p in d.glob("*.timer"))
 
 
-def busy_line(doc: dict, now_ms: int, warns: list, lines: list) -> None:
+# permtracker-dbcache locks the database file in memory only up to this size
+# (scripts/oracle/bin/permtracker-dbcache, held equal by test_daily_monitor.py).
+DBCACHE_CAP_BYTES = 6 * 1024 ** 3
+HOUR_MS = 3_600_000
+
+
+def ram_lock_line(svc: dict, n: dict) -> str | None:
+    """Say so when the database is no longer locked in memory because it grew
+    past the lock's cap: the service still runs, so nothing else shows it (it
+    stopped locking on Oct 9 2026 at 6.46 GB, unnoticed for ten days)."""
+    data, locked = n.get("dbDataBytes"), n.get("lockedMb")
+    if svc.get("permtracker-dbcache") != "active" or not data or locked is None:
+        return None
+    if data > DBCACHE_CAP_BYTES and locked < 512:
+        return (f"Database not locked in memory: its data file ({data / 1e9:.1f} GB) is over the lock's "
+                f"{DBCACHE_CAP_BYTES / 1024 ** 3:.0f} GB cap, so reads come from the system's file cache")
+    return None
+
+
+def busy_line(doc: dict, now_ms: int, warns: list, lines: list, switches: list[int] | None = None) -> None:
     """People turned away with a refusal page, counted by the server from the
     1-pixel image those pages carry (only a browser that draws the page asks
     for it). Absent from a doc written before the count existed: says nothing.
@@ -764,8 +838,30 @@ def busy_line(doc: dict, now_ms: int, warns: list, lines: list) -> None:
     lines.append(f"People shown \"busy\" (server full): {busy} in 24 h; by day, oldest first: "
                  + ", ".join(str(n) for n in series)
                  + (f". Shown \"one moment\" (their own address too fast): {slow}" if slow else ""))
+    hours = [h for h in (bs.get("busyHours") or []) if h.get("busyPeople")]
+    near = 0
+    if hours:
+        def at(h):
+            return dt.datetime.fromisoformat(h["hour"].replace("Z", "+00:00"))
+        lines.append("By hour (Eastern): " + ", ".join(
+            f"{at(h).astimezone(ET).strftime('%a %-I %p')} {h['busyPeople']}" for h in hours))
+        # An hour of people turned away within an hour of a deploy's switch: a
+        # deploy empties the page cache, and every page is built again.
+        # The hour holding the switch, or one starting within the hour after it.
+        near = sum(h["busyPeople"] for h in hours
+                   if any(-HOUR_MS <= s - at(h).timestamp() * 1000 < HOUR_MS for s in (switches or [])))
     if busy >= BUSY_PEOPLE_WARN:
-        warns.append(f"{busy} people were shown \"busy\" in 24 h: the server is too small for its traffic")
+        if switches is not None and hours and near * 2 >= busy:
+            warns.append(f"{busy} people were shown \"busy\" in 24 h, {near} of them within an hour of a deploy "
+                         "(each deploy empties the page cache)")
+        elif hours:
+            peak = max(hours, key=lambda h: h["busyPeople"])
+            when = at(peak).astimezone(ET).strftime("%a %-I %p")
+            tail = "" if switches is None else (" (none near a deploy)" if near == 0 else f" ({near} near a deploy)")
+            warns.append(f"{busy} people were shown \"busy\" in 24 h, the most around {when}{tail}: "
+                         "the server is too small for its traffic at its busiest")
+        else:
+            warns.append(f"{busy} people were shown \"busy\" in 24 h: the server is too small for its traffic")
     elif all(n >= BUSY_STREAK_MIN for n in series[-BUSY_STREAK_DAYS:]):
         warns.append(f"people shown \"busy\" {BUSY_STREAK_DAYS} days running: the server is getting too small")
 
@@ -829,7 +925,7 @@ def estimate_lines(priv: dict) -> list[str]:
             line("visa bulletin release days", ours("bulletin").get("all") or {})]
     return [x for x in out if x]
 
-def server_verdict(doc: dict | None, now_ms: int) -> dict:
+def server_verdict(doc: dict | None, now_ms: int, switches: list[int] | None = None) -> dict:
     """Judge perm_docs['server_health'], which the server writes every 10 minutes."""
     title = "The server (Oracle)"
     if not doc:
@@ -1035,7 +1131,10 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
                      f"{(n.get('dbLogBytes') or 0) / 1e9:.1f} GB (compacted at {SQLD_LOG_CAP_BYTES / 1e9:.1f} GB)")
     if slot:
         lines.append(f"Live copy: {slot} ({(doc.get('slot') or {}).get('release')})")
-    busy_line(doc, now_ms, warns, lines)
+    lock = ram_lock_line(svc, n)
+    if lock:
+        lines.append(lock)
+    busy_line(doc, now_ms, warns, lines, switches)
     status = "fail" if fails else "warn" if warns else "ok"
     summary = (fails + warns)[0] if fails or warns else f"all services up, memory {n.get('memPct')}%"
     return section("server", title, status, summary, fails + warns + lines)
@@ -1045,7 +1144,7 @@ def server_section(now_ms: int) -> dict:
     from lib_db import Database, read_doc  # noqa: PLC0415 - only needed here
 
     db = Database()
-    return server_verdict(read_doc(db, "server_health"), now_ms)
+    return server_verdict(read_doc(db, "server_health"), now_ms, DEPLOY_SWITCH_MS if DEPLOY_SWITCH_MS or SPEED_READ else None)
 
 
 # ── assembly ──────────────────────────────────────────────────────────────

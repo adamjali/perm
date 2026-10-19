@@ -73,6 +73,8 @@ check("each day counts its own people", [d["people"] for d in r["days"]] == [1, 
 check("people shown \"busy\" (server full) apart", r["last24h"]["busyPeople"] == 2 and [d["busyPeople"] for d in r["days"]] == [1, 1, 2],
       str(r))
 check("last view time", r["lastAt"] == "2026-10-02T11:02:00Z", str(r["lastAt"]))
+check("people shown \"busy\" by hour, the last 24 h only", r["busyHours"] == [{"hour": "2026-10-02T11:00:00Z", "busyPeople": 2}],
+      str(r["busyHours"]))
 check("no log, no answer (never zero)", health.busy_seen(NOW, pathlib.Path("/nonexistent/seen.log")) is None)
 empty = run([""])
 check("an empty log is zero people", empty is not None and empty["last24h"]["people"] == 0 and empty["days"] == [])

@@ -7,5 +7,9 @@
 set -euo pipefail
 D=/srv/permtracker/db/data.sqld/dbs/default
 size=$(stat -c %s "$D/data")
-if [ "$size" -gt $((6*1024*1024*1024)) ]; then echo "database is $size bytes, over the 6 GB cap; not locking"; exec sleep infinity; fi
+# Over the cap it waits, then exits cleanly for systemd to start it again and
+# re-check the size. It slept forever until Oct 19 2026, so the unit's 6-hour
+# RuntimeMaxSec killed it as "failed" four times a day from Oct 9, when the
+# database passed 6 GB (the morning report now says when nothing is locked).
+if [ "$size" -gt $((6*1024*1024*1024)) ]; then echo "database is $size bytes, over the 6 GB cap; not locking"; exec sleep 20700; fi
 exec vmtouch -l -q "$D/data"

@@ -143,6 +143,10 @@ def busy_seen(now: float, log: pathlib.Path = BUSY_LOG) -> dict | None:
     day_ago = now - 86_400
     days: dict[str, dict] = {}
     last: dict = {"views": 0, "people": set(), "busyPeople": set(), "busy": 0, "slowDown": 0}
+    # People shown "busy" in each hour of the last 24 (UTC hour starts), so the
+    # morning report can name the hours and set them against deploy times: a
+    # deploy empties the page cache, which is a different cause from traffic.
+    hours: dict[str, set] = {}
     latest = None
     for f in files:
         if f.suffix == ".gz":
@@ -177,6 +181,7 @@ def busy_seen(now: float, log: pathlib.Path = BUSY_LOG) -> dict | None:
                 last["people"].add(who)
                 if busy:
                     last["busyPeople"].add(who)
+                    hours.setdefault(time.strftime("%Y-%m-%dT%H:00:00Z", time.gmtime(t)), set()).add(who)
                 last["busy" if busy else "slowDown"] += 1
             latest = max(latest or t, t)
     return {
@@ -184,6 +189,7 @@ def busy_seen(now: float, log: pathlib.Path = BUSY_LOG) -> dict | None:
                     "busyViews": last["busy"], "slowDownViews": last["slowDown"]},
         "days": [{"day": k, "views": v["views"], "people": len(v["people"]), "busyPeople": len(v["busyPeople"])}
                  for k, v in sorted(days.items())],
+        "busyHours": [{"hour": k, "busyPeople": len(v)} for k, v in sorted(hours.items())],
         "lastAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(latest)) if latest else None,
     }
 
