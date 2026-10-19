@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+import http.client
 import json
 import os
 import pathlib
@@ -113,6 +114,18 @@ def lca_joins(sql: str) -> set[str]:
     own = {m.group(1).lower() for m in _CTE_NAME.finditer(sql)}
     return {t for t in (m.group(1) for m in _TABLE_REF.finditer(sql))
             if t.lower() not in own and t.lower() not in _NOT_TABLES and t != "lca_cases"}
+
+
+_READ = re.compile(r"^\s*(SELECT|WITH|EXPLAIN)\b", re.I)
+_WRITE = re.compile(r"\b(INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|VACUUM|ATTACH)\b", re.I)
+
+
+def reads_only(requests: list[dict]) -> bool:
+    """True when every statement in a pipeline only reads, so asking again
+    can't apply anything twice. Any doubt (a REPLACE() call in a SELECT, say)
+    counts as a write."""
+    sqls = list(request_sqls(requests))
+    return bool(sqls) and all(_READ.match(q) and not _WRITE.search(q) for q in sqls)
 
 
 def pipeline_home(requests: list[dict], *, strict: bool = True) -> str:
@@ -456,6 +469,16 @@ class Database:
                 with urllib.request.urlopen(req, timeout=timeout) as resp:
                     out = json.loads(resp.read())
             except (urllib.error.URLError, TimeoutError, OSError) as e:
+                last = e
+                continue
+            except http.client.HTTPException as e:
+                # An answer cut partway (IncompleteRead). The server ran the
+                # statements, so only a read is asked again; a write may have
+                # been applied. Oct 19 2026: two nightly builders lost their
+                # whole step to one cut read each, while Cloudflare or the
+                # runner's network dropped connections for about 20 minutes.
+                if not reads_only(requests):
+                    raise
                 last = e
                 continue
             # A pipeline returns 200 even when a statement failed. Surfacing

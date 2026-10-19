@@ -24,6 +24,7 @@ retried and an `INSERT OR IGNORE` can.
 """
 from __future__ import annotations
 
+import http.client
 import io
 import json
 import pathlib
@@ -187,6 +188,33 @@ def main() -> int:
           lib_db.transient_code({"code": "SQLITE_NEWTHING"}) is None)
     check("a malformed error object is NOT transient",
           lib_db.transient_code("boom") is None)
+
+    # --- an answer cut partway (Oct 19 2026) -------------------------------
+    print("\ncut answers")
+
+    class CutOnce(FakeHrana):
+        def __call__(self, req, timeout=None):
+            if self.fail_remaining > 0:
+                self.fail_remaining -= 1
+                self.posts += 1
+                raise http.client.IncompleteRead(b"{", 900)
+            return super().__call__(req, timeout)
+
+    s = CutOnce(fail_posts=1)
+    db = with_server(s)
+    s.db.execute("CREATE TABLE r (id INTEGER)")
+    err = attempt(lambda: db.execute("SELECT COUNT(*) FROM r"))
+    check("a read whose answer was cut is asked again", err is None and s.posts == 2, f"{s.posts} POSTs, {err!r}")
+    s = CutOnce(fail_posts=1)
+    db = with_server(s)
+    s.db.execute("CREATE TABLE r (id INTEGER)")
+    err = attempt(lambda: db.execute("INSERT INTO r VALUES (1)"))
+    check("a write whose answer was cut is NOT sent again", isinstance(err, http.client.IncompleteRead) and s.posts == 1,
+          f"{s.posts} POSTs, {err!r}")
+    check("a SELECT calling replace() counts as a write",
+          lib_db.reads_only([lib_db.stmt("SELECT replace(name, 'a', 'b') FROM t")]) is False)
+    check("a CTE that only reads counts as a read",
+          lib_db.reads_only([lib_db.stmt("WITH f AS (SELECT 1) SELECT * FROM f"), {"type": "close"}]) is True)
 
     # --- the retry actually fires ----------------------------------------
     print("\nretry")
