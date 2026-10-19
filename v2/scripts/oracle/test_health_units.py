@@ -85,5 +85,21 @@ check("pages the cap can't see make it unknown",
       health.cache_headroom([{"gb": 2.0, "budgetGB": 30.0, "serverGB": 40.0}]) is None)
 check("no releases on record is unknown, never zero", health.cache_headroom([]) is None)
 
+# The LCA database's newest backup (Oct 19 2026: read before the live
+# signature existed, every run failed once the first copy was written).
+import tempfile  # noqa: E402
+with tempfile.TemporaryDirectory() as tmp:
+    rec = pathlib.Path(tmp) / "LCA_OK"
+    check("no LCA backup record is None", health.lca_backup(rec, "1:2:3") is None)
+    rec.write_text("2026-10-19T18:17:49Z 136426620 lca-20261019-1813.sql.zst 2468593664:1792431532:2483058144\n")
+    got = health.lca_backup(rec, "2468593664:1792431532:2483058144")
+    check("a backup taken at the live signature is current",
+          got == {"at": "2026-10-19T18:17:49Z", "bytes": 136426620, "file": "lca-20261019-1813.sql.zst", "current": True})
+    check("one taken before a change is not", health.lca_backup(rec, "2468593664:1792999999:2483058144")["current"] is False)
+    check("with no LCA database it still reads, as not current", health.lca_backup(rec, None)["current"] is False)
+src = (HERE / "bin" / "permtracker-health").read_text()
+check("the backup is judged after the live signature is computed",
+      src.index('lca_sig = f"{st.st_size}') < src.index("lca_ok = lca_backup("))
+
 print(f"\n{len(failures)} failure(s)" if failures else "\nall passed")
 sys.exit(1 if failures else 0)

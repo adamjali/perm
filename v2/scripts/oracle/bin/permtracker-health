@@ -114,6 +114,19 @@ def meminfo():
     return m
 
 
+def lca_backup(path: pathlib.Path, live_sig: str | None) -> dict | None:
+    """The newest LCA database backup (bin/permtracker-backup writes LCA_OK:
+    time, bytes, file, signature) and whether it matches the live file's
+    signature. None when there's no record. Oct 19 2026: this was first read
+    before the live signature existed, and every run failed once the first
+    LCA backup was written."""
+    try:
+        at, size, name, sig = path.read_text().split()
+        return {"at": at, "bytes": int(size), "file": name, "current": sig == live_sig}
+    except (OSError, ValueError):
+        return None
+
+
 def active(unit):
     r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True)
     return r.stdout.strip() or "unknown"
@@ -303,12 +316,6 @@ def main():
     # The daily copy of the boot disk in Oracle (bin/permtracker-disk-copies):
     # when it last made one, how many it holds, and whether Oracle marked the
     # new one free.
-    lca_ok = None
-    try:
-        at, size, name, sig = (APP / "backups" / "LCA_OK").read_text().split()
-        lca_ok = {"at": at, "bytes": int(size), "file": name, "current": sig == lca_sig}
-    except (OSError, ValueError):
-        pass
     disk_copy = None
     try:
         at, count, free = (APP / "backups" / "DISKCOPY_OK").read_text().split()
@@ -353,6 +360,7 @@ def main():
                      "lcaSnapshotBytes": sum(p.stat().st_size for p in (lca_dir / "snapshots").glob("*") if p.is_file()),
                      "lcaLogBytes": lca_log}
         lca_sig = f"{st.st_size}:{int(st.st_mtime)}:{lca_log or 0}"
+    lca_ok = lca_backup(APP / "backups" / "LCA_OK", lca_sig)
 
     # The watchdog's repairs (bin/permtracker-watchdog), last 24 hours.
     repairs = []
