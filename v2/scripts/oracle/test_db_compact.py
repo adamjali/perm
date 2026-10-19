@@ -85,6 +85,8 @@ def setup(root: pathlib.Path, *, retired: bool = True, live: bool = False, liste
     con.commit()
     con.close()
     (d / "wallog").write_text("old log")
+    (d / "snapshots").mkdir()
+    (d / "snapshots" / "s1").write_text("old snapshot")
     lca = srv / "db-lca" / "data"
     c2 = sqlite3.connect(lca)
     c2.execute("CREATE TABLE lca_cases (case_number TEXT PRIMARY KEY)")
@@ -150,8 +152,9 @@ def main() -> int:
         check("compacts: the retired table is gone and the file is smaller",
               r.returncode == 0 and "lca_cases_retired" not in t and s["main"].stat().st_size < before,
               f"rc={r.returncode} {before}->{s['main'].stat().st_size} {r.stdout[-300:]} {r.stderr[-300:]}")
-        check("keeps the original and sqld's old log for a rollback",
-              (s["keep"] / "data").exists() and (s["keep"] / "wallog").exists() and not (s["dir"] / "wallog").exists())
+        check("keeps the original file for a rollback, and drops sqld's log and snapshots",
+              (s["keep"] / "data").exists() and not (s["keep"] / "wallog").exists()
+              and not (s["dir"] / "wallog").exists() and not (s["dir"] / "snapshots").exists())
         check("the database and its lock are started again", (root / "running-8080").exists()
               and "start permtracker-dbcache permtracker-watchdog.timer" in (root / "systemctl.log").read_text())
         check("the integrity check runs once it's back, and passes", "done: quick_check ok" in r.stdout, r.stdout[-200:])
@@ -174,7 +177,7 @@ def main() -> int:
         t = tables(s["main"])
         check("a figure that differs after the restart puts the original back",
               r.returncode == 1 and "lca_cases_retired" in t and s["main"].stat().st_size == before
-              and (s["dir"] / "wallog").read_text() == "old log",
+              and not (s["dir"] / "wallog").exists() and not (s["dir"] / "snapshots").exists(),
               f"rc={r.returncode} {r.stdout[-300:]}")
 
     print(f"{len(failures)} failure(s)")

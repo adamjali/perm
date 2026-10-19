@@ -25,9 +25,12 @@
 #     main file;
 #   - no deploy and no batch job of ours is running; disk room for a copy.
 #
-# Rollback: the original data file is copied to $KEEP before any change, and
-# sqld's own files are moved there; any failure after the stop puts them back
-# and starts the old database. $KEEP is removed by hand once all is well.
+# Rollback: the original data file (and any write-ahead file) is copied to
+# $KEEP before any change; any failure after the stop puts it back and starts
+# the old database. $KEEP is removed by hand once all is well. sqld's own
+# replication log and snapshots are deleted, not kept: they derive from the
+# file, and sqld rebuilds them from it on start (the README's restore does the
+# same). Kept, they'd have cost 14.7 GB on Oct 19 (log 2.9, snapshots 11.8).
 set -euo pipefail
 DRY=${1:-}
 D=/srv/permtracker/db/data.sqld/dbs/default
@@ -85,9 +88,8 @@ rollback() {
     cp --sparse=never -f "$KEEP/data" "$D/data"
     rm -f "$D/data-wal" "$D/data-shm"
     for f in data-wal data-shm; do [ -e "$KEEP/$f" ] && cp -f "$KEEP/$f" "$D/$f"; done
-    for f in wallog to_compact snapshots; do
-      if [ -e "$KEEP/$f" ]; then rm -rf "${D:?}/$f"; mv "$KEEP/$f" "$D/$f"; fi
-    done
+    # A log rebuilt from the new file doesn't fit the old one: sqld rebuilds.
+    rm -rf "${D:?}/wallog" "${D:?}/to_compact" "${D:?}/snapshots"
     chown -R permtracker:permtracker "$D"
   fi
   systemctl start permtracker-db permtracker-dbcache permtracker-watchdog.timer
@@ -102,7 +104,7 @@ rm -rf "$KEEP"; mkdir -p "$KEEP"
 cp --sparse=never "$D/data" "$KEEP/data"
 for f in data-wal data-shm; do if [ -e "$D/$f" ]; then cp "$D/$f" "$KEEP/$f"; fi; done
 touch "$KEEP/.complete"
-for f in wallog to_compact snapshots; do if [ -e "$D/$f" ]; then mv "$D/$f" "$KEEP/$f"; fi; done
+rm -rf "${D:?}/wallog" "${D:?}/to_compact" "${D:?}/snapshots"
 LOG "original kept in $KEEP"
 before=$(sudo -u permtracker env SQLITE_TMPDIR=/srv/permtracker/db python3 - "$D/data" "$RETIRED" "$SAMPLE" <<'PY'
 import sqlite3, sys, time
