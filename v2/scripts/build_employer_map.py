@@ -133,7 +133,9 @@ CASE_SOURCES = [
     ("lca_cases", "employer_name", "received_date", "decision_date", "lca", ()),
     ("seasonal_cases", "employer_name", "received_date", "decision_date", "h2a", ()),
     ("pwd_case_status", "employer_name", "filing_date", "fetched_at", "pwd", ("pwd_cases",)),
-    ("lca_case_status", "employer_name", "filing_date", "fetched_at", "lca", ("lca_cases",)),
+    # `lca_case_numbers`: the main file's list of published LCAs (the filings
+    # themselves are in a database of their own, which this subquery can't reach).
+    ("lca_case_status", "employer_name", "filing_date", "fetched_at", "lca", ("lca_case_numbers",)),
     ("seasonal_case_status", "employer_name", "filing_date", "fetched_at", "h2a", ("seasonal_cases", "pwd_cases")),
 ]
 # Aggregate tables: they map to a page, they never make one.
@@ -222,7 +224,9 @@ def read_sources(db: Database) -> dict[str, dict]:
         try:
             rows = rows_of(db.execute(sql))
         except Exception as e:  # noqa: BLE001 (the client raises RuntimeError, SQLite OperationalError)
-            if missing_table(e):
+            # A missing published table is never a reason to skip the live
+            # one: every live row would drop out of the map with the run green.
+            if missing_table(e) and not any(p in str(e) for p in published):
                 log(f"  {table}: not present, skipped")
                 continue
             raise

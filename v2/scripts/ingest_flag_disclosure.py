@@ -88,6 +88,7 @@ from ingest_perm_disclosure import (  # noqa: E402
     to_iso,
 )
 from lib_load_guard import Fingerprint, drift_findings, sanity_findings  # noqa: E402
+import lca_numbers  # noqa: E402
 from lib_naics import normalize_naics  # noqa: E402
 from lib_gov_data import (  # noqa: E402
     BROWSER_HEADERS,
@@ -1069,7 +1070,13 @@ def write_cases(db: Database, table: str, rows, pause: float = WRITE_PAUSE_S) ->
     placeholders = "(" + ",".join("?" * len(COLUMNS)) + ")"
     head = f"INSERT INTO {table} ({','.join(COLUMNS)}) VALUES "
     tail = upsert_tail(table)
+    # LCA filings live in a database of their own; the main file's list of
+    # their numbers (lca_numbers.py) is written beside each request, after it.
+    listing = table == "lca_cases"
+    if listing:
+        lca_numbers.ensure_table(db)
     pending: list[dict] = []
+    pending_numbers: list[tuple[str, str | None]] = []
     batch: list[dict] = []
     sent = 0
     written = 0
@@ -1081,17 +1088,22 @@ def write_cases(db: Database, table: str, rows, pause: float = WRITE_PAUSE_S) ->
             return
         pending.append(stmt(head + ",".join([placeholders] * len(batch)) + tail,
                             [row[c] for row in batch for c in COLUMNS]))
+        if listing:
+            pending_numbers.extend((row["case_number"], row.get("received_date")) for row in batch)
         batch = []
 
     def flush_request() -> None:
-        nonlocal pending, written
+        nonlocal pending, pending_numbers, written
         if not pending:
             return
         out = db.pipeline(pending + [{"type": "close"}])
         for r in out.get("results", []):
             res = (r.get("response") or {}).get("result") or {}
             written += int(res.get("affected_row_count") or 0)
+        if pending_numbers:
+            db.pipeline(lca_numbers.record_stmts(pending_numbers) + [{"type": "close"}])
         pending = []
+        pending_numbers = []
         if pause > 0:
             time.sleep(pause)
 

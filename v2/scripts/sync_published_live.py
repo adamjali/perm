@@ -48,8 +48,10 @@ DEFAULT_CAP = 400           # requests a night; 20,000 numbers, a backlog clears
 
 # Which published tables feed each live program table. The seasonal program
 # draws on two: its wage requests (P-400, P-500) are in DOL's PW file, and its
-# H-2A, H-2B and CW-1 applications share `seasonal_cases`.
-PUBLISHED_FOR = {"pwd": ("pwd_cases",), "lca": ("lca_cases",),
+# H-2A, H-2B and CW-1 applications share `seasonal_cases`. LCAs are read from
+# `lca_case_numbers`, the main file's list of the published numbers: the filings
+# themselves are in a database of their own, which a join can't reach.
+PUBLISHED_FOR = {"pwd": ("pwd_cases",), "lca": ("lca_case_numbers",),
                  "seasonal": ("pwd_cases", "seasonal_cases")}
 
 

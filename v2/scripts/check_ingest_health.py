@@ -31,6 +31,7 @@ import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from lib_flag_serials import code_to_date  # noqa: E402
 from lib_db import Database, query_rows, rows_of  # noqa: E402
+import lca_numbers  # noqa: E402
 
 
 def parse_as_of(raw: str) -> datetime.date | None:
@@ -498,6 +499,29 @@ def check_wage_views(db) -> int:
     return bad
 
 
+def check_lca_numbers(db) -> int:
+    """Fail when the main file's list of published LCA numbers differs in size
+    from the LCA table it mirrors (lca_numbers.py).
+
+    The list stands in for the table in three nightly reads that can't reach
+    the LCA database file (the gap sweep, the published-to-live sync, the
+    employer map's double-count guard). A short list costs them quietly: the
+    sweep re-asks DOL for published numbers, the sync re-fetches them, the map
+    counts a live row twice. `python3 scripts/lca_numbers.py` repairs it.
+    """
+    print("lca case numbers")
+    try:
+        published, listed = lca_numbers.counts(db)
+    except Exception as e:  # noqa: BLE001 - a missing table is itself the finding
+        print(f"  FAIL: could not count: {e}")
+        return 1
+    ok = published == listed and published > 0
+    print(f"  {published:,} published, {listed:,} listed  {'ok' if ok else 'DIFFERENT'}")
+    if not ok:
+        print("  repair: python3 scripts/lca_numbers.py")
+    return 0 if ok else 1
+
+
 # The rebuilds after the 4:10 AM full sweep (case-status-direct.yml) whose
 # tables the pages read directly: no doc or freshness row ages when one stops,
 # and a step that stops RUNNING is caught by no failed run either. Each must
@@ -858,6 +882,7 @@ def main() -> int:
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)
     views_bad = check_wage_views(db)
+    lca_numbers_bad = check_lca_numbers(db)
     handread_bad = check_hand_read_figures()
 
     print()
@@ -900,7 +925,7 @@ def main() -> int:
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
             or coverage_bad or gapsweep_bad or builders_bad or watched_bad or docs_bad or views_bad
-            or handread_bad or unparseable):
+            or lca_numbers_bad or handread_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "

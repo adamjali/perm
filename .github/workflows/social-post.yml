@@ -39,6 +39,8 @@ jobs:
       - name: Compose (and post, if asked and configured)
         env:
           DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          # The H-1B LCA filings' own database (Oct 19 2026); empty means the main one.
+          DATABASE_LCA_URL: ${{ secrets.DATABASE_LCA_URL }}
           DATABASE_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           X_API_KEY: ${{ secrets.X_API_KEY }}
           X_API_SECRET: ${{ secrets.X_API_SECRET }}

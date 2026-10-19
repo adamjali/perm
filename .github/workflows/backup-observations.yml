@@ -31,6 +31,8 @@ jobs:
     timeout-minutes: 30
     env:
       DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      # The H-1B LCA filings' own database (Oct 19 2026); empty means the main one.
+      DATABASE_LCA_URL: ${{ secrets.DATABASE_LCA_URL }}
       DATABASE_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

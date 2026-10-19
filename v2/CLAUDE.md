@@ -9971,3 +9971,26 @@ stamps both `perm-case-status-full` and `perm-case-status`; the Federal Register
 **Two shell traps that hit while building it** (both in `~/.claude/reference/machine-and-tools.md`): an unquoted
 heredoc runs every backtick inside it (a note's `gh workflow run ... -f when=now` fired a deploy request GitHub refused
 only because the input wasn't live yet), and zsh never splits `$var` into words, so `set -- $r` left a poll waiting forever.
+
+## Oct 19 2026: the H-1B LCA filings move to a database of their own
+
+**Why.** `permtracker-dbcache` holds the main database file in RAM (speed, and Oracle's idle rule), and it stops at
+6 GB. The file passed that on Oct 9 (6.69 GB), so nothing has been locked since. `lca_cases` and its indexes are
+2.75 GB of it; on their own server the main file is about 3.9 GB and fits again, for free.
+
+**The rule, in both clients** (`src/lib/db/lcaRoute.ts`, `scripts/lib_db.py`, held to
+`scripts/fixtures/lca_routing.json`): a statement naming `lca_cases` goes to `DATABASE_LCA_URL`, everything else to
+`DATABASE_URL`, same tokens. Unset, everything goes to the main file, as before. A statement joining `lca_cases` to a
+main-file table is refused by name once the LCA server is set (and in tests and dev always); a request mixing the two
+is refused in Python.
+
+**What the main file keeps:** `lca_case_numbers` (case number and received date, 3,754,961 rows, filled Oct 19), for
+the three nightly reads that can't reach the other file: the gap sweep, the published-to-live sync and the employer
+map's double-count guard. The loader writes it beside every batch of LCA rows, `scripts/lca_numbers.py` repairs it,
+and the health check fails when its count differs from the LCA table's. A missing list stops the employer map
+instead of skipping the live LCAs.
+
+**Status:** step 1 (the code) is live once deployed and changes nothing while `DATABASE_LCA_URL` is unset. Step 2 (a
+second sqld on 127.0.0.1:8082, a copy of the table, the tunnel host, the secrets) and step 3 (rename, then drop the
+old table and compact the main file offline in the night window, then the RAM lock) are in `scripts/oracle/README.md`
+once done.

@@ -13,6 +13,8 @@ import hashlib
 import json
 import os
 import pathlib
+import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -54,7 +56,89 @@ DB_SETTINGS = {
     "url": ("DATABASE_URL", "TURSO_DATABASE_URL"),
     "token": ("DATABASE_AUTH_TOKEN", "TURSO_AUTH_TOKEN"),
     "write_token": ("DATABASE_RW_AUTH_TOKEN", "TURSO_RW_AUTH_TOKEN"),
+    "lca_url": ("DATABASE_LCA_URL",),
 }
+
+# THE H-1B LCA FILINGS LIVE IN A DATABASE FILE OF THEIR OWN (Oct 19 2026). The
+# main file is held in memory whole (`permtracker-dbcache`), and its lock stops
+# at 6 GB; the LCA table and its indexes were 2.75 GB of 6.69. A statement that
+# names `lca_cases` goes to DATABASE_LCA_URL, every other statement to
+# DATABASE_URL, with the same tokens (both servers trust one signing key). Left
+# unset, everything goes to the main file, as before the move.
+#
+# One request never mixes the two: a join between `lca_cases` and a table in the
+# main file can't run, so it fails loudly here instead of half-running. What the
+# main file needs to know about published LCAs is in `lca_case_numbers` there.
+LCA_TABLE_RE = re.compile(r"\blca_cases\b")
+_TXN_CONTROL = re.compile(r"^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b", re.I)
+
+
+def statement_home(sql: str) -> str | None:
+    """'lca' for a statement on the LCA table, 'main' for any other, None for
+    transaction control, which goes wherever the rest of its request goes."""
+    if _TXN_CONTROL.match(sql or ""):
+        return None
+    return "lca" if LCA_TABLE_RE.search(sql or "") else "main"
+
+
+def request_sqls(requests: list[dict]) -> Iterator[str]:
+    """Every SQL text in an Hrana pipeline, batches included."""
+    for r in requests:
+        kind = r.get("type")
+        if kind == "execute":
+            yield str((r.get("stmt") or {}).get("sql") or "")
+        elif kind == "batch":
+            for step in (r.get("batch") or {}).get("steps") or []:
+                yield str((step.get("stmt") or {}).get("sql") or "")
+        elif kind == "sequence":
+            yield str(r.get("sql") or "")
+
+
+# A table a statement reads or writes: the name after FROM, JOIN, INTO or
+# UPDATE, unless a parenthesis follows (a table-valued function like json_each).
+_TABLE_REF = re.compile(r"\b(?:FROM|JOIN|INTO|UPDATE)\s+([A-Za-z_]\w*)\b(?!\s*\()", re.I)
+# A name the statement defines for itself: `WITH f AS (` or `, f AS (`.
+_CTE_NAME = re.compile(r"(?:\bWITH(?:\s+RECURSIVE)?|,)\s*([A-Za-z_]\w*)\s+AS\s*(?:NOT\s+)?(?:MATERIALIZED\s*)?\(", re.I)
+# Words that can follow those four and aren't tables (`ON CONFLICT DO UPDATE SET`).
+_NOT_TABLES = {"set", "select", "values", "where", "default", "or", "ignore", "replace"}
+_warned_joins: set[str] = set()
+
+
+def lca_joins(sql: str) -> set[str]:
+    """The main-file tables a statement on `lca_cases` also names. Empty means
+    the statement can run on the LCA database alone."""
+    sql = sql or ""
+    if not LCA_TABLE_RE.search(sql):
+        return set()
+    own = {m.group(1).lower() for m in _CTE_NAME.finditer(sql)}
+    return {t for t in (m.group(1) for m in _TABLE_REF.finditer(sql))
+            if t.lower() not in own and t.lower() not in _NOT_TABLES and t != "lca_cases"}
+
+
+def pipeline_home(requests: list[dict], *, strict: bool = True) -> str:
+    """Which database a pipeline goes to; refuses one that names both.
+
+    A single statement joining `lca_cases` to a main-file table is refused too,
+    once the LCA database is its own server (`strict`); before that it still
+    runs (one file holds both) and prints a warning, so it shows up first."""
+    for sql in request_sqls(requests):
+        others = lca_joins(sql)
+        if not others:
+            continue
+        msg = (f"a statement joins lca_cases (the LCA database) to {', '.join(sorted(others))} "
+               f"(the main database); read them separately: {' '.join(sql.split())[:160]}")
+        if strict:
+            raise RuntimeError(msg)
+        if msg not in _warned_joins:
+            _warned_joins.add(msg)
+            print(f"::warning::{msg}", file=sys.stderr, flush=True)
+    homes = {h for h in (statement_home(s) for s in request_sqls(requests)) if h}
+    if len(homes) > 1:
+        sample = next(s for s in request_sqls(requests) if statement_home(s) == "lca")
+        raise RuntimeError(
+            "one database request names lca_cases (the LCA database) and tables in the "
+            f"main database; send them separately: {' '.join(sample.split())[:160]}")
+    return homes.pop() if homes else "main"
 
 
 def db_setting(key: str, path: str = ".env.local", *, required: bool = True) -> str | None:
@@ -331,9 +415,19 @@ def transient_code(err) -> str | None:
 
 
 class Database:
-    def __init__(self, url: str | None = None, token: str | None = None):
+    def __init__(self, url: str | None = None, token: str | None = None,
+                 lca_url: str | None = None):
         self.url = (url or db_setting("url")).replace("libsql://", "https://")
         self.token = token or db_setting("token")
+        # Read from the environment only when the main URL was too, so a client
+        # built for one explicit server never wanders to another.
+        lca = lca_url or (db_setting("lca_url", required=False) if url is None else None)
+        self.lca_url = lca.replace("libsql://", "https://") if lca else None
+
+    def url_for(self, requests: list[dict]) -> str:
+        """The server a pipeline goes to (see LCA_TABLE_RE)."""
+        home = pipeline_home(requests, strict=bool(self.lca_url))
+        return self.lca_url if home == "lca" and self.lca_url else self.url
 
     def pipeline(self, requests: list[dict], *, timeout: int = 180,
                  retries: int = 4, retry_transient: bool = True):
@@ -346,6 +440,7 @@ class Database:
         the same statement usually succeeds a few seconds later.
         """
         body = json.dumps({"requests": requests}).encode()
+        url = self.url_for(requests)
         last: BaseException | None = None
         for attempt in range(retries):
             if attempt:
@@ -354,7 +449,7 @@ class Database:
                 # 43 seconds, nothing against a long sweep.
                 time.sleep(RETRY_BACKOFF_S[min(attempt - 1, len(RETRY_BACKOFF_S) - 1)])
             req = urllib.request.Request(
-                self.url + "/v2/pipeline", data=body,
+                url + "/v2/pipeline", data=body,
                 headers={"Authorization": f"Bearer {self.token}",
                          "Content-Type": "application/json"})
             try:

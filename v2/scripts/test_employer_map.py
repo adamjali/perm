@@ -19,7 +19,7 @@ import tempfile
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import build_employer_map as bem  # noqa: E402
 from entity_identity import program_key  # noqa: E402
-from lib_sqlite_shim import SqliteTurso  # noqa: E402
+from lib_sqlite_shim import SplitSqlite  # noqa: E402
 
 FAILED: list[str] = []
 
@@ -37,8 +37,10 @@ LIVE = """(case_number TEXT PRIMARY KEY, filing_date TEXT, employer_name TEXT,
            employer_slug TEXT, fetched_at INTEGER)"""
 
 
-def seed() -> SqliteTurso:
-    db = SqliteTurso()
+def seed() -> SplitSqlite:
+    # The LCA filings sit in a database of their own (since Oct 19 2026), so
+    # a read that joins them to a main-file table fails here as it would live.
+    db = SplitSqlite()
     db.script([
         "CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT, merge_key TEXT, total INTEGER)",
         "CREATE TABLE perm_entity_alias (kind TEXT, slug TEXT, target_slug TEXT)",
@@ -49,6 +51,7 @@ def seed() -> SqliteTurso:
         "employer_name TEXT, employer_slug TEXT)",
         f"CREATE TABLE pwd_cases {CASES}",
         f"CREATE TABLE lca_cases {CASES}",
+        "CREATE TABLE lca_case_numbers (case_number TEXT PRIMARY KEY, received_date TEXT)",
         f"CREATE TABLE seasonal_cases {CASES}",
         f"CREATE TABLE pwd_case_status {LIVE}",
         f"CREATE TABLE lca_case_status {LIVE}",
@@ -116,6 +119,9 @@ def seed() -> SqliteTurso:
     # An employer that FILES under an abbreviation keeps its own page: its URL exists.
     db.execute("INSERT INTO lca_cases VALUES (?,?,?,?,?)",
                ["I-200-25003-000001", "2024-11-01", "2024-11-08", "BAR TECH INC", "bar-tech-inc"])
+    # The main file's list of published LCA numbers, which the live row checks.
+    for (case, received) in db.lca.conn.execute("SELECT case_number, received_date FROM lca_cases").fetchall():
+        db.execute("INSERT INTO lca_case_numbers VALUES (?, ?)", [case, received])
     return db
 
 
@@ -230,6 +236,17 @@ def main() -> int:
         check("changed pages join the expiry list", bem.add_changed_slugs(["shore-crabs", "adobe-inc"], path), 1)
         check("and the list keeps what was there", json.loads(pathlib.Path(path).read_text())["slugs"],
               ["adobe-inc", "shore-crabs"])
+
+    # Without the main file's list of published LCAs, the live LCA source can't
+    # be read; skipping it would drop every live LCA from the map.
+    bare = seed()
+    bare.execute("DROP TABLE lca_case_numbers")
+    try:
+        bem.read_sources(bare)
+        missing = "read"
+    except Exception as e:  # noqa: BLE001
+        missing = "lca_case_numbers" in str(e)
+    check("a missing list of published LCAs stops the build", missing, True)
     print(f"{len(FAILED)} failure(s); stats {stats}")
     return 1 if FAILED else 0
 

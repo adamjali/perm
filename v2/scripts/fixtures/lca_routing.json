@@ -1,0 +1,22 @@
+{
+  "about": "Which database a statement goes to, read by scripts/test_lca_numbers.py and src/lib/db/__tests__/lcaRoute.test.ts so the Python and TypeScript copies of the rule agree. home: lca, main or null (transaction control). joins: the main-file tables a statement on lca_cases also names.",
+  "cases": [
+    { "sql": "SELECT COUNT(*) AS n FROM lca_cases INDEXED BY lca_cases_emp WHERE employer_slug = ?", "home": "lca", "joins": [] },
+    { "sql": "PRAGMA table_info(lca_cases)", "home": "lca", "joins": [] },
+    { "sql": "SELECT * FROM lca_cases LIMIT 1", "home": "lca", "joins": [] },
+    { "sql": "WITH f AS (SELECT wage FROM lca_cases WHERE x = 1),\n c AS (SELECT COUNT(*) AS n FROM f),\n o AS (SELECT wage, ROW_NUMBER() OVER (ORDER BY wage) AS rn FROM f)\nSELECT (SELECT n FROM c) AS n, (SELECT AVG(wage) FROM f) AS avg FROM o LIMIT 1", "home": "lca", "joins": [] },
+    { "sql": "INSERT INTO lca_cases (case_number) VALUES (?) ON CONFLICT(case_number) DO UPDATE SET naics = excluded.naics", "home": "lca", "joins": [] },
+    { "sql": "UPDATE lca_cases SET naics = ? WHERE case_number = ?", "home": "lca", "joins": [] },
+    { "sql": "SELECT value FROM lca_cases, json_each(lca_cases.tags)", "home": "lca", "joins": [] },
+    { "sql": "SELECT 1 FROM lca_case_status", "home": "main", "joins": [] },
+    { "sql": "SELECT 1 FROM lca_case_events", "home": "main", "joins": [] },
+    { "sql": "SELECT case_number FROM lca_case_numbers WHERE case_number > ?", "home": "main", "joins": [] },
+    { "sql": "SELECT * FROM lca_cities WHERE slug = ?", "home": "main", "joins": [] },
+    { "sql": "SELECT 1 FROM perm_docs JOIN perm_cases USING (x)", "home": "main", "joins": [] },
+    { "sql": "BEGIN", "home": null, "joins": [] },
+    { "sql": "  commit", "home": null, "joins": [] },
+    { "sql": "SELECT 1 FROM lca_case_status s WHERE NOT EXISTS (SELECT 1 FROM lca_cases c WHERE c.case_number = s.case_number)", "home": "lca", "joins": ["lca_case_status"] },
+    { "sql": "SELECT * FROM lca_cases l JOIN employer_page_map m ON m.source_slug = l.employer_slug", "home": "lca", "joins": ["employer_page_map"] },
+    { "sql": "SELECT employer_slug FROM lca_cases UNION SELECT employer_slug FROM pwd_cases", "home": "lca", "joins": ["pwd_cases"] }
+  ]
+}

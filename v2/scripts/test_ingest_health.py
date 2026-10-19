@@ -537,6 +537,7 @@ def main() -> int:
     check_hand_read_figures()
     check_main_combines_every_check()
     check_wage_views_rules()
+    check_lca_numbers_rules()
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 
@@ -595,7 +596,7 @@ def check_capped_partial_is_not_broken() -> None:
 CHECKS = ("check_runs", "check_frontier", "check_discovery_yield", "check_backfill", "check_gap_sweep",
           "check_nightly_builders",
           "check_watched", "check_lookup_demand", "check_coverage_stated", "check_precomputed_docs",
-          "check_wage_views")
+          "check_wage_views", "check_lca_numbers")
 
 
 def check_main_combines_every_check() -> None:
@@ -656,6 +657,32 @@ def check_wage_views_rules() -> None:
     check("wage views: too few views fails", v([("perm", 49, day_ago), ("lca", 400, day_ago)]) == 1)
     check("wage views: a build past its budget fails",
           v([("perm", 60, NOW - 126 * 24 * H), ("lca", 400, day_ago)]) == 1)
+
+
+
+def check_lca_numbers_rules() -> None:
+    """The LCA filings' own database file and the main file's list of their
+    numbers (since Oct 19 2026): a list that falls behind, or an LCA file that
+    reads empty, fails the check."""
+    import contextlib
+    import io
+    from lib_sqlite_shim import SplitSqlite
+
+    def counted(published: int, listed: int, with_list: bool = True) -> int:
+        db = SplitSqlite()
+        db.script(["CREATE TABLE lca_cases (case_number TEXT PRIMARY KEY, received_date TEXT)"])
+        if with_list:
+            db.script(["CREATE TABLE lca_case_numbers (case_number TEXT PRIMARY KEY, received_date TEXT)"])
+        for n in range(published):
+            db.execute("INSERT INTO lca_cases VALUES (?, ?)", [f"I-200-26001-{n:06d}", "2026-01-01"])
+        for n in range(listed if with_list else 0):
+            db.execute("INSERT INTO lca_case_numbers VALUES (?, ?)", [f"I-200-26001-{n:06d}", "2026-01-01"])
+        with contextlib.redirect_stdout(io.StringIO()):
+            return health.check_lca_numbers(db)
+    check("lca numbers: a whole list is a pass", counted(5, 5) == 0)
+    check("lca numbers: a list behind the table fails", counted(5, 4) == 1)
+    check("lca numbers: an empty LCA table fails", counted(0, 0) == 1)
+    check("lca numbers: no list at all fails", counted(5, 0, with_list=False) == 1)
 
 
 if __name__ == "__main__":

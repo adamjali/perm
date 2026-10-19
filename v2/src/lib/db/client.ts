@@ -29,18 +29,23 @@ import { createClient, type Client } from "@libsql/client/http";
 
 import { withhold } from "@/lib/privacy/withheld";
 
+import { lcaJoins, statementHome, type DatabaseHome } from "./lcaRoute";
+
 let client: Client | null = null;
+let lcaClient: Client | null = null;
 
 /**
  * The connection settings. `DATABASE_*` are the names; the `TURSO_*` names
  * date from the hosted database this replaced and still work, so a server
  * whose environment has not been renamed keeps serving.
  */
-export function databaseEnv(): { url?: string; authToken?: string; writeToken?: string } {
+export function databaseEnv(): { url?: string; authToken?: string; writeToken?: string; lcaUrl?: string } {
   return {
     url: process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL,
     authToken: process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
     writeToken: process.env.DATABASE_RW_AUTH_TOKEN || process.env.TURSO_RW_AUTH_TOKEN,
+    // The H-1B LCA filings' own database (see lcaRoute.ts). Unset: the main one.
+    lcaUrl: process.env.DATABASE_LCA_URL || undefined,
   };
 }
 
@@ -58,6 +63,40 @@ export function database(): Client {
   }
   client = createClient({ url, authToken });
   return client;
+}
+
+/** The LCA filings' database, read with the same token; the main one when
+ *  DATABASE_LCA_URL is unset. */
+function lcaDatabase(): Client {
+  const { lcaUrl, authToken } = databaseEnv();
+  if (!lcaUrl) return database();
+  if (lcaClient) return lcaClient;
+  if (!authToken) return database(); // throws the missing-settings error
+  lcaClient = createClient({ url: lcaUrl, authToken });
+  return lcaClient;
+}
+
+const warnedJoins = new Set<string>();
+
+/**
+ * Where a statement goes, refusing one that joins the LCA table to a main-file
+ * table: once they are two servers it can't run. Before the LCA database is set
+ * (one file holds both) production still runs it and logs it once, so it shows
+ * up before the move; anywhere else it fails at once.
+ */
+function homeOf(sql: string): DatabaseHome {
+  const joins = lcaJoins(sql);
+  if (joins.length > 0) {
+    const msg =
+      `a statement joins lca_cases (the LCA database) to ${joins.join(", ")} (the main database); ` +
+      `read them separately: ${sql.replace(/\s+/g, " ").slice(0, 160)}`;
+    if (databaseEnv().lcaUrl || process.env.NODE_ENV !== "production") throw new Error(msg);
+    if (!warnedJoins.has(msg)) {
+      warnedJoins.add(msg);
+      console.error(`[lcaRoute] ${msg}`);
+    }
+  }
+  return statementHome(sql) === "lca" ? "lca" : "main";
 }
 
 /**
@@ -187,8 +226,9 @@ export async function rows<T = Record<string, unknown>>(
   sql: string,
   args: unknown[] = [],
 ): Promise<T[]> {
+  const db = homeOf(sql) === "lca" ? lcaDatabase() : database();
   const rs = await withDeadline(
-    () => database().execute({ sql, args: args as never[] }),
+    () => db.execute({ sql, args: args as never[] }),
     sql.slice(0, 80),
     { retryTransient: true },
   );
@@ -217,6 +257,7 @@ export async function one<T = Record<string, unknown>>(
 }
 
 let rwClient: Client | null = null;
+let lcaRwClient: Client | null = null;
 
 /**
  * The write-capable connection, used by exec() alone.
@@ -229,8 +270,13 @@ let rwClient: Client | null = null;
  * under the same variable name. DATABASE_RW_AUTH_TOKEN is the explicit write
  * credential; absent (local dev), the default token serves both roles.
  */
-function writeDatabase(): Client {
-  const { url, writeToken } = databaseEnv();
+function writeDatabase(home: DatabaseHome = "main"): Client {
+  const { url, writeToken, lcaUrl } = databaseEnv();
+  if (home === "lca" && lcaUrl) {
+    if (!writeToken) return lcaDatabase();
+    lcaRwClient ??= createClient({ url: lcaUrl, authToken: writeToken });
+    return lcaRwClient;
+  }
   if (!writeToken) return database();
   if (rwClient) return rwClient;
   if (!url) throw new Error("DATABASE_URL is not set.");
@@ -245,8 +291,9 @@ function writeDatabase(): Client {
  * database holds public federal records only.
  */
 export async function exec(sql: string, args: unknown[] = []): Promise<number> {
+  const db = writeDatabase(homeOf(sql));
   const rs = await withDeadline(
-    () => writeDatabase().execute({ sql, args: args as never[] }),
+    () => db.execute({ sql, args: args as never[] }),
     sql.slice(0, 80),
   );
   return rs.rowsAffected;

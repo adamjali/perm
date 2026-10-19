@@ -23,7 +23,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_db import cell, lit  # noqa: E402
+from lib_db import cell, lit, pipeline_home  # noqa: E402
 
 
 class SqliteTurso:
@@ -64,3 +64,32 @@ class SqliteTurso:
                 "affected_row_count": max(cur.rowcount, 0)}}})
         self.conn.commit()
         return {"results": results}
+
+
+class SplitSqlite:
+    """Two in-memory databases routed the way the real client routes them: a
+    statement naming `lca_cases` to `lca`, every other to `main`, and a request
+    naming both refused (lib_db.pipeline_home). The LCA filings live in a
+    database file of their own since Oct 19 2026."""
+
+    def __init__(self) -> None:
+        self.main = SqliteTurso()
+        self.lca = SqliteTurso()
+
+    def _for(self, sql: str) -> SqliteTurso:
+        # pipeline_home also refuses a statement joining the two files.
+        return self.lca if pipeline_home([{"type": "execute", "stmt": {"sql": sql}}]) == "lca" else self.main
+
+    def execute(self, sql: str, args: list | None = None, **kw):
+        return self._for(sql).execute(sql, args, **kw)
+
+    def scalar(self, sql: str, args: list | None = None):
+        return self._for(sql).scalar(sql, args)
+
+    def script(self, statements: list[str]):
+        for s in statements:
+            self._for(s).script([s])
+
+    def pipeline(self, reqs: list[dict], **kw):
+        side = self.lca if pipeline_home(reqs) == "lca" else self.main
+        return side.pipeline(reqs, **kw)
