@@ -1,0 +1,139 @@
+#!/bin/bash
+# permtracker-db-compact [--dry-run]: drop the retired H-1B LCA table from the
+# main database file and compact the file, with the database stopped.
+#
+# Why: the LCA filings moved to their own server on Oct 19 2026
+# (permtracker-db-lca) so the main file fits the 6 GB RAM lock
+# (permtracker-dbcache) again. Dropping a table leaves its pages free inside the
+# file; only VACUUM gives them back, and a VACUUM through sqld would push the
+# whole file through its replication log (the Oct 3 2026 outage class). So it
+# runs offline: sqld stopped, plain SQLite on the file, sqld started again,
+# which rebuilds its log from the file (66 s for 2.47 GB, measured Oct 19).
+#
+# The site can't read or write the database while this runs. Rehearsed Oct 19
+# 2026 on a copy: drop 171 s, vacuum 495 s, 6.83 GB down to 3.82 GB; the disk
+# moves about 74 MB/s (Oracle's balanced rate for 150 GB), so with the rollback
+# copy, the check and sqld rebuilding its log, expect 17 to 19 minutes offline.
+# Run it in the night window, after the deploy and before the 3:15 AM backup.
+# Root only.
+#
+# Preconditions, all checked before anything stops:
+#   - the main file holds lca_cases_retired and no lca_cases (renamed by hand
+#     the day before, so a reader still pointed at the main file had a day to
+#     fail loudly);
+#   - the LCA server answers and its row count equals lca_case_numbers' in the
+#     main file;
+#   - no deploy and no batch job of ours is running; disk room for a copy.
+#
+# Rollback: the original data file is copied to $KEEP before any change, and
+# sqld's own files are moved there; any failure after the stop puts them back
+# and starts the old database. $KEEP is removed by hand once all is well.
+set -euo pipefail
+DRY=${1:-}
+D=/srv/permtracker/db/data.sqld/dbs/default
+H=/srv/permtracker/health
+KEEP=/srv/permtracker/db-compact-before
+RETIRED=lca_cases_retired
+LOG() { echo "$(TZ=America/New_York date '+%-I:%M:%S %p %Z') $*"; }
+
+[ "$(id -u)" = 0 ] || { echo "run as root"; exit 2; }
+ro=$(cat /srv/permtracker/secrets/db_ro.jwt)
+q() { # port, sql -> first value of the first row, or ERR
+  curl -sf -m 60 -H "Authorization: Bearer $ro" -H "Content-Type: application/json" \
+    -d "{\"requests\":[{\"type\":\"execute\",\"stmt\":{\"sql\":\"$2\"}},{\"type\":\"close\"}]}" \
+    "http://127.0.0.1:$1/v2/pipeline" | python3 -c '
+import json, sys
+r = json.load(sys.stdin)["results"][0]
+rows = (r.get("response") or {}).get("result", {}).get("rows") if r.get("type") == "ok" else None
+print(rows[0][0].get("value") if rows else "ERR")' 2>/dev/null || echo ERR
+}
+
+# ---- preconditions ------------------------------------------------------------
+retired=$(q 8080 "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '$RETIRED'")
+live=$(q 8080 "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'lca_cases'")
+[ "$retired" = 1 ] || { LOG "refused: the main file has no $RETIRED ($retired)"; exit 3; }
+[ "$live" = 0 ] || { LOG "refused: the main file holds an lca_cases again ($live); something still writes it there"; exit 3; }
+lca_n=$(q 8082 "SELECT COUNT(*) FROM lca_cases")
+list_n=$(q 8080 "SELECT COUNT(*) FROM lca_case_numbers")
+[ "$lca_n" != ERR ] && [ "$lca_n" -gt 0 ] && [ "$lca_n" = "$list_n" ] \
+  || { LOG "refused: LCA server $lca_n rows, main list $list_n"; exit 3; }
+if [ -f "$H/deploying" ] && [ $(( $(date +%s) - $(stat -c %Y "$H/deploying") )) -lt 1200 ]; then
+  LOG "refused: a deploy is running"; exit 3
+fi
+busy=$(systemctl list-units --no-legend --plain --state=active,activating 'permtracker-uscis@*' 'permtracker-backup*' \
+       'permtracker-restore-test*' 'permtracker-disk-copies*' 2>/dev/null | awk '{print $1}' | tr '\n' ' ')
+[ -z "${busy// /}" ] || { LOG "refused: running now: $busy"; exit 3; }
+size=$(stat -c %s "$D/data")
+free=$(df --output=avail -B1 /srv | tail -1)
+[ "$free" -gt $(( size * 3 )) ] || { LOG "refused: $free bytes free, want 3x the $size-byte file"; exit 3; }
+# Figures compared across the change: read from the stopped file before the
+# drop, again after the vacuum, and through sqld once it's back (the site writes
+# until the stop, so a figure read earlier could differ for no fault).
+SAMPLE="SELECT (SELECT COUNT(*) FROM perm_cases) || ':' || (SELECT COUNT(*) FROM perm_case_status) || ':' || (SELECT COUNT(*) FROM pwd_cases) || ':' || (SELECT COUNT(*) FROM lca_case_numbers) || ':' || (SELECT COUNT(*) FROM perm_docs)"
+LOG "ready: main file $((size / 1000000)) MB, LCA rows $lca_n, sample now $(q 8080 "$SAMPLE")"
+[ "$DRY" = "--dry-run" ] && { LOG "dry run: nothing stopped"; exit 0; }
+
+# ---- offline ------------------------------------------------------------------
+t0=$(date +%s)
+rollback() {
+  trap - ERR
+  set +e
+  LOG "FAILED; putting the original back"
+  systemctl stop permtracker-db
+  # Only from a whole copy: before it exists, nothing in $D has changed.
+  if [ -f "$KEEP/.complete" ]; then
+    cp --sparse=never -f "$KEEP/data" "$D/data"
+    rm -f "$D/data-wal" "$D/data-shm"
+    for f in data-wal data-shm; do [ -e "$KEEP/$f" ] && cp -f "$KEEP/$f" "$D/$f"; done
+    for f in wallog to_compact snapshots; do
+      if [ -e "$KEEP/$f" ]; then rm -rf "${D:?}/$f"; mv "$KEEP/$f" "$D/$f"; fi
+    done
+    chown -R permtracker:permtracker "$D"
+  fi
+  systemctl start permtracker-db permtracker-dbcache permtracker-watchdog.timer
+  LOG "original restored and started"
+  exit 1
+}
+trap rollback ERR
+systemctl stop permtracker-watchdog.timer permtracker-dbcache
+systemctl stop permtracker-db
+LOG "database stopped"
+rm -rf "$KEEP"; mkdir -p "$KEEP"
+cp --sparse=never "$D/data" "$KEEP/data"
+for f in data-wal data-shm; do if [ -e "$D/$f" ]; then cp "$D/$f" "$KEEP/$f"; fi; done
+touch "$KEEP/.complete"
+for f in wallog to_compact snapshots; do if [ -e "$D/$f" ]; then mv "$D/$f" "$KEEP/$f"; fi; done
+LOG "original kept in $KEEP"
+before=$(sudo -u permtracker env SQLITE_TMPDIR=/srv/permtracker/db python3 - "$D/data" "$RETIRED" "$SAMPLE" <<'PY'
+import sqlite3, sys, time
+path, retired, sample = sys.argv[1], sys.argv[2], sys.argv[3]
+con = sqlite3.connect(path, isolation_level=None)
+con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+before = con.execute(sample).fetchone()[0]
+# Ubuntu builds SQLite with SECURE_DELETE, which zeroes every freed page: a
+# 2.75 GB table pushed 2.75 GB through the write-ahead file before the vacuum
+# that discards those pages anyway (rehearsal, Oct 19 2026).
+con.execute("PRAGMA secure_delete = OFF")
+t = time.time(); con.execute(f"DROP TABLE {retired}"); print(f"  drop {time.time() - t:.0f}s", file=sys.stderr, flush=True)
+t = time.time(); con.execute("VACUUM"); print(f"  vacuum {time.time() - t:.0f}s", file=sys.stderr, flush=True)
+con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+ok = con.execute("PRAGMA quick_check").fetchone()[0]
+after = con.execute(sample).fetchone()[0]
+print(f"  quick_check {ok}; sample {before} -> {after}", file=sys.stderr, flush=True)
+con.close()
+print(before)
+sys.exit(0 if ok == "ok" and before == after else 1)
+PY
+)
+# An empty write-ahead file is all a clean close leaves; one with pages in it
+# stays for sqld to replay.
+if [ -e "$D/data-wal" ] && [ ! -s "$D/data-wal" ]; then rm -f "$D/data-wal" "$D/data-shm"; fi
+chown -R permtracker:permtracker "$D"
+LOG "compacted: $(( $(stat -c %s "$D/data") / 1000000 )) MB"
+systemctl start permtracker-db
+for _ in $(seq 1 120); do [ "$(q 8080 'SELECT 1')" = 1 ] && break; sleep 5; done
+after=$(q 8080 "$SAMPLE")
+[ "$after" = "$before" ] || { LOG "sample differs after: $after (before $before)"; false; }
+trap - ERR
+systemctl start permtracker-dbcache permtracker-watchdog.timer
+LOG "done: database back after $(( $(date +%s) - t0 )) s offline; sample $after; original still in $KEEP"

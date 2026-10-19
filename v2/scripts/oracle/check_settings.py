@@ -116,6 +116,16 @@ for k in (db_key("DATABASE_AUTH_TOKEN"), db_key("DATABASE_RW_AUTH_TOKEN")):
     ok = c == "200" and '"type":"ok"' in t.replace(" ", "")
     show(k, f"queries the database (access: {claims(ENV[k]).get('a', '?')})", ok, c)
 
+# The H-1B LCA filings' own database (since Oct 19 2026): the same tokens must
+# read its table, or every LCA read on the site fails.
+if ENV.get("DATABASE_LCA_URL"):
+    lca_url = ENV["DATABASE_LCA_URL"].replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
+    for k in (db_key("DATABASE_AUTH_TOKEN"), db_key("DATABASE_RW_AUTH_TOKEN")):
+        c, t = curl("-X", "POST", *bearer(k), "-H", "Content-Type: application/json", lca_url,
+                    "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": "SELECT count(*) FROM lca_cases"}}, {"type": "close"}]}))
+        ok = c == "200" and '"type":"ok"' in t.replace(" ", "")
+        show(k, "queries the LCA database (DATABASE_LCA_URL)", ok, c)
+
 c, _ = curl(ENV["NEXT_PUBLIC_CONVEX_URL"].rstrip("/") + "/version")
 show("NEXT_PUBLIC_CONVEX_URL", "Convex answers", c == "200", c)
 c, _ = curl("-X", "POST", "-H", "Content-Type: application/json", ENV["NEXT_PUBLIC_POSTHOG_HOST"].rstrip("/") + "/decide/?v=3",
