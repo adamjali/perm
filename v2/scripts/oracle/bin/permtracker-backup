@@ -25,6 +25,28 @@ ls -1t "$B"/db-*.sql.zst | tail -n +8 | xargs -r rm -f
 printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$(stat -c %s "$f")" "$(basename "$f")" > "$B/LAST_OK"
 echo "backup ok: $(basename "$f") $(du -h "$f" | cut -f1)"
 
+# ---- the H-1B LCA filings' own database (since Oct 19 2026) -----------------
+# It changes about once a month, with DOL's LCA file, so it's dumped only when it
+# changed: any write moves its data file or grows its replication log, so their
+# sizes and the data file's time make the signature. LCA_OK records the copy and
+# the signature it was taken at; the health report says when they differ.
+L=/srv/permtracker/db-lca/data.sqld/dbs/default
+lca_file=""; lca_sig=""
+if systemctl is-enabled --quiet permtracker-db-lca 2>/dev/null && [ -f "$L/data" ]; then
+  lca_sig="$(stat -c %s:%Y "$L/data"):$(stat -c %s "$L/wallog" 2>/dev/null || echo 0)"
+  if [ "$lca_sig" != "$(cut -d' ' -f4 "$B/LCA_OK" 2>/dev/null || true)" ]; then
+    lca_file="$B/lca-$(date -u +%Y%m%d-%H%M).sql.zst"
+    curl -sS --fail --max-time 3600 -H "Authorization: Bearer $(cat /srv/permtracker/secrets/db_ro.jwt)" \
+      http://127.0.0.1:8082/dump | zstd -q -T2 -10 -o "$lca_file.part"
+    zstd -dc "$lca_file.part" | tail -c 200 | grep -q "COMMIT;" || { echo "lca dump incomplete; kept nothing"; rm -f "$lca_file.part"; exit 1; }
+    mv "$lca_file.part" "$lca_file"
+    ls -1t "$B"/lca-*.sql.zst | tail -n +3 | xargs -r rm -f
+    echo "lca backup ok: $(basename "$lca_file") $(du -h "$lca_file" | cut -f1)"
+  else
+    echo "lca backup: unchanged since $(cut -d' ' -f3 "$B/LCA_OK")"
+  fi
+fi
+
 # ---- off-site copy ----------------------------------------------------------
 [ -r /etc/permtracker/r2.env ] || { echo "off-site: no R2 key on this server; not uploaded"; exit 0; }
 # shellcheck disable=SC1091
@@ -40,5 +62,14 @@ printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/OFFSITE_OK"
 echo "off-site ok: $name ($size bytes) in R2"
 # Only now, with a newer copy in place, may older ones go.
 /usr/local/bin/permtracker-r2-prune db "$name" || true
+if [ -n "$lca_file" ]; then
+  lname=$(basename "$lca_file"); lsize=$(stat -c %s "$lca_file")
+  rclone copyto "$lca_file" "r2:permtracker-backups/lca/$lname" --s3-no-head --s3-chunk-size 16M --retries 3 --low-level-retries 10 -q
+  lremote=$(rclone lsjson "r2:permtracker-backups/lca/$lname" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["Size"] if r else -1)')
+  [ "$lremote" = "$lsize" ] || { echo "off-site: lca uploaded size $lremote does not match $lsize"; exit 1; }
+  printf '%s %s %s %s\n' "$(date -u +%FT%TZ)" "$lsize" "$lname" "$lca_sig" > "$B/LCA_OK"
+  echo "off-site ok: $lname ($lsize bytes) in R2"
+  /usr/local/bin/permtracker-r2-prune lca "$lname" || true
+fi
 # The whole bucket, against R2's free 10 GB: the report warns long before a charge.
 rclone size r2:permtracker-backups --json | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r["count"], r["bytes"])' > "$B/OFFSITE_SIZE" || true

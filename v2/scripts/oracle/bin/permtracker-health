@@ -303,6 +303,12 @@ def main():
     # The daily copy of the boot disk in Oracle (bin/permtracker-disk-copies):
     # when it last made one, how many it holds, and whether Oracle marked the
     # new one free.
+    lca_ok = None
+    try:
+        at, size, name, sig = (APP / "backups" / "LCA_OK").read_text().split()
+        lca_ok = {"at": at, "bytes": int(size), "file": name, "current": sig == lca_sig}
+    except (OSError, ValueError):
+        pass
     disk_copy = None
     try:
         at, count, free = (APP / "backups" / "DISKCOPY_OK").read_text().split()
@@ -335,6 +341,18 @@ def main():
     # one once they add up to twice the database's pages.
     snapshot_bytes = sum(p.stat().st_size for p in (db_dir / "snapshots").glob("*") if p.is_file())
     log_bytes = (db_dir / "wallog").stat().st_size if (db_dir / "wallog").exists() else None
+    # The H-1B LCA filings' own database (permtracker-db-lca, since Oct 19 2026):
+    # the same three parts, and the signature its backup is taken at
+    # (bin/permtracker-backup builds it the same way: data size, data time, log size).
+    lca_dir = APP / "db-lca" / "data.sqld" / "dbs" / "default"
+    lca_parts, lca_sig = {}, None
+    if (lca_dir / "data").exists():
+        st = (lca_dir / "data").stat()
+        lca_log = (lca_dir / "wallog").stat().st_size if (lca_dir / "wallog").exists() else None
+        lca_parts = {"lcaDataBytes": st.st_size,
+                     "lcaSnapshotBytes": sum(p.stat().st_size for p in (lca_dir / "snapshots").glob("*") if p.is_file()),
+                     "lcaLogBytes": lca_log}
+        lca_sig = f"{st.st_size}:{int(st.st_mtime)}:{lca_log or 0}"
 
     # The watchdog's repairs (bin/permtracker-watchdog), last 24 hours.
     repairs = []
@@ -375,6 +393,7 @@ def main():
             "dbDataBytes": data_bytes,
             "dbSnapshotBytes": snapshot_bytes,
             "dbLogBytes": log_bytes,
+            **lca_parts,
             "lockedMb": m.get("Mlocked", 0) // 1024,
             "swapUsedMb": (m.get("SwapTotal", 0) - m.get("SwapFree", 0)) // 1024,
             "swapPagesPerS": swap_rate,
@@ -390,10 +409,11 @@ def main():
             "netP95": p95([s["net"] for s in week if s.get("net") is not None]),
         },
         "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok,
-                   "diskCopy": disk_copy, **sealed},
+                   "diskCopy": disk_copy, "lcaOk": lca_ok, **sealed},
         # The live slot's second copy (one per CPU) is a service too; the old
         # slot's second copy is stopped on purpose and not listed.
-        "services": {u: active(u) for u in SERVICES + ([f"permtracker-web@{slot}2"] if slot else [])},
+        "services": {u: active(u) for u in SERVICES + ([f"permtracker-web@{slot}2"] if slot else [])
+                     + (["permtracker-db-lca"] if pathlib.Path("/etc/systemd/system/permtracker-db-lca.service").exists() else [])},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
         "stoppedUnits": stopped,
         # The defense writes to the same log; it is not a restart, so it is

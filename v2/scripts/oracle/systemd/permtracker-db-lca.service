@@ -1,0 +1,28 @@
+[Unit]
+Description=PERM Tracker H-1B LCA database (libsql-server), loopback only
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=permtracker
+Group=permtracker
+# The H-1B LCA filings (`lca_cases`, about 2.75 GB with its indexes) in a file
+# of their own since Oct 19 2026, so the main file fits the 6 GB RAM lock
+# (permtracker-dbcache) again. The same build, signing key and caps as
+# permtracker-db.service, whose comments explain each flag; the clients send a
+# statement naming lca_cases here (DATABASE_LCA_URL, src/lib/db/lcaRoute.ts).
+# Writes land once a month, with DOL's quarterly LCA file.
+ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db-lca/data.sqld --http-listen-addr 127.0.0.1:8082 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB --max-log-size 4096
+Restart=always
+RestartSec=2
+LimitNOFILE=65536
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/srv/permtracker/db-lca
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

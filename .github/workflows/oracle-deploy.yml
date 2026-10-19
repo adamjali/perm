@@ -135,11 +135,20 @@ jobs:
         env:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
         run: |
+          # Two ports: the main database and, since Oct 19 2026, the H-1B LCA
+          # filings' own (permtracker-db-lca), which the build reads once the
+          # repository variable ORACLE_DB_LCA is "on". The deploy key's
+          # permitopen allows exactly these two.
           ssh -i ~/.ssh/deploy -o BatchMode=yes -o ExitOnForwardFailure=yes \
-            -o ServerAliveInterval=20 -f -N -L 18080:127.0.0.1:8080 "deploy@$ORACLE_HOST"
+            -o ServerAliveInterval=20 -f -N -L 18080:127.0.0.1:8080 -L 18082:127.0.0.1:8082 "deploy@$ORACLE_HOST"
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18080/v2/pipeline -d '{}')
           echo "database tunnel answered HTTP $code (401 = reached, login required)"
           test "$code" = "401"
+          if [ "${{ vars.ORACLE_DB_LCA }}" = "on" ]; then
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18082/v2/pipeline -d '{}')
+            echo "LCA database tunnel answered HTTP $code"
+            test "$code" = "401"
+          fi
 
       - name: Date each page by its last change (the sitemap's lastmod)
         if: steps.plan.outputs.build == 'true'
@@ -166,6 +175,7 @@ jobs:
         if: steps.plan.outputs.build == 'true'
         env:
           DATABASE_URL: http://127.0.0.1:18080
+          DATABASE_LCA_URL: ${{ vars.ORACLE_DB_LCA == 'on' && 'http://127.0.0.1:18082' || '' }}
           DATABASE_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
           # Names withheld at a person's request (src/lib/privacy/withheld.ts):
           # the build prerenders pages too, so it needs the list the server has.

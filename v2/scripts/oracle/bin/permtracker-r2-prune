@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-r2-prune <db|server|convex> <name just uploaded> [--dry-run]
+# permtracker-r2-prune <db|lca|server|convex> <name just uploaded> [--dry-run]
 #
 # Removes the off-site copies lib/r2_keep.py lets go: the newest 15 and the
 # first copy of each of the 3 newest months stay, and nothing under 8 days old
@@ -11,7 +11,7 @@
 # A failure here deletes nothing and never fails the backup that called it.
 set -uo pipefail
 folder=${1:-}; newest=${2:-}; dry=${3:-}
-[[ "$folder" =~ ^(db|server|convex)$ ]] || { echo "prune: unknown folder '$folder'"; exit 2; }
+[[ "$folder" =~ ^(db|lca|server|convex)$ ]] || { echo "prune: unknown folder '$folder'"; exit 2; }
 [ -n "$newest" ] || { echo "prune: no name given"; exit 2; }
 # shellcheck disable=SC1091
 . /usr/local/lib/permtracker/r2-env

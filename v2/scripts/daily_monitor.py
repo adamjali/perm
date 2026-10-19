@@ -899,6 +899,39 @@ def db_folder_warnings(n: dict) -> list[str]:
     return out
 
 
+# The H-1B LCA filings' database may lag its newest backup this long: it's
+# dumped nightly when it changed, and DOL's LCA file can land between dumps.
+LCA_BACKUP_LAG_H = 30
+
+
+def lca_db_checks(doc: dict, now_ms: int) -> tuple[list[str], list[str], list[str]]:
+    """(fails, warns, lines) for the H-1B LCA filings' own database
+    (permtracker-db-lca, since Oct 19 2026). Says nothing for a server that
+    doesn't have one."""
+    svc = doc.get("services") or {}
+    n = doc.get("now") or {}
+    if "permtracker-db-lca" not in svc and not n.get("lcaDataBytes"):
+        return [], [], []
+    fails, warns, lines = [], [], []
+    if svc.get("permtracker-db-lca") != "active":
+        fails.append(f"not running: permtracker-db-lca (the H-1B LCA database) is {svc.get('permtracker-db-lca')}")
+    if n.get("lcaDataBytes"):
+        folder = {"dbDataBytes": n["lcaDataBytes"], "dbSnapshotBytes": n.get("lcaSnapshotBytes"),
+                  "dbLogBytes": n.get("lcaLogBytes")}
+        warns.extend("LCA " + w for w in db_folder_warnings(folder))
+        lines.append(f"LCA database parts: data {n['lcaDataBytes'] / 1e9:.1f} GB, snapshots "
+                     f"{(n.get('lcaSnapshotBytes') or 0) / 1e9:.1f} GB, log {(n.get('lcaLogBytes') or 0) / 1e9:.1f} GB")
+    ok = (doc.get("backup") or {}).get("lcaOk") or {}
+    if not ok.get("at"):
+        warns.append("no backup of the H-1B LCA database on record")
+    else:
+        age_h = (now_ms / 1000 - dt.datetime.fromisoformat(ok["at"].replace("Z", "+00:00")).timestamp()) / 3600
+        if not ok.get("current") and age_h > LCA_BACKUP_LAG_H:
+            warns.append(f"the H-1B LCA database changed after its newest backup ({et_time(ok['at'])})")
+        lines.append(f"LCA database backup: {et_time(ok['at'])}" + ("" if ok.get("current") else ", changed since"))
+    return fails, warns, lines
+
+
 # Methods the case page no longer uses: the keys of RETIRED_METHODS in
 # src/lib/scorecard/verdict.ts (test_daily_monitor.py holds the two equal).
 RETIRED_METHODS = {"dol-average", "pwd-queue-request-month", "pwd-day"}
@@ -1053,6 +1086,9 @@ def server_verdict(doc: dict | None, now_ms: int, switches: list[int] | None = N
 
     n = doc.get("now") or {}
     warns.extend(db_folder_warnings(n))
+    lca_fails, lca_warns, lca_lines = lca_db_checks(doc, now_ms)
+    fails.extend(lca_fails)
+    warns.extend(lca_warns)
     if doc.get("stoppedUnits"):
         warns.append("stopped after an error and not restarted: " + ", ".join(doc["stoppedUnits"][:5]))
     # Every timer the repo defines must be enabled on the server: the backups,
@@ -1129,6 +1165,7 @@ def server_verdict(doc: dict | None, now_ms: int, switches: list[int] | None = N
         lines.append(f"Database parts: data {n['dbDataBytes'] / 1e9:.1f} GB, snapshots "
                      f"{n['dbSnapshotBytes'] / 1e9:.1f} GB (merged at 2x the data), log "
                      f"{(n.get('dbLogBytes') or 0) / 1e9:.1f} GB (compacted at {SQLD_LOG_CAP_BYTES / 1e9:.1f} GB)")
+    lines.extend(lca_lines)
     if slot:
         lines.append(f"Live copy: {slot} ({(doc.get('slot') or {}).get('release')})")
     lock = ram_lock_line(svc, n)

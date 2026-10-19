@@ -41,6 +41,13 @@ case "$url" in
       *"SELECT 1"*) [ "${DB_READ:-ok}" = down ] && exit 7 ;;
     esac
     echo '{"results":[{"type":"ok"},{"type":"ok"},{"type":"ok"}]}'; exit 0 ;;
+  *:8082/v2/pipeline)
+    # The LCA database: LCA_WRITE and LCA_READ, as above.
+    case "$*" in
+      *"BEGIN IMMEDIATE"*) [ "${LCA_WRITE:-ok}" = locked ] && { echo '{"results":[{"type":"error","error":{"message":"database is locked"}}]}'; exit 0; } ;;
+      *"SELECT 1"*) [ "${LCA_READ:-ok}" = down ] && exit 7 ;;
+    esac
+    echo '{"results":[{"type":"ok"},{"type":"ok"},{"type":"ok"}]}'; exit 0 ;;
   *:8081/__pt/nginx-alive) [ "${NGINX_ALIVE:-1}" = 1 ] && exit 0 || exit 7 ;;
   *:8081/*) [ "${APP_VIA_NGINX:-1}" = 1 ] && exit 0 || exit 22 ;;
   *:3001/api/health|*:3011/api/health) exit 0 ;;
@@ -50,7 +57,7 @@ esac
 FAKE_SYSTEMCTL = r"""#!/bin/bash
 case "$1" in
   is-active) case "$3" in permtracker-web@blue|permtracker-web@blue2) exit 0 ;; *) exit 3 ;; esac ;;
-  is-enabled) exit 1 ;;
+  is-enabled) [ "$3" = permtracker-db-lca ] && [ "${LCA_UNIT:-0}" = 1 ] && exit 0; exit 1 ;;
   restart) echo "$2" >> "$WD_ROOT/restarts" ;;
 esac
 exit 0
@@ -136,6 +143,31 @@ def main() -> int:
         got = run(root, 3, DB_WRITE="locked", DB_READ="down")
         check("with reads failing too, the read check alone counts: one restart, not two",
               got == ["permtracker-db"], str(got))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        setup(root)
+        got = run(root, 3, LCA_UNIT="1", LCA_WRITE="locked")
+        check("three locked writes on the LCA database restart it, and only it",
+              got == ["permtracker-db-lca"], str(got))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        setup(root)
+        got = run(root, 3, LCA_UNIT="1", LCA_READ="down", LCA_WRITE="locked")
+        check("an LCA database that stopped answering: one restart", got == ["permtracker-db-lca"], str(got))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        setup(root)
+        got = run(root, 3, LCA_UNIT="0", LCA_READ="down")
+        check("with no LCA unit installed, its port is never judged", got == [], str(got))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        setup(root)
+        got = run(root, 3, LCA_UNIT="1", DB_WRITE="locked")
+        check("a locked main database restarts the main one, not the LCA one", got == ["permtracker-db"], str(got))
 
     print(f"{len(failures)} failure(s)")
     return 1 if failures else 0

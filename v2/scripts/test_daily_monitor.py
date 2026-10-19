@@ -409,6 +409,33 @@ def main() -> int:
     check("$((6*1024*1024*1024))" in script and dm.DBCACHE_CAP_BYTES == 6 * 1024 ** 3,
           "the report's cap is the lock script's cap")
 
+    # The H-1B LCA filings' own database (Oct 19 2026).
+    now_ms = int(dt.datetime(2026, 10, 20, 11, 30, tzinfo=dt.timezone.utc).timestamp() * 1000)
+    base = {"services": {"permtracker-db-lca": "active"},
+            "now": {"lcaDataBytes": 2_468_593_664, "lcaSnapshotBytes": 0, "lcaLogBytes": 2_483_058_144},
+            "backup": {"lcaOk": {"at": "2026-10-20T07:20:00Z", "current": True}}}
+    f, w, ln = dm.lca_db_checks(base, now_ms)
+    check(f == [] and w == [] and any("LCA database parts" in x for x in ln), f"a healthy LCA database is a line ({f}, {w})")
+    check(dm.lca_db_checks({"services": {}, "now": {}}, now_ms) == ([], [], []), "no LCA database, nothing said")
+    down = {**base, "services": {"permtracker-db-lca": "failed"}}
+    check(any("permtracker-db-lca" in x for x in dm.lca_db_checks(down, now_ms)[0]), "a stopped LCA database fails")
+    stale = {**base, "backup": {"lcaOk": {"at": "2026-10-18T07:20:00Z", "current": False}}}
+    check(any("changed after its newest backup" in x for x in dm.lca_db_checks(stale, now_ms)[1]),
+          "an LCA database changed since a two-day-old backup warns")
+    fresh = {**base, "backup": {"lcaOk": {"at": "2026-10-20T07:20:00Z", "current": False}}}
+    check(dm.lca_db_checks(fresh, now_ms)[1] == [], "changed since this morning's backup: not yet a warning")
+    none = {**base, "backup": {}}
+    check(any("no backup of the H-1B LCA database" in x for x in dm.lca_db_checks(none, now_ms)[1]),
+          "no LCA backup on record warns")
+    big = {**base, "now": {**base["now"], "lcaLogBytes": 6_000_000_000}}
+    check(any(x.startswith("LCA database replication log") for x in dm.lca_db_checks(big, now_ms)[1]),
+          "an LCA log past sqld's cap warns, by the main database's rule")
+    backup = (HERE / "oracle" / "bin" / "permtracker-backup").read_text()
+    health = (HERE / "oracle" / "bin" / "permtracker-health").read_text()
+    check('stat -c %s:%Y "$L/data"):$(stat -c %s "$L/wallog"' in backup
+          and 'f"{st.st_size}:{int(st.st_mtime)}:{lca_log or 0}"' in health,
+          "the backup and the health report build the LCA signature the same way")
+
     # Traffic against the same weekday (Oct 19 2026: a Sunday read as a drop).
     views = {}
     d0 = dt.date(2026, 9, 14)
