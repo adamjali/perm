@@ -157,7 +157,7 @@ def run(conf_text: str) -> None:
         check(f"{sel}: whole-app in-flight cap", "pt_app" in zones_in(b, "limit_conn"))
 
     # People and crawlers are limited everywhere a page or API answers.
-    crawler_req = {"pt_search", "pt_bot", "pt_bots", "pt_meta"}
+    crawler_req = {"pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity"}
     crawler_conn = {"pt_search_conn", "pt_bots_conn"}
     for sel, b in public.items():
         req = set(zones_in(b, "limit_req"))
@@ -201,7 +201,11 @@ def run(conf_text: str) -> None:
     check("Meta's crawler has its own lower allowance",
           meta is not None and '"meta-externalagent" meta;' in meta.group(1)
           and re.search(r"zone=pt_meta:\S+\s+rate=30r/m;", head) is not None)
-    for zone in ("pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_prefetch"):
+    perp = re.search(r"map \$http_user_agent \$pt_perplexity_key\s*\{([^}]*)\}", head)
+    check("Perplexity's crawler has the same lower allowance, verified or not",
+          perp is not None and '"~*PerplexityBot" perplexity;' in perp.group(1) and "Perplexity-User" not in perp.group(1)
+          and re.search(r"zone=pt_perplexity:\S+\s+rate=30r/m;", head) is not None)
+    for zone in ("pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_prefetch"):
         lines = re.findall(rf"limit_req\s+zone={zone}\s+([^;]*);", server)
         check(f"{zone}: refused at once (nodelay)", bool(lines) and all("nodelay" in x for x in lines), str(lines))
 
@@ -334,6 +338,8 @@ def probe() -> None:
             '        proxy_hide_header Cache-Control;\n        add_header Cache-Control "private, no-store" always;\n', "        proxy_hide_header Cache-Control;\n", 1),
         "upstream keeps idle connections past Node's": good.replace("    keepalive_timeout 4s;\n", "", 1),
         "Meta's allowance dropped from a page": good.replace("        limit_req zone=pt_meta burst=15 nodelay;\n", "", 1),
+        "Perplexity's allowance dropped from a page": good.replace("        limit_req zone=pt_perplexity burst=15 nodelay;\n", "", 1),
+        "Perplexity limited only when verified": good.replace("map $http_user_agent $pt_perplexity_key", "map $pt_bot_key $pt_perplexity_key", 1),
         "refusal views no longer logged": good.replace("        access_log /var/log/permtracker-busy/seen.log pt_busy_seen;\n", "", 1),
         "refusal-view log loses the status": good.replace("'$time_iso8601 $status $remote_addr", "'$time_iso8601 $remote_addr", 1),
         "counting image answered before its limit": good.replace("        empty_gif;\n    }", "        return 204;\n    }", 1),

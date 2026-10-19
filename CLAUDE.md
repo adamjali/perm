@@ -944,4 +944,7 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   On Oct 18 it was traffic, Sunday 4 to 7 PM (PerplexityBot about 180 a minute, partly unverified, plus two
   scraper labels), none near a deploy. **The database RAM lock had been off since Oct 9** (the data file passed
   its 6 GB cap) and nothing said so; the report does now (`ram_lock_line`).
+- **Perplexity's crawler reads at 30 pages a minute** (owner's call, Oct 19 2026, like Meta's on Oct 2), matched by
+  name whether Cloudflare verified it or not (`pt_perplexity`); Perplexity-User, which fetches for a person's
+  question, is left alone. Proved on the server: 16 requests passed, then 429; a browser kept getting 200.
 
