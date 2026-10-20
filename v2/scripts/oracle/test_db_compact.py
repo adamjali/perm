@@ -51,7 +51,9 @@ echo "$*" >> "$DC_ROOT/systemctl.log"
 case "$1" in
   stop) for u in "${@:2}"; do [ "$u" = permtracker-db ] && rm -f "$DC_ROOT/running-8080"; done ;;
   start) for u in "${@:2}"; do [ "$u" = permtracker-db ] && touch "$DC_ROOT/running-8080"; done ;;
-  list-units) [ -n "${DC_BUSY:-}" ] && echo "$DC_BUSY loaded active running x" ;;
+  # Like systemd: a job's timer is "active waiting" all day, listed unless only services are asked for.
+  list-units) case " $* " in *" --type=service "*) ;; *) echo "permtracker-uscis@h1b-hub.timer loaded active waiting x" ;; esac
+              [ -n "${DC_BUSY:-}" ] && echo "$DC_BUSY loaded active running x" ;;
 esac
 exit 0
 """

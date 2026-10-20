@@ -63,7 +63,8 @@ list_n=$(q 8080 "SELECT COUNT(*) FROM lca_case_numbers")
 if [ -f "$H/deploying" ] && [ $(( $(date +%s) - $(stat -c %Y "$H/deploying") )) -lt 1200 ]; then
   LOG "refused: a deploy is running"; exit 3
 fi
-busy=$(systemctl list-units --no-legend --plain --state=active,activating 'permtracker-uscis@*' 'permtracker-backup*' \
+# Services only: every one of these jobs has a timer, and a timer reads "active" all day while it waits.
+busy=$(systemctl list-units --type=service --no-legend --plain --state=active,activating 'permtracker-uscis@*' 'permtracker-backup*' \
        'permtracker-restore-test*' 'permtracker-disk-copies*' 2>/dev/null | awk '{print $1}' | tr '\n' ' ')
 [ -z "${busy// /}" ] || { LOG "refused: running now: $busy"; exit 3; }
 size=$(stat -c %s "$D/data")
