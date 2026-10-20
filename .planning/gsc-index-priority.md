@@ -1204,3 +1204,36 @@ priority, since nothing a searcher reads changed; the sitemap's lastmod carries 
 above, and only a page crawled before Oct 19, 2 AM EDT:
 `/`, `/perm-case-status`, `/perm-cases`, `/perm-decision-activity`, `/perm-processing-times`, `/policy-changes`,
 `/seasonal-cases`, `/tools`.
+
+## Queue after the Oct 20 night deploy (08256222, about 2 AM EDT)
+
+`node scripts/gsc_queue.mjs --since 319340a2`: the deadline calculator's dates can leave the page (copy, a calendar
+file, save as a case), and three articles that link to it. All four changed Oct 19, 9:28 PM EDT and went live at 2 AM.
+`/tools/perm-deadline-calculator`, `/blog/what-is-perm-labor-certification`, `/guides/manual-vs-automated-tracking`,
+`/guides/ultimate-perm-guide-2026`.
+
+### Round, Tuesday Oct 20 2026 (about 11:13 to 11:39 AM EDT)
+
+Worked Monday's "Still to request" list, then the Oct 20 list. Google answered Quota Exceeded on the 12th request.
+
+Requested (last crawl before the request):
+- `/guides/perm-employer-questionnaire` (Oct 17, 7:46 AM; changed 2:42 PM that day)
+- `/guides/perm-business-necessity` (Oct 17, 7:46 AM; that crawl got a server error, so the page wasn't indexed)
+- `/guides/perm-layoff-rule-for-employers` (Oct 17, 7:46 AM; changed 2:42 PM)
+- `/guides/special-handling-university-teachers` (Oct 17, 7:46 AM; changed 2:42 PM)
+- `/blog/docketwise-vs-inszoom-lollylaw-eimmigration` (Oct 17, 7:46 AM; changed 2:42 PM)
+- `/blog/vendor-data-security-questions` (Oct 17, 7:46 AM; changed 2:42 PM)
+- `/blog/perm-attorney-fees-employer-must-pay` (Oct 17, 7:45 AM; changed 2:42 PM)
+- `/guides/perm-sunday-ads-additional-recruitment-steps` (Oct 17, 7:46 AM; changed Oct 18, 4:01 AM)
+- `/contact` (Oct 9, 7:55 PM; changed Oct 18, 2:37 AM)
+- `/tools/perm-deadline-calculator` (Oct 11, 7:18 PM; changed Oct 19, live Oct 20)
+- `/blog/what-is-perm-labor-certification` (Oct 7, 3:08 PM)
+
+Skipped: none.
+
+Quota Exceeded on `/guides/manual-vs-automated-tracking` (Aug 29, 3:50 PM; not requested).
+
+Still to request, in order:
+1. `/guides/manual-vs-automated-tracking`
+2. `/guides/ultimate-perm-guide-2026`
+3. The Oct 19 night-deploy list above (month ticks), only a page crawled before Oct 19, 2 AM EDT.
