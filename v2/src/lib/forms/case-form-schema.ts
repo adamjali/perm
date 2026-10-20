@@ -225,6 +225,10 @@ export const caseFormSchema = z
     eta9089AuditDate: optionalIsoDateSchema,
     eta9089CertificationDate: optionalIsoDateSchema,
     eta9089ExpirationDate: optionalIsoDateSchema,
+    eta9089DenialDate: optionalIsoDateSchema,
+    eta9089ReconsiderationDate: optionalIsoDateSchema,
+    eta9089ReconsiderationDeniedDate: optionalIsoDateSchema,
+    eta9089BalcaRequestDate: optionalIsoDateSchema,
     eta9089CaseNumber: z.string().max(50, 'ETA 9089 case number must be 50 characters or less').optional(),
 
     // RFI entries (strict 30-day due, one active at a time)
@@ -567,6 +571,10 @@ export const FIELD_LABELS: Record<string, string> = {
   eta9089AuditDate: 'ETA 9089 Audit Date',
   eta9089CertificationDate: 'ETA 9089 Certification Date',
   eta9089ExpirationDate: 'ETA 9089 Expiration Date',
+  eta9089DenialDate: 'ETA 9089 Denial Date',
+  eta9089ReconsiderationDate: 'Reconsideration Requested',
+  eta9089ReconsiderationDeniedDate: 'Reconsideration Denied',
+  eta9089BalcaRequestDate: 'BALCA Review Requested',
 
   // I-140
   i140FilingDate: 'I-140 Filing Date',
@@ -693,6 +701,10 @@ const PERM_TO_FORM_FIELD_MAP: Record<string, string> = {
   eta9089_filing_date: 'eta9089FilingDate',
   eta9089_certification_date: 'eta9089CertificationDate',
   eta9089_expiration_date: 'eta9089ExpirationDate',
+  eta9089_denial_date: 'eta9089DenialDate',
+  eta9089_reconsideration_date: 'eta9089ReconsiderationDate',
+  eta9089_reconsideration_denied_date: 'eta9089ReconsiderationDeniedDate',
+  eta9089_balca_request_date: 'eta9089BalcaRequestDate',
   i140_filing_date: 'i140FilingDate',
   i140_approval_date: 'i140ApprovalDate',
   // RFI/RFE use arrays - map to specific entry fields (index 0 = active entry)
@@ -745,6 +757,10 @@ function formDataToValidationData(data: CaseFormData) {
     eta9089_filing_date: data.eta9089FilingDate || null,
     eta9089_certification_date: data.eta9089CertificationDate || null,
     eta9089_expiration_date: data.eta9089ExpirationDate || null,
+    eta9089_denial_date: data.eta9089DenialDate || null,
+    eta9089_reconsideration_date: data.eta9089ReconsiderationDate || null,
+    eta9089_reconsideration_denied_date: data.eta9089ReconsiderationDeniedDate || null,
+    eta9089_balca_request_date: data.eta9089BalcaRequestDate || null,
     i140_filing_date: data.i140FilingDate || null,
     i140_approval_date: data.i140ApprovalDate || null,
     rfi_received_date: activeRfi?.receivedDate || null,

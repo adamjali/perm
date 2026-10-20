@@ -96,6 +96,26 @@ export const CERTIFICATION_RULE_DAYS = ETA9089_EXPIRATION_DAYS + 1;
 export const RFI_DUE_DAYS = 30;
 
 /**
+ * Days after an ETA 9089 denial to ask DOL to look again: a request for
+ * reconsideration by the Certifying Officer or a request for review by the
+ * Board of Alien Labor Certification Appeals (BALCA), one or the other.
+ * 20 CFR 656.24(g)(1): "within 30 days from the date of issuance of the
+ * denial"; 656.26(a)(2)(i): "within 30 days of the date of the determination".
+ * DOL's PERM FAQ Round 14 (May 13 2019): "thirty (30) calendar days from the
+ * date on the Final Determination letter", and a submission asking for both
+ * "will be treated as a Request for Reconsideration".
+ *
+ * The same 30 days, from the date on the Certifying Officer's notice, apply to
+ * asking BALCA after a reconsideration that upheld the denial: "The CO will not
+ * automatically forward the appeal file to BALCA" (Round 14, question 3; the
+ * regulation names no period for that step).
+ *
+ * Calendar days from the letter's date, counted like RFI_DUE_DAYS. No DOL rule
+ * moves a deadline that falls on a weekend: FLAG takes filings every day.
+ */
+export const DENIAL_REVIEW_DAYS = 30;
+
+/**
  * Days before RFI due date to show warning (approaching deadline).
  */
 export const RFI_WARNING_DAYS = 7;

@@ -49,7 +49,9 @@ export type DeadlineType =
   | "notice_of_filing_start_deadline"
   | "first_sunday_ad_deadline"
   | "second_sunday_ad_deadline"
-  | "recruitment_window_closes";
+  | "recruitment_window_closes"
+  | "denial_review_due"
+  | "balca_request_due";
 
 // ============================================================================
 // CASE DATA TYPE (for deadline extraction)

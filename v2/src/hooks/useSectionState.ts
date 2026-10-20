@@ -22,6 +22,7 @@ import {
   getFilingWindowStatus,
   isBasicRecruitmentComplete,
   isProfessionalRecruitmentComplete,
+  denialReviewDeadline,
 } from "@/lib/perm";
 
 export type SectionName = 'pwd' | 'recruitment' | 'professional' | 'eta9089' | 'i140' | 'notes';
@@ -197,7 +198,9 @@ function getETA9089Summary(values: Partial<CaseFormData>): string | undefined {
   if (filed) parts.push(`Filed ${filed}`);
 
   const cert = fmtDate(values.eta9089CertificationDate);
+  const denied = fmtDate(values.eta9089DenialDate);
   if (cert) parts.push(`Certified ${cert}`);
+  else if (denied) parts.push(`Denied ${denied}`);
 
   if (values.eta9089CaseNumber) parts.push(`Case ${values.eta9089CaseNumber}`);
 
@@ -258,13 +261,21 @@ export function useSectionState(values: Partial<CaseFormData>) {
       disabledReason: !recruitmentEnabled ? 'Complete PWD section first' : undefined,
     });
 
-    // ETA 9089 Section - Needs complete recruitment + 30-day window open
-    const eta9089Enabled = recruitmentComplete && eta9089Window.isOpen;
+    // ETA 9089 Section - Needs complete recruitment + 30-day window open, or a
+    // filing already made: a filed case's window closing behind it, or a denial,
+    // doesn't lock the section that records what DOL did with it.
+    const eta9089Filed = !!values.eta9089FilingDate;
+    const eta9089Enabled = eta9089Filed || (recruitmentComplete && eta9089Window.isOpen);
 
     let eta9089DisabledReason: string | undefined;
     let eta9089StatusInfo: string | undefined;
 
-    if (!recruitmentComplete) {
+    const reviewDue = denialReviewDeadline(values);
+    if (eta9089Filed) {
+      if (reviewDue) {
+        eta9089StatusInfo = `${reviewDue.kind === "review" ? "Reconsideration or BALCA review" : "BALCA review"} due ${fmtDate(reviewDue.date)}`;
+      }
+    } else if (!recruitmentComplete) {
       eta9089DisabledReason = 'Complete all recruitment activities first';
     } else if (!eta9089Window.isOpen && eta9089Window.daysUntilOpen && eta9089Window.daysUntilOpen > 0) {
       eta9089DisabledReason = `30-day waiting period: ${eta9089Window.daysUntilOpen} days remaining`;

@@ -62,6 +62,13 @@ Extra tags:
 	⁃	response submitted must be after receive date, before response due
 	⁃	only add one until submitted date then can another (only one active one at a time)
 	⁃	red with active or gone if not (how it is now)
+	⁃	ETA 9089 denied (added Oct 19 2026; 20 CFR 656.24(g), 656.26, DOL's PERM FAQ Round 14)
+	⁃	denial date is the date on DOL's Final Determination letter, on or after the filing date
+	⁃	within 30 calendar days of that date the employer asks for ONE of reconsideration by the Certifying Officer or review by BALCA, in FLAG (asking for both is treated as reconsideration). Not moved for a weekend
+	⁃	if reconsideration upholds the denial, BALCA review is due within 30 calendar days of that notice; DOL doesn't forward it on its own
+	⁃	no request in time: the denial is final and a new application may be filed. The case stays open with the deadline overdue until the user closes it
+	⁃	a certification after a denial means it was reversed: the certification counts and the I-140 steps follow
+	⁃	stage: ETA 9089, working while a request is owed, under review once one is pending
 	⁃	RFE
 	⁃	rfi received date must be after filing date
 	⁃	response due is editable, no auto

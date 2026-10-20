@@ -10013,3 +10013,31 @@ The public calculator now hands them over three ways, and the last is the funnel
   picker unless `progressStatusOverride` was set. Pinning the pick by hand would have left a stage that stops following
   the dates with nothing on the case page saying so, so the buttons are gone and a line says the stage follows the
   dates (owner: "whatever is best"). The case form's own auto-status switch is unchanged.
+
+## Oct 19 2026 (night): an ETA 9089 denial, its 30 days, and three case-page fixes
+
+- **A denied ETA 9089 has its own path** (`convex/lib/perm/calculators/denialReview.ts`, the one place): the date on
+  DOL's Final Determination letter (`eta9089DenialDate`), then within 30 calendar days ONE of reconsideration by the
+  Certifying Officer (`eta9089ReconsiderationDate`) or BALCA review (`eta9089BalcaRequestDate`); if reconsideration
+  upholds the denial (`eta9089ReconsiderationDeniedDate`, the notice's date), BALCA review within 30 days of that
+  notice. Sources, read Oct 19: 20 CFR 656.24(g)(1) and 656.26(a)(2)(i) on eCFR; DOL's PERM FAQ Round 14 (May 13 2019)
+  for "calendar days", "treated as a Request for Reconsideration" when both are asked, and the 30 days after an upheld
+  denial (the regulation names no period for that step); FLAG's user guide and release notes for where it's filed.
+  No primary source moves a weekend deadline (BALCA said FLAG "is always available"), so the date never moves.
+  DOL's 2009 appeals FAQ, still linked, says the opposite of Round 14 on forwarding: Round 14 and FLAG's "Continue to
+  BALCA" button are current practice.
+- Two central deadlines, `denial_review_due` and `balca_request_due` (DOL's clock, FLAG), reach every surface the
+  others do: dashboard, cards, calendar slots under the ETA 9089 switch, reminders, notifications. Stage: ETA 9089,
+  working while a request is owed, under review once one is pending; a certification after a denial is a reversal and
+  wins. A missed request leaves the deadline overdue and the case open: no auto-close (a closure reason would need a
+  schema change, and the dates can't tell a missed deadline from a request not yet recorded). Validator V-DEN-01 to 04.
+- **The day count, flagged for the attorney**: letter date + 30 (counted like the RFI's 30), not + 29 the way DOL
+  prints a certification's expiry.
+- **"Next up" opened its quick-edit box for none of nine steps** after the Oct 11 sentence-case rename; `ACTION_CONFIG`
+  is typed by `NextActionName` now. A step can save on either of several outcomes (`optional` fields: a certification
+  or a denial).
+- **Fields in one form row sit on one line**: `FormField` puts the hint under the input and holds the label row's height.
+- **Progress chips have their own soft fills** (filed green, working yellow, RFI or RFE red, waiting for intake blue,
+  under review purple, `--soft-purple`), contrast-tested in both themes and on the folder.
+- **`useInactivityTimeout.test.ts` replaced `window.localStorage` and never put it back**, so in the shared `unit`
+  pool every later file's storage stored nothing (the carried-dates test read null). It restores the real one now.

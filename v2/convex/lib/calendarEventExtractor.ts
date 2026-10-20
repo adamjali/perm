@@ -39,6 +39,8 @@ const CENTRAL_TO_EVENT: Record<DeadlineType, CalendarEventType> = {
   i140_filing_deadline: "i140_deadline",
   rfi_due: "rfi_due",
   rfe_due: "rfe_due",
+  denial_review_due: "denial_review_due",
+  balca_request_due: "balca_request_due",
 };
 
 /**

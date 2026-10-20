@@ -39,6 +39,8 @@ import {
   JOB_ORDER_MIN_DAYS,
   subtractBusinessDays,
   calculateI140FilingDeadline,
+  calculateDenialReviewDeadline,
+  calculateBalcaRequestDeadline,
 } from "../perm";
 
 // Re-export for consumers that import from here
@@ -517,7 +519,13 @@ export function getETA9089DateConstraints(values: Partial<CaseFormData>) {
   const recruitmentEnd = getRecruitmentEndDate(values);
   const firstRecruitmentDate = getFirstRecruitmentStartDate(values);
   const todayStr = today();
-  const { eta9089FilingDate, eta9089AuditDate } = values;
+  const {
+    eta9089FilingDate,
+    eta9089AuditDate,
+    eta9089DenialDate,
+    eta9089ReconsiderationDate,
+    eta9089ReconsiderationDeniedDate,
+  } = values;
 
   // Filing window: opens FILING_WINDOW_WAIT_DAYS after last recruitment, closes FILING_WINDOW_CLOSE_DAYS after first
   const filingWindowOpen = recruitmentEnd ? addDaysToDateStr(recruitmentEnd, FILING_WINDOW_WAIT_DAYS) : undefined;
@@ -551,6 +559,61 @@ export function getETA9089DateConstraints(values: Partial<CaseFormData>) {
       min: certMinRef ? addDaysToDateStr(certMinRef, 1) : undefined,
       max: todayStr,
       hint: buildCertificationHint(eta9089AuditDate, eta9089FilingDate),
+    },
+    ...getDenialReviewConstraints({
+      certMinRef,
+      eta9089DenialDate,
+      eta9089ReconsiderationDate,
+      eta9089ReconsiderationDeniedDate,
+      todayStr,
+    }),
+  };
+}
+
+/**
+ * The denial path's fields: the denial, then reconsideration or BALCA review,
+ * each requested within 30 calendar days (perm/calculators/denialReview.ts).
+ * A request may be made the day the letter is dated, so each request's
+ * earliest day is the day it answers.
+ */
+function getDenialReviewConstraints(v: {
+  certMinRef: string | undefined;
+  eta9089DenialDate: string | undefined;
+  eta9089ReconsiderationDate: string | undefined;
+  eta9089ReconsiderationDeniedDate: string | undefined;
+  todayStr: string;
+}) {
+  const denial = v.eta9089DenialDate;
+  const reviewDue = denial ? calculateDenialReviewDeadline(denial) : undefined;
+  const upheld = v.eta9089ReconsiderationDeniedDate;
+  const balcaDue = upheld ? calculateBalcaRequestDeadline(upheld) : reviewDue;
+
+  return {
+    eta9089DenialDate: {
+      min: v.certMinRef ? addDaysToDateStr(v.certMinRef, 1) : undefined,
+      max: v.todayStr,
+      hint: "The date on DOL's Final Determination letter, if it denied the case",
+    },
+    eta9089ReconsiderationDate: {
+      min: denial,
+      max: v.todayStr,
+      hint: reviewDue
+        ? `Due by ${formatDateForDisplay(reviewDue)}. Ask for reconsideration or BALCA review, not both`
+        : "Enter the denial date first",
+    },
+    eta9089ReconsiderationDeniedDate: {
+      min: v.eta9089ReconsiderationDate,
+      max: v.todayStr,
+      hint: v.eta9089ReconsiderationDate
+        ? "The date on DOL's notice upholding the denial. BALCA review is due 30 days after"
+        : "Enter the reconsideration request first",
+    },
+    eta9089BalcaRequestDate: {
+      min: upheld || denial,
+      max: v.todayStr,
+      hint: balcaDue
+        ? `Due by ${formatDateForDisplay(balcaDue)}`
+        : "Enter the denial date first",
     },
   };
 }

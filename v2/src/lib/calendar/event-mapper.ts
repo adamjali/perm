@@ -186,6 +186,8 @@ const CENTRAL_TO_CALENDAR: Record<ExtractedDeadline["type"], { type: DeadlineTyp
   i140_filing_deadline: { type: "eta9089Expires", stage: "eta9089" },
   rfi_due: { type: "rfiDue", stage: "rfi" },
   rfe_due: { type: "rfeDue", stage: "rfe" },
+  denial_review_due: { type: "denialReviewDue", stage: "eta9089" },
+  balca_request_due: { type: "balcaRequestDue", stage: "eta9089" },
 };
 
 function deadlineToCalendarEvent(

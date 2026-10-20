@@ -18,6 +18,7 @@ import type { CaseStatus, ProgressStatus } from './statusTypes';
 import { isRecruitmentComplete } from './recruitment/isRecruitmentComplete';
 import { FILING_WINDOW_WAIT_DAYS } from './constants';
 import { getLastRecruitmentDate } from './dates/filingWindow';
+import { denialReviewStep } from './calculators/denialReview';
 import { parseISO, addDays, isAfter } from 'date-fns';
 
 // ============================================================================
@@ -41,6 +42,11 @@ export interface StatusCalculationInput {
   // ETA 9089 dates
   eta9089CertificationDate?: string | null;
   eta9089FilingDate?: string | null;
+  // ETA 9089 denial and what was asked after it (calculators/denialReview.ts)
+  eta9089DenialDate?: string | null;
+  eta9089ReconsiderationDate?: string | null;
+  eta9089ReconsiderationDeniedDate?: string | null;
+  eta9089BalcaRequestDate?: string | null;
 
   // PWD dates
   pwdDeterminationDate?: string | null;
@@ -129,7 +135,7 @@ function isEta9089WindowOpen(input: StatusCalculationInput): boolean {
  * Priority order:
  * 1. Active RFI/RFE (overrides stage-based status)
  * 2. I-140 stage (approved > denied > filed)
- * 3. ETA 9089 stage (certified > filed)
+ * 3. ETA 9089 stage (certified > denied > filed)
  * 4. Recruitment stage (complete + window open > complete > in progress)
  * 5. PWD stage (filed > working)
  *
@@ -174,6 +180,17 @@ export function calculateAutoStatus(input: StatusCalculationInput): AutoStatusRe
   // -------------------------------------------------------------------------
   if (input.eta9089CertificationDate) {
     return { caseStatus: 'i140', progressStatus: 'working' };
+  }
+  // Denied: the case stays in the ETA 9089 stage while reconsideration or BALCA
+  // review can still be asked for or is pending. A denial that's final is closed
+  // by the user (or the stage set by hand), never here: the dates can't tell a
+  // missed deadline from a request not yet recorded.
+  const denial = denialReviewStep(input);
+  if (denial === 'reconsidering' || denial === 'at-balca') {
+    return { caseStatus: 'eta9089', progressStatus: 'under_review' };
+  }
+  if (denial) {
+    return { caseStatus: 'eta9089', progressStatus: 'working' };
   }
   if (input.eta9089FilingDate) {
     return { caseStatus: 'eta9089', progressStatus: 'filed' };

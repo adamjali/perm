@@ -46,7 +46,9 @@ export type MappableCalendarDeadlineType =
   | "jobOrderStartDeadline"
   | "noticeOfFilingStartDeadline"
   | "firstSundayAdDeadline"
-  | "secondSundayAdDeadline";
+  | "secondSundayAdDeadline"
+  | "denialReviewDue"
+  | "balcaRequestDue";
 
 /**
  * Mapping from dashboard (snake_case) to calendar (camelCase) deadline types.
@@ -67,6 +69,8 @@ export const DASHBOARD_TO_CALENDAR_MAP: Partial<
   notice_of_filing_start_deadline: "noticeOfFilingStartDeadline",
   first_sunday_ad_deadline: "firstSundayAdDeadline",
   second_sunday_ad_deadline: "secondSundayAdDeadline",
+  denial_review_due: "denialReviewDue",
+  balca_request_due: "balcaRequestDue",
 } as const;
 
 /**
@@ -88,6 +92,8 @@ export const CALENDAR_TO_DASHBOARD_MAP: Record<
   noticeOfFilingStartDeadline: "notice_of_filing_start_deadline",
   firstSundayAdDeadline: "first_sunday_ad_deadline",
   secondSundayAdDeadline: "second_sunday_ad_deadline",
+  denialReviewDue: "denial_review_due",
+  balcaRequestDue: "balca_request_due",
 } as const;
 
 /**

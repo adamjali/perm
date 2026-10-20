@@ -41,6 +41,7 @@ Use this table to understand user questions about case state:
 | **eta9089 / working** | **Filing window is OPEN, case is ready to file ETA 9089** |
 | eta9089 / filed | ETA 9089 has been submitted to DOL, awaiting certification |
 | eta9089 / rfi_rfe | DOL issued an RFI on the ETA 9089 application |
+| eta9089 / under_review | ETA 9089 denied, and reconsideration or BALCA review has been requested |
 | i140 / working | ETA 9089 certified, preparing I-140 petition |
 | i140 / filed | I-140 submitted to USCIS |
 | i140 / approved | I-140 approved by USCIS |
@@ -59,6 +60,7 @@ Status fields are derived from dates. When you need to verify a case's true stat
 - **Ready to file ETA 9089?** → Recruitment complete + \`eta9089FilingDate\` is empty + 30+ days since last recruitment activity
 - **ETA 9089 filed?** → \`eta9089FilingDate\` exists
 - **ETA 9089 certified?** → \`eta9089CertificationDate\` exists
+- **ETA 9089 denied?** → \`eta9089DenialDate\` exists and \`eta9089CertificationDate\` doesn't (a certification after a denial means it was reversed)
 - **I-140 filed?** → \`i140FilingDate\` exists
 - **I-140 approved?** → \`i140ApprovalDate\` exists
 
@@ -74,6 +76,7 @@ Status fields are derived from dates. When you need to verify a case's true stat
 - **ETA 9089 filing window**: opens 30 days after the LAST recruitment activity ends; closes 180 days after the FIRST recruitment activity starts, or at PWD expiration if that's earlier and the PWD still limits the case
 - **I-140 deadline**: on or before the ETA 9089 expiration date (certification + 179 days, the date DOL prints; 180 calendar days counting the certification day)
 - **RFI response**: 30 calendar days from receipt
+- **ETA 9089 denied** (20 CFR 656.24(g), 656.26; DOL's PERM FAQ Round 14): within 30 calendar days of the date on the Final Determination letter, request ONE of reconsideration by the Certifying Officer or review by BALCA, in FLAG (a request asking for both is treated as reconsideration). If reconsideration upholds the denial, BALCA review must be requested within 30 calendar days of that notice; nothing is forwarded on its own. With no request in time the denial is final and a new application may be filed. Record the dates in \`eta9089DenialDate\`, \`eta9089ReconsiderationDate\`, \`eta9089ReconsiderationDeniedDate\` and \`eta9089BalcaRequestDate\`
 - **Sunday ads**: on Sundays, at least a week apart
 - **Notice of filing**: at least 10 business days
 - **Job order**: at least 30 days

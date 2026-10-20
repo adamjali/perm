@@ -62,6 +62,10 @@ export function toImportCaseArgs(c: Record<string, unknown>): ImportCaseArgs {
     eta9089AuditDate: pick("eta9089AuditDate"),
     eta9089CertificationDate: dates?.etaCertified || pick("eta9089CertificationDate"),
     eta9089ExpirationDate: dates?.etaExpires || pick("eta9089ExpirationDate"),
+    eta9089DenialDate: pick("eta9089DenialDate"),
+    eta9089ReconsiderationDate: pick("eta9089ReconsiderationDate"),
+    eta9089ReconsiderationDeniedDate: pick("eta9089ReconsiderationDeniedDate"),
+    eta9089BalcaRequestDate: pick("eta9089BalcaRequestDate"),
     eta9089CaseNumber: pick("eta9089CaseNumber"),
     // I-140
     i140FilingDate: dates?.i140Filed || pick("i140FilingDate"),

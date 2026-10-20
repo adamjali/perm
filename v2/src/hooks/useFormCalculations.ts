@@ -18,7 +18,9 @@ const FIELD_DEPENDENCIES: Partial<Record<keyof CaseFormData, (keyof CaseFormData
   // Clear-only: clearing parent clears user-entered child (prevents soft-lock on disabled fields)
   pwdFilingDate: ["pwdDeterminationDate"],
   sundayAdFirstDate: ["sundayAdSecondDate"],
-  eta9089FilingDate: ["eta9089AuditDate", "eta9089CertificationDate"],
+  eta9089FilingDate: ["eta9089AuditDate", "eta9089CertificationDate", "eta9089DenialDate"],
+  eta9089DenialDate: ["eta9089ReconsiderationDate", "eta9089BalcaRequestDate"],
+  eta9089ReconsiderationDate: ["eta9089ReconsiderationDeniedDate"],
   i140FilingDate: ["i140ReceiptDate", "i140ApprovalDate", "i140DenialDate"],
   // Auto-calculated: changing parent recalculates child
   pwdDeterminationDate: ["pwdExpirationDate"],
@@ -54,6 +56,10 @@ export function calculateAutoStatus(formData: Partial<CaseFormData>): AutoStatus
     // ETA 9089 dates
     eta9089CertificationDate: formData.eta9089CertificationDate,
     eta9089FilingDate: formData.eta9089FilingDate,
+    eta9089DenialDate: formData.eta9089DenialDate,
+    eta9089ReconsiderationDate: formData.eta9089ReconsiderationDate,
+    eta9089ReconsiderationDeniedDate: formData.eta9089ReconsiderationDeniedDate,
+    eta9089BalcaRequestDate: formData.eta9089BalcaRequestDate,
     // PWD dates
     pwdDeterminationDate: formData.pwdDeterminationDate,
     pwdFilingDate: formData.pwdFilingDate,

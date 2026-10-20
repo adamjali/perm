@@ -35,7 +35,9 @@ export type CalendarEventType =
   | "second_sunday_ad_deadline"
   | "i140_deadline"
   | "rfi_due"
-  | "rfe_due";
+  | "rfe_due"
+  | "denial_review_due"
+  | "balca_request_due";
 
 /**
  * Human-readable labels for each calendar event type.
@@ -53,6 +55,8 @@ export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
   i140_deadline: "I-140 filing deadline",
   rfi_due: "RFI response due",
   rfe_due: "RFE response due",
+  denial_review_due: "Reconsideration or BALCA request due",
+  balca_request_due: "BALCA request due",
 };
 
 // ============================================================================
@@ -90,6 +94,8 @@ export const EVENT_TYPE_TO_PREF: Record<CalendarEventType, CalendarSyncPreferenc
   i140_deadline: "calendarSyncI140",
   rfi_due: "calendarSyncRfi",
   rfe_due: "calendarSyncRfe",
+  denial_review_due: "calendarSyncEta9089",
+  balca_request_due: "calendarSyncEta9089",
 };
 
 /**
@@ -110,6 +116,8 @@ export const EVENT_TYPE_TO_SLOT: Record<CalendarEventType, CalendarEventSlot> = 
   i140_deadline: "i140_filing_deadline",
   rfi_due: "rfi_due",
   rfe_due: "rfe_due",
+  denial_review_due: "denial_review_due",
+  balca_request_due: "balca_request_due",
 };
 
 /**
@@ -139,6 +147,8 @@ export const CALENDAR_EVENT_SLOTS = [
   "notice_of_filing_start_deadline",
   "first_sunday_ad_deadline",
   "second_sunday_ad_deadline",
+  "denial_review_due",
+  "balca_request_due",
 ] as const;
 export type CalendarEventSlot = (typeof CALENDAR_EVENT_SLOTS)[number];
 

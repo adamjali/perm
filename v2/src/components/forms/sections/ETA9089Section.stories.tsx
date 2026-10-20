@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { ETA9089Section } from './ETA9089Section';
+import { CaseFormProvider } from '../CaseFormContext';
 import { addDays } from 'date-fns';
 
 /**
@@ -35,6 +36,15 @@ ETA 9089 form section with filing window indicator.
     },
   },
   tags: ['autodocs'],
+  // The RFI list reads the case form's field arrays, so every story needs the
+  // form around it (the section's own test wraps it the same way).
+  decorators: [
+    (Story, { args }) => (
+      <CaseFormProvider mode="edit" initialData={args.values ?? {}}>
+        <Story />
+      </CaseFormProvider>
+    ),
+  ],
   argTypes: {
     onChange: { action: 'onChange' },
     onDateChange: { action: 'onDateChange' },
@@ -140,6 +150,40 @@ export const WithCertification: Story = {
       eta9089CaseNumber: 'A-12345-67890',
     },
     autoCalculatedFields: new Set(['eta9089ExpirationDate']),
+  },
+};
+
+/**
+ * DOL denied the application 10 days ago: reconsideration or BALCA review is
+ * due 30 days after the date on the letter.
+ */
+export const Denied: Story = {
+  args: {
+    values: {
+      sundayAdSecondDate: toISODate(addDays(new Date(), -200)),
+      jobOrderEndDate: toISODate(addDays(new Date(), -200)),
+      pwdExpirationDate: toISODate(addDays(new Date(), 120)),
+      eta9089FilingDate: toISODate(addDays(new Date(), -160)),
+      eta9089DenialDate: toISODate(addDays(new Date(), -10)),
+      eta9089CaseNumber: 'G-100-25300-123456',
+    },
+  },
+};
+
+/**
+ * Reconsideration upheld the denial: BALCA review is due 30 days after that notice.
+ */
+export const ReconsiderationUpheld: Story = {
+  args: {
+    values: {
+      sundayAdSecondDate: toISODate(addDays(new Date(), -260)),
+      jobOrderEndDate: toISODate(addDays(new Date(), -260)),
+      pwdExpirationDate: toISODate(addDays(new Date(), 60)),
+      eta9089FilingDate: toISODate(addDays(new Date(), -220)),
+      eta9089DenialDate: toISODate(addDays(new Date(), -90)),
+      eta9089ReconsiderationDate: toISODate(addDays(new Date(), -75)),
+      eta9089ReconsiderationDeniedDate: toISODate(addDays(new Date(), -5)),
+    },
   },
 };
 

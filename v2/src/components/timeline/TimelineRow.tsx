@@ -75,6 +75,10 @@ interface TimelineCaseData {
   eta9089AuditDate?: string;
   eta9089CertificationDate?: string;
   eta9089ExpirationDate?: string;
+  eta9089DenialDate?: string;
+  eta9089ReconsiderationDate?: string;
+  eta9089ReconsiderationDeniedDate?: string;
+  eta9089BalcaRequestDate?: string;
   // I-140 dates
   i140FilingDate?: string;
   i140ReceiptDate?: string;

@@ -165,6 +165,11 @@ export interface CaseData {
   eta9089_filing_date: string | null;
   eta9089_certification_date: string | null;
   eta9089_expiration_date: string | null;
+  // The denial path (calculators/denialReview.ts); optional so older builders keep compiling
+  eta9089_denial_date?: string | null;
+  eta9089_reconsideration_date?: string | null;
+  eta9089_reconsideration_denied_date?: string | null;
+  eta9089_balca_request_date?: string | null;
 
   // I-140 dates
   i140_filing_date: string | null;

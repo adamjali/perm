@@ -22,6 +22,10 @@ export type CaseDeadlineDates = Pick<
   | "eta9089AuditDate"
   | "eta9089CertificationDate"
   | "eta9089ExpirationDate"
+  | "eta9089DenialDate"
+  | "eta9089ReconsiderationDate"
+  | "eta9089ReconsiderationDeniedDate"
+  | "eta9089BalcaRequestDate"
   | "i140FilingDate"
   | "i140ReceiptDate"
   | "i140ApprovalDate"
@@ -48,6 +52,10 @@ export function caseDeadlineDates(caseDoc: Doc<"cases">): CaseDeadlineDates {
     eta9089AuditDate: caseDoc.eta9089AuditDate,
     eta9089CertificationDate: caseDoc.eta9089CertificationDate,
     eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
+    eta9089DenialDate: caseDoc.eta9089DenialDate,
+    eta9089ReconsiderationDate: caseDoc.eta9089ReconsiderationDate,
+    eta9089ReconsiderationDeniedDate: caseDoc.eta9089ReconsiderationDeniedDate,
+    eta9089BalcaRequestDate: caseDoc.eta9089BalcaRequestDate,
     // I-140 dates
     i140FilingDate: caseDoc.i140FilingDate,
     i140ReceiptDate: caseDoc.i140ReceiptDate,

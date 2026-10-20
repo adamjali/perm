@@ -31,7 +31,9 @@ export type DeadlineType =
   | "second_sunday_ad_deadline"
   | "i140_filing_deadline"
   | "rfi_due"
-  | "rfe_due";
+  | "rfe_due"
+  | "denial_review_due"
+  | "balca_request_due";
 
 /**
  * All deadline types as a constant array.
@@ -49,6 +51,8 @@ export const ALL_DEADLINE_TYPES: readonly DeadlineType[] = [
   "i140_filing_deadline",
   "rfi_due",
   "rfe_due",
+  "denial_review_due",
+  "balca_request_due",
 ] as const;
 
 /**
@@ -66,6 +70,8 @@ export const DEADLINE_LABELS: Record<DeadlineType, string> = {
   i140_filing_deadline: "I-140 filing deadline",
   rfi_due: "RFI response due",
   rfe_due: "RFE response due",
+  denial_review_due: "Reconsideration or BALCA request due",
+  balca_request_due: "BALCA request due",
 };
 
 // ============================================================================
@@ -113,6 +119,12 @@ export interface CaseDataForDeadlines {
   eta9089FilingDate?: string;
   eta9089CertificationDate?: string;
   eta9089ExpirationDate?: string;
+
+  // ETA 9089 denial path (calculators/denialReview.ts)
+  eta9089DenialDate?: string;
+  eta9089ReconsiderationDate?: string;
+  eta9089ReconsiderationDeniedDate?: string;
+  eta9089BalcaRequestDate?: string;
 
   // I-140 dates (for supersession checks)
   i140FilingDate?: string;
@@ -209,6 +221,11 @@ export const SUPERSESSION_REASONS = {
   NO_FIRST_RECRUITMENT: "No recruitment activity started yet",
   RECRUITMENT_BEGAN_IN_VALIDITY: "Recruitment began while the wage determination was valid",
   RECRUITMENT_COMPLETE: "All recruitment activities completed",
+  NOT_DENIED: "ETA 9089 has not been denied",
+  ETA9089_CERTIFIED: "ETA 9089 has been certified",
+  REVIEW_REQUESTED: "Reconsideration or BALCA review has been requested",
+  RECONSIDERATION_PENDING: "Reconsideration has not been decided",
+  BALCA_REQUESTED: "BALCA review has been requested",
 } as const;
 
 export type SupersessionReason =

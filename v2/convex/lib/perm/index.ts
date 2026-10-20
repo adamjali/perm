@@ -78,6 +78,8 @@ export {
   RFI_DUE_DAYS,
   RFI_WARNING_DAYS,
   RFE_WARNING_DAYS,
+  // ETA 9089 denial: reconsideration or BALCA review
+  DENIAL_REVIEW_DAYS,
   // Recruitment deadline buffer constants
   JOB_ORDER_START_DEADLINE_DAYS,
   JOB_ORDER_START_PWD_BUFFER_DAYS,
@@ -240,6 +242,13 @@ export {
   type PaceEstimateInput,
   type MeasuredRangeRow,
   type EstimateModelId,
+  // ETA 9089 denial: reconsideration or BALCA review
+  denialReviewStep,
+  denialReviewDeadline,
+  calculateDenialReviewDeadline,
+  calculateBalcaRequestDeadline,
+  type DenialReviewInput,
+  type DenialReviewStep,
 } from './calculators';
 
 // ============================================================================

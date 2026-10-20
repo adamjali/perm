@@ -1000,6 +1000,10 @@ export const CLEARABLE_CASE_FIELDS = [
   'eta9089AuditDate',
   'eta9089CertificationDate',
   'eta9089ExpirationDate',
+  'eta9089DenialDate',
+  'eta9089ReconsiderationDate',
+  'eta9089ReconsiderationDeniedDate',
+  'eta9089BalcaRequestDate',
   'i140FilingDate',
   'i140ReceiptDate',
   'i140ApprovalDate',
@@ -1088,6 +1092,10 @@ export const UpdateCaseInputSchema = z.object({
   eta9089AuditDate: ISODateString.optional(),
   eta9089CertificationDate: ISODateString.optional().describe('Sets the ETA 9089 expiration too (certification + 179 days)'),
   eta9089ExpirationDate: ISODateString.optional(),
+  eta9089DenialDate: ISODateString.optional().describe("The date on DOL's Final Determination letter denying certification"),
+  eta9089ReconsiderationDate: ISODateString.optional().describe('When the employer asked the Certifying Officer to reconsider the denial'),
+  eta9089ReconsiderationDeniedDate: ISODateString.optional().describe("The date on DOL's notice upholding the denial on reconsideration"),
+  eta9089BalcaRequestDate: ISODateString.optional().describe('When the employer asked BALCA to review the denial'),
 
   // I-140
   i140FilingDate: ISODateString.optional(),

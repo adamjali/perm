@@ -7,6 +7,12 @@ import { useInactivityTimeout, formatTimeRemaining } from "../useInactivityTimeo
 // ============================================================================
 
 describe("useInactivityTimeout", () => {
+  // The unit project shares one window across files (isolate: false), so the
+  // stub storage below must be taken off again: left in place it stored
+  // nothing for every file after this one (the deadline calculator's
+  // carried-dates test read null on Oct 19 2026).
+  const realStorage = Object.getOwnPropertyDescriptor(window, "localStorage");
+
   beforeEach(() => {
     vi.useFakeTimers();
     // Mock localStorage
@@ -18,7 +24,7 @@ describe("useInactivityTimeout", () => {
       length: 0,
       key: vi.fn(),
     };
-    Object.defineProperty(window, "localStorage", { value: localStorageMock });
+    Object.defineProperty(window, "localStorage", { value: localStorageMock, configurable: true });
 
     // Mock BroadcastChannel
     vi.stubGlobal("BroadcastChannel", class {
@@ -31,6 +37,7 @@ describe("useInactivityTimeout", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    if (realStorage) Object.defineProperty(window, "localStorage", realStorage);
   });
 
   // --------------------------------------------------------------------------

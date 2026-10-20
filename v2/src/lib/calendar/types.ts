@@ -104,7 +104,10 @@ export type DeadlineType =
   | "secondSundayAdDeadline"
   // RFI/RFE deadlines
   | "rfiDue"
-  | "rfeDue";
+  | "rfeDue"
+  // ETA 9089 denial: reconsideration or BALCA review
+  | "denialReviewDue"
+  | "balcaRequestDue";
 
 /**
  * Mapping from milestone field names to DeadlineType.
@@ -161,6 +164,8 @@ export const DEADLINE_TYPE_LABELS: Record<DeadlineType, string> = {
   secondSundayAdDeadline: "2nd ad due",
   rfiDue: "RFI due",
   rfeDue: "RFE due",
+  denialReviewDue: "Denial review due",
+  balcaRequestDue: "BALCA request due",
 } as const;
 
 /**

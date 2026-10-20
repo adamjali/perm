@@ -61,7 +61,9 @@ export type DeadlineNotificationType =
   | "job_order_start_deadline"
   | "notice_of_filing_start_deadline"
   | "first_sunday_ad_deadline"
-  | "second_sunday_ad_deadline";
+  | "second_sunday_ad_deadline"
+  | "denial_review_due"
+  | "balca_request_due";
 
 /**
  * Context for generating notification titles and messages.
@@ -474,6 +476,8 @@ const DEADLINE_PHRASES: Record<DeadlineNotificationType, { noun: string; verb: k
   second_sunday_ad_deadline: { noun: "Second Sunday ad", verb: "due" },
   rfi_due: { noun: "RFI response", verb: "due" },
   rfe_due: { noun: "RFE response", verb: "due" },
+  denial_review_due: { noun: "Reconsideration or BALCA request", verb: "due" },
+  balca_request_due: { noun: "BALCA request", verb: "due" },
 };
 
 /** Each verb in a title ("due", "expires"), a sentence ("is due") and the past. */

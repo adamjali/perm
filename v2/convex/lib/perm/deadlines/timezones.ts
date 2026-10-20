@@ -63,6 +63,8 @@ export const DEADLINE_TIMEZONE_RULES = {
   i140_filing_deadline: "local", // I-140 filed with USCIS
   rfi_due: "dol", // Response submitted to DOL
   rfe_due: "local", // Response submitted to USCIS
+  denial_review_due: "dol", // Requested in DOL FLAG
+  balca_request_due: "dol", // Requested in DOL FLAG ("Continue to BALCA")
 } as const satisfies Record<DeadlineType, TimezoneRule>;
 
 /**

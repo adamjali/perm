@@ -31,6 +31,8 @@ export const NULLABLE_FIELDS = new Set([
   // ETA-9089 stage
   'eta9089FilingDate', 'eta9089AuditDate', 'eta9089CertificationDate',
   'eta9089ExpirationDate', 'eta9089CaseNumber',
+  'eta9089DenialDate', 'eta9089ReconsiderationDate',
+  'eta9089ReconsiderationDeniedDate', 'eta9089BalcaRequestDate',
   // I-140 stage
   'i140FilingDate', 'i140ReceiptDate', 'i140ReceiptNumber',
   'i140ApprovalDate', 'i140DenialDate', 'i140Category', 'i140ServiceCenter',

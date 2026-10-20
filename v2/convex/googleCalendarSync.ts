@@ -185,6 +185,8 @@ export const updateCaseCalendarEventIds = internalMutation({
       notice_of_filing_start_deadline: v.optional(v.string()),
       first_sunday_ad_deadline: v.optional(v.string()),
       second_sunday_ad_deadline: v.optional(v.string()),
+      denial_review_due: v.optional(v.string()),
+      balca_request_due: v.optional(v.string()),
     }),
   },
   handler: async (ctx, args): Promise<void> => {

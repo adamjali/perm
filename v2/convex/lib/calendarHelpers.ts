@@ -261,6 +261,8 @@ export const ALL_CALENDAR_EVENT_TYPES: CalendarEventType[] = [
   "i140_deadline",
   "rfi_due",
   "rfe_due",
+  "denial_review_due",
+  "balca_request_due",
 ];
 
 /**

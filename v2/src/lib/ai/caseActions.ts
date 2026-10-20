@@ -152,6 +152,10 @@ export const FIELD_LABELS: Record<string, string> = {
   eta9089AuditDate: 'ETA 9089 audit date',
   eta9089CertificationDate: 'ETA 9089 certification date',
   eta9089ExpirationDate: 'ETA 9089 expiration date',
+  eta9089DenialDate: 'ETA 9089 denial date',
+  eta9089ReconsiderationDate: 'Reconsideration requested',
+  eta9089ReconsiderationDeniedDate: 'Reconsideration denied',
+  eta9089BalcaRequestDate: 'BALCA review requested',
   i140FilingDate: 'I-140 filing date',
   i140ReceiptDate: 'I-140 receipt date',
   i140ApprovalDate: 'I-140 approval date',
@@ -279,6 +283,7 @@ export function dateNeededFor(caseStatus: string, progressStatus?: string): stri
     case 'eta9089':
       if (progressStatus === 'filed') return 'the ETA 9089 filing date';
       if (progressStatus === 'rfi_rfe') return 'the date the RFI was received';
+      if (progressStatus === 'under_review') return 'the ETA 9089 denial date and the date reconsideration or BALCA review was requested';
       return 'the recruitment dates (recruitment done and the 30-day wait over)';
     case 'i140':
       if (progressStatus === 'filed') return 'the I-140 filing date';
@@ -331,6 +336,10 @@ const SCALAR_UPDATE_FIELDS = [
   'eta9089AuditDate',
   'eta9089CertificationDate',
   'eta9089ExpirationDate',
+  'eta9089DenialDate',
+  'eta9089ReconsiderationDate',
+  'eta9089ReconsiderationDeniedDate',
+  'eta9089BalcaRequestDate',
   'i140FilingDate',
   'i140ReceiptDate',
   'i140ApprovalDate',

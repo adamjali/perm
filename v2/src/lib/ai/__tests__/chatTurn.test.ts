@@ -17,6 +17,7 @@ import {
   FILING_WINDOW_WAIT_DAYS,
   ETA9089_EXPIRATION_DAYS,
   RFI_DUE_DAYS,
+  DENIAL_REVIEW_DAYS,
 } from '@/lib/perm';
 
 describe('stepShowedCard', () => {
@@ -58,6 +59,8 @@ describe("the system prompt's PERM rules match the app's own", () => {
     [`closes ${FILING_WINDOW_CLOSE_DAYS} days after the FIRST recruitment`],
     [`certification + ${ETA9089_EXPIRATION_DAYS} days`],
     [`${RFI_DUE_DAYS} calendar days from receipt`],
+    [`within ${DENIAL_REVIEW_DAYS} calendar days of the date on the Final Determination letter`],
+    [`within ${DENIAL_REVIEW_DAYS} calendar days of that notice`],
     ['Jan 1 to Apr 1, June 30 of the same year'],
   ])('states %s', (phrase) => {
     expect(text).toContain(phrase);

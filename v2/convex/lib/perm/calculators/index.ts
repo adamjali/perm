@@ -25,6 +25,14 @@ export {
 export { calculateI140FilingDeadline } from './i140';
 export { calculateRFIDueDate } from './rfi';
 export {
+  denialReviewStep,
+  denialReviewDeadline,
+  calculateDenialReviewDeadline,
+  calculateBalcaRequestDeadline,
+  type DenialReviewInput,
+  type DenialReviewStep,
+} from './denialReview';
+export {
   calculateH1bMaxOut,
   H1B_MAX_YEARS,
   PERM_ADVANCE_DAYS,

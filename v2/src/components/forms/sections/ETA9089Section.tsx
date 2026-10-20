@@ -12,7 +12,14 @@ import { useETA9089Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import { isRecruitmentComplete } from "@/lib/forms/date-constraints";
-import { getFirstRecruitmentDate, getLastRecruitmentDate, calculateFilingWindow, pwdFilingLimitFromCase } from "@/lib/perm";
+import {
+  getFirstRecruitmentDate,
+  getLastRecruitmentDate,
+  calculateFilingWindow,
+  pwdFilingLimitFromCase,
+  denialReviewDeadline,
+  denialReviewStep,
+} from "@/lib/perm";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import { CharLimit } from "@/components/ui/char-limit";
 
@@ -76,6 +83,45 @@ export interface ETA9089SectionProps {
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+/** "in 12 days", "today", "3 days ago". */
+function whenFromToday(isoDate: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = differenceInDays(new Date(isoDate + "T00:00:00"), today);
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  if (days > 1) return `in ${days} days`;
+  return days === -1 ? "yesterday" : `${-days} days ago`;
+}
+
+/**
+ * The one line under the denial fields that says what's due or what's
+ * pending, from the central denial rules (perm/calculators/denialReview.ts).
+ */
+function denialStatusLine(values: Partial<CaseFormData>): { text: string; late: boolean } | null {
+  const step = denialReviewStep(values);
+  if (!step) return null;
+  const due = denialReviewDeadline(values);
+  if (due) {
+    const what = due.kind === "review" ? "Reconsideration or BALCA review" : "BALCA review";
+    const late = differenceInDays(new Date(due.date + "T00:00:00"), new Date(new Date().toDateString())) < 0;
+    const date = format(new Date(due.date + "T00:00:00"), "MMMM d, yyyy");
+    return {
+      text: late
+        ? `${what} was due ${date}, ${whenFromToday(due.date)}. With no request in time the denial is final, and a new application may be filed.`
+        : `${what} is due ${date}, ${whenFromToday(due.date)}. Request it in FLAG${due.kind === "review" ? ": one or the other, not both" : ""}.`,
+      late,
+    };
+  }
+  if (step === "reconsidering") {
+    return {
+      text: "Waiting on the Certifying Officer. If reconsideration upholds the denial, BALCA review is due 30 days from that notice.",
+      late: false,
+    };
+  }
+  return { text: "Waiting on BALCA's decision.", late: false };
+}
 
 /**
  * Build filing window data for the FilingWindowIndicator component.
@@ -244,6 +290,8 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   // Check if recruitment is complete before showing window
   const recruitmentComplete = isRecruitmentComplete(values);
 
+  const denialLine = denialStatusLine(values);
+
   const windowData = buildFilingWindowData(
     lastRecruitDate,
     firstRecruitDate,
@@ -376,6 +424,75 @@ export function ETA9089Section(props: ETA9089SectionProps) {
           </div>
         )}
 
+        {/* ========== DENIAL SUBSECTION ========== */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-sm font-semibold text-muted-foreground">Denial, reconsideration and BALCA review</h3>
+          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+            <DenialDateField
+              field="eta9089DenialDate"
+              label="Denial date (optional)"
+              fallbackHint="The date on DOL's Final Determination letter, if it denied the case"
+              values={values}
+              errors={errors}
+              dateConstraints={dateConstraints}
+              validationStates={validationStates}
+              fieldDisabledStates={fieldDisabledStates}
+              onChange={handleDateChange}
+              onBlur={handleDateBlur}
+            />
+            {values.eta9089DenialDate ? (
+              <>
+                <DenialDateField
+                  field="eta9089ReconsiderationDate"
+                  label="Reconsideration requested"
+                  values={values}
+                  errors={errors}
+                  dateConstraints={dateConstraints}
+                  validationStates={validationStates}
+                  fieldDisabledStates={fieldDisabledStates}
+                  onChange={handleDateChange}
+                  onBlur={handleDateBlur}
+                />
+                <DenialDateField
+                  field="eta9089ReconsiderationDeniedDate"
+                  label="Reconsideration denied"
+                  values={values}
+                  errors={errors}
+                  dateConstraints={dateConstraints}
+                  validationStates={validationStates}
+                  fieldDisabledStates={fieldDisabledStates}
+                  onChange={handleDateChange}
+                  onBlur={handleDateBlur}
+                />
+                <DenialDateField
+                  field="eta9089BalcaRequestDate"
+                  label="BALCA review requested"
+                  values={values}
+                  errors={errors}
+                  dateConstraints={dateConstraints}
+                  validationStates={validationStates}
+                  fieldDisabledStates={fieldDisabledStates}
+                  onChange={handleDateChange}
+                  onBlur={handleDateBlur}
+                />
+              </>
+            ) : null}
+          </div>
+          {denialLine ? (
+            <div
+              role="status"
+              className={
+                denialLine.late
+                  ? "flex items-start gap-2 border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink"
+                  : "border-2 border-input bg-tint p-3 text-sm"
+              }
+            >
+              {denialLine.late ? <WarningIcon aria-hidden className="mt-0.5 size-4 shrink-0" weight="bold" /> : null}
+              <p>{denialLine.text}</p>
+            </div>
+          ) : null}
+        </div>
+
         {/* ========== RFI SUBSECTION ========== */}
         <div className="space-y-3 pt-2">
           <h3 className="text-sm font-semibold text-muted-foreground">
@@ -394,5 +511,68 @@ export function ETA9089Section(props: ETA9089SectionProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+// ============================================================================
+// DENIAL FIELDS
+// ============================================================================
+
+type DenialField =
+  | "eta9089DenialDate"
+  | "eta9089ReconsiderationDate"
+  | "eta9089ReconsiderationDeniedDate"
+  | "eta9089BalcaRequestDate";
+
+interface DenialDateFieldProps {
+  field: DenialField;
+  label: string;
+  fallbackHint?: string;
+  values: Partial<CaseFormData>;
+  errors?: Record<string, string>;
+  dateConstraints?: Record<string, DateConstraint>;
+  validationStates?: Record<string, ValidationState>;
+  fieldDisabledStates?: Record<string, { disabled: boolean; reason?: string }>;
+  onChange: (field: keyof CaseFormData) => (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur: (field: string) => (event: React.FocusEvent<HTMLInputElement>) => void;
+}
+
+/** One date on the denial path, with its rule's hint (date-constraints.ts). */
+function DenialDateField({
+  field,
+  label,
+  fallbackHint,
+  values,
+  errors,
+  dateConstraints,
+  validationStates,
+  fieldDisabledStates,
+  onChange,
+  onBlur,
+}: DenialDateFieldProps) {
+  const constraint = dateConstraints?.[field];
+  const disabled = fieldDisabledStates?.[field];
+  const hint = disabled?.disabled ? disabled.reason : constraint?.hint || fallbackHint;
+  return (
+    <FormField
+      label={label}
+      name={field}
+      error={errors?.[field]}
+      hint={hint}
+      validationState={validationStates?.[field]}
+    >
+      <DateInput
+        id={field}
+        name={field}
+        value={values[field] || ""}
+        onChange={onChange(field)}
+        onBlur={onBlur(field)}
+        minDate={constraint?.min}
+        maxDate={constraint?.max}
+        error={!!errors?.[field]}
+        validationState={validationStates?.[field]}
+        disabled={disabled?.disabled}
+      />
+    </FormField>
   );
 }

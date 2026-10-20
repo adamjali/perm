@@ -382,6 +382,8 @@ describe("getEventTypeLabel", () => {
     i140_deadline: "I-140 filing deadline",
     rfi_due: "RFI response due",
     rfe_due: "RFE response due",
+    denial_review_due: "Reconsideration or BALCA request due",
+    balca_request_due: "BALCA request due",
   };
 
   for (const [type, label] of Object.entries(expectedLabels)) {
@@ -694,7 +696,12 @@ describe("calendar event slots", () => {
     expect(slotsForPreference("calendarSyncRecruitment")).toEqual(
       expect.arrayContaining(["recruitment_end", "recruitment_window_closes", "job_order_start_deadline"]),
     );
-    expect(slotsForPreference("calendarSyncEta9089")).toEqual(["eta9089_filing", "eta9089_expiration"]);
+    expect(slotsForPreference("calendarSyncEta9089")).toEqual([
+      "eta9089_filing",
+      "denial_review_due",
+      "balca_request_due",
+      "eta9089_expiration",
+    ]);
     expect(slotsForPreference("calendarSyncFilingWindow")).toEqual(["eta9089_filing_window", "filing_window_closes"]);
   });
 });

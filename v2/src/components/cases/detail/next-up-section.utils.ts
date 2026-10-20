@@ -13,6 +13,8 @@ import {
   calculateFilingWindowFromCase,
   extractActiveDeadlines,
   buildDeadlineInput,
+  denialReviewStep,
+  denialReviewDeadline,
   type LooseDeadlineCaseData,
 } from "@/lib/perm";
 import { getUrgencyLevelExtended, type UrgencyLevelExtended } from "@/lib/status";
@@ -44,6 +46,10 @@ export interface NextUpCaseData {
   eta9089FilingDate?: string | null;
   eta9089CertificationDate?: string | null;
   eta9089ExpirationDate?: string | null;
+  eta9089DenialDate?: string | null;
+  eta9089ReconsiderationDate?: string | null;
+  eta9089ReconsiderationDeniedDate?: string | null;
+  eta9089BalcaRequestDate?: string | null;
   // I-140
   i140FilingDate?: string | null;
   i140ApprovalDate?: string | null;
@@ -74,7 +80,9 @@ export type NextActionName =
   | "Post job order" | "Post notice of filing" | "Place Sunday ads"
   | "Complete additional recruitment" | "Wait for filing window" | "File ETA 9089"
   | "Wait for certification" | "File I-140" | "Wait for I-140 decision"
-  | "Case complete" | "Respond to RFI" | "Respond to RFE";
+  | "Case complete" | "Respond to RFI" | "Respond to RFE"
+  | "Respond to denial" | "Wait for reconsideration" | "Request BALCA review"
+  | "Wait for BALCA decision";
 
 export interface NextAction {
   action: NextActionName;
@@ -346,6 +354,44 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
       urgency: "soon",
     };
   }
+
+  // A denial, until a certification reverses it (calculators/denialReview.ts)
+  const denial = denialReviewStep(caseData);
+  if (denial) {
+    const due = denialReviewDeadline(caseData);
+    const daysUntil = due ? calculateDaysUntil(due.date) : 0;
+    switch (denial) {
+      case "request-review":
+        return {
+          action: "Respond to denial",
+          description: `Reconsideration or BALCA review due ${formatDaysText(daysUntil)}`,
+          icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
+          urgency: getUrgencyLevel(daysUntil),
+        };
+      case "reconsidering":
+        return {
+          action: "Wait for reconsideration",
+          description: "Awaiting the Certifying Officer's decision",
+          icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
+          urgency: "normal",
+        };
+      case "request-balca":
+        return {
+          action: "Request BALCA review",
+          description: `Reconsideration upheld the denial. BALCA review due ${formatDaysText(daysUntil)}`,
+          icon: createElement(AlertTriangle, { className: "h-5 w-5" }),
+          urgency: getUrgencyLevel(daysUntil),
+        };
+      case "at-balca":
+        return {
+          action: "Wait for BALCA decision",
+          description: "Awaiting BALCA's decision",
+          icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
+          urgency: "normal",
+        };
+    }
+  }
+
   if (!caseData.eta9089CertificationDate) {
     return {
       action: "Wait for certification",

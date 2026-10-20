@@ -38,6 +38,10 @@ const FIELD_DEPENDENCIES: Record<string, string[]> = {
   additionalRecruitmentEndDate: ['pwdDeterminationDate', 'additionalRecruitmentStartDate'],
   eta9089AuditDate: ['eta9089FilingDate'],
   eta9089CertificationDate: ['eta9089FilingDate'],
+  eta9089DenialDate: ['eta9089FilingDate'],
+  eta9089ReconsiderationDate: ['eta9089DenialDate'],
+  eta9089ReconsiderationDeniedDate: ['eta9089ReconsiderationDate'],
+  eta9089BalcaRequestDate: ['eta9089DenialDate'],
   i140ReceiptDate: ['i140FilingDate'],
   i140ApprovalDate: ['i140FilingDate'],
   i140DenialDate: ['i140FilingDate'],
@@ -51,6 +55,8 @@ const FIELD_NAME_MAP: Record<string, string> = {
   noticeOfFilingStartDate: 'notice of filing start date',
   additionalRecruitmentStartDate: 'additional recruitment start date',
   eta9089FilingDate: 'ETA 9089 filing date',
+  eta9089DenialDate: 'denial date',
+  eta9089ReconsiderationDate: 'reconsideration request date',
   i140FilingDate: 'I-140 filing date',
   i140ReceiptDate: 'I-140 receipt date',
 };
@@ -62,6 +68,8 @@ const DATE_FIELDS = [
   'noticeOfFilingStartDate', 'noticeOfFilingEndDate',
   'additionalRecruitmentStartDate', 'additionalRecruitmentEndDate',
   'eta9089FilingDate', 'eta9089AuditDate', 'eta9089CertificationDate',
+  'eta9089DenialDate', 'eta9089ReconsiderationDate',
+  'eta9089ReconsiderationDeniedDate', 'eta9089BalcaRequestDate',
   'i140FilingDate', 'i140ReceiptDate', 'i140ApprovalDate', 'i140DenialDate',
 ] as const;
 

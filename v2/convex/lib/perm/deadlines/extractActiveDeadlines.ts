@@ -31,6 +31,7 @@ import {
 import { getFirstRecruitmentDate, pwdStepLimitFromCase, subtractBusinessDays } from "../dates";
 import { calculateStepDeadlineUnderPwd, STEP_DEADLINE_CONFIGS } from "../calculators/recruitment";
 import { NOTICE_MIN_BUSINESS_DAYS } from "../constants";
+import { calculateBalcaRequestDeadline, calculateDenialReviewDeadline } from "../calculators/denialReview";
 
 const log = loggers.deadline;
 
@@ -81,6 +82,17 @@ export function extractActiveDeadlines(
     { type: "filing_window_closes", date: caseData.filingWindowCloses },
     { type: "i140_filing_deadline", date: caseData.eta9089ExpirationDate },
     { type: "recruitment_window_closes", date: caseData.recruitmentWindowCloses },
+    // 30 calendar days to ask DOL to look again at a denial (constants.ts, DENIAL_REVIEW_DAYS)
+    {
+      type: "denial_review_due",
+      date: caseData.eta9089DenialDate ? calculateDenialReviewDeadline(caseData.eta9089DenialDate) : undefined,
+    },
+    {
+      type: "balca_request_due",
+      date: caseData.eta9089ReconsiderationDeniedDate
+        ? calculateBalcaRequestDeadline(caseData.eta9089ReconsiderationDeniedDate)
+        : undefined,
+    },
   ];
 
   for (const { type, date } of fieldDeadlines) {
@@ -286,6 +298,10 @@ export function shouldRemindForDeadline(
       return !!getActiveRfiEntry(caseData.rfiEntries ?? [])?.responseDueDate;
     case "rfe_due":
       return !!getActiveRfeEntry(caseData.rfeEntries ?? [])?.responseDueDate;
+    case "denial_review_due":
+      return !!caseData.eta9089DenialDate;
+    case "balca_request_due":
+      return !!caseData.eta9089ReconsiderationDeniedDate;
     default:
       return false;
   }

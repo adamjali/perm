@@ -200,14 +200,14 @@ describe("getTimezoneDisplayLabel", () => {
 // INTEGRATION: timezone rules + extractActiveDeadlines
 
 describe("timezone rule integration", () => {
-  it("filing_window_closes and rfi_due are the only DOL deadlines", () => {
+  it("the DOL deadlines are the filing window, the RFI and the denial requests, all made in FLAG", () => {
     const dolDeadlines = Object.entries(DEADLINE_TIMEZONE_RULES)
       .filter(([, rule]) => rule === "dol")
       .map(([type]) => type);
 
-    expect(dolDeadlines).toHaveLength(2);
-    expect(dolDeadlines).toContain("filing_window_closes");
-    expect(dolDeadlines).toContain("rfi_due");
+    expect(dolDeadlines.sort()).toEqual(
+      ["balca_request_due", "denial_review_due", "filing_window_closes", "rfi_due"],
+    );
   });
 
   it("filing_window_missed is the only DOL enforcement violation", () => {

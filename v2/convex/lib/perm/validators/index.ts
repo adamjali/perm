@@ -15,4 +15,5 @@ export { validateETA9089, type ETA9089ValidationInput } from './eta9089';
 export { validateI140, type I140ValidationInput } from './i140';
 export { validateRFI, type RFIValidationInput } from './rfi';
 export { validateRFE, type RFEValidationInput } from './rfe';
+export { validateDenialReview, type DenialReviewValidationInput } from './denialReview';
 export { validateCase, type ValidationCaseData as CaseData } from './validateCase';

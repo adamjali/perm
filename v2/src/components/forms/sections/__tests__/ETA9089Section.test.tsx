@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ETA9089Section } from '../ETA9089Section';
 import { CaseFormProvider } from '../../CaseFormContext';
 import type { CaseFormData } from '@/lib/forms/case-form-schema';
@@ -516,6 +516,42 @@ describe('ETA9089Section', () => {
       // All fields should be visible and populated
       const filingInput = screen.getByLabelText(/filing date/i) as HTMLInputElement;
       expect(filingInput.value).toBe('2024-06-15');
+    });
+  });
+
+  describe('denial, reconsideration and BALCA review', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('asks only for the denial date until there is one', () => {
+      renderETA9089Section(createFormValues({ eta9089FilingDate: '2025-11-10' }));
+      expect(screen.getByLabelText(/denial date/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/reconsideration requested/i)).toBeNull();
+      expect(screen.queryByLabelText(/BALCA review requested/i)).toBeNull();
+    });
+
+    it('says what is due, 30 days from the denial letter', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-15T12:00:00'));
+      renderETA9089Section(createFormValues({ eta9089FilingDate: '2025-11-10', eta9089DenialDate: '2026-03-02' }));
+      expect(screen.getByLabelText(/reconsideration requested/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/BALCA review requested/i)).toBeInTheDocument();
+      expect(screen.getByText(/Reconsideration or BALCA review is due April 1, 2026, in 17 days/)).toBeInTheDocument();
+    });
+
+    it('says a missed request means the denial is final', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-04-05T12:00:00'));
+      renderETA9089Section(createFormValues({ eta9089FilingDate: '2025-11-10', eta9089DenialDate: '2026-03-02' }));
+      expect(screen.getByText(/was due April 1, 2026, 4 days ago\. With no request in time the denial is final/)).toBeInTheDocument();
+    });
+
+    it('waits on the Certifying Officer once reconsideration is requested', () => {
+      renderETA9089Section(
+        createFormValues({ eta9089FilingDate: '2025-11-10', eta9089DenialDate: '2026-03-02', eta9089ReconsiderationDate: '2026-03-20' }),
+      );
+      expect(screen.getByText(/Waiting on the Certifying Officer/)).toBeInTheDocument();
     });
   });
 });

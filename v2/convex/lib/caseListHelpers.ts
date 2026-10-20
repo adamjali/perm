@@ -132,6 +132,8 @@ function getDeadlineCardLabel(deadlineType: ExtractedDeadline["type"]): string {
     notice_of_filing_start_deadline: "Notice by",
     first_sunday_ad_deadline: "1st Sunday ad by",
     second_sunday_ad_deadline: "2nd Sunday ad by",
+    denial_review_due: "Denial review by",
+    balca_request_due: "BALCA request by",
   };
   return labelMap[deadlineType] || "Deadline";
 }

@@ -141,6 +141,10 @@ export const MILESTONE_CONFIG: readonly MilestoneConfig[] = [
     label: "ETA 9089 expires",
     stage: "eta9089",
   },
+  { field: "eta9089DenialDate", label: "ETA 9089 denied", stage: "eta9089" },
+  { field: "eta9089ReconsiderationDate", label: "Reconsideration requested", stage: "eta9089" },
+  { field: "eta9089ReconsiderationDeniedDate", label: "Reconsideration denied", stage: "eta9089" },
+  { field: "eta9089BalcaRequestDate", label: "BALCA review requested", stage: "eta9089" },
 
   // I-140 phase
   { field: "i140FilingDate", label: "I-140 filed", stage: "i140" },
@@ -189,6 +193,10 @@ export interface CaseWithDates {
   eta9089AuditDate?: string | null;
   eta9089CertificationDate?: string | null;
   eta9089ExpirationDate?: string | null;
+  eta9089DenialDate?: string | null;
+  eta9089ReconsiderationDate?: string | null;
+  eta9089ReconsiderationDeniedDate?: string | null;
+  eta9089BalcaRequestDate?: string | null;
 
   // I-140 phase
   i140FilingDate?: string | null;

@@ -36,6 +36,11 @@ export interface QuickEditFieldConfig {
   placeholder?: string;
   /** Whether this field is auto-calculated (read-only display) */
   autoCalculated?: boolean;
+  /**
+   * One of several outcomes, any of which completes the step (a certification
+   * or a denial). The step saves once at least one optional field is filled.
+   */
+  optional?: boolean;
 }
 
 /**
@@ -85,6 +90,37 @@ const JOB_ORDER_FIELDS: QuickEditFieldConfig[] = [
     placeholder: "Auto-calculated (30 calendar days)",
   },
 ];
+
+/**
+ * The certification and its auto-calculated expiry: the step after a filing,
+ * a reconsideration or a BALCA review, whichever certified the case.
+ */
+const CERTIFICATION_FIELDS: QuickEditFieldConfig[] = [
+  {
+    name: "eta9089CertificationDate",
+    label: "Certification date",
+    type: "date",
+    triggersCalculation: true,
+    optional: true,
+    placeholder: "Enter when certified",
+  },
+  {
+    name: "eta9089ExpirationDate",
+    label: "Expiration date",
+    type: "date",
+    autoCalculated: true,
+    placeholder: "Auto-calculated (+179 days)",
+  },
+];
+
+/** DOL denied the application: the date on its Final Determination letter. */
+const DENIAL_FIELD: QuickEditFieldConfig = {
+  name: "eta9089DenialDate",
+  label: "Denial date",
+  type: "date",
+  optional: true,
+  placeholder: "Enter if denied",
+};
 
 /**
  * Configuration for each action type returned by calculateNextAction(),
@@ -211,22 +247,59 @@ export const ACTION_CONFIG: Record<NextActionName, ActionConfig> = {
 
   "Wait for certification": {
     type: "editable",
+    fields: [...CERTIFICATION_FIELDS, DENIAL_FIELD],
+  },
+
+  // ========== ETA 9089 denial: reconsideration or BALCA review ==========
+  "Respond to denial": {
+    type: "editable",
     fields: [
       {
-        name: "eta9089CertificationDate",
-        label: "Certification date",
+        name: "eta9089ReconsiderationDate",
+        label: "Reconsideration requested",
         type: "date",
-        triggersCalculation: true,
-        placeholder: "Enter when certified",
+        optional: true,
+        placeholder: "Enter when requested",
       },
       {
-        name: "eta9089ExpirationDate",
-        label: "Expiration date",
+        name: "eta9089BalcaRequestDate",
+        label: "BALCA review requested",
         type: "date",
-        autoCalculated: true,
-        placeholder: "Auto-calculated (+179 days)",
+        optional: true,
+        placeholder: "Enter when requested",
       },
     ],
+  },
+
+  "Wait for reconsideration": {
+    type: "editable",
+    fields: [
+      ...CERTIFICATION_FIELDS,
+      {
+        name: "eta9089ReconsiderationDeniedDate",
+        label: "Reconsideration denied",
+        type: "date",
+        optional: true,
+        placeholder: "Enter the notice's date",
+      },
+    ],
+  },
+
+  "Request BALCA review": {
+    type: "editable",
+    fields: [
+      {
+        name: "eta9089BalcaRequestDate",
+        label: "BALCA review requested",
+        type: "date",
+        placeholder: "Enter when requested",
+      },
+    ],
+  },
+
+  "Wait for BALCA decision": {
+    type: "editable",
+    fields: CERTIFICATION_FIELDS,
   },
 
   // ========== I-140 Stage ==========

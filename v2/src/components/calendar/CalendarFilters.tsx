@@ -112,6 +112,8 @@ const DEADLINE_TYPE_GROUPS: {
       { value: "eta9089Expires", label: "ETA expiration" },
       { value: "filingWindowOpens", label: "Filing window opens" },
       { value: "filingWindowCloses", label: "Filing window closes" },
+      { value: "denialReviewDue", label: "Denial review due" },
+      { value: "balcaRequestDue", label: "BALCA request due" },
     ],
   },
   {

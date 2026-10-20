@@ -67,6 +67,10 @@ export interface CamelCaseFields {
   eta9089FilingDate?: string | null;
   eta9089CertificationDate?: string | null;
   eta9089ExpirationDate?: string | null;
+  eta9089DenialDate?: string | null;
+  eta9089ReconsiderationDate?: string | null;
+  eta9089ReconsiderationDeniedDate?: string | null;
+  eta9089BalcaRequestDate?: string | null;
 
   // I-140 dates
   i140FilingDate?: string | null;
@@ -150,6 +154,10 @@ export function mapToValidatorFormat(fields: CamelCaseFields): CaseData {
     eta9089_filing_date: fields.eta9089FilingDate || null,
     eta9089_certification_date: fields.eta9089CertificationDate || null,
     eta9089_expiration_date: fields.eta9089ExpirationDate || null,
+    eta9089_denial_date: fields.eta9089DenialDate || null,
+    eta9089_reconsideration_date: fields.eta9089ReconsiderationDate || null,
+    eta9089_reconsideration_denied_date: fields.eta9089ReconsiderationDeniedDate || null,
+    eta9089_balca_request_date: fields.eta9089BalcaRequestDate || null,
 
     // I-140 dates
     i140_filing_date: fields.i140FilingDate || null,

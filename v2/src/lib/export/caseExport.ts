@@ -154,6 +154,10 @@ export interface ExportedCase {
   eta9089AuditDate?: string;
   eta9089CertificationDate?: string;
   eta9089ExpirationDate?: string;
+  eta9089DenialDate?: string;
+  eta9089ReconsiderationDate?: string;
+  eta9089ReconsiderationDeniedDate?: string;
+  eta9089BalcaRequestDate?: string;
   eta9089CaseNumber?: string;
 
   // RFI/RFE entries
@@ -261,6 +265,10 @@ export interface FullCaseData {
   eta9089AuditDate?: string;
   eta9089CertificationDate?: string;
   eta9089ExpirationDate?: string;
+  eta9089DenialDate?: string;
+  eta9089ReconsiderationDate?: string;
+  eta9089ReconsiderationDeniedDate?: string;
+  eta9089BalcaRequestDate?: string;
   eta9089CaseNumber?: string;
   rfiEntries?: Array<{
     id: string;
@@ -399,6 +407,10 @@ function transformFullCaseForExport(caseData: FullCaseData): ExportedCase {
     eta9089AuditDate: caseData.eta9089AuditDate,
     eta9089CertificationDate: caseData.eta9089CertificationDate,
     eta9089ExpirationDate: caseData.eta9089ExpirationDate,
+    eta9089DenialDate: caseData.eta9089DenialDate,
+    eta9089ReconsiderationDate: caseData.eta9089ReconsiderationDate,
+    eta9089ReconsiderationDeniedDate: caseData.eta9089ReconsiderationDeniedDate,
+    eta9089BalcaRequestDate: caseData.eta9089BalcaRequestDate,
     eta9089CaseNumber: caseData.eta9089CaseNumber,
 
     // RFI/RFE entries
@@ -506,6 +518,10 @@ function buildFullCSVHeader(): string {
     "eta9089AuditDate",
     "eta9089CertificationDate",
     "eta9089ExpirationDate",
+    "eta9089DenialDate",
+    "eta9089ReconsiderationDate",
+    "eta9089ReconsiderationDeniedDate",
+    "eta9089BalcaRequestDate",
     // I-140
     "i140FilingDate",
     "i140ReceiptDate",
@@ -571,6 +587,10 @@ function buildFullCSVRow(caseData: ExportedCase): string {
     escapeCSVField(caseData.eta9089AuditDate),
     escapeCSVField(caseData.eta9089CertificationDate),
     escapeCSVField(caseData.eta9089ExpirationDate),
+    escapeCSVField(caseData.eta9089DenialDate),
+    escapeCSVField(caseData.eta9089ReconsiderationDate),
+    escapeCSVField(caseData.eta9089ReconsiderationDeniedDate),
+    escapeCSVField(caseData.eta9089BalcaRequestDate),
     // I-140
     escapeCSVField(caseData.i140FilingDate),
     escapeCSVField(caseData.i140ReceiptDate),

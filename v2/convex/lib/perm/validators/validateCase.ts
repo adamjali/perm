@@ -6,6 +6,7 @@ import { validateETA9089 } from './eta9089';
 import { validateI140 } from './i140';
 import { validateRFI } from './rfi';
 import { validateRFE } from './rfe';
+import { validateDenialReview } from './denialReview';
 
 /**
  * Validation-relevant subset of CaseData (excludes status fields).
@@ -19,6 +20,7 @@ export type ValidationCaseData = Omit<CaseData, 'case_status' | 'progress_status
  * - PWD (V-PWD-01 to V-PWD-04)
  * - Recruitment (V-REC-01 to V-REC-12)
  * - ETA 9089 (V-ETA-01 to V-ETA-05)
+ * - ETA 9089 denial, reconsideration and BALCA review (V-DEN-01 to V-DEN-04)
  * - I-140 (V-I140-01 to V-I140-03)
  * - RFI (V-RFI-01 to V-RFI-05)
  * - RFE (V-RFE-01 to V-RFE-05)
@@ -47,6 +49,13 @@ export function validateCase(caseData: ValidationCaseData): ValidationResult {
       pwd_expiration_date: caseData.pwd_expiration_date,
       eta9089_certification_date: caseData.eta9089_certification_date,
       eta9089_expiration_date: caseData.eta9089_expiration_date,
+    }),
+    validateDenialReview({
+      eta9089_filing_date: caseData.eta9089_filing_date,
+      eta9089_denial_date: caseData.eta9089_denial_date,
+      eta9089_reconsideration_date: caseData.eta9089_reconsideration_date,
+      eta9089_reconsideration_denied_date: caseData.eta9089_reconsideration_denied_date,
+      eta9089_balca_request_date: caseData.eta9089_balca_request_date,
     }),
     validateI140({
       eta9089_certification_date: caseData.eta9089_certification_date,

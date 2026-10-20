@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ClockIcon, FileTextIcon } from "@phosphor-icons/react";
-import { isRecruitmentComplete } from "@/lib/perm";
+import { denialReviewDeadline, denialReviewStep, isRecruitmentComplete } from "@/lib/perm";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
@@ -33,6 +33,10 @@ export function ETA9089Tab({
     : null;
 
   const isCertified = !!caseData.eta9089CertificationDate;
+  // A certification after a denial is a reversal, and the certification counts.
+  const denialStep = denialReviewStep(caseData);
+  const reviewDue = denialReviewDeadline(caseData);
+  const isDenied = !!denialStep;
 
   return (
     <div className="space-y-6">
@@ -57,7 +61,7 @@ export function ETA9089Tab({
                 ETA Form 9089
               </h2>{" "}
               <span className="head-badge">
-                {isCertified ? "Certified" : isFiled ? "Filed" : "Pending"}
+                {isCertified ? "Certified" : isDenied ? "Denied" : isFiled ? "Filed" : "Pending"}
               </span>
             </div>
             <div className="field-grid">
@@ -85,6 +89,26 @@ export function ETA9089Tab({
                   ) : "-"}
                 </div>
               </div>
+              {caseData.eta9089DenialDate ? (
+                <>
+                  <div className="field-cell">
+                    <div className="fc-label">Denial date</div>
+                    <div className="fc-val num">{fmtISODate(caseData.eta9089DenialDate)}</div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Reconsideration requested</div>
+                    <div className={`fc-val num ${!caseData.eta9089ReconsiderationDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089ReconsiderationDate)}</div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">Reconsideration denied</div>
+                    <div className={`fc-val num ${!caseData.eta9089ReconsiderationDeniedDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089ReconsiderationDeniedDate)}</div>
+                  </div>
+                  <div className="field-cell">
+                    <div className="fc-label">BALCA review requested</div>
+                    <div className={`fc-val num ${!caseData.eta9089BalcaRequestDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089BalcaRequestDate)}</div>
+                  </div>
+                </>
+              ) : null}
               <div className="field-cell">
                 <div className="fc-label">Filing window</div>
                 <div className="fc-val num" style={{ fontSize: "0.875rem" }}>
@@ -98,9 +122,18 @@ export function ETA9089Tab({
               <div className="detail-status-bar">
                 <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-eta9089-ink)" }} />
                 <span>
-                  {isFiled
-                    ? "ETA 9089 filed. Awaiting DOL decision."
-                    : "Awaiting filing. Recruitment must be completed first."}
+                  {reviewDue ? (
+                    <>
+                      {reviewDue.kind === "review" ? "ETA 9089 denied. Reconsideration or BALCA review is due " : "Reconsideration upheld the denial. BALCA review is due "}
+                      <strong className="text-foreground">{fmtISODate(reviewDue.date)}</strong>, 30 days after the {reviewDue.kind === "review" ? "denial" : "notice"}.
+                    </>
+                  ) : denialStep === "reconsidering"
+                    ? "ETA 9089 denied. Reconsideration requested; awaiting the Certifying Officer."
+                    : denialStep === "at-balca"
+                      ? "ETA 9089 denied. BALCA review requested; awaiting BALCA."
+                      : isFiled
+                        ? "ETA 9089 filed. Awaiting DOL decision."
+                        : "Awaiting filing. Recruitment must be completed first."}
                   {filingWindowOpens && !isFiled && (
                     <> Filing window opens <strong className="text-foreground">{fmtISODate(filingWindowOpens)}</strong>.</>
                   )}

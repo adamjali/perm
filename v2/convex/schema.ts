@@ -370,6 +370,13 @@ export default defineSchema({
     eta9089FilingDate: v.optional(v.string()),
     eta9089AuditDate: v.optional(v.string()),
     eta9089CertificationDate: v.optional(v.string()),
+    // A denial and what the employer asked for after it (perm/calculators/denialReview.ts):
+    // the date on DOL's Final Determination letter, the requests for reconsideration
+    // and BALCA review, and the date on the notice upholding the denial on reconsideration.
+    eta9089DenialDate: v.optional(v.string()),
+    eta9089ReconsiderationDate: v.optional(v.string()),
+    eta9089ReconsiderationDeniedDate: v.optional(v.string()),
+    eta9089BalcaRequestDate: v.optional(v.string()),
     eta9089ExpirationDate: v.optional(v.string()),
     eta9089CaseNumber: v.optional(v.string()),
 
@@ -505,6 +512,8 @@ export default defineSchema({
         notice_of_filing_start_deadline: v.optional(v.string()),
         first_sunday_ad_deadline: v.optional(v.string()),
         second_sunday_ad_deadline: v.optional(v.string()),
+        denial_review_due: v.optional(v.string()),
+        balca_request_due: v.optional(v.string()),
       })
     ),
     calendarSyncEnabled: v.boolean(),

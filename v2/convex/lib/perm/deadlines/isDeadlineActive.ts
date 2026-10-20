@@ -21,6 +21,7 @@ import type {
 import { ALL_DEADLINE_TYPES, SUPERSESSION_REASONS } from "./types";
 import { isRecruitmentComplete } from "../recruitment/isRecruitmentComplete";
 import { pwdBearingFromCase } from "../dates/pwdValidity";
+import { denialReviewStep } from "../calculators/denialReview";
 
 // ============================================================================
 // MAIN SUPERSESSION CHECK
@@ -36,6 +37,9 @@ import { pwdBearingFromCase } from "../dates/pwdValidity";
  * - I-140 deadline: Inactive when I-140 filed
  * - RFI due: Inactive when response submitted
  * - RFE due: Inactive when response submitted
+ * - Denial review due: Active from an ETA 9089 denial until a request is filed
+ * - BALCA request due: Active from a reconsideration that upheld the denial
+ *   until BALCA review is requested
  *
  * @param deadlineType - The type of deadline to check
  * @param caseData - Case data with relevant fields
@@ -99,6 +103,12 @@ export function isDeadlineActive(
 
     case "rfe_due":
       return checkRfeActive(caseData);
+
+    case "denial_review_due":
+      return checkDenialStepActive(caseData, "request-review");
+
+    case "balca_request_due":
+      return checkDenialStepActive(caseData, "request-balca");
 
     default: {
       // Exhaustiveness check — compile error if a new DeadlineType is added without a case
@@ -270,6 +280,33 @@ function checkRfeActive(caseData: CaseDataForDeadlines): DeadlineActiveStatus {
   }
 
   return { isActive: true };
+}
+
+/**
+ * The two denial deadlines are each active at one step of the denial path
+ * (calculators/denialReview.ts): the first until reconsideration or BALCA
+ * review is asked for, the second from a reconsideration that upheld the
+ * denial until BALCA review is asked for. A certification ends both.
+ */
+function checkDenialStepActive(
+  caseData: CaseDataForDeadlines,
+  activeAt: "request-review" | "request-balca"
+): DeadlineActiveStatus {
+  if (!caseData.eta9089DenialDate) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.NOT_DENIED };
+  }
+  if (caseData.eta9089CertificationDate) {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.ETA9089_CERTIFIED };
+  }
+  const step = denialReviewStep(caseData);
+  if (step === activeAt) return { isActive: true };
+  if (step === "at-balca") {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.BALCA_REQUESTED };
+  }
+  if (activeAt === "request-balca") {
+    return { isActive: false, supersededReason: SUPERSESSION_REASONS.RECONSIDERATION_PENDING };
+  }
+  return { isActive: false, supersededReason: SUPERSESSION_REASONS.REVIEW_REQUESTED };
 }
 
 // ============================================================================

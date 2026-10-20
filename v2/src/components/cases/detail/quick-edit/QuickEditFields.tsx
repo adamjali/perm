@@ -121,6 +121,10 @@ function convertToCaseFormData(caseData: NextUpCaseData): CaseFormData {
     eta9089FilingDate: caseData.eta9089FilingDate || undefined,
     eta9089CertificationDate: caseData.eta9089CertificationDate || undefined,
     eta9089ExpirationDate: caseData.eta9089ExpirationDate || undefined,
+    eta9089DenialDate: caseData.eta9089DenialDate || undefined,
+    eta9089ReconsiderationDate: caseData.eta9089ReconsiderationDate || undefined,
+    eta9089ReconsiderationDeniedDate: caseData.eta9089ReconsiderationDeniedDate || undefined,
+    eta9089BalcaRequestDate: caseData.eta9089BalcaRequestDate || undefined,
     i140FilingDate: caseData.i140FilingDate || undefined,
     i140ApprovalDate: caseData.i140ApprovalDate || undefined,
     i140DenialDate: caseData.i140DenialDate || undefined,
@@ -237,17 +241,22 @@ export function QuickEditFields({
     return getAllDateConstraints(formData);
   }, [formData]);
 
-  // Check if all required fields are filled AND no validation errors
+  // Every required field filled, at least one of the optional outcomes when
+  // the step has them (a certification or a denial), and no validation errors
   const hasFieldErrors = Object.keys(fieldErrors).length > 0;
   const canSubmit = useMemo(() => {
     if (!config?.fields) return false;
     if (hasFieldErrors) return false;
-    return config.fields
-      .filter(f => !f.autoCalculated) // Only check user-editable fields
-      .every(f => {
-        const value = formData[f.name as keyof CaseFormData];
-        return typeof value === "string" && value.length > 0;
-      });
+    const filled = (f: { name: keyof CaseFormData }) => {
+      const value = formData[f.name];
+      return typeof value === "string" && value.length > 0;
+    };
+    const editable = config.fields.filter(f => !f.autoCalculated);
+    const optional = editable.filter(f => f.optional);
+    return (
+      editable.filter(f => !f.optional).every(filled) &&
+      (optional.length === 0 || optional.some(filled))
+    );
   }, [config, formData, hasFieldErrors]);
 
   // Check if any values have changed from original
