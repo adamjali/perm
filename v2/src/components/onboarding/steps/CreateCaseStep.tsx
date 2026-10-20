@@ -6,10 +6,7 @@ import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PERM_STAGES } from "@/lib/onboarding/constants";
-import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { useOnboarding } from "../OnboardingProvider";
-import { cn } from "@/lib/utils";
 import { captureError } from "@/lib/sentry";
 import { analytics } from "@/lib/analytics";
 import { CalendarCheckIcon } from "@phosphor-icons/react";
@@ -28,7 +25,6 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
   const [employerName, setEmployerName] = useState("");
   const [positionTitle, setPositionTitle] = useState("");
   const [beneficiaryIdentifier, setBeneficiaryIdentifier] = useState("");
-  const [caseStatus, setCaseStatus] = useState<string>("pwd");
   const [isCreating, setIsCreating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -54,7 +50,9 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         employerName: employerName.trim(),
         positionTitle: positionTitle.trim(),
         beneficiaryIdentifier: beneficiaryIdentifier.trim() || undefined,
-        caseStatus: caseStatus as "pwd" | "recruitment" | "eta9089" | "i140",
+        // The stage follows the dates (cases.create works it out); a stage
+        // picked here was never stored, so none is asked for.
+        caseStatus: "pwd",
         progressStatus: "working",
         ...(carried ? carriedCaseFields(carried) : {}),
       });
@@ -159,34 +157,9 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
           </p>
         </div>
 
-        {/* Stage Selector: with the calculator's dates, the stage follows them. */}
-        {carried ? null : (
-        <div className="space-y-1.5">
-          <Label className="font-heading font-semibold text-sm">
-            Current PERM stage
-          </Label>
-          <div className="flex flex-wrap gap-2">
-            {PERM_STAGES.map((stage) => (
-              <button
-                key={stage.value}
-                type="button"
-                onClick={() => setCaseStatus(stage.value)}
-                aria-pressed={caseStatus === stage.value}
-                className={cn(
-                  "inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm font-heading font-bold border-2 border-border transition-colors duration-150 cursor-pointer",
-                  // The chosen stage shows in its own colour, as it does everywhere else.
-                  caseStatus === stage.value
-                    ? cn(STAGE_VISUALS[stage.value].fill, STAGE_VISUALS[stage.value].onFill, "")
-                    : "bg-card text-foreground motion-safe:hover:-translate-y-[1px] hover:shadow-hard-sm motion-safe:active:translate-y-0 active:shadow-hard-sm transition-[color,background-color,border-color,box-shadow,transform]"
-                )}
-              >
-                <StageIcon stage={stage.value} />
-                {STAGE_VISUALS[stage.value].label}
-              </button>
-            ))}
-          </div>
-        </div>
-        )}
+        <p className="text-sm text-muted-foreground">
+          The case&rsquo;s stage follows its dates, so there&rsquo;s no stage to pick.
+        </p>
       </div>
 
       {errors.form && (
@@ -205,9 +178,4 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
       </Button>
     </div>
   );
-}
-
-function StageIcon({ stage }: { stage: keyof typeof STAGE_VISUALS }) {
-  const Icon = STAGE_VISUALS[stage].icon;
-  return <Icon className="size-4" weight="bold" aria-hidden="true" />;
 }

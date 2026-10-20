@@ -10009,5 +10009,7 @@ The public calculator now hands them over three ways, and the last is the funnel
   dashboard's `CarriedCaseCard` catches anyone who got lost. Only the wage determination and its expiration are
   filled: the calculator never says which recruitment step came first, so the steps go in the recruitment notes.
   Nothing is saved without the employer, the job and the person.
-- **The setup wizard's stage picker is ignored by `cases.create`** unless `progressStatusOverride` is set; it hides
-  when calculator dates are present. Left as it was otherwise, flagged for the owner.
+- **The setup wizard no longer asks for a stage.** `cases.create` works the stage out from the dates and ignored the
+  picker unless `progressStatusOverride` was set. Pinning the pick by hand would have left a stage that stops following
+  the dates with nothing on the case page saying so, so the buttons are gone and a line says the stage follows the
+  dates (owner: "whatever is best"). The case form's own auto-status switch is unchanged.

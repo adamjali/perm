@@ -4,9 +4,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { calculatePWDExpiration } from "@/lib/perm";
 
 /**
- * A new account that came from the deadline calculator: the setup wizard's
- * first case is saved with the calculator's dates, and the stage, which the
- * dates decide, isn't asked for.
+ * The setup wizard's first case. Its stage is never asked for: cases.create
+ * works it out from the dates (a picked stage was ignored, Oct 19 2026). A new
+ * account that came from the deadline calculator saves the case with its dates.
  */
 
 const calls = vi.hoisted(() => ({ create: vi.fn(), complete: vi.fn() }));
@@ -44,7 +44,6 @@ describe("CreateCaseStep", () => {
     const onNext = vi.fn();
     render(<CreateCaseStep onNext={onNext} />);
     expect(screen.getByText(/From the deadline calculator: wage determination January 15, 2026/)).toBeInTheDocument();
-    expect(screen.queryByText("Current PERM stage")).toBeNull();
     fill();
     await waitFor(() => expect(onNext).toHaveBeenCalled());
     expect(calls.create).toHaveBeenCalledWith(
@@ -58,12 +57,16 @@ describe("CreateCaseStep", () => {
     expect(window.location.search).toBe("");
   });
 
-  it("asks for the stage and adds no dates without them", async () => {
+  it("asks for no stage and adds no dates without them", async () => {
     const onNext = vi.fn();
     render(<CreateCaseStep onNext={onNext} />);
-    expect(screen.getByText("Current PERM stage")).toBeInTheDocument();
+    expect(screen.queryByText("Current PERM stage")).toBeNull();
+    expect(screen.getByText(/stage follows its dates/)).toBeInTheDocument();
     fill();
     await waitFor(() => expect(onNext).toHaveBeenCalled());
-    expect(calls.create.mock.calls[0]![0]).not.toHaveProperty("pwdDeterminationDate");
+    const args = calls.create.mock.calls[0]![0];
+    expect(args).not.toHaveProperty("pwdDeterminationDate");
+    // No stage set by hand: the server works it out from the dates.
+    expect(args).not.toHaveProperty("progressStatusOverride");
   });
 });
