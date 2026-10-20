@@ -41,6 +41,15 @@ export default function robots(): MetadataRoute.Robots {
     // A pair of employers is a dynamic render per request, and the number of
     // pairs is the square of the employer count.
     '/perm-employers/compare?',
+    // A search with a name in the address: every employer, firm and job page
+    // links to one, each is the heaviest render the site has, and each names the
+    // bare page as its canonical, so none can be indexed. On Oct 20 2026 crawlers
+    // asked for about 18,000 of them in 16 hours (Applebot 8,842, ClaudeBot 5,167,
+    // PerplexityBot 2,112, Google 143) while visitors met timeouts. The bare
+    // pages stay open.
+    '/case-search?',
+    '/lca-cases?',
+    '/pwd-cases?',
   ]
 
   // High-volume crawlers that bring this product NOTHING back. Human

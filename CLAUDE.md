@@ -948,3 +948,13 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   name whether Cloudflare verified it or not (`pt_perplexity`); Perplexity-User, which fetches for a person's
   question, is left alone. Proved on the server: 16 requests passed, then 429; a browser kept getting 200.
 
+
+## Oct 20 2026, in three lines
+
+- **Crawlers skip searches with a name in the address** (`/case-search?`, `/lca-cases?`, `/pwd-cases?` in robots.txt):
+  about 18,000 came from Applebot, ClaudeBot and PerplexityBot in 16 hours while visitors met timeouts. Each names the
+  bare page as canonical, so none could be indexed; the bare pages stay open.
+- **The main database's old LCA copy is `lca_cases_retired`** since 10:26 AM EDT; the offline compaction runs at about
+  2:43 AM Oct 21 (`permtracker-db-compact`).
+- **The compaction's busy check counts services, not timers**: a job's timer reads "active waiting" all day, and the
+  check had refused on fourteen of them; its dry run caught it.

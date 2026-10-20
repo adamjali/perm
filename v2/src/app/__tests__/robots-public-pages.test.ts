@@ -57,4 +57,13 @@ describe("robots.txt", () => {
   it("still blocks the API itself", () => {
     expect(allowed("/api/case-search", list(rules.allow), list(rules.disallow))).toBe(false);
   });
+
+  it("keeps crawlers off searches with a name in the address, and the search pages open", () => {
+    for (const page of ["/case-search", "/lca-cases", "/pwd-cases"]) {
+      expect(allowed(page, list(rules.allow), list(rules.disallow))).toBe(true);
+      expect(allowed(`${page}?q=Microsoft`, list(rules.allow), list(rules.disallow))).toBe(false);
+    }
+    // A search page's own children are pages, not searches.
+    expect(allowed("/perm-cases", list(rules.allow), list(rules.disallow))).toBe(true);
+  });
 });
