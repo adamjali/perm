@@ -27,7 +27,7 @@ export const Working: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Working on it - neutral muted badge.",
+        story: "Working on it: soft yellow.",
       },
     },
   },
@@ -40,7 +40,7 @@ export const WaitingIntake: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Waiting for Intake - neutral muted badge.",
+        story: "Waiting for intake: soft blue.",
       },
     },
   },
@@ -53,7 +53,7 @@ export const Filed: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Filed - blue badge indicating submission.",
+        story: "Filed: soft green.",
       },
     },
   },
@@ -66,7 +66,7 @@ export const Approved: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Approved - green badge indicating success.",
+        story: "Approved: full green, apart from filed.",
       },
     },
   },
@@ -79,7 +79,7 @@ export const UnderReview: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Under Review - yellow badge indicating pending review.",
+        story: "Under review: soft purple.",
       },
     },
   },
@@ -92,7 +92,7 @@ export const RFIRFE: Story = {
   parameters: {
     docs: {
       description: {
-        story: "RFI/RFE - red badge indicating request for information/evidence.",
+        story: "RFI or RFE: soft red.",
       },
     },
   },

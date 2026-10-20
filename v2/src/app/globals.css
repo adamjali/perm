@@ -171,6 +171,7 @@
   --soft-warn: #F9DDBB;        /* withdrawn, the employer's own step */
   --soft-bad: #F6D2CD;         /* denied, rejected */
   --soft-info: #D9E6FA;        /* on hold, appeal: out of order */
+  --soft-purple: #E7DEF7;      /* a case's progress: under review */
   /* Chart colours (round 3, Oct 15 2026: "avoid black and grey in charts").
      Soft but visible fills for marks; text stays ink. Meaning, not order:
      green done or ahead, yellow waiting or behind you, orange the employer's
@@ -264,6 +265,7 @@
   --soft-warn: #3E2A14;
   --soft-bad: #3F1D1A;
   --soft-info: #1B2A42;
+  --soft-purple: #2C2340;
   --chart-green: #4FA85A;
   --chart-yellow: #C9A93A;
   --chart-orange: #C07A3E;
@@ -407,6 +409,7 @@ html {
   --color-soft-warn: var(--soft-warn);
   --color-soft-bad: var(--soft-bad);
   --color-soft-info: var(--soft-info);
+  --color-soft-purple: var(--soft-purple);
   --color-chart-green: var(--chart-green);
   --color-chart-yellow: var(--chart-yellow);
   --color-chart-orange: var(--chart-orange);
@@ -2094,6 +2097,13 @@ input[type="week"] {
   --data-warn-ink: #7a3605;
   --data-bad-ink: #a30000;
   --destructive-text: #a30000;
+  /* The soft chip fills stay light on the tan in both themes, under ink. */
+  --soft-good: #D5EBCD;
+  --soft-wait: #FBEFC2;
+  --soft-warn: #F9DDBB;
+  --soft-bad: #F6D2CD;
+  --soft-info: #D9E6FA;
+  --soft-purple: #E7DEF7;
   color: #141414;
   background-color: #f5e6c8;
   border: 2px solid #141414;

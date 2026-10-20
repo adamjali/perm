@@ -12,6 +12,7 @@
  */
 
 import type { CaseFormData } from "@/lib/forms";
+import type { NextActionName } from "../next-up-section.utils";
 
 // ============================================================================
 // TYPES
@@ -86,10 +87,13 @@ const JOB_ORDER_FIELDS: QuickEditFieldConfig[] = [
 ];
 
 /**
- * Configuration for each action type returned by calculateNextAction().
- * Keys match the `action` string from NextAction.
+ * Configuration for each action type returned by calculateNextAction(),
+ * keyed by its exact name. Typed by NextActionName so a step renamed there
+ * fails the typecheck here: the Oct 11 sentence-case pass renamed nine of them
+ * ("Wait for Certification" became "Wait for certification") and every one
+ * silently lost its quick-edit box until Oct 19.
  */
-export const ACTION_CONFIG: Record<string, ActionConfig> = {
+export const ACTION_CONFIG: Record<NextActionName, ActionConfig> = {
   // ========== PWD Stage ==========
   "File PWD": {
     type: "editable",
@@ -123,18 +127,18 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     ],
   },
 
-  "Start Recruitment": {
+  "Start recruitment": {
     type: "editable",
     fields: JOB_ORDER_FIELDS,
   },
 
   // ========== Recruitment Stage ==========
-  "Post Job Order": {
+  "Post job order": {
     type: "editable",
     fields: JOB_ORDER_FIELDS,
   },
 
-  "Post Notice of Filing": {
+  "Post notice of filing": {
     type: "editable",
     fields: [
       {
@@ -154,7 +158,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     ],
   },
 
-  "Place Sunday Ads": {
+  "Place Sunday ads": {
     type: "editable",
     fields: [
       {
@@ -174,13 +178,13 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     ],
   },
 
-  "Complete Additional Recruitment": {
+  "Complete additional recruitment": {
     type: "complex",
     complexMessage: "Professional recruitment requires 3 methods. Use the full edit form to add recruitment methods.",
     linkToFullForm: true,
   },
 
-  "Wait for Filing Window": {
+  "Wait for filing window": {
     type: "waiting",
     waitingInfo: {
       estimatedTime: "Check deadline countdown",
@@ -205,7 +209,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     ],
   },
 
-  "Wait for Certification": {
+  "Wait for certification": {
     type: "editable",
     fields: [
       {
@@ -238,7 +242,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     ],
   },
 
-  "Wait for I-140 Decision": {
+  "Wait for I-140 decision": {
     type: "editable",
     fields: [
       {
@@ -250,7 +254,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     ],
   },
 
-  "Case Complete": {
+  "Case complete": {
     type: "complete",
   },
 
@@ -276,14 +280,14 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
  * Get the configuration for an action by its name
  */
 export function getActionConfig(actionName: string): ActionConfig | undefined {
-  return ACTION_CONFIG[actionName];
+  return ACTION_CONFIG[actionName as NextActionName];
 }
 
 /**
  * Check if an action has editable fields
  */
 export function isEditableAction(actionName: string): boolean {
-  const config = ACTION_CONFIG[actionName];
+  const config = ACTION_CONFIG[actionName as NextActionName];
   return config?.type === "editable" && (config.fields?.length ?? 0) > 0;
 }
 
@@ -291,7 +295,7 @@ export function isEditableAction(actionName: string): boolean {
  * Check if an action is a waiting/info-only action
  */
 export function isWaitingAction(actionName: string): boolean {
-  const config = ACTION_CONFIG[actionName];
+  const config = ACTION_CONFIG[actionName as NextActionName];
   return config?.type === "waiting";
 }
 
@@ -299,7 +303,7 @@ export function isWaitingAction(actionName: string): boolean {
  * Check if an action is complex (requires full form)
  */
 export function isComplexAction(actionName: string): boolean {
-  const config = ACTION_CONFIG[actionName];
+  const config = ACTION_CONFIG[actionName as NextActionName];
   return config?.type === "complex";
 }
 
@@ -307,7 +311,7 @@ export function isComplexAction(actionName: string): boolean {
  * Get field names for an action (for partial update payload)
  */
 export function getActionFieldNames(actionName: string): (keyof CaseFormData)[] {
-  const config = ACTION_CONFIG[actionName];
+  const config = ACTION_CONFIG[actionName as NextActionName];
   if (config?.type !== "editable" || !config.fields) {
     return [];
   }

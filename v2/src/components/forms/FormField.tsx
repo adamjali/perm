@@ -64,7 +64,11 @@ export interface FormFieldProps {
  * Features:
  * - Label with optional required indicator (red asterisk)
  * - Status icons next to label (error/warning/valid)
- * - Hint text below label (dynamic based on constraints)
+ * - Hint text under the input (dynamic based on constraints). Above it, a
+ *   one-line hint and a two-line hint put the boxes of one row at different
+ *   heights, and the "Auto" tag made its label row taller (owner, Oct 19 2026:
+ *   boxes in a row share one line). The label row is a fixed 24px for the same
+ *   reason.
  * - Error message with shake animation
  * - Warning message (non-blocking)
  * - Auto-calculated state indicator
@@ -114,8 +118,9 @@ export function FormField({
       data-valid={validationState === 'valid' ? "true" : undefined}
       data-auto-calculated={autoCalculated ? "true" : undefined}
     >
-      {/* Label row with status indicator */}
-      <div className="flex items-center gap-2 min-w-0 flex-wrap">
+      {/* Label row with status indicator: always 24px, the "Auto" tag's height,
+          so every box in a row starts on the same line. */}
+      <div className="flex min-h-6 items-center gap-2 min-w-0 flex-wrap">
         <Label htmlFor={name} data-slot="label" className="font-semibold break-words min-w-0">
           {label}
           {required && (
@@ -156,7 +161,12 @@ export function FormField({
         )}
       </div>
 
-      {/* Hint text */}
+      {/* An error says what's wrong under the field; the field doesn't shake. */}
+      <div data-error={error ? "true" : undefined}>
+        {enhancedChildren}
+      </div>
+
+      {/* Hint text, under the box so a long hint can't push the box down. */}
       {hint && (
         <p
           id={`${name}-hint`}
@@ -173,11 +183,6 @@ export function FormField({
           {hint}
         </p>
       )}
-
-      {/* An error says what's wrong under the field; the field doesn't shake. */}
-      <div data-error={error ? "true" : undefined}>
-        {enhancedChildren}
-      </div>
 
       {/* Error message */}
       {error && (

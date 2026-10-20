@@ -228,6 +228,23 @@ describe("token contrast", () => {
     expect(fails).toEqual([]);
   });
 
+  it("a case's progress chip reads on its soft fill in both themes and on the folder", () => {
+    // ProgressStatusBadge (owner, Oct 19 2026): filed green, working yellow,
+    // RFI red, intake blue, under review purple, ink words on each.
+    const fills = ["soft-good", "soft-wait", "soft-bad", "soft-info", "soft-purple"];
+    const folder = block(".manila");
+    const fails: string[] = [];
+    for (const [name, t] of [["light", light], ["dark", dark], ["folder", { ...light, ...folder }]] as const) {
+      for (const f of fills) {
+        if (!t[f]) fails.push(`${name}: ${f} not set`);
+        else if (contrast(t.foreground!, t[f]!) < 4.5) fails.push(`${name}: foreground on ${f}: ${contrast(t.foreground!, t[f]!).toFixed(2)}`);
+      }
+    }
+    // The folder stays tan in dark mode, so its fills must be its own light ones.
+    for (const f of fills) if (!folder[f]) fails.push(`folder doesn't set ${f}`);
+    expect(fails).toEqual([]);
+  });
+
   it("the lime main button's label reads on the lime", () => {
     expect(contrast(light["primary-foreground"]!, light.primary!)).toBeGreaterThanOrEqual(4.5);
   });
