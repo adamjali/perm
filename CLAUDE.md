@@ -949,7 +949,7 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   question, is left alone. Proved on the server: 16 requests passed, then 429; a browser kept getting 200.
 
 
-## Oct 20 2026, in six lines
+## Oct 20 2026, in nine lines
 
 - **Crawlers skip searches with a name in the address** (`/case-search?`, `/lca-cases?`, `/pwd-cases?` in robots.txt):
   about 18,000 came from Applebot, ClaudeBot and PerplexityBot in 16 hours while visitors met timeouts. Each names the
@@ -964,3 +964,14 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
 - **The defense ignores pre-loads and analytics beacons, and never challenges a browser label whose browsers run the
   site's scripts** (`PEOPLE_BEACON_SHARE`): it had challenged Windows Chrome 155, about half of all real page views.
 - **ClaudeBot and Applebot read at 30 pages a minute each** (`pt_slowcrawl`, owner's call), like Meta's and Perplexity's.
+- **The disk alarm holds once it fires** until free space is 5 GB and 6 hours clear of its line (`permtracker-alarm`,
+  `DISK_CLEAR_MARGIN_*`): it had emailed "filling" and "back to normal" seven times each overnight as the page cache
+  rose and fell around one threshold.
+- **Two daytime deploys (the urgent robots change, then a privacy removal) each emptied the page cache** and left the
+  afternoon at capacity. `withhold.py` redeploys at once: unless a request is urgent, run it after midnight Eastern.
+  While Under Attack Mode is on, outside checks see Cloudflare's 403; check the origin from the server
+  (`curl -H "Host: permtracker.app" http://127.0.0.1:8081/...`).
+- **Sign-in's Cloudflare check is advisory**: the login page's Turnstile is interaction-only and the server requires a
+  pass only to create a password account (`requireSignupPass`); sign-in is held by the per-address and per-email
+  limits in `src/proxy.ts`.
+

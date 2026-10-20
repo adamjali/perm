@@ -41,8 +41,17 @@ So a request isn't a legal obligation today. The owner has chosen to honor them 
    It saves the entry in `WITHHELD_EMPLOYERS` in the server's production.env (the one source of the list),
    mirrors it to the GitHub secret the build reads, redeploys so no page cache holds the name, has the deploy
    drop Cloudflare's copies of every affected page, checks the live site, and tells IndexNow. About 15 minutes.
+   The redeploy empties every page cache at once, so unless the request is urgent run it at night (after midnight
+   Eastern), when few people are reading. While Cloudflare's Under Attack Mode is on, its live check sees
+   Cloudflare's 403 where it expects a 404; check from the server instead:
+   `ssh permtracker 'curl -s -o /dev/null -w "%{http_code}" -H "Host: permtracker.app" http://127.0.0.1:8081/perm-employers/<slug>'`.
+   The name-suggestion index loads a few minutes after a deploy (`"warming"`); it's built from the same filtered rows.
 4. **By hand in Search Console** (no API exists): Removals > New request > Temporarily remove URL for the employer
-   page; then Clear snippet for any other page the person named. Check the Internet Archive too:
+   page; then Clear snippet for any other page the person named. **And in Bing Webmaster Tools** (it serves Yahoo, DuckDuckGo
+   and Ecosia too): Configuration > Block URLs (`bing.com/webmasters/searchconfig/blockurl?siteUrl=https://permtracker.app/`)
+   > Add URL to block, the employer page, URL type Page, Block type **URL & Cache** (the default is Cache only),
+   90 days; read it back in the list. IndexNow, in step 3, already told Yandex, Seznam, Naver and the other IndexNow
+   engines. Crawlers with no removal tool (Apple, the AI crawlers) drop the page when they next fetch it and get 404. Check the Internet Archive too:
    `https://web.archive.org/cdx/search/cdx?url=permtracker.app/perm-employers/<slug>&output=json`. If it holds a
    copy, write to the Archive only with the owner's yes: that's an outward-facing message.
 5. **Reply** from support@ (`supportEmail:replyToEmail`, threaded), on the owner's yes for that message. Pass the
