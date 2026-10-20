@@ -77,6 +77,35 @@ check("...and a cache the cap can't count keeps the plain trend",
       "disk" in alarm.evaluate(healthy(disk_free_gb=66.9, cache_headroom_gb=30.6, uncounted=["abc-1 (42 GB)"]), 5.5))
 check("...and the low line itself never waits on headroom",
       "disk" in alarm.evaluate(healthy(disk_free_gb=20.0, cache_headroom_gb=0.0), None))
+# Oct 20 2026, 2:31 AM EDT: 28.3 GB free, falling 1.2 GB an hour, the caches
+# allowed 3.9 GB more. The cap stops that fall with 24 GB free, past its own
+# 20 GB tight line, so it is no alarm.
+check("Oct 20: a fall the cap stops with 24 GB free raises nothing",
+      "disk" not in alarm.evaluate(healthy(disk_free_gb=28.3, cache_headroom_gb=3.9), 1.2))
+check("...but one it would stop under 20 GB still does",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=28.3, cache_headroom_gb=10.0), 2.0))
+# Once on, the disk alarm clears only 5 GB (or 6 hours) past its lines.
+check("an alarm already on holds at 27 GB free with no trend",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=27.0), None, {"disk"}))
+check("...where a new one wouldn't start",
+      "disk" not in alarm.evaluate(healthy(disk_free_gb=27.0), None))
+check("...and clears at 31 GB free",
+      "disk" not in alarm.evaluate(healthy(disk_free_gb=31.0), None, {"disk"}))
+check("an alarm on holds while the caches' floor is 22 GB",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=40.0, cache_headroom_gb=18.0), 2.0, {"disk"}))
+check("...and clears once it is 26 GB",
+      "disk" not in alarm.evaluate(healthy(disk_free_gb=40.0, cache_headroom_gb=14.0), 2.0, {"disk"}))
+check("an alarm on holds at full in 28 hours, where a new one starts under 24",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=56.0), 2.0, {"disk"})
+      and "disk" not in alarm.evaluate(healthy(disk_free_gb=56.0), 2.0))
+# Oct 19 to 20 replayed: a floor wobbling 24.4 / 25.6 each hour around a 25 GB
+# line emailed start, clear, start, clear. With the hold it starts once.
+st, kinds = {}, []
+for i, (free, room) in enumerate([(26.0, 7.0), (26.0, 1.0), (25.6, 5.9), (25.5, 0.2), (25.4, 5.6)]):
+    on_now = alarm.evaluate(healthy(disk_free_gb=free, cache_headroom_gb=room), 3.0, st.get("alarms", {}).keys())
+    mail, st = alarm.plan(on_now, st, T0 + i * 3600)
+    kinds += [kind for _, kind, _ in mail]
+check("a floor wobbling around the line emails once, not every hour", kinds == ["start"], str(kinds))
 check("headroom adds what each release may still grow",
       alarm.cache_headroom({"releases": [{"budgetGB": 30.0, "gb": 16.2}, {"budgetGB": 30.0, "gb": 13.3},
                                          {"budgetGB": 3.0, "gb": 3.0}, {"budgetGB": 0.0, "gb": 0.0}]}) == 30.5)
@@ -206,6 +235,17 @@ check("a due email that couldn't be sent exits 1", alarm.main() == 1)
 alarm.send = lambda subject, text: True
 _os.remove(alarm.STATE)
 check("a due email that went exits 0", alarm.main() == 0)
+# The run hands the alarms already on to evaluate, so a disk alarm started at
+# 24 GB free stays on (and quiet) at 27 GB instead of clearing.
+_sent: list[str] = []
+alarm.send = lambda subject, text: _sent.append(subject) or True
+_os.remove(alarm.STATE)
+alarm.snapshot = lambda now: healthy(disk_free_gb=24.0)
+alarm.main()
+alarm.snapshot = lambda now: healthy(disk_free_gb=27.0)
+alarm.main()
+check("a run at 27 GB keeps the disk alarm started at 24 GB, without a clear",
+      len(_sent) == 1 and "back to normal" not in _sent[0], str(_sent))
 
 
 # With the mail Worker set up, an alarm goes there (free); when it fails,

@@ -17,7 +17,10 @@ lasts, and once when it clears. At most 12 alarm emails a day (Resend's 100 a
 day is shared with every subscriber's mail).
 
   disk        under 25 GB free, or full within 24 hours at the last two
-              hours' rate (with at least an hour of readings)
+              hours' rate (with at least an hour of readings), unless the
+              page-cache cap would stop that fall with 20 GB still free. Once
+              on, it clears only 5 GB (or 6 hours) past its line, so a reading
+              sitting on the line can't switch it on and off every check
   disk-crit   under 10 GB free
   memory      under 500 MB available, or over 2 GB of swap in use while
               under 2 GB of memory is available
@@ -68,6 +71,14 @@ ET = ZoneInfo("America/New_York")
 DISK_LOW_GB = 25
 DISK_CRIT_GB = 10
 FULL_WITHIN_H = 24
+# The cap switches to tight budgets under this much free, so a fall it will stop
+# with this much left can't fill the disk.
+DISK_FLOOR_GB = 20
+# An alarm already on clears only this far past its lines. Oct 19 to 20 2026: the
+# caches' floor sat at 24 to 25 GB against a 25 GB line, and the disk alarm
+# started and cleared five times in three hours (ten emails) with 28 GB free.
+DISK_CLEAR_MARGIN_GB = 5
+DISK_CLEAR_MARGIN_H = 6
 TREND_WINDOW_S = 2 * 3600       # the rate is read over the last two hours
 TREND_MIN_S = 3600              # ... once there is at least an hour of readings
 HISTORY_S = 6 * 3600            # readings kept in /run
@@ -111,23 +122,31 @@ def rate_gb_per_hour(points: list[list[float]], now: float) -> float | None:
     return -slope * 3600
 
 
-def evaluate(snap: dict, rate: float | None) -> dict[str, str]:
-    """The alarms on now, each with its one-line reason."""
+def evaluate(snap: dict, rate: float | None, already_on=()) -> dict[str, str]:
+    """The alarms on now, each with its one-line reason.
+
+    `already_on` names the alarms on at the last check: the disk alarm's lines
+    move out by DISK_CLEAR_MARGIN_GB and DISK_CLEAR_MARGIN_H while it is on.
+    """
     on: dict[str, str] = {}
     free = snap["disk_free_gb"]
     hours = free / rate if rate and rate > 0.2 else None
+    held = "disk" in already_on
+    margin_gb = DISK_CLEAR_MARGIN_GB if held else 0
+    within_h = FULL_WITHIN_H + (DISK_CLEAR_MARGIN_H if held else 0)
     # A fall the page-cache cap will stop isn't the disk filling: the cached
     # pages grow until their budgets and no further, so if the disk would
-    # still have DISK_LOW_GB free with every cache at its budget, the trend
+    # still have DISK_FLOOR_GB free with every cache at its budget, the trend
     # alone raises nothing (Oct 10 2026: the live cache refilling toward its
     # 60 GB read as "full in 12 hours" with 37 GB to spare). Unknown headroom,
     # or a cache the cap can't see, keeps the plain trend.
     headroom = snap.get("cache_headroom_gb")
-    if hours is not None and headroom is not None and not snap.get("uncounted") and free - headroom >= DISK_LOW_GB:
+    if (hours is not None and headroom is not None and not snap.get("uncounted")
+            and free - headroom >= DISK_FLOOR_GB + margin_gb):
         hours = None
     if free < DISK_CRIT_GB:
         on["disk-crit"] = f"only {free:.1f} GB of the disk is free"
-    if free < DISK_LOW_GB or (hours is not None and hours < FULL_WITHIN_H):
+    if free < DISK_LOW_GB + margin_gb or (hours is not None and hours < within_h):
         why = f"{free:.1f} GB free"
         if hours is not None:
             why += f", falling {rate:.1f} GB an hour: full in about {hours:.0f} hours"
@@ -451,7 +470,7 @@ def main() -> int:
     points.append([now, round(snap["disk_free_gb"], 2)])
     state["disk"] = points
     rate = rate_gb_per_hour(points, now)
-    on = evaluate(snap, rate)
+    on = evaluate(snap, rate, state.get("alarms", {}).keys())
     actions = heal(on)
     mail, planned = plan(on, state, now)
     undelivered = False
