@@ -11,6 +11,11 @@ import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { useOnboarding } from "../OnboardingProvider";
 import { cn } from "@/lib/utils";
 import { captureError } from "@/lib/sentry";
+import { analytics } from "@/lib/analytics";
+import { CalendarCheckIcon } from "@phosphor-icons/react";
+import { carriedSummary, forgetCarried } from "@/lib/carriedCase";
+import { carriedCaseFields } from "@/lib/carriedCaseFields";
+import { useCarriedDates } from "@/hooks/useCarriedDates";
 
 interface CreateCaseStepProps {
   onNext: () => void;
@@ -28,6 +33,9 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createCase = useMutation(api.cases.create);
+  // Dates brought from the public deadline calculator (src/lib/carriedCase.ts):
+  // this first case is saved with them, and its stage then follows them.
+  const { dates: carried } = useCarriedDates();
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -48,7 +56,12 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         beneficiaryIdentifier: beneficiaryIdentifier.trim() || undefined,
         caseStatus: caseStatus as "pwd" | "recruitment" | "eta9089" | "i140",
         progressStatus: "working",
+        ...(carried ? carriedCaseFields(carried) : {}),
       });
+      if (carried) {
+        forgetCarried();
+        analytics.capture("carried_case_saved", { where: "onboarding", recruitment: Boolean(carried.first) });
+      }
 
       setOnboardingCaseId(caseId);
       setOnboardingCaseInfo({
@@ -78,6 +91,15 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
       <p className="text-muted-foreground text-sm mb-6 text-center">
         Just a few fields to get started. You can add details later.
       </p>
+
+      {carried ? (
+        <div className="mb-6 flex w-full max-w-sm items-start gap-3 border-2 border-border bg-tint p-3 text-sm">
+          <CalendarCheckIcon className="mt-0.5 size-5 shrink-0 text-primary-text" aria-hidden="true" />{" "}
+          <p>
+            From the deadline calculator: {carriedSummary(carried)}. They&rsquo;re saved with this case.
+          </p>
+        </div>
+      ) : null}{" "}
 
       <div className="w-full max-w-sm space-y-4 mb-6">
         {/* Employer Name */}
@@ -137,7 +159,8 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
           </p>
         </div>
 
-        {/* Stage Selector */}
+        {/* Stage Selector: with the calculator's dates, the stage follows them. */}
+        {carried ? null : (
         <div className="space-y-1.5">
           <Label className="font-heading font-semibold text-sm">
             Current PERM stage
@@ -163,6 +186,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {errors.form && (

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { PermDeadlineCalculator } from "../PermDeadlineCalculator";
 import { calculateFilingWindow } from "@/lib/perm";
@@ -189,5 +189,95 @@ describe("PermDeadlineCalculator", () => {
     setDate(/first recruitment step/i, "2026-01-10");
     setDate(/last recruitment step/i, "2026-06-25"); // opens 07-25, closes 07-09
     expect(screen.getByRole("alert")).toHaveTextContent(/opens after it closes/i);
+  });
+});
+
+describe("the dates leave the page (Oct 19 2026: firms that keep cases in plain Salesforce)", () => {
+  async function fill() {
+    render(<PermDeadlineCalculator />);
+    setDate(/prevailing wage determination date/i, "2026-01-15"); // expires 2026-06-30
+    setDate(/first recruitment step/i, "2026-02-01");
+    setDate(/last recruitment step/i, "2026-03-01");
+  }
+
+  it("copies every date as text, and says so", async () => {
+    let written = "";
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: async (t: string) => { written = t; } },
+    });
+    await fill();
+    fireEvent.click(screen.getByRole("button", { name: /copy all dates/i }));
+    expect(await screen.findByText(/copied 6 dates, ready to paste/i)).toBeInTheDocument();
+    expect(written).toContain("Prevailing wage determination expires: June 30, 2026");
+    expect(written).toContain("ETA-9089 filing window opens: March 31, 2026");
+    expect(written).toContain("Last recruitment step: March 1, 2026");
+  });
+
+  it("shows the text to copy by hand when the browser refuses", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: async () => { throw new Error("denied"); } },
+    });
+    await fill();
+    fireEvent.click(screen.getByRole("button", { name: /copy all dates/i }));
+    const box = (await screen.findByLabelText(/your perm deadlines as text/i)) as HTMLTextAreaElement;
+    expect(box.value).toContain("PERM deadlines");
+    expect(screen.getByText(/didn.t allow copying/i)).toBeInTheDocument();
+  });
+
+  it("downloads a calendar file of every deadline", async () => {
+    let blob: Blob | null = null;
+    const origCreate = URL.createObjectURL;
+    const origClick = HTMLAnchorElement.prototype.click;
+    URL.createObjectURL = (b: Blob) => { blob = b; return "blob:test"; };
+    let downloaded = "";
+    HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) { downloaded = this.download; };
+    try {
+      await fill();
+      fireEvent.click(screen.getByRole("button", { name: /add to calendar/i }));
+      expect(downloaded).toBe("perm-deadlines.ics");
+      expect(blob).not.toBeNull();
+      const text = await (blob as unknown as Blob).text();
+      expect(text.match(/BEGIN:VEVENT/g)).toHaveLength(6);
+      expect(text).toContain("DTSTART;VALUE=DATE:20260630");
+    } finally {
+      URL.createObjectURL = origCreate;
+      HTMLAnchorElement.prototype.click = origClick;
+    }
+  });
+
+  it("holds the calendar back while a warning shows", () => {
+    render(<PermDeadlineCalculator />);
+    setDate(/prevailing wage determination date/i, "2026-01-15"); // expires 2026-06-30
+    setDate(/first recruitment step/i, "2026-08-01"); // after it expires
+    expect(screen.getByRole("button", { name: /add to calendar/i })).toBeDisabled();
+    expect(screen.getByText(/fix the dates flagged above/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /copy all dates/i })).toBeEnabled();
+  });
+});
+
+describe("keeping the dates as a case (Oct 19 2026)", () => {
+  afterEach(() => window.localStorage.clear());
+
+  it("offers nothing before a date, then carries the entered dates to sign-up and sign-in", () => {
+    window.localStorage.clear();
+    render(<PermDeadlineCalculator />);
+    expect(screen.queryByRole("link", { name: "Save as a case" })).toBeNull();
+    setDate(/prevailing wage determination date/i, "2026-01-15");
+    setDate(/first recruitment step/i, "2026-02-01");
+    setDate(/last recruitment step/i, "2026-03-10");
+    const save = screen.getByRole("link", { name: "Save as a case" });
+    expect(save).toHaveAttribute("href", "/signup?calc=2026-01-15_2026-02-01_2026-03-10");
+    expect(screen.getByRole("link", { name: /have an account\? sign in/i })).toHaveAttribute(
+      "href",
+      "/login?calc=2026-01-15_2026-02-01_2026-03-10",
+    );
+    fireEvent.click(save);
+    expect(JSON.parse(window.localStorage.getItem("pt:calculator-case") || "{}").calc).toBe(
+      "2026-01-15_2026-02-01_2026-03-10",
+    );
+    // The offer is the site's own: an embed on another site hides it.
+    expect(screen.getByRole("heading", { name: "Keep these dates with the case" }).closest("[data-embed-hide]")).not.toBeNull();
   });
 });

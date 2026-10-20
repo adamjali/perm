@@ -22,7 +22,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "PERM Deadline Calculator";
 const DESCRIPTION =
-  "Work out every PERM deadline from the prevailing wage determination: recruitment window, notice of filing, quiet period and the ETA-9089 filing window.";
+  "Every PERM deadline from the prevailing wage determination: recruitment, notice of filing and the filing window. Copy them or add them to a calendar.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -54,6 +54,18 @@ const FAQS = [
   {
     q: "How long does the notice of filing have to be posted?",
     a: "Ten consecutive business days, and it has to be completed inside the recruitment window rather than after it.",
+  },
+  {
+    q: "How do I put PERM deadlines in Outlook or Google Calendar?",
+    a: "Enter the dates and choose Add to calendar. It saves one calendar file with every deadline as an all-day event and a reminder a week before each, which Outlook, Google Calendar and Apple Calendar all open.",
+  },
+  {
+    q: "Can I copy the dates into a spreadsheet or Salesforce?",
+    a: "Yes. Copy all dates puts every deadline on the clipboard as plain text, one line each with its name, ready to paste into a spreadsheet, a case system such as Salesforce, or an email. Any warning about the dates entered is copied with them.",
+  },
+  {
+    q: "Can I get reminders before each deadline?",
+    a: "Save the dates as a case in PERM Tracker, free for attorneys and their teams, and it reminds you 30, 14, 7, 3 and 1 day before each deadline, by email and in the app. The calendar file carries its own reminder a week before each date.",
   },
   {
     q: "Does this cover professional occupations?",

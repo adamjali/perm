@@ -9994,3 +9994,20 @@ instead of skipping the live LCAs.
 second sqld on 127.0.0.1:8082, a copy of the table, the tunnel host, the secrets) and step 3 (rename, then drop the
 old table and compact the main file offline in the night window, then the RAM lock) are in `scripts/oracle/README.md`
 once done.
+
+## Oct 19 2026: the deadline calculator's dates leave the page
+
+Firms that keep cases in plain Salesforce have support staff work the PERM dates out by hand and type them in.
+The public calculator now hands them over three ways, and the last is the funnel into the app.
+
+- **Copy all dates** and **Add to calendar** (`src/lib/deadlineExport.ts`): plain text with any warning first, and
+  an RFC 5545 file (CRLF, 75-octet folding, all-day events, a reminder a week before each, a UID built from the dates
+  entered). The calendar button waits while a warning shows; the copy carries the warning.
+- **Save as a case** (`SaveDatesAsCase`, hidden in embeds): the dates travel in the address (`?calc=`) and in
+  localStorage for 14 days (`src/lib/carriedCase.ts`). A new account's setup wizard saves its first case with them;
+  sign-in, and the proxy for someone already signed in, go to `/cases/new?calc=`, which arrives filled; the
+  dashboard's `CarriedCaseCard` catches anyone who got lost. Only the wage determination and its expiration are
+  filled: the calculator never says which recruitment step came first, so the steps go in the recruitment notes.
+  Nothing is saved without the employer, the job and the person.
+- **The setup wizard's stage picker is ignored by `cases.create`** unless `progressStatusOverride` is set; it hides
+  when calculator dates are present. Left as it was otherwise, flagged for the owner.

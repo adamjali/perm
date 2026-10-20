@@ -38,6 +38,7 @@ import {
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
+import { afterAuthPath } from "@/lib/carriedCase";
 
 type LoginStep = "login" | "verification";
 
@@ -163,7 +164,7 @@ export function LoginPageClient() {
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
         trackLoginSucceeded("email_password");
-        router.push("/dashboard");
+        router.push(afterAuthPath("login"));
       } else {
         // Email not verified — provider re-sent a verification code
         setStep("verification");
@@ -221,7 +222,7 @@ export function LoginPageClient() {
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
       trackLoginSucceeded("email_password");
-      router.push("/dashboard");
+      router.push(afterAuthPath("login"));
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -253,7 +254,7 @@ export function LoginPageClient() {
     setIsGoogleLoading(true);
     authBreadcrumb("login_google_initiated");
     try {
-      await signIn("google", { redirectTo: "/dashboard" });
+      await signIn("google", { redirectTo: afterAuthPath("login") });
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 

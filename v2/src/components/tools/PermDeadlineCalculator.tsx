@@ -14,7 +14,14 @@
  */
 
 import { useId, useMemo, useState } from "react";
-import { ArrowSquareOutIcon, CalendarCheckIcon, InfoIcon, WarningIcon } from "@phosphor-icons/react";
+import {
+  ArrowSquareOutIcon,
+  CalendarCheckIcon,
+  CalendarPlusIcon,
+  CopyIcon,
+  InfoIcon,
+  WarningIcon,
+} from "@phosphor-icons/react";
 
 import {
   calculatePWDExpiration,
@@ -32,8 +39,13 @@ import {
   inShutdownWindow,
 } from "@/lib/permShutdown2025";
 import { formatAsOf } from "@/lib/dolFormat";
+import { analytics } from "@/lib/analytics";
+import { deadlinesIcs, deadlinesText, icsStamp } from "@/lib/deadlineExport";
+import { cleanCarried } from "@/lib/carriedCase";
+import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/forms/DateInput";
 import { DeadlineWindowDiagram } from "./DeadlineWindowDiagram";
+import { SaveDatesAsCase } from "./SaveDatesAsCase";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +69,9 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   const [pwdDate, setPwdDate] = useState("");
   const [firstRecruitment, setFirstRecruitment] = useState("");
   const [lastRecruitment, setLastRecruitment] = useState("");
+  // Which dates the last copy was of, so "Copied" never describes older dates.
+  const [copied, setCopied] = useState<{ key: string; ok: boolean; text: string } | null>(null);
+  const inputKey = `${pwdDate}|${firstRecruitment}|${lastRecruitment}`;
 
   const result = useMemo((): {
     rows: Row[];
@@ -242,6 +257,46 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
     }
   }, [pwdDate, firstRecruitment, lastRecruitment]);
 
+  // FOR FIRMS THAT KEEP CASES ELSEWHERE (plain Salesforce, a spreadsheet),
+  // where someone works these dates out by hand and types them in: the dates
+  // leave the page as text to paste, or as a calendar file (src/lib/deadlineExport.ts).
+  const exportInputs = {
+    pwdDate,
+    firstRecruitment: DATE_RE.test(firstRecruitment) ? firstRecruitment : undefined,
+    lastRecruitment: DATE_RE.test(lastRecruitment) ? lastRecruitment : undefined,
+  };
+  async function copyDates() {
+    if (!result) return;
+    const text = deadlinesText(result.rows, exportInputs, result.warnings, new Date().toLocaleDateString("en-CA"));
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch {
+      // No clipboard (an older browser, a refused permission): the text is
+      // shown below to select by hand instead.
+    }
+    setCopied({ key: inputKey, ok, text });
+    analytics.capture("deadline_calculator_export", { kind: "copy", ok, dates: result.rows.length });
+  }
+  function downloadCalendar() {
+    if (!result) return;
+    const ics = deadlinesIcs(result.rows, exportInputs, icsStamp());
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "perm-deadlines.ics";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    analytics.capture("deadline_calculator_export", { kind: "calendar", dates: result.rows.length });
+  }
+  const copyState = copied && copied.key === inputKey ? copied : null;
+  // What "Save as a case" carries into the app: the entered dates, cleaned
+  // the same way the app reads them back.
+  const carried = cleanCarried({ pwd: pwdDate, first: firstRecruitment, last: lastRecruitment });
+
   return (
     <div className={cn("object", className)}>
       <div className="border-b-2 border-border p-6 sm:p-8">
@@ -413,6 +468,47 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">{row.detail}</p>
             </div>
           ))}
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-wrap gap-3">
+              <Button type="button" variant="outline" onClick={copyDates}>
+                <CopyIcon aria-hidden="true" />
+                Copy all dates
+              </Button>{" "}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={downloadCalendar}
+                disabled={result.warnings.length > 0}
+                aria-describedby={result.warnings.length > 0 ? `${pwdId}-cal-note` : undefined}
+              >
+                <CalendarPlusIcon aria-hidden="true" />
+                Add to calendar
+              </Button>
+            </div>{" "}
+            <p className="mt-3 text-sm text-muted-foreground" role="status">
+              {copyState?.ok
+                ? `Copied ${result.rows.length} ${result.rows.length === 1 ? "date" : "dates"}, ready to paste.`
+                : copyState
+                  ? "This browser didn't allow copying. Select the text below and copy it."
+                  : result.warnings.length > 0
+                    ? ""
+                    : "The calendar file works in Outlook, Google and Apple Calendar, with a reminder a week before each date."}
+            </p>{" "}
+            {result.warnings.length > 0 ? (
+              <p id={`${pwdId}-cal-note`} className="mt-1 text-sm text-muted-foreground">
+                Fix the dates flagged above to add them to a calendar. A copy carries the warning with it.
+              </p>
+            ) : null}{" "}
+            {copyState && !copyState.ok ? (
+              <textarea
+                readOnly
+                value={copyState.text}
+                aria-label="Your PERM deadlines as text"
+                className="mt-3 h-48 w-full min-w-0 border-2 border-input bg-card p-3 font-mono text-sm"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+            ) : null}
+          </div>
         </div>
       ) : (
         // BEFORE A DATE, THE DATES IT WILL FILL: each deadline the calculator
@@ -439,7 +535,9 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             ))}
           </ol>
         </div>
-      )}
+      )}{" "}
+
+      {result && carried ? <SaveDatesAsCase dates={carried} headingId={`${pwdId}-save`} /> : null}
 
       <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">

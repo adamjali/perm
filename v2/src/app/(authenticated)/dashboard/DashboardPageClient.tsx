@@ -13,6 +13,7 @@ import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanne
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { QueuePulseWidget } from "@/components/dashboard/QueuePulseWidget";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
+import { CarriedCaseCard } from "@/components/dashboard/CarriedCaseCard";
 
 /** An account younger than this is greeted "Welcome", not "Welcome back". */
 const NEW_ACCOUNT_MS = 24 * 60 * 60 * 1000;
@@ -76,6 +77,7 @@ export function DashboardPageClient() {
         <DashboardHeading firstName={firstName} isNewAccount={isNewAccount} />
         <QueuePulseWidget />
       </div>
+      <CarriedCaseCard />
       <CaseCapNotice />
       <AutoClosureAlertBanner />
       <DeadlineHeroWidget />

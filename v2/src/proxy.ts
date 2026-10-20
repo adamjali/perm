@@ -5,6 +5,7 @@ import {
 } from "@convex-dev/auth/nextjs/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { refuseAuthPost } from "@/lib/auth/authGate";
+import { afterAuthPath } from "@/lib/carriedCase";
 
 // Protected routes (auth required) — unknown routes fall through to Next.js (404 naturally)
 const isProtectedRoute = createRouteMatcher([
@@ -63,9 +64,11 @@ const auth = convexAuthNextjsMiddleware(
 
     const isAuthenticated = await convexAuth.isAuthenticated();
 
-    // Redirect authenticated users away from login/signup pages
+    // Redirect authenticated users away from login/signup pages. One who chose
+    // "Save as a case" under the deadline calculator goes straight to the
+    // new-case form with those dates (src/lib/carriedCase.ts).
     if (isAuth && isAuthenticated) {
-      return nextjsMiddlewareRedirect(request, "/dashboard");
+      return nextjsMiddlewareRedirect(request, afterAuthPath("login", request.nextUrl.search));
     }
 
     // Redirect unauthenticated users to login (for protected routes only)

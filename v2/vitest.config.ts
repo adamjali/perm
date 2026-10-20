@@ -57,6 +57,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/db/__tests__/debarments.test.ts",
   "src/lib/db/__tests__/reference.test.ts",
   "src/lib/auth/__tests__/authGate.test.ts",
+  // Added 2026-10-19: drives the proxy signed in, with Convex Auth mocked.
+  "src/lib/auth/__tests__/proxyCarried.test.ts",
   // Added 2026-10-02. The API layer's tests mock the database client, the
   // key check and the reads; isolated so no neighbour inherits those mocks.
   "src/lib/api/__tests__/usage.test.ts",

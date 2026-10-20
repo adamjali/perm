@@ -45,6 +45,7 @@ import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
+import { afterAuthPath } from "@/lib/carriedCase";
 
 type SignupStep = "credentials" | "verification";
 
@@ -223,7 +224,7 @@ export function SignupPageClient() {
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
         trackSignupSucceeded("email_password");
-        router.push("/dashboard");
+        router.push(afterAuthPath("signup"));
       } else {
         // OTP sent — move to verification step
         setStep("verification");
@@ -296,7 +297,7 @@ export function SignupPageClient() {
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
       trackSignupSucceeded("email_password");
-      router.push("/dashboard");
+      router.push(afterAuthPath("signup"));
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -328,7 +329,7 @@ export function SignupPageClient() {
     setIsGoogleLoading(true);
     authBreadcrumb("signup_google_initiated");
     try {
-      await signIn("google", { redirectTo: "/dashboard" });
+      await signIn("google", { redirectTo: afterAuthPath("signup") });
     } catch (error) {
       if (handleStaleDeployment(error)) return;
       const message = error instanceof Error ? error.message : String(error);

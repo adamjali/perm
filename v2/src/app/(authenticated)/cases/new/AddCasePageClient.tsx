@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useMutation, useConvex } from "convex/react";
 import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
@@ -19,6 +19,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { NewCaseHeading } from "./NewCaseHeading";
+import { CarriedDatesNote } from "./CarriedDatesNote";
+import { useCarriedDates } from "@/hooks/useCarriedDates";
+import { forgetCarried } from "@/lib/carriedCase";
+import { carriedCaseFields } from "@/lib/carriedCaseFields";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -45,6 +49,11 @@ export function AddCasePageClient() {
   // ============================================================================
 
   const createMutation = useMutation(api.cases.create);
+
+  // Dates brought from the public deadline calculator (src/lib/carriedCase.ts)
+  // fill the form; `key` remounts it once they're read after hydration.
+  const { dates: carried, key: carriedKey } = useCarriedDates();
+  const carriedInitial = useMemo(() => (carried ? carriedCaseFields(carried) : undefined), [carried]);
 
   // ============================================================================
   // HANDLERS
@@ -74,7 +83,9 @@ export function AddCasePageClient() {
         analytics.capture("case_created", {
           case_id: caseId,
           is_duplicate_override: !!duplicateOf,
+          from_calculator: Boolean(carried),
         });
+        if (carried) forgetCarried();
         toast.success("Case created");
         await router.push(`/cases/${caseId}`);
       } catch (error) {
@@ -94,7 +105,7 @@ export function AddCasePageClient() {
         setIsCreating(false);
       }
     },
-    [createMutation, router]
+    [createMutation, router, carried]
   );
 
   /**
@@ -200,9 +211,13 @@ export function AddCasePageClient() {
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <NewCaseHeading />
 
+      {carried ? <CarriedDatesNote dates={carried} /> : null}
+
       {/* Case Form */}
       <CaseForm
+        key={carriedKey}
         mode="add"
+        initialData={carriedInitial}
         onSuccess={handleFormSuccess}
         onCancel={handleCancel}
       />
