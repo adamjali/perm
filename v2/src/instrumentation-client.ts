@@ -32,6 +32,7 @@ import {
 } from "@/lib/exceptionNoise";
 import { scrubClickEvent } from "@/lib/analyticsRedact";
 import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
+import { guardStorage } from "@/lib/storageGuard";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -39,6 +40,11 @@ import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 // this skips the probe. Schemas read the flag when they are built, and this
 // file runs before any app module loads.
 zodConfig({ jitless: true });
+
+// A browser blocking this site's storage throws on reading it, and the sign-in
+// pages' auth library reads it while rendering: an in-memory store stands in
+// for this page, and those pages say why sign-in can't stick (src/lib/storageGuard.ts).
+const storageGuarded = typeof window !== "undefined" ? guardStorage(window) : { local: false, session: false };
 
 // A page the browser has translated must not drop to the error screen when
 // React updates it (src/lib/translateSafeDom.ts). It runs before hydration,
@@ -273,6 +279,11 @@ function startPostHog(key: string, country: string | null): void {
 if (posthogKey) {
   // Calls the app makes before PostHog is up are held, then replayed.
   holdUntilStarted();
+  // Held with the rest until PostHog is up, then sent: how often a browser
+  // blocking this site's storage reaches us (storageGuard above).
+  if (storageGuarded.local || storageGuarded.session) {
+    analytics.capture("storage_guard_stepped_in", storageGuarded);
+  }
   void edgeCountry()
     .then((country) => startPostHog(posthogKey, country))
     .finally(releaseHeld);

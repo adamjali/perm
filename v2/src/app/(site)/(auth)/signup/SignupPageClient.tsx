@@ -44,6 +44,7 @@ import {
 import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
+import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
 
 type SignupStep = "credentials" | "verification";
 
@@ -424,6 +425,7 @@ export function SignupPageClient() {
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
+        <StorageBlockedNotice />
         <form ref={credentialsFormRef} onSubmit={handleCredentialsSubmit} className="space-y-5" noValidate>
           <AuthField
             id="email"

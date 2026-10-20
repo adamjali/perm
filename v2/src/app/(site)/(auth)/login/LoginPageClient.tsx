@@ -37,6 +37,7 @@ import {
 } from "@/lib/auth/auth-telemetry";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
+import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
 
 type LoginStep = "login" | "verification";
 
@@ -345,6 +346,7 @@ export function LoginPageClient() {
         </h1>
       </CardHeader>
       <CardContent className="space-y-6">
+        <StorageBlockedNotice />
         {showExpiredBanner && (
           <div className="flex items-center gap-2 border-2 border-data-warn/50 bg-data-warn/15 px-3 py-2.5 text-sm text-data-warn-ink">
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
