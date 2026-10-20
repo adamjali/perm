@@ -302,6 +302,27 @@ d.decide(_st, False, None, NOW)
 check("...and 30 calm minutes later it all goes off",
       d.decide(_st, False, None, NOW + d.CALM_FOR) == [("all_off", {})])
 
+# Pre-loads and beacons (Oct 20 2026). A pre-load (the last field "1") is not a
+# page, and a refused one is not a full app; old lines without the field still
+# read; a label whose browsers send analytics beacons is people, never the source.
+CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+old_line = dl(NOW - 30)
+check("a line written before the pre-load field still reads", len(d.page_requests([old_line], NOW - 600)) == 1)
+pre = [dl(NOW - 30 - i % 50, status=503) + " 1" for i in range(200)] + [dl(NOW - 30 - i % 50) + " -" for i in range(300)]
+check("refused pre-loads don't make a minute full", d.full_minutes(d.page_requests(pre, NOW - 600), NOW) == 0)
+check("a pre-load is not a page", len(d.page_requests(pre, NOW - 600)) == 300)
+check("an analytics beacon is not a page", d.page_requests([dl(NOW - 30, uri="/ingest/e/?ip=0") + " -"], NOW - 600) == [])
+readers = ([dl(NOW - i % 200, asn=7922, ua=CHROME) + " -" for i in range(400)]
+           + [dl(NOW - i % 200, asn=7922, uri="/ingest/e/", ua=CHROME) + " -" for i in range(60)]
+           + [dl(NOW - i % 200, asn=7018) + " -" for i in range(300)])
+lines_r = readers
+src = d.find_source(d.page_requests(lines_r, NOW - 300), NOW, d.beacons_by_label(lines_r, NOW - 300))
+check("a label whose browsers run the site's scripts is never the source", src is None or src.get("kind") != "ua", str(src))
+scrape = ([dl(NOW - i % 200, asn=7922, ua=SCRAPER) + " -" for i in range(400)]
+          + [dl(NOW - i % 200, asn=7018) + " -" for i in range(300)])
+src = d.find_source(d.page_requests(scrape, NOW - 300), NOW, d.beacons_by_label(scrape, NOW - 300))
+check("a label that never runs them still is", src and src["kind"] == "ua" and src["value"] == SCRAPER, str(src))
+
 print()
 print(f"{len(failures)} failure(s)")
 sys.exit(1 if failures else 0)

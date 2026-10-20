@@ -949,7 +949,7 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   question, is left alone. Proved on the server: 16 requests passed, then 429; a browser kept getting 200.
 
 
-## Oct 20 2026, in three lines
+## Oct 20 2026, in six lines
 
 - **Crawlers skip searches with a name in the address** (`/case-search?`, `/lca-cases?`, `/pwd-cases?` in robots.txt):
   about 18,000 came from Applebot, ClaudeBot and PerplexityBot in 16 hours while visitors met timeouts. Each names the
@@ -958,3 +958,9 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   2:43 AM Oct 21 (`permtracker-db-compact`).
 - **The compaction's busy check counts services, not timers**: a job's timer reads "active waiting" all day, and the
   check had refused on fourteen of them; its dry run caught it.
+- **Most of what browsers ask the server for is pre-loads**, not pages: 9,397 of 10,791 requests from 12:55 to 1:30 PM
+  EDT, each link a reader can see. nginx lets pre-loads together hold 16 of the app's 64 slots (`pt_prefetch_conn`); a
+  refused one costs the reader nothing.
+- **The defense ignores pre-loads and analytics beacons, and never challenges a browser label whose browsers run the
+  site's scripts** (`PEOPLE_BEACON_SHARE`): it had challenged Windows Chrome 155, about half of all real page views.
+- **ClaudeBot and Applebot read at 30 pages a minute each** (`pt_slowcrawl`, owner's call), like Meta's and Perplexity's.

@@ -157,7 +157,7 @@ def run(conf_text: str) -> None:
         check(f"{sel}: whole-app in-flight cap", "pt_app" in zones_in(b, "limit_conn"))
 
     # People and crawlers are limited everywhere a page or API answers.
-    crawler_req = {"pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity"}
+    crawler_req = {"pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_slowcrawl"}
     crawler_conn = {"pt_search_conn", "pt_bots_conn"}
     for sel, b in public.items():
         req = set(zones_in(b, "limit_req"))
@@ -175,6 +175,8 @@ def run(conf_text: str) -> None:
     for sel in ("/", "= /perm-case-status", "= /embed/case-status"):
         req = zones_in(locs.get(sel, ""), "limit_req")
         check(f"{sel}: page and pre-load limits", {"pt_page", "pt_prefetch"} <= set(req))
+        m = re.search(r"limit_conn\s+pt_prefetch_conn\s+(\d+);", locs.get(sel, ""))
+        check(f"{sel}: pre-loads together hold only part of the app's slots", m is not None and int(m.group(1)) < 64)
     check("/api/: its own limit", "pt_api" in zones_in(locs.get("/api/", ""), "limit_req"))
 
     # The public API: the app's cap, its own share of it, JSON refusals.
@@ -205,7 +207,14 @@ def run(conf_text: str) -> None:
     check("Perplexity's crawler has the same lower allowance, verified or not",
           perp is not None and '"~*PerplexityBot" perplexity;' in perp.group(1) and "Perplexity-User" not in perp.group(1)
           and re.search(r"zone=pt_perplexity:\S+\s+rate=30r/m;", head) is not None)
-    for zone in ("pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_prefetch"):
+    slow = re.search(r"map \$http_user_agent \$pt_slowcrawl_key\s*\{([^}]*)\}", head)
+    check("ClaudeBot and Applebot have the same lower allowance, each its own, verified or not",
+          slow is not None and '"~*ClaudeBot" claude;' in slow.group(1) and '"~*Applebot" apple;' in slow.group(1)
+          and "Claude-User" not in slow.group(1) and re.search(r"zone=pt_slowcrawl:\S+\s+rate=30r/m;", head) is not None)
+    pf = re.search(r"map \$http_next_router_prefetch \$pt_prefetch_all\s*\{([^}]*)\}", head)
+    check("pre-loads from everyone share one in-flight cap", pf is not None and '"1" prefetch;' in pf.group(1)
+          and "default \"\";" in pf.group(1))
+    for zone in ("pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_slowcrawl", "pt_prefetch"):
         lines = re.findall(rf"limit_req\s+zone={zone}\s+([^;]*);", server)
         check(f"{zone}: refused at once (nodelay)", bool(lines) and all("nodelay" in x for x in lines), str(lines))
 
@@ -304,6 +313,8 @@ def run(conf_text: str) -> None:
     # $uri of a turned-away request is the busy page's /503.html; the defense
     # needs the page the visitor asked for (Oct 12 2026).
     check("defend: the path is the one asked for, not the busy page's", fmt is not None and '"$uri"' not in fmt.group(1))
+    check("defense log records whether a request is a pre-load",
+          fmt is not None and fmt.group(1).endswith('"$http_user_agent" $http_next_router_prefetch'))
 
 
 def probe() -> None:
@@ -340,6 +351,10 @@ def probe() -> None:
         "Meta's allowance dropped from a page": good.replace("        limit_req zone=pt_meta burst=15 nodelay;\n", "", 1),
         "Perplexity's allowance dropped from a page": good.replace("        limit_req zone=pt_perplexity burst=15 nodelay;\n", "", 1),
         "Perplexity limited only when verified": good.replace("map $http_user_agent $pt_perplexity_key", "map $pt_bot_key $pt_perplexity_key", 1),
+        "ClaudeBot's allowance dropped from a page": good.replace("        limit_req zone=pt_slowcrawl burst=15 nodelay;\n", "", 1),
+        "pre-load cap dropped from a page": good.replace("        limit_conn pt_prefetch_conn 16;\n", "", 1),
+        "pre-load cap counts every request": good.replace('{ "1" prefetch; default ""; }', '{ default prefetch; }', 1),
+        "defense log loses the pre-load flag": good.replace(' $http_next_router_prefetch\';', "';", 1),
         "refusal views no longer logged": good.replace("        access_log /var/log/permtracker-busy/seen.log pt_busy_seen;\n", "", 1),
         "refusal-view log loses the status": good.replace("'$time_iso8601 $status $remote_addr", "'$time_iso8601 $remote_addr", 1),
         "counting image answered before its limit": good.replace("        empty_gif;\n    }", "        return 204;\n    }", 1),

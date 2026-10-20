@@ -117,7 +117,14 @@ NOT_PERSON = re.compile(
     r"bot|crawl|spider|slurp|externalagent|externalhit|fetcher|headless|lighthouse|python|curl|wget|"
     r"httpclient|java/|go-http|node-fetch|axios|okhttp|scrapy|playwright|puppeteer|phantom", re.I)
 # nginx pt_defend: $msec $status $http_x_pt_asn $http_x_pt_verified_bot "$request_uri" "$http_user_agent"
-DEFEND_LINE = re.compile(r'^(\d+(?:\.\d+)?) (\d{3}) (\S+) (\S+) "([^"]*)" "(.*)"$')
+# $http_next_router_prefetch (the last field since Oct 20 2026; older lines lack it)
+DEFEND_LINE = re.compile(r'^(\d+(?:\.\d+)?) (\d{3}) (\S+) (\S+) "([^"]*)" "(.*)"(?: (\S+))?$')
+# A browser running the site's scripts sends analytics beacons; a scraper that
+# only fetches pages sends none. A browser label that sends at least this many
+# beacons per page it asks for is people, and is never challenged as a label
+# (Oct 20 2026: the busiest label was Windows Chrome 155, the current Chrome,
+# about half of all real page views, and challenging it landed on readers).
+PEOPLE_BEACON_SHARE = 0.05
 # nginx pt_busy_seen: $time_iso8601 $status $remote_addr $arg_k "$http_user_agent"
 BUSY_LINE = re.compile(r'^(\S+) (\d{3}) (\S+) (\S*) "(.*)"$')
 
@@ -150,10 +157,24 @@ def page_requests(lines: list[str], since: float) -> list[tuple[float, int, int 
             continue
         t = float(m.group(1))
         path = m.group(5).split("?", 1)[0]
-        if t < since or STATIC.match(path):
+        # A pre-load is the browser fetching a link before anyone clicks it;
+        # nginx refuses those past their own cap, and a refused one costs the
+        # reader nothing, so it is neither a page nor a sign the app is full.
+        # Analytics beacons go straight to PostHog and are counted apart.
+        if t < since or STATIC.match(path) or path.startswith("/ingest") or m.group(7) == "1":
             continue
         asn = int(m.group(3)) if m.group(3).isdigit() else None
         out.append((t, int(m.group(2)), asn, m.group(4) == "true", m.group(6), path))
+    return out
+
+
+def beacons_by_label(lines: list[str], since: float) -> Counter:
+    """Analytics beacons (/ingest) per browser label since `since`."""
+    out: Counter = Counter()
+    for ln in lines:
+        m = DEFEND_LINE.match(ln)
+        if m and float(m.group(1)) >= since and m.group(5).startswith("/ingest"):
+            out[m.group(6)] += 1
     return out
 
 
@@ -216,9 +237,10 @@ def find_section(reqs, now: float) -> dict | None:
     return {"kind": "section", "value": sec, "share": round(n / len(refused), 2), "requests": n}
 
 
-def find_source(reqs, now: float) -> dict | None:
+def find_source(reqs, now: float, beacons: Counter | None = None) -> dict | None:
     """The network or browser label sending most unverified page requests, or
-    failing those, the part of the site most of the turned-away requests were for."""
+    failing those, the part of the site most of the turned-away requests were for.
+    A label whose browsers run the site's scripts is people, never the source."""
     recent = [r for r in reqs if r[0] >= now - SOURCE_WINDOW and not r[3]]
     if len(recent) < SOURCE_MIN:
         return None
@@ -227,7 +249,8 @@ def find_source(reqs, now: float) -> dict | None:
     total = len(recent)
     if asn is not None and asn not in WHOLE_NETWORK_NEVER and n_asn >= SOURCE_MIN and n_asn >= SOURCE_SHARE * total:
         return {"kind": "asn", "value": asn, "share": round(n_asn / total, 2), "requests": n_asn}
-    if ua and n_ua >= SOURCE_MIN and n_ua >= SOURCE_SHARE * total:
+    people = beacons is not None and beacons.get(ua, 0) >= PEOPLE_BEACON_SHARE * n_ua
+    if ua and not people and n_ua >= SOURCE_MIN and n_ua >= SOURCE_SHARE * total:
         return {"kind": "ua", "value": ua, "share": round(n_ua / total, 2), "requests": n_ua}
     return find_section(reqs, now)
 
@@ -508,7 +531,9 @@ def main() -> int:
     except (OSError, ValueError):
         state = {"mode": "off"}
         saved = False
-    reqs = page_requests(tail_lines(DEFEND_LOG), now - max(SOURCE_WINDOW, 60 * FULL_MINUTES))
+    defend_lines = tail_lines(DEFEND_LOG)
+    reqs = page_requests(defend_lines, now - max(SOURCE_WINDOW, 60 * FULL_MINUTES))
+    beacons = beacons_by_label(defend_lines, now - SOURCE_WINDOW)
     people = people_busy(tail_lines(BUSY_LOG, 2 << 20), now)
     deploying = deploying_now(now)
     full = 0 if deploying else full_minutes(reqs, now)
@@ -521,7 +546,7 @@ def main() -> int:
         if db_bound:
             full = 0
     trouble = in_trouble(people, full)
-    source = find_source(reqs, now) if trouble else None
+    source = find_source(reqs, now, beacons) if trouble else None
     acts = decide(state, trouble, source, now)
     if not trouble:
         state.pop("lastWould", None)
