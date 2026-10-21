@@ -518,6 +518,28 @@ describe("getAllPosts", () => {
     expect(posts).toEqual([]);
   });
 
+  it("in production reads the files once per process, and hands each caller its own list", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      setupMultiTypePosts([
+        { type: "changelog", slug: "once-a", data: { title: "A", date: "2025-01-01", tags: [], published: true } },
+        { type: "changelog", slug: "once-b", data: { title: "B", date: "2025-03-01", tags: [], published: true } },
+      ]);
+      const first = getAllPosts("changelog");
+      const reads = mockReadFileSync.mock.calls.length;
+      const words = mockReadingTime.mock.calls.length;
+
+      first.reverse();
+      const second = getAllPosts("changelog");
+
+      expect(mockReadFileSync.mock.calls.length).toBe(reads);
+      expect(mockReadingTime.mock.calls.length).toBe(words);
+      expect(second.map((p) => p.slug)).toEqual(["once-b", "once-a"]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("includes post type in each PostSummary", () => {
     setupMultiTypePosts([
       { type: "guides", slug: "tut-1", data: { title: "Tut", date: "2025-01-01", tags: [], published: true } },

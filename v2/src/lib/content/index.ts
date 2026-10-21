@@ -115,8 +115,25 @@ export function latestPostDate(): string | null {
   return newestPostDay;
 }
 
-/** Get all posts, optionally filtered by type. Sorted by date descending. */
+const allPostsRead = new Map<string, PostSummary[]>();
+
+/**
+ * Get all posts, optionally filtered by type. Sorted by date descending.
+ *
+ * READ ONCE PER SERVER PROCESS IN PRODUCTION (Oct 21 2026). The site's layout
+ * and both 404 pages call this, and Next renders the 404 page into every page
+ * it builds, so each page build read, parsed and word-counted every article
+ * two or three times. A CPU profile of a live copy put 45% of its time in
+ * reading-time alone. The files ship with the build and never change while it
+ * runs; the dev server still reads them each time, so a new post shows at
+ * once. Each caller gets its own copy of the list.
+ */
 export function getAllPosts(type?: ContentType): PostSummary[] {
+  const key = type ?? "all";
+  const once = process.env.NODE_ENV === "production";
+  const kept = once ? allPostsRead.get(key) : undefined;
+  if (kept) return kept.slice();
+
   const types: ContentType[] = type
     ? [type]
     : ["blog", "guides", "changelog"];
@@ -133,9 +150,9 @@ export function getAllPosts(type?: ContentType): PostSummary[] {
     }
   }
 
-  return posts.sort(
-    (a, b) => new Date(b.meta.date).getTime() - new Date(a.meta.date).getTime()
-  );
+  posts.sort((a, b) => new Date(b.meta.date).getTime() - new Date(a.meta.date).getTime());
+  if (once) allPostsRead.set(key, posts);
+  return posts.slice();
 }
 
 /** Get related posts by matching tags */
