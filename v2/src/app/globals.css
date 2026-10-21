@@ -1583,8 +1583,11 @@ body[data-scroll-locked] {
 }
 
 
-/* Images */
-.prose-article img {
+/* Images. A figure component (ScreenshotFigure, VideoFigure) is `not-prose`
+   and draws its own frame, so its picture takes neither the border nor the
+   margin: the margin had left an empty band above and below every article
+   picture, inside its frame. */
+.prose-article img:not(.not-prose img) {
   border: 1px solid var(--border);
   margin: 1.5em 0;
   max-width: 100%;
