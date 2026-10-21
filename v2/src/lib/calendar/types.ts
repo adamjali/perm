@@ -152,7 +152,7 @@ export const DEADLINE_TYPE_LABELS: Record<DeadlineType, string> = {
   additionalMethod: "Addl method",
   eta9089Filed: "ETA filed",
   eta9089Certified: "ETA certified",
-  eta9089Expires: "ETA expires",
+  eta9089Expires: "I-140 deadline",
   i140Filed: "I-140 filed",
   i140Approved: "I-140 approved",
   filingWindowOpens: "ETA window opens",

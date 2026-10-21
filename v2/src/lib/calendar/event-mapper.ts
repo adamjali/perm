@@ -183,7 +183,7 @@ const CENTRAL_TO_CALENDAR: Record<ExtractedDeadline["type"], { type: DeadlineTyp
   notice_of_filing_start_deadline: { type: "noticeOfFilingStartDeadline", stage: "recruitment" },
   first_sunday_ad_deadline: { type: "firstSundayAdDeadline", stage: "recruitment" },
   second_sunday_ad_deadline: { type: "secondSundayAdDeadline", stage: "recruitment" },
-  i140_filing_deadline: { type: "eta9089Expires", stage: "eta9089" },
+  i140_filing_deadline: { type: "eta9089Expires", stage: "i140" },
   rfi_due: { type: "rfiDue", stage: "rfi" },
   rfe_due: { type: "rfeDue", stage: "rfe" },
   denial_review_due: { type: "denialReviewDue", stage: "eta9089" },

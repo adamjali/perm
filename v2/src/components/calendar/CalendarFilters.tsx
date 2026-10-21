@@ -109,7 +109,7 @@ const DEADLINE_TYPE_GROUPS: {
     types: [
       { value: "eta9089Filed", label: "ETA filed" },
       { value: "eta9089Certified", label: "ETA certified" },
-      { value: "eta9089Expires", label: "ETA expiration" },
+      { value: "eta9089Expires", label: "I-140 deadline" },
       { value: "filingWindowOpens", label: "Filing window opens" },
       { value: "filingWindowCloses", label: "Filing window closes" },
       { value: "denialReviewDue", label: "Denial review due" },

@@ -192,7 +192,11 @@ drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every p
 - has alt text saying what it shows and what it means, and any text inside it readable on a phone at 4.5:1;
 - is looked at full size before it ships, and taken again when the page it shows changes.
 
-A drawing is a file loaded as an image, below the fold, and holds still (see Motion). Films: captions never cover
+A still drawing is a file loaded as an image, below the fold. A moving one is a client component that renders its first
+pose on the server (`src/components/figures/`, the kit in `src/components/iso/`), its dates from the central rules,
+and its caption saying in words what the motion shows. **The filing-window bench is the owner's exception to the
+motion rules (Oct 21 2026):** it sweeps by itself and pauses at each end, page scrolling pushes it, and dragging moves
+it, the sweep resuming a second after either; under reduced motion it holds still and only dragging moves it. Films: captions never cover
 what's shown, no frame is empty, and every film is checked frame by frame before its final encode
 (`~/money/video/hyperframes/permtracker-campaign/SOURCES.md`).
 

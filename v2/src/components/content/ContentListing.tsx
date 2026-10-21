@@ -116,7 +116,8 @@ function TopicButton({ pressed, onClick, label, count }: { pressed: boolean; onC
       className={choiceVariants({ on: pressed })}
     >
       {label}{" "}
-      <span className="text-sm text-muted-foreground">{count}</span>
+      {/* On the pressed (lime) button the count takes the button's ink: grey on lime read 3.03:1. */}
+      <span className={pressed ? "text-sm" : "text-sm text-muted-foreground"}>{count}</span>
     </button>
   );
 }

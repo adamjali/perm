@@ -101,7 +101,7 @@ const SECTIONS: TourSection[] = [
     ],
     surface: "calendar",
     url: "permtracker.app/calendar",
-    alt: "The calendar's month view for October 2026 with the sample firm's RFI response and ETA 9089 expiration.",
+    alt: "The calendar's month view for October 2026 with the sample firm's RFI response and I-140 deadline.",
   },
 ];
 

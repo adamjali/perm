@@ -6,6 +6,7 @@
  */
 
 import type { MDXComponents } from "mdx/types";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,9 @@ import { BulletinReleaseNow } from "@/components/content/BulletinReleaseNow";
 import { Lightbox } from "@/components/ui/lightbox";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
+
+// The drawings load their kit only on the articles that use them.
+const FilingWindowFigure = dynamic(() => import("@/components/figures/filing-window/FilingWindowFigure"));
 
 /* ------------------------------------------------------------------ */
 /* Custom MDX blocks                                                   */
@@ -222,6 +226,8 @@ export const mdxComponents: MDXComponents = {
   RecruitmentNow,
   // When the next bulletin usually comes out, from the archive's captures.
   BulletinReleaseNow,
+  // The filing window as a measuring bench: the reader moves the last recruitment step.
+  FilingWindowFigure,
 
   // Headings
   //

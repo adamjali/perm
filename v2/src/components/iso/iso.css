@@ -1,0 +1,80 @@
+/*
+ * The isometric drawings' tones (from the anatomy skill's kit/iso.css, Oct 21 2026), keyed to the
+ * site's themes: light by default, dark under html.dark. The paper is the page, so a drawing's
+ * fills hide what's behind them without showing as patches. No card, legend or motion styles:
+ * the site frames a figure itself, and nothing here moves by itself.
+ */
+.iso {
+  --anatomy-paper: var(--background);
+  --anatomy-face: #ffffff;
+  --anatomy-top: #ffffff;
+  --anatomy-shade-0: #dcdcd9;
+  --anatomy-shade-1: #e5e5e2;
+  --anatomy-shade-2: #ededea;
+  --anatomy-shade-3: #f4f4f1;
+  --anatomy-lit-top: #ffffff;
+  --anatomy-lit-shade: #eeeeeb;
+  --anatomy-hi: #26262a;
+  --anatomy-mid: #8a8a8f;
+  --anatomy-lo: #b4b4b8;
+  --anatomy-faint: #d4d4d6;
+  --anatomy-lit: #000000;
+  --anatomy-halo: #8a8a80;
+  --anatomy-halo-opacity: 0.32;
+  --anatomy-dot: #3a3a3e;
+  --anatomy-weight: 0.6px;
+}
+.dark .iso {
+  --anatomy-face: #1b1b1b;
+  --anatomy-top: #1c1c1c;
+  --anatomy-shade-0: #0f0f0f;
+  --anatomy-shade-1: #121212;
+  --anatomy-shade-2: #151515;
+  --anatomy-shade-3: #181818;
+  --anatomy-lit-top: #262626;
+  --anatomy-lit-shade: #1d1d1d;
+  --anatomy-hi: #d4d4d4;
+  --anatomy-mid: #6a6a6a;
+  --anatomy-lo: #3e3e3e;
+  --anatomy-faint: #2a2a2a;
+  --anatomy-lit: #ffffff;
+  --anatomy-halo: #050505;
+  --anatomy-halo-opacity: 0.9;
+  --anatomy-dot: #e6e6e6;
+}
+.iso-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.iso-svg path, .iso-svg circle { vector-effect: non-scaling-stroke; }
+.iso-fill { fill: var(--anatomy-paper); stroke: none; }
+.iso-solid[data-lit] > .iso-fill { fill: var(--anatomy-face); }
+.iso-shade, .iso-top { stroke: none; }
+.iso-shade[data-shade="0"] { fill: var(--anatomy-shade-0); }
+.iso-shade[data-shade="1"] { fill: var(--anatomy-shade-1); }
+.iso-shade[data-shade="2"] { fill: var(--anatomy-shade-2); }
+.iso-shade[data-shade="3"] { fill: var(--anatomy-shade-3); }
+.iso-top { fill: var(--anatomy-top); }
+.iso-solid[data-lit] > .iso-top { fill: var(--anatomy-lit-top); }
+.iso-solid[data-lit] > .iso-shade { fill: var(--anatomy-lit-shade); }
+.iso-solid[data-lit] > .iso-edge { stroke: var(--anatomy-lit); }
+.iso-halo { fill: var(--anatomy-halo); stroke: none; filter: blur(9px); opacity: var(--anatomy-halo-opacity); transform: translateY(3px); }
+.iso-line { fill: none; stroke: var(--anatomy-lo); stroke-width: var(--anatomy-weight); stroke-linecap: round; stroke-linejoin: round; }
+.iso-line[data-tone="hi"] { stroke: var(--anatomy-hi); }
+.iso-line[data-tone="mid"] { stroke: var(--anatomy-mid); }
+.iso-line[data-tone="lo"] { stroke: var(--anatomy-lo); }
+.iso-line[data-tone="faint"] { stroke: var(--anatomy-faint); }
+.iso-line[data-tone="lit"] { stroke: var(--anatomy-lit); }
+.iso-dots circle { fill: var(--anatomy-dot); stroke: none; opacity: 0.32; }
+.iso-dots[data-tone="hi"] circle { opacity: 0.85; }
+.iso-dots[data-tone="mid"] circle { opacity: 0.45; }
+.iso-dots[data-tone="lo"] circle { opacity: 0.22; }
+.iso-dots[data-tone="faint"] circle { opacity: 0.12; }
+.iso-face-text { fill: var(--anatomy-mid); font-family: var(--font-mono), ui-monospace, monospace; }
+.iso-face-text[data-tone="hi"] { fill: var(--anatomy-hi); }
+.iso-face-text[data-tone="lo"] { fill: var(--anatomy-lo); }
+
+/* The filing window, in the site's lime: the one part to watch. Its outline is the lime ink. */
+.fw-window {
+  --anatomy-lit-top: var(--primary);
+  --anatomy-lit-shade: color-mix(in srgb, var(--primary) 82%, #000000);
+  --anatomy-face: var(--primary);
+  --anatomy-lit: var(--primary-text);
+}

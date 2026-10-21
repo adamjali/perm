@@ -85,7 +85,7 @@ export default function ContentCard({
               />
               {/* Type badge overlay */}
               {showType && (
-                <Badge className="absolute left-3 top-3 bg-card max-sm:hidden">{config.label}</Badge>
+                <Badge variant="outline" className="absolute left-3 top-3 bg-card max-sm:hidden">{config.label}</Badge>
               )}
             </div>
           )}{" "}

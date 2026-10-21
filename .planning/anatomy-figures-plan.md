@@ -4,7 +4,8 @@ Two skills draw them. `anatomy` makes interactive figures that explain how somet
 comes from code (here: the central rules in `convex/lib/perm`, so a figure can't contradict the app). `anatomy-asset`
 makes still pictures (spots, page pictures, promo tiles), mostly grey with the lime and the stage colours.
 
-The owner approves each one before it's built (Oct 21 2026). Nothing below is built yet.
+The owner approves each one before it's built (Oct 21 2026). Built: the filing-window bench (approved Oct 21, 3:37 PM
+EDT), in `the-perm-deadlines-that-matter`; the rest wait for his yes, one at a time.
 
 ## Where they go
 
@@ -37,7 +38,9 @@ The owner approves each one before it's built (Oct 21 2026). Nothing below is bu
 
 - Loaded as an image file (`<img src="/….svg">`), below the fold, never the first thing a page paints. Inline SVG in a
   server component rides in the page payload twice.
-- No motion that runs by itself (`calm-system.test.ts`, WCAG 2.2.2): ship still, or one interaction-driven move.
+- Motion: the owner chose, for the filing-window bench, a sweep that pauses at each end, scroll that pushes it and
+  dragging (no slider or keys), resuming a second after the reader lets go. Each new figure asks him again. Reduced
+  motion always holds it still, and the caption says in words what the motion shows.
 - Alt text on each; keyboard and a live readout for the interactive ones; text and marks at AA contrast.
 - 70 to 240 KB each. The site is flat with square corners and 2px borders, so keep them grey with lime and few in
   number, or they look pasted on.

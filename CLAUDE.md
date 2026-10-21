@@ -1028,4 +1028,12 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
   PWD expiries that stopped binding on Oct 17 (recruitment began inside the PWD): all were re-made from the corrected
   sample firm. After re-recording the tour fixtures, re-take every picture, clip and header made from them.
 - **Isometric drawings** (the `anatomy` and `anatomy-asset` skills) go only where `.planning/anatomy-figures-plan.md`
-  says, and each waits for the owner's yes before it ships.
+  says, and each waits for the owner's yes before it ships. The first, the filing window as a measuring bench
+  (`<FilingWindowFigure />` in `the-perm-deadlines-that-matter`), is a client component on the kit in
+  `src/components/iso/` (geometry and SVG strings, no card or CSS from the skill), its dates from
+  `calculateFilingWindow`. By the owner's call it sweeps by itself, scroll pushes it and dragging moves it (no slider or
+  keys); under reduced motion it holds still. `next/dynamic` loads it only on articles that use it.
+- **The calendar calls the certification's expiry the "I-140 deadline"**, in the I-140 colour, like the dashboard
+  and the case card (it said "ETA expires" in ETA 9089 orange). The calendar pictures and clips were re-taken.
+- **Two dark-mode contrast failures fixed**, found by axe on the guide pages: the "Guide" badge on article cards (black on
+  near-black) and the count on the pressed topic button (grey on lime, 3.03:1).
