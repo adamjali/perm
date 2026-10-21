@@ -37,11 +37,13 @@ pace), in `how-the-perm-queue-works`. The rest wait for his yes, one at a time.
 
 ## Rules for every one
 
-- Loaded as an image file (`<img src="/….svg">`), below the fold, never the first thing a page paints. Inline SVG in a
-  server component rides in the page payload twice.
+- A still picture is an image file (`<img src="/….svg">`), below the fold, never the first thing a page paints: inline
+  SVG in a server component rides in the page payload twice. An interactive one is a client component loaded through
+  `next/dynamic`, its first pose drawn on the server, so the kit ships only with the articles that use it.
 - Motion: the owner chose, for the filing-window bench, a sweep that pauses at each end, scroll that pushes it and
   dragging (no slider or keys), resuming a second after the reader lets go. Each new figure asks him again. Reduced
-  motion always holds it still, and the caption says in words what the motion shows.
+  motion always holds it still, a self-running one carries a Pause button (WCAG 2.2.2), and the caption says in words
+  what the motion shows.
 - Alt text on each; keyboard and a live readout for the interactive ones; text and marks at AA contrast.
 - 70 to 240 KB each. The site is flat with square corners and 2px borders, so keep them grey with lime and few in
   number, or they look pasted on.

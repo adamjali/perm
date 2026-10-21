@@ -32,6 +32,12 @@ describe("FilingWindowFigure on the server", () => {
     expect(html).toContain("Drag the carriage, or scroll, to move the last step.");
   });
 
+  it("can be paused, because it moves by itself (WCAG 2.2.2), and the control hides under reduced motion", () => {
+    const button = html.match(/<button[^>]*>/)?.[0] ?? "";
+    expect(button).toContain('aria-label="Pause the sweep"');
+    expect(button).toContain("motion-reduce:hidden");
+  });
+
   it("says it's an illustration on an example case, and hides nothing", () => {
     expect(html).toContain("An illustration, on an example case whose recruitment began March 2, 2026");
     expect(html).not.toMatch(/opacity:\s*0[;"]/);

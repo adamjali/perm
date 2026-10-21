@@ -39,6 +39,12 @@ describe("QueueConveyorFigure on the server", () => {
     expect(html).toContain("if DOL keeps that pace and works strictly in filing order");
   });
 
+  it("can be paused, because it moves by itself (WCAG 2.2.2), and the control hides under reduced motion", () => {
+    const button = html.match(/<button[^>]*>/)?.[0] ?? "";
+    expect(button).toContain('aria-label="Pause the time-lapse"');
+    expect(button).toContain("motion-reduce:hidden");
+  });
+
   it("hides nothing", () => {
     expect(html).not.toMatch(/opacity:\s*0[;"]/);
   });

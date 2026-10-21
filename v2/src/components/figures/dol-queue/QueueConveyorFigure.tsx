@@ -12,11 +12,12 @@
  * Under reduced motion it holds today's line still, and the caption says the dates in words.
  */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@/components/iso/iso.css";
 import { longDate, monthYear } from "@convex/lib/months";
 import { HEIGHT, WIDTH, buildConveyor } from "./geometry";
 import { frontMonth, queueReading, remainingAt, type QueueRun } from "./model";
+import { MotionToggle } from "../MotionToggle";
 
 /** Real seconds for the whole run, the hold at the picked month's arrival and at its end. */
 const RUN_S = 11;
@@ -48,6 +49,15 @@ export default function QueueConveyorFigure({ run, census }: { run: QueueRun; ce
   const stamp = useRef<SVGGElement>(null);
   const sign = useRef<SVGGElement>(null);
   const readout = useRef<HTMLParagraphElement>(null);
+  // The reader's Pause: the run stops until Play. The loop reads the ref; the label reads the state.
+  const [paused, setPaused] = useState(false);
+  const stopped = useRef(false);
+  const wake = useRef<() => void>(() => {});
+  const toggle = useCallback(() => {
+    stopped.current = !stopped.current;
+    setPaused(stopped.current);
+    wake.current();
+  }, []);
 
   useEffect(() => {
     const el = stage.current;
@@ -117,7 +127,7 @@ export default function QueueConveyorFigure({ run, census }: { run: QueueRun; ce
       const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 0;
       last = now;
       clock += dt;
-      const running = !still.matches;
+      const running = !still.matches && !stopped.current;
       if (held && !dragging && now >= resumeAt) held = false;
       if (running && !held) {
         if (fading > 0) {
@@ -161,6 +171,20 @@ export default function QueueConveyorFigure({ run, census }: { run: QueueRun; ce
         frame = requestAnimationFrame(tick);
       }
     };
+    wake.current = () => {
+      // a pause in the middle of the fade lands on the start, never on a half-faded line
+      if (fading > 0) {
+        t = 0;
+        heldReach = false;
+      }
+      fading = 0;
+      group.style.opacity = "";
+      desk.style.opacity = "";
+      holdUntil = 0;
+      hand.setAttribute("transform", art.press(0));
+      run$();
+    };
+
     const hold = () => {
       held = true;
       fading = 0;
@@ -269,9 +293,12 @@ export default function QueueConveyorFigure({ run, census }: { run: QueueRun; ce
             <g ref={stamp} dangerouslySetInnerHTML={{ __html: art.stamp }} />
           </svg>
         </div>
-        <p ref={readout} className="min-h-12 border-t-2 border-border px-4 py-3 text-base tabular-nums sm:min-h-0 sm:px-6">
-          {queueReading(run, 0)}
-        </p>
+        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+          <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
+            {queueReading(run, 0)}
+          </p>
+          <MotionToggle paused={paused} onToggle={toggle} what="time-lapse" />
+        </div>
       </div>
       <figcaption className="mt-2 text-sm text-muted-foreground">
         {`An illustration of the line on ${longDate(census)}, run forward. Each tray is one filing month. Its stack is that month's cases still in analyst review, drawn to scale. The ${run.earlier.toLocaleString("en-US")} older cases still in line sit on the desk and go first. ${run.dolAsOf ? `DOL's own published month was ${monthYear(run.dolMonth)} on ${longDate(run.dolAsOf)}. ` : ""}The reviewer works at DOL's average over the last ${run.paceDays} days we observed: about ${pace.toLocaleString("en-US")} cases a day, oldest first. There are ${ahead.toLocaleString("en-US")} cases ahead of ${monthYear(run.pick)}, so the line reaches it around ${longDate(run.reachDate)}. It reaches the month's end around ${longDate(run.endDate)}. That's the estimate the queue month pages give, if DOL keeps that pace and works strictly in filing order. New filings joining the back aren't drawn. Drag along the line, or scroll, to move through the days.`}

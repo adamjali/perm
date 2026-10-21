@@ -195,8 +195,9 @@ drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every p
 A still drawing is a file loaded as an image, below the fold. A moving one is a client component that renders its first
 pose on the server (`src/components/figures/`, the kit in `src/components/iso/`), its dates from the central rules,
 and its caption saying in words what the motion shows. **The filing-window bench and the queue conveyor are the owner's
-exception to the motion rules (Oct 21 2026):** it sweeps by itself and pauses at each end, page scrolling pushes it, and dragging moves
-it, the sweep resuming a second after either; under reduced motion it holds still and only dragging moves it. Films: captions never cover
+exception to the motion rules (Oct 21 2026):** each runs by itself and pauses at its ends, page scrolling pushes it, and dragging moves
+it, the run resuming a second after either. Each carries a Pause button (`MotionToggle`; WCAG 2.2.2, motion over 5 s), hidden
+under reduced motion, where the figure holds still and only dragging moves it. No slider or keys (owner's call). Films: captions never cover
 what's shown, no frame is empty, and every film is checked frame by frame before its final encode
 (`~/money/video/hyperframes/permtracker-campaign/SOURCES.md`).
 

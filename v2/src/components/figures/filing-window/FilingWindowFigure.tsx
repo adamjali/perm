@@ -15,11 +15,12 @@
  * drag.
  */
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "@/components/iso/iso.css";
 import { longDate } from "@convex/lib/months";
 import { BACK, CARRIAGE, DAY_ON_SCREEN, FRONT, HEIGHT, LAST_MAX, LAST_MIN, WIDTH, carriageAt, windowAt } from "./geometry";
 import { readFilingWindow } from "./model";
+import { MotionToggle } from "../MotionToggle";
 
 interface FilingWindowFigureProps {
   /** The example case's first recruitment step, ISO. */
@@ -53,6 +54,15 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
   const carriage = useRef<SVGGElement>(null);
   const strip = useRef<SVGGElement>(null);
   const readout = useRef<HTMLParagraphElement>(null);
+  // The reader's Pause: the sweep stops until Play. The loop reads the ref; the label reads the state.
+  const [paused, setPaused] = useState(false);
+  const stopped = useRef(false);
+  const wake = useRef<() => void>(() => {});
+  const toggle = useCallback(() => {
+    stopped.current = !stopped.current;
+    setPaused(stopped.current);
+    wake.current();
+  }, []);
 
   useEffect(() => {
     const el = stage.current;
@@ -101,7 +111,7 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
         phase = phaseAt(day, dir);
         pausedUntil = 0;
       }
-      if (!held && !still.matches && now >= pausedUntil) {
+      if (!held && !still.matches && !stopped.current && now >= pausedUntil) {
         const next = phase + (Math.PI / SWEEP_S) * dt;
         const turn = dir > 0 ? Math.PI : 2 * Math.PI;
         if (next >= turn) {
@@ -114,7 +124,7 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
         day = MID - AMP * Math.cos(phase);
       }
       draw();
-      if (visible && (held || !still.matches)) frame = requestAnimationFrame(tick);
+      if (visible && (held || (!still.matches && !stopped.current))) frame = requestAnimationFrame(tick);
     };
 
     const run = () => {
@@ -122,6 +132,12 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
         last = 0;
         frame = requestAnimationFrame(tick);
       }
+    };
+
+    wake.current = () => {
+      pausedUntil = 0;
+      phase = phaseAt(day, dir);
+      run();
     };
 
     const hold = () => {
@@ -217,9 +233,12 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
             <g dangerouslySetInnerHTML={{ __html: FRONT }} />
           </svg>
         </div>
-        <p ref={readout} className="min-h-12 border-t-2 border-border px-4 py-3 text-base tabular-nums sm:min-h-0 sm:px-6">
-          {widest.sentence}
-        </p>
+        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+          <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
+            {widest.sentence}
+          </p>
+          <MotionToggle paused={paused} onToggle={toggle} what="sweep" />
+        </div>
       </div>
       <figcaption className="mt-2 text-sm text-muted-foreground">
         {`An illustration, on an example case whose recruitment began ${longDate(first)}, inside the wage determination's validity. Drag the carriage, or scroll, to move the last step. With a last step on ${longDate(widest.last)} the window runs from ${longDate(widest.opens)} to ${longDate(widest.closes)}. Each day later shortens it by a day, and a last step on ${longDate(narrowest.last)} leaves only ${longDate(narrowest.closes)}. The 180 days run from the earliest step, or from the notice of filing if it went up first. The 30 days run from the end of the last mandatory step or the notice, whichever ends later. One of a professional job's additional steps may fall inside them. The dates come from the same rule the app uses on every case.`}
