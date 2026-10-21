@@ -1263,3 +1263,25 @@ Skipped:
 
 Still to request, in order:
 1. Nothing queued. After the next deploy, run `node scripts/gsc_queue.mjs --since b11de4e4`.
+
+## Queue after the Oct 21 inspection of every main page and article (and the Oct 22 night deploy, d9d0545b)
+
+Every URL in `sitemaps/pages.xml` (689) was put to Search Console's URL Inspection API on Oct 21 2026, 11:30 AM to
+1:00 PM EDT: 538 indexed. Not indexed: 87 visa bulletin months, 48 H-1B state pages and 3 bulletin category lines
+(templated families, left to the sitemap by the owner's call), and the one-off pages below. Three guides answered
+the API with an error and weren't checked (`/guides/look-up-a-law-firm`, `/guides/look-up-a-perm-case-by-number`,
+`/guides/look-up-an-lca-by-number`): inspect them by hand first.
+
+Still to request, in order (after the Oct 22 2 AM deploy for the first):
+1. `/guides/getting-started` (rewritten Oct 21; the welcome email's link)
+2. `/tools/i140-calculator` (unknown to Google)
+3. `/tools/pwd-calculator` (discovered, not indexed)
+4. `/guides/track-a-prevailing-wage-request` (unknown to Google)
+5. `/blog/why-perm-cases-are-denied` (discovered, not indexed)
+6. `/blog/what-dol-publishes-about-perm` (discovered, not indexed)
+7. `/blog/how-perm-wage-data-is-published` (unknown to Google)
+8. The three guides the API couldn't read, if they turn out not indexed
+9. `/perm-attorneys/browse/u` (unknown to Google)
+10. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled Oct 17 and Oct 12, not
+    indexed: a request rarely changes Google's mind; last)
+11. After the deploy, `node scripts/gsc_queue.mjs --since b11de4e4` for anything else the Oct 21 changes touched.
