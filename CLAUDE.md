@@ -991,3 +991,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 21 2026".
   main log carries `rt=`, `urt=`, `nc=`; Cloudflare holds employer, firm and job HTML a day (stale-while-revalidate).
 - **Of `.github/`, only `oracle-deploy.yml` ships the site**: an ordered `paths` list, the last match winning.
 - **Googlebot's 42% refusals (11 PM to 2 AM EDT Oct 20) were slow builds**, not deploys or limits.
+
+## Oct 21 2026 (afternoon): the getting-started guide, and three copies that dropped fields
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 21 2026 (afternoon)".
+
+- **The dashboard, the case list and the cards showed a passed PWD as overdue on cases still free to file** (8 live cases,
+  7 accounts): `toPermCaseData` copied fields by name and left out the determination date and the four denial dates.
+  The calendar page and Google Calendar sync had their own copies with their own gaps. All three pass the whole case now
+  (`calendarCaseRow`, `calendarSyncCase` in `convex/lib/caseDates.ts`), and `deadline-agreement.test.ts` checks the
+  calendar and sync through what their own queries send. Reminders, auto-close and the assistant were already right.
+- **A filed case's ETA 9089 and Recruitment tabs read "Expired"** in red: they now say what was filed and when.
+- **Every article picture sat in an empty band**: `.prose-article img` gave figure pictures a margin inside their frame.
+- **The getting-started guide (the welcome email's link) is rewritten against the app**, with a real tour and a case-page
+  clip; the five guide clips, 31 app pictures and 15 article figures were re-recorded from the current app.

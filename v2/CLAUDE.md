@@ -10067,3 +10067,38 @@ The public calculator now hands them over three ways, and the last is the funnel
 - **A read that does more than its caller needs runs as often as the page.** `getDisclosureStats` read 750 ranking
   rows for pages that used one figure; `getDisclosureSummary` is the document alone.
 - **Before adding a read to a page, check what it costs per render**: `permtracker-db-stats --rows` after an hour.
+
+## Oct 21 2026 (afternoon): the getting-started guide, and three copies that dropped fields
+
+**A copy of a case that names its fields one by one is where a field goes missing.** Three such copies sat between the
+cases table and the central deadline rules, each with its own gaps, and each surface still passed its own tests because
+those tests fed it the full case:
+
+| copy | left out | what people saw |
+|---|---|---|
+| `toPermCaseData` (dashboard, case list, cards) | the PWD determination date, the four ETA 9089 denial dates | a passed PWD as overdue on a case whose recruitment began inside it (8 live cases, 7 accounts, measured); no denial-review deadline at all |
+| the calendar page's mapping, and `caseDeadlineDates` behind the calendar and timeline queries | the professional flag, the additional steps, the stored windows, the notice of filing start, the denial dates | a professional case's filing window from the wrong step; no denial deadline |
+| `getCaseForCalendarSync` (Google Calendar) | the determination date, the denial dates | a PWD expiry event that no longer binds; no denial event (none in production yet) |
+
+All three pass the whole case now: `toPermCaseData` spreads it, `calendarCaseRow` and `calendarSyncCase` in
+`convex/lib/caseDates.ts` build what the calendar query and the sync query send, and `toCalendarCaseData`
+(`src/lib/calendar/fromQuery.ts`) passes the calendar row through. `deadline-agreement.test.ts` gained eight situations
+(recruitment begun inside and before the determination, a professional job's window, four denial states and a
+reversal), a reminders check, and checks of the calendar page and Google sync made from what their own queries send;
+`convex/__tests__/recentRulesEndToEnd.test.ts` drives the real reminder job, dashboard query, auto-close and sync query.
+Each was probed: the old code fails exactly the checks it should. Production check: no synced case held a stale PWD
+event and no case has a denial, so nothing needed a resync.
+
+**The case page's window cards** (`computeWindowStatus`): the ETA 9089 and Recruitment tabs passed only their dates, so a
+case filed inside its window read "Expired, 82 days past expiration". They pass the filing now ("ETA 9089 filed Apr 2,
+2026", no day count), and the Recruitment tab reads "Begun" once recruitment began inside the PWD (`pwdBearingFromCase`).
+
+**`.prose-article img` is unlayered**, so `not-prose` doesn't stop it: every ScreenshotFigure picture had a 1.5em margin
+inside its frame. It skips `.not-prose img` now (`article-figure-frame.test.ts`).
+
+**The guide clips and pictures.** `scripts/record_tour_videos.mjs` records `app-tour` (dashboard, cases, a case, the
+calendar, joined from `segments`) and `case-page` (each tab) beside the five older clips. Re-record the tour fixtures
+first when the app's data shape changes (`UPDATE_TOUR_FIXTURES=1 pnpm exec vitest run tourFixtures --project convex -u`;
+Juniper now has three notes). The article capture hides `.fixed`, which caught the chat panel mid-animation and made a
+blank figure: its recipe forces opacity and transform. **Look at every clip's frames and every figure** before shipping:
+a 2 KB WebP was a blank picture, and the case-page clip is what showed the "Expired" defect.
