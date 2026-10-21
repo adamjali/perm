@@ -20,7 +20,6 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import { CircleNotchIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 
-import type { SearchArticle } from "./SearchPalette";
 import { cn } from "@/lib/utils";
 import { trackPaletteOpened } from "@/lib/funnelEvents";
 
@@ -29,13 +28,7 @@ const SearchPalette = dynamic(() => import("./SearchPalette"), { ssr: false });
 /** What the box asks for, everywhere it appears. */
 export const SEARCH_PLACEHOLDER = "Case number, employer or firm";
 
-export function SiteSearch({
-  articles,
-  className,
-}: {
-  articles: SearchArticle[];
-  className?: string;
-}) {
+export function SiteSearch({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false);
   const [initialQuery, setInitialQuery] = React.useState("");
   // The palette mounts after the first open and stays mounted after it.
@@ -119,7 +112,6 @@ export function SiteSearch({
         <SearchPalette
           open={open}
           onOpenChange={setOpen}
-          articles={articles}
           onReady={onReady}
           initialQuery={initialQuery}
         />

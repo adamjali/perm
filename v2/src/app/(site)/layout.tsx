@@ -1,6 +1,5 @@
 import SiteHeader from "@/components/layout/SiteHeader";
 import Footer from "@/components/layout/Footer";
-import { getAllPosts } from "@/lib/content";
 
 /**
  * The shell shared by every logged-out page: the marketing and data pages in
@@ -27,16 +26,7 @@ export default function SiteLayout({
         Skip to main content
       </a>
 
-      {/* The search palette's article index: titles only, read from the
-          content directory at render time (a server layout, so this costs
-          the client nothing until the palette opens). */}
-      <SiteHeader
-        articles={getAllPosts().map((p) => ({
-          title: p.meta.title,
-          href: `/${p.type}/${p.slug}`,
-          kind: p.type,
-        }))}
-      />
+      <SiteHeader />
 
       {children}
 

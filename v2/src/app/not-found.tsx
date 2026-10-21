@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import SiteHeader from "@/components/layout/SiteHeader";
 import Footer from "@/components/layout/Footer";
 import { NotFoundBody } from "@/components/layout/NotFoundBody";
-import { getAllPosts } from "@/lib/content";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
@@ -23,10 +22,9 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
-  const articles = getAllPosts().map((p) => ({ title: p.meta.title, href: `/${p.type}/${p.slug}`, kind: p.type }));
   return (
     <div className="relative flex min-h-screen flex-col bg-background">
-      <SiteHeader articles={articles} />
+      <SiteHeader />
       <main id="main-content" tabIndex={-1} className="relative flex-1 pt-(--site-header-h)">
         <NotFoundBody />
       </main>

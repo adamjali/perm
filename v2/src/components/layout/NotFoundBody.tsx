@@ -13,7 +13,6 @@ import {
 } from "@phosphor-icons/react/ssr";
 
 import { NotFoundSuggestions } from "@/components/search/NotFoundSuggestions";
-import { getAllPosts } from "@/lib/content";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 const DOORS = [
@@ -34,9 +33,6 @@ const DOORS = [
  * own 404 (which sits inside them).
  */
 export function NotFoundBody() {
-  // Every article by title and address, so a mistyped article link can be
-  // matched against them. Read from the content folder when the page is built.
-  const articles = getAllPosts().map((p) => ({ title: p.meta.title, href: `/${p.type}/${p.slug}`, kind: p.type }));
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
       <p className="text-sm text-muted-foreground">Error 404</p>{" "}
@@ -46,7 +42,7 @@ export function NotFoundBody() {
       </p>{" "}
       <div className="object mt-6 p-5 sm:p-6">
         <CaseLookupForm className="max-w-xl" label="Case number" compact source="not-found" help={null} />{" "}
-        <NotFoundSuggestions articles={articles} />
+        <NotFoundSuggestions />
       </div>{" "}
 
       <h2 className="mt-12 font-heading text-xl font-bold">Or go to</h2>{" "}

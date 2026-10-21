@@ -25,6 +25,7 @@ import { Command } from "cmdk";
 import { CircleNotchIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 import { staticIndex } from "@/lib/search/siteIndex";
+import { useArticles } from "@/lib/search/articleList";
 import { GROUPS } from "@/lib/siteMap";
 import { fuzzyScore } from "@/lib/fuzzy";
 import { useNameSuggestions } from "@/components/search/DidYouMean";
@@ -94,19 +95,20 @@ const PALETTE_PER_KIND = 5;
 export function SearchPalette({
   open,
   onOpenChange,
-  articles,
   onReady,
   initialQuery = "",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  articles: SearchArticle[];
   /** Fired once this module has mounted, so the trigger can stop spinning. */
   onReady?: () => void;
   /** What was already typed in the header's box when the palette opened. */
   initialQuery?: string;
 }) {
   const router = useRouter();
+  // Fetched the first time the palette opens and kept for the visit; the page
+  // itself no longer carries the list (src/app/articles.json).
+  const { articles, failed: articlesFailed } = useArticles(true);
   const pathname = usePathname();
   const [query, setQuery] = React.useState(initialQuery);
   // Each opening starts from what the box held at that moment.
@@ -522,6 +524,11 @@ export function SearchPalette({
             ),
           )}
 
+          {articlesFailed && articles.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-muted-foreground">
+              Articles couldn&apos;t load this time; close search and open it again to retry.
+            </p>
+          ) : null}
           {articles.length > 0 ? (
             <Command.Group
               heading="Articles"

@@ -40,7 +40,7 @@ describe("SearchPalette feedback", () => {
 
   it("says it is searching the corpus even when the page list already matches", async () => {
     const user = userEvent.setup();
-    render(<SearchPalette open onOpenChange={noop} articles={[]} />);
+    render(<SearchPalette open onOpenChange={noop} />);
 
     // "data" matches the static index, so Command.Empty never renders - which
     // is exactly the case the old spinner could not reach.
@@ -53,7 +53,7 @@ describe("SearchPalette feedback", () => {
 
   it("stops saying it is searching when the query drops below two characters", async () => {
     const user = userEvent.setup();
-    render(<SearchPalette open onOpenChange={noop} articles={[]} />);
+    render(<SearchPalette open onOpenChange={noop} />);
 
     const input = screen.getByRole("combobox");
     await user.type(input, "microsoft");
@@ -79,7 +79,7 @@ describe("SearchPalette feedback", () => {
       vi.fn(() => Promise.reject(new TypeError("network"))),
     );
     const user = userEvent.setup();
-    render(<SearchPalette open onOpenChange={noop} articles={[]} />);
+    render(<SearchPalette open onOpenChange={noop} />);
 
     await user.type(screen.getByRole("combobox"), "microsoft");
 
@@ -87,7 +87,7 @@ describe("SearchPalette feedback", () => {
   });
 
   it("keeps the whole list of what it accepts in a hint that cannot truncate", () => {
-    render(<SearchPalette open onOpenChange={noop} articles={[]} />);
+    render(<SearchPalette open onOpenChange={noop} />);
     // The placeholder is short enough to fit a 320px phone; the enumeration
     // lives in prose underneath, where it wraps instead of clipping.
     expect(screen.getByRole("combobox")).toHaveAttribute(
@@ -100,7 +100,7 @@ describe("SearchPalette feedback", () => {
   });
 
   it("is a dialog, so assistive tech knows the page behind it is not the subject", () => {
-    render(<SearchPalette open onOpenChange={noop} articles={[]} />);
+    render(<SearchPalette open onOpenChange={noop} />);
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
   });

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 import { DidYouMean, nameSuggestionChips, useNameSuggestions } from "@/components/search/DidYouMean";
-import { suggestForPath, type ArticleRef, type PathSuggestions } from "@/lib/search/didYouMean";
+import { useArticles } from "@/lib/search/articleList";
+import { suggestForPath, type PathSuggestions } from "@/lib/search/didYouMean";
 import { staticIndex } from "@/lib/search/siteIndex";
 
 /**
@@ -20,11 +21,14 @@ import { staticIndex } from "@/lib/search/siteIndex";
  */
 const noop = () => () => {};
 
-export function NotFoundSuggestions({ articles }: { articles: ArticleRef[] }) {
+export function NotFoundSuggestions() {
   const pathname = usePathname();
   // False on the server and in the prerendered HTML, true once in a browser,
   // where the address is the one that missed.
   const mounted = React.useSyncExternalStore(noop, () => true, () => false);
+  // Fetched only when a 404 is actually shown: Next ships this page inside
+  // every page, so a list passed as a prop rode along on all of them.
+  const { articles } = useArticles(mounted);
   const found: PathSuggestions | null = React.useMemo(
     () => (mounted && pathname ? suggestForPath(pathname, staticIndex(), articles) : null),
     [mounted, pathname, articles],
