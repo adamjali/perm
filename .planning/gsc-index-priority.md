@@ -1237,3 +1237,29 @@ Still to request, in order:
 1. `/guides/manual-vs-automated-tracking`
 2. `/guides/ultimate-perm-guide-2026`
 3. The Oct 19 night-deploy list above (month ticks), only a page crawled before Oct 19, 2 AM EDT.
+
+### Round, Wednesday Oct 21 2026 (about 11:12 AM to 11:24 AM EDT)
+
+Worked Tuesday's "Still to request" list, then `node scripts/gsc_queue.mjs --since 08256222` (live at 2 AM and
+10:39 AM today: /opt-employers under 2 MB, the article list out of every page, frame links pre-loading on intent, the
+H-1B-only employer descriptions, translated pages declaring their language), then the Oct 19 month-tick list. Google
+didn't answer Quota Exceeded.
+
+Requested (last crawl before the request):
+- `/opt-employers` (Oct 15, 11:38 PM; over Googlebot's 2 MB until 2 AM today)
+- `/guides/manual-vs-automated-tracking` (Aug 29, 3:50 PM)
+- `/guides/ultimate-perm-guide-2026` (Oct 10, 6:06 AM)
+- `/perm-case-status` (Oct 17, 2:58 AM)
+- `/policy-changes` (Sep 17, 12:54 PM)
+- `/seasonal-cases` (Oct 15, 11:38 PM)
+
+Skipped:
+- `/` (crawled today 1:34 AM, and daily; today's change shrank its page data and left its text alone)
+- `/perm-cases` (Oct 20, 12:14 AM), `/perm-decision-activity` (today 7:35 AM), `/perm-processing-times`
+  (Oct 19, 4:48 PM), `/tools` (Oct 20, 3:46 PM): each crawled after the month-tick change
+- The employer, law firm and job samples and the five translated pages: today's change to them touches no text
+  Google indexes (the page data, the frame links, a language attribute set in the browser); the sitemap's lastmod
+  carries them.
+
+Still to request, in order:
+1. Nothing queued. After the next deploy, run `node scripts/gsc_queue.mjs --since b11de4e4`.
