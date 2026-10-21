@@ -1,0 +1,9 @@
+[Unit]
+Description=PERM Tracker page speed, every hour
+[Timer]
+# At :17, clear of the jobs on the hour and the half hour.
+OnCalendar=*-*-* *:17:00
+RandomizedDelaySec=60
+Persistent=false
+[Install]
+WantedBy=timers.target

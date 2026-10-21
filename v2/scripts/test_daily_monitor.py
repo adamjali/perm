@@ -36,6 +36,27 @@ def main() -> int:
     check(dm.worst(["ok", "off"]) == "off" and dm.worst(["warn", "fail"]) == "fail" and dm.worst([]) == "ok",
           "worst() picks the worst status")
 
+    # Page speed (bin/permtracker-perf writes perm_docs['server_perf'] hourly).
+    pnow = 1_800_000_000_000
+    healthy = {"computedAt": pnow - 600_000, "errors": {}, "day": {"runs": 24, "warnings": [], "failedRuns": 0},
+               "pages": {"entityBuilds": {"n": 300, "p50": 0.34, "p90": 0.56}, "cached": {"n": 900, "p50": 0.016}},
+               "preloads": {"share": 0.21, "requests": 30000},
+               "profile": {"busyShare": 0.25, "seconds": 30, "self": [{"what": "Node (write)", "share": 0.15}],
+                           "ours": [{"what": "src/lib/db/client.ts", "share": 0.02}]},
+               "database": {"totalSeconds": 60.0, "top": [{"runs": 9000, "meanMs": 1.1, "sql": "SELECT slug"}]}}
+    v = dm.perf_verdict(healthy, pnow)
+    check(v["status"] == "ok" and "340 ms" in v["summary"], "perf: a healthy hour is OK and says the build time", str(v))
+    check(any("busy 25%" in ln for ln in v["lines"]), "perf: the profile's busy share is reported", str(v["lines"]))
+    check(dm.perf_verdict(None, pnow)["status"] == "warn", "perf: no readings at all is a warning")
+    stale = dict(healthy, computedAt=pnow - 4 * 3_600_000)
+    check(dm.perf_verdict(stale, pnow)["status"] == "fail", "perf: readings 4 hours old mean the job stopped: FAIL")
+    hot = dict(healthy, day={"runs": 24, "warnings": ["src/lib/content/index.ts is under 75% of the copy's busy time."]})
+    v = dm.perf_verdict(hot, pnow)
+    check(v["status"] == "warn" and "index.ts" in v["summary"], "perf: a warning from any hour of the day is raised", str(v))
+    broke = dict(healthy, errors={"profile": "the copy's inspector didn't open"})
+    v = dm.perf_verdict(broke, pnow)
+    check(v["status"] == "warn" and "inspector" in v["summary"], "perf: a failed reading is said, never skipped", str(v))
+
     runs = [
         {"name": "Case status (direct from DOL)", "status": "completed", "conclusion": "failure", "run_attempt": 1,
          "updated_at": "2026-09-29T08:30:00Z"},

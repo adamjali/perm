@@ -1184,6 +1184,74 @@ def server_section(now_ms: int) -> dict:
     return server_verdict(read_doc(db, "server_health"), now_ms, DEPLOY_SWITCH_MS if DEPLOY_SWITCH_MS or SPEED_READ else None)
 
 
+# ── page speed (bin/permtracker-perf on the server, hourly) ───────────────
+
+PERF_STALE_MS = 3 * HOUR_MS
+
+
+def dur(seconds) -> str:
+    if seconds is None:
+        return "n/a"
+    return f"{seconds * 1000:.0f} ms" if seconds < 1 else f"{seconds:.1f} s"
+
+
+def perf_verdict(doc: dict | None, now_ms: int) -> dict:
+    """Judge perm_docs['server_perf']: page build times, pre-loads, the
+    database's hour and a CPU profile, written by the server every hour. Its
+    day rollup carries the busy hours a 7:30 AM report would otherwise miss."""
+    title = "Page speed (the server's own readings)"
+    if not doc:
+        return section("perf", title, "warn", "no speed readings yet: the hourly permtracker-perf job hasn't written any")
+    fails: list[str] = []
+    warns: list[str] = []
+    lines: list[str] = []
+    age = now_ms - int(doc.get("computedAt") or 0)
+    if age > PERF_STALE_MS:
+        fails.append(f"The speed readings are {age // HOUR_MS} hours old: the hourly job has stopped "
+                     "(systemctl status permtracker-perf on the server).")
+    day = doc.get("day") or {}
+    warns.extend(day.get("warnings") or [])
+    errors = doc.get("errors") or {}
+    if errors:
+        warns.append("The last run couldn't read: " + "; ".join(f"{k} ({v})" for k, v in sorted(errors.items())))
+    if day.get("failedRuns"):
+        lines.append(f"{day['failedRuns']} of the day's {day.get('runs', 0)} runs missed a reading.")
+    pages = doc.get("pages") or {}
+    eb = pages.get("entityBuilds") or {}
+    cached = pages.get("cached") or {}
+    lines.append(f"Last hour: employer, law firm and job pages built in {dur(eb.get('p50'))} typically "
+                 f"({dur(eb.get('p90'))} at the slow end, {eb.get('n', 0)} builds); cached pages answered in "
+                 f"{dur(cached.get('p50'))}.")
+    if day.get("worstEntityBuildP50") is not None and day.get("worstHour"):
+        at = et_time(dt.datetime.fromtimestamp(day["worstHour"] / 1000, dt.timezone.utc).isoformat())
+        lines.append(f"Slowest hour of the day: {dur(day['worstEntityBuildP50'])} a build, at {at}.")
+    pre = doc.get("preloads") or {}
+    if pre.get("share") is not None:
+        lines.append(f"Background pre-loads: {pre['share']:.0%} of {pre.get('requests', 0):,} requests.")
+    prof = doc.get("profile") or {}
+    if prof and not prof.get("error") and prof.get("busyShare") is not None:
+        top = (prof.get("self") or [{}])[0]
+        ours = (prof.get("ours") or [{}])[0]
+        lines.append(f"The live copy was busy {prof['busyShare']:.0%} of a {prof.get('seconds', 30)}-second profile. "
+                     f"Most of that: {top.get('what', 'n/a')} ({top.get('share', 0):.0%}). Our busiest file: "
+                     f"{ours.get('what', 'none')} ({ours.get('share', 0):.0%}).")
+    db = doc.get("database") or {}
+    if db.get("top"):
+        t = db["top"][0]
+        lines.append(f"Database: {db.get('totalSeconds')} s of statements in the hour. Costliest: {t['runs']:,} runs "
+                     f"at {t['meanMs']} ms: {t['sql'][:80]}")
+    status = "fail" if fails else "warn" if warns else "ok"
+    summary = (fails + warns)[0] if fails or warns else (
+        f"pages build in {dur(eb.get('p50'))} and cached ones answer in {dur(cached.get('p50'))}")
+    return section("perf", title, status, summary, fails + warns + lines)
+
+
+def perf_section(now_ms: int) -> dict:
+    from lib_db import Database, read_doc  # noqa: PLC0415 - only needed here
+
+    return perf_verdict(read_doc(Database(), "server_perf"), now_ms)
+
+
 # ── assembly ──────────────────────────────────────────────────────────────
 
 
@@ -1213,6 +1281,7 @@ def build(now: dt.datetime) -> dict:
         guarded("sentry", "Errors (Sentry)", sentry_section),
         guarded("browser", "Errors in visitors' browsers", browser_errors_section),
         guarded("server", "The server (Oracle)", server_section, now_ms),
+        guarded("perf", "Page speed (the server's own readings)", perf_section, now_ms),
     ]
     return {"day": now.astimezone(ET).date().isoformat(), "generatedAt": now_ms, "sections": sections}
 

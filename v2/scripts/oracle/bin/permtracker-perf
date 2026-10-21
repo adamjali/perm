@@ -1,0 +1,683 @@
+#!/usr/bin/env python3
+"""Every hour: what each page costs the server, and which code the cost is.
+
+Written Oct 21 2026, the morning a CPU profile found 75% of the web copies'
+time going to one function of ours (every page build re-read and word-counted
+all the articles) while every other instrument said only "the server is busy".
+This job takes the same readings on its own, keeps them, and says when one
+regresses:
+
+  1. page builds and cached answers by page type, from nginx's main log (its
+     rt=, urt= and nc= fields), over the last hour;
+  2. background pre-loads' share of requests (the defense log's flag);
+  3. the database's costliest statements over the hour (sqld's admin stats,
+     the difference from the last run's snapshot);
+  4. a 30-second CPU profile of the live first copy through its inspector
+     (SIGUSR1), named from the build's own source maps: the hottest code, and
+     for library code, the file of ours that called it.
+
+It writes perm_docs['server_perf'] (the morning report's "Page speed"
+section), keeps 30 days of hourly summaries in health/perf.jsonl, and prints a
+one-line verdict. A reading that fails is recorded with its reason, never
+skipped quietly; the job itself fails (and permtracker-alarm emails) only when
+it can't write its report. It never runs during a deploy, never opens a
+second inspector, and closes the one it opened.
+
+    permtracker-perf              # the hourly run
+    permtracker-perf --dry-run    # print the report, write nothing
+    permtracker-perf --no-profile # skip the CPU profile
+"""
+from __future__ import annotations
+
+import argparse
+import bisect
+import json
+import os
+import pathlib
+import re
+import signal
+import socket
+import statistics
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.request
+from collections import Counter, defaultdict
+
+APP = pathlib.Path("/srv/permtracker")
+HEALTH = APP / "health"
+HISTORY = HEALTH / "perf.jsonl"
+DB_PREV = HEALTH / "perf-dbstats.json"
+ACCESS = pathlib.Path("/var/log/nginx/access.log")
+DEFEND = pathlib.Path("/var/log/permtracker-busy/defend.log")
+ADMIN_KEY = pathlib.Path("/etc/permtracker/db-admin.env")
+WINDOW_S = 3600
+HISTORY_DAYS = 30
+PROFILE_S = 30
+TAIL_CHUNK = 4 << 20  # bytes read from a log's end at first; doubled until the hour is covered
+INSPECTOR_PORT = 9229
+
+# What counts as a regression. Set from Oct 21 2026's readings: before the
+# fix a cold employer page took 2.8 s typically (8.0 s slow end) and a cached
+# answer about 1 s; after it, 0.34 s, 0.56 s and 0.016 s.
+HOT_OWN_FILE = 0.25      # one file of ours holding a quarter of the busy CPU
+BUSY_COPY = 0.85         # the profiled copy busy 85% of the sample
+ENTITY_BUILD_P50 = 1.5   # seconds
+ENTITY_BUILD_P90 = 5.0
+CACHED_P50 = 0.2         # a cached answer this slow means the copies are starved
+PRELOAD_SHARE = 0.40
+SLOW_STATEMENT_MS = 1000  # mean, over 5+ runs in the hour
+REGRESSION = 2.0          # twice the week's typical hour
+
+ENTITY_FAMILIES = ("/perm-employers/*", "/perm-attorneys/*", "/perm-wages/*")
+
+LOG_LINE = re.compile(
+    r'\[(?P<t>[^\]]+)\] "(?P<m>\S+) (?P<p>\S+)[^"]*" (?P<s>\d{3}) \d+ "[^"]*" "[^"]*" '
+    r"rt=(?P<rt>[\d.]+) urt=(?P<urt>[\d.,: -]+?) nc=(?P<nc>\S*)$"
+)
+MONTHS = {m: i for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(), 1)}
+
+
+# ── 1 and 2: the logs ─────────────────────────────────────────────────────
+
+
+def log_time(stamp: str) -> float | None:
+    """nginx's $time_local ("21/Oct/2026:13:24:07 +0000") as epoch seconds."""
+    m = re.match(r"(\d+)/(\w+)/(\d+):(\d+):(\d+):(\d+) ([+-]\d{4})", stamp)
+    if not m or m.group(2) not in MONTHS:
+        return None
+    import calendar  # noqa: PLC0415
+
+    d, mon, y, hh, mm, ss, tz = m.groups()
+    t = calendar.timegm((int(y), MONTHS[mon], int(d), int(hh), int(mm), int(ss)))
+    sign = 1 if tz[0] == "+" else -1
+    return t - sign * (int(tz[1:3]) * 3600 + int(tz[3:5]) * 60)
+
+
+def family(path: str) -> str:
+    """A page type: the first segment, with "/*" for a page under it."""
+    bare = path.split("?", 1)[0]
+    parts = [p for p in bare.split("/") if p]
+    if not parts:
+        return "/"
+    return f"/{parts[0]}/*" if len(parts) > 1 else f"/{parts[0]}"
+
+
+def upstream_seconds(urt: str) -> float | None:
+    """nginx joins several upstream tries with ", "; the answer's time is the sum."""
+    total, seen = 0.0, False
+    for part in re.split(r"[,:]\s*", urt.strip()):
+        if part and part != "-":
+            try:
+                total += float(part)
+                seen = True
+            except ValueError:
+                return None
+    return total if seen else None
+
+
+def quantile(xs: list[float], q: float) -> float | None:
+    if not xs:
+        return None
+    s = sorted(xs)
+    return s[min(len(s) - 1, int(q * len(s)))]
+
+
+def tail_since(path: pathlib.Path, since: float, when) -> tuple[list[str], bool]:
+    """The lines of one log newer than `since`, reading from the end in growing
+    chunks rather than the whole file (the main log runs to 150 MB a day). The
+    second value says whether the file's start was reached still inside the
+    window, so the rotated copy is needed too."""
+    if not path.exists():
+        return [], True
+    size = path.stat().st_size
+    chunk = TAIL_CHUNK
+    with path.open("rb") as fh:
+        while True:
+            start = max(0, size - chunk)
+            fh.seek(start)
+            data = fh.read(size - start).decode(errors="ignore")
+            lines = data.splitlines()
+            if start > 0:
+                lines = lines[1:]  # the first may be cut
+            first = next((t for t in map(when, lines[:50]) if t is not None), None)
+            if start == 0 or (first is not None and first < since):
+                break
+            chunk *= 2
+    keep = [ln for ln in lines if (t := when(ln)) is not None and t >= since]
+    return keep, start == 0
+
+
+def read_window(path: pathlib.Path, since: float, when) -> list[str]:
+    """A log's lines from the last window, with the rotated copy's tail when the
+    current file began inside it (nginx rotates just after midnight UTC)."""
+    lines, reached_start = tail_since(path, since, when)
+    if reached_start:
+        older, _ = tail_since(path.with_name(path.name + ".1"), since, when)
+        lines = older + lines
+    return lines
+
+
+def main_log_time(line: str) -> float | None:
+    m = re.search(r"\[([^\]]+)\]", line)
+    return log_time(m.group(1)) if m else None
+
+
+def defend_log_time(line: str) -> float | None:
+    try:
+        return float(line.split(" ", 1)[0])
+    except ValueError:
+        return None
+
+
+def page_costs(lines: list[str], since: float) -> dict:
+    groups: dict[tuple[str, str, str], list[float]] = defaultdict(list)
+    seen = 0
+    for line in lines:
+        m = LOG_LINE.search(line.rstrip("\n"))
+        if not m:
+            continue
+        t = log_time(m.group("t"))
+        if t is None or t < since or m.group("m") != "GET":
+            continue
+        u = upstream_seconds(m.group("urt"))
+        if u is None:
+            continue
+        seen += 1
+        kind = "data" if "_rsc=" in m.group("p") else "page"
+        groups[(family(m.group("p")), kind, m.group("nc") or "-")].append(u)
+    rows = [
+        {"family": f, "kind": k, "answer": a, "n": len(v), "seconds": round(sum(v), 1),
+         "p50": quantile(v, 0.5), "p90": quantile(v, 0.9)}
+        for (f, k, a), v in groups.items()
+    ]
+    rows.sort(key=lambda r: -r["seconds"])
+
+    def pool(pred) -> dict:
+        xs = [x for (f, k, a), v in groups.items() if pred(f, k, a) for x in v]
+        return {"n": len(xs), "p50": quantile(xs, 0.5), "p90": quantile(xs, 0.9)}
+
+    return {
+        "requests": seen,
+        "appSeconds": round(sum(sum(v) for v in groups.values()), 1),
+        "builds": pool(lambda f, k, a: k == "page" and a == "MISS"),
+        "entityBuilds": pool(lambda f, k, a: k == "page" and a == "MISS" and f in ENTITY_FAMILIES),
+        "cached": pool(lambda f, k, a: a == "HIT"),
+        "byType": rows[:20],
+    }
+
+
+def preload_share(lines: list[str], since: float) -> dict:
+    total = pre = 0
+    for line in lines:
+        parts = line.split(" ", 2)
+        try:
+            t = float(parts[0])
+        except (ValueError, IndexError):
+            continue
+        if t < since:
+            continue
+        total += 1
+        if line.rstrip("\n").endswith(" 1"):
+            pre += 1
+    return {"requests": total, "preloads": pre, "share": round(pre / total, 3) if total else None}
+
+
+# ── 3: the database ───────────────────────────────────────────────────────
+
+
+def admin_key() -> str:
+    for line in ADMIN_KEY.read_text().splitlines():
+        if line.startswith("LIBSQL_ADMIN_AUTH_KEY="):
+            return line.split("=", 1)[1].strip()
+    raise RuntimeError(f"no LIBSQL_ADMIN_AUTH_KEY in {ADMIN_KEY}")
+
+
+def db_snapshot(port: int = 9097) -> dict[str, dict]:
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{port}/v1/namespaces/default/stats",
+        headers={"Authorization": f"basic {admin_key()}"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as r:
+        d = json.load(r)
+    return {s["query"]: {"count": s["count"], "ms": s["elapsed_ms"], "rows": s["rows_read"]}
+            for s in d.get("queries", {}).get("stats", [])}
+
+
+def db_delta(now: dict[str, dict], prev: dict[str, dict] | None) -> tuple[list[dict], bool]:
+    """Per statement, what the hour added. sqld's counts are cumulative since
+    it started; a count that went down means it restarted, so the whole
+    current count is the hour's (and the second value says so)."""
+    restarted = False
+    out = []
+    for q, s in now.items():
+        p = (prev or {}).get(q)
+        if p and s["count"] >= p["count"]:
+            d = {"count": s["count"] - p["count"], "ms": s["ms"] - p["ms"], "rows": s["rows"] - p["rows"]}
+        else:
+            if p:
+                restarted = True
+            d = dict(s)
+        if d["count"] > 0:
+            out.append({"sql": " ".join(q.split())[:160], "runs": d["count"], "totalS": round(d["ms"] / 1000, 2),
+                        "meanMs": round(d["ms"] / d["count"], 1), "rows": d["rows"]})
+    out.sort(key=lambda r: -r["totalS"])
+    return out, restarted
+
+
+# ── 4: the CPU profile ────────────────────────────────────────────────────
+
+PROFILER_JS = r"""
+const seconds = Number(process.argv[2]); const out = process.argv[3];
+const list = await (await fetch("http://127.0.0.1:PORT/json/list")).json();
+const ws = new WebSocket(list[0].webSocketDebuggerUrl);
+let id = 0; const waiting = new Map();
+const send = (method, params = {}) => new Promise((res, rej) => {
+  const i = ++id; waiting.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params }));
+});
+ws.onmessage = (e) => { const m = JSON.parse(e.data); const w = waiting.get(m.id); if (w) { waiting.delete(m.id); m.error ? w.rej(new Error(JSON.stringify(m.error))) : w.res(m.result); } };
+await new Promise((r, j) => { ws.onopen = r; ws.onerror = () => j(new Error("inspector refused")); });
+try {
+  await send("Profiler.enable");
+  await send("Profiler.setSamplingInterval", { interval: 1000 });
+  await send("Profiler.start");
+  await new Promise((r) => setTimeout(r, seconds * 1000));
+  const { profile } = await send("Profiler.stop");
+  (await import("node:fs")).writeFileSync(out, JSON.stringify(profile));
+} finally {
+  // Closes the inspector: the answer never comes, because the socket goes with it.
+  send("Runtime.evaluate", { expression: "process._debugEnd && process._debugEnd()" }).catch(() => {});
+  setTimeout(() => process.exit(0), 500);
+}
+""".replace("PORT", str(INSPECTOR_PORT))
+
+B64 = {c: i for i, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")}
+
+
+def vlq(segment: str) -> list[int]:
+    vals, shift, v = [], 0, 0
+    for ch in segment:
+        d = B64[ch]
+        v += (d & 31) << shift
+        if d & 32:
+            shift += 5
+        else:
+            vals.append(-(v >> 1) if v & 1 else v >> 1)
+            v, shift = 0, 0
+    return vals
+
+
+def decode_mappings(mappings: str) -> list[tuple[list[int], list[int]]]:
+    """Per generated line: (generated columns, source indexes), columns sorted."""
+    lines, src = [], 0
+    oline = ocol = 0
+    for text in mappings.split(";"):
+        cols, srcs, gcol = [], [], 0
+        for seg in text.split(","):
+            if not seg:
+                continue
+            f = vlq(seg)
+            gcol += f[0]
+            if len(f) >= 4:
+                src += f[1]
+                oline += f[2]
+                ocol += f[3]
+                cols.append(gcol)
+                srcs.append(src)
+        lines.append((cols, srcs))
+    return lines
+
+
+def tidy_source(src: str) -> str:
+    """A source map path as a reader would name it. Next's maps name our files
+    "webpack://v2/./src/...", library code by its node_modules path, and Next's
+    own sources relative to its package ("webpack://v2/../../../src/server/...")."""
+    s = src.split("/", 3)[3] if src.startswith("webpack://") and src.count("/") >= 3 else src
+    if "node_modules/" in s:
+        parts = s.rsplit("node_modules/", 1)[1].split("/")
+        return "/".join(parts[:2]) if parts[0].startswith("@") else parts[0]
+    if s.startswith("../"):
+        return f"next ({s.rsplit('/', 1)[-1]})"
+    return s[2:] if s.startswith("./") else s
+
+
+def is_ours(name: str) -> bool:
+    return name.startswith(("src/", "convex/"))
+
+
+class SourceMaps:
+    """Source maps of one release's server chunks, decoded on first use."""
+
+    def __init__(self) -> None:
+        self.cache: dict[str, tuple[list, list[str]] | None] = {}
+
+    def where(self, url: str, line: int, col: int) -> str | None:
+        path = url.replace("file://", "")
+        if path not in self.cache:
+            self.cache[path] = None
+            m = pathlib.Path(path + ".map")
+            if m.exists():
+                try:
+                    j = json.loads(m.read_text())
+                    if "mappings" in j:
+                        self.cache[path] = (decode_mappings(j["mappings"]), [tidy_source(s) for s in j.get("sources", [])])
+                except (OSError, ValueError, KeyError):
+                    self.cache[path] = None
+        hit = self.cache[path]
+        if not hit:
+            return None
+        lines, sources = hit
+        if line >= len(lines):
+            return None
+        cols, srcs = lines[line]
+        i = bisect.bisect_right(cols, col) - 1
+        if i < 0:
+            return None
+        return sources[srcs[i]] if srcs[i] < len(sources) else None
+
+
+def frame_name(cf: dict, maps: SourceMaps) -> str:
+    url = cf.get("url", "")
+    if "/.next/server/" in url:
+        where = maps.where(url, cf.get("lineNumber", 0), cf.get("columnNumber", 0))
+        if where:
+            return where
+        return "app code (" + url.rsplit("/", 1)[-1] + ")"
+    if url.startswith("node:") or not url:
+        fn = cf.get("functionName") or ""
+        return {"(garbage collector)": "garbage collection", "(program)": "Node itself", "(idle)": "idle"}.get(
+            fn, "Node (" + (fn or "native") + ")")
+    return url.rsplit("/", 1)[-1]
+
+
+def summarise_profile(profile: dict, maps: SourceMaps) -> dict:
+    nodes = {n["id"]: n for n in profile["nodes"]}
+    parent = {c: n["id"] for n in profile["nodes"] for c in n.get("children", [])}
+    counts = Counter(profile["samples"])
+    total = sum(counts.values())
+    names: dict[int, str] = {}
+
+    def name(nid: int) -> str:
+        if nid not in names:
+            names[nid] = frame_name(nodes[nid]["callFrame"], maps)
+        return names[nid]
+
+    idle = sum(c for nid, c in counts.items() if nodes[nid]["callFrame"].get("functionName") == "(idle)")
+    busy = total - idle
+    self_time: Counter = Counter()
+    ours_incl: Counter = Counter()
+    for nid, c in counts.items():
+        if nodes[nid]["callFrame"].get("functionName") == "(idle)":
+            continue
+        what = name(nid)
+        # Library code is named with the file of ours that called it.
+        caller = None
+        seen: set[str] = set()
+        x = nid
+        while x is not None:
+            n = name(x)
+            if is_ours(n):
+                caller = caller or n
+                if n not in seen:
+                    ours_incl[n] += c
+                    seen.add(n)
+            x = parent.get(x)
+        label = what if is_ours(what) or not caller else f"{what}, called from {caller}"
+        self_time[label] += c
+
+    def top(counter: Counter, k: int) -> list[dict]:
+        return [{"what": w, "share": round(n / busy, 3)} for w, n in counter.most_common(k)] if busy else []
+
+    return {"samples": total, "busyShare": round(busy / total, 3) if total else None,
+            "self": top(self_time, 8), "ours": top(ours_incl, 8)}
+
+
+def live_copy() -> tuple[str, int] | None:
+    active = APP / "app" / "active"
+    if not active.exists():
+        return None
+    slot = active.read_text().strip()
+    out = subprocess.run(["systemctl", "show", "-p", "MainPID", "--value", f"permtracker-web@{slot}.service"],
+                         capture_output=True, text=True, timeout=10).stdout.strip()
+    return (slot, int(out)) if out.isdigit() and int(out) > 0 else None
+
+
+def port_open(port: int) -> bool:
+    with socket.socket() as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+CLOSE_JS = r"""
+const list = await (await fetch("http://127.0.0.1:PORT/json/list")).json();
+const ws = new WebSocket(list[0].webSocketDebuggerUrl);
+await new Promise((r) => (ws.onopen = r));
+ws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression: "process._debugEnd && process._debugEnd()" } }));
+setTimeout(() => process.exit(0), 500);
+""".replace("PORT", str(INSPECTOR_PORT))
+
+
+def close_inspector(tmp: pathlib.Path) -> bool:
+    """Close an inspector the profiler left open. True when the port is shut."""
+    js = tmp / "close.mjs"
+    js.write_text(CLOSE_JS)
+    try:
+        subprocess.run(["node", str(js)], timeout=20, capture_output=True)
+    except subprocess.TimeoutExpired:
+        pass
+    time.sleep(1)
+    return not port_open(INSPECTOR_PORT)
+
+
+def take_profile(seconds: int = PROFILE_S) -> dict:
+    copy = live_copy()
+    if not copy:
+        return {"error": "no live copy found"}
+    slot, pid = copy
+    if port_open(INSPECTOR_PORT):
+        return {"error": f"port {INSPECTOR_PORT} already in use; another profile may be running"}
+    release = os.path.basename(os.readlink(APP / "app" / "slots" / slot))
+    os.kill(pid, signal.SIGUSR1)
+    for _ in range(40):
+        if port_open(INSPECTOR_PORT):
+            break
+        time.sleep(0.25)
+    else:
+        return {"error": "the copy's inspector didn't open"}
+    with tempfile.TemporaryDirectory(dir="/run") as tmp:
+        js = pathlib.Path(tmp) / "prof.mjs"
+        js.write_text(PROFILER_JS)
+        out = pathlib.Path(tmp) / "p.cpuprofile"
+        try:
+            subprocess.run(["node", str(js), str(seconds), str(out)], timeout=seconds + 60,
+                           capture_output=True, text=True)
+        except subprocess.TimeoutExpired:
+            pass
+        time.sleep(1)
+        still_open = port_open(INSPECTOR_PORT) and not close_inspector(pathlib.Path(tmp))
+        if not out.exists():
+            return {"error": "the profiler wrote nothing", "inspectorLeftOpen": still_open}
+        profile = json.loads(out.read_text())
+    summary = summarise_profile(profile, SourceMaps())
+    summary.update({"copy": slot, "release": release, "seconds": seconds, "inspectorLeftOpen": still_open})
+    return summary
+
+
+# ── judgments ─────────────────────────────────────────────────────────────
+
+
+def secs(x: float | None) -> str:
+    return "n/a" if x is None else (f"{x * 1000:.0f} ms" if x < 1 else f"{x:.1f} s")
+
+
+def judge(pages: dict | None, pre: dict | None, db: list[dict] | None, prof: dict | None,
+          history: list[dict]) -> list[str]:
+    w: list[str] = []
+    if pages:
+        e = pages["entityBuilds"]
+        if e["n"] >= 10 and e["p50"] is not None and e["p50"] > ENTITY_BUILD_P50:
+            w.append(f"Employer, law firm and job pages take {secs(e['p50'])} to build (typical, {e['n']} builds); "
+                     f"the line is {secs(ENTITY_BUILD_P50)}.")
+        if e["n"] >= 10 and e["p90"] is not None and e["p90"] > ENTITY_BUILD_P90:
+            w.append(f"The slowest tenth of employer, law firm and job page builds take over {secs(e['p90'])}.")
+        c = pages["cached"]
+        if c["n"] >= 50 and c["p50"] is not None and c["p50"] > CACHED_P50:
+            w.append(f"Cached pages take {secs(c['p50'])} to answer (typical); the copies are short of CPU.")
+        past = [h["entityBuildP50"] for h in history[-24 * 7:] if h.get("entityBuildP50")]
+        if e["p50"] and len(past) >= 24:
+            usual = statistics.median(past)
+            if usual and e["p50"] > REGRESSION * usual and e["p50"] > 0.5:
+                w.append(f"Employer, law firm and job page builds are {e['p50'] / usual:.1f} times their usual "
+                         f"({secs(e['p50'])} against {secs(usual)} over the week).")
+    if pre and pre.get("share") is not None and pre["requests"] >= 500 and pre["share"] > PRELOAD_SHARE:
+        w.append(f"Background pre-loads are {pre['share']:.0%} of requests.")
+    for s in (db or []):
+        if s["runs"] >= 5 and s["meanMs"] > SLOW_STATEMENT_MS:
+            w.append(f"A database statement averages {s['meanMs'] / 1000:.1f} s over {s['runs']} runs: {s['sql'][:90]}")
+    if prof and not prof.get("error"):
+        if prof.get("busyShare") is not None and prof["busyShare"] > BUSY_COPY:
+            w.append(f"The live copy was busy {prof['busyShare']:.0%} of the profile.")
+        for o in prof.get("ours", []):
+            if o["share"] > HOT_OWN_FILE:
+                w.append(f"{o['what']} is under {o['share']:.0%} of the copy's busy time.")
+        if prof.get("inspectorLeftOpen"):
+            w.append("The profiler's inspector stayed open on the live copy; the next deploy closes it.")
+    return w
+
+
+# ── the run ───────────────────────────────────────────────────────────────
+
+
+def load_history() -> list[dict]:
+    if not HISTORY.exists():
+        return []
+    out = []
+    for line in HISTORY.read_text().splitlines():
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            continue
+    return out
+
+
+def write_doc(doc: dict, now: float) -> None:
+    token = (APP / "secrets" / "db_rw.jwt").read_text().strip()
+    body = json.dumps({"requests": [
+        {"type": "execute", "stmt": {
+            "sql": "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+            "args": [{"type": "text", "value": "server_perf"},
+                     {"type": "text", "value": json.dumps(doc)},
+                     {"type": "integer", "value": str(int(now * 1000))}]}},
+        {"type": "close"}]}).encode()
+    req = urllib.request.Request("http://127.0.0.1:8080/v2/pipeline", body,
+                                 {"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        res = json.load(r)["results"][0]
+    if res.get("type") != "ok":
+        raise SystemExit(f"server_perf not written: {res.get('error', {}).get('message')}")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--no-profile", action="store_true")
+    a = ap.parse_args()
+
+    deploying = HEALTH / "deploying"
+    if deploying.exists() and time.time() - deploying.stat().st_mtime < 20 * 60:
+        print("a deploy is running; skipped")
+        return 0
+
+    now = time.time()
+    since = now - WINDOW_S
+    errors: dict[str, str] = {}
+    pages = pre = prof = None
+    db: list[dict] | None = None
+    restarted = False
+
+    try:
+        pages = page_costs(read_window(ACCESS, since, main_log_time), since)
+        if pages["requests"] == 0:
+            errors["pages"] = "no timed requests in the main log's last hour (its rt=/urt= fields may be gone)"
+    except Exception as e:  # noqa: BLE001
+        errors["pages"] = f"{type(e).__name__}: {e}"
+    try:
+        pre = preload_share(read_window(DEFEND, since, defend_log_time), since)
+    except Exception as e:  # noqa: BLE001
+        errors["preloads"] = f"{type(e).__name__}: {e}"
+    snap = None
+    try:
+        snap = db_snapshot()
+        prev = json.loads(DB_PREV.read_text()) if DB_PREV.exists() else None
+        db, restarted = db_delta(snap, prev)
+    except Exception as e:  # noqa: BLE001
+        errors["database"] = f"{type(e).__name__}: {e}"
+    if not a.no_profile:
+        try:
+            prof = take_profile()
+            if prof.get("error"):
+                errors["profile"] = prof["error"]
+        except Exception as e:  # noqa: BLE001
+            errors["profile"] = f"{type(e).__name__}: {e}"
+
+    history = load_history()
+    warnings = judge(pages, pre, db, prof, history)
+    db_total = round(sum(s["totalS"] for s in db), 1) if db is not None else None
+    doc = {
+        "window": {"from": int(since * 1000), "to": int(now * 1000)},
+        "pages": pages,
+        "preloads": pre,
+        "database": None if db is None else {"statements": len(db), "totalSeconds": db_total,
+                                             "sinceRestart": restarted, "top": db[:8]},
+        "profile": prof,
+        "warnings": warnings,
+        "errors": errors,
+        "day": day_rollup(history, warnings, now),
+    }
+    if a.dry_run:
+        print(json.dumps(doc, indent=1))
+        return 0
+
+    write_doc(doc, now)
+    if snap is not None:
+        DB_PREV.write_text(json.dumps(snap))
+    row = {"t": int(now), "entityBuildP50": (pages or {}).get("entityBuilds", {}).get("p50"),
+           "buildP50": (pages or {}).get("builds", {}).get("p50"),
+           "cachedP50": (pages or {}).get("cached", {}).get("p50"),
+           "preloadShare": (pre or {}).get("share"), "busyShare": (prof or {}).get("busyShare"),
+           "topOurs": ((prof or {}).get("ours") or [{}])[0].get("what"),
+           "dbSeconds": db_total, "warnings": warnings, "errors": sorted(errors)}
+    keep = [h for h in history if h.get("t", 0) > now - HISTORY_DAYS * 86400] + [row]
+    tmp = HISTORY.with_suffix(".tmp")
+    tmp.write_text("".join(json.dumps(h) + "\n" for h in keep))
+    tmp.replace(HISTORY)
+    verdict = "warn" if warnings else "ok"
+    print(f"{verdict}: {len(warnings)} warning(s), {len(errors)} reading(s) failed"
+          + (f" ({', '.join(sorted(errors))})" if errors else ""))
+    return 0
+
+
+def day_rollup(history: list[dict], warnings: list[str], now: float) -> dict:
+    """The last 24 hourly runs: the worst hour and every distinct warning, so a
+    morning report written at a quiet hour still sees the busy ones."""
+    day = [h for h in history if h.get("t", 0) > now - 86400]
+    worst = max((h for h in day if h.get("entityBuildP50")), key=lambda h: h["entityBuildP50"], default=None)
+    seen: list[str] = []
+    for h in day:
+        for w in h.get("warnings", []):
+            if w not in seen:
+                seen.append(w)
+    for w in warnings:
+        if w not in seen:
+            seen.append(w)
+    return {"runs": len(day) + 1,
+            "worstEntityBuildP50": worst["entityBuildP50"] if worst else None,
+            "worstHour": worst["t"] * 1000 if worst else None,
+            "maxBusyShare": max((h["busyShare"] for h in day if h.get("busyShare") is not None), default=None),
+            "warnings": seen[:10],
+            "failedRuns": sum(1 for h in day if h.get("errors"))}
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,18 @@
+[Unit]
+Description=PERM Tracker page speed: what each page costs the server, and which code the cost is
+After=permtracker-db.service
+[Service]
+Type=oneshot
+# Root: it reads nginx's logs (adm), signals the live copy to open its
+# inspector, and reads the database's admin key. It yields to visitors: lowest
+# CPU and disk weight, idle disk class, and a memory ceiling (a profile and the
+# source maps it reads come to a few hundred MB).
+ExecStart=/usr/local/sbin/permtracker-perf
+TimeoutStartSec=10min
+Nice=15
+IOSchedulingClass=idle
+CPUWeight=20
+IOWeight=20
+MemoryHigh=768M
+MemoryMax=1G
+OOMScoreAdjust=500
