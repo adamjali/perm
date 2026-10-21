@@ -116,7 +116,7 @@ import { groupIndustries } from "@/components/entities/FilingMakeup";
 import { HOLD_STATUS } from "@/lib/employerStages";
 import { phase } from "@/lib/db/debarments";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
-import { monthDay, shortDate } from "@convex/lib/months";
+import { monthDay, monthYear, shortDate } from "@convex/lib/months";
 import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
 
@@ -224,7 +224,16 @@ function otherEmployerMetadata(slug: string, other: OtherEmployerRecord): Metada
     `${programs} Filings`,
   ]);
   const mix = programsMix(other, formatInt);
+  // What every one of these pages shows: its newest filings with DOL's status,
+  // the job and the wage. Bing reads a description under about 150 characters
+  // as too short (Ahrefs flagged 41 of these at about 95, Oct 2026), so the
+  // longest that fits says when the employer began filing and what's on the page.
+  const began = monthYear(other.firstFiled?.slice(0, 7));
+  const sees = ["DOL's status on its newest filings", "the jobs", "the wages offered"];
+  const tails = [", from DOL's own records", ", from DOL's records", ""];
   const description = firstThatFits([
+    ...(began ? seeCandidates(`${other.name}: ${mix} since ${began}.`, sees, tails) : []),
+    ...seeCandidates(`${other.name}: ${mix}.`, sees, tails),
     `${other.name}: ${mix}, with DOL's status on each and the wage offered, from DOL's own records.`,
     `${other.name}: ${mix}, from DOL's own records.`,
     `${other.name}: ${mix}.`,
