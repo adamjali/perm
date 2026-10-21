@@ -144,6 +144,8 @@ const CLIPS = {
   },
   // The wage determination date sets the expiration; the page works it out.
   "pwd-cascade": {
+    // The still shown until play: the dates the clip is about, in view.
+    posterAt: 4,
     url: story("edit-case"),
     run: async (p) => {
       await p.waitForTimeout(1500);
@@ -162,6 +164,8 @@ const CLIPS = {
   },
   // Recruitment dates in, and the filing window comes back.
   "recruitment-window": {
+    // The still shown until play: the dates the clip is about, in view.
+    posterAt: 4,
     url: story("edit-case"),
     run: async (p) => {
       await p.waitForTimeout(1500);
@@ -177,6 +181,8 @@ const CLIPS = {
   },
   // Filed, then certified, and the I-140 deadline comes back 179 days later.
   "certification-cascade": {
+    // The still shown until play: the dates the clip is about, in view.
+    posterAt: 7,
     url: story("edit-case"),
     run: async (p) => {
       await p.waitForTimeout(1500);
@@ -257,8 +263,10 @@ try {
       // H.264 at a constant 30 frames a second, quality that keeps small type
       // sharp, no sound, the index at the front so it starts at once.
       execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.txt"), "-vf", "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2", "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "26", "-preset", "slow", "-movflags", "+faststart", mp4]);
-      // The poster through Pillow: this ffmpeg build has no WebP encoder.
-      execFileSync(PYTHON, ["-c", "import sys; from PIL import Image; Image.open(sys.argv[1]).save(sys.argv[2], 'WEBP', quality=82, method=6)", frames[0].file, path.join(OUT, `${name}.webp`)]);
+      // The poster through Pillow: this ffmpeg build has no WebP encoder. It's
+      // the first frame, or the one `posterAt` seconds in when the clip names one.
+      const at = clip.posterAt === undefined ? frames[0] : (frames.find((f) => f.t - frames[0].t >= clip.posterAt) ?? frames.at(-1));
+      execFileSync(PYTHON, ["-c", "import sys; from PIL import Image; Image.open(sys.argv[1]).save(sys.argv[2], 'WEBP', quality=82, method=6)", at.file, path.join(OUT, `${name}.webp`)]);
       console.log(`ok ${name} ${frames.length} frames, ${Math.round(fs.statSync(mp4).size / 1024)} KB`);
     } catch (e) {
       failed++;

@@ -6,9 +6,10 @@
  * A short silent recording inside an article: the video equivalent of
  * ScreenshotFigure, with the same frame, caption, credit and click-to-expand.
  *
- * It waits on its first frame until the reader presses play, then loops, and
+ * It waits on its poster until the reader presses play, then loops, and
  * the same button pauses it (WCAG 2.2.2). Nothing on the page starts moving
- * by itself.
+ * by itself. The button sits bottom-left: on a phone the page's own back-to-top
+ * button is fixed to the bottom-right corner and sat on top of it.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -85,7 +86,7 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
           type="button"
           onClick={toggle}
           aria-label={playing ? "Pause the recording" : "Play the recording"}
-          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border"
+          className="absolute bottom-2 left-2 z-10 flex size-11 items-center justify-center border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border"
         >
           {playing ? <PauseIcon className="size-5" weight="bold" aria-hidden="true" /> : <PlayIcon className="size-5" weight="bold" aria-hidden="true" />}
         </button>
@@ -95,7 +96,7 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
         <figcaption className="mt-2 text-sm text-muted-foreground">
           {caption}
           {caption && credit ? " " : null}
-          {credit ? <span>{credit}</span> : null}
+          {credit ? <span className="block">{credit}</span> : null}
         </figcaption>
       ) : null}
     </figure>
