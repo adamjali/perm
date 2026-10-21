@@ -10045,3 +10045,25 @@ The public calculator now hands them over three ways, and the last is the funnel
   under review purple, `--soft-purple`), contrast-tested in both themes and on the folder.
 - **`useInactivityTimeout.test.ts` replaced `window.localStorage` and never put it back**, so in the shared `unit`
   pool every later file's storage stored nothing (the carried-dates test read null). It restores the real one now.
+
+## Oct 21 2026: where the server's time went
+
+- **The instruments.** nginx's main log (`pt_main`) ends each line with `rt=` (nginx's time, a limit's wait included),
+  `urt=` (the app's) and `nc=` (Next's cache answer). sqld's admin API on 127.0.0.1:9097 (key in
+  `/etc/permtracker/db-admin.env`) keeps each statement's count, time and rows read; `sudo permtracker-db-stats`
+  prints them. A live copy can be profiled: `kill -USR1 <pid>` opens its inspector on 127.0.0.1:9229, the DevTools
+  Profiler samples it, `process._debugEnd()` closes it. `permtracker-perf` does all of it hourly
+  (`perm_docs['server_perf']`, the morning report's "Page speed"); its reasons and thresholds are in its docstring.
+- **The database was never the slow part.** Statements took milliseconds while the two copies ran the CPU near 100%.
+- **75% of that CPU was `getAllPosts`** (`src/lib/content/index.ts`): every call read, parsed and word-counted every
+  article (reading-time), and the `(site)` layout, the root 404 and `NotFoundBody` called it on every page build,
+  because Next renders `not-found.tsx` into every page's tree. It reads once per process in production now.
+- **What a server component hands a client component rides in every page.** Four copies of the article list (17 KB
+  each) did. Anything a component needs only on interaction (search, a 404) loads when that happens:
+  `/articles.json` through `src/lib/search/articleList.ts`, fetched at most once a visit.
+- **Next pre-loads every visible link** and has no hover-only setting (`prefetch={false}` turns hover off too).
+  `IntentLink` (`src/components/ui/intent-link.tsx`) arms pre-loading at the first hover, touch or focus; the header,
+  footer, data rail and breadcrumbs use it, and `intent-link.test.tsx` keeps plain `next/link` out of them.
+- **A read that does more than its caller needs runs as often as the page.** `getDisclosureStats` read 750 ranking
+  rows for pages that used one figure; `getDisclosureSummary` is the document alone.
+- **Before adding a read to a page, check what it costs per render**: `permtracker-db-stats --rows` after an hour.

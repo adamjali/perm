@@ -975,3 +975,19 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   pass only to create a password account (`requireSignupPass`); sign-in is held by the per-address and per-email
   limits in `src/proxy.ts`.
 
+
+## Oct 21 2026, in eight lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 21 2026".
+
+- **75% of the web copies' CPU was rereading the articles**: the site's layout and both 404 pages called `getAllPosts`,
+  and Next renders the 404 page into every page it builds. It's read once per process now; a cold employer page went
+  from 2.8 s to 0.34 s typical (8 s to 0.56 s at the slow end) and a cached answer from about 1 s to 16 ms.
+- **Measure with a profile before reading code**: `kill -USR1` on a copy opens its inspector, `permtracker-perf` does it
+  hourly and names the hot code from the source maps; nothing else had named the cause.
+- **Each page carried four 17 KB copies of the article list** (layout and 404s); `/articles.json` loads when search opens.
+- **The page's frame pre-loads on intent** (`IntentLink`): pre-loads were 29% of requests, 20 to 40 per employer view.
+- **The database reports its own costliest statements** (admin API on 127.0.0.1:9097, `permtracker-db-stats`); the
+  main log carries `rt=`, `urt=`, `nc=`; Cloudflare holds employer, firm and job HTML a day (stale-while-revalidate).
+- **Of `.github/`, only `oracle-deploy.yml` ships the site**: an ordered `paths` list, the last match winning.
+- **Googlebot's 42% refusals (11 PM to 2 AM EDT Oct 20) were slow builds**, not deploys or limits.
