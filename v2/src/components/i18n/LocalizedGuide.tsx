@@ -3,6 +3,7 @@ import { Fragment } from "react";
 
 import { D, F } from "@/components/i18n/guideParts";
 import { LanguageLinks } from "@/components/i18n/LanguageLinks";
+import { PageLanguage } from "@/components/i18n/PageLanguage";
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { GUIDE_COPY } from "@/lib/i18n/guide";
 import { GLOSSED_STATUSES, SECTION_IDS } from "@/lib/i18n/guide/types";
@@ -120,6 +121,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
 
   return (
     <div lang={locale.tag} className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <PageLanguage tag={locale.tag} />
       <div className="pt-8 sm:pt-10" />
       <LanguageLinks current={code} />
 
