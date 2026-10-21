@@ -20,7 +20,15 @@ Group=permtracker
 # 1:24 PM EDT no write could take the lock while sqld held both CPUs. At 4 GB
 # the same writes compact about twenty times less often, and a page rewritten
 # many times in one log is compacted once.
-ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB --max-log-size 4096
+#
+# Admin API on loopback (Oct 21 2026), for its query statistics: GET
+# /v1/namespaces/default/stats lists the slowest statements and the ones that
+# read the most rows, across every page and job. Its key is
+# LIBSQL_ADMIN_AUTH_KEY in /etc/permtracker/db-admin.env (root, 600), never on
+# the command line, where `ps` would show it. The leading "-" lets the database
+# start if that file is ever missing.
+EnvironmentFile=-/etc/permtracker/db-admin.env
+ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --admin-listen-addr 127.0.0.1:9097 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB --max-log-size 4096
 Restart=always
 RestartSec=2
 LimitNOFILE=65536

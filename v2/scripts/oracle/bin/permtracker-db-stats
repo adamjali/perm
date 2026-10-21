@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""The database's own record of its statements: which ones cost the most time.
+
+sqld's admin API (loopback, keyed: /etc/permtracker/db-admin.env) keeps a
+count, total time and rows read for each statement it has run since the
+record began. Run as root:
+
+    permtracker-db-stats            # the 15 that took the most time in all
+    permtracker-db-stats --mean 25  # the 25 slowest on average (5+ runs)
+    permtracker-db-stats --rows     # the 15 that read the most rows
+    permtracker-db-stats --lca      # the H-1B LCA database (port 9098)
+
+Added Oct 21 2026: Googlebot was refused a page on 42% of its requests one
+night because cold page builds took 1 to 15 s, and nothing said which reads
+made them slow.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import pathlib
+import urllib.request
+
+KEY_FILE = pathlib.Path("/etc/permtracker/db-admin.env")
+
+
+def admin_key() -> str:
+    for line in KEY_FILE.read_text().splitlines():
+        if line.startswith("LIBSQL_ADMIN_AUTH_KEY="):
+            return line.split("=", 1)[1].strip()
+    raise SystemExit(f"no LIBSQL_ADMIN_AUTH_KEY in {KEY_FILE}")
+
+
+def stats(port: int) -> dict:
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{port}/v1/namespaces/default/stats",
+        headers={"Authorization": f"basic {admin_key()}"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.load(r)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("n", nargs="?", type=int, default=15)
+    ap.add_argument("--mean", action="store_true", help="slowest on average, statements run 5+ times")
+    ap.add_argument("--rows", action="store_true", help="most rows read in all")
+    ap.add_argument("--lca", action="store_true", help="the LCA database instead of the main one")
+    ap.add_argument("--width", type=int, default=150)
+    a = ap.parse_args()
+    d = stats(9098 if a.lca else 9097)
+    rows = d.get("queries", {}).get("stats", [])
+    total_ms = sum(r["elapsed_ms"] for r in rows) or 1.0
+    if a.rows:
+        rows.sort(key=lambda r: -r["rows_read"])
+    elif a.mean:
+        rows = [r for r in rows if r["count"] >= 5]
+        rows.sort(key=lambda r: -r["elapsed_ms"] / r["count"])
+    else:
+        rows.sort(key=lambda r: -r["elapsed_ms"])
+    print(f"{len(d.get('queries', {}).get('stats', []))} statements; {total_ms / 1000:,.0f} s in all")
+    print(f"{'share':>6} {'total s':>9} {'runs':>7} {'mean ms':>8} {'rows read':>12}  statement")
+    for r in rows[: a.n]:
+        q = " ".join(r["query"].split())
+        print(f"{r['elapsed_ms'] / total_ms:6.1%} {r['elapsed_ms'] / 1000:9.1f} {r['count']:7d} "
+              f"{r['elapsed_ms'] / max(r['count'], 1):8.1f} {r['rows_read']:12,d}  {q[: a.width]}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

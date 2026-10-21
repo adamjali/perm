@@ -45,6 +45,26 @@ def zones_in(body: str, directive: str) -> list[str]:
     return re.findall(r"limit_conn\s+(\w+)\s+\d+", body)
 
 
+def map_label(body: str):
+    """The value a regex map gives, as nginx picks it: the first matching regex
+    in file order, else the default. Keys are case-insensitive (~*)."""
+    entries = re.findall(r'"([^"]*)"\s+"([^"]*)";', body)
+    default = next((v for k, v in entries if k == "default"), "")
+    rules = [(re.compile(k[2:], re.I), v) for k, v in entries if k.startswith("~*")]
+    default_bare = re.search(r"default\s+\"([^\"]*)\";", body)
+    if default_bare:
+        default = default_bare.group(1)
+
+    def pick(cache_control: str, uri: str, rsc: str) -> str:
+        key = f"{cache_control}|{uri}|{rsc}"
+        for rx, value in rules:
+            if rx.search(key):
+                return value
+        return default
+
+    return pick
+
+
 def run(conf_text: str) -> None:
     conf = strip_comments(conf_text)
     server_start = conf.index("server {")
@@ -128,9 +148,25 @@ def run(conf_text: str) -> None:
     check("the mirror target is internal and goes to the second copy",
           "internal;" in locs.get("= /__pt_revalidate_w2", "")
           and "proxy_pass http://permtracker_w2$request_uri;" in locs.get("= /__pt_revalidate_w2", ""))
-    cdn = re.search(r"map \$upstream_http_cache_control \$pt_cdn_cc\s*\{([^}]*)\}", head)
+    cdn = re.search(r'map "\$upstream_http_cache_control\|\$uri\|\$arg__rsc" \$pt_cdn_cc\s*\{([^}]*)\}', head)
+    check("the edge label is chosen from the app's label, the path and the navigation-data token", cdn is not None)
+    edge = map_label(cdn.group(1) if cdn else "")
+    page = "public, s-maxage=2592000, stale-while-revalidate=31536000"
     check("shareable pages may be served stale while refreshing and when the server errors",
-          cdn is not None and "stale-while-revalidate=" in cdn.group(1) and "stale-if-error=" in cdn.group(1))
+          "stale-while-revalidate=" in edge(page, "/perm-queue", "") and "stale-if-error=" in edge(page, "/perm-queue", ""))
+    for path in ("/perm-employers/adobe-inc", "/perm-attorneys/fragomen", "/perm-wages/15-1252-software-developers"):
+        check(f"edge holds {path} a day", "stale-while-revalidate=86400" in edge(page, path, ""), edge(page, path, ""))
+        check(f"edge holds {path}'s navigation data an hour", "stale-while-revalidate=3600" in edge(page, path, "1a2b3"),
+              edge(page, path, "1a2b3"))
+    check("other pages keep the hour", "stale-while-revalidate=3600" in edge(page, "/perm-queue", ""))
+    check("an index page keeps the hour", "stale-while-revalidate=3600" in edge(page, "/perm-employers", ""))
+    for label in ("private, no-cache, no-store", "private, s-maxage=60", "no-store, s-maxage=60"):
+        check(f"a private answer is never stored ({label})", edge(label, "/perm-employers/adobe-inc", "") == "")
+    check("entity pages are served stale when the server errors too",
+          "stale-if-error=" in edge(page, "/perm-employers/adobe-inc", ""))
+    check("an address containing 'private' is still stored",
+          "stale-while-revalidate=86400" in edge(page, "/perm-employers/private-equity-partners-llc", ""))
+    check("an answer with no label is never stored", edge("", "/perm-employers/adobe-inc", "") == "")
     browser = re.search(r"map \$upstream_http_cache_control \$pt_browser_cc\s*\{([^}]*)\}", head)
     check("browsers revalidate shareable pages and their navigation data",
           browser is not None and re.search(r'"~\*s-maxage"\s+"public, max-age=0, must-revalidate";', browser.group(1)) is not None
@@ -308,7 +344,13 @@ def run(conf_text: str) -> None:
     server_level = server[: server.index("location")]
     check("defend: request log kept at server level",
           "access_log /var/log/permtracker-busy/defend.log pt_defend" in server_level)
-    check("defend: main access log still written", "access_log /var/log/nginx/access.log;" in server_level)
+    check("defend: main access log still written", "access_log /var/log/nginx/access.log pt_main;" in server_level)
+    main_fmt = re.search(r"log_format pt_main ((?:'[^']*'\s*)+);", head)
+    main_text = "".join(re.findall(r"'([^']*)'", main_fmt.group(1))) if main_fmt else ""
+    check("main log keeps the combined fields first", main_text.startswith(
+        '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" '))
+    check("main log records nginx's time, the app's time and Next's cache answer",
+          all(f in main_text for f in ("rt=$request_time", "urt=$upstream_response_time", "nc=$upstream_http_x_nextjs_cache")))
     fmt = re.search(r"log_format pt_defend '([^']*)'", head)
     check("defend: log records time, status, network, crawler flag, path and browser",
           fmt is not None and fmt.group(1).startswith('$msec $status $http_x_pt_asn $http_x_pt_verified_bot "$request_uri" "$http_user_agent"'))
@@ -365,7 +407,13 @@ def probe() -> None:
             "        return 204;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
         "nginx's own check behind the app's cap": good.replace(
             "        return 204;\n    }", "        limit_conn pt_app 64;\n        return 204;\n    }", 1),
-        "main access log dropped for the defense log": good.replace("    access_log /var/log/nginx/access.log;\n", "", 1),
+        "main access log dropped for the defense log": good.replace("    access_log /var/log/nginx/access.log pt_main;\n", "", 1),
+        "main log loses the build time": good.replace("rt=$request_time urt=$upstream_response_time ", "", 1),
+        "main log back to the plain format": good.replace("access_log /var/log/nginx/access.log pt_main;", "access_log /var/log/nginx/access.log;", 1),
+        "navigation data held a day": good.replace("[^|]+\\|$\"", "[^|]+\\|\"", 1),
+        "a private answer stored for a day": good.replace('"~*^[^|]*(private|no-store|no-cache)" "";', '"~*^[^|]*(nothing-matches)" "";', 1),
+        "'private' in an address read as a private answer": good.replace('"~*^[^|]*(private|no-store|no-cache)"', '"~*(private|no-store|no-cache)"', 1),
+        "entity pages back to the hour": good.replace("stale-while-revalidate=86400, stale-if-error=86400", "stale-while-revalidate=3600, stale-if-error=86400", 1),
         "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
         "php probes sent to the app": good.replace("        return 404;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
         "WordPress folders matched anywhere in the path": good.replace("|^/(wp-admin|", "|/(wp-admin|", 1),
