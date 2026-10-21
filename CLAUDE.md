@@ -1023,6 +1023,9 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
   figure can show an agency's own search answering. First use: DOL's case search answering RFI ISSUED for a real case, in
   the RFI guide.
 - **The app's pictures were re-taken** (`capture-tour.mjs`, `tour_shots.py`, then the 15 Storybook article figures).
-  Only the dashboard, its deadline hub and the calendar changed, and one figure's stated shape with them.
+  Only the dashboard, its deadline hub and the calendar changed, and one figure's stated shape with them. The old
+  pictures, the app-tour, case, cases and calendar clips and five article headers cropped from them still showed two
+  PWD expiries that stopped binding on Oct 17 (recruitment began inside the PWD): all were re-made from the corrected
+  sample firm. After re-recording the tour fixtures, re-take every picture, clip and header made from them.
 - **Isometric drawings** (the `anatomy` and `anatomy-asset` skills) go only where `.planning/anatomy-figures-plan.md`
   says, and each waits for the owner's yes before it ships.
