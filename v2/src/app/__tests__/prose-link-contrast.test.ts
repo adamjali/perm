@@ -34,9 +34,16 @@ function contrast(a: string, b: string): number {
 
 describe("in-article link contrast", () => {
   it("the unlayered prose link rule paints with the text-safe token, never the brand lime", () => {
-    const rule = block(".prose-article a");
+    const rule = block(".prose-article a:not(.not-prose a)");
     expect(rule).toMatch(/\bcolor:\s*var\(--primary-text\)/);
     expect(rule).not.toMatch(/\bcolor:\s*var\(--primary\)/);
+  });
+
+  it("leaves links inside a not-prose component to their own classes", () => {
+    // An unlayered colour rule on `.not-prose a` beats every Tailwind utility, so the lime
+    // article button took the page's text colour: 1.82:1 in dark mode (axe, Oct 21 2026).
+    expect(css).not.toMatch(/\.not-prose a\s*\{[^}]*\bcolor:/);
+    expect(css).toContain(".prose-article a:not(.not-prose a):hover {");
   });
 
   it("hover, group-hover and focus lime text paint with the text-safe token too", () => {

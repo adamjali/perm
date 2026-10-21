@@ -295,7 +295,7 @@ export default async function MethodologyPage() {
             <div
               key={s.name}
               className={
-                "bg-tint p-6 border-2 shadow-hard-sm border-border" +
+                "p-6 border-2 shadow-hard-sm border-border " +
                 (i % 2 === 0 ? "bg-card" : "bg-tint")
               }
             >

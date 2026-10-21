@@ -30,6 +30,7 @@ import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SpotPicture } from "@/components/ui/spot-picture";
 import { handleOperationError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
@@ -297,6 +298,8 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
 
   return (
     <div className="bg-tint px-4 py-12 text-center">
+      {/* A quiet desk bell, decorative beside the words that say there's nothing new. */}
+      <SpotPicture name="empty-notifications" alt="" className="mx-auto mb-3 w-28" />{" "}
       <p className="font-heading text-lg font-bold text-foreground">{title}</p>{" "}
       <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">{description}</p>
     </div>

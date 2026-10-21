@@ -1447,8 +1447,11 @@ body[data-scroll-locked] {
    var(--primary) it would paint every in-article link #2ECC40 on #FAFAFA,
    2.05:1 against the 4.5:1 floor (measured in the browser on a guide; the MDX
    renderer's own `text-primary` class never gets a say). --primary-text is
-   #1D8229 in light (4.53:1) and the lime itself in dark (9.26:1). */
-.prose-article a {
+   #1D8229 in light (4.53:1) and the lime itself in dark (9.26:1).
+   Links inside a `not-prose` component are left alone, so a button there keeps its own
+   colours: an unlayered `color: inherit` escape had painted the lime article button's
+   label in the page's light dark-mode text, 1.82:1 (axe, Oct 21 2026). */
+.prose-article a:not(.not-prose a) {
   color: var(--primary-text);
   font-weight: 600;
   text-decoration: underline;
@@ -1457,7 +1460,7 @@ body[data-scroll-locked] {
   transition: color 0.15s, text-decoration-color 0.15s;
 }
 
-.prose-article a:hover {
+.prose-article a:not(.not-prose a):hover {
   color: var(--foreground);
   text-decoration-color: var(--primary);
 }
@@ -1613,13 +1616,6 @@ body[data-scroll-locked] {
 .prose-article h3:hover .anchor,
 .prose-article h4:hover .anchor {
   opacity: 0.5;
-}
-
-/* Not-prose escape — prevents prose link styles from overriding embedded components */
-.prose-article .not-prose a {
-  color: inherit;
-  text-decoration: none;
-  font-weight: inherit;
 }
 
 /* ============================================================================

@@ -6,10 +6,12 @@
  * - new-user: No cases at all (shows "Add your first case" CTA)
  * - no-results: Filtered results empty (shows "No cases match your filters")
  *
- * Design: a title, one sentence, one action. No illustration.
+ * Design: a title, one sentence, one action. A new account's empty list also
+ * shows a small drawing (an empty desk tray), decorative beside the title.
  */
 
 import { Button } from "@/components/ui/button";
+import { SpotPicture } from "@/components/ui/spot-picture";
 
 // ============================================================================
 // TYPES
@@ -36,6 +38,7 @@ export function CaseListEmptyState({
         data-testid="empty-state-new-user"
         className="flex flex-col items-center justify-center bg-tint px-6 py-16 border-2 shadow-hard border-border"
       >
+        <SpotPicture name="empty-cases" alt="" className="mb-4 w-32" />{" "}
         <h2 className="font-heading text-2xl font-bold mb-2">No cases yet</h2>{" "}
         <p className="text-muted-foreground text-center max-w-md mb-6">
           Add a case and its deadlines appear here, on your calendar and in your reminders.

@@ -71,9 +71,9 @@
 .iso-face-text[data-tone="hi"] { fill: var(--anatomy-hi); }
 .iso-face-text[data-tone="lo"] { fill: var(--anatomy-lo); }
 
-/* The one part to watch, in the site's lime (the filing window, the reader's month on the queue line).
-   Its outline is the lime ink. */
-.fw-window, .dq-pick {
+/* The one part to watch, in the site's lime (the filing window, the reader's month on the queue line,
+   and `iso-accent` for every later drawing). Its outline is the lime ink. */
+.fw-window, .dq-pick, .iso-accent {
   --anatomy-lit-top: var(--primary);
   --anatomy-lit-shade: color-mix(in srgb, var(--primary) 82%, #000000);
   --anatomy-face: var(--primary);

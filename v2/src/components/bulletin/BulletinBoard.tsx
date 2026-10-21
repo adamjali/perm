@@ -147,7 +147,11 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
   );
   const zeroPct = (1 / domainMax) * 100;
 
-  const window = `${formatMonth(board.firstMonth)} to ${formatMonth(board.lastMonth)}`;
+  // Said from the count itself: "most" was typed here while 13 of 27 queues were slower (Oct 21 2026).
+  const slower = paced.filter((c) => c.pace < 1).length;
+  const paceLine = paced.length
+    ? `Measured from ${formatMonth(board.measuredFrom)} to ${formatMonth(board.lastMonth)}, ${slower} of the ${paced.length} queues with a pace moved slower than that.`
+    : "";
 
   return (
     <div className={cn("border-border bg-card border", className)}>
@@ -159,9 +163,8 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             </h2>{" "}
             <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
               A cutoff that advances thirty days in a month has stood still:
-              everyone waiting behind it is exactly as far back as they were.
-              Across the {board.bulletinCount} bulletins held here, {window},
-              most of these queues moved slower than that.
+              everyone waiting behind it is exactly as far back as they were.{" "}
+              {paceLine}
             </p>
           </div>{" "}
           <ViewToggle

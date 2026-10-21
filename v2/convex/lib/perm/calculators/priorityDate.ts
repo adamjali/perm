@@ -71,7 +71,7 @@ export interface PriorityDateEstimate {
   /** The newest bulletin in the data. Never claimed to be the current month. */
   asOfBulletin: string | null;
   latest: Cutoff | null;
-  /** True only when the priority date is on or before a real cutoff, or C. */
+  /** True only when the priority date is earlier than a real cutoff, or C. */
   isCurrent: boolean;
   /** Days between the priority date and the cutoff. Null unless both are dates. */
   daysFromCutoff: number | null;
@@ -157,7 +157,9 @@ export function estimatePriorityDate(input: PriorityDateInput): PriorityDateEsti
     isCurrent = true;
   } else if (latest?.kind === "date") {
     daysFromCutoff = daysBetween(input.priorityDate, latest.iso);
-    isCurrent = daysFromCutoff >= 0;
+    // "Earlier than the final action date" (State's own note on every chart): the cutoff is the
+    // priority date of the first applicant who couldn't be reached, so that day itself isn't current.
+    isCurrent = daysFromCutoff > 0;
   }
 
   // Net movement and retrogressions, over real dates only. A month that went

@@ -282,7 +282,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/tools/rfi-deadline",
     label: "RFI response deadline",
-    blurb: "The last day to answer a PERM request for information, counted from the date on DOL's letter under 20 CFR 656.20(b), with the calendar around it.",
+    blurb: "The last day to answer a PERM request for information, counted from the date on DOL's letter under 20 CFR 656.20(a)(2), with the calendar around it.",
   },
   {
     path: "/tools/pwd-validity",

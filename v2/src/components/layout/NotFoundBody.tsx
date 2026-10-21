@@ -14,6 +14,7 @@ import {
 
 import { NotFoundSuggestions } from "@/components/search/NotFoundSuggestions";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { SpotPicture } from "@/components/ui/spot-picture";
 
 const DOORS = [
   { href: "/", label: "Home", Icon: HouseIcon },
@@ -45,7 +46,11 @@ export function NotFoundBody() {
         <NotFoundSuggestions />
       </div>{" "}
 
-      <h2 className="mt-12 font-heading text-xl font-bold">Or go to</h2>{" "}
+      <div className="mt-12 flex items-end justify-between gap-4">
+        <h2 className="font-heading text-xl font-bold">Or go to</h2>{" "}
+        {/* A signpost, decorative beside the heading and the list of places. */}
+        <SpotPicture name="not-found" alt="" className="w-24 shrink-0 sm:w-32" />
+      </div>{" "}
       <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
         {DOORS.map((d) => (
           <Fragment key={d.href}>

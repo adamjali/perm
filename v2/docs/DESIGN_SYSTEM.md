@@ -192,10 +192,13 @@ drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every p
 - has alt text saying what it shows and what it means, and any text inside it readable on a phone at 4.5:1;
 - is looked at full size before it ships, and taken again when the page it shows changes.
 
-A still drawing is a file loaded as an image, below the fold. A moving one is a client component that renders its first
-pose on the server (`src/components/figures/`, the kit in `src/components/iso/`), its dates from the central rules,
-and its caption saying in words what the motion shows. **The filing-window bench and the queue conveyor are the owner's
-exception to the motion rules (Oct 21 2026):** each runs by itself and pauses at its ends, page scrolling pushes it, and dragging moves
+A still drawing is a file loaded as an image, below the fold: `SpotPicture` (`src/components/ui/spot-picture.tsx`)
+with a light and a dark file, lazy, so a page fetches only its theme's; all are drawn by `scripts/spot-pictures/build.mjs`
+into `public/images/spots/` and `src/lib/spotPictures.ts`, grey with lime and nothing else (wood drawn grey). A moving one
+is a client component that renders its first pose on the server (`src/components/figures/`, the kit in
+`src/components/iso/`, the one lime part classed `iso-accent`), its dates from the central rules or the readers the site's
+own pages use, and its caption saying in words what the motion shows. **Every moving drawing is the owner's exception to
+the motion rules (Oct 21 2026):** each runs by itself and pauses at its ends, page scrolling pushes it, and dragging moves
 it, the run resuming a second after either. Each carries a Pause button (`MotionToggle`; WCAG 2.2.2, motion over 5 s), hidden
 under reduced motion, where the figure holds still and only dragging moves it. No slider or keys (owner's call). Films: captions never cover
 what's shown, no frame is empty, and every film is checked frame by frame before its final encode

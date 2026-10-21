@@ -32,11 +32,11 @@ export const dynamic = "force-static";
 const FAQS = [
   {
     q: "Is it 30 days from the letter or from when we received it?",
-    a: "From the date of the letter. 20 CFR 656.20(b) says the employer must respond within 30 days of the date of the audit letter. Mail time comes out of the 30, which is why the response window is usually shorter than a month in practice.",
+    a: "From the date of the letter. 20 CFR 656.20(a)(2) has the audit letter set a date 30 days from the date of the letter. Mail time comes out of the 30, which is why the response window is usually shorter than a month in practice.",
   },
   {
     q: "What happens if the deadline is missed?",
-    a: "The application is denied, and 20 CFR 656.20 lets the Certifying Officer require supervised recruitment on the employer's future applications for up to two years. The regulation gives the Certifying Officer discretion to extend the period; there is no right to an extension, and a request has to go in before the deadline.",
+    a: "The application is denied, and 20 CFR 656.20 lets the Certifying Officer require supervised recruitment on the employer's future applications for up to two years. Under 656.20(c) the Certifying Officer may grant one extension of up to 30 days at their discretion; there's no right to one, and a request has to go in before the deadline.",
   },
   {
     q: "Does an RFI in FLAG follow the same rule?",

@@ -18,6 +18,7 @@ import { SANDBOX_CASE_NUMBERS } from "@/lib/api/sandbox";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { SpotPicture } from "@/components/ui/spot-picture";
 
 const TITLE = "PERM Tracker API and MCP Server";
 const DESCRIPTION =
@@ -235,7 +236,7 @@ export default function DevelopersPage() {
           </table>
         </ScrollBox>{" "}
         <details className="mt-4 bg-tint px-4 py-3 border-2 border-border">
-          <summary className="cursor-pointer font-bold">The shape of every answer</summary>
+          <summary className="cursor-pointer py-2.5 font-bold">The shape of every answer</summary>
           <Code>{`{
   "data": { ... },
   "meta": {
@@ -250,7 +251,7 @@ export default function DevelopersPage() {
           </p>
         </details>{" "}
         <details className="mt-3 bg-tint px-4 py-3 border-2 border-border">
-          <summary className="cursor-pointer font-bold">Errors</summary>
+          <summary className="cursor-pointer py-2.5 font-bold">Errors</summary>
           <p className="mt-3 text-sm leading-relaxed text-soft">
             Every error is JSON with a code and a sentence saying what happened and what to do.
           </p>{" "}
@@ -271,13 +272,19 @@ export default function DevelopersPage() {
       </section>
 
       <section className="mt-12" aria-labelledby="keys">
-        <h2 id="keys" className="font-heading text-2xl font-bold">
-          Scopes, lifetimes and rotation
-        </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
-          Each key says what it may do. Give a script only what it needs; a call outside its scopes answers 403 and
-          isn&rsquo;t counted. Writing to your cases is reserved for the firm tools and can&rsquo;t be granted yet.
-        </p>{" "}
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0">
+            <h2 id="keys" className="font-heading text-2xl font-bold">
+              Scopes, lifetimes and rotation
+            </h2>{" "}
+            <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
+              Each key says what it may do. Give a script only what it needs; a call outside its scopes answers 403 and
+              isn&rsquo;t counted. Writing to your cases is reserved for the firm tools and can&rsquo;t be granted yet.
+            </p>
+          </div>{" "}
+          {/* A key cabinet, decorative beside the section that describes keys. */}
+          <SpotPicture name="developers-keys" alt="" className="w-24 shrink-0 sm:w-36" />
+        </div>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
           {GRANTABLE_SCOPES.map((sc) => (
             <Fragment key={sc}>
@@ -357,7 +364,7 @@ export default function DevelopersPage() {
           ))}
         </ul>{" "}
         <details className="mt-4 bg-tint px-4 py-3 border-2 border-border">
-          <summary className="cursor-pointer font-bold">A delivery, and how to check its signature</summary>
+          <summary className="cursor-pointer py-2.5 font-bold">A delivery, and how to check its signature</summary>
           <Code>{WEBHOOK_EXAMPLE}</Code>{" "}
           <p className="mt-3 text-sm leading-relaxed text-soft">
             The signature is HMAC-SHA256, keyed by your secret without its whsec_ prefix (base64-decoded), over the id,

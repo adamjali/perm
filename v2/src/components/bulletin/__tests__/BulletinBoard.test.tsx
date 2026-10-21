@@ -26,6 +26,7 @@ function cell(over: Partial<BoardCell> & Pick<BoardCell, "category" | "country">
 function board(cells: BoardCell[]): Board {
   return {
     firstMonth: "2023-10",
+    measuredFrom: "2014-10",
     lastMonth: "2026-09",
     bulletinCount: 36,
     categories: [...new Set(cells.map((c) => c.category))],
@@ -51,6 +52,8 @@ describe("BulletinBoard: the pace", () => {
     // The count is the finding: forward movement is not the same as a
     // shortening queue, and most of these queues lengthened.
     expect(screen.getByText(/2 of the 3 queues measured here moved slower/i)).toBeInTheDocument();
+    // The header says it from the same count and names the window the paces are measured over.
+    expect(screen.getByText(/Measured from October 2014 to September 2026, 2 of the 3 queues with a pace moved slower than that\./)).toBeInTheDocument();
   });
 
   it("puts the fastest queue first", () => {

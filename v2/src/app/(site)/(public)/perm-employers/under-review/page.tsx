@@ -149,7 +149,7 @@ export default async function EmployersUnderReviewPage() {
             <span
               aria-hidden="true"
               className={
-                "inline-flex min-w-[4.5rem] shrink-0 justify-end font-mono text-sm font-bold tabular-nums border-2 px-1.5 border-border" +
+                "inline-flex min-w-[4.5rem] shrink-0 justify-end font-mono text-sm font-bold tabular-nums border-2 px-1.5 border-border " +
                 (m.dir === "on"
                   ? "text-data-warn-ink"
                   : m.to === "DENIED"

@@ -6,7 +6,8 @@
  * The guides and blog listings: one section per topic (lib/content/topics.ts),
  * in the topics' order, with a row of topic buttons that narrows the page to
  * one topic and a search box that narrows by words. Both keep the sections,
- * so a card title is always an <h3> under its topic's <h2>.
+ * so a card title is always an <h3> under its topic's <h2>. Each section's heading
+ * row carries the topic's small drawing, decorative beside the heading that names it.
  */
 
 import * as React from "react";
@@ -17,6 +18,7 @@ import { rankFuzzy } from "@/lib/fuzzy";
 import ContentGrid from "./ContentGrid";
 import ContentSearch from "./ContentSearch";
 import { choiceVariants } from "@/components/ui/choice";
+import { SpotPicture } from "@/components/ui/spot-picture";
 
 interface ContentListingProps {
   posts: PostSummary[];
@@ -83,11 +85,14 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
 
       {sections.map(({ topic, posts: list }) => (
         <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} >
-          <div className="mb-5 border-b-2 border-border pb-3">
-            <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-bold sm:text-3xl">
-              {topic.label}
-            </h2>{" "}
-            <p className="mt-1 text-base text-soft">{topic.blurb}</p>
+          <div className="mb-5 flex items-center gap-3 border-b-2 border-border pb-3 sm:gap-4">
+            <SpotPicture name={topic.picture} alt="" className="w-16 shrink-0 sm:w-24" />{" "}
+            <div className="min-w-0">
+              <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-bold sm:text-3xl">
+                {topic.label}
+              </h2>{" "}
+              <p className="mt-1 text-base text-soft">{topic.blurb}</p>
+            </div>
           </div>
           <ContentGrid posts={list} headingLevel={3} />
         </section>

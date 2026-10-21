@@ -1038,6 +1038,22 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
   `getEstimatorData`, `getSweepCoverage`) and runs them forward as a time-lapse. The lime month reaches the front on the
   day `estimateByPace` gives and ends on `monthEndDate`'s day, the month page's "The line reaches this month's end";
   tests hold both. It shows nothing when the pace, DOL's month or a fresh sweep is missing.
+- **Four more moving drawings and eighteen still pictures, all on the owner's go (5:05 PM EDT: "take initiative for
+  all").** Moving, each with a Pause button: a wage determination's validity (`<PwdValidityFigure />`, from `pwdBearing` and
+  `calculateFilingWindow`), two of the three 180-day clocks (`<I140ClocksFigure />`, from
+  `calculatePriorityDateRetention`), an RFI as a siding (`<RfiFigure />`, from the measured RFI clock and `estimateRfiCase`)
+  and a bulletin cutoff as a gate (`<BulletinFigure />`, EB-2 India's real cutoffs from the archive). Still: a spot per
+  guide and blog topic, the homepage's two halves, the attorney security section, two app empty states, the 404 and
+  `/developers` (`SpotPicture`).
+- **A priority date on the cutoff day isn't current.** State prints "earlier than the final action date" on every chart;
+  `estimatePriorityDate` had counted the day itself (`daysFromCutoff > 0` now, with a test).
+- **Ten class strings glued two class names into one** (`"... border" + (on ? "bg-primary" ...)` made `borderbg-primary`):
+  the bulletin hub's months had no border or fill, sortable headers lost their alignment and focus ring.
+  `no-glued-class-concat.test.ts` reads the operand after every `+`, ternaries over several lines included.
+- **Links inside an article's `not-prose` components keep their own classes**: an unlayered `color: inherit` escape had
+  put the lime article button's label at 1.82:1 in dark mode on 10 articles.
+- **The board says its own count and window** ("Measured from October 2014 to October 2026, 13 of the 27 queues..."): it
+  had typed "most" over the June 2005 archive.
 - **The calendar calls the certification's expiry the "I-140 deadline"**, in the I-140 colour, like the dashboard
   and the case card (it said "ETA expires" in ETA 9089 orange). The calendar pictures and clips were re-taken.
 - **Two dark-mode contrast failures fixed**, found by axe on the guide pages: the "Guide" badge on article cards (black on

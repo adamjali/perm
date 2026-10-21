@@ -6,6 +6,8 @@ import { FILM_ATTORNEYS, FILM_WAITING, type Film } from "@/lib/constants/films";
 import { ExplainerFilm } from "./ExplainerFilm";
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import { buttonVariants } from "@/components/ui/button";
+import { SpotPicture } from "@/components/ui/spot-picture";
+import type { SpotPictureName } from "@/lib/spotPictures";
 
 /**
  * The two audiences, side by side, with EQUAL headings.
@@ -26,6 +28,8 @@ import { buttonVariants } from "@/components/ui/button";
 
 interface Half {
   heading: string;
+  /** A small drawing beside the heading, decorative (the heading says who the half is for). */
+  picture: SpotPictureName;
   film: Film;
   lede: string;
   /** Folded under "What it does", with the lede: the film carries the half. */
@@ -37,6 +41,7 @@ interface Half {
 const HALVES: readonly Half[] = [
   {
     heading: "For the person waiting on a PERM case",
+    picture: "home-waiting",
     film: FILM_WAITING,
     lede: ABOUT_TWO_HALVES.waiting,
     items: [
@@ -51,6 +56,7 @@ const HALVES: readonly Half[] = [
   },
   {
     heading: "For attorneys, paralegals and HR teams",
+    picture: "home-practice",
     film: FILM_ATTORNEYS,
     lede: ABOUT_TWO_HALVES.practice,
     items: [
@@ -96,9 +102,12 @@ export function AudienceBlocks() {
         <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-10 [&>*]:min-w-0">
           {HALVES.map((h) => (
             <article key={h.heading} className="flex flex-col">
-              <h3 className="font-heading text-xl font-bold">
-                {h.heading}
-              </h3>{" "}
+              <div className="flex items-center gap-4">
+                <SpotPicture name={h.picture} alt="" className="w-24 shrink-0 sm:w-28" />{" "}
+                <h3 className="font-heading text-xl font-bold">
+                  {h.heading}
+                </h3>
+              </div>{" "}
               <ExplainerFilm film={h.film} className="mt-4" />{" "}
               <details className="group mt-4 border-b border-border border-y-2">
                 <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between font-semibold [&::-webkit-details-marker]:hidden">

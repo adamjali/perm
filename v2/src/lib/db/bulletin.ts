@@ -68,6 +68,8 @@ export interface BoardCell {
 export interface BulletinBoard {
   /** Oldest and newest bulletin months in the archive, `YYYY-MM`. */
   firstMonth: string;
+  /** The first bulletin month the paces and backward steps are measured from, `YYYY-MM`. */
+  measuredFrom: string;
   lastMonth: string;
   bulletinCount: number;
   /** Categories the archive actually publishes, in bulletin order. */
@@ -216,6 +218,7 @@ export function summariseBulletins(bulletins: readonly BulletinMonth[]): Bulleti
 
   return {
     firstMonth: first.bulletinMonth,
+    measuredFrom: BOARD_MEASURED_FROM,
     lastMonth: last.bulletinMonth,
     bulletinCount: sorted.length,
     categories,

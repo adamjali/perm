@@ -150,7 +150,7 @@ function Strip({
   return (
     <div
       className={
-        "grid grid-cols-[9.5rem_1fr] items-end gap-3 py-1.5" +
+        "grid grid-cols-[9.5rem_1fr] items-end gap-3 py-1.5 " +
         (context ? "border-b-2 border-border/40 pb-3" : "")
       }
     >

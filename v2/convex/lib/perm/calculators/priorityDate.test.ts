@@ -60,7 +60,7 @@ describe('estimatePriorityDate: the verdict', () => {
     expect(r.caveats.join(' ')).toMatch(/unavailable in the most recent bulletin/i);
   });
 
-  it('is current when the priority date is on or before a real cutoff', () => {
+  it('is current when the priority date is earlier than a real cutoff', () => {
     const upTo2026_06 = BULLETINS.filter((b) => b.bulletinMonth <= '2026-06');
     const r = estimatePriorityDate({
       ...BASE, bulletins: upTo2026_06, priorityDate: '2013-01-01',
@@ -68,6 +68,18 @@ describe('estimatePriorityDate: the verdict', () => {
     // 2026-06 cutoff is 01SEP13, so a Jan 2013 date clears it.
     expect(r.isCurrent).toBe(true);
     expect(r.daysFromCutoff).toBe(243);
+  });
+
+  it('is not current on the cutoff day itself', () => {
+    // State: "Numbers are authorized for issuance only for applicants whose priority date is
+    // earlier than the final action date", which is "the priority date of the first applicant
+    // who could not be reached" (Visa Bulletin for April 2026, read Oct 21 2026).
+    const upTo2026_06 = BULLETINS.filter((b) => b.bulletinMonth <= '2026-06');
+    const r = estimatePriorityDate({
+      ...BASE, bulletins: upTo2026_06, priorityDate: '2013-09-01',
+    });
+    expect(r.daysFromCutoff).toBe(0);
+    expect(r.isCurrent).toBe(false);
   });
 
   it('is not current when the priority date is after the cutoff', () => {

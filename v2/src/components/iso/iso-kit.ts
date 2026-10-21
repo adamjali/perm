@@ -2,6 +2,7 @@
  * The isometric drawing kit from the anatomy skill (~/.claude/skills/anatomy/kit/iso-kit.ts, Oct 21 2026):
  * camera, solids, parts and SVG string builders, without its standalone page, card and CSS (the site
  * frames a figure itself; the tones live in iso.css). Pure functions: safe on the server and the client.
+ * MIT licensed by its author: the notice is in ./LICENSE and travels with the copy.
  */
 /* eslint-disable */
 export type Flat = [number, number];

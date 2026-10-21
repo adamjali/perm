@@ -1,6 +1,7 @@
 import { LockKeyIcon } from "@phosphor-icons/react/ssr";
 
 import { RecordList } from "@/components/data/RecordList";
+import { SpotPicture } from "@/components/ui/spot-picture";
 import { IDLE_SIGN_OUT_MINUTES } from "@/lib/auth/session";
 
 /**
@@ -29,8 +30,14 @@ export function SecuritySection() {
             Your client data, protected
           </h2>
         </div>{" "}
-        <RecordList rows={ROWS} className="mt-8" />{" "}
-        <p className="mt-6 text-base text-soft">We don&apos;t sell your data or train AI on it.</p>
+        {/* The drawing (separate locked doors) is decorative: the list beside it states every fact. */}
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center [&>*]:min-w-0">
+          <div>
+            <RecordList rows={ROWS} />{" "}
+            <p className="mt-6 text-base text-soft">We don&apos;t sell your data or train AI on it.</p>
+          </div>{" "}
+          <SpotPicture name="security-vault" alt="" className="mx-auto w-full max-w-[260px] lg:max-w-none" />
+        </div>
       </div>
     </section>
   );

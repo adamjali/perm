@@ -94,6 +94,7 @@ function cell(over: Partial<BoardCell> & Pick<BoardCell, "category" | "country">
 
 const BOARD: Board = {
   firstMonth: "2023-10",
+  measuredFrom: "2014-10",
   lastMonth: "2026-09",
   bulletinCount: 36,
   categories: ["EB1", "EB2", "EB3"],

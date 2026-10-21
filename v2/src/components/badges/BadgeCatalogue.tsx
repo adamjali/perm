@@ -347,7 +347,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                   <li className="flex flex-col bg-tint">
                     <div
                       className={
-                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b-2 border-border px-4 py-4" +
+                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b-2 border-border px-4 py-4 " +
                         (theme === "dark" ? "bg-black" : "bg-white")
                       }
                       /* Our own string from the renderer, which escapes its

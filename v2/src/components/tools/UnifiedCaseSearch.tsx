@@ -148,7 +148,7 @@ const WORKER_DISPLAY: Partial<Record<CaseFieldKey, (v: string) => string>> = {
 };
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium" +
+  "w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium " +
   "focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed " +
   // `text-muted-foreground` (5.50:1) for the disabled state, not a half-opacity
   // foreground, which measures 3.94:1 in light and is on the contrast gate's
@@ -1850,7 +1850,7 @@ export function UnifiedCaseSearch({
                 <span className="hidden text-sm text-muted-foreground sm:block">{PROGRAM_LABEL[g.program]}</span>{" "}
                 <span
                   className={
-                    "inline-block w-fit bg-tint px-2 py-0.5 text-sm font-bold border-2 border-border" +
+                    "inline-block w-fit px-2 py-0.5 text-sm font-bold border-2 border-border " +
                     (g.open ? "bg-card" : "bg-tint")
                   }
                 >

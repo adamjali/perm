@@ -81,7 +81,7 @@ export function RfiDeadlineCalculator() {
           ) : null}{" "}
           <RuleNotes
             items={[
-              "20 CFR 656.20(b): the employer must respond within 30 days of the date of the audit letter.",
+              "20 CFR 656.20(a)(2): the audit letter sets a date 30 days from the date of the letter.",
               "20 CFR 656.20: an application whose employer does not respond is denied, and the employer may be placed in supervised recruitment for up to two years.",
             ]}
           />

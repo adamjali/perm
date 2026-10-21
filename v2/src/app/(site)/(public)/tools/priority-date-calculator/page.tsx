@@ -170,7 +170,7 @@ const FAQS = [
   },
   {
     q: "The cutoff moved forward. Why is the wait no shorter?",
-    a: "Because a cutoff has to advance about thirty days a month just for the queue to stay the same length. It moves forward while a month of real time passes, so anyone holding a fixed priority date only gains ground when it advances faster than that. Across the bulletins held here most employment-based queues moved slower, which means the number on the page went up and the wait got longer at the same time. The pace figures on this page are that measurement.",
+    a: "Because a cutoff has to advance about thirty days a month just for the queue to stay the same length. It moves forward while a month of real time passes, so anyone holding a fixed priority date only gains ground when it advances faster than that. Many employment-based queues moved slower than that, so the date on the page went up while the wait got longer. The pace figures on this page measure it, and the board says how many queues lost ground.",
   },
   {
     q: "Which chart should I use, final action or dates for filing?",

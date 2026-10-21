@@ -800,6 +800,11 @@ export function PriorityDateEstimator({
                     Yours is {Math.abs(estimate.daysFromCutoff).toLocaleString("en-US")}{" "}
                     days later.
                   </>
+                ) : estimate.daysFromCutoff === 0 ? (
+                  <>
+                    {" "}
+                    Yours is that day itself, and the bulletin counts only dates earlier than the cutoff.
+                  </>
                 ) : null}
               </>
             ) : estimate.latest?.kind === "current" ? (

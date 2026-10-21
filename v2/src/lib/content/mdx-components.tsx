@@ -22,12 +22,16 @@ import { DolNow } from "@/components/content/DolNow";
 import { RecruitmentNow } from "@/components/content/RecruitmentNow";
 import { BulletinReleaseNow } from "@/components/content/BulletinReleaseNow";
 import { QueueFigure } from "@/components/figures/dol-queue/QueueFigure";
+import { RfiFigure } from "@/components/figures/rfi-path/RfiFigure";
+import { BulletinFigure } from "@/components/figures/bulletin-cutoff/BulletinFigure";
 import { Lightbox } from "@/components/ui/lightbox";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
 
 // The drawings load their kit only on the articles that use them.
 const FilingWindowFigure = dynamic(() => import("@/components/figures/filing-window/FilingWindowFigure"));
+const PwdValidityFigure = dynamic(() => import("@/components/figures/pwd-validity/PwdValidityFigure"));
+const I140ClocksFigure = dynamic(() => import("@/components/figures/i140-clocks/I140ClocksFigure"));
 
 /* ------------------------------------------------------------------ */
 /* Custom MDX blocks                                                   */
@@ -229,8 +233,16 @@ export const mdxComponents: MDXComponents = {
   BulletinReleaseNow,
   // The filing window as a measuring bench: the reader moves the last recruitment step.
   FilingWindowFigure,
+  // A wage determination's validity as a bench: the reader moves the first recruitment step.
+  PwdValidityFigure,
+  // Two of the 180-day clocks as lanes: the reader moves the day they leave.
+  I140ClocksFigure,
   // DOL's line as a conveyor, run forward at DOL's pace: reads today's line (an async server component).
   QueueFigure,
+  // An RFI as a siding off DOL's line, run forward on the measured RFI clock (an async server component).
+  RfiFigure,
+  // A visa bulletin cutoff as a gate on a rail of priority dates, stepped through one line's real bulletins (an async server component).
+  BulletinFigure,
 
   // Headings
   //

@@ -53,7 +53,7 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                     href={`/visa-bulletin/${ym}`}
                     aria-current={current ? "page" : undefined}
                     className={
-                      "flex min-h-11 items-center justify-center border-input font-mono text-sm font-semibold transition-colors border" +
+                      "flex min-h-11 items-center justify-center border-input font-mono text-sm font-semibold transition-colors border " +
                       (current
                         ? "bg-primary text-primary-foreground shadow-hard-sm"
                         : "bg-card hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-safe:active:translate-y-px transition-[color,background-color,border-color,box-shadow,transform]")
