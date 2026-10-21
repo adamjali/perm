@@ -1,0 +1,16 @@
+{
+  "fetchedAt": "2026-10-21T22:45:55.466Z",
+  "answer": {
+    "data": {
+      "query": "Acme Robotics Studio",
+      "match": "none",
+      "employer": null,
+      "shareFloor": 30
+    },
+    "meta": {
+      "source": "U.S. Department of Labor, OFLC PERM and LCA disclosure files (decided cases) and FLAG case status (pending)",
+      "asOf": "2026-06-30",
+      "url": "https://permtracker.app/perm-employers?q=Acme%20Robotics%20Studio"
+    }
+  }
+}

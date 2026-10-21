@@ -32,4 +32,9 @@ export const SWEEP_PAGES = [
   "/lca-cases",
   "/seasonal-cases",
   "/case-search",
+  // Guides holding a drawing that reads the sweep (the line, the RFI record): figure-guides-refresh.test.ts
+  // holds this list to the guides' own tags.
+  "/guides/how-the-perm-queue-works",
+  "/guides/perm-rfi-issued-what-to-do",
+  "/guides/track-a-prevailing-wage-request",
 ] as const;

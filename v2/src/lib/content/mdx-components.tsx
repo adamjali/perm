@@ -24,6 +24,7 @@ import { BulletinReleaseNow } from "@/components/content/BulletinReleaseNow";
 import { QueueFigure } from "@/components/figures/dol-queue/QueueFigure";
 import { RfiFigure } from "@/components/figures/rfi-path/RfiFigure";
 import { BulletinFigure } from "@/components/figures/bulletin-cutoff/BulletinFigure";
+import { PwdQueueFigure } from "@/components/figures/pwd-queue/PwdQueueFigure";
 import { Lightbox } from "@/components/ui/lightbox";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
@@ -243,6 +244,8 @@ export const mdxComponents: MDXComponents = {
   RfiFigure,
   // A visa bulletin cutoff as a gate on a rail of priority dates, stepped through one line's real bulletins (an async server component).
   BulletinFigure,
+  // DOL's wage-request line as a conveyor, run forward in DOL's working days (an async server component).
+  PwdQueueFigure,
 
   // Headings
   //

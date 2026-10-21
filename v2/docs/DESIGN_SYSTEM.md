@@ -181,6 +181,11 @@ sits under its field, with a summary at the top of the form.
 
 ## Pictures
 
+**Image-led, by the owner's direction (Oct 21 2026):** a section leads with its picture and says little; its motion,
+if any, is one scroll-scrubbed move the reader drives (a list that lights with its picture, a photo that grows, cards that
+stack), with the finished layout under reduced motion and a simple stack on phones. The patterns and which fit this site:
+`~/.claude/explanations/20261021_details_so/RELEVANCE-PERMTRACKER.md`. The case box stays above the fold.
+
 The real thing first: a capture of our own page or app, the agency's own document page, a chart drawn from the data.
 A drawing only where nothing real can be photographed (a mechanism, a topic), and then from the real numbers; where
 drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every picture:

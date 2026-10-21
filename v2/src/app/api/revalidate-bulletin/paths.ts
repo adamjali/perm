@@ -22,6 +22,8 @@ export const BULLETIN_PAGES = [
   "/open-data",
   "/open-data/visa-bulletins.csv",
   "/open-data/visa-bulletins.json",
+  // The bulletin gate drawing in this guide steps through the archive.
+  "/guides/how-the-visa-bulletin-works",
   // The sitemap child that lists the month pages, so a new month is advertised
   // the day it lands rather than the next day.
   "/sitemaps/pages.xml",

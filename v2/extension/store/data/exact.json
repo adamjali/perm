@@ -1,0 +1,32 @@
+{
+  "fetchedAt": "2026-10-21T22:45:55.098Z",
+  "answer": {
+    "data": {
+      "query": "Microsoft Corporation",
+      "match": "exact",
+      "employer": {
+        "name": "Microsoft Corporation",
+        "slug": "microsoft-corporation",
+        "url": "https://permtracker.app/perm-employers/microsoft-corporation",
+        "page": "perm",
+        "perm": {
+          "published": 6875,
+          "certified": 6260,
+          "denied": 45,
+          "certifiedShare": 0.993,
+          "pending": 598,
+          "newestFiling": "2026-09-16",
+          "filingsLast12Months": 617
+        },
+        "h1bLcas": 58652,
+        "wageRequests": null
+      },
+      "shareFloor": 30
+    },
+    "meta": {
+      "source": "U.S. Department of Labor, OFLC PERM and LCA disclosure files (decided cases) and FLAG case status (pending)",
+      "asOf": "2026-06-30",
+      "url": "https://permtracker.app/perm-employers/microsoft-corporation"
+    }
+  }
+}

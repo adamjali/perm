@@ -29,6 +29,7 @@ import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SpotPicture } from "@/components/ui/spot-picture";
 import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
 import Link from "next/link";
@@ -257,18 +258,11 @@ function NotificationSkeleton() {
 /**
  * Empty state when no notifications exist
  */
-function EmptyState() {
+export function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-      <div
-        className={cn(
-          "flex h-14 w-14 items-center justify-center mb-3",
-          "border-border border",
-          "bg-muted"
-        )}
-      >
-        <BellIcon className="h-7 w-7 text-muted-foreground" />
-      </div>
+      {/* The quiet desk bell, the notifications page's own picture: the heading below says it all. */}
+      <SpotPicture name="empty-notifications" alt="" className="mx-auto mb-3 w-24" />
       <p className="text-sm font-heading font-bold text-foreground">
         No notifications
       </p>{" "}

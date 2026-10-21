@@ -50,6 +50,10 @@ export const DOL_PAGES = [
   "/open-data",
   "/open-data/dol-processing-times.csv",
   "/open-data/dol-processing-times.json",
+  // The queue drawing in this guide prints DOL's published month with its date.
+  "/guides/how-the-perm-queue-works",
+  // ...and this one DOL's published wage-request month.
+  "/guides/track-a-prevailing-wage-request",
   // Every badge's canonical path, DERIVED rather than hand-listed. A hand list
   // fell behind the registry the same day six kinds were added, and the file
   // said "keep in step with BADGE_KINDS" in a comment, which is not a thing

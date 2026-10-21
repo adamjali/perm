@@ -1,0 +1,32 @@
+{
+  "fetchedAt": "2026-10-21T22:45:55.275Z",
+  "answer": {
+    "data": {
+      "query": "Amazon",
+      "match": "possible",
+      "employer": {
+        "name": "Amazon.com Services LLC",
+        "slug": "amazon-com-services-llc",
+        "url": "https://permtracker.app/perm-employers/amazon-com-services-llc",
+        "page": "perm",
+        "perm": {
+          "published": 2271,
+          "certified": 2186,
+          "denied": 8,
+          "certifiedShare": 0.996,
+          "pending": 525,
+          "newestFiling": "2026-10-20",
+          "filingsLast12Months": 1277
+        },
+        "h1bLcas": 94258,
+        "wageRequests": null
+      },
+      "shareFloor": 30
+    },
+    "meta": {
+      "source": "U.S. Department of Labor, OFLC PERM and LCA disclosure files (decided cases) and FLAG case status (pending)",
+      "asOf": "2026-06-30",
+      "url": "https://permtracker.app/perm-employers/amazon-com-services-llc"
+    }
+  }
+}

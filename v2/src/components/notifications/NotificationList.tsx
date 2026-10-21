@@ -270,7 +270,7 @@ function NotificationListSkeleton() {
 }
 
 // Empty state
-function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
+export function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
   const messages: Record<NotificationTabType, { title: string; description: string }> = {
     all: {
       title: "No notifications",

@@ -42,7 +42,10 @@ export interface Conveyor {
   length: number;
 }
 
-export function buildConveyor(run: QueueRun): Conveyor {
+/** What the conveyor needs from a run: its months, oldest first, with the cases in line (any queue). */
+export type ConveyorRun = Pick<QueueRun, "months">;
+
+export function buildConveyor(run: ConveyorRun): Conveyor {
   const n = run.months.length;
   // Month i (0 = the oldest, at the front) sits at x; the front is the high-x end, by the desk.
   const trayX = (i: number) => (n - 1 - i) * PITCH;
