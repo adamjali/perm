@@ -38,6 +38,11 @@ UA = {
 
 # A description past this is truncated mid-sentence in the SERP.
 DESC_MAX = 155
+# Googlebot reads only the first 2 MB of a page ("When crawling for Google
+# Search, Googlebot crawls the first 2MB of a supported file type": Google's
+# Googlebot page, updated Feb 3 2026). Flagged at 1.8 MB so a page is caught
+# while it still has room. /opt-employers was 3.3 MB on Oct 21 2026.
+PAGE_MAX_BYTES = 1_800_000
 DESC_MIN = 70
 
 
@@ -195,6 +200,9 @@ def audit(base: str, path: str, lastmod: str | None = None) -> list[str]:
     if status != 200:
         return [f"{path}: HTTP {status}"]
     width = display_width
+    size = len(html.encode("utf-8"))
+    if size > PAGE_MAX_BYTES:
+        out.append(f"{path}: page is {size / 1e6:.1f} MB; Googlebot reads only the first 2 MB")
 
     out.extend(check_dates(path, html, lastmod))
     for tag in SOCIAL_TAGS:
