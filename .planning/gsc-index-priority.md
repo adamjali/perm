@@ -1285,3 +1285,18 @@ Still to request, in order (after the Oct 22 2 AM deploy for the first):
 10. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled Oct 17 and Oct 12, not
     indexed: a request rarely changes Google's mind; last)
 11. After the deploy, `node scripts/gsc_queue.mjs --since b11de4e4` for anything else the Oct 21 changes touched.
+
+## Queue after the Oct 21 afternoon deploy (55a9c3a7, shipped by hand that afternoon)
+
+`node scripts/gsc_queue.mjs --since 540723a8` lists 13 pages. The three guides that gained DOL's own pages lead:
+they say something new. The rest changed through shared parts (the films' copy, the phone fixes): inspect, and
+request only those last crawled before Oct 21.
+
+Still to request, in order (after the "Oct 21 inspection" list above):
+1. `/guides/perm-denied-what-happens-next` (DOL's FAQ on the 30 calendar days, highlighted)
+2. `/guides/perm-appeal-reconsideration-balca` (DOL's FAQ on asking for both at once)
+3. `/guides/perm-rfi-issued-what-to-do` (DOL's case search answering RFI ISSUED)
+4. `/for-attorneys` (re-cut film, re-taken app pictures)
+5. `/guides/complete-perm-filing-guide` (a re-taken figure)
+6. `/about`, `/blog`, `/changelog`, `/glossary`, `/guides`, `/policy-changes`, `/tools/ead-extension`,
+   `/tools/perm-timeline-calculator`: inspect only; request any crawled before Oct 21
