@@ -328,7 +328,7 @@ export function ringSeam(ring: Plane[], z: number, projection: Projection) {
   const counter = signedArea(ring) > 0;
   const [vx, vy] = towardViewer(projection);
   const facing = ring.map(([ax, ay], index) => {
-    const [bx, by] = ring[(index + 1) % count];
+    const [bx, by] = ring[(index + 1) % count]!;
     const dx = bx - ax;
     const dy = by - ay;
     const [nx, ny] = counter ? [dy, -dx] : [-dy, dx];
