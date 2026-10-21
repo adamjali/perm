@@ -17,7 +17,7 @@ import { StageCard } from "../components/StageCard";
  *
  * Scenes (with 12-15 frame transition overlaps between each):
  * 1. Intro title (frames 0-90)
- * 2. PWD Request stage (frames ~90-180)
+ * 2. Prevailing wage stage (frames ~90-180)
  * 3. Recruitment stage (frames ~180-270)
  * 4. ETA 9089 Filing stage (frames ~270-360)
  * 5. I-140 Filing stage (frames ~360-450)
@@ -41,43 +41,43 @@ interface PERMStage {
 const STAGES: PERMStage[] = [
   {
     badge: "1",
-    title: "PWD Request",
+    title: "Prevailing wage",
     description:
-      "Submit prevailing wage determination to the DOL. Processing takes 4-6 months. Valid for 1 year.",
+      "Ask DOL for the prevailing wage. Its determination sets the least the job can pay, and prints the date it expires.",
     color: "#0066FF",
-    meta: [{ text: "4-6 months" }, { text: "Valid 1 year" }],
+    meta: [{ text: "Sets the wage" }, { text: "Expiry printed on it" }],
   },
   {
     badge: "2",
     title: "Recruitment",
     description:
-      "Conduct required recruitment: Sunday newspaper ads, job orders, and additional methods for professional roles.",
+      "Run the required recruitment: a job order, two Sunday ads, a notice of filing, and three more steps for a professional job.",
     color: "#9333ea",
-    meta: [{ text: "2 Sunday ads" }, { text: "30+ day job order" }],
+    meta: [{ text: "2 Sunday ads" }, { text: "30-day job order" }],
   },
   {
     badge: "3",
-    title: "ETA 9089 Filing",
+    title: "ETA 9089",
     description:
-      "File the PERM application 30 days after the last recruitment step, within 180 days of the first. Must file before PWD expires.",
+      "File the PERM application at least 30 days after the last recruitment step and within 180 days of the first. Then DOL reviews it.",
     color: "#D97706",
-    meta: [{ text: "30-180 day window" }, { text: "6-12 months review" }],
+    meta: [{ text: "30 to 180 day window" }, { text: "Then DOL's review" }],
   },
   {
     badge: "4",
-    title: "I-140 Filing",
+    title: "I-140",
     description:
-      "File I-140 petition within 180 days of PERM certification. Premium processing available.",
+      "File the I-140 petition within 180 days of certification. Premium processing is available.",
     color: "#059669",
-    meta: [{ text: "180 day deadline" }, { text: "Premium: 15 days" }],
+    meta: [{ text: "180-day deadline" }, { text: "Premium: 15 business days" }],
   },
   {
     badge: "✓",
-    title: "Approved!",
+    title: "Approved",
     description:
-      "Case approved. Priority date secured. The green card journey continues from here.",
+      "The I-140 is approved and the priority date is kept. The green card steps come next.",
     color: "#2ECC40",
-    meta: [{ text: "Priority date locked" }, { text: "Case complete" }],
+    meta: [{ text: "Priority date kept" }, { text: "On to the green card" }],
   },
 ];
 
@@ -445,7 +445,7 @@ const ApprovalScene: React.FC<{ brandColor: string }> = ({ brandColor }) => {
 
       <div style={{ marginTop: 32 }}>
         <AnimatedText
-          text="Case Approved!"
+          text="I-140 approved"
           fontSize={72}
           fontWeight={800}
           color="#ffffff"

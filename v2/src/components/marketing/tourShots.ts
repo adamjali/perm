@@ -17,14 +17,14 @@ export type TourSurface =
 
 export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
   "hub": {
-    light: { src: "/images/for-attorneys/hub-light.webp", width: 1800, height: 1233 },
-    dark: { src: "/images/for-attorneys/hub-dark.webp", width: 1800, height: 1233 },
+    light: { src: "/images/for-attorneys/hub-light.webp", width: 1800, height: 1159 },
+    dark: { src: "/images/for-attorneys/hub-dark.webp", width: 1800, height: 1159 },
     narrowLight: { src: "/images/for-attorneys/hub-light-phone.webp", width: 732, height: 1166 },
     narrowDark: { src: "/images/for-attorneys/hub-dark-phone.webp", width: 732, height: 1166 },
   },
   "dashboard": {
-    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1840 },
-    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1840 },
+    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1766 },
+    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1766 },
     narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 732, height: 1590 },
     narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 732, height: 1590 },
   },
@@ -45,10 +45,10 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/case-detail-dark-phone.webp", width: 732, height: 2400 },
   },
   "edit-case": {
-    light: { src: "/images/for-attorneys/edit-case-light.webp", width: 1800, height: 1060 },
-    dark: { src: "/images/for-attorneys/edit-case-dark.webp", width: 1800, height: 1060 },
-    narrowLight: { src: "/images/for-attorneys/edit-case-light-phone.webp", width: 732, height: 2536 },
-    narrowDark: { src: "/images/for-attorneys/edit-case-dark-phone.webp", width: 732, height: 2536 },
+    light: { src: "/images/for-attorneys/edit-case-light.webp", width: 1800, height: 1089 },
+    dark: { src: "/images/for-attorneys/edit-case-dark.webp", width: 1800, height: 1089 },
+    narrowLight: { src: "/images/for-attorneys/edit-case-light-phone.webp", width: 732, height: 2776 },
+    narrowDark: { src: "/images/for-attorneys/edit-case-dark-phone.webp", width: 732, height: 2776 },
   },
   "calendar": {
     light: { src: "/images/for-attorneys/calendar-light.webp", width: 1800, height: 1511 },

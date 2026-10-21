@@ -84,7 +84,7 @@ export function WelcomeEmail({
       {/* The main action right after what it does. */}
       <Section style={ctaSectionStyle}>
         <Link
-          href={`${baseUrl}/cases`}
+          href={`${baseUrl}/cases/new`}
           className="em-button-primary"
           style={styles.ctaButton}
         >

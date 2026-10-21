@@ -7,8 +7,9 @@
  *   pnpm storybook   # in another terminal, on :6006
  *   node scripts/record_tour_videos.mjs [http://localhost:6006] [name ...]
  *
- * Each clip is a scripted walk through one page: scroll to a section, set a
- * date, let the page work out the rest. The clock is fixed to the recording's
+ * Each clip is a scripted walk through one page (scroll to a section, set a
+ * date, open a tab, let the page work out the rest), or through several pages
+ * one after another (`segments`, the app tour). The clock is fixed to the recording's
  * day (2026-10-01), so "due in 12 days" says what it said when the sample firm
  * was recorded. One Chrome, one clip at a time (never two browsers at once on
  * this Mac). Frames come from Chrome's own screencast and are put together
@@ -59,19 +60,87 @@ async function setDate(page, id, iso) {
   await input.blur();
 }
 
+/** Open one of the case page's tabs the way a reader would, then let it settle. */
+async function openTab(page, name, ms = 1800) {
+  const tab = page.getByRole("tab", { name, exact: true });
+  await tab.hover();
+  await page.waitForTimeout(250);
+  await tab.click();
+  await page.waitForTimeout(ms);
+}
+
+/** The case page: the header, the next step, then each tab in turn. */
+async function walkCasePage(p) {
+  await p.waitForTimeout(1600);
+  await glide(p, 520, 1800);
+  await p.waitForTimeout(1400);
+  await glide(p, 560, 1800);
+  await p.waitForTimeout(1200);
+  await glide(p, -1080, 1600);
+  await p.waitForTimeout(600);
+  await openTab(p, "Recruitment");
+  await openTab(p, "ETA 9089");
+  await openTab(p, "I-140", 1300);
+  await openTab(p, "Notes", 2000);
+  await openTab(p, "Overview", 900);
+}
+
+/** The cases page: point at a case, then scroll the caseload. */
+async function walkCases(p, by = 700) {
+  await p.waitForTimeout(1300);
+  await p.locator("main h3").first().hover().catch(() => {});
+  await p.waitForTimeout(1300);
+  await glide(p, by, 2400);
+  await p.waitForTimeout(1000);
+  await glide(p, -by, 1600);
+  await p.waitForTimeout(600);
+}
+
 const CLIPS = {
+  // A short walk through the app: the dashboard, the cases, one case, the calendar.
+  "app-tour": {
+    segments: [
+      {
+        url: story("dashboard"),
+        run: async (p) => {
+          await p.waitForTimeout(1600);
+          await glide(p, 620, 2200);
+          await p.waitForTimeout(1200);
+          await glide(p, 520, 1600);
+          await p.waitForTimeout(1000);
+        },
+      },
+      { url: story("cases"), run: (p) => walkCases(p, 520) },
+      {
+        url: story("case-detail"),
+        run: async (p) => {
+          await p.waitForTimeout(1500);
+          await glide(p, 520, 1800);
+          await p.waitForTimeout(1200);
+          await glide(p, -520, 1200);
+          await openTab(p, "Recruitment", 1500);
+          await openTab(p, "ETA 9089", 1600);
+        },
+      },
+      {
+        url: story("calendar"),
+        run: async (p) => {
+          await p.waitForTimeout(1600);
+          await p.getByRole("button", { name: /next/i }).first().click();
+          await p.waitForTimeout(1800);
+        },
+      },
+    ],
+  },
   // The cases page: every case as a card, ordered by its next deadline.
   "cases-page": {
     url: story("cases"),
-    run: async (p) => {
-      await p.waitForTimeout(1500);
-      await p.locator("main h3").first().hover().catch(() => {});
-      await p.waitForTimeout(1200);
-      await glide(p, 700, 2600);
-      await p.waitForTimeout(1200);
-      await glide(p, -700, 1800);
-      await p.waitForTimeout(800);
-    },
+    run: (p) => walkCases(p),
+  },
+  // One case's page: the next step, its dates, then each tab.
+  "case-page": {
+    url: story("case-detail"),
+    run: walkCasePage,
   },
   // The wage determination date sets the expiration; the page works it out.
   "pwd-cascade": {
@@ -144,36 +213,45 @@ try {
   for (const [name, clip] of Object.entries(CLIPS)) {
     if (only.length && !only.includes(name)) continue;
     const ctx = await browser.newContext({ viewport: SIZE, colorScheme: "light" });
-    const page = await ctx.newPage();
-    await page.clock.setFixedTime(TODAY);
     const dir = fs.mkdtempSync(path.join(process.env.TMPDIR ?? "/tmp", `tour-${name}-`));
     const frames = [];
     try {
-      const res = await page.goto(clip.url, { waitUntil: "load", timeout: 180000 });
-      if (!res || res.status() !== 200) throw new Error(`status ${res?.status()}`);
-      await page.waitForSelector("#storybook-root main", { timeout: 240000 });
-      await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
-      await page.waitForTimeout(1500);
-      // Chrome's own screencast: a frame each time the page paints, with its
-      // time, so the clip keeps the real pace without a video binary of
-      // Playwright's own.
-      const cdp = await ctx.newCDPSession(page);
-      cdp.on("Page.screencastFrame", async ({ data, metadata, sessionId }) => {
-        const file = path.join(dir, `f${String(frames.length).padStart(5, "0")}.jpg`);
-        fs.writeFileSync(file, Buffer.from(data, "base64"));
-        frames.push({ file, t: metadata.timestamp });
-        await cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
-      });
-      await cdp.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: SIZE.width, maxHeight: SIZE.height });
-      await clip.run(page);
-      await page.waitForTimeout(600);
-      await cdp.send("Page.stopScreencast");
+      // A clip is one page, or several pages played one after another (a
+      // segment each), joined with a hard cut.
+      const segments = clip.segments ?? [{ url: clip.url, run: clip.run }];
+      for (const [seg, segment] of segments.entries()) {
+        const page = await ctx.newPage();
+        await page.clock.setFixedTime(TODAY);
+        const res = await page.goto(segment.url, { waitUntil: "load", timeout: 180000 });
+        if (!res || res.status() !== 200) throw new Error(`status ${res?.status()}`);
+        await page.waitForSelector("#storybook-root main", { timeout: 240000 });
+        await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
+        await page.waitForTimeout(1500);
+        // Chrome's own screencast: a frame each time the page paints, with its
+        // time, so the clip keeps the real pace without a video binary of
+        // Playwright's own.
+        const cdp = await ctx.newCDPSession(page);
+        cdp.on("Page.screencastFrame", async ({ data, metadata, sessionId }) => {
+          const file = path.join(dir, `f${String(frames.length).padStart(5, "0")}.jpg`);
+          fs.writeFileSync(file, Buffer.from(data, "base64"));
+          frames.push({ file, t: metadata.timestamp, seg });
+          await cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
+        });
+        await cdp.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: SIZE.width, maxHeight: SIZE.height });
+        await segment.run(page);
+        await page.waitForTimeout(600);
+        await cdp.send("Page.stopScreencast");
+        await page.close();
+      }
       if (frames.length < 5) throw new Error(`only ${frames.length} frames`);
-      // A concat list with each frame held until the next one painted.
-      const end = frames.at(-1).t + 0.8;
-      const list = frames
-        .map((f, i) => `file '${f.file}'\nduration ${Math.max(0.001, (frames[i + 1]?.t ?? end) - f.t).toFixed(3)}`)
-        .join("\n") + `\nfile '${frames.at(-1).file}'\n`;
+      // A concat list with each frame held until the next one painted; the
+      // last frame of each segment holds a moment before the cut.
+      const hold = (i) => {
+        const next = frames[i + 1];
+        if (!next || next.seg !== frames[i].seg) return 0.8;
+        return Math.max(0.001, next.t - frames[i].t);
+      };
+      const list = frames.map((f, i) => `file '${f.file}'\nduration ${hold(i).toFixed(3)}`).join("\n") + `\nfile '${frames.at(-1).file}'\n`;
       fs.writeFileSync(path.join(dir, "list.txt"), list);
       const mp4 = path.join(OUT, `${name}.mp4`);
       // H.264 at a constant 30 frames a second, quality that keeps small type

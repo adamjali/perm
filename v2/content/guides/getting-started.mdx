@@ -2,7 +2,7 @@
 title: "Getting started with PERM Tracker"
 description: "PERM Tracker has two halves: look up any PERM, PWD or LCA case number with no account, or sign in to manage a caseload. This guide covers both."
 date: "2026-01-18"
-updated: "2026-10-16"
+updated: "2026-10-21"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/getting-started.webp"
 imageAlt: "The PERM Tracker dashboard: the deadlines due this week and this month across a firm's cases"
@@ -15,51 +15,56 @@ published: true
 featured: true
 ---
 
-**What you’ll learn:** Everything you need to use PERM Tracker effectively, creating cases, tracking deadlines, managing recruitment, handling RFIs and RFEs, configuring notifications, using the calendar, and getting answers from the AI assistant.
+**What you'll learn:** how to use PERM Tracker day to day. Adding cases, reading the dashboard, working a case from its own page, recruitment, RFIs and denials, the calendar, reminders and the assistant.
 
-## Welcome: Who This Is For
+## Who this is for
 
 PERM Tracker is free, and it has two halves. Public pages for anyone waiting on a [PERM labor certification](https://flag.dol.gov/programs/perm), and a case manager for the people filing them:
 
 - **The person waiting on a case**: look your own case number up at [PERM case status](/perm-case-status), get an email when DOL changes it, and read the same federal data everyone else is reading. The same lookup and the same alerts take prevailing wage requests (P-) and H-1B labor condition applications (I-). No account, no sign-in.
 - **Immigration attorneys** managing a caseload of PERM cases
-- **Paralegals** tracking deadlines and recruitment activities
-- **HR professionals** sponsoring employees for green cards
-- **Employers** keeping tabs on their own cases
+- **Paralegals** tracking deadlines and recruitment
+- **HR teams and employers** keeping track of their own cases
 
 No credit card. No trial period. Free forever.
 
-Everything below this point covers the signed-in case manager. If you’re waiting on your own case and don’t want an account, [check the case status](/perm-case-status) and [read the PERM data](/guides/reading-the-perm-data) instead.
+Everything below this point covers the signed-in case manager. If you're waiting on your own case and don't want an account, [check the case status](/perm-case-status) and [read the PERM data](/guides/reading-the-perm-data) instead.
 
 <Callout type="tip" title="New to PERM?">
-  If you’re unfamiliar with the PERM process, start with our [overview of PERM labor certification](/blog/what-is-perm-labor-certification) or the [Ultimate PERM Guide](/guides/ultimate-perm-guide-2026) first.
+  If PERM is new to you, start with our [overview of PERM labor certification](/blog/what-is-perm-labor-certification) or the [Ultimate PERM Guide](/guides/ultimate-perm-guide-2026) first.
 </Callout>
 
-### Watch the Product Demo
+### A short tour of the app
 
-See PERM Tracker in action. This interactive demo walks through the dashboard, case management, deadline tracking, and more.
+<VideoFigure
+  src="/videos/guides/app-tour.mp4"
+  poster="/videos/guides/app-tour.webp"
+  alt="A walk through the app: the dashboard's deadlines, the cases page, one case's page with its tabs, then the calendar"
+  caption="The dashboard, the cases page, one case and the calendar, in under half a minute."
+  credit="The PERM Tracker app, drawn from a sample firm's cases"
+/>
 
-<VideoPlayer videoId="ProductDemo" />
-
-## The PERM Process in 60 Seconds
+## The PERM process in 60 seconds
 
 Every PERM case follows four stages. PERM Tracker tracks them all:
 
-1. **PWD**: File a prevailing wage determination request with the DOL. Receive the determination, which sets the wage and has an expiration date.
-2. **Recruitment**: Conduct required recruitment activities: job order, Sunday ads, notice of filing, and (for professional occupations) three additional methods.
-3. **ETA 9089**: File the PERM application after a 30-day quiet period. Wait for certification (or audit/denial).
-4. **I-140**: File the immigrant petition within 180 days of certification.
+1. **PWD**: file a prevailing wage determination request with DOL. The determination sets the wage and has an expiration date.
+2. **Recruitment**: run the required recruitment: the job order, two Sunday ads, the notice of filing, and three more steps for a professional job.
+3. **ETA 9089**: file the PERM application once the 30-day quiet period after recruitment has passed, then wait for certification (or an RFI, an audit or a denial).
+4. **I-140**: file the immigrant petition within 180 days of certification. DOL prints the last day, certification plus 179, and the app uses it.
 
-Each stage has specific deadlines, and missing one can mean starting over. That’s what PERM Tracker is for.
+Each stage has deadlines, and missing one can mean starting over. That's what PERM Tracker is for.
 
-## Your Dashboard: Command Center
+## The dashboard
 
-Once signed in, you land on the **Dashboard**. It shows everything at a glance:
+After you sign in, you land on the **Dashboard**:
 
-- **Deadlines**: four groups: overdue, this week, this month and later. A case moves between them on its own as its next deadline nears.
-- **Summary Tiles**: Case counts by stage (PWD, Recruitment, ETA 9089, I-140, Complete, Closed) with interactive progress rings.
-- **Upcoming Deadlines**: A list of the next deadlines across all your cases.
-- **Recent Activity**: Your latest actions (case created, dates updated, status changes).
+- **DOL's queue**: one line saying which filing month DOL is deciding PERM cases from.
+- **Deadlines**: every deadline across your cases in four groups: overdue, this week, this month and later. A deadline moves between the groups on its own as its day comes closer.
+- **Cases**: how many cases sit at each stage, drawn as one bar. Each count opens the cases page filtered to that stage. A **Duplicates** count appears when two cases look like the same filing.
+- **Recent changes**: the latest updates across your cases, each with its job and stage.
+
+A new account also sees a short setup checklist, and a banner appears when auto-close has closed a case (see [Notifications](#notifications)).
 
 <ScreenshotFigure
   src="/images/content/figures/guides/getting-started-recent-activity.webp"
@@ -70,25 +75,25 @@ Once signed in, you land on the **Dashboard**. It shows everything at a glance:
   aspectRatio={1600 / 618}
 />
 
-## Cases: Your Caseload at a Glance
+## Cases
 
-The **Cases** page lists all your cases with two view options:
+The **Cases** page shows every case as a card, or as rows in a list. Switch between them with the two buttons beside the heading.
 
-- **Card view**: Each case gets a card showing employer, beneficiary, current stage, progress status, next deadline, and an urgency indicator dot.
-- **List view**: Compact table format for large caseloads.
+- **Card view**: each card names the employer and the job, shows the stage on its tab, and leads with the next deadline and the days left. A small label under it says where the work stands (working on it, filed, RFI open). Open **Dates** on a card to see all its dates; it stays open until you close it.
+- **Active, Completed, Closed, All**: the tabs above the search.
+- **Search**: finds a case by employer, foreign worker ID, job, notes or any case number, and forgives a typo.
+- **Filters**: stage, progress and duplicates only.
+- **Sort**: next deadline, recently updated, favorites first, employer name, case status, the date the PWD, ETA 9089 or I-140 was filed, or your own order by dragging.
+- **Favorites**: star a case to keep it near the top.
+- **Select**: pick several cases to export them (CSV or JSON), archive them, reopen closed ones, sync them to Google Calendar or delete them.
+- **Import / export**: bring a caseload in from a JSON file, or export the cases the list shows.
 
-### What You Can Do
-
-- **Search and filter**: Find cases by employer, beneficiary, stage, or status.
-- **Sort**: By deadline, name, stage, or date created.
-- **Expand cards**: Hover or pin a card to see more details without leaving the page.
-- **Bulk actions**: Select multiple cases to archive, delete, reopen, or export.
-- **Favorites**: Star cases for quick access.
+Press **⌘K** (Ctrl+K on Windows) anywhere in the app to search your own cases by name.
 
 <VideoFigure
   src="/videos/guides/cases-page.mp4"
   poster="/videos/guides/cases-page.webp"
-  alt="The cases page scrolling through a firm's cases, each card showing its next deadline"
+  alt="The cases page: the pointer rests on a case, then the page scrolls through a firm's cases, each card leading with its next deadline"
   caption="The cases page: every case as a card, ordered by its next deadline."
   credit="The PERM Tracker app, drawn from a sample firm's cases"
 />
@@ -96,46 +101,41 @@ The **Cases** page lists all your cases with two view options:
 <ScreenshotFigure
   src="/images/for-attorneys/cases-light.webp"
   alt="The cases page with sample cases as cards, each with its stage, its next deadline and the days left"
-  caption="Each card shows the case's stage, its next deadline and the days left. Sample cases."
+  caption="Each card shows the case's stage, its next deadline and the days left."
+  credit="The PERM Tracker app, drawn from a sample firm's cases"
+  creditHref="/for-attorneys"
   aspectRatio={1800 / 1217}
 />
 
-## Creating & Editing a Case: How the Form Works
+## Adding and editing a case
 
-Click **"New Case"** from the Dashboard or Cases page. The form has two parts:
+Click **Add case** on the dashboard or the cases page. The form has these parts:
 
-### Basic Info (Always Visible)
-
-- **Beneficiary name**: The foreign worker
-- **Company name**: The sponsoring employer
-- **Position title**: The job being sponsored
-- **Case status and progress**: Auto-calculated from your dates (or set manually)
-
-### Progressive Sections
-
-Below Basic Info, four collapsible sections unlock as you progress:
-
-1. **PWD**: Enter filing and determination dates. The expiration date auto-calculates.
-2. **Recruitment**: Enter job order dates, Sunday ad dates, notice of filing dates, and (for professional occupations) additional recruitment methods.
-3. **ETA 9089**: Opens after recruitment is complete and the 30-day quiet period passes. Enter filing, audit, and certification dates.
-4. **I-140**: Opens after ETA 9089 certification. Enter filing, receipt, and approval/denial dates.
+- **Basic information**: the employer, the job, the foreign worker ID, the DOL case number and your own reference. The stage follows the dates you enter unless you switch that off and set it yourself.
+- **PWD**, **Recruitment**, **ETA 9089** and **I-140**: one section for each stage's dates.
+- **Job description**: the duties and requirements, with templates you can save and reuse.
+- **Notes and settings**: Google Calendar sync, favorite, and whether the case shows on the timeline.
 
 <Callout type="info" title="Save at any time">
-  You don’t have to fill everything at once. Enter what you have, save, and come back later. The form remembers where you left off.
+  You don't have to fill everything in at once. Enter what you have, save, and come back later.
 </Callout>
 
-### How Sections Work
+### How the sections work
 
-- **Checkmark**: When a section is complete, it collapses and shows a green checkmark with a summary line (e.g., "Determined Jun 15 · Expires Dec 31 · $95,000 LII").
-- **Auto-open**: When you complete a prerequisite (like entering the PWD determination date), the next section opens automatically.
-- **Always accessible**: You can open any section at any time, even if prerequisites aren’t met. A note reminds you what’s needed.
-- **Auto-calculation**: PWD expiration, filing windows, and some deadlines calculate automatically. These fields show an "auto" badge.
+- **A checkmark** shows when a section is complete, with a one-line summary (for example "Determined Jun 15 · Expires Dec 31 · $95,000 LII").
+- **The next section opens on its own** when you finish the one before it, such as entering the PWD determination date.
+- **Any section opens at any time**, even before its stage. A note says what usually comes first.
+- **Dates work themselves out**: the PWD expiration, the recruitment deadlines, the filing window and the I-140 deadline. These carry an "Auto" tag.
 
-### Validation
+### Checks as you type
 
 - **Red asterisks (*)** mark required fields.
-- **Orange warnings** are advisory. They flag potential issues but don’t prevent saving.
-- **Date constraints** prevent impossible dates (e.g., certification before filing).
+- **Amber warnings** flag something worth a second look but don't stop you saving.
+- **Impossible dates** are refused, such as a certification before the filing.
+
+### Starting from the deadline calculator
+
+Worked a case out on the public [PERM deadline calculator](/tools/perm-deadline-calculator)? Choose **Save as a case** there and the dates come with you into a new case, after you sign in or create an account.
 
 <VideoFigure
   src="/videos/guides/pwd-cascade.mp4"
@@ -145,133 +145,121 @@ Below Basic Info, four collapsible sections unlock as you progress:
   credit="The PERM Tracker app, drawn from a sample firm's cases"
 />
 
-## Case Detail View: Everything About a Case
+## The case page
 
-Click any case to see its full detail view with tabs:
+Click a case anywhere in the app to open its own page. Everything about the case is there, in six tabs.
 
-### Overview Tab
-- **Next Up**: The most important upcoming action for this case.
-- **PWD Timeline**: Visual representation of the PWD determination through expiration.
-- **Job Description**: The position details.
-- **Inline Timeline**: A chronological view of all dates and milestones.
+<VideoFigure
+  src="/videos/guides/case-page.mp4"
+  poster="/videos/guides/case-page.webp"
+  alt="A case's page: its next step and timeline on the Overview tab, then the Recruitment, ETA 9089, I-140 and Notes tabs in turn"
+  caption="One case's page: the next step and the dates on Overview, then each stage's tab and the case's notes."
+  credit="The PERM Tracker app, drawn from a sample firm's cases"
+/>
 
-### Recruitment Tab
-- **Job Order**: Start/end dates and duration.
-- **Sunday Ads**: First and second ad dates.
-- **Notice of Filing**: Posting period dates.
-- **Additional Methods**: For professional occupations, the 3+ additional recruitment methods with their types, dates, and descriptions.
+### The top of the page
 
-### ETA 9089 Tab
-- **Filing details**: Filing date, case number.
-- **Audit status**: If the case was audited.
-- **Certification**: Certification date and expiration.
-- **RFI entries**: Any Requests for Information from the DOL (see below).
+- **The case's name, stage and progress**, with a **Professional** label when the extra recruitment steps apply, and a bar across the four stages.
+- **The DOL case number**, once you've entered it, links to its live status on the public [case lookup](/perm-case-status).
+- **Buttons**: star the case, turn its Google Calendar sync on or off, **Edit case**, and a menu to show it on the timeline or take it off, reopen, archive or delete it. Archiving closes a case; it doesn't delete it.
 
-### I-140 Tab
-- **Filing**: Filing date and receipt number.
-- **Outcome**: Approval or denial date.
-- **RFE entries**: Any Requests for Evidence from USCIS (see below).
+### The tabs
 
-### Documents, Notes & Actions
-- **Documents**: Upload, preview, and categorize case documents.
-- **Notes**: Journal entries for internal notes.
-- **Actions**: Edit, archive, bookmark, or sync to Google Calendar.
+- **Overview**: **Next up**, the one thing to do next, where you can record the date it happened without opening the form. Below it: the prevailing wage (case number, wage level and amount, expiration), quick stats (days with DOL, deadlines due in the next 30 days), every step so far on one line of milestones, and the job description. Once recruitment is complete, a **recruitment results** summary is written for you to edit and copy.
+- **Recruitment**: the recruitment window, then every step with its dates: the job order, the Sunday ads, the notice of filing and any additional steps.
+- **ETA 9089**: the filing window, the filing, any audit, the certification and its expiration, any RFIs, and a denial with the review that follows it.
+- **I-140**: the I-140 filing window, the filing and receipt, the category, premium processing, the service center, the outcome and any RFEs.
+- **Documents**: upload, preview and sort the case's files by kind.
+- **Notes**: the case's journal. Each note can be marked done once it's handled.
 
 <ScreenshotFigure
   src="/images/for-attorneys/case-detail-light.webp"
   alt="A sample case's page: the RFI response due in 7 days, the timeline of completed steps, the prevailing wage and quick stats"
-  caption="The case page: the next action, every step so far, the wage determination and the job description. A sample case."
+  caption="The Overview tab: the next action, every step so far, the wage determination and the job description."
+  credit="The PERM Tracker app, drawn from a sample firm's cases"
+  creditHref="/for-attorneys"
   aspectRatio={1800 / 1927}
 />
 
-## RFI & RFE: When the Government Asks for More
+## RFIs, RFEs and denials
 
-Two types of government requests can happen during a PERM case:
+### An RFI from DOL
 
-### RFI (Request for Information) from DOL
+An RFI (request for information) comes while DOL reviews the ETA 9089.
 
-An RFI comes during ETA 9089 review. The DOL asks for additional documentation.
-
-- **Strict 30-day deadline**: Auto-calculated from the received date.
-- Track received date, due date, and submitted date.
-- Shows urgency badge on case cards when approaching deadline.
+- **30 days to answer**: enter the date it came and the due date is worked out and locked.
+- Record when you answered, and the deadline leaves your list.
+- The case card and the dashboard show it as it comes closer.
 
 <Callout type="warning" title="The RFI deadline">
-  The 30-day RFI deadline is strict. Missing it means the case is denied. PERM Tracker auto-calculates this deadline the moment you enter the received date.
+  DOL's 30 days don't stretch. Enter the date the RFI came the day it arrives, so the deadline is on your dashboard and in your reminders from the start.
 </Callout>
 
-### RFE (Request for Evidence) from USCIS
+### An RFE from USCIS
 
-An RFE comes during I-140 review. USCIS asks for additional evidence.
+An RFE (request for evidence) comes while USCIS reviews the I-140.
 
-- **Flexible deadline**: You enter the due date (typically ~87 days from receipt).
-- Track received date, due date, and submitted date.
-- Shows urgency badge on case cards.
+- **You enter the due date** from the notice: typically 30 to 90 days, 87 as standard.
+- Record when you answered, as with an RFI.
 
-### Key Difference
+### A denied ETA 9089
 
-| | RFI | RFE |
-|---|---|---|
-| **Stage** | ETA 9089 | I-140 |
-| **From** | DOL | USCIS |
-| **Deadline** | 30 days (auto-calculated) | ~87 days (user-entered) |
-| **Consequence** | Case denied | Case denied |
+Enter the date on DOL's denial letter in the ETA 9089 section, and the case shows the 30 days you have to ask for reconsideration by the Certifying Officer or review by BALCA. If you ask for reconsideration and it's upheld, enter the date of that notice and the case shows the 30 days to ask BALCA. The deadline reaches the dashboard, the calendar and your reminders like any other. A certification entered after a denial counts as a reversal.
 
-## Professional Occupations & Additional Recruitment
+| | RFI | RFE | Denial review |
+|---|---|---|---|
+| **Stage** | ETA 9089 | I-140 | ETA 9089 |
+| **From** | DOL | USCIS | DOL |
+| **Deadline** | 30 days, worked out | From the notice, entered by you | 30 days from the letter, worked out |
 
-For positions requiring a Bachelor's degree or higher, PERM regulations (20 CFR 656.17(e)) require **3 additional recruitment methods** beyond the standard requirements.
+## Professional occupations and additional recruitment
 
-### When to Check "Professional Occupation"
+For a job that needs a bachelor's degree or higher, the regulations ([20 CFR 656.17(e)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-C/section-656.17)) require **3 additional recruitment steps** beyond the standard ones.
 
-Check the **"Professional Occupation"** toggle in the Recruitment section when the position requires a Bachelor's degree or higher in a specific field.
+### Turning it on
 
-### The 11 Available Methods
+Switch on **Professional occupation** in the Recruitment section when the job needs a bachelor's degree or higher.
 
-Choose from: campus placement, professional organizations, trade publications, job fairs, employer website, employee referral program, local/ethnic newspapers, radio/TV ads, career conferences, private employment firms, or other.
+### The 11 steps to choose from
 
-### Method Date Types
+Local or ethnic newspaper ad, radio ad, TV ad, job fair, campus placement office, trade or professional organization, private employment firm, employee referral program, the employer's website, a job website, and on-campus recruitment.
 
-Different methods track dates differently:
-- **Single-date methods** (job fair, career conference), One date field.
-- **Date-range methods** (employer website, employee referral), Start and end dates.
-- **Sub-entry methods** (radio/TV ads, local newspapers), Multiple individual entries with dates and descriptions.
+### How each step is dated
 
-### Common Mistakes
+- **A start and end date**: a job website ad, the employer's website, a private employment firm.
+- **Several dated entries**: radio and TV ads, one for each time it ran.
+- **One date**: every other step.
 
-- **Only 2 methods**: You need 3. PERM Tracker won’t show recruitment as complete until 3 valid methods have dates.
-- **Missing dates**: A method without dates doesn’t count.
-- **Dates outside the recruitment window**: Methods must occur during the recruitment period.
+### Common mistakes
 
-<Callout type="important" title="Three extra methods are required">
-  Professional occupations require at least 3 additional recruitment methods, each with valid dates. Two isn’t enough.
+- **Two steps**: you need three. Recruitment isn't complete until three steps have dates.
+- **A step with no date** doesn't count.
+- **A step dated before the wage determination**, or after the last day the steps can run, is flagged.
+
+<Callout type="important" title="Three extra steps are required">
+  A professional job needs at least 3 additional recruitment steps, each with its dates. Two isn't enough.
 </Callout>
 
-## Calendar & Timeline
+## Calendar and timeline
 
-### Calendar View
+### The calendar
 
-A monthly calendar grid shows all deadlines across all cases:
+Every deadline across your cases, by month, week or day:
 
-- **Color-coded** by stage (PWD, Recruitment, ETA 9089, I-140).
-- **Hover** for deadline details (case name, deadline type, date).
-- **Click** to navigate to the case.
+- **Coloured by stage** (PWD, recruitment, ETA 9089, I-140), with filters for what to show.
+- **Point at an entry** for a summary, or **click it** for the details and a link to the case.
 
-### Google Calendar Sync
+### Google Calendar sync
 
-Connect your Google account in **Settings** to sync deadlines:
+1. Go to **Settings > Calendar sync**.
+2. Click **Connect calendar**.
+3. Choose which kinds of deadline to send.
 
-1. Go to **Settings > Calendar**.
-2. Click **Connect Google Calendar**.
-3. Enable sync per-case using the toggle in the case edit form (Notes & Settings section).
+Every case syncs once you connect. To leave one case out, switch its sync off on its page or in its **Notes and settings**. **Sync all cases** in Settings, and **Select** on the cases page, change many at once.
 
-Deadlines appear as events in your Google Calendar with links back to PERM Tracker.
+### The timeline
 
-### Timeline View
-
-A Gantt-chart style view showing case progression across time:
-
-- See how cases overlap and identify scheduling conflicts.
-- Visual representation of recruitment windows, filing deadlines, and more.
+Every case on one timeline, each stage drawn as a bar, so you can see which cases run side by side and where the deadlines bunch up.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/getting-started-timeline.webp"
@@ -282,30 +270,27 @@ A Gantt-chart style view showing case progression across time:
   aspectRatio={1600 / 778}
 />
 
-## Notifications & Alerts
+## Notifications
 
-PERM Tracker sends reminders through three channels:
+### Email
 
-### Email Notifications
-Receive deadline reminders by email. Configure:
-- Which stages to receive alerts for.
-- How many days before a deadline to be notified (e.g., 7 days, 3 days, 1 day).
+Under **Settings > Notifications**:
 
-### Push Notifications
-Browser notifications for deadline reminders, so they reach you without the app open. Enable in Settings and allow browser permissions when prompted.
+- **Deadline reminders** by stage: PWD, recruitment, ETA 9089, I-140, RFI responses and RFE responses. They arrive gathered into one email a day.
+- **When to remind you**: 30, 14, 7, 3 and 1 days before a deadline, all on to start with.
+- **Case updates**, and a **weekly summary** of the whole caseload on Mondays, sent only in a week when something changed.
 
-### Dashboard Indicators
-The case cards and the dashboard's Deadlines panel mark the deadlines that are close or overdue.
+### In the browser
 
-### Configuration
+Turn on browser notifications in the same tab and allow them when your browser asks. They reach you without the app open.
 
-Go to **Settings > Notifications** to configure:
-- Per-stage toggles (PWD, Recruitment, ETA 9089, I-140).
-- Days before deadline for each alert level.
-- Quiet hours (suppress notifications during off-hours).
+### Quiet hours
 
-### Auto-Closure Alerts
-Cases with expired deadlines (e.g., PWD expiration passed, filing window closed) are automatically flagged. You’ll receive a notification when this happens.
+**Settings > Quiet hours** holds notifications during the hours you choose.
+
+### Auto-close
+
+**Settings > Auto-close** is off to start with. Turn it on and a case closes itself when a deadline that can't be met has passed: a PWD that expired before the ETA 9089 was filed (unless recruitment began while it was valid), or a filing window that closed. You get a notification and a banner on the dashboard, and the case stays readable.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/getting-started-settings-notifications.webp"
@@ -316,30 +301,25 @@ Cases with expired deadlines (e.g., PWD expiration passed, filing window closed)
   aspectRatio={1600 / 933}
 />
 
-## AI Assistant: Your PERM Expert
+## The assistant
 
-PERM Tracker includes an AI assistant that can help with questions, case lookups, and actions.
+The chat button in the corner opens an assistant that knows PERM and can read your cases.
 
-### What It Can Do
+### What it can do
 
-- **Answer PERM questions**: Regulations, timelines, requirements, best practices.
-- **Look up cases**: "What’s the status of the Smith case?" or "Which cases have deadlines this week?"
-- **Check deadlines**: "When does the filing window close for case X?"
-- **Take actions**: Update case fields, change statuses, and more (with your confirmation).
-- **Search the web**: Look up current DOL processing times, regulation changes, and more.
+- **Answer PERM questions**: the rules, the timelines, what comes next.
+- **Read your cases**: "Which cases have deadlines this week?" or "What's left on the Juniper case?"
+- **Check a deadline**: "When does the filing window close for this case?"
+- **Make changes for you**: update a date, change a stage, add a note. It shows the change before it runs, and checks it against the PERM rules first.
+- **Search the web** for current news, such as a rule change.
 
-### Three Modes
+### Three modes
 
-Configure the AI behavior in **Settings > AI Assistant**:
-- **Off**: Disable the AI assistant entirely.
-- **Confirm**: The AI proposes actions but waits for your approval before executing.
-- **Auto**: The AI executes actions automatically (use with caution).
+Choose at the top of the chat panel:
 
-### Tips for Using the AI
-
-- Ask natural language questions: "What are the recruitment requirements for professional occupations?"
-- Reference cases by employer or beneficiary name.
-- Ask "What should I do next?" for guidance on any case.
+- **Read only**: answers questions and changes nothing.
+- **Ask first** (the default): proposes each change and waits for your yes.
+- **Auto**: makes changes straight away. Deleting still asks.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/getting-started-assistant.webp"
@@ -350,37 +330,34 @@ Configure the AI behavior in **Settings > AI Assistant**:
   aspectRatio={904 / 1344}
 />
 
-## Tips, Tricks & Common Pitfalls
+## Tips and common pitfalls
 
-### Best Practices
+### Good habits
 
-- **Enter dates as you get them**: Don’t wait to fill everything out. Save often.
-- **PWD determination is the foundation**: Everything else depends on it. Enter it first.
-- **Recruitment dates must come after PWD determination**: The system enforces this.
-- **The 30-day quiet period is automatic**: PERM Tracker calculates when the ETA 9089 filing window opens.
-- **Use the AI assistant for quick answers**: Faster than searching through regulations.
+- **Enter dates as you get them**. You don't need the whole case at once.
+- **Start with the PWD determination**: the expiration and the recruitment deadlines hang on it.
+- **Let the app work out the quiet period**: the filing window opens 30 days after the last recruitment step, and closes 180 days after the first.
+- **The sample case** a new account starts with is marked **Sample**, sends you nothing, and can be deleted any time.
 
-### Common Pitfalls
+### Pitfalls
 
-- **Professional occupations need 3 additional methods**: Not 2, not 1. Three valid methods with dates.
-- **RFI has a strict 30-day deadline**: Enter the received date immediately so the deadline calculates.
-- **Recruitment has to begin before the PWD expires**: Once it has begun inside the PWD's validity, the window closes 180 days from the first recruitment step even if the PWD expires first. Recruitment begun before the determination date has to be filed by the PWD expiration.
-- **Don’t forget the Notice of Filing**: It’s a 10-business-day posting requirement that’s easy to overlook.
+- **Professional jobs need 3 additional steps**: not 2, not 1. Three, each with its dates.
+- **An RFI gives 30 days**: enter the date it came straight away.
+- **Recruitment has to begin before the PWD expires**: once it has begun inside the PWD's validity, the window closes 180 days from the first recruitment step even if the PWD expires first. Recruitment begun before the determination date has to be filed by the PWD expiration.
+- **Don't forget the notice of filing**: 10 business days of posting, and easy to overlook.
 
-### Getting Help
+### Getting help
 
-- **AI Assistant**: Ask questions directly in the app.
-- **Content Hub**: Browse [guides](/guides) and [blog posts](/blog).
-- **Contact**: Reach out via [contact page](/contact) for support.
+- **The assistant**: ask in the app.
+- **Guides and articles**: browse [guides](/guides) and [blog posts](/blog).
+- **Contact**: write to us from the [contact page](/contact).
 
-## What’s Next?
+## What's next
 
-Where to go from here:
-
-- [Tracking PERM Deadlines](/guides/tracking-perm-deadlines), How the automated deadline engine works
-- [Recruitment Tracking](/guides/recruitment-tracking), Complete guide to recruitment activity management
-- [Complete PERM Filing Guide](/guides/complete-perm-filing-guide), Step-by-step filing instructions
-- [Ultimate PERM Guide 2026](/guides/ultimate-perm-guide-2026), Comprehensive PERM reference
+- [Tracking PERM deadlines](/guides/tracking-perm-deadlines): how the deadlines are worked out
+- [Recruitment tracking](/guides/recruitment-tracking): every recruitment step, dated
+- [Complete PERM filing guide](/guides/complete-perm-filing-guide): the filing, step by step
+- [Ultimate PERM guide 2026](/guides/ultimate-perm-guide-2026): the whole process in one place
 
 <ProductCTA
   title="Ready to get started?"

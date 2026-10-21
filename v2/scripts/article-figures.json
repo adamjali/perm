@@ -593,7 +593,7 @@
    "wait": 2500,
    "clip": "sel:#tour-capture",
    "maxHeight": 700,
-   "css": "#tour-capture .fixed { display: flex !important; position: relative !important; inset: auto !important; }"
+   "css": "#tour-capture .fixed { display: flex !important; position: relative !important; inset: auto !important; opacity: 1 !important; transform: none !important; }"
   },
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
   "alt": "The assistant answering which cases have something due in the next two weeks: an RFI response and an I-140 deadline"

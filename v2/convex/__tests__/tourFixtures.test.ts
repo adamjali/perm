@@ -105,6 +105,33 @@ const SAMPLE: SampleCase[] = [
           createdAt: Date.parse("2026-09-08T14:00:00Z"),
         },
       ],
+      // The case's journal, so its Notes tab shows a working file.
+      notes: [
+        {
+          id: "note-sample-1",
+          content: "RFI in: DOL wants the recruitment report and a copy of the posted notice. Asked HR for the signed notice.",
+          createdAt: Date.parse("2026-09-08T15:20:00Z"),
+          status: "done",
+          priority: "high",
+          category: "follow-up",
+        },
+        {
+          id: "note-sample-2",
+          content: "HR sent the signed notice of filing and the posting dates. Filed with the RFI documents.",
+          createdAt: Date.parse("2026-09-22T18:05:00Z"),
+          status: "done",
+          priority: "medium",
+          category: "document",
+        },
+        {
+          id: "note-sample-3",
+          content: "Final review of the recruitment report with the hiring manager before the response goes in.",
+          createdAt: Date.parse("2026-09-30T13:40:00Z"),
+          status: "pending",
+          priority: "high",
+          category: "deadline",
+        },
+      ],
     },
   },
   {

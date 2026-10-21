@@ -113,58 +113,6 @@
         "urgency": "later"
       },
       {
-        "beneficiaryName": "T. Nakamura",
-        "caseId": "000000000000000000000010018cases",
-        "caseStatus": "recruitment",
-        "daysUntil": 212,
-        "dueDate": "2027-05-01",
-        "employerName": "Halcyon Robotics",
-        "label": "Start job order by",
-        "positionTitle": "Controls Engineer",
-        "progressStatus": "working",
-        "type": "job_order_start_deadline",
-        "urgency": "later"
-      },
-      {
-        "beneficiaryName": "T. Nakamura",
-        "caseId": "000000000000000000000010018cases",
-        "caseStatus": "recruitment",
-        "daysUntil": 228,
-        "dueDate": "2027-05-17",
-        "employerName": "Halcyon Robotics",
-        "label": "Start notice of filing by",
-        "positionTitle": "Controls Engineer",
-        "progressStatus": "working",
-        "type": "notice_of_filing_start_deadline",
-        "urgency": "later"
-      },
-      {
-        "beneficiaryName": "T. Nakamura",
-        "caseId": "000000000000000000000010018cases",
-        "caseStatus": "recruitment",
-        "daysUntil": 234,
-        "dueDate": "2027-05-23",
-        "employerName": "Halcyon Robotics",
-        "label": "First Sunday ad by",
-        "positionTitle": "Controls Engineer",
-        "progressStatus": "working",
-        "type": "first_sunday_ad_deadline",
-        "urgency": "later"
-      },
-      {
-        "beneficiaryName": "T. Nakamura",
-        "caseId": "000000000000000000000010018cases",
-        "caseStatus": "recruitment",
-        "daysUntil": 241,
-        "dueDate": "2027-05-30",
-        "employerName": "Halcyon Robotics",
-        "label": "Second Sunday ad by",
-        "positionTitle": "Controls Engineer",
-        "progressStatus": "working",
-        "type": "second_sunday_ad_deadline",
-        "urgency": "later"
-      },
-      {
         "beneficiaryName": "R. Okafor",
         "caseId": "000000000000000000000010003cases",
         "caseStatus": "recruitment",
@@ -751,7 +699,7 @@
     "documents": [],
     "employerName": "Juniper Biologics",
     "eta9089FilingDate": "2026-04-02",
-    "filingWindowCloses": "2026-06-30",
+    "filingWindowCloses": "2026-07-11",
     "filingWindowOpens": "2026-03-15",
     "isFavorite": false,
     "isPinned": false,
@@ -762,6 +710,32 @@
     "jobOrderStartDate": "2026-01-12",
     "jobOrderState": "MA",
     "jobTitle": "Senior Statistician",
+    "notes": [
+      {
+        "category": "follow-up",
+        "content": "RFI in: DOL wants the recruitment report and a copy of the posted notice. Asked HR for the signed notice.",
+        "createdAt": 1788880800000,
+        "id": "note-sample-1",
+        "priority": "high",
+        "status": "done"
+      },
+      {
+        "category": "document",
+        "content": "HR sent the signed notice of filing and the posting dates. Filed with the RFI documents.",
+        "createdAt": 1790100300000,
+        "id": "note-sample-2",
+        "priority": "medium",
+        "status": "done"
+      },
+      {
+        "category": "deadline",
+        "content": "Final review of the recruitment report with the hiring manager before the response goes in.",
+        "createdAt": 1790775600000,
+        "id": "note-sample-3",
+        "priority": "high",
+        "status": "pending"
+      }
+    ],
     "noticeOfFilingEndDate": "2026-01-27",
     "noticeOfFilingStartDate": "2026-01-12",
     "positionTitle": "Senior Statistician",
@@ -775,7 +749,7 @@
     "recruitmentApplicantsCount": 0,
     "recruitmentEndDate": "2026-02-13",
     "recruitmentStartDate": "2026-01-12",
-    "recruitmentWindowCloses": "2026-05-31",
+    "recruitmentWindowCloses": "2026-06-11",
     "rfeEntries": [],
     "rfiEntries": [
       {
@@ -828,7 +802,7 @@
     "eta9089CertificationDate": "2026-04-19",
     "eta9089ExpirationDate": "2026-10-15",
     "eta9089FilingDate": "2025-04-14",
-    "filingWindowCloses": "2025-06-30",
+    "filingWindowCloses": "2025-07-05",
     "filingWindowOpens": "2025-03-09",
     "isFavorite": false,
     "isPinned": false,
@@ -850,7 +824,7 @@
     "recruitmentApplicantsCount": 0,
     "recruitmentEndDate": "2025-02-07",
     "recruitmentStartDate": "2025-01-06",
-    "recruitmentWindowCloses": "2025-05-31",
+    "recruitmentWindowCloses": "2025-06-05",
     "rfeEntries": [],
     "rfiEntries": [],
     "showOnTimeline": true,
@@ -1084,6 +1058,7 @@
         "isProfessionalOccupation": true,
         "nextDeadline": "2026-10-08",
         "nextDeadlineLabel": "RFI due",
+        "notes": "RFI in: DOL wants the recruitment report and a copy of the posted notice. Asked HR for the signed notice. | HR sent the signed notice of filing and the posting dates. Filed with the RFI documents. | F",
         "positionTitle": "Senior Statistician",
         "progressStatus": "rfi_rfe"
       },
@@ -1185,8 +1160,8 @@
         "isFavorite": false,
         "isPinned": false,
         "isProfessionalOccupation": false,
-        "nextDeadline": "2027-05-01",
-        "nextDeadlineLabel": "Job order by",
+        "nextDeadline": "2027-06-30",
+        "nextDeadlineLabel": "PWD expires",
         "positionTitle": "Controls Engineer",
         "progressStatus": "working"
       },
