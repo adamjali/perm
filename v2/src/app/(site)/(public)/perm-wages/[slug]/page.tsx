@@ -51,7 +51,7 @@ import {
   entityMetadata,
   entityStaticParams,
 } from "@/lib/entityPage";
-import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
+import { getDisclosureSummary, getFreshness } from "@/lib/db/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/db/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -232,7 +232,7 @@ export default async function OccupationPage({
   // no code on file simply has no ladder rather than a wrong one.
   const wageKey = row.code ?? "";
   const [stats, dist, near, ladderYears, stateLadders, facets, freshness, workers, h1b] = await Promise.all([
-    getDisclosureStats(),
+    getDisclosureSummary(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
       kind: KIND,

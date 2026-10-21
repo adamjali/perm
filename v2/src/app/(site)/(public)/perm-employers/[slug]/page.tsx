@@ -54,7 +54,7 @@ import {
   entityStaticParams,
 } from "@/lib/entityPage";
 import { employerHistoryCases, employerYears, workerFacets } from "@/lib/db/employerHistory";
-import { getDisclosureStats, getFreshness, liveOnlyLastChanged } from "@/lib/db/publicData";
+import { getDisclosureSummary, getFreshness, liveOnlyLastChanged } from "@/lib/db/publicData";
 import { getDateSources } from "@/lib/db/dateSources";
 import { employerOwnDate, pageDate } from "@/lib/pageDates";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
@@ -654,7 +654,7 @@ export default async function EmployerPage({
   const match = await employerMatch(canonicalSlug);
   const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor] =
     await Promise.all([
-      getDisclosureStats(),
+      getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
       comparables({
         kind: KIND,

@@ -392,6 +392,22 @@ export async function getDisclosureStats<T = DisclosureStats>(): Promise<T | nul
   } as T;
 }
 
+/** The disclosure document without the three ranked lists. */
+export type DisclosureSummary = Omit<DisclosureStats, "topEmployers" | "topAttorneys" | "topOccupations">;
+
+/**
+ * The aggregate document alone: one row read, once per render.
+ *
+ * For callers that never show the ranked lists (the employer, law firm and job
+ * pages want the national baseline; the estimate wants the cohorts).
+ * getDisclosureStats also reads 250 rows of each ranking, 750 in all, and on
+ * Oct 21 2026 it ran about 73 times a minute, almost all of it for pages that
+ * used one number from the document.
+ */
+export const getDisclosureSummary = cache(
+  (): Promise<DisclosureSummary | null> => doc<DisclosureSummary>("disclosure_stats"),
+);
+
 /** Corpus metadata: totals, date span, byStatus / byFiscalYear / byState. */
 export function getCasesMeta<T = Record<string, unknown>>(): Promise<T | null> {
   return doc<T>("cases_meta");

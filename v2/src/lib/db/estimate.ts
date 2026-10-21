@@ -17,7 +17,7 @@ import {
   measurePwdClearance,
 } from "@/lib/perm";
 
-import { getDisclosureStats, type Cohort, type FrontierPoint } from "./publicData";
+import { getDisclosureSummary, type Cohort, type FrontierPoint } from "./publicData";
 import { getLiveCensus, receivedByMonthFrom } from "./liveCensus";
 import { getProcessingTimes, getProcessingTimesHistory } from "./processingTimes";
 
@@ -90,7 +90,7 @@ export async function getEstimatorData(): Promise<EstimatorData> {
   // reads, so this costs no extra queries.
   const [snapshot, stats, census] = await Promise.all([
     getProcessingTimes(),
-    getDisclosureStats(),
+    getDisclosureSummary(),
     getLiveCensus(),
   ]);
   const received = receivedByMonthFrom(census);

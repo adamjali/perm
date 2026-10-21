@@ -51,7 +51,7 @@ import {
   entityMetadata,
   entityStaticParams,
 } from "@/lib/entityPage";
-import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
+import { getDisclosureSummary, getFreshness } from "@/lib/db/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FirmPrograms } from "@/components/entities/FirmPrograms";
 import { getFirmPrograms } from "@/lib/db/firmPrograms";
@@ -249,7 +249,7 @@ export default async function AttorneyPage({
   // wide because the state filter thins it hard: California holds 604 firms
   // and Wyoming a handful.
   const [stats, dist, near, facets, variants, absorbed, freshness, debarments, programs, firmProfile] = await Promise.all([
-    getDisclosureStats(),
+    getDisclosureSummary(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
       kind: KIND,
