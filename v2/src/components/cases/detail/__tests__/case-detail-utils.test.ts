@@ -120,16 +120,37 @@ describe("computeWindowStatus", () => {
     expect(result!.days).toBeLessThan(65);
   });
 
-  it("returns 'Filed' when options.filed is true", () => {
+  it("returns 'Filed' when options.filed is true, with what was filed and no day count", () => {
     vi.setSystemTime(new Date("2025-03-15T12:00:00Z"));
     const result = computeWindowStatus("2025-01-01", "2025-06-30", {
       filed: true,
+      filedLabel: "I-140 filed Mar 1, 2025",
     });
     expect(result).not.toBeNull();
     expect(result!.chip).toBe("Filed");
-    expect(result!.label).toBe("I-140 filed");
+    expect(result!.label).toBe("I-140 filed Mar 1, 2025");
     expect(result!.pct).toBe(100);
-    expect(result!.days).toBe(0);
+    expect(result!.days).toBeNull();
+  });
+
+  it("never reads 'Expired' for a window whose filing is in, however long ago it closed", () => {
+    // A case that filed its ETA 9089 inside the window had shown a red
+    // "Expired, 82 days past expiration" on its own page (Oct 21 2026).
+    vi.setSystemTime(new Date("2026-10-01T15:00:00Z"));
+    const result = computeWindowStatus("2026-03-15", "2026-07-11", { filed: true, filedLabel: "ETA 9089 filed Apr 2, 2026" });
+    expect(result!.chip).toBe("Filed");
+    expect(result!.label).toBe("ETA 9089 filed Apr 2, 2026");
+  });
+
+  it("reads 'Begun' past the PWD's end when recruitment began inside it, and counts days while it runs", () => {
+    vi.setSystemTime(new Date("2025-09-01T00:00:00Z"));
+    const past = computeWindowStatus("2025-01-01", "2025-06-30", { begunInside: true });
+    expect(past!.chip).toBe("Begun");
+    expect(past!.days).toBeNull();
+    vi.setSystemTime(new Date("2025-03-15T00:00:00Z"));
+    const running = computeWindowStatus("2025-01-01", "2025-06-30", { begunInside: true });
+    expect(running!.chip).toBe("Active");
+    expect(running!.days).toBeGreaterThan(100);
   });
 
   it("handles zero-length window in the past", () => {

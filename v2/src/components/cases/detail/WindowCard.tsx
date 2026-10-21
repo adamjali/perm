@@ -24,13 +24,20 @@ export function WindowCard({ ws, title, stageColor, startDate, endDate }: Window
             <span className="win-title">{title}</span>{" "}
             <span className="win-chip" style={ws.chipStyle}>{ws.chip}</span>
           </div>
-          <div className="win-hero">
-            <div>
-              <span className="win-hero-num" style={{ color: stageColor }}>{ws.days}</span>{" "}
-              <span className="win-hero-unit">days</span>
+          {ws.days === null ? (
+            // Done with (filed, or recruitment begun in time): no count, just what happened.
+            <div className="win-hero">
+              <div className="font-heading text-lg font-bold">{ws.label}</div>
             </div>
-            <div className="win-hero-label">{ws.label}</div>
-          </div>
+          ) : (
+            <div className="win-hero">
+              <div>
+                <span className="win-hero-num" style={{ color: stageColor }}>{ws.days}</span>{" "}
+                <span className="win-hero-unit">days</span>
+              </div>
+              <div className="win-hero-label">{ws.label}</div>
+            </div>
+          )}
           <div className="win-progress">
             <span className="win-date">{fmtISOShort(startDate)}</span>
             <div className="win-bar">

@@ -25,7 +25,7 @@ export function I140Tab({ caseData }: I140TabProps) {
   const ws = computeWindowStatus(
     caseData.eta9089CertificationDate,
     caseData.eta9089ExpirationDate,
-    { filed: isFiled || isApproved },
+    { filed: isFiled || isApproved, filedLabel: caseData.i140FilingDate ? `I-140 filed ${fmtISODate(caseData.i140FilingDate)}` : "I-140 filed" },
   );
 
   return (

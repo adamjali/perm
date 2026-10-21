@@ -29,7 +29,7 @@ export function ETA9089Tab({
 
   // Filing window calc
   const ws = showFilingWindow
-    ? computeWindowStatus(filingWindowOpens, filingWindowCloses)
+    ? computeWindowStatus(filingWindowOpens, filingWindowCloses, { filed: !!caseData.eta9089FilingDate, filedLabel: `ETA 9089 filed ${fmtISODate(caseData.eta9089FilingDate)}` })
     : null;
 
   const isCertified = !!caseData.eta9089CertificationDate;

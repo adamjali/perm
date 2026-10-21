@@ -5,7 +5,7 @@ import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { ChartBarIcon, CheckIcon, ClockIcon, FileTextIcon, FlagIcon, InfoIcon, NewspaperIcon, UsersIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { getMethodLabel } from "@/lib/recruitment";
-import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, isBasicRecruitmentComplete, isProfessionalRecruitmentComplete, FILING_WINDOW_WAIT_DAYS } from "@/lib/perm";
+import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecruitmentDate, isBasicRecruitmentComplete, isProfessionalRecruitmentComplete, FILING_WINDOW_WAIT_DAYS, pwdBearingFromCase } from "@/lib/perm";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { CaseDetailData } from "./case-detail-types";
@@ -130,10 +130,15 @@ interface RecruitmentTabProps {
 }
 
 export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
-  // PWD validity period (determination -> expiration)
+  // PWD validity period (determination -> expiration). Once the ETA 9089 is
+  // filed, or recruitment began inside it, its end no longer limits the case.
   const windowStart = caseData.pwdDeterminationDate;
   const windowEnd = caseData.pwdExpirationDate;
-  const ws = computeWindowStatus(windowStart, windowEnd);
+  const ws = computeWindowStatus(windowStart, windowEnd, {
+    filed: !!caseData.eta9089FilingDate,
+    filedLabel: `ETA 9089 filed ${fmtISODate(caseData.eta9089FilingDate)}`,
+    begunInside: pwdBearingFromCase(caseData) === "began-inside",
+  });
 
   const hasJobOrder = !!caseData.jobOrderStartDate;
   const hasSundayAds = !!caseData.sundayAdFirstDate;

@@ -35,10 +35,11 @@ export function fmtCurrency(amount: number | string): string {
 /* ------------------------------------------------------------------ */
 
 export interface WindowStatus {
-  days: number;
+  /** Days left, until opening, or past the end; null once the window is done with (filed, begun). */
+  days: number | null;
   label: string;
   pct: number;
-  chip: "Filed" | "Upcoming" | "Active" | "Expired";
+  chip: "Filed" | "Begun" | "Upcoming" | "Active" | "Expired";
   chipStyle: React.CSSProperties;
 }
 
@@ -47,12 +48,17 @@ export interface WindowStatus {
  *
  * @param startDate  ISO string, window opens
  * @param endDate    ISO string, window closes
- * @param options.filed  If true, show "Filed" chip at 100% (I-140 pattern)
+ * @param options.filed  The window's filing is in: a "Filed" chip at 100%,
+ *   whatever the dates say. A filed case's window never reads "Expired".
+ * @param options.filedLabel  What was filed, under the chip ("ETA 9089 filed").
+ * @param options.begunInside  For the PWD's validity period: recruitment began
+ *   inside it, so its passing no longer limits the case (20 CFR 656.40(c),
+ *   `pwdBearing` in @/lib/perm). Past the end it reads "Begun", never "Expired".
  */
 export function computeWindowStatus(
   startDate: string | undefined | null,
   endDate: string | undefined | null,
-  options?: { filed?: boolean },
+  options?: { filed?: boolean; filedLabel?: string; begunInside?: boolean },
 ): WindowStatus | null {
   if (!startDate || !endDate) return null;
 
@@ -64,8 +70,8 @@ export function computeWindowStatus(
 
   if (options?.filed) {
     return {
-      days: 0,
-      label: "I-140 filed",
+      days: null,
+      label: options.filedLabel ?? "Filed",
       pct: 100,
       chip: "Filed",
       chipStyle: { background: "var(--primary)", color: "var(--primary-foreground)" },
@@ -90,6 +96,16 @@ export function computeWindowStatus(
       label: "remaining in window",
       pct: total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0,
       chip: "Active",
+      chipStyle: { background: "var(--primary)", color: "var(--primary-foreground)" },
+    };
+  }
+
+  if (options?.begunInside) {
+    return {
+      days: null,
+      label: "Recruitment began inside it, so its end no longer limits the case",
+      pct: 100,
+      chip: "Begun",
       chipStyle: { background: "var(--primary)", color: "var(--primary-foreground)" },
     };
   }
