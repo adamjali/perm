@@ -9947,8 +9947,12 @@ step (`test_deploy_plan.py`, probed by mutation):
 | `when=now` (by hand: `gh workflow run oracle-deploy.yml -f when=now`) | yes | yes |
 
 - **What's live comes from the server** (`ssh deploy@<host> status`, the active slot's release `<sha12>-<run>`), never
-  from "the last successful run": a held push succeeds too. `IGNORED` mirrors the workflow's `paths-ignore`, held equal
+  from "the last successful run": a held push succeeds too. `PATHS` mirrors the workflow's `paths` list, held equal
   by the test. The diff uses `--no-renames`, so the blob-less checkout never fetches file contents.
+- **Of `.github/`, only `oracle-deploy.yml` ships the site** (Oct 21 2026): the workflow filters with an ordered `paths`
+  list, the last match winning (GitHub's rule), so a change to any other workflow or to `dependabot.yml` builds and
+  ships nothing. Adding `dol-perm-files.yml` had shipped the site and emptied its page cache. `site_changes` in
+  `scripts/deploy_plan.py` reads the list the same way.
 - **Everything that read "a deploy run succeeded" as "it shipped" moved.** IndexNow's changed-pages send is a step in
   the deploy run (`indexnow.yml` is the manual full send only); the morning report counts a run as a deploy only when
   its deploy step ran, and lists "Pushes built and held for the night deploy" (`speed_lines`).

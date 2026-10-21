@@ -25,18 +25,25 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Oracle build a
 on:
   push:
     branches: [main]
-    # A push that cannot change the built site does not rebuild it.
-    paths-ignore:
-      - "**/*.md"
-      - "v2/scripts/**"
-      - "v2/workers/**"
-      - "v2/**/__tests__/**"
-      - "v2/**/*.test.ts"
-      - "v2/**/*.test.tsx"
-      - ".planning/**"
-      - "docs/**"
-      - "v2/docs/**"
-      - ".github/workflows/test.yml"
+    # A push that cannot change the built site does not rebuild it. Read in
+    # order, the last match winning (GitHub's own rule for `paths`): every
+    # file, less what a build never reads, then this workflow back in. A
+    # change to any other workflow had shipped the site and emptied its page
+    # cache (dol-perm-files.yml, Oct 21 2026). scripts/deploy_plan.py reads
+    # the same list.
+    paths:
+      - "**"
+      - "!**/*.md"
+      - "!v2/scripts/**"
+      - "!v2/workers/**"
+      - "!v2/**/__tests__/**"
+      - "!v2/**/*.test.ts"
+      - "!v2/**/*.test.tsx"
+      - "!.planning/**"
+      - "!docs/**"
+      - "!v2/docs/**"
+      - "!.github/**"
+      - ".github/workflows/oracle-deploy.yml"
   workflow_dispatch:
     inputs:
       when:

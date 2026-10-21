@@ -42,11 +42,12 @@ def main() -> int:
     for when in ("now", ""):
         check(dp.plan("workflow_dispatch", when, 14, docs)[:2] == (True, True), f"a hand dispatch ({when or 'no input'}) ships at once")
 
-    # The ignore list is oracle-deploy.yml's paths-ignore, entry for entry.
+    # The list is oracle-deploy.yml's `paths`, entry for entry and in order.
     wf = open(os.path.join(HERE, "..", "..", ".github", "workflows", "oracle-deploy.yml")).read()
-    block = wf[wf.index("paths-ignore:"):wf.index("workflow_dispatch:")]
+    check("paths-ignore:" not in wf, "the workflow filters with `paths`, never `paths-ignore` beside it")
+    block = wf[re.search(r"^\s*paths:\s*$", wf, re.M).end():wf.index("workflow_dispatch:")]
     yml = re.findall(r'^\s*-\s*"([^"]+)"', block, re.M)
-    check(yml == dp.IGNORED, f"the ignore list matches the workflow's paths-ignore ({len(yml)} entries)")
+    check(yml == dp.PATHS, f"the list matches the workflow's paths ({len(yml)} entries)")
 
     # The globs, as GitHub reads them.
     check(dp.site_changes(docs) == [], "scripts, tests, planning and markdown are not the site")
@@ -55,6 +56,12 @@ def main() -> int:
     check(dp.site_changes(["v2/src/a.test.tsx", "v2/src/a.tsx"]) == ["v2/src/a.tsx"], "a test file is not the page beside it")
     check(dp.site_changes([".github/workflows/oracle-deploy.yml"]) == [".github/workflows/oracle-deploy.yml"],
           "the deploy workflow itself counts")
+    check(dp.site_changes([".github/workflows/dol-perm-files.yml", ".github/workflows/test.yml",
+                           ".github/dependabot.yml", ".github/ISSUE_TEMPLATE/bug.yml"]) == [],
+          "any other workflow, Dependabot's settings and the issue forms are not the site")
+    check(dp.site_changes(["v2/next.config.ts", "v2/package.json", "v2/pnpm-lock.yaml", "v2/public/og/home.jpg"])
+          == ["v2/next.config.ts", "v2/package.json", "v2/pnpm-lock.yaml", "v2/public/og/home.jpg"],
+          "the build's own settings, packages and public files are")
 
     # The live commit, from the server's own answer.
     status = ("active: blue\nblue: 0f8583afce3b-207 active\nblue2: 0f8583afce3b-207.w2 active\n"

@@ -37,19 +37,22 @@ NIGHT_HOURS = range(1, 5)
 # permtracker-cron@dispatch-night-deploy timer, 06:00 UTC: 2 AM EDT, 1 AM EST).
 NIGHT_RUN = "about 2 AM Eastern (1 AM in winter)"
 
-# The files a site build never reads: the same list as oracle-deploy.yml's
-# paths-ignore, which test_deploy_plan.py holds equal.
-IGNORED = [
-    "**/*.md",
-    "v2/scripts/**",
-    "v2/workers/**",
-    "v2/**/__tests__/**",
-    "v2/**/*.test.ts",
-    "v2/**/*.test.tsx",
-    ".planning/**",
-    "docs/**",
-    "v2/docs/**",
-    ".github/workflows/test.yml",
+# The files a site build reads: oracle-deploy.yml's `paths`, entry for entry
+# (test_deploy_plan.py holds them equal), read as GitHub reads them: in order,
+# the last pattern that matches a file deciding, a leading "!" leaving it out.
+PATHS = [
+    "**",
+    "!**/*.md",
+    "!v2/scripts/**",
+    "!v2/workers/**",
+    "!v2/**/__tests__/**",
+    "!v2/**/*.test.ts",
+    "!v2/**/*.test.tsx",
+    "!.planning/**",
+    "!docs/**",
+    "!v2/docs/**",
+    "!.github/**",
+    ".github/workflows/oracle-deploy.yml",
 ]
 
 
@@ -72,12 +75,18 @@ def glob_re(pattern: str) -> re.Pattern[str]:
     return re.compile(out + r"\Z")
 
 
-IGNORED_RES = [glob_re(p) for p in IGNORED]
+PATH_RES = [(not p.startswith("!"), glob_re(p.lstrip("!"))) for p in PATHS]
 
 
 def site_changes(files: list[str]) -> list[str]:
     """The changed files a build of the site reads."""
-    return [f for f in files if f and not any(r.match(f) for r in IGNORED_RES)]
+    def counts(f: str) -> bool:
+        keep = False
+        for include, rx in PATH_RES:
+            if rx.match(f):
+                keep = include
+        return keep
+    return [f for f in files if f and counts(f)]
 
 
 def live_release(status: str) -> str | None:
