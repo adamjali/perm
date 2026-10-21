@@ -744,5 +744,44 @@
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The cases DOL moved on one day, counted by the status each moved from and to: certified to withdrawn, RFI issued back to analyst review, denied to pending appeal"
+ },
+ "guides/perm-denied-what-happens-next/dol-faq-deadline": {
+  "pdf": {
+   "file": "PERM_FAQ-Round-14_051419.pdf",
+   "page": 2,
+   "top": 0.495,
+   "height": 0.2055,
+   "mark": "must be made no later than thirty (30) calendar days from the date on the Final Determination letter"
+  },
+  "credit": "PERM FAQs, Round 14 (May 2019), page 3. U.S. Department of Labor, Office of Foreign Labor Certification",
+  "alt": "DOL's own answer on reconsideration and review, with the sentence highlighted: the request must be made no later than thirty calendar days from the date on the Final Determination letter"
+ },
+ "guides/perm-appeal-reconsideration-balca/dol-faq-both": {
+  "pdf": {
+   "file": "PERM_FAQ-Round-14_051419.pdf",
+   "page": 4,
+   "top": 0.075,
+   "height": 0.24,
+   "mark": "will be treated as a Request for Reconsideration"
+  },
+  "credit": "PERM FAQs, Round 14 (May 2019), page 5. U.S. Department of Labor, Office of Foreign Labor Certification",
+  "alt": "DOL's answer to whether an employer can ask for reconsideration and Board review at once: no, and a request that asks for both is treated as a request for reconsideration, which is highlighted"
+ },
+ "guides/perm-rfi-issued-what-to-do/flag-rfi-status": {
+  "capture": {
+   "url": "https://flag.dol.gov/case-status-search",
+   "ready": "#cases-textarea",
+   "wait": 1500,
+   "fill": {
+    "sel": "#cases-textarea",
+    "text": "G-100-25336-448148"
+   },
+   "click": "button:has-text('Search')",
+   "css": ".usa-table tbody tr td:last-child { background: #A1E8A9 !important; box-shadow: inset 0 -4px 0 #1A7A25 !important; }",
+   "width": 1200,
+   "height": 880
+  },
+  "credit": "Case Status Search, FLAG, U.S. Department of Labor, captured October 21, 2026",
+  "alt": "DOL's Case Status Search on flag.dol.gov answering for one PERM case filed December 1, 2025 by LinkedIn Corporation for a Digital Marketing Manager, with its status, RFI ISSUED, highlighted"
  }
 }

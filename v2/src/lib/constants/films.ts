@@ -2,7 +2,7 @@
  * The two explainer films, as the site serves them (public/videos/).
  *
  * Web copies of ~/money/video/hyperframes/permtracker-campaign renders
- * (the v2 cuts, ben-explainer-v2 and att-explainer-v2, since Oct 7 2026):
+ * (the v2 cuts, ben-explainer-v2 and att-explainer-v2, since Oct 7 2026; re-cut Oct 21 2026):
  * 1280x720 H.264, CRF 27, AAC 96k, faststart (about 4 MB each). The
  * captions are burned into the picture; `transcript` is the voice script
  * verbatim (src/script.json), so the words are on the page for anyone who
@@ -52,7 +52,7 @@ export const FILM_ATTORNEYS: Film = {
   poster: "/videos/explainer-attorneys-thumb.webp",
   title: "PERM Tracker for attorneys and HR teams",
   description: "How PERM Tracker works out every PERM deadline from the dates you enter, recalculates when one changes and reminds you before each one, free.",
-  duration: 95,
+  duration: 97,
   published: "2026-10-01",
   transcript: [
     "A PERM case runs on dates. Miss the filing window, and recruitment starts over.",
@@ -60,9 +60,9 @@ export const FILM_ATTORNEYS: Film = {
     "Add a case, or import your whole caseload. Client data is encrypted at rest, and kept separate for every account.",
     "Put in the dates you have, and it works out the rest: the job order's thirty days, the recruitment window, the filing window, when the wage determination expires, and the I-140 deadline.",
     "Change one date, and everything after it moves with it.",
-    "And if something's out of order, like filing after the wage determination expires, it warns you before you file.",
-    "The Deadline Hub sorts every case into overdue, this week, this month, and later. The calendar and timeline show the whole caseload at once.",
-    "Reminders come in the app, by email and push, and on your Google Calendar. And every Monday, there's a digest of the whole caseload.",
+    "And if something's out of order, like filing before the thirty-day wait is up, it warns you before you file.",
+    "Your dashboard sorts every deadline into overdue, this week, this month, and later. The calendar and timeline show the whole caseload at once.",
+    "Reminders come in the app, by email and push, and on your Google Calendar. And in any week your cases change, there's a Monday digest of the whole caseload.",
     "Quiet hours hold back the routine alerts. Urgent ones still get through.",
     "Your clients get free tools of their own. They can see where their case sits in DOL's line, without an account.",
     "PERM Tracker. Free, at permtracker.app.",

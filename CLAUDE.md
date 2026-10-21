@@ -1005,3 +1005,24 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 21 2026 (afternoon)".
 - **Every article picture sat in an empty band**: `.prose-article img` gave figure pictures a margin inside their frame.
 - **The getting-started guide (the welcome email's link) is rewritten against the app**, with a real tour and a case-page
   clip; the five guide clips, 31 app pictures and 15 article figures were re-recorded from the current app.
+
+## Oct 21 2026 (evening): the films re-cut, and real pictures as claims
+
+The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md), section "Pictures".
+
+- **Both explainer films are re-cut** (`src/lib/constants/films.ts`; sources in `~/money/video/hyperframes/permtracker-campaign`).
+  No caption sits on the picture: the attorney film's windows were raised clear of the lowest band. The waiting film's
+  chart no longer shows an empty window: its wipe starts as the window lands. The posters are rebuilt from the new cuts
+  (`node scripts/make-film-posters.mjs`, whose frame and crop still fit). Before a final encode, look at a frame every
+  three seconds and at every scene change.
+- **A guide can show the agency's own page with the quoted words highlighted.** An `article-figures.json` pdf entry takes
+  `mark` (a phrase or a list): a lime tint multiplied under the words, so the print stays black, and the lime ink under
+  them (5.45:1 on white). A phrase that isn't on the page fails the build. First use: DOL's PERM FAQ Round 14 in the
+  denial and appeal guides.
+- **The capture script can press a key and click** (`fill.press`, `click` in `scripts/capture_article_heroes.mjs`), so a
+  figure can show an agency's own search answering. First use: DOL's case search answering RFI ISSUED for a real case, in
+  the RFI guide.
+- **The app's pictures were re-taken** (`capture-tour.mjs`, `tour_shots.py`, then the 15 Storybook article figures).
+  Only the dashboard, its deadline hub and the calendar changed, and one figure's stated shape with them.
+- **Isometric drawings** (the `anatomy` and `anatomy-asset` skills) go only where `.planning/anatomy-figures-plan.md`
+  says, and each waits for the owner's yes before it ships.

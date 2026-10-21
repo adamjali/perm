@@ -300,6 +300,11 @@ describe.skipIf(!process.env.UPDATE_TOUR_FIXTURES)("tour fixtures", () => {
         await ctx.db.insert("userProfiles", {
           ...buildDefaultProfile(id, { fullName: "Dana Whitfield" }),
           googleCalendarConnected: true,
+          // Quiet hours on, as a busy practice keeps them: the settings tab shows its times.
+          quietHoursEnabled: true,
+          quietHoursStart: "22:00",
+          quietHoursEnd: "08:00",
+          pushNotificationsEnabled: true,
         });
         // A verified password sign-in: the reminder job writes only for these.
         await ctx.db.insert("authAccounts", {
@@ -425,6 +430,9 @@ describe.skipIf(!process.env.UPDATE_TOUR_FIXTURES)("tour fixtures", () => {
       await record(api.users.currentUserProfile);
       await record(api.users.getActionMode);
       await record(api.timeline.getPreferences);
+      // The timeline page: its cases over the saved range, and every case for its picker.
+      await record(api.timeline.getCasesForTimeline, { timeRange: 12 });
+      await record(api.cases.list, {});
       await record(api.dashboard.getDeadlines);
       await record(api.dashboard.getSummary);
       await record(api.dashboard.getRecentActivity);

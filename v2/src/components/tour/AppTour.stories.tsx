@@ -12,7 +12,9 @@ import { DashboardPageClient } from "../../app/(authenticated)/dashboard/Dashboa
 import { CasesPageClient } from "../../app/(authenticated)/cases/CasesPageClient";
 import { CaseDetailPageClient } from "../../app/(authenticated)/cases/[id]/CaseDetailPageClient";
 import { EditCasePageClient } from "../../app/(authenticated)/cases/[id]/edit/EditCasePageClient";
+import { AddCasePageClient } from "../../app/(authenticated)/cases/new/AddCasePageClient";
 import { CalendarPageClient } from "../../app/(authenticated)/calendar/CalendarPageClient";
+import { TimelinePageClient } from "../../app/(authenticated)/timeline/TimelinePageClient";
 import { NotificationsPageClient } from "../../app/(authenticated)/notifications/NotificationsPageClient";
 import { SettingsPageClient } from "../../app/(authenticated)/settings/SettingsPageClient";
 import { TOUR_CASE_IDS, TourConvex } from "./fakeConvex";
@@ -110,11 +112,31 @@ export const EditCase: Story = {
   ),
 };
 
+/** A new case's empty form, as Add case opens it. */
+export const NewCase: Story = {
+  name: "New case",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/cases/new" } } },
+  render: () => (
+    <AppShell>
+      <AddCasePageClient />
+    </AppShell>
+  ),
+};
+
 export const Calendar: Story = {
   parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/calendar" } } },
   render: () => (
     <AppShell>
       <CalendarPageClient />
+    </AppShell>
+  ),
+};
+
+export const Timeline: Story = {
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/timeline" } } },
+  render: () => (
+    <AppShell>
+      <TimelinePageClient />
     </AppShell>
   ),
 };
@@ -143,6 +165,17 @@ export const SettingsNotifications: Story = {
 export const SettingsCalendar: Story = {
   name: "Settings, calendar sync",
   parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/settings", query: { tab: "calendar-sync" } } } },
+  render: () => (
+    <AppShell>
+      <SettingsPageClient />
+    </AppShell>
+  ),
+};
+
+/** Settings, open at quiet hours. */
+export const SettingsQuietHours: Story = {
+  name: "Settings, quiet hours",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/settings", query: { tab: "quiet-hours" } } } },
   render: () => (
     <AppShell>
       <SettingsPageClient />

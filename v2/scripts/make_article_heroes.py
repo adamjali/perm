@@ -73,8 +73,27 @@ def figure(key: str, s: dict, a: argparse.Namespace) -> Image.Image:
         import fitz  # PyMuPDF
 
         p = s["pdf"]
-        pix = fitz.open(a.forms / p["file"])[p["page"]].get_pixmap(dpi=200)
+        page = fitz.open(a.forms / p["file"])[p["page"]]
+        pix = page.get_pixmap(dpi=200)
         im = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+        # "mark": the words the article quotes, highlighted like a marker on paper: a lime tint
+        # behind each line of the match (multiplied, so the print stays black) and the lime
+        # ink (5.45:1 on white) under it
+        for phrase in [p["mark"]] if isinstance(p.get("mark"), str) else p.get("mark", []):
+            hits = page.search_for(phrase)
+            if not hits:
+                raise ValueError(f"{key}: mark not found on the page: {phrase!r}")
+            from PIL import ImageChops, ImageDraw
+
+            k = 200 / 72
+            tint = Image.new("RGB", im.size, "white")
+            ink = ImageDraw.Draw(tint)
+            for r in hits:
+                ink.rectangle((r.x0 * k - 4, r.y0 * k + 2, r.x1 * k + 4, r.y1 * k), fill="#A1E8A9")
+            im = ImageChops.multiply(im, tint)
+            line = ImageDraw.Draw(im)
+            for r in hits:
+                line.rectangle((r.x0 * k - 4, r.y1 * k, r.x1 * k + 4, r.y1 * k + 3), fill="#1A7A25")
         top, height = p.get("top", 0.0), p.get("height", 1.0)
         im = im.crop((0, int(top * im.height), im.width, int(min(1.0, top + height) * im.height)))
     elif "capture" in s:

@@ -17,14 +17,14 @@ export type TourSurface =
 
 export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
   "hub": {
-    light: { src: "/images/for-attorneys/hub-light.webp", width: 1800, height: 1159 },
-    dark: { src: "/images/for-attorneys/hub-dark.webp", width: 1800, height: 1159 },
+    light: { src: "/images/for-attorneys/hub-light.webp", width: 1800, height: 940 },
+    dark: { src: "/images/for-attorneys/hub-dark.webp", width: 1800, height: 940 },
     narrowLight: { src: "/images/for-attorneys/hub-light-phone.webp", width: 732, height: 1166 },
     narrowDark: { src: "/images/for-attorneys/hub-dark-phone.webp", width: 732, height: 1166 },
   },
   "dashboard": {
-    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1766 },
-    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1766 },
+    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1547 },
+    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1547 },
     narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 732, height: 1590 },
     narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 732, height: 1590 },
   },
@@ -53,8 +53,8 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
   "calendar": {
     light: { src: "/images/for-attorneys/calendar-light.webp", width: 1800, height: 1511 },
     dark: { src: "/images/for-attorneys/calendar-dark.webp", width: 1800, height: 1511 },
-    narrowLight: { src: "/images/for-attorneys/calendar-light-phone.webp", width: 732, height: 1228 },
-    narrowDark: { src: "/images/for-attorneys/calendar-dark-phone.webp", width: 732, height: 1228 },
+    narrowLight: { src: "/images/for-attorneys/calendar-light-phone.webp", width: 732, height: 1546 },
+    narrowDark: { src: "/images/for-attorneys/calendar-dark-phone.webp", width: 732, height: 1546 },
   },
   "notifications": {
     light: { src: "/images/for-attorneys/notifications-light.webp", width: 1800, height: 1141 },

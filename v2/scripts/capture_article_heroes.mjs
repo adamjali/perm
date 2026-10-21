@@ -49,7 +49,7 @@ try {
   });
   const page = await ctx.newPage();
   for (const [slug, s] of jobs) {
-    const { url, scroll, wait, clip, width, height, maxHeight, fill, css, clock, ready, settle } = s.capture;
+    const { url, scroll, wait, clip, width, height, maxHeight, fill, click, css, clock, ready, settle } = s.capture;
     try {
       await page.setViewportSize({ width: width ?? 1200, height: height ?? 900 });
       // A Storybook capture of the app runs on the day its sample firm was
@@ -65,10 +65,18 @@ try {
       for (const f of fill ? [fill].flat() : []) {
         const box = page.locator(f.sel).first();
         await box.fill(f.text);
-        await box.blur();
+        // "press": a key to send to the box (Enter submits a search form);
+        // without one the box just loses focus, which is how a date box commits.
+        if (f.press) await box.press(f.press);
+        else await box.blur();
         await page.waitForTimeout(f.wait ?? 600);
       }
-      if (fill) await page.waitForTimeout(3000);
+      // "click": buttons to press after typing (a search that has no form to submit).
+      for (const sel of click ? [click].flat() : []) {
+        await page.locator(sel).first().click();
+        await page.waitForTimeout(600);
+      }
+      if (fill || click) await page.waitForTimeout(3000);
       if (scroll) {
         await page.evaluate((sel) => {
           // "text:Case number" scrolls to the element whose own text is exactly that.

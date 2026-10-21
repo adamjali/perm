@@ -179,6 +179,23 @@ public, "PWD" in the app. Numbers with separators; "October 27, 2026" in sentenc
 "Oct 27" in tables. An empty state is a title, one sentence and one action. An error
 sits under its field, with a summary at the top of the form.
 
+## Pictures
+
+The real thing first: a capture of our own page or app, the agency's own document page, a chart drawn from the data.
+A drawing only where nothing real can be photographed (a mechanism, a topic), and then from the real numbers; where
+drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every picture:
+
+- is labelled when it isn't the live thing ("Example case", "Demo account", "Sample firm");
+- carries its source and date in the credit line (`article-pictures.test.ts` fails on an uncredited figure or a repeat);
+- has one job: it sits beside the sentence it proves, cropped to the part that matters, with the spot to look at
+  marked, and a caption that says what to see;
+- has alt text saying what it shows and what it means, and any text inside it readable on a phone at 4.5:1;
+- is looked at full size before it ships, and taken again when the page it shows changes.
+
+A drawing is a file loaded as an image, below the fold, and holds still (see Motion). Films: captions never cover
+what's shown, no frame is empty, and every film is checked frame by frame before its final encode
+(`~/money/video/hyperframes/permtracker-campaign/SOURCES.md`).
+
 ## The gates
 
 | Test | Holds |
