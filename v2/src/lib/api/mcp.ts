@@ -93,6 +93,10 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
         "Federal records on U.S. employment-based immigration: PERM labor certification, prevailing wage requests, " +
         "H-1B LCAs, DOL processing times and the State Department visa bulletin. Every answer names its source and " +
         "the page it came from; cite that page. Estimates are labelled as estimates, not promises.",
+      // Every tool takes a few short strings, so a call's arguments never hold
+      // more than a handful of keys. Without a cap a 256 KB body of one big
+      // array can exhaust memory during validation (GHSA-46jr-4wx8-v453).
+      maxToolInputElements: 100,
     },
   );
 

@@ -111,6 +111,13 @@ describe("the MCP server at /mcp", () => {
     expect(body.result.content[0].text).toContain("No record");
   });
 
+  it("refuses a call whose arguments hold thousands of elements before validating them", async () => {
+    const big = Array.from({ length: 5_000 }, () => 0);
+    const { body } = await rpc("tools/call", { name: "lookup_case", arguments: { case_number: "G-100-26045-123456", big } });
+    expect(body.result.isError).toBe(true);
+    expect(readCase).not.toHaveBeenCalled();
+  });
+
   it("refuses a wrong key outright with 401", async () => {
     authenticate.mockResolvedValue({ ok: false, code: "invalid_key", message: "That isn't a key." });
     const { res } = await rpc("tools/list", {}, { authorization: "Bearer nope" });
