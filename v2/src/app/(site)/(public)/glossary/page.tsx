@@ -176,12 +176,13 @@ export default function GlossaryPage() {
                       </p>
                     ) : null}{" "}
                     {t.cite || (t.see && t.see.length > 0) ? (
-                      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                      // Each link a 44px tap target: on their own row they're targets, not words in a sentence.
+                      <p className="mt-1 flex flex-wrap gap-x-4 text-sm">
                         {t.cite ? (
                           <a
                             href={t.cite.href}
                             rel="noopener noreferrer"
-                            className="link font-mono text-sm"
+                            className="link inline-flex min-h-11 items-center font-mono text-sm"
                           >
                             {t.cite.label}
                           </a>
@@ -191,7 +192,7 @@ export default function GlossaryPage() {
                             {" "}
                             <Link
                               href={s.href}
-                              className="link"
+                              className="link inline-flex min-h-11 items-center"
                             >
                               {s.label}
                             </Link>

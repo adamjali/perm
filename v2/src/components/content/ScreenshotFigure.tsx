@@ -69,7 +69,7 @@ export default function ScreenshotFigure({
           {credit ? (
             // The credit on its own line, so it never reads as the caption's last sentence.
             creditHref ? (
-              <a href={creditHref} rel="noopener" target="_blank" className="link block w-fit">
+              <a href={creditHref} rel="noopener" target="_blank" className="link flex w-fit min-h-11 items-center">
                 {credit}
               </a>
             ) : (

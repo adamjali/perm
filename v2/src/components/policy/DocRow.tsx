@@ -51,8 +51,9 @@ export function dateLine(doc: PolicyNotice, today: string): string | null {
   return `Comments close ${dayLabel(w.closesOn)}, ${w.daysLeft} ${w.daysLeft === 1 ? "day" : "days"} left`;
 }
 
+// Each a 44px tap target: on their own row they're targets, not words in a sentence.
 const LINK =
-  "font-semibold link";
+  "font-semibold link inline-flex min-h-11 items-center";
 
 export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: string }) {
   const corrections = "corrections" in doc ? doc.corrections : [];
@@ -112,7 +113,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
             <dd>{doc.documentNumber}</dd>
           </dl>
         ) : null}{" "}
-        <p className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+        <p className="mt-3 flex flex-wrap gap-x-5">
           <a href={doc.url} rel="noopener" target="_blank" className={LINK}>
             {isOflc ? "Read it on DOL's page" : "Read it on the Federal Register"}
           </a>{" "}

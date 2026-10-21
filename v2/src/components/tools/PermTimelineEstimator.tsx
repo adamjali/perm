@@ -686,7 +686,9 @@ export function PermTimelineEstimator({
                 {alertAnchor ? (
                   <a
                     href={`#${alertAnchor}`}
-                    className={buttonVariants({ variant: "default", size: "lg" })}
+                    // The label carries a month, so it wraps on a phone instead of
+                    // running past the card and pushing the page sideways.
+                    className={cn(buttonVariants({ variant: "default", size: "lg" }), "h-auto min-h-11 max-w-full whitespace-normal py-2 text-left")}
                   >
                     <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
                     Email me when DOL reaches {formatMonth(month)}
