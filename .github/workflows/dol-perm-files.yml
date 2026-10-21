@@ -1,0 +1,65 @@
+name: DOL PERM files for the owner
+
+# DOL's newest PERM disclosure workbooks, fetched on GitHub's runners (www.dol.gov
+# answers them and refuses the Oracle server and the owner's laptop) and kept one
+# day as an artifact for the owner's Mac to download. They're DOL's public files;
+# this job reads nothing from them and prints only each file's name and size.
+# Anything worked out from them happens on the owner's Mac, never here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: How many of the newest PERM files to fetch
+        required: true
+        default: "2"
+        type: choice
+        options: ["1", "2", "3"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dol-perm-files
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+
+      - name: Fetch the newest PERM disclosure files from DOL's own page
+        working-directory: v2
+        env:
+          COUNT: ${{ inputs.count }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/dol"
+          python3 - <<'PY'
+          import os, re, sys
+          sys.path.insert(0, "scripts")
+          from ingest_perm_disclosure import discover_files
+          from build_firm_domains import fetch_file
+          out = os.path.join(os.environ["RUNNER_TEMP"], "dol")
+          files = discover_files(int(os.environ["COUNT"]))
+          if not files:
+              raise SystemExit("FATAL: no PERM disclosure file on DOL's page.")
+          for name, url in files:
+              if not re.fullmatch(r"PERM_Disclosure_Data_FY\d{4}[A-Za-z0-9_]*\.xlsx", name) or not url.startswith("https://www.dol.gov/"):
+                  raise SystemExit(f"FATAL: unexpected file {name!r} at {url!r}")
+              dest = os.path.join(out, name)
+              fetch_file(url, dest)
+              print(f"{name}: {os.path.getsize(dest):,} bytes")
+          PY
+
+      - name: Keep them one day
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dol-perm-files
+          path: ${{ runner.temp }}/dol/*.xlsx
+          retention-days: 1
+          if-no-files-found: error
