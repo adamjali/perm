@@ -1033,6 +1033,11 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
   `src/components/iso/` (geometry and SVG strings, no card or CSS from the skill), its dates from
   `calculateFilingWindow`. By the owner's call it sweeps by itself, scroll pushes it and dragging moves it (no slider or
   keys); under reduced motion it holds still. `next/dynamic` loads it only on articles that use it.
+- **The second, DOL's line as a roller conveyor** (`<QueueFigure />` in `how-the-perm-queue-works`), reads today's line,
+  DOL's pace and its published month with the queue month pages' own readers (`getLiveBacklog`, `getDecisionPace`,
+  `getEstimatorData`, `getSweepCoverage`) and runs them forward as a time-lapse. The lime month reaches the front on the
+  day `estimateByPace` gives and ends on `monthEndDate`'s day, the month page's "The line reaches this month's end";
+  tests hold both. It shows nothing when the pace, DOL's month or a fresh sweep is missing.
 - **The calendar calls the certification's expiry the "I-140 deadline"**, in the I-140 colour, like the dashboard
   and the case card (it said "ETA expires" in ETA 9089 orange). The calendar pictures and clips were re-taken.
 - **Two dark-mode contrast failures fixed**, found by axe on the guide pages: the "Guide" badge on article cards (black on

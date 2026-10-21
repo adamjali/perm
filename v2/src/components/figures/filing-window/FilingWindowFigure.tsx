@@ -222,7 +222,7 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
         </p>
       </div>
       <figcaption className="mt-2 text-sm text-muted-foreground">
-        {`An illustration, on an example case whose recruitment began ${longDate(first)}, inside the wage determination's validity. Drag the carriage, or scroll, to move the last step. With a last step on ${longDate(widest.last)} the window runs from ${longDate(widest.opens)} to ${longDate(widest.closes)}. Each day later shortens it by a day, and a last step on ${longDate(narrowest.last)} leaves only ${longDate(narrowest.closes)}. The dates come from the same rule the app uses on every case.`}
+        {`An illustration, on an example case whose recruitment began ${longDate(first)}, inside the wage determination's validity. Drag the carriage, or scroll, to move the last step. With a last step on ${longDate(widest.last)} the window runs from ${longDate(widest.opens)} to ${longDate(widest.closes)}. Each day later shortens it by a day, and a last step on ${longDate(narrowest.last)} leaves only ${longDate(narrowest.closes)}. The 180 days run from the earliest step, or from the notice of filing if it went up first. The 30 days run from the end of the last mandatory step or the notice, whichever ends later. One of a professional job's additional steps may fall inside them. The dates come from the same rule the app uses on every case.`}
       </figcaption>
     </figure>
   );

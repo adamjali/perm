@@ -21,6 +21,7 @@ import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
 import { RecruitmentNow } from "@/components/content/RecruitmentNow";
 import { BulletinReleaseNow } from "@/components/content/BulletinReleaseNow";
+import { QueueFigure } from "@/components/figures/dol-queue/QueueFigure";
 import { Lightbox } from "@/components/ui/lightbox";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
@@ -228,6 +229,8 @@ export const mdxComponents: MDXComponents = {
   BulletinReleaseNow,
   // The filing window as a measuring bench: the reader moves the last recruitment step.
   FilingWindowFigure,
+  // DOL's line as a conveyor, run forward at DOL's pace: reads today's line (an async server component).
+  QueueFigure,
 
   // Headings
   //

@@ -5,7 +5,8 @@ comes from code (here: the central rules in `convex/lib/perm`, so a figure can't
 makes still pictures (spots, page pictures, promo tiles), mostly grey with the lime and the stage colours.
 
 The owner approves each one before it's built (Oct 21 2026). Built: the filing-window bench (approved Oct 21, 3:37 PM
-EDT), in `the-perm-deadlines-that-matter`; the rest wait for his yes, one at a time.
+EDT), in `the-perm-deadlines-that-matter`, and DOL's line as a conveyor (approved 4:27 PM EDT, run forward at DOL's
+pace), in `how-the-perm-queue-works`. The rest wait for his yes, one at a time.
 
 ## Where they go
 
