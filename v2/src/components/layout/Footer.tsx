@@ -17,7 +17,7 @@
  */
 
 import { Fragment } from "react";
-import Link from "next/link";
+import { IntentLink } from "@/components/ui/intent-link";
 
 import { LinkedinLogoIcon, XLogoIcon } from "@phosphor-icons/react";
 import ThemeToggle from "./ThemeToggle";
@@ -40,9 +40,9 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
         <nav aria-label="Footer" className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 px-4 py-4 text-sm sm:px-6">
           {APP_FOOTER.map((p) => (
             <Fragment key={p.href}>
-              <Link href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
+              <IntentLink href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
                 <span className="hover-underline">{p.name}</span>
-              </Link>{" "}
+              </IntentLink>{" "}
             </Fragment>
           ))}
           <span className="ml-auto flex items-center gap-3 text-muted-foreground">
@@ -63,11 +63,11 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="col-span-2 lg:col-span-1">
             {/* The brand name links home from every page. */}
-            <Link href="/" className="logo-link inline-flex min-h-11 items-center font-heading text-xl font-bold text-foreground">
+            <IntentLink href="/" className="logo-link inline-flex min-h-11 items-center font-heading text-xl font-bold text-foreground">
               <span className="hover-underline">
                 <span className="text-primary-text">PERM</span> <span className="logo-word">Tracker</span>
               </span>
-            </Link>{" "}
+            </IntentLink>{" "}
             <p className="mt-3 max-w-xs text-base text-soft">
               Live DOL data for the wait, automatic deadlines for the work. Free for applicants and attorneys.
             </p>{" "}
@@ -95,9 +95,9 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
               <ul className="mt-2">
                 {col.pages.map((p) => (
                   <li key={p.href}>
-                    <Link href={p.href} className={`flex min-h-10 items-center text-base ${LINK}`}>
+                    <IntentLink href={p.href} className={`flex min-h-10 items-center text-base ${LINK}`}>
                       <span className="hover-underline">{p.name}</span>
-                    </Link>{" "}
+                    </IntentLink>{" "}
                   </li>
                 ))}
               </ul>
@@ -109,9 +109,9 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 text-sm">
             {FOOTER_LEGAL.map((p) => (
               <Fragment key={p.href}>
-                <Link href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
+                <IntentLink href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
                   <span className="hover-underline">{p.name}</span>
-                </Link>{" "}
+                </IntentLink>{" "}
               </Fragment>
             ))}
           </nav>{" "}

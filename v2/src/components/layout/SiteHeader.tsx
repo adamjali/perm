@@ -18,13 +18,14 @@
  */
 
 import * as React from "react";
-import Link, { useLinkStatus } from "next/link";
+import { useLinkStatus } from "next/link";
+
+import { IntentLink } from "@/components/ui/intent-link";
 import { usePathname } from "next/navigation";
 import { CaretDownIcon, CircleNotchIcon, ListIcon, XIcon } from "@phosphor-icons/react";
 
 import { SiteSearch } from "@/components/search/SiteSearch";
 import { LogoMark } from "./LogoMark";
-import type { SearchArticle } from "@/components/search/SearchPalette";
 import {
   DATA_MENU_FOOTER,
   GROUPS,
@@ -48,7 +49,7 @@ function isLearnPath(path: string): boolean {
 /**
  * The header's loading state (Oct 15 2026: a click on a slow page gave no
  * sign it had been heard). It reads `useLinkStatus`, so it must sit inside
- * the `<Link>`; it clears on commit, failure or a newer click. Always a
+ * the link; it clears on commit, failure or a newer click. Always a
  * spinner (owner, 9:50 PM: a rule under the link read as an underline). In the
  * bar it sits in the link's right padding, so nothing shifts; on the Sign in
  * button it covers the label; in a menu row it sits at the row's end. The
@@ -80,7 +81,7 @@ function LinkPending({ kind }: { kind: "bar" | "button" | "row" }) {
 /** A link in the bar: current page marked by a green rule under it. */
 function BarLink({ page, current }: { page: SitePage; current: boolean }) {
   return (
-    <Link
+    <IntentLink
       href={page.href}
       aria-current={current ? "page" : undefined}
       className={cn(
@@ -90,7 +91,7 @@ function BarLink({ page, current }: { page: SitePage; current: boolean }) {
     >
       <span className={current ? undefined : "hover-underline"}>{page.name}</span>
       <LinkPending kind="bar" />
-    </Link>
+    </IntentLink>
   );
 }
 
@@ -145,7 +146,7 @@ function Panel({ id, open, className, children }: { id: string; open: boolean; c
 function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
   const here = pathname === page.href;
   return (
-    <Link
+    <IntentLink
       href={page.href}
       aria-current={here ? "page" : undefined}
       className={cn(
@@ -157,11 +158,11 @@ function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
     >
       {page.name}
       <LinkPending kind="row" />
-    </Link>
+    </IntentLink>
   );
 }
 
-export default function SiteHeader({ articles = [] }: { articles?: SearchArticle[] }) {
+export default function SiteHeader() {
   const pathname = usePathname();
   const [menu, setMenu] = React.useState<Menu>(null);
   const barRef = React.useRef<HTMLElement>(null);
@@ -203,7 +204,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       {/* Black in both themes, like the footer (owner, Oct 15 2026): the bar is
           dark-scoped, its dropdown panels below keep the page's theme. */}
       <div className="dark mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 text-foreground sm:px-6 lg:gap-6">
-        <Link
+        <IntentLink
           href="/"
           className="logo-link relative flex h-11 shrink-0 items-center gap-2 font-heading text-xl font-bold text-foreground group/logo"
         >
@@ -215,7 +216,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
           <span className="hover-underline">
             <span className="text-primary-text">PERM</span> <span className="logo-word">Tracker</span>
           </span>
-        </Link>{" "}
+        </IntentLink>{" "}
         <nav aria-label="Main" className="hidden items-center lg:flex">
           <BarLink page={HEADER_PAGES.caseStatus} current={pathname === HEADER_PAGES.caseStatus.href} />{" "}
           <BarLink page={HEADER_PAGES.processingTimes} current={pathname === HEADER_PAGES.processingTimes.href} />{" "}
@@ -230,15 +231,15 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
           <BarLink page={HEADER_PAGES.forAttorneys} current={pathname === HEADER_PAGES.forAttorneys.href} />
         </nav>{" "}
         <div className="ml-auto flex items-center gap-1 lg:gap-3">
-          <SiteSearch articles={articles} className="w-[22rem] 2xl:w-96" />{" "}
+          <SiteSearch className="w-[22rem] 2xl:w-96" />{" "}
           {pathname !== "/login" ? (
-            <Link
+            <IntentLink
               href="/login"
               className="relative hidden h-10 items-center whitespace-nowrap border border-input bg-card px-4 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex"
             >
               Sign in
               <LinkPending kind="button" />
-            </Link>
+            </IntentLink>
           ) : null}{" "}
           <button
             type="button"
@@ -298,10 +299,10 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
         >
           <nav aria-label="Menu" className="divide-y divide-border">
             {[HEADER_PAGES.caseStatus, HEADER_PAGES.processingTimes].map((p) => (
-              <Link key={p.href} href={p.href} className="flex min-h-12 items-center text-lg font-semibold">
+              <IntentLink key={p.href} href={p.href} className="flex min-h-12 items-center text-lg font-semibold">
                 {p.name}
                 <LinkPending kind="row" />
-              </Link>
+              </IntentLink>
             ))}
             <details className="group">
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-lg font-semibold">
@@ -343,15 +344,15 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
                 ))}
               </ul>
             </details>
-            <Link href={HEADER_PAGES.forAttorneys.href} className="flex min-h-12 items-center text-lg font-semibold">
+            <IntentLink href={HEADER_PAGES.forAttorneys.href} className="flex min-h-12 items-center text-lg font-semibold">
               {HEADER_PAGES.forAttorneys.name}
               <LinkPending kind="row" />
-            </Link>
+            </IntentLink>
             {pathname !== "/login" ? (
-              <Link href="/login" className="flex min-h-12 items-center text-lg font-semibold">
+              <IntentLink href="/login" className="flex min-h-12 items-center text-lg font-semibold">
                 Sign in
                 <LinkPending kind="row" />
-              </Link>
+              </IntentLink>
             ) : null}
           </nav>
         </div>

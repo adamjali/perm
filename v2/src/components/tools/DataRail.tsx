@@ -1,7 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import Link, { useLinkStatus } from "next/link";
+import { useLinkStatus } from "next/link";
+
+import { IntentLink } from "@/components/ui/intent-link";
 import { usePathname } from "next/navigation";
 import {
   BellRingingIcon,
@@ -372,7 +374,7 @@ export function DataRail() {
                 <span className="sr-only">Expand data sections</span>
                 <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
               </button>{" "}
-              <Link
+              <IntentLink
                 href={OVERVIEW.href}
                 aria-label={OVERVIEW.label}
                 title={OVERVIEW.label}
@@ -380,7 +382,7 @@ export function DataRail() {
                 className={cn("rail-square", onOverview ? "bg-primary text-black" : "text-primary hover:bg-rail-hover")}
               >
                 <HouseIcon className="size-4" weight="fill" aria-hidden="true" />
-              </Link>{" "}
+              </IntentLink>{" "}
               {GROUPS.map((g) => {
                 const GroupIcon = GROUP_ICONS[g];
                 const here = active?.group === g;
@@ -534,7 +536,7 @@ function TabMarker({ current, kind }: { current: boolean; kind: "home" | "leaf" 
  * front page and takes the heading face; `leaf` is a page inside a group and
  * takes the reading face, indented under the group it belongs to.
  *
- * The pending state is why this is not a bare `<Link>`. A data page can take a
+ * The pending state is why this is not a bare link. A data page can take a
  * moment, and without a signal the rail looks dead and gets clicked twice.
  */
 function Tab({
@@ -549,7 +551,7 @@ function Tab({
   kind: "home" | "leaf";
 }) {
   return (
-    <Link
+    <IntentLink
       href={href}
       aria-current={current ? "page" : undefined}
       className={cn(
@@ -593,7 +595,7 @@ function Tab({
       ) : null}
       <TabMarker current={current} kind={kind} />{" "}
       <span className="min-w-0 flex-1 truncate">{label}</span>
-    </Link>
+    </IntentLink>
   );
 }
 
@@ -622,7 +624,7 @@ function RailFooter() {
       <p className="mt-1 text-sm leading-snug text-soft lg:hidden">
         When it&apos;ll likely be decided, and an email when DOL moves it.
       </p>{" "}
-      <Link
+      <IntentLink
         href="/perm-case-status"
         className={cn(
           "mt-2.5 flex min-h-11 items-center justify-center gap-2 border-2 border-black bg-primary px-3 lg:mt-2",
@@ -636,7 +638,7 @@ function RailFooter() {
             signal. */}
         <LinkPending />
         Check my case
-      </Link>
+      </IntentLink>
     </div>
   );
 }

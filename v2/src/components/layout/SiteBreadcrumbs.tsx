@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/ui/intent-link";
 import { usePathname } from "next/navigation";
 import { CaretRightIcon } from "@phosphor-icons/react";
 
@@ -97,12 +97,12 @@ export function SiteBreadcrumbs({
                     <span className="truncate">{crumb.name}</span>
                   </span>
                 ) : (
-                  <Link
+                  <IntentLink
                     href={crumb.href}
                     className="inline-flex min-h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                   >
                     {crumb.name}
-                  </Link>
+                  </IntentLink>
                 )}
               </li>
             );
