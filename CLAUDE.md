@@ -1045,6 +1045,13 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
   and a bulletin cutoff as a gate (`<BulletinFigure />`, EB-2 India's real cutoffs from the archive). Still: a spot per
   guide and blog topic, the homepage's two halves, the attorney security section, two app empty states, the 404 and
   `/developers` (`SpotPicture`).
+- **DOL's wage-request line is a conveyor too** (`<PwdQueueFigure />` in `track-a-prevailing-wage-request`, the PERM
+  conveyor's parts in `src/components/figures/pwd-queue/`), run at DOL's measured pace from `pwd_day_queue`.
+- **A guide with a data drawing refreshes when its data moves**: the sweep, DOL and bulletin routes list each such guide
+  by path, and `src/app/api/__tests__/figure-guides-refresh.test.ts` maps every async figure to its routes and fails a
+  guide left off one. A new data figure needs an entry there.
+- **The Chrome Web Store and Product Hunt images are built** (`extension/store/build.mjs`, from the live site); the
+  listing still waits on the LLC rename, because a store listing shows the legal name, address and phone to everyone.
 - **A priority date on the cutoff day isn't current.** State prints "earlier than the final action date" on every chart;
   `estimatePriorityDate` had counted the day itself (`daysFromCutoff > 0` now, with a test).
 - **Ten class strings glued two class names into one** (`"... border" + (on ? "bg-primary" ...)` made `borderbg-primary`):

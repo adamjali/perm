@@ -8,7 +8,7 @@ The owner approves each one before it's built (Oct 21 2026). Built: the filing-w
 EDT), in `the-perm-deadlines-that-matter`, and DOL's line as a conveyor (approved 4:27 PM EDT, run forward at DOL's
 pace), in `how-the-perm-queue-works`. At 5:05 PM EDT he approved the rest at once ("take initiative for all and choose urself"):
 the wage validity bench, the two clocks, the RFI siding and the bulletin gate, and every still picture in the table
-below except the store tiles, which wait on the listing.
+below. The store tiles and DOL's wage-request conveyor followed the same evening; the tiles wait on the listing.
 
 ## Where they go
 
