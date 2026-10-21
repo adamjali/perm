@@ -12,7 +12,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { readUserCases } from "./lib/userCases";
-import { caseDeadlineDates, type CaseDeadlineDates } from "./lib/caseDates";
+import { calendarCaseRow, type CaseDeadlineDates } from "./lib/caseDates";
 import { buildDefaultProfile } from "./lib/userDefaults";
 
 
@@ -88,18 +88,7 @@ export const getCalendarEvents = query({
     }
 
     // Map to calendar event data format
-    return filteredCases.map((caseDoc) => ({
-      id: caseDoc._id,
-      employerName: caseDoc.employerName,
-      beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
-      positionTitle: caseDoc.positionTitle,
-      caseStatus: caseDoc.caseStatus,
-      progressStatus: caseDoc.progressStatus,
-      ...caseDeadlineDates(caseDoc),
-      // RFI/RFE entries - default to empty arrays
-      rfiEntries: (caseDoc.rfiEntries ?? []) as CalendarRfiRfeEntry[],
-      rfeEntries: (caseDoc.rfeEntries ?? []) as CalendarRfiRfeEntry[],
-    }));
+    return filteredCases.map(calendarCaseRow);
   },
 });
 

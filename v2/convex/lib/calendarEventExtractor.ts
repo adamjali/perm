@@ -27,7 +27,7 @@ import type {
 } from "./calendarTypes";
 
 /** The calendar event each central deadline becomes. */
-const CENTRAL_TO_EVENT: Record<DeadlineType, CalendarEventType> = {
+export const CENTRAL_TO_EVENT: Record<DeadlineType, CalendarEventType> = {
   pwd_expiration: "pwd_expiration",
   filing_window_opens: "filing_window_opens",
   filing_window_closes: "filing_window_closes",

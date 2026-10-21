@@ -9,7 +9,8 @@ import { ArrowSquareOutIcon, CalendarIcon as CalendarIcon, InfoIcon, PlusIcon } 
 
 import { api } from "@convex/_generated/api";
 import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
-import { RECORDED_EVENT_TYPES, type CalendarCaseData, type DeadlineType } from "@/lib/calendar/types";
+import { RECORDED_EVENT_TYPES, type DeadlineType } from "@/lib/calendar/types";
+import { toCalendarCaseData } from "@/lib/calendar/fromQuery";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { CalendarView, type CaseDataMap, CalendarFilters } from "@/components/calendar";
@@ -220,41 +221,8 @@ export function CalendarPageClient() {
         caseStatus: caseData.caseStatus,
       });
 
-      // Map to CalendarCaseData format expected by mapper
-      const calendarCaseData: CalendarCaseData = {
-        _id: caseData.id,
-        employerName: caseData.employerName,
-        beneficiaryIdentifier: caseData.beneficiaryIdentifier,
-        positionTitle: caseData.positionTitle,
-        caseStatus: caseData.caseStatus,
-        progressStatus: caseData.progressStatus,
-        // SWC minifier bug workaround: use || instead of ?? (swc#760)
-        // PWD dates
-        pwdFilingDate: caseData.pwdFilingDate || null,
-        pwdDeterminationDate: caseData.pwdDeterminationDate || null,
-        pwdExpirationDate: caseData.pwdExpirationDate || null,
-        // Recruitment dates
-        sundayAdFirstDate: caseData.sundayAdFirstDate || null,
-        sundayAdSecondDate: caseData.sundayAdSecondDate || null,
-        jobOrderStartDate: caseData.jobOrderStartDate || null,
-        jobOrderEndDate: caseData.jobOrderEndDate || null,
-        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || null,
-        // Additional recruitment (for professional occupations)
-        additionalRecruitmentStartDate:
-          caseData.additionalRecruitmentStartDate || null,
-        additionalRecruitmentEndDate:
-          caseData.additionalRecruitmentEndDate || null,
-        // ETA 9089 dates
-        eta9089FilingDate: caseData.eta9089FilingDate || null,
-        eta9089CertificationDate: caseData.eta9089CertificationDate || null,
-        eta9089ExpirationDate: caseData.eta9089ExpirationDate || null,
-        // I-140 dates
-        i140FilingDate: caseData.i140FilingDate || null,
-        i140ApprovalDate: caseData.i140ApprovalDate || null,
-        // RFI/RFE entries
-        rfiEntries: caseData.rfiEntries || null,
-        rfeEntries: caseData.rfeEntries || null,
-      };
+      // Every field the row carries, as the event mapper reads it
+      const calendarCaseData = toCalendarCaseData(caseData);
 
       return caseToCalendarEvents(calendarCaseData);
     });

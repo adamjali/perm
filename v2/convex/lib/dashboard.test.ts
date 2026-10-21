@@ -103,12 +103,22 @@ describe("extractDeadlines", () => {
       expect(pwdDeadline?.label).toContain("PWD expiration");
     });
 
-    it("includes PWD expiration if in recruitment stage", () => {
-      const caseData = fixtures.recruitment.recruitmentActive();
+    it("includes the PWD expiration while recruitment hasn't begun", () => {
+      const caseData = fixtures.pwd.pwdWithExpiration();
       const deadlines = extractDeadlines(caseData, todayISO);
 
       const pwdDeadline = deadlines.find((d) => d.type === "pwd_expiration");
       expect(pwdDeadline).toBeDefined();
+    });
+
+    it("drops the PWD expiration once recruitment began inside its validity (20 CFR 656.40(c))", () => {
+      // Determined 120 days ago, recruitment begun 35 days ago: the filing
+      // window alone closes the case now (Karl Storz, BALCA en banc 2011).
+      const caseData = fixtures.recruitment.recruitmentActive();
+      const deadlines = extractDeadlines(caseData, todayISO);
+
+      const pwdDeadline = deadlines.find((d) => d.type === "pwd_expiration");
+      expect(pwdDeadline).toBeUndefined();
     });
 
     it("excludes PWD expiration if ETA 9089 filed (superseded)", () => {

@@ -269,11 +269,18 @@ export interface CaseDataForCalendar {
 
   // PWD dates
   pwdExpirationDate?: string;
+  /** Tells whether recruitment began inside the PWD's validity (pwdBearing). */
+  pwdDeterminationDate?: string;
 
   // ETA 9089 dates
   eta9089FilingDate?: string;
   eta9089CertificationDate?: string;
   eta9089ExpirationDate?: string;
+  // A denial and the review that follows it (calculators/denialReview.ts)
+  eta9089DenialDate?: string;
+  eta9089ReconsiderationDate?: string;
+  eta9089ReconsiderationDeniedDate?: string;
+  eta9089BalcaRequestDate?: string;
 
   // Filing window dates (stored derived fields)
   filingWindowOpens?: string;

@@ -378,6 +378,16 @@ export interface CalendarCaseData {
   eta9089FilingDate?: string | null;
   eta9089CertificationDate?: string | null;
   eta9089ExpirationDate?: string | null;
+  // A denial and the review that follows it (calculators/denialReview.ts)
+  eta9089DenialDate?: string | null;
+  eta9089ReconsiderationDate?: string | null;
+  eta9089ReconsiderationDeniedDate?: string | null;
+  eta9089BalcaRequestDate?: string | null;
+
+  // The windows the server stores on save; the rules read them first
+  filingWindowOpens?: string | null;
+  filingWindowCloses?: string | null;
+  recruitmentWindowCloses?: string | null;
 
   // I-140 phase
   i140FilingDate?: string | null;

@@ -21,6 +21,7 @@ import {
   buildDeadlineInput,
   extractActiveDeadlines as centralExtractActiveDeadlines,
   type CaseDataForDeadlines as PermCaseDataForDeadlines,
+  type LooseDeadlineCaseData,
 } from "./perm/deadlines";
 
 // ============================================================================
@@ -146,34 +147,19 @@ export interface ExtractedDeadline {
 }
 
 /**
- * Convert dashboard CaseDataForDeadlines to perm/deadlines CaseDataForDeadlines.
- * This bridges the two type systems for supersession checks.
+ * Hand the whole case to the central deadline rules.
+ *
+ * This used to copy a list of fields by name, and the list left out the PWD
+ * determination date and the four ETA 9089 denial dates. Without the
+ * determination date the rules can't tell recruitment begun inside the PWD's
+ * validity (20 CFR 656.40(c)), so the dashboard, the case list and the case
+ * cards showed a passed PWD expiry as overdue on a case still free to file;
+ * without the denial dates they never showed the 30 days to ask for review.
+ * The calendar, the reminders and the case page had both (Oct 21 2026).
  */
-function toPermCaseData(caseData: CaseDataForDeadlines): PermCaseDataForDeadlines {
-  return {
-    _id: caseData._id as unknown as PermCaseDataForDeadlines["_id"],
-    caseStatus: caseData.caseStatus,
-    progressStatus: caseData.progressStatus,
-    deletedAt: caseData.deletedAt,
-    pwdExpirationDate: caseData.pwdExpirationDate,
-    eta9089FilingDate: caseData.eta9089FilingDate,
-    eta9089CertificationDate: caseData.eta9089CertificationDate,
-    eta9089ExpirationDate: caseData.eta9089ExpirationDate,
-    i140FilingDate: caseData.i140FilingDate,
-    rfiEntries: caseData.rfiEntries,
-    rfeEntries: caseData.rfeEntries,
-    filingWindowOpens: caseData.filingWindowOpens,
-    filingWindowCloses: caseData.filingWindowCloses,
-    recruitmentWindowCloses: caseData.recruitmentWindowCloses,
-    sundayAdFirstDate: caseData.sundayAdFirstDate,
-    sundayAdSecondDate: caseData.sundayAdSecondDate,
-    jobOrderStartDate: caseData.jobOrderStartDate,
-    jobOrderEndDate: caseData.jobOrderEndDate,
-    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
-    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate,
-    isProfessionalOccupation: caseData.isProfessionalOccupation,
-    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
-  };
+function toPermCaseData(caseData: CaseDataForDeadlines): LooseDeadlineCaseData {
+  const { _id, ...rest } = caseData;
+  return { ...rest, _id: _id as unknown as PermCaseDataForDeadlines["_id"] };
 }
 
 export function extractDeadlines(

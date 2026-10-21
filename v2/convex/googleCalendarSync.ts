@@ -11,6 +11,7 @@
 import { internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getDefaultCalendarPreferences } from "./lib/calendarEventExtractor";
+import { calendarSyncCase } from "./lib/caseDates";
 import type {
   CaseDataForCalendar,
   UserCalendarPreferences,
@@ -35,49 +36,7 @@ export const getCaseForCalendarSync = internalQuery({
       return null;
     }
 
-    // Map to CaseDataForCalendar interface
-    return {
-      _id: caseDoc._id,
-      caseNumber: caseDoc.caseNumber,
-      internalCaseNumber: caseDoc.internalCaseNumber,
-      employerName: caseDoc.employerName,
-      beneficiaryIdentifier: caseDoc.beneficiaryIdentifier ?? "",
-      caseStatus: caseDoc.caseStatus,
-      progressStatus: caseDoc.progressStatus,
-      deletedAt: caseDoc.deletedAt,
-      pwdExpirationDate: caseDoc.pwdExpirationDate,
-      eta9089FilingDate: caseDoc.eta9089FilingDate,
-      eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-      eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-      filingWindowOpens: caseDoc.filingWindowOpens,
-      filingWindowCloses: caseDoc.filingWindowCloses,
-      recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
-      sundayAdFirstDate: caseDoc.sundayAdFirstDate,
-      sundayAdSecondDate: caseDoc.sundayAdSecondDate,
-      jobOrderStartDate: caseDoc.jobOrderStartDate,
-      jobOrderEndDate: caseDoc.jobOrderEndDate,
-      noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: caseDoc.noticeOfFilingEndDate,
-      additionalRecruitmentStartDate: caseDoc.additionalRecruitmentStartDate,
-      additionalRecruitmentEndDate: caseDoc.additionalRecruitmentEndDate,
-      isProfessionalOccupation: caseDoc.isProfessionalOccupation,
-      additionalRecruitmentMethods: caseDoc.additionalRecruitmentMethods,
-      i140FilingDate: caseDoc.i140FilingDate,
-      rfiEntries: caseDoc.rfiEntries?.map((entry) => ({
-        id: entry.id,
-        receivedDate: entry.receivedDate,
-        responseDueDate: entry.responseDueDate,
-        responseSubmittedDate: entry.responseSubmittedDate,
-      })),
-      rfeEntries: caseDoc.rfeEntries?.map((entry) => ({
-        id: entry.id,
-        receivedDate: entry.receivedDate,
-        responseDueDate: entry.responseDueDate,
-        responseSubmittedDate: entry.responseSubmittedDate,
-      })),
-      // The sample case is demo data: no events, so no calendar reminders.
-      calendarSyncEnabled: caseDoc.isSample ? false : caseDoc.calendarSyncEnabled,
-    };
+    return calendarSyncCase(caseDoc);
   },
 });
 

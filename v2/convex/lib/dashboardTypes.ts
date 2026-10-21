@@ -74,13 +74,19 @@ export interface CaseDataForDeadlines {
   progressStatus: ProgressStatus;
   deletedAt?: number;
 
-  // PWD dates
+  // PWD dates. The determination date tells whether recruitment began inside
+  // the PWD's validity, which decides whether its expiry still binds.
   pwdExpirationDate?: string;
+  pwdDeterminationDate?: string;
 
-  // ETA 9089 dates
+  // ETA 9089 dates, and a denial with the review that follows it
   eta9089FilingDate?: string;
   eta9089CertificationDate?: string;
   eta9089ExpirationDate?: string;
+  eta9089DenialDate?: string;
+  eta9089ReconsiderationDate?: string;
+  eta9089ReconsiderationDeniedDate?: string;
+  eta9089BalcaRequestDate?: string;
 
   // RFI/RFE entries (arrays)
   rfiEntries?: Array<{
@@ -106,6 +112,7 @@ export interface CaseDataForDeadlines {
   sundayAdSecondDate?: string;
   jobOrderEndDate?: string;
   noticeOfFilingEndDate?: string;
+  additionalRecruitmentStartDate?: string;
   additionalRecruitmentEndDate?: string;
   isProfessionalOccupation?: boolean;
   additionalRecruitmentMethods?: Array<{
