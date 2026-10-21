@@ -195,7 +195,9 @@ def run(conf_text: str) -> None:
     check("/mcp: streams unbuffered", "proxy_buffering off;" in mcp)
 
     # People are SLOWED before they are refused; crawlers are refused at once.
-    for zone in ("pt_page", "pt_lookup", "pt_api"):
+    # Search engines too (Oct 21 2026): Googlebot's bursts ran past the 12 in
+    # flight and got 503s while its average stayed under the rate.
+    for zone in ("pt_page", "pt_lookup", "pt_api", "pt_search"):
         lines = re.findall(rf"limit_req\s+zone={zone}\s+([^;]*);", server)
         check(f"{zone}: two-stage (delay=), never nodelay",
               bool(lines) and all("delay=" in x and "nodelay" not in x for x in lines), str(lines))
@@ -214,7 +216,7 @@ def run(conf_text: str) -> None:
     pf = re.search(r"map \$http_next_router_prefetch \$pt_prefetch_all\s*\{([^}]*)\}", head)
     check("pre-loads from everyone share one in-flight cap", pf is not None and '"1" prefetch;' in pf.group(1)
           and "default \"\";" in pf.group(1))
-    for zone in ("pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_slowcrawl", "pt_prefetch"):
+    for zone in ("pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_slowcrawl", "pt_prefetch"):
         lines = re.findall(rf"limit_req\s+zone={zone}\s+([^;]*);", server)
         check(f"{zone}: refused at once (nodelay)", bool(lines) and all("nodelay" in x for x in lines), str(lines))
 
@@ -327,6 +329,7 @@ def probe() -> None:
             r"(location = /perm-case-status \{[^}]*?)\n\s*limit_conn pt_search_conn \d+;\n\s*limit_conn pt_bots_conn \d+;",
             r"\1", good, count=1),
         "people refused instead of slowed": good.replace("zone=pt_page burst=300 delay=150", "zone=pt_page burst=300 nodelay", 1),
+        "search engines refused instead of paced": good.replace("zone=pt_search burst=120 delay=8", "zone=pt_search burst=120 nodelay", 1),
         "refusal page drops its status": good.replace("error_page 429 @pt_slow_down;", "error_page 429 = @pt_slow_down;"),
         "defense log records the busy page's path": good.replace('"$request_uri" "$http_user_agent"', '"$uri" "$http_user_agent"', 1),
         "relay sends the server's address": good.replace(
