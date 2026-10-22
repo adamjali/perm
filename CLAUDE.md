@@ -1096,6 +1096,10 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   plain picture bands (`StageBand`, pinned only inside `TourStage`), one after another, each with a real capture.
   Captures of the site's own pages: `scripts/page-pictures.json`, `CAPTURE_SPEC=... node scripts/capture_article_heroes.mjs`
   (add `CAPTURE_DARK=1` for the dark run), then `python3 scripts/page_shots.py <dir> <set>`.
+- **For a developer the answer is the picture**: `CodeWindow` (`src/components/marketing/CodeWindow.tsx`) shows a real
+  request and what came back, as text, dated: the keyless employer lookup on /developers, the live security headers on
+  /security. Re-ask and replace both the text and its date when the figures change. Badges and open data already open
+  with their real thing (the live badges, the files' first rows) and got no band.
 - **A value a scroll stage writes every frame is a registered, non-inherited CSS variable, written on the element that
   reads it** (`@property` block at the top of `globals.css`). An inherited variable written on a section restyles the
   whole section every frame: the guides page's card stack spent 1,110 ms of style work over one scroll (measured A B B A
