@@ -27,6 +27,7 @@ import {
 } from "@phosphor-icons/react/ssr";
 import { buttonVariants } from "@/components/ui/button";
 import { ToneBadge } from "@/components/ui/badge";
+import { CodeWindow } from "@/components/marketing/CodeWindow";
 
 export const dynamic = "force-static";
 
@@ -67,6 +68,14 @@ const POSTURE = [
   },
 ] as const;
 
+/**
+ * The security headers the live site sent, asked from outside and kept as printed (one HEAD request to the home
+ * page; the rest of the reply left out), with the day it was asked. Ask again and replace both when nginx's
+ * headers change (scripts/oracle/nginx).
+ */
+const HEADERS_ASKED = "October 22, 2026";
+const HEADERS = "HTTP/2 200 \ncontent-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://browser.sentry-cdn.com https://challenges.cloudflare.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://*.sentry.io https://browser.sentry-cdn.com https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com; media-src 'self' blob: data:; frame-src 'self' https://app.supademo.com https://*.convex.cloud https://challenges.cloudflare.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'\ncross-origin-opener-policy: same-origin-allow-popups\npermissions-policy: camera=(), microphone=(self), geolocation=()\nreferrer-policy: strict-origin-when-cross-origin\nstrict-transport-security: max-age=63072000; includeSubDomains; preload\nx-content-type-options: nosniff\nx-frame-options: DENY";
+
 /** The April 2026 incident's figures, each from its own account below. */
 const INCIDENT_FACTS = [
   { value: "139", label: "Addresses that got a message" },
@@ -86,6 +95,24 @@ export default function SecurityPage() {
           How permtracker.app is run, how to report a problem, and every security incident on the record.
         </p>
       </header>{" "}
+
+      {/* The page's picture: what the site really sends, as text anyone can check with one request. */}
+      <section aria-labelledby="headers" className="mt-10">
+        <h2 id="headers" className="font-heading text-2xl font-bold">
+          What every page is sent with
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
+          HTTPS only, for two years, on every subdomain. No other site may show a page in a frame. No camera or
+          location. And a content policy that lists where scripts, styles and connections may come from.
+        </p>{" "}
+        <CodeWindow
+          className="mt-6"
+          command="curl -sI https://permtracker.app"
+          output={HEADERS}
+          label="The security headers permtracker.app sends: a content security policy, strict transport security for two years with subdomains, no framing, no content sniffing, a referrer policy and a permissions policy with camera and location off."
+          caption={`Asked ${HEADERS_ASKED}; the security headers from the reply.`}
+        />
+      </section>{" "}
 
       {/* THE POSTURE AS FOUR FACTS, each one a sentence the page already made.
           It had been one paragraph behind a "More" link. */}
