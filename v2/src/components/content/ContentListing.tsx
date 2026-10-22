@@ -19,6 +19,10 @@ import ContentGrid from "./ContentGrid";
 import ContentSearch from "./ContentSearch";
 import { choiceVariants } from "@/components/ui/choice";
 import { SpotPicture } from "@/components/ui/spot-picture";
+import { clampPage, Pagination, usePageParam, useQueryParam } from "@/components/ui/pagination";
+
+/** Articles a page (owner, Oct 21 2026: "pagination not endless scroll"). */
+export const PER_PAGE = 12;
 
 interface ContentListingProps {
   posts: PostSummary[];
@@ -27,8 +31,18 @@ interface ContentListingProps {
 
 export default function ContentListing({ posts, type }: ContentListingProps) {
   const topics = topicsFor(type);
-  const [search, setSearch] = React.useState("");
-  const [active, setActive] = React.useState<string | null>(null);
+  const [search, setSearchRaw] = React.useState("");
+  // The topic and the page live in the address (?topic=queue&page=2), so a link can open one topic's articles.
+  const [topicParam, setQuery] = useQueryParam("topic");
+  const active = topics.some((t) => t.id === topicParam) ? topicParam : null;
+  const [pageParam, setPage] = usePageParam();
+  const top = React.useRef<HTMLDivElement>(null);
+  // A new search or topic starts again at the first page.
+  const setSearch = (value: string) => {
+    setSearchRaw(value);
+    if (pageParam !== 1) setPage(1);
+  };
+  const setActive = (value: string | null) => setQuery({ topic: value, page: null });
 
   // Words first; when no article holds them, the closest articles by title,
   // tags and description, so a misspelt search still lands somewhere.
@@ -48,15 +62,22 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
     return { matches: near, closest: near.length > 0 };
   }, [posts, search]);
 
+  // Every matching article in reading order (topic by topic), then the page's twelve, still under their topics.
+  const ordered = topics
+    .filter((t) => !active || t.id === active)
+    .flatMap((t) => matches.filter((p) => p.meta.category === t.id));
+  const shown = ordered.length;
+  const pageCount = Math.max(1, Math.ceil(shown / PER_PAGE));
+  const page = clampPage(pageParam, pageCount);
+  const onPage = new Set(ordered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
   const sections = topics
     .filter((t) => !active || t.id === active)
-    .map((t) => ({ topic: t, posts: matches.filter((p) => p.meta.category === t.id) }))
+    .map((t) => ({ topic: t, posts: matches.filter((p) => p.meta.category === t.id && onPage.has(p)) }))
     .filter((s) => s.posts.length > 0);
-  const shown = sections.reduce((n, s) => n + s.posts.length, 0);
   const counts = new Map(topics.map((t) => [t.id, posts.filter((p) => p.meta.category === t.id).length]));
 
   return (
-    <div className="space-y-10">
+    <div ref={top} id="articles" className="scroll-mt-28 space-y-10">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div role="group" aria-label="Topics" className="flex flex-wrap gap-2">
           <TopicButton pressed={active === null} onClick={() => setActive(null)} label="All topics" count={posts.length} />{" "}
@@ -102,12 +123,19 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
         <p className="py-16 text-center text-base text-soft">
           Nothing matches &ldquo;{search}&rdquo;. Try a shorter word, or show all topics.
         </p>
-      ) : search || active ? (
-        <p className="text-center text-sm text-muted-foreground">
-          Showing {shown} of {posts.length}
-          {search ? (closest ? ` close to "${search}"` : ` matching "${search}"`) : null}
-        </p>
-      ) : null}
+      ) : (
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          onPage={setPage}
+          total={shown}
+          perPage={PER_PAGE}
+          noun={search ? (closest ? `close to "${search}"` : `matching "${search}"`) : type === "blog" ? "posts" : "guides"}
+          label={type === "blog" ? "Pages of posts" : "Pages of guides"}
+          scrollTo={top}
+          className="border-t-2 border-border pt-8"
+        />
+      )}
     </div>
   );
 }

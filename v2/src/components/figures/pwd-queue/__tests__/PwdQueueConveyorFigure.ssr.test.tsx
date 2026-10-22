@@ -33,7 +33,7 @@ describe("PwdQueueConveyorFigure on the server", () => {
   });
 
   it("starts at the count and gives the lookup's dates in words", () => {
-    expect(html).toContain("October 20, 2026, as DOL left it: the front tray is May 2026.");
+    expect(html).toContain("October 20, 2026, as DOL left it: DOL is finishing May 2026&#x27;s last requests.");
     expect(html).toContain("DOL&#x27;s own published month was June 2026 on September 30, 2026.");
     expect(html).toContain("about 750 requests a working day");
     expect(html).toContain("Weekends and federal holidays don&#x27;t count, because DOL doesn&#x27;t work them.");

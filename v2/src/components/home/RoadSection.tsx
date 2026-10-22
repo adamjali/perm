@@ -1,8 +1,7 @@
-import Image from "next/image";
-import Link from "next/link";
-
 import { formatMonth } from "@/lib/dolFormat";
 import { formatInt } from "@/lib/format";
+
+import { RoadStage, type RoadStop } from "./RoadStage";
 
 /**
  * The road to a green card, drawn with each stop's real paperwork.
@@ -25,9 +24,10 @@ import { formatInt } from "@/lib/format";
  * Federal documents, so no licence question (17 U.S.C. 105). Each is shown
  * as the top of its first page, lossless WebP in 16 grays, 16 to 30 KB.
  *
- * Each document sits flat in a 1px frame, as a screenshot does. On a phone the
+ * Each document sits flat in a 2px frame, as a screenshot does. On a phone the
  * stops are a list, the document small beside its name; from 1024px a row of
- * six.
+ * six under reduced motion, and otherwise a scroll stage (RoadStage): the stops
+ * down the left, the stop being read in lime, its document large on the right.
  */
 
 export interface RoadSectionProps {
@@ -37,19 +37,8 @@ export interface RoadSectionProps {
   frontierMonth: string | null;
 }
 
-interface Stop {
-  n: number;
-  name: string;
-  who: string;
-  /** The stage's colour, as a dot beside its number. */
-  dot: string;
-  img: { src: string; alt: string; w: number; h: number };
-  fact: string;
-  href: string;
-  cta: string;
-}
 
-function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
+function stops({ pwdPending, frontierMonth }: RoadSectionProps): RoadStop[] {
   return [
     {
       n: 1,
@@ -64,6 +53,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       },
       fact: pwdPending ? `${formatInt(pwdPending)} requests waiting` : "How long the wage request takes",
       href: "/tools/pwd-calculator",
+      doc: "Form ETA-9141, from DOL's FLAG site",
       cta: "PWD timeline",
     },
     {
@@ -81,6 +71,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
         ? `Deciding ${formatMonth(frontierMonth.slice(0, 7))} filings`
         : "When DOL decides",
       href: "/tools/perm-timeline-calculator",
+      doc: "Form ETA-9089, from DOL's forms page",
       cta: "PERM timeline",
     },
     {
@@ -96,6 +87,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       },
       fact: "How deep USCIS's queue is",
       href: "/tools/i140-calculator",
+      doc: "Form I-140, from USCIS",
       cta: "I-140 timeline",
     },
     {
@@ -111,6 +103,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       },
       fact: "Every bulletin since October 2014",
       href: "/tools/priority-date-calculator",
+      doc: "The October 2026 visa bulletin, from the State Department",
       cta: "Is my date current?",
     },
     {
@@ -126,6 +119,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       },
       fact: "Your place in USCIS's line",
       href: "/tools/i485-queue-position",
+      doc: "Form I-485, from USCIS",
       cta: "Queue position",
     },
     {
@@ -139,67 +133,15 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
         w: 482,
         h: 306,
       },
+      contain: true,
       fact: "Every stage, drawn to scale",
       href: "/tools/green-card-timeline",
+      doc: "USCIS's specimen green card",
       cta: "Whole timeline",
     },
   ];
 }
 
 export function RoadSection(props: RoadSectionProps) {
-  return (
-    <section aria-labelledby="road-heading">
-      <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 sm:py-16">
-        <h2 id="road-heading" className="font-heading text-2xl font-bold sm:text-3xl">
-          The road to a green card
-        </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base text-soft">Six stops, three agencies. Each one has a calculator.</p>{" "}
-        {/* THE ROAD IS DRAWN: one ink line through six numbered stops, each
-            with its stage's real paperwork. Down the left edge on a phone,
-            across the top from 1024px. The order is real, so the numbers are. */}
-        <ol
-          aria-label="The stages, in order"
-          className="relative mt-8 grid grid-cols-1 gap-y-6 before:absolute before:bottom-4 before:left-[16px] before:top-4 before:w-1 before:bg-foreground before:content-[''] lg:grid-cols-6 lg:gap-x-6 lg:before:bottom-auto lg:before:left-0 lg:before:right-0 lg:before:top-4 lg:before:h-1 lg:before:w-auto"
-        >
-          {stops(props).map((s) => (
-            <li key={s.n} className="relative">
-              <Link
-                href={s.href}
-                aria-label={`${s.name}, ${s.who}: ${s.fact}. Open the ${s.cta.toLowerCase()} tool`}
-                className="group grid grid-cols-[36px_minmax(0,1fr)] gap-x-4 lg:grid-cols-1 lg:gap-y-4"
-              >
-                <span
-                  aria-hidden="true"
-                  className="relative z-10 flex size-9 items-center justify-center bg-foreground font-heading text-lg font-bold text-background ring-4 ring-background group-hover:bg-primary group-hover:text-black"
-                >
-                  {s.n}
-                </span>{" "}
-                <span className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-4 lg:grid-cols-1 lg:gap-3">
-                  <span className="block aspect-[5/4] overflow-hidden border-2 border-[var(--object-border)] bg-card transition-colors group-hover:border-primary-text">
-                    <Image
-                      src={s.img.src}
-                      alt={s.img.alt}
-                      width={s.img.w}
-                      height={s.img.h}
-                      unoptimized
-                      loading="lazy"
-                      className="block size-full object-cover object-top"
-                    />
-                  </span>{" "}
-                  <span className="min-w-0">
-                    <span className="block font-heading text-lg font-bold leading-tight group-hover:underline">{s.name}</span>{" "}
-                    <span className="mt-1 flex items-center gap-2 text-sm font-semibold text-soft">
-                      <span aria-hidden="true" className={`size-2.5 shrink-0 ${s.dot}`} />
-                      {s.who}
-                    </span>{" "}
-                    <span className="mt-1 block text-sm leading-snug text-soft">{s.fact}</span>
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
+  return <RoadStage stops={stops(props)} />;
 }

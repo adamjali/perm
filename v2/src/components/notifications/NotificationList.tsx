@@ -22,13 +22,14 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { MS_PER_DAY } from "@/lib/time";
 import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Pager } from "@/components/ui/pager";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SpotPicture } from "@/components/ui/spot-picture";
 import { handleOperationError } from "@/lib/errors";
@@ -314,10 +315,11 @@ export default function NotificationList({
   const router = useRouter();
   const { isSigningOut } = useAuthContext();
 
-  // Pagination state
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Pages, not an endless list (owner, Oct 21 2026: "pagination not endless scroll"): twenty a page, the
+  // server's cursor for each page kept in a stack so Previous goes back exactly. A new tab starts at page 1.
+  const [stack, setStack] = useState<Array<string | undefined>>([undefined]);
+  const cursor = stack[stack.length - 1];
+  const top = useRef<HTMLDivElement>(null);
 
   // Build filter based on active tab
   const getFilters = useCallback(() => {
@@ -342,32 +344,18 @@ export default function NotificationList({
     isSigningOut ? "skip" : { limit: 20, cursor, filters: getFilters() }
   );
 
-  // Reset pagination when tab changes
-  useEffect(() => {
-    setCursor(undefined);
-    setAllNotifications([]);
-    setIsLoadingMore(false);
-  }, [activeTab]);
+  // A new tab starts at the first page.
+  const [tabSeen, setTabSeen] = useState(activeTab);
+  if (tabSeen !== activeTab) {
+    setTabSeen(activeTab);
+    setStack([undefined]);
+  }
 
-  // Accumulate notifications when new data arrives
-  useEffect(() => {
-    if (result?.notifications) {
-      if (cursor === undefined) {
-        // First page - replace all
-        setAllNotifications(result.notifications as Notification[]);
-      } else {
-        // Subsequent pages - append unique notifications
-        setAllNotifications((prev) => {
-          const existingIds = new Set(prev.map((n) => n._id));
-          const newNotifications = (result.notifications as Notification[]).filter(
-            (n) => !existingIds.has(n._id)
-          );
-          return [...prev, ...newNotifications];
-        });
-      }
-      setIsLoadingMore(false);
-    }
-  }, [result, cursor]);
+  // The last page shown stays on screen while the next one loads, so a press never blanks the list.
+  const lastShown = useRef<Notification[]>([]);
+  const fresh = result?.notifications as Notification[] | undefined;
+  if (fresh) lastShown.current = fresh;
+  const loading = result === undefined;
 
   // Mutations
   const markAsRead = useMutation(api.notifications.markAsRead);
@@ -396,21 +384,13 @@ export default function NotificationList({
     }
   };
 
-  const handleLoadMore = () => {
-    if (result?.nextCursor && !isLoadingMore) {
-      setIsLoadingMore(true);
-      setCursor(result.nextCursor);
-    }
+  const goNext = () => {
+    const next = result?.nextCursor;
+    if (next && !loading) setStack((st) => [...st, next]);
   };
+  const goPrevious = () => setStack((st) => (st.length > 1 ? st.slice(0, -1) : st));
 
-  // Loading state (only for initial load)
-  // On the first page, render the query's answer directly. The accumulating
-  // copy is set in an effect AFTER the answer arrives, so reading only it left
-  // one frame with the answer in hand and an empty list on screen.
-  const shown =
-    cursor === undefined && result?.notifications
-      ? (result.notifications as Notification[])
-      : allNotifications;
+  const shown = fresh ?? lastShown.current;
 
   if (result === undefined && shown.length === 0) {
     return <NotificationListSkeleton />;
@@ -429,8 +409,8 @@ export default function NotificationList({
         <p className="max-w-sm text-sm text-muted-foreground">
           None of your newest notifications match this tab. Older ones haven&apos;t been checked yet.
         </p>
-        <Button variant="outline" size="lg" onClick={handleLoadMore} disabled={isLoadingMore}>
-          {isLoadingMore ? (
+        <Button variant="outline" size="lg" onClick={goNext} disabled={loading}>
+          {loading ? (
             <>
               <CircleNotchIcon className="size-4 mr-2 animate-spin" />
               Looking...
@@ -447,7 +427,7 @@ export default function NotificationList({
   const groupedNotifications = groupNotificationsByDate(shown);
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div ref={top} className={cn("scroll-mt-28 space-y-6", className)}>
       {Array.from(groupedNotifications.entries()).map(([group, notifications]) => (
         <div key={group}>
           {/* Group header */}
@@ -468,26 +448,23 @@ export default function NotificationList({
         </div>
       ))}
 
-      {/* Load more button */}
-      {result?.hasMore && (
-        <div className="flex justify-center pt-4">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleLoadMore}
-            disabled={isLoadingMore}
-          >
-            {isLoadingMore ? (
-              <>
-                <CircleNotchIcon className="size-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load more"
-            )}
-          </Button>
-        </div>
-      )}
+      {stack.length > 1 || result?.hasMore ? (
+        <Pager
+          id="notifications-pages"
+          page={stack.length}
+          hasPrevious={stack.length > 1}
+          hasNext={!!result?.hasMore}
+          loading={loading}
+          onPrevious={goPrevious}
+          onNext={goNext}
+          noun="notifications"
+          previousLabel="Newer"
+          nextLabel="Older"
+          buttonClassName={buttonVariants({ variant: "outline", size: "lg" })}
+          scrollTo={top}
+          className="pt-4"
+        />
+      ) : null}
     </div>
   );
 }

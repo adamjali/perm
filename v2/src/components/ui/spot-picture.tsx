@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
  *
  * `alt` is required so every use decides: "" for a picture beside a heading or a sentence that
  * already says everything it shows (it's then hidden from screen readers), or a sentence saying
- * what's drawn. `className` sizes the wrapper; the image fills its width.
+ * what's drawn. `className` sizes the wrapper; the image fills its width. With a mouse, something inside the picture
+ * answers the pointer (SpotMotion, mounted once in SharedProviders), and only when the visitor allows motion.
  */
 export function SpotPicture({ name, alt, className }: { name: SpotPictureName; alt: string; className?: string }) {
   const p = SPOT_PICTURES[name];

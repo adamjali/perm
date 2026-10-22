@@ -150,16 +150,18 @@ describe("NotificationList - an empty page with more to check", () => {
 });
 
 describe("NotificationList - Pagination", () => {
-  it("shows Load More when hasMore is true, hides when false", () => {
+  it("pages Older and Newer, twenty at a time, when there are more", () => {
     (useQuery as Mock).mockReturnValue({ notifications: [createMockNotification()], hasMore: true, nextCursor: "123" });
     renderWithProviders(<NotificationList activeTab="all" />);
-    expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /older/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /newer/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /load more/i })).not.toBeInTheDocument();
   });
 
-  it("hides Load More when hasMore is false", () => {
+  it("draws no page controls when everything fits on one page", () => {
     (useQuery as Mock).mockReturnValue({ notifications: [createMockNotification()], hasMore: false, nextCursor: null });
     renderWithProviders(<NotificationList activeTab="all" />);
-    expect(screen.queryByRole("button", { name: /load more/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /older/i })).not.toBeInTheDocument();
   });
 });
 

@@ -18,6 +18,7 @@ import { longDate } from "@convex/lib/months";
 import { HEIGHT, WIDTH, buildRfiTrack } from "./geometry";
 import { LEAD_DAYS, rfiReading, type RfiRun } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 /** Real seconds for the whole run, and the holds at the RFI, at the rejoin and at the gate. */
 const RUN_S = 9;
@@ -219,9 +220,9 @@ export default function RfiPathFigure({ run }: { run: RfiRun }) {
     ? `half were decided within ${run.afterHalf} days of going back to review, and 3 in 4 within ${run.afterThreeQuarters}`
     : `half were decided within ${run.afterHalf} days of going back to review`;
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -240,15 +241,20 @@ export default function RfiPathFigure({ run }: { run: RfiRun }) {
             <g dangerouslySetInnerHTML={{ __html: art.front }} />
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {rfiReading(run, start)}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="time-lapse" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {`An illustration of an RFI issued on ${longDate(run.rfiDay)}. The siding is the RFI: the case leaves filing order while the employer answers. DOL gives the employer ${run.dueDays} days, to ${longDate(run.dueDate)}. Our sweep has watched ${int(run.watched)} RFIs from their first day since ${longDate(run.watchedFrom)}. ${run.leaveDay === run.dueDays + 1 ? `Half had left RFI status by day ${run.leaveDay}: DOL moves the case when its ${run.dueDays} days run out, and our sweep sees it the morning after.` : `Half had left RFI status by day ${run.leaveDay}.`} Then ${after}${run.afterWatched ? `, over ${int(run.afterWatched)} decided cases` : ""}. So the case page dates an RFI like this one around ${longDate(run.decideDate)}, between ${longDate(run.earliestDate)} and ${longDate(run.latestDate)}. ${run.slowEndFrom === "measured" ? `The late end is the day by which 9 in 10 were decided after leaving RFI.` : `The late end allows ${run.slowEndDays} days after the case leaves RFI. That's an immigration attorney's estimate, used until the record can measure it.`} ${run.afterReply ? `Of the ${int(run.afterReply.decided)} RFIs decided after a reply so far, ${int(run.afterReply.certified)} were certified. ` : ""}A letter can set a different date, and an extension or a second request takes a case out of these numbers. Drag along the track, or scroll, to move through the days.`}
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

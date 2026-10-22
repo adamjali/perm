@@ -3,6 +3,8 @@ import { Fragment, type ReactNode } from "react";
 import { DeadlineDocket } from "@/components/home/DeadlineDocket";
 import { AppWindow } from "@/components/marketing/AppWindow";
 import { TOUR_SHOTS, type TourSurface } from "@/components/marketing/tourShots";
+import { TourStage } from "@/components/home/TourStage";
+import { STAGE_BAND_NO_SCRIPT_CSS, StageBand } from "@/components/scroll/StageBand";
 import { cn } from "@/lib/utils";
 
 /**
@@ -10,10 +12,19 @@ import { cn } from "@/lib/utils";
  * captured from the sample firm (src/components/tour/), beside what it does in
  * three plain lines. The facts describe behaviour the code has; when a feature
  * changes, the line and the capture change with it.
+ *
+ * PREVIEW (Oct 21 2026, branch preview/image-led): from 1024px with motion allowed the six
+ * sections are one pinned stage (TourStage): a ribbon of page names across the top, each band
+ * wiping in over the last as the reader scrolls. Below 1024px and under reduced motion they are
+ * the alternating paper and ink sections, unchanged. The extras (the worked-out example case,
+ * the reminder email) show in that static layout only: inside the pinned frame they would run
+ * past its bottom.
  */
 
 interface TourSection {
   id: string;
+  /** The page's name on the ribbon. */
+  short: string;
   title: string;
   lead: string;
   facts: string[];
@@ -27,6 +38,7 @@ interface TourSection {
 const SECTIONS: TourSection[] = [
   {
     id: "timeline",
+    short: "Timeline",
     title: "Every case on one line",
     lead: "The timeline draws each case from its wage request to the I-140 with today marked, so a crowded month shows before it arrives.",
     facts: [
@@ -40,6 +52,7 @@ const SECTIONS: TourSection[] = [
   },
   {
     id: "cases",
+    short: "Cases",
     title: "Each case on a card",
     lead: "Stage, next deadline and days left at a glance, with filters, sorting, search and bulk actions.",
     facts: [
@@ -53,6 +66,7 @@ const SECTIONS: TourSection[] = [
   },
   {
     id: "case-page",
+    short: "Case page",
     title: "One page for the whole case",
     lead: "What to do next, every step done and still ahead, the wage determination and the recruitment report.",
     facts: [
@@ -66,6 +80,7 @@ const SECTIONS: TourSection[] = [
   },
   {
     id: "dates",
+    short: "Dates",
     title: "Type the dates. The rest is worked out.",
     lead: "Enter the determination date and the wage expiration fills in. Start the job order and its end date, the notice period and the filing window follow.",
     facts: [
@@ -79,6 +94,7 @@ const SECTIONS: TourSection[] = [
   },
   {
     id: "reminders",
+    short: "Reminders",
     title: "Reminders before every deadline",
     lead: "30, 14, 7, 3 and 1 day out by default, in the app and in one email a day with the most urgent first.",
     facts: [
@@ -92,6 +108,7 @@ const SECTIONS: TourSection[] = [
   },
   {
     id: "calendar",
+    short: "Calendar",
     title: "On your calendar, too",
     lead: "Month, week, day and list views of every deadline, and each one sent to Google Calendar once you connect it.",
     facts: [
@@ -122,32 +139,21 @@ function Facts({ facts, ink = false }: { facts: string[]; ink?: boolean }) {
   );
 }
 
-/** Paper and ink bands alternate down the page (round 2, Oct 15 2026). */
-function Section({ s, flip, ink }: { s: TourSection; flip: boolean; ink: boolean }) {
+/** One of the six pages as a band of the stage (StageBand, shared with the calculators page). */
+function Section({ s, index, flip, ink }: { s: TourSection; index: number; flip: boolean; ink: boolean }) {
   return (
-    <section
+    <StageBand
       id={s.id}
-      className={cn(
-        "scroll-mt-24 overflow-hidden border-b-2 border-black",
-        ink
-          ? "bg-[#141414] text-white [--band-ink:#ffffff] dark:bg-card dark:text-foreground dark:[--band-ink:var(--foreground)]"
-          : "bg-background",
-      )}
+      index={index}
+      flip={flip}
+      ink={ink}
+      title={s.title}
+      lead={s.lead}
+      picture={<AppWindow url={s.url} shots={TOUR_SHOTS[s.surface]} alt={s.alt} onBand={ink} />}
+      extra={s.extra}
     >
-      <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-14 [&>*]:min-w-0 sm:px-8 sm:py-20 lg:grid-cols-12 lg:items-center lg:gap-14">
-        <div className={cn("lg:col-span-4", flip && "lg:order-2")}>
-          <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-4xl">{s.title}</h2>{" "}
-          <p className={cn("mt-4 text-lg leading-relaxed", ink ? "text-white/80 dark:text-soft" : "text-soft")}>{s.lead}</p>{" "}
-          <Facts facts={s.facts} ink={ink} />
-        </div>{" "}
-        {/* The window runs off the right edge; on a flipped row it stops at the page's own margin, because a
-            window cut on the left loses its address bar and the page's heading. */}
-        <div className={cn("relative lg:col-span-8", flip ? "lg:order-1 lg:-ml-8" : "lg:-mr-[12%]")}>
-          <AppWindow url={s.url} shots={TOUR_SHOTS[s.surface]} alt={s.alt} onBand={ink} />
-          {s.extra}
-        </div>
-      </div>
-    </section>
+      <Facts facts={s.facts} ink={ink} />
+    </StageBand>
   );
 }
 
@@ -231,14 +237,20 @@ function AssistantSection() {
 export function AttorneyTour() {
   return (
     <>
-      {SECTIONS.map((s, i) => (
-        <Section
-          key={s.id}
-          s={{ ...s, extra: EXTRAS[s.id] }}
-          flip={i % 2 === 1}
-          ink={i % 2 === 1}
-        />
-      ))}
+      <noscript>
+        <style>{STAGE_BAND_NO_SCRIPT_CSS}</style>
+      </noscript>
+      <TourStage labels={SECTIONS.map((s) => s.short)}>
+        {SECTIONS.map((s, i) => (
+          <Section
+            key={s.id}
+            s={{ ...s, extra: EXTRAS[s.id] }}
+            index={i}
+            flip={i % 2 === 1}
+            ink={i % 2 === 1}
+          />
+        ))}
+      </TourStage>
       <AssistantSection />
     </>
   );

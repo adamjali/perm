@@ -9,12 +9,13 @@
  *   node scripts/capture_article_heroes.mjs <base-url> <out-dir> [slug ...]
  *
  * Reads the `capture` entries of scripts/article-heroes.json and of
- * scripts/article-figures.json (the pictures inside an article's text). One headless
+ * scripts/article-figures.json (the pictures inside an article's text), or of the file CAPTURE_SPEC names. One headless
  * Chrome, pages one after another (never two browsers at once on this Mac).
  * scripts/make_article_heroes.py turns the PNGs into the 1600x1200 WebPs.
  */
 import { chromium } from "playwright-core";
 import fs from "node:fs";
+import { execSync } from "node:child_process";
 
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const [base, out, ...only] = process.argv.slice(2);
@@ -22,10 +23,14 @@ if (!base || !out) {
   console.error("usage: node scripts/capture_article_heroes.mjs <base-url> <out-dir> [slug ...]");
   process.exit(2);
 }
-const spec = {
-  ...JSON.parse(fs.readFileSync("scripts/article-heroes.json", "utf8")),
-  ...JSON.parse(fs.readFileSync("scripts/article-figures.json", "utf8")),
-};
+// CAPTURE_SPEC names another file of the same shape (scripts/page-pictures.json: pictures a page shows of the
+// site's own tools), read in place of the two article files.
+const spec = process.env.CAPTURE_SPEC
+  ? JSON.parse(fs.readFileSync(process.env.CAPTURE_SPEC, "utf8"))
+  : {
+      ...JSON.parse(fs.readFileSync("scripts/article-heroes.json", "utf8")),
+      ...JSON.parse(fs.readFileSync("scripts/article-figures.json", "utf8")),
+    };
 const jobs = Object.entries(spec).filter(([slug, s]) => s.capture && (only.length === 0 || only.includes(slug)));
 fs.mkdirSync(out, { recursive: true });
 
@@ -34,10 +39,27 @@ const HIDE = `
   nextjs-portal, [data-nextjs-toast], button[aria-label="Back to top"], .fixed { display: none !important; }
   /* A data page's "In this section" column goes, and its page takes the width. */
   div:has(> nav.print\\:hidden) { display: block !important; }
+  /* The data rail (DataRail.tsx): its column, the phone panel and the panel's handle. */
+  div:has(> nav[aria-label="Data sections"]), #data-rail-panel, [aria-controls="data-rail-panel"] { display: none !important; }
   main { padding-top: 0 !important; }
   html { scroll-behavior: auto !important; }
 `;
 
+// One headless Chrome on this machine at a time: wait up to 3 minutes for any other to finish.
+for (let i = 0; ; i++) {
+  let busy = false;
+  try {
+    busy = execSync('pgrep -f -- "--headless"', { stdio: ["ignore", "pipe", "ignore"] }).toString().trim() !== "";
+  } catch {
+    busy = false;
+  }
+  if (!busy) break;
+  if (i >= 180) {
+    console.error("another headless Chrome is still running after 3 minutes; not starting");
+    process.exit(3);
+  }
+  await new Promise((r) => setTimeout(r, 1000));
+}
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 let failed = 0;
 try {
@@ -45,7 +67,8 @@ try {
     viewport: { width: 1200, height: 900 },
     deviceScaleFactor: 2,
     reducedMotion: "reduce",
-    colorScheme: "light",
+    // CAPTURE_DARK=1 takes the dark theme (a page that shows the site in both themes needs both).
+    colorScheme: process.env.CAPTURE_DARK ? "dark" : "light",
   });
   const page = await ctx.newPage();
   for (const [slug, s] of jobs) {

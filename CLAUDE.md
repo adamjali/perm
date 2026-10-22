@@ -1065,3 +1065,41 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
   and the case card (it said "ETA expires" in ETA 9089 orange). The calendar pictures and clips were re-taken.
 - **Two dark-mode contrast failures fixed**, found by axe on the guide pages: the "Guide" badge on article cards (black on
   near-black) and the count on the pressed topic button (grey on lime, 3.03:1).
+
+## Oct 21 2026 (night): drawings beside the text, pictures that turn, and pages instead of endless lists
+
+Built on branch `preview/image-led`; the owner saw the four previews and kept all of them (10:19 PM EDT), so they go to `main`.
+
+- **A moving drawing sits beside the text, with no box** (owner: "smaller on the side ... not main thing full width",
+  "naked on the screen not in container"): `src/components/figures/frame.ts` floats it right at a third of the
+  column from 1024px, the long description folds under "What this shows", and `globals.css` (`.figure-side`) keeps
+  a heading or a boxed block from running under it. Each drawing sits at the top of the section it explains.
+- **A readout never contradicts the page beside it**: when a conveyor's front tray is older than DOL's published
+  month it says "DOL is finishing December 2025's last cases", not "the front tray is December 2025".
+- **Something inside each small picture answers the mouse** (owner: tilting the whole picture was "so corny").
+  `SpotMotion` (one listener in SharedProviders) swaps a picture near the pointer for its own SVG and moves the parts
+  `scripts/spot-pictures/build.mjs` marks: the compass needle and vault wheel point at it, the nearest day, window, coin
+  stack, fruit, bar, tab or key turns lime, the signpost arm aims, the stamp lifts, the bell presses, the folder slides.
+  Mouse only, motion allowed; the still file otherwise. Each file's style is scoped to its root id so a copy in the page
+  restyles nothing (`spot-motion.test.ts`). Three that repeated were redrawn: the green card (was a ticket dispenser),
+  data notes as an uneven bar chart (was a second card drawer), and a round vault door (was a third grid of doors).
+- **Pages, not endless lists** (owner: "pagination not endless scroll"): `Pagination` (numbers, gaps, the page in
+  the address) on the guides and blog lists (12 a page, the topic in the address too), the shared table
+  (`FilterableStatTable`), debarments (25 per program), the day's decided cases (50); `ListPages` pages the A to Z
+  lists while keeping every link in the HTML; notifications page Newer and Older with the server's cursor.
+- **`--site-header-max-h` no longer exists** (since Oct 14 the header publishes `--site-header-h`, a fixed 64px);
+  four new files and the data rail's sticky offset used it and fell back to 72px. The notes in v2/CLAUDE.md that
+  describe the two variables are history.
+- **The owner kept all four previews** ("PERFECT THANK YOU KEEP ALL"; the attorney page's ribbon stage: "BEAUTIFUL keep
+  going more like that"). The stage's band is shared now (`src/components/scroll/StageBand.tsx`), so another page can
+  take the same shape: the calculators page is the next.
+- **A value a scroll stage writes every frame is a registered, non-inherited CSS variable, written on the element that
+  reads it** (`@property` block at the top of `globals.css`). An inherited variable written on a section restyles the
+  whole section every frame: the guides page's card stack spent 1,110 ms of style work over one scroll (measured A B B A
+  with a Chrome trace, `node_modules/.cache/qa/scroll-perf.mjs`), 76 ms after, and jerky frames fell from 9 to 1 in 100.
+  `useScrollStage` runs once per frame and skips frames where the place hasn't moved; it no longer writes `--progress`.
+- **Topic cards take the height the pinned frame leaves** (`--card-h`, at most 600px) and drop the blurb under 840px of
+  screen height and the third article under 700px, so the "All N guides" button always has room under it
+  (`node_modules/.cache/qa/card-fit.mjs` checks every card at nine sizes).
+- **A picture a script fetches is fetched with `cache: "no-cache"`**: `force-cache` handed back files kept from before the
+  pictures had moving parts, and they never reacted.

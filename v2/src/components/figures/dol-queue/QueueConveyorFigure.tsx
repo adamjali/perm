@@ -18,6 +18,7 @@ import { longDate, monthYear } from "@convex/lib/months";
 import { HEIGHT, WIDTH, buildConveyor } from "./geometry";
 import { frontMonth, queueReading, remainingAt, type QueueRun } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 /** Real seconds for the whole run, the hold at the picked month's arrival and at its end. */
 const RUN_S = 11;
@@ -263,9 +264,9 @@ export default function QueueConveyorFigure({ run, census }: { run: QueueRun; ce
   // Painter's order: the back of the line (the newest month) first, the front last.
   const order = Array.from({ length: n }, (_, j) => n - 1 - j);
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -293,15 +294,20 @@ export default function QueueConveyorFigure({ run, census }: { run: QueueRun; ce
             <g ref={stamp} dangerouslySetInnerHTML={{ __html: art.stamp }} />
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {queueReading(run, 0)}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="time-lapse" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {`An illustration of the line on ${longDate(census)}, run forward. Each tray is one filing month. Its stack is that month's cases still in analyst review, drawn to scale. The ${run.earlier.toLocaleString("en-US")} older cases still in line sit on the desk and go first. ${run.dolAsOf ? `DOL's own published month was ${monthYear(run.dolMonth)} on ${longDate(run.dolAsOf)}. ` : ""}The reviewer works at DOL's average over the last ${run.paceDays} days we observed: about ${pace.toLocaleString("en-US")} cases a day, oldest first. There are ${ahead.toLocaleString("en-US")} cases ahead of ${monthYear(run.pick)}, so the line reaches it around ${longDate(run.reachDate)}. It reaches the month's end around ${longDate(run.endDate)}. That's the estimate the queue month pages give, if DOL keeps that pace and works strictly in filing order. New filings joining the back aren't drawn. Drag along the line, or scroll, to move through the days.`}
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

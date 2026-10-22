@@ -3,6 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Values the scroll stages write every frame (src/components/scroll/useScrollStage.ts and its callers). Registered
+   as non-inherited, so a write restyles the one element that reads it, never its whole subtree: unregistered, the
+   guides page's card stack recomputed every card's styles on every scroll frame. Each is written on the element
+   that reads it. */
+@property --stack-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --stack-s { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --stack-dim { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --wipe { syntax: "<length-percentage>"; inherits: false; initial-value: 0%; }
+@property --reveal { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --bar { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --drift { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --road-fill { syntax: "<number>"; inherits: false; initial-value: 0; }
+
 :root {
   /* Core */
   /* THE SYSTEM (Oct 14 2026, with character back Oct 15). One flat page,
@@ -1435,6 +1448,20 @@ body[data-scroll-locked] {
 .prose-article h2 { font-size: 1.75rem; margin-top: 2.5em; margin-bottom: 0.75em; padding-bottom: 0.5em; border-bottom: 1px solid var(--border); }
 .prose-article h3 { font-size: 1.375rem; margin-top: 2em; margin-bottom: 0.5em; }
 .prose-article h4 { font-size: 1.125rem; margin-top: 1.5em; margin-bottom: 0.5em; }
+
+/* A moving drawing sits beside the text from 1024px, with no box of its own (owner, Oct 21 2026: "smaller on
+   the side ... not main thing full width", "naked on the screen not in container"; src/components/figures/frame.ts).
+   A heading beside it shortens instead of running its rule under it, a new section starts below it, and a block
+   with its own ground (a table, a callout, a screenshot) never sits half under it. The prose's paragraph margins
+   don't reach the drawing's own readout and note. */
+.prose-article .figure-side p { margin-top: 0; margin-bottom: 0; }
+.prose-article .figure-side details > p { margin-top: 0.25rem; }
+@media (min-width: 1024px) {
+  .prose-article :where(h2, h3, h4) { display: flow-root; }
+  .prose-article > h2 { clear: right; }
+  .prose-article > .not-prose:not(.figure-side) { clear: right; }
+  .prose-article > .figure-side { margin-top: 0.5rem; }
+}
 
 /* Paragraphs */
 .prose-article p {

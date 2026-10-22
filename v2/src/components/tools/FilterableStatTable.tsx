@@ -11,6 +11,7 @@ import type { SuggestKind } from "@/lib/search/suggestTypes";
 import { buttonVariants } from "@/components/ui/button";
 import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 import { compareNullsLast } from "@/lib/tableSort";
+import { Pagination } from "@/components/ui/pagination";
 
 /**
  * The searchable, filterable, paged table every entity index stands on.
@@ -165,6 +166,7 @@ export function FilterableStatTable<T>({
   const [sortKey, setSortKey] = useState(initialSort);
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(0);
+  const tableTop = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState<number>(initialPageSize);
   const [facetValues, setFacetValues] = useState<Record<string, string>>({});
 
@@ -347,7 +349,7 @@ export function FilterableStatTable<T>({
   const filtersOn = query.trim() !== "" || activeFacets.length > 0;
 
   return (
-    <div>
+    <div ref={tableTop} className="scroll-mt-28">
       {/* Controls */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -585,39 +587,22 @@ export function FilterableStatTable<T>({
         </table>
       </div>
 
+      {/* Numbered pages (owner, Oct 21 2026: "pagination not endless ... good looking good working smooth"). */}
       {pageCount > 1 ? (
-        <nav
-          aria-label={`${noun} pages`}
-          className="mt-4 flex flex-wrap items-center justify-between gap-3"
-        >
-          <p className="text-sm font-bold text-muted-foreground">
-            Page {safePage + 1} of {pageCount.toLocaleString("en-US")}
-          </p>{" "}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                ensureAll();
-                setPage((p) => Math.max(0, p - 1));
-              }}
-              disabled={safePage === 0}
-              className={buttonVariants({ variant: "outline", size: "default" })}
-            >
-              ← Prev
-            </button>{" "}
-            <button
-              type="button"
-              onClick={() => {
-                ensureAll();
-                setPage((p) => Math.min(pageCount - 1, p + 1));
-              }}
-              disabled={safePage >= pageCount - 1}
-              className={buttonVariants({ variant: "outline", size: "default" })}
-            >
-              Next →
-            </button>
-          </div>
-        </nav>
+        <Pagination
+          page={safePage + 1}
+          pageCount={pageCount}
+          onPage={(n) => {
+            ensureAll();
+            setPage(n - 1);
+          }}
+          total={shown.length}
+          perPage={effectiveSize}
+          noun={noun}
+          label={`${noun} pages`}
+          scrollTo={tableTop}
+          className="mt-6"
+        />
       ) : null}
 
       {/* Results the columns above cannot describe. Kept out of the table on

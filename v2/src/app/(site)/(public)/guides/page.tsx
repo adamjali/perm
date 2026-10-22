@@ -8,6 +8,7 @@ import { getAllPosts } from "@/lib/content";
 import { generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
+import { TopicStack } from "@/components/content/TopicStack";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
@@ -35,6 +36,7 @@ export default function GuidesPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <ContentHero type="guides" postCount={posts.length} />
+      <TopicStack posts={posts} type="guides" />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <ContentListing posts={posts} type="guides" />
       </section>

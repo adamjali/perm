@@ -20,6 +20,7 @@ import { lineSlug } from "@/lib/bulletinLines";
 import { HEIGHT, WIDTH, buildRail } from "./geometry";
 import { captionOf, frameAt, keySteps, readingAt, type BulletinRun } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 /** Real seconds to move from one bulletin to the next, to hold on one, and to hold on one that changed something. */
 const MOVE_S = 0.45;
@@ -249,9 +250,9 @@ export default function BulletinCutoffFigure({ run }: { run: BulletinRun }) {
   const gateStyle = (side: "behind" | "ahead") =>
     side !== firstSide ? { display: "none" } : first.gateShown >= 1 ? undefined : { opacity: first.gateShown };
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -282,19 +283,24 @@ export default function BulletinCutoffFigure({ run }: { run: BulletinRun }) {
             </g>
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {readingAt(run, 0)}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="bulletins" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {captionOf(run)}{" "}
         <Link href={`/visa-bulletin/categories/${lineSlug(run.category, run.country)}`} className="link">
           {`Every ${run.label} bulletin, month by month`}
         </Link>
         .
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

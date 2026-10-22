@@ -21,6 +21,7 @@ import { longDate } from "@convex/lib/months";
 import { BACK, CARRIAGE, DAY_ON_SCREEN, FRONT, HEIGHT, LAST_MAX, LAST_MIN, WIDTH, carriageAt, windowAt } from "./geometry";
 import { readFilingWindow } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 interface FilingWindowFigureProps {
   /** The example case's first recruitment step, ISO. */
@@ -215,9 +216,9 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
   const widest = readFilingWindow(first, LAST_MIN);
   const narrowest = readFilingWindow(first, LAST_MAX);
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -233,15 +234,20 @@ export default function FilingWindowFigure({ first = "2026-03-02" }: FilingWindo
             <g dangerouslySetInnerHTML={{ __html: FRONT }} />
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {widest.sentence}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="sweep" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {`An illustration, on an example case whose recruitment began ${longDate(first)}, inside the wage determination's validity. Drag the carriage, or scroll, to move the last step. With a last step on ${longDate(widest.last)} the window runs from ${longDate(widest.opens)} to ${longDate(widest.closes)}. Each day later shortens it by a day, and a last step on ${longDate(narrowest.last)} leaves only ${longDate(narrowest.closes)}. The 180 days run from the earliest step, or from the notice of filing if it went up first. The 30 days run from the end of the last mandatory step or the notice, whichever ends later. One of a professional job's additional steps may fall inside them. The dates come from the same rule the app uses on every case.`}
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

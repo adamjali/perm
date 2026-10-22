@@ -5,6 +5,7 @@ import { MotionConfig } from "motion/react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { NavLinkProvider } from "@/components/ui/nav-link";
+import { SpotMotion } from "@/components/ui/spot-motion";
 
 /**
  * Lightweight providers for ALL pages (public + authenticated).
@@ -22,6 +23,7 @@ export function SharedProviders({ children }: { children: ReactNode }) {
         </NavLinkProvider>
       </MotionConfig>
       <Toaster />
+      <SpotMotion />
     </ThemeProvider>
   );
 }

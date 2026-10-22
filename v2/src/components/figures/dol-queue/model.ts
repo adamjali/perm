@@ -122,6 +122,10 @@ export function queueReading(run: QueueRun, t: number): string {
   const days = Math.round(t);
   if (days >= run.endDays) return `Around ${longDate(run.endDate)}: the line reaches the end of ${monthYear(run.pick)}.`;
   if (days >= run.reachDays) return `Around ${longDate(run.reachDate)}: the line reaches ${monthYear(run.pick)}.`;
-  // The front tray: the oldest drawn month with cases left (the few older ones sit on the desk).
-  return `${longDate(addDays(run.today, days))}: the front tray is ${monthYear(frontMonth(run, t))}.`;
+  // The front tray: the oldest drawn month with cases left (the few older ones sit on the desk). A month older
+  // than the one DOL publishes is its tail, so the words say so beside a page that quotes DOL's month.
+  const front = frontMonth(run, t);
+  const when = longDate(addDays(run.today, days));
+  if (index(front) < index(run.dolMonth)) return `${when}: DOL is finishing ${monthYear(front)}'s last cases.`;
+  return `${when}: the front tray is ${monthYear(front)}.`;
 }

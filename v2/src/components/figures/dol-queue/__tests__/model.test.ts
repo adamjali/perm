@@ -42,7 +42,7 @@ describe("the queue figure runs the estimate's own arithmetic", () => {
   });
 
   it("says where the line is, then the estimate's dates in the month page's words", () => {
-    expect(queueReading(run, 0)).toBe("October 21, 2026: the front tray is November 2025.");
+    expect(queueReading(run, 0)).toBe("October 21, 2026: DOL is finishing November 2025's last cases.");
     expect(queueReading(run, 2)).toBe("October 23, 2026: the front tray is December 2025.");
     expect(queueReading(run, run.reachDays)).toBe(`Around November 18, 2026: the line reaches March 2026.`);
     expect(queueReading(run, run.endDays)).toMatch(/^Around .+: the line reaches the end of March 2026\.$/);

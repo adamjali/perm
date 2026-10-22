@@ -19,6 +19,7 @@ import { longDate } from "@convex/lib/months";
 import { BACK, DAY_ON_SCREEN, GANTRY, HEIGHT, LANES, LOCK_DAY, WIDTH, fillAt, gantryAt, lockAt } from "./geometry";
 import { APPROVED, I485_FILED, LEAVE_MAX, LEAVE_MIN, PORTABLE_FROM, SAFE_FROM, readClocks } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 const LABEL =
   "An illustration of two 180-day clocks as lanes on a bench. The back lane starts at the I-140 approval, the front lane at the I-485 receipt, and each ends at a lock. A gantry across both lanes marks the day you leave; each lane fills up to it, and a lock turns lime once its 180 days have run.";
@@ -222,9 +223,9 @@ export default function I140ClocksFigure() {
   const start = readClocks(START_DAY);
   const startDone = [start.i140Holds, start.portable];
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -258,15 +259,20 @@ export default function I140ClocksFigure() {
             </g>
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {start.sentence}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="sweep" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {`An illustration on the worked example above: an I-140 approved ${longDate(APPROVED)} and an I-485 received ${longDate(I485_FILED)}. From ${longDate(SAFE_FROM)}, an employer's withdrawal no longer revokes the I-140. From ${longDate(PORTABLE_FROM)}, the I-485 can move to a new job in the same or a similar occupation, on Supplement J. The first clock, the certification's, stopped mattering once the I-140 was filed. The priority date stays either way, unless USCIS revokes the approval for cause. Drag the gantry, or scroll, to move the day you leave. The dates come from the same rule as the retention calculator.`}
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

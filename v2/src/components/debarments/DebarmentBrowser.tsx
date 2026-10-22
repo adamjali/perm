@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useId, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useRef, useState } from "react";
 
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { Debarment, DebarmentPhase, DebarmentProgram } from "@/lib/db/debarments";
@@ -8,6 +8,7 @@ import { DidYouMean } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { rankFuzzy } from "@/lib/fuzzy";
 import { shortDate } from "@convex/lib/months";
+import { Pagination } from "@/components/ui/pagination";
 
 export type DebarmentView = Debarment & { phase: DebarmentPhase };
 
@@ -89,6 +90,42 @@ function Row({ d }: { d: DebarmentView }) {
  * publishes them. With JavaScript off the server-rendered lists are the whole
  * record, so nothing is hidden behind a control.
  */
+/** Entries a page in one program's list (owner, Oct 21 2026: "pagination not endless scroll"). */
+const PER_PAGE = 25;
+
+/** One program's entries, a page at a time; a new search or order starts again at page 1 (the key). */
+function ProgramList({ list, label }: { list: DebarmentView[]; label: string }) {
+  const [page, setPage] = useState(1);
+  const top = useRef<HTMLUListElement>(null);
+  const pageCount = Math.max(1, Math.ceil(list.length / PER_PAGE));
+  const slice = list.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  return (
+    <>
+      <ul ref={top} className="mt-3 scroll-mt-28 divide-y divide-border border-y-2 border-border">
+        {slice.map((d) => (
+          <Fragment key={`${d.program}-${d.entity}-${d.startDate}`}>
+            {" "}
+            <Row d={d} />
+          </Fragment>
+        ))}
+      </ul>{" "}
+      {pageCount > 1 ? (
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          onPage={setPage}
+          total={list.length}
+          perPage={PER_PAGE}
+          noun="entries"
+          label={`Pages of ${label}`}
+          scrollTo={top}
+          className="mt-5"
+        />
+      ) : null}
+    </>
+  );
+}
+
 export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; sections: ProgramSection[] }) {
   const id = useId();
   const [q, setQ] = useState<DebarmentQuery>({ text: "", status: "", type: "", sort: "start" });
@@ -194,14 +231,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
                 </a>
               </p>{" "}
               {list.length > 0 ? (
-                <ul className="mt-3 divide-y divide-border border-y-2 border-border">
-                  {list.map((d) => (
-                    <Fragment key={`${d.program}-${d.entity}-${d.startDate}`}>
-                      {" "}
-                      <Row d={d} />
-                    </Fragment>
-                  ))}
-                </ul>
+                <ProgramList key={`${s.program}|${q.text}|${q.status}|${q.type}|${q.sort}`} list={list} label={s.label} />
               ) : null}
             </section>
           </Fragment>

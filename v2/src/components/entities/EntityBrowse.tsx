@@ -194,7 +194,10 @@ export function BrowseList({
   entries,
   unit,
   className,
+  id,
 }: {
+  /** For ListPages, which pages the list by this id. */
+  id?: string;
   base: string;
   entries: BrowseEntry[];
   /** What the number beside a name counts: "filings". */
@@ -203,6 +206,7 @@ export function BrowseList({
 }) {
   return (
     <ul
+      id={id}
       className={cn(
         "list-none columns-1 gap-x-8 p-0 sm:columns-2 lg:columns-3 xl:columns-4",
         "[&>li]:flex [&>li]:break-inside-avoid [&>li]:items-center [&>li]:justify-between [&>li]:gap-3 [&>li]:border-b [&>li]:border-border/40",

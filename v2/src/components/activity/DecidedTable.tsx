@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 
 import { SortableHeader } from "@/components/tools/SortableHeader";
@@ -13,6 +14,7 @@ import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { comparableWage } from "@/lib/wageFormat";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { entityHref } from "@/lib/entityPayload";
+import { Pagination } from "@/components/ui/pagination";
 
 /**
  * A wage, with the period DOL quoted it per.
@@ -75,6 +77,9 @@ export const DECIDED_COLUMNS: SortColumn<DecidedCase>[] = [
  * invalid HTML and a hydration error; the separator lives inside the cell
  * instead. `no-whitespace-in-table-rows.test.ts` is the gate.
  */
+/** Rows a page in the decided table. */
+export const DECIDED_PER_PAGE = 50;
+
 export function DecidedTable({
   rows,
   sort,
@@ -88,8 +93,19 @@ export function DecidedTable({
   caption: string;
   sortable?: boolean;
 }) {
+  // Fifty rows a page (owner, Oct 21 2026: "pagination not endless scroll"); a new day or a new order starts at page 1.
+  const [page, setPage] = useState(1);
+  const [seen, setSeen] = useState(rows);
+  if (seen !== rows) {
+    setSeen(rows);
+    setPage(1);
+  }
+  const top = useRef<HTMLDivElement>(null);
+  const pageCount = Math.max(1, Math.ceil(rows.length / DECIDED_PER_PAGE));
+  const slice = rows.slice((page - 1) * DECIDED_PER_PAGE, page * DECIDED_PER_PAGE);
   return (
-    <div className="mt-4 overflow-x-auto">
+    <>
+    <div ref={top} className="mt-4 scroll-mt-28 overflow-x-auto">
       <table className="w-full min-w-[1720px] border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <SortableHeader
@@ -99,7 +115,7 @@ export function DecidedTable({
           disabled={!sortable}
         />
         <tbody translate="no" className="bg-card">
-          {rows.map((c) => (
+          {slice.map((c) => (
             <tr
               key={`${c.program}:${c.caseNumber}`}
               className="border-t-2 border-border/30 align-top"
@@ -166,6 +182,20 @@ export function DecidedTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </div>{" "}
+    {pageCount > 1 ? (
+      <Pagination
+        page={page}
+        pageCount={pageCount}
+        onPage={setPage}
+        total={rows.length}
+        perPage={DECIDED_PER_PAGE}
+        noun="decided cases"
+        label="Pages of decided cases"
+        scrollTo={top}
+        className="mt-5"
+      />
+    ) : null}
+    </>
   );
 }

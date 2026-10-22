@@ -46,6 +46,28 @@ const byDepth = (items, key = (i) => i) => [...items].sort((p, q) => depth(key(p
 const lime = (svg) => `<g class="ac-lime">${svg}</g>`;
 const rubber = (svg) => `<g class="ac-rubber">${svg}</g>`;
 const wood = (svg) => `<g class="ac-wood">${svg}</g>`;
+
+// ---------- what moves with the mouse (owner, Oct 21 2026) ----------
+// "something happening unique within the drawing pref with the colors ... if its a compass point to mouse ...
+// whichever is highlighted which is closest to mouse". The file is the still picture; src/components/ui/spot-motion.ts
+// puts it in the page for a mouse user and moves these parts. Each picture's body names one act (ACT), written on the
+// root:
+//   near         the lime goes to the item nearest the pointer
+//   show-near    only the item nearest the pointer shows (a mark that exists once)
+//   toward       the lime goes to the item that points closest to the pointer (data-dir, from data-pivot)
+//   show-toward  only the item that points closest to the pointer shows (the compass needle, the vault wheel)
+//   lift         parts marked data-spot-lift move by up to their "dx dy" as the pointer comes near
+// The items as drawn here (lime, shown) are the still picture, and the picture goes back to them when the pointer leaves.
+let ACT = null;
+const item = (svg, { on = false, show = true, dir = null } = {}) =>
+  `<g data-spot-item=""${on ? ' class="ac-lime"' : ""}${dir ? ` data-dir="${dir}"` : ""}${show ? "" : ' display="none"'}>${svg}</g>`;
+// Screen directions from a pivot to one or more tips (an item can point several ways, like a wheel's spokes).
+const dirOf = (from, ...tips) => {
+  const [x0, y0] = at(from);
+  return tips.map((t) => { const [x1, y1] = at(t); return `${(x1 - x0).toFixed(2)} ${(y1 - y0).toFixed(2)}`; }).join(";");
+};
+const liftOf = (svg, [dx, dy]) => `<g data-spot-lift="${dx.toFixed(2)} ${dy.toFixed(2)}">${svg}</g>`;
+const pivotAt = (p) => at(p).map((v) => v.toFixed(2)).join(" ");
 const halo = (plan, z, blur = 3) => `<path class="iso-halo" d="${k.haloOf(plan, z, 0.1, P)}" style="filter:blur(${blur}px)"/>`;
 const screws = (pts, z, ring = 1.2) =>
   L(pts.map(([x, y]) => k.ring(x, y, ring, z, P, 14)).join(""), { tone: "lo" }) + D(pts.map(([x, y]) => at([x, y, z])), { size: SCREW });
@@ -108,15 +130,19 @@ function compass() {
   out.push(S(k.cylinder(C[0], C[1], R - 3.6, 6, 2, P, 40), { tone: "lo", crease: "none" }));
   out.push(L(k.radialTicks(C[0], C[1], R - 1.8, 36, 9, 9.6, [1.2, 2.6], P), { tone: "mid" }));
   out.push(L(k.ring(C[0], C[1], R - 7, 8, P, 40), { tone: "faint" }));
-  // the needle: a long diamond, north (lime) and south (grey) halves, on a pivot
-  const t = (-38 * Math.PI) / 180;
-  const dir = [Math.cos(t), Math.sin(t)];
-  const nrm = [-dir[1], dir[0]];
-  const pt = (s, w) => [C[0] + dir[0] * s + nrm[0] * w, C[1] + dir[1] * s + nrm[1] * w];
-  const north = [pt(0, -2.2), pt(15, 0), pt(0, 2.2)];
-  const south = [pt(0, 2.2), pt(-15, 0), pt(0, -2.2)];
-  out.push(prism(south, 8.6, 0.8, { tone: "mid" }));
-  out.push(lime(prism(north, 8.6, 0.8, { tone: "hi" })));
+  // the needle: a long diamond, north (lime) and south (grey) halves, on a pivot. Drawn at 24 headings, one shown:
+  // with a mouse, the one whose north half points nearest the pointer.
+  ACT = { act: "show-toward", pivot: pivotAt([C[0], C[1], 9]) };
+  for (let i = 0; i < 24; i++) {
+    const t = ((-38 + i * 15) * Math.PI) / 180;
+    const dir = [Math.cos(t), Math.sin(t)];
+    const nrm = [-dir[1], dir[0]];
+    const pt = (s, w) => [C[0] + dir[0] * s + nrm[0] * w, C[1] + dir[1] * s + nrm[1] * w];
+    const north = [pt(0, -2.2), pt(15, 0), pt(0, 2.2)];
+    const south = [pt(0, 2.2), pt(-15, 0), pt(0, -2.2)];
+    const needle = prism(south, 8.6, 0.8, { tone: "mid" }) + lime(prism(north, 8.6, 0.8, { tone: "hi" }));
+    out.push(item(needle, { show: i === 0, dir: dirOf([C[0], C[1], 9], [...pt(15, 0), 9]) }));
+  }
   out.push(S(k.cylinder(C[0], C[1], 1.5, 8.6, 1.6, P, 16), { tone: "hi" }));
   out.push(D([at([C[0], C[1], 10.2])], { size: 0.5 }));
   // the bow ring at the front, for a lanyard
@@ -139,14 +165,20 @@ function stamp() {
   const SX = 11, SY = 11;
   const DIE = { x: SX - 13, y: SY - 9, w: 26, d: 18, r: 1 };
   out.push(halo(k.insetPlan(DIE, -2), 0, 3));
-  out.push(rubber(slab(DIE, 0, 2.4, { tone: "lo" }, 2, 0.2)));
-  out.push(lime(slab(k.insetPlan(DIE, 0.6), 0, 0.5, { tone: "mid", crease: "none" }, 2, 0)));
+  // with a mouse the stamp lifts off the tray, ready to stamp, as the pointer comes near
+  ACT = { act: "lift" };
+  const st = [];
+  st.push(rubber(slab(DIE, 0, 2.4, { tone: "lo" }, 2, 0.2)));
+  st.push(lime(slab(k.insetPlan(DIE, 0.6), 0, 0.5, { tone: "mid", crease: "none" }, 2, 0)));
   const MOUNT = { x: DIE.x - 0.6, y: DIE.y - 0.6, w: DIE.w + 1.2, d: DIE.d + 1.2, r: 1.2 };
-  out.push(wood(slab(MOUNT, 2.4, 7, { tone: "mid", inner: L(k.sideSeam(MOUNT, 5.6, P, 3), { tone: "faint" }) }, 3, 0.6)));
-  out.push(L(faceY(MOUNT.y + MOUNT.d, MOUNT.x + 6, MOUNT.x + MOUNT.w - 6, 4, 7.6), { tone: "lo" }));
-  out.push(S(k.cylinder(SX, SY, 4.2, 9.4, 1.4, P, 24, 0.3), { tone: "mid" }));
-  out.push(S(k.cylinder(SX, SY, 2.4, 10.8, 10, P, 20), { tone: "mid", inner: L(k.ringSeam(k.circleRing(SX, SY, 2.4, 20), 14, P), { tone: "faint" }) }));
-  out.push(wood(S(G.lathe([[20.8, 0], [20.8, 3.2], [23, 5.6], [27, 6.4], [30.5, 5.2], [32.4, 2.8], [33, 0]], up([SX, SY, 0]), P, { bevel: 0.6 }), { tone: "hi" })));
+  st.push(wood(slab(MOUNT, 2.4, 7, { tone: "mid", inner: L(k.sideSeam(MOUNT, 5.6, P, 3), { tone: "faint" }) }, 3, 0.6)));
+  st.push(L(faceY(MOUNT.y + MOUNT.d, MOUNT.x + 6, MOUNT.x + MOUNT.w - 6, 4, 7.6), { tone: "lo" }));
+  st.push(S(k.cylinder(SX, SY, 4.2, 9.4, 1.4, P, 24, 0.3), { tone: "mid" }));
+  st.push(S(k.cylinder(SX, SY, 2.4, 10.8, 10, P, 20), { tone: "mid", inner: L(k.ringSeam(k.circleRing(SX, SY, 2.4, 20), 14, P), { tone: "faint" }) }));
+  st.push(wood(S(G.lathe([[20.8, 0], [20.8, 3.2], [23, 5.6], [27, 6.4], [30.5, 5.2], [32.4, 2.8], [33, 0]], up([SX, SY, 0]), P, { bevel: 0.6 }), { tone: "hi" })));
+  const [, y0] = at([SX, SY, 0]);
+  const [, y1] = at([SX, SY, 6]);
+  out.push(liftOf(st.join(""), [0, y1 - y0]));
   return out.join("");
 }
 const stampPoints = () => [...trayPoints(), [12, 12, 34]];
@@ -154,6 +186,7 @@ const stampPoints = () => [...trayPoints(), [12, 12, 34]];
 // Timing and the queue: a short roller conveyor with three trays of files, the front one lime.
 function conveyor() {
   const out = [tray()];
+  ACT = { act: "near" };
   const X0 = -30, X1 = 30, Y0 = -12, Y1 = 12, Z = 16;
   out.push(halo({ x: X0, y: Y0, w: X1 - X0, d: Y1 - Y0, r: 2 }, 0));
   const legs = byDepth([[X0 + 4, Y0 + 2], [X1 - 4, Y0 + 2], [X0 + 4, Y1 - 2], [X1 - 4, Y1 - 2]]);
@@ -168,8 +201,7 @@ function conveyor() {
   const trays = [X0 + 2, X0 + 22, X0 + 42];
   trays.forEach((x, i) => {
     const plan = { x, y: Y0 + 1.5, w: 16, d: Y1 - Y0 - 3, r: 1 };
-    const cls = i === 2 ? lime : (s) => s;
-    out.push(cls(slab(plan, Z, 2.4, { tone: "mid" }, 2, 0.3)));
+    out.push(item(slab(plan, Z, 2.4, { tone: "mid" }, 2, 0.3), { on: i === 2 }));
     const pile = k.insetPlan(plan, 1.8);
     const h = [7, 4.5, 9][i];
     const seams = [];
@@ -207,8 +239,12 @@ function calendar() {
   const days = [];
   for (let j = 0; j < 5; j++) for (let i = 0; i < 7; i++) days.push(at([gx + i * cw + 1.6, gy + j * ch + 1.6, H]));
   out.push(D(days, { size: 0.32, tone: "lo" }));
-  const mark = { x: gx + 4 * cw + 0.7, y: gy + 3 * ch + 0.7, w: cw - 1.4, d: ch - 1.4, r: 0.4 };
-  out.push(lime(slab(mark, H, 0.7, { tone: "hi" }, 2, 0)));
+  // one day marked in lime: with a mouse, the day nearest the pointer
+  ACT = { act: "show-near" };
+  for (let j = 0; j < 5; j++) for (let i = 0; i < 7; i++) {
+    const mark = { x: gx + i * cw + 0.7, y: gy + j * ch + 0.7, w: cw - 1.4, d: ch - 1.4, r: 0.4 };
+    out.push(item(lime(slab(mark, H, 0.7, { tone: "hi" }, 2, 0)), { show: i === 4 && j === 3 }));
+  }
   return out.join("");
 }
 const calendarPoints = () => [...trayPoints(), [-32, -26, 16]];
@@ -221,16 +257,18 @@ function coins() {
   out.push(slab(SLIP, 0, 0.6, { tone: "hi", crease: "none" }, 2, 0));
   out.push(L([0, 1, 2].map((i) => k.lineOnTop([SLIP.x + 4, SLIP.y + SLIP.d - 4 - i * 2.4], [SLIP.x + 22 - i * 4, SLIP.y + SLIP.d - 4 - i * 2.4], 0.6, P)).join(""), { tone: "lo", free: true }));
   const stacks = [[-21, 4, 3], [-7, 2, 5], [7, 0, 8], [21, -2, 11]];
+  ACT = { act: "near" };
   for (const [x, y, n] of byDepth(stacks, ([x, y]) => [x, y])) {
     out.push(halo({ x: x - 7, y: y - 7, w: 14, d: 14, r: 7 }, 0.6, 2));
-    const cls = n === 11 ? lime : (s) => s;
+    const stack = [];
     for (let i = 0; i < n; i++) {
       const z = 0.6 + i * 2;
       const off = ((i * 37) % 5) * 0.12 - 0.24;
-      out.push(cls(S(k.cylinder(x + off, y - off, 6.4, z, 2, P, 32, 0.3), { tone: i === n - 1 ? "hi" : "mid", crease: "faint" })));
+      stack.push(S(k.cylinder(x + off, y - off, 6.4, z, 2, P, 32, 0.3), { tone: i === n - 1 ? "hi" : "mid", crease: "faint" }));
     }
     const top = 0.6 + n * 2;
-    out.push(cls(L(k.ring(x, y, 4.6, top, P, 32), { tone: "lo" })));
+    stack.push(L(k.ring(x, y, 4.6, top, P, 32), { tone: "lo" }));
+    out.push(item(stack.join(""), { on: n === 11 }));
   }
   return out.join("");
 }
@@ -255,9 +293,16 @@ function building() {
     for (let y = B.y + 4; y + 5 <= B.y + B.d - 3; y += 7.6) wins.push(faceX(sx, y, y + 5, z, z + 5));
   }
   out.push(L(wins.join(""), { tone: "mid" }));
-  // ground floor: a lime door with a canopy over it on the front
+  // ground floor: a door with a canopy over it on the front, lime in the still picture. With a mouse the light moves:
+  // the window or the door nearest the pointer is the lime one.
+  ACT = { act: "show-near" };
   const DX = B.x + B.w / 2 - 4;
-  out.push(lime(block(DX, DX + 8, fy - 0.2, fy + 0.6, 3, 11, { tone: "hi" })));
+  out.push(block(DX, DX + 8, fy - 0.2, fy + 0.6, 3, 11, { tone: "hi" }));
+  out.push(item(lime(block(DX, DX + 8, fy - 0.2, fy + 0.6, 3, 11, { tone: "hi" })), { show: true }));
+  for (let z = 3 + 9 + 2; z < H - 4; z += 9) {
+    for (let x = B.x + 4; x + 5 <= B.x + B.w - 3; x += 7.4) out.push(item(lime(block(x, x + 5, fy, fy + 0.3, z, z + 5, { tone: "hi" }, 0.1)), { show: false }));
+    for (let y = B.y + 4; y + 5 <= B.y + B.d - 3; y += 7.6) out.push(item(lime(block(sx, sx + 0.3, y, y + 5, z, z + 5, { tone: "hi" }, 0.1)), { show: false }));
+  }
   out.push(L(segY(fy + 0.6, DX + 4, 3, DX + 4, 11), { tone: "lit" }));
   out.push(block(DX - 3, DX + 11, fy, fy + 5, 12, 13.4, { tone: "mid" }));
   // the roof: parapet, plant room, vents
@@ -274,34 +319,6 @@ function building() {
 }
 const buildingPoints = () => [...trayPoints(), [-24, -22, 60]];
 
-// After PERM: a take-a-number dispenser on its stand, the next ticket out in lime: the wait for
-// a visa number.
-function dispenser() {
-  const out = [tray()];
-  const C = [0, 0];
-  out.push(halo({ x: -14, y: -14, w: 28, d: 28, r: 14 }, 0));
-  out.push(S(k.cylinder(C[0], C[1], 13, 0, 2.2, P, 40, 0.4), { tone: "mid" }));
-  out.push(screws(k.circleRing(C[0], C[1], 9.5, 4).map((p) => p), 2.2, 0.8));
-  out.push(S(k.cylinder(C[0], C[1], 2.3, 2.2, 22, P, 18), { tone: "mid" }));
-  out.push(S(k.cylinder(C[0], C[1], 4.4, 23.4, 1.6, P, 24, 0.3), { tone: "mid" }));
-  // the body: a drum with a domed cap
-  const R = 15;
-  out.push(S(k.cylinder(C[0], C[1], R, 25, 15, P, 48, 0.5), { tone: "hi", inner: L(k.ringSeam(k.circleRing(C[0], C[1], R, 48), 29, P), { tone: "faint" }) }));
-  out.push(S(G.lathe([[40, 0], [40, R - 0.4], [41.8, R - 1.6], [43, R - 4.6], [43.6, 0]], up([C[0], C[1], 0]), P, { bevel: 0.5 }), { tone: "hi" }));
-  // the ticket slot on the front, and the next ticket out of it, toward the viewer
-  // the slot faces the screen's right, so the ticket reads as a strip coming out sideways
-  const ang = (8 * Math.PI) / 180;
-  const ex = [Math.cos(ang), Math.sin(ang)];
-  const side = [-ex[1], ex[0]];
-  const p = (s, w) => [C[0] + ex[0] * s + side[0] * w, C[1] + ex[1] * s + side[1] * w];
-  const slotZ = 33;
-  const slot = [p(R + 0.2, -5), p(R + 0.2, 5)];
-  out.push(L(k.pathOf([[...slot[0], slotZ + 1.2], [...slot[1], slotZ + 1.2], [...slot[1], slotZ - 0.6], [...slot[0], slotZ - 0.6]].map(at), true), { tone: "hi" }));
-  out.push(lime(prism([p(R - 1, -4.6), p(R + 15, -4.6), p(R + 15, 4.6), p(R - 1, 4.6)], slotZ, 0.6, { tone: "hi" })));
-  out.push(lime(L(k.pathOf([p(R + 7, -4.6), p(R + 7, 4.6)].map(([x, y]) => at([x, y, slotZ + 0.6]))), { tone: "mid", dotted: true })));
-  return out.join("");
-}
-const dispenserPoints = () => [...trayPoints(), [0, 0, 44]];
 
 // H-2A, H-2B and CW-1: a slatted harvest crate of fruit, one of them a lime.
 function crate() {
@@ -325,12 +342,12 @@ function crate() {
   for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) fruit.push([CR.x + 8 + i * 13.3, CR.y + 8 + j * 13, 9, 6.2]);
   for (let j = 0; j < 2; j++) for (let i = 0; i < 3; i++) fruit.push([CR.x + 14.5 + i * 13.3, CR.y + 14.5 + j * 13, 17, 6.2]);
   const LIME_AT = fruit.length - 2;
+  ACT = { act: "near" };
   const order = byDepth(fruit.map((f, i) => ({ f, i })), ({ f }) => [f[0], f[1], f[2]]);
   for (const { f, i } of order) {
     const ball = S(G.sphereOf([f[0], f[1], f[2]], f[3], P), { tone: "hi", crease: "none" });
-    out.push(i === LIME_AT ? lime(ball) : ball);
     const stem = L(k.rise([f[0] + 0.6, f[1]], f[2] + f[3] - 0.6, f[2] + f[3] + 1.8, P), { tone: "hi" });
-    out.push(i === LIME_AT ? lime(stem) : stem);
+    out.push(item(ball + stem, { on: i === LIME_AT }));
   }
   out.push(...wallsFront);
   // nails at the slat ends
@@ -341,44 +358,6 @@ function crate() {
 }
 const cratePoints = () => [...trayPoints(), [0, 0, 24]];
 
-// Data notes: a card index box, its cards standing in rows, one lime divider raised above them.
-function cardIndex() {
-  const out = [tray()];
-  const BX = { x: -24, y: -30, w: 46, d: 60, r: 0.8 };
-  const H = 16, T = 1.6;
-  out.push(halo(k.insetPlan(BX, -3), 0));
-  out.push(wood(slab(BX, 0, 2, { tone: "mid" }, 2, 0.3)));
-  // back wall and left wall
-  out.push(wood(slab({ x: BX.x, y: BX.y, w: BX.w, d: T, r: 0.3 }, 2, H - 2, { tone: "mid" }, 2, 0.2)));
-  out.push(wood(slab({ x: BX.x, y: BX.y, w: T, d: BX.d, r: 0.3 }, 2, H - 2, { tone: "mid" }, 2, 0.2)));
-  // cards, back to front: thin plates across the box, a tab on every fifth, the divider in lime
-  const CARD = (y, h, cls) => {
-    const card = slab({ x: BX.x + T + 0.6, y, w: BX.w - 2 * T - 1.2, d: 0.6, r: 0 }, 2, h, { tone: "hi", crease: "none" }, 1, 0);
-    return cls ? cls(card) : card;
-  };
-  let n = 0;
-  for (let y = BX.y + T + 1.2; y < BX.y + BX.d - T - 3; y += 1.4) {
-    n++;
-    const divider = n === 18;
-    out.push(CARD(y, divider ? H + 5 : H - 2.4 + (n % 3) * 0.3, divider ? lime : null));
-    if (divider) {
-      const tab = { x: BX.x + 26, y, w: 10, d: 0.6, r: 0 };
-      out.push(lime(slab(tab, H + 5, 3.4, { tone: "hi", crease: "none" }, 1, 0)));
-    } else if (n % 6 === 0) {
-      const tx = BX.x + 6 + ((n / 6) % 3) * 12;
-      out.push(slab({ x: tx, y, w: 8, d: 0.6, r: 0 }, H - 2.4, 2.6, { tone: "hi", crease: "none" }, 1, 0));
-    }
-  }
-  // front and right walls, a pull ring on the front
-  out.push(wood(slab({ x: BX.x, y: BX.y + BX.d - T, w: BX.w, d: T, r: 0.3 }, 2, H - 2, { tone: "mid" }, 2, 0.2)));
-  out.push(wood(slab({ x: BX.x + BX.w - T, y: BX.y, w: T, d: BX.d, r: 0.3 }, 2, H - 2, { tone: "mid" }, 2, 0.2)));
-  const fy = BX.y + BX.d;
-  out.push(block(BX.x + BX.w / 2 - 6, BX.x + BX.w / 2 + 6, fy, fy + 0.6, 8, 12, { tone: "mid" }));
-  out.push(L(faceY(fy + 0.6, BX.x + BX.w / 2 - 4.4, BX.x + BX.w / 2 + 4.4, 8.8, 11.2), { tone: "lo" }));
-  out.push(S(G.ringBand(-0.6, 0.6, 1.6, 2.6, frame([BX.x + BX.w / 2, fy + 1.4, 5.6], [1, 0, 0], [0, 1, 0], [0, 0, 1]), P), { tone: "mid" }));
-  return out.join("");
-}
-const cardIndexPoints = () => [...trayPoints(), [-24, -30, 28]];
 
 // Explainers: a stack of three books, a lime ribbon marker hanging from the top one.
 function books() {
@@ -401,9 +380,14 @@ function books() {
   // the ribbon from the top book over its front edge
   const t = (-2 * Math.PI) / 180;
   const fx = 1 + Math.sin(-t) * 0, fy = 0 + 16 * Math.cos(t);
-  const rib = (z0, z1, y) => block(fx + 6, fx + 9.6, y, y + 0.4, z0, z1, { tone: "hi" }, 0.1);
-  out.push(lime(rib(9, 24, fy + 1.4)));
-  out.push(lime(L(segY(fy + 1.8, fx + 6, 9, fx + 7.8, 7.4) + segY(fy + 1.8, fx + 9.6, 9, fx + 7.8, 7.4), { tone: "mid" })));
+  // with a mouse, the ribbon marks the place along the book nearest the pointer
+  ACT = { act: "show-near" };
+  for (const off of [-16, -8, 0, 8, 16]) {
+    const rx = fx + off;
+    const rib = block(rx + 6, rx + 9.6, fy + 1.4, fy + 1.8, 9, 24, { tone: "hi" }, 0.1);
+    const tail = L(segY(fy + 1.8, rx + 6, 9, rx + 7.8, 7.4) + segY(fy + 1.8, rx + 9.6, 9, rx + 7.8, 7.4), { tone: "mid" });
+    out.push(item(lime(rib + tail), { show: off === 0 }));
+  }
   return out.join("");
 }
 const booksPoints = () => [...trayPoints(), [0, 0, 26]];
@@ -419,10 +403,11 @@ function briefcase() {
   // stitched panel on the front
   const fy = B.y + B.d;
   out.push(L(faceY(fy, B.x + 5, B.x + B.w - 5, 5, 1.4 + H * 0.62 - 3), { tone: "faint", dashed: true }));
-  // latches
+  // latches: both lime when still; with a mouse, the one nearest the pointer
+  ACT = { act: "near" };
   for (const x of [B.x + 13, B.x + B.w - 19]) {
-    out.push(lime(block(x, x + 6, fy - 0.1, fy + 1.2, 1.4 + H * 0.62 - 2.6, 1.4 + H * 0.62 + 2.6, { tone: "hi" }, 0.3)));
-    out.push(lime(D([at([x + 3, fy + 1.2, 1.4 + H * 0.62])], { size: 0.45 })));
+    const latch = block(x, x + 6, fy - 0.1, fy + 1.2, 1.4 + H * 0.62 - 2.6, 1.4 + H * 0.62 + 2.6, { tone: "hi" }, 0.3) + D([at([x + 3, fy + 1.2, 1.4 + H * 0.62])], { size: 0.45 });
+    out.push(item(latch, { on: true }));
   }
   // corner guards at the top, and the handle
   for (const x of [B.x + 0.6, B.x + B.w - 4.6]) out.push(block(x, x + 4, B.y - 0.4, B.y + B.d + 0.4, 1.4 + H - 4, 1.4 + H + 0.5, { tone: "hi" }, 0.6));
@@ -461,18 +446,22 @@ function splitFlap() {
     for (let c = 0; c < cols; c++) {
       const x0 = B.x + 4.5 + c * mw + 0.5, x1 = x0 + mw - 1;
       const z1 = Z0 + H - 4.5 - r * mh - 0.5, z0 = z1 - mh + 1;
-      if (r === 1 && c === 4) continue;
       mods.push(faceY(fy, x0, x1, z0, z1));
       hinges.push(segY(fy, x0, (z0 + z1) / 2, x1, (z0 + z1) / 2));
     }
   }
   out.push(L(mods.join(""), { tone: "hi" }));
   out.push(L(hinges.join(""), { tone: "mid" }));
-  // the lime module: two flaps, the upper one falling toward the viewer
-  const x0 = B.x + 4.5 + 4 * mw + 0.5, x1 = x0 + mw - 1;
-  const z1 = Z0 + H - 4.5 - mh - 0.5, z0 = z1 - mh + 1, zm = (z0 + z1) / 2;
-  out.push(lime(block(x0, x1, fy - 0.2, fy + 0.4, z0, zm - 0.2, { tone: "hi" }, 0.1)));
-  out.push(lime(S(G.prismOf(frame([x0, fy, zm], [1, 0, 0], [0, 1, 0], [0, 0, 1]), [[0, 0], [3.2, 0.3], [3.8, 0.9], [0.4, (zm - z0) * 0.86]], 0, x1 - x0, P), { tone: "hi" })));
+  // the lime module: two flaps, the upper one falling toward the viewer. With a mouse, the module nearest the pointer flips.
+  ACT = { act: "show-near" };
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x0 = B.x + 4.5 + c * mw + 0.5, x1 = x0 + mw - 1;
+      const z1 = Z0 + H - 4.5 - r * mh - 0.5, z0 = z1 - mh + 1, zm = (z0 + z1) / 2;
+      const flap = block(x0, x1, fy - 0.2, fy + 0.4, z0, zm - 0.2, { tone: "hi" }, 0.1) + S(G.prismOf(frame([x0, fy, zm], [1, 0, 0], [0, 1, 0], [0, 0, 1]), [[0, 0], [3.2, 0.3], [3.8, 0.9], [0.4, (zm - z0) * 0.86]], 0, x1 - x0, P), { tone: "hi" });
+      out.push(item(lime(flap), { show: r === 1 && c === 4 }));
+    }
+  }
   // status lamp and screws on the top
   out.push(screws([[B.x + 4, B.y + B.d / 2], [B.x + B.w - 4, B.y + B.d / 2]], Z0 + H, 0.8));
   out.push(lime(S(k.cylinder(B.x + B.w - 12, B.y + B.d / 2, 1.6, Z0 + H, 1.2, P, 14), { tone: "hi" })));
@@ -484,6 +473,7 @@ const splitFlapPoints = () => [...trayPoints(PLINTH), [-38, -8, 50], [38, 6, 50]
 // one tab in lime.
 function docket() {
   const out = [tray(PLINTH)];
+  ACT = { act: "near" };
   const CAB = { x: -22, y: -18, w: 34, d: 30, r: 0.8 };
   const H = 46;
   out.push(halo(k.insetPlan(CAB, -2), 0));
@@ -510,7 +500,7 @@ function docket() {
       const tx = DR.x + 4 + ((i / 3) % 3) * 9;
       const tall = i === 7 ? 5 : 2.6;
       const tab = slab({ x: tx, y, w: 7, d: 0.8, r: 0 }, z0 + 1.2 + h, tall, { tone: "hi", crease: "none" }, 1, 0);
-      out.push(i === 7 ? lime(tab) : tab);
+      out.push(item(tab, { on: i === 7 }));
     }
   });
   out.push(slab({ x: DR.x + DR.w - 1.2, y: DR.y + 6, w: 1.2, d: DR.d - 6, r: 0.2 }, z0 + 1.2, z1 - z0 - 4, { tone: "mid" }, 2, 0.2));
@@ -523,39 +513,6 @@ function docket() {
 }
 const docketPoints = () => [...trayPoints(PLINTH), [-22, -18, 50], [12, 40, 48]];
 
-// ======================================================================================
-// The attorney page's security band: a cabinet of separate safe-deposit doors, each with its
-// own lock; one lock plate in lime.
-// ======================================================================================
-function vault() {
-  const BASE = { x: -48, y: -24, w: 96, d: 48, r: 5 };
-  const out = [tray(BASE)];
-  const C = { x: -40, y: -14, w: 80, d: 24, r: 1 };
-  const H = 56, Z0 = 3;
-  out.push(halo(k.insetPlan(C, -2), 0));
-  out.push(slab({ x: C.x - 2, y: C.y - 2, w: C.w + 4, d: C.d + 4, r: 1.4 }, 0, Z0, { tone: "lo" }, 2, 0.4));
-  out.push(slab(C, Z0, H, { tone: "mid", inner: L(k.sideSeam(C, Z0 + H - 3, P, 2), { tone: "faint" }) }, 2, 0.6));
-  const fy = C.y + C.d;
-  const cols = 4, rows = 4;
-  const gx = C.x + 4, gz = Z0 + 4, cw = (C.w - 8) / cols, rh = (H - 8) / rows;
-  const doors = [];
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) doors.push([c, r]);
-  for (const [c, r] of doors) {
-    const x0 = gx + c * cw + 0.8, x1 = gx + (c + 1) * cw - 0.8;
-    const z0 = gz + r * rh + 0.8, z1 = gz + (r + 1) * rh - 0.8;
-    out.push(block(x0, x1, fy - 0.1, fy + 0.8, z0, z1, { tone: "hi" }, 0.3));
-    // hinge pins on the left edge, a lock plate with a keyhole on the right
-    out.push(D([at([x0 + 1.2, fy + 0.8, z0 + 2]), at([x0 + 1.2, fy + 0.8, z1 - 2])], { size: 0.4 }));
-    const lx = x1 - 6, lz = (z0 + z1) / 2;
-    const plate = block(lx, lx + 4, fy + 0.8, fy + 1.4, lz - 2.6, lz + 2.6, { tone: "mid" }, 0.3);
-    const hole = L(segY(fy + 1.4, lx + 2, lz + 0.6, lx + 2, lz - 1.2), { tone: "hi" }) + D([at([lx + 2, fy + 1.4, lz + 0.9])], { size: 0.45 });
-    out.push(c === 2 && r === 1 ? lime(plate + hole) : plate + hole);
-    // a number plate above the lock: a blank engraved panel, no text
-    out.push(L(faceY(fy + 0.8, x0 + 3, x0 + 9, z1 - 3.4, z1 - 1.6), { tone: "lo" }));
-  }
-  return out.join("");
-}
-const vaultPoints = () => [...trayPoints({ x: -48, y: -24, w: 96, d: 48, r: 5 }), [-40, -14, 62], [40, 10, 62]];
 
 // ======================================================================================
 // The app's empty states, on the tint
@@ -578,13 +535,16 @@ function emptyTray() {
   out.push(slab({ x: T.x, y: fy, w: T.w / 2 - 6, d: W, r: 0.4 }, 1.4, H, { tone: "mid" }, 2, 0.3));
   out.push(slab({ x: T.x + T.w / 2 + 6, y: fy, w: T.w / 2 - 6, d: W, r: 0.4 }, 1.4, H, { tone: "mid" }, 2, 0.3));
   out.push(slab({ x: T.x + T.w / 2 - 6, y: fy, w: 12, d: W, r: 0.4 }, 1.4, H - 5, { tone: "mid" }, 2, 0.3));
-  // the folder: closed, lying on the tray in front right, its tab toward the back
+  // the folder: closed, lying on the tray in front right, its tab toward the back. With a mouse it slides a little way
+  // toward the empty tray as the pointer comes near, as if it's about to go in.
+  ACT = { act: "lift" };
   const F = turned(20, 18, 30, 22, -12);
   out.push(halo({ x: 5, y: 7, w: 30, d: 22, r: 1 }, 0, 2));
-  out.push(lime(prism(F, 0, 1.6, { tone: "hi" })));
   const tab = turned(20 + 6 * Math.cos(-0.21) - (-12.4) * Math.sin(-0.21), 18 + 6 * Math.sin(-0.21) + (-12.4) * Math.cos(-0.21), 10, 3, -12);
-  out.push(lime(prism(tab, 0, 1.6, { tone: "hi" })));
-  out.push(lime(L(k.pathOf([...F, F[0]].map(([x, y]) => at([x, y, 0.8]))), { tone: "mid" })));
+  const folder = lime(prism(F, 0, 1.6, { tone: "hi" })) + lime(prism(tab, 0, 1.6, { tone: "hi" })) + lime(L(k.pathOf([...F, F[0]].map(([x, y]) => at([x, y, 0.8]))), { tone: "mid" }));
+  const [fx0, fy0] = at([20, 18, 0]);
+  const [tx0, ty0] = at([T.x + T.w / 2, T.y + T.d / 2, 0]);
+  out.push(liftOf(folder, [(tx0 - fx0) * 0.22, (ty0 - fy0) * 0.22]));
   return out.join("");
 }
 const emptyTrayPoints = () => [...trayPoints(), [-30, -26, 12]];
@@ -597,8 +557,12 @@ function bell() {
   out.push(wood(S(k.cylinder(C[0], C[1], 19, 0, 5, P, 48, 0.8), { tone: "mid", inner: L(k.ringSeam(k.circleRing(C[0], C[1], 19, 48), 2.2, P), { tone: "faint" }) })));
   out.push(S(k.cylinder(C[0], C[1], 3, 5, 3, P, 20), { tone: "mid" }));
   out.push(S(G.lathe([[7, 0], [7, 16], [9.4, 15.6], [13.2, 13.8], [17.2, 10.4], [20.4, 5.8], [22.2, 2.2], [22.6, 0]], up([C[0], C[1], 0]), P, { bevel: 0.8 }), { tone: "hi" }));
-  out.push(lime(S(k.cylinder(C[0], C[1], 1.4, 22.6, 4.4, P, 14), { tone: "mid" })));
-  out.push(lime(S(G.lathe([[27, 0], [27, 3.4], [28.4, 3.1], [29.3, 2], [29.6, 0]], up([C[0], C[1], 0]), P), { tone: "hi" })));
+  // the plunger presses down as the pointer comes near (with a mouse)
+  ACT = { act: "lift" };
+  const plunger = lime(S(k.cylinder(C[0], C[1], 1.4, 22.6, 4.4, P, 14), { tone: "mid" })) + lime(S(G.lathe([[27, 0], [27, 3.4], [28.4, 3.1], [29.3, 2], [29.6, 0]], up([C[0], C[1], 0]), P), { tone: "hi" }));
+  const [, py0] = at([C[0], C[1], 27]);
+  const [, py1] = at([C[0], C[1], 24]);
+  out.push(liftOf(plunger, [0, py1 - py0]));
   out.push(screws(k.circleRing(C[0], C[1], 15.5, 3).slice(0, 3), 5, 0.8));
   return out.join("");
 }
@@ -610,6 +574,8 @@ const bellPoints = () => [...trayPoints(), [0, 2, 31]];
 function signpost() {
   const out = [tray()];
   const C = [0, 0];
+  // with a mouse, the lime goes to the arm that points nearest the pointer
+  ACT = { act: "toward", pivot: pivotAt([C[0], C[1], 40]) };
   out.push(halo({ x: -10, y: -10, w: 20, d: 20, r: 3 }, 0));
   out.push(slab({ x: -9, y: -9, w: 18, d: 18, r: 1.2 }, 0, 4, { tone: "mid" }, 2, 0.5));
   out.push(screws(k.corners({ x: -9, y: -9, w: 18, d: 18 }, 2.6), 4, 0.7));
@@ -628,7 +594,8 @@ function signpost() {
     const poly = [[0, -H / 2], [len - 5, -H / 2], [len, 0], [len - 5, H / 2], [0, H / 2]];
     const svg = S(G.prismOf(F, poly, -0.8, 0.8, P), { tone: "hi" });
     const tip = [C[0] + u[0] * len, C[1] + u[1] * len, z];
-    return { svg: isLime ? lime(svg) : svg, key: tip };
+    // each arm points from the post along its own height, so its direction is measured at that height
+    return { svg: item(svg, { on: isLime, dir: dirOf([C[0], C[1], z], tip) }), key: tip };
   };
   const built = arms.map(arm);
   const post = [S(k.slabOf({ x: -2.2, y: -2.2, w: 4.4, d: 4.4, r: 0.6 }, 4, 54, P, 2, 0.3), { tone: "mid" }), S(G.lathe([[58, 0], [58, 3.6], [60, 2.6], [61, 0]], up([0, 0, 0]), P), { tone: "mid" })].join("");
@@ -645,6 +612,7 @@ const signpostPoints = () => [...trayPoints(), [0, 0, 62], [30, 10, 46], [-28, -
 // ======================================================================================
 function keyCabinet() {
   const out = [tray()];
+  ACT = { act: "near" };
   const BX = { x: -24, y: -26, w: 48, d: 10, r: 0.8 };
   const H = 50, Z0 = 2;
   out.push(halo(k.insetPlan(BX, -2), 0));
@@ -668,7 +636,7 @@ function keyCabinet() {
     out.push(block(kk.x - 2.6, kk.x - 1.2, ky - 0.3, ky + 0.3, kk.z - 9, kk.z - 3, { tone: "hi" }, 0.1));
     out.push(S(G.disc(-0.3, 0.3, 1.6, frame([kk.x - 1.9, ky, kk.z - 2.4], [0, 1, 0], [1, 0, 0], [0, 0, 1]), P), { tone: "hi" }));
     const tag = block(kk.x + 0.6, kk.x + 4.4, ky - 0.2, ky + 0.4, kk.z - 8.4, kk.z - 3.2, { tone: "hi" }, 0.4);
-    out.push(kk.lime ? lime(tag) : tag);
+    out.push(item(tag, { on: kk.lime }));
     out.push(D([at([kk.x + 2.5, ky + 0.4, kk.z - 4.2])], { size: 0.35 }));
   }
   // the right wall and the top, then the door: hinged on the left, swung open toward the viewer,
@@ -693,6 +661,97 @@ const keyCabinetPoints = () => [...trayPoints(), [-24, -26, 56], [24, -16, 56], 
 // ======================================================================================
 // The pictures, their pages and their sets. A set shares one world scale.
 // ======================================================================================
+// ======================================================================================
+// Redrawn Oct 21 2026 (owner: "unique, not same or basically same"): the ticket dispenser read as a
+// second stamp, the card index as a second filing drawer, the deposit boxes as a third grid of doors.
+// ======================================================================================
+
+// After PERM: the green card itself, standing in a desk stand, its photo in lime.
+function greenCard() {
+  const out = [tray()];
+  // the stand: a low block with a slot along x
+  out.push(halo({ x: -20, y: -8, w: 40, d: 14, r: 2 }, 0));
+  out.push(slab({ x: -18, y: -7, w: 36, d: 12, r: 1.4 }, 0, 4, { tone: "mid" }, 2, 0.4));
+  // the card, upright, 3:2 like an ID card, its face toward the viewer (+y)
+  const x0 = -25, x1 = 25, y0 = -1.4, y1 = 0, z0 = 3, z1 = 36;
+  out.push(block(x0, x1, y0, y1, z0, z1, { tone: "hi" }, 1.2));
+  const fy = y1 + 0.05;
+  // the photo, lime, on the left. With a mouse, the lime goes to the photo or the printed line nearest the pointer.
+  ACT = { act: "near" };
+  out.push(item(block(x0 + 3.5, x0 + 15.5, fy, fy + 0.5, z0 + 9, z1 - 4, { tone: "hi" }, 0.4), { on: true }));
+  // the printed lines on the right: name, number, dates
+  const lines = [
+    [x0 + 19, x1 - 3.5, z1 - 6.5],
+    [x0 + 19, x1 - 9, z1 - 11],
+    [x0 + 19, x1 - 6, z1 - 15.5],
+    [x0 + 19, x1 - 12, z1 - 20],
+  ];
+  for (const [a0, a1, z] of lines) out.push(item(block(a0, a1, fy, fy + 0.3, z - 1.1, z + 1.1, { tone: "mid" }, 0.2)));
+  // the machine-readable strip along the bottom
+  out.push(L(segY(fy + 0.3, x0 + 3.5, z0 + 5.2, x1 - 3.5, z0 + 5.2), { tone: "faint" }));
+  out.push(L(segY(fy + 0.3, x0 + 3.5, z0 + 3.4, x1 - 3.5, z0 + 3.4), { tone: "faint" }));
+  return out.join("");
+}
+const greenCardPoints = () => [...trayPoints(), [-25, 0, 38], [25, 0, 38]];
+
+// Data notes: a bar chart standing on a plate, an uneven series with one bar picked out in lime.
+function barChart() {
+  const out = [tray()];
+  const PL = { x: -28, y: -16, w: 56, d: 32, r: 1.6 };
+  out.push(halo(k.insetPlan(PL, -2), 0));
+  out.push(slab(PL, 0, 2, { tone: "mid" }, 2, 0.4));
+  // the axis: a thin rule along the back and up the left
+  out.push(block(PL.x + 2, PL.x + PL.w - 2, PL.y + 2, PL.y + 3, 2, 3, { tone: "lo" }, 0.2));
+  // an uneven series, as counted data is, with one bar picked out in lime: not a rising stack
+  const heights = [22, 13, 28, 9, 18, 24];
+  const PICK = 3;
+  const w = 5.6, gap = 2.6, start = PL.x + 5;
+  ACT = { act: "near" };
+  heights.forEach((h, i) => {
+    const bx = start + i * (w + gap);
+    out.push(item(block(bx, bx + w, -4, 3, 2, 2 + h, { tone: "hi" }, 0.3), { on: i === PICK }));
+  });
+  // a dotted average line across the bars
+  out.push(L(segY(4.2, PL.x + 3, 19, PL.x + PL.w - 3, 19), { tone: "lo", dotted: true }));
+  return out.join("");
+}
+const barChartPoints = () => [...trayPoints(), [16, 0, 36]];
+
+// The attorney page's security band: a vault door, its wheel and dial on the front, the dial in lime.
+function vaultDoor() {
+  const BASE = { x: -48, y: -24, w: 96, d: 48, r: 5 };
+  const out = [tray(BASE)];
+  const C = { x: -32, y: -16, w: 64, d: 26, r: 1.2 };
+  const H = 58, Z0 = 3;
+  out.push(halo(k.insetPlan(C, -2), 0));
+  out.push(slab({ x: C.x - 2, y: C.y - 2, w: C.w + 4, d: C.d + 4, r: 1.4 }, 0, Z0, { tone: "lo" }, 2, 0.4));
+  out.push(slab(C, Z0, H, { tone: "mid", inner: L(k.sideSeam(C, Z0 + H - 3, P, 2), { tone: "faint" }) }, 2, 0.6));
+  const fy = C.y + C.d;
+  const cx = C.x + C.w / 2, cz = Z0 + H / 2;
+  const F = G.frameAlong([cx, fy, cz], [0, 1, 0]);
+  // the door: a thick round plate standing proud of the front, a raised rim
+  out.push(S(G.lathe([[0, 0], [0, 24], [1.4, 24], [2.4, 23], [2.4, 0]], F, P, { bevel: 0.4 }), { tone: "hi" }));
+  out.push(S(G.ringBand(2.4, 3.2, 19.5, 21.5, F, P), { tone: "mid" }));
+  // the hinges on the left edge of the door
+  out.push(block(cx - 27, cx - 23, fy, fy + 2.4, cz + 9, cz + 15, { tone: "mid" }, 0.3));
+  out.push(block(cx - 27, cx - 23, fy, fy + 2.4, cz - 15, cz - 9, { tone: "mid" }, 0.3));
+  // the wheel: a hub, four spokes and their grips
+  const W = G.frameAlong([cx, fy + 2.4, cz], [0, 1, 0]);
+  out.push(S(G.lathe([[0, 0], [0, 4.2], [2.6, 4.2], [3.2, 3.2], [3.2, 0]], W, P, { bevel: 0.3 }), { tone: "mid" }));
+  // the spokes, drawn at 12 turns of the wheel, one shown: with a mouse, the turn with a spoke pointing nearest the pointer
+  ACT = { act: "show-toward", pivot: pivotAt([cx, fy + 2.4, cz]) };
+  for (let i = 0; i < 12; i++) {
+    const phase = Math.PI / 4 + (i * Math.PI) / 24;
+    const tips = [0, 1, 2, 3].map((n) => G.pointOf(W, 2.2, 13, phase + (n * Math.PI) / 2));
+    out.push(item(L(G.spokesOf(W, 2.2, 4, 13, 4, P, { phase }), { tone: "hi" }), { show: i === 0, dir: dirOf([cx, fy + 2.4, cz], ...tips) }));
+  }
+  // the combination dial above the wheel, in lime
+  const Dl = G.frameAlong([cx + 11, fy + 2.4, cz + 13], [0, 1, 0]);
+  out.push(lime(S(G.lathe([[0, 0], [0, 3.6], [1.4, 3.6], [1.8, 2.8], [1.8, 0]], Dl, P, { bevel: 0.2 }), { tone: "hi" })));
+  return out.join("");
+}
+const vaultDoorPoints = () => [...trayPoints({ x: -48, y: -24, w: 96, d: 48, r: 5 }), [-32, -16, 64], [32, 10, 64]];
+
 const BOTH = (paper) => ({ light: paper.light, dark: paper.dark });
 const PICTURES = [
   // topic spots: shown at 96 px
@@ -702,16 +761,16 @@ const PICTURES = [
   { name: "topic-deadlines", set: "topics", size: [160, 160], body: calendar, points: calendarPoints, papers: BOTH(PAGE), label: "A desk calendar pad with one day marked in green." },
   { name: "topic-wages", set: "topics", size: [160, 160], body: coins, points: coinsPoints, papers: BOTH(PAGE), label: "Four stacks of coins rising in height, the tallest green, on a pay slip." },
   { name: "topic-employers", set: "topics", size: [160, 160], body: building, points: buildingPoints, papers: BOTH(PAGE), label: "An office building with a green front door." },
-  { name: "topic-green-card", set: "topics", size: [160, 160], body: dispenser, points: dispenserPoints, papers: BOTH(PAGE), label: "A take-a-number ticket dispenser with a green ticket coming out." },
+  { name: "topic-green-card", set: "topics", size: [160, 160], body: greenCard, points: greenCardPoints, papers: BOTH(PAGE), label: "A green card standing in a desk stand, its photo in green." },
   { name: "topic-seasonal", set: "topics", size: [160, 160], body: crate, points: cratePoints, papers: BOTH(PAGE), label: "A slatted harvest crate of fruit, one of them green." },
-  { name: "topic-data-notes", set: "topics", size: [160, 160], body: cardIndex, points: cardIndexPoints, papers: BOTH(PAGE), label: "A card index box with a green divider card." },
+  { name: "topic-data-notes", set: "topics", size: [160, 160], body: barChart, points: barChartPoints, papers: BOTH(PAGE), label: "A bar chart standing on a plate, one bar picked out in green, a dotted average across it." },
   { name: "topic-explainers", set: "topics", size: [160, 160], body: books, points: booksPoints, papers: BOTH(PAGE), label: "A stack of three books with a green ribbon marker." },
   { name: "topic-practice", set: "topics", size: [160, 160], body: briefcase, points: briefcasePoints, papers: BOTH(PAGE), label: "A briefcase with green latches." },
   // the homepage pair, on the dark band: shown at 112 px
   { name: "home-waiting", set: "home", size: [200, 150], body: splitFlap, points: splitFlapPoints, papers: { dark: BAND_HOME }, label: "A split-flap board, one module flipping to green." },
   { name: "home-practice", set: "home", size: [200, 150], body: docket, points: docketPoints, papers: { dark: BAND_HOME }, label: "A filing cabinet with its top drawer open, one folder tab green." },
   // the attorney page's security band: shown up to 320 px
-  { name: "security-vault", set: "security", size: [360, 300], body: vault, points: vaultPoints, papers: { dark: BAND_SECURITY }, label: "A cabinet of separate safe-deposit doors, each with its own lock, one lock plate green." },
+  { name: "security-vault", set: "security", size: [360, 300], body: vaultDoor, points: vaultDoorPoints, papers: { dark: BAND_SECURITY }, label: "A safe with a round vault door, its wheel and a green combination dial." },
   // the app's empty states, on the tint: shown at 128 px
   { name: "empty-cases", set: "empty", size: [180, 160], body: emptyTray, points: emptyTrayPoints, papers: BOTH(TINT), label: "An empty desk tray with a green folder beside it." },
   { name: "empty-notifications", set: "empty", size: [180, 160], body: bell, points: bellPoints, papers: BOTH(TINT), label: "A quiet desk bell with a green plunger." },
@@ -746,6 +805,35 @@ function minifyD(d) {
 }
 const minify = (svg) => svg.replace(/ d="([^"]*)"/g, (_, d) => ` d="${minifyD(d)}"`);
 
+// ---------- an inline copy must not restyle the page ----------
+// spot-motion.ts puts a picture's own SVG in the page for a mouse user, and the kit's rules name the same classes the
+// article drawings use (.iso, .iso-fill ...). Every rule is scoped to this picture's root id, so it styles itself only.
+function scopeStyle(svg, id) {
+  const scopeSel = (sel) =>
+    sel
+      .split(",")
+      .map((part) => {
+        const p = part.trim();
+        if (!p || p.startsWith(`#${id}`) || p.startsWith("from") || p.startsWith("to") || /^\d/.test(p)) return p;
+        if (p === ".iso" || p.startsWith(".iso[") || p.startsWith(".iso:")) return `#${id}${p.slice(4)}`;
+        if (p.startsWith(".iso-svg")) return `#${id}${p.slice(8)}`;
+        return `#${id} ${p}`;
+      })
+      .join(",");
+  return svg.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, (_, css) => {
+    const lines = css.split("\n").map((line) => {
+      if (line.startsWith("@keyframes") || !line.includes("{") || /^\s/.test(line)) return line;
+      if (line.startsWith("@media")) {
+        const brace = line.indexOf("{");
+        return line.slice(0, brace + 1) + line.slice(brace + 1).replace(/(^|\})([^{}]+)\{/g, (_, b, sel) => `${b}${scopeSel(sel)}{`);
+      }
+      const brace = line.indexOf("{");
+      return scopeSel(line.slice(0, brace)) + line.slice(brace);
+    });
+    return `<![CDATA[${lines.join("\n")}]]>`;
+  });
+}
+
 // ---------- build ----------
 mkdirSync(OUT, { recursive: true });
 const unit = { origin: [0, 0], scale: 1, azimuth: AZIMUTH, elevation: ELEVATION };
@@ -768,11 +856,14 @@ for (const pic of PICTURES) {
   const files = {};
   for (const [theme, paper] of Object.entries(pic.papers)) {
     const id = `${pic.name}-${theme}`;
-    const svg = a.assetSvg({
+    ACT = null;
+    const body = minify(pic.body());
+    if (!ACT) throw new Error(`${pic.name}: its drawing names no act for the pointer`);
+    const raw = a.assetSvg({
       width: pic.size[0],
       height: pic.size[1],
       label: pic.label,
-      body: minify(pic.body()),
+      body,
       paper,
       theme,
       accents: {
@@ -785,6 +876,8 @@ for (const pic of PICTURES) {
       motion: false,
       id,
     });
+    const act = ` data-spot-act="${ACT.act}"${ACT.pivot ? ` data-pivot="${ACT.pivot}"` : ""}`;
+    const svg = scopeStyle(raw, id).replace("<svg ", `<svg${act} `);
     writeFileSync(join(OUT, `${id}.svg`), svg);
     files[theme] = { file: `/images/spots/${id}.svg`, bytes: Buffer.byteLength(svg) };
   }

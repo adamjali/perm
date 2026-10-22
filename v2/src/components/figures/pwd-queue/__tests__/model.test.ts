@@ -56,7 +56,7 @@ describe("the wage-queue figure runs the wage-request lookup's own arithmetic", 
   });
 
   it("says where the line is, then the lookup's dates", () => {
-    expect(pwdReading(run, 0)).toBe("October 20, 2026, as DOL left it: the front tray is May 2026.");
+    expect(pwdReading(run, 0)).toBe("October 20, 2026, as DOL left it: DOL is finishing May 2026's last requests.");
     expect(pwdReading(run, 1)).toBe("October 21, 2026: the front tray is July 2026.");
     expect(pwdReading(run, run.reachWork)).toMatch(/^Around .+: the line reaches September 2026\.$/);
     expect(pwdReading(run, run.endWork)).toMatch(/^Around .+: requests filed on the last day of September 2026 are decided\.$/);

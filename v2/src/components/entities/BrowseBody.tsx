@@ -19,6 +19,7 @@ import { browseBucket, browseCounts } from "@/lib/db/entityBrowse";
 import { formatInt } from "@/lib/format";
 
 import { BrowseIndexGrid, BrowseList, BrowseStrip } from "./EntityBrowse";
+import { ListPages } from "@/components/ui/list-pages";
 
 /**
  * The A-Z browse pages, written once and mounted by all three kinds.
@@ -362,11 +363,13 @@ export async function BrowseLetterBody({
             </p>
           ) : null}
           <BrowseList
+            id="browse-list"
             base={cfg.base}
             entries={entries}
             unit={cfg.unit}
-            className="mt-6"
-          />
+            className="mt-6 scroll-mt-28"
+          />{" "}
+          <ListPages listId="browse-list" total={shown} noun={cfg.plural} />
         </section>
       ) : null}
 

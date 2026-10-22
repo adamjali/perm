@@ -133,5 +133,8 @@ export function pwdReading(run: PwdQueueRun, w: number): string {
   if (w >= run.reachWork) return `Around ${longDate(run.reachDate)}: the line reaches ${monthYear(run.pick)}.`;
   const day = pwdDayAt(run, w);
   const lead = w < 0.5 ? `${longDate(day)}, as DOL left it` : longDate(day);
-  return `${lead}: the front tray is ${monthYear(pwdFrontMonth(run, w))}.`;
+  // A month older than the one DOL publishes is its tail: say so, beside a page that quotes DOL's month.
+  const front = pwdFrontMonth(run, w);
+  if (index(front) < index(run.dolMonth)) return `${lead}: DOL is finishing ${monthYear(front)}'s last requests.`;
+  return `${lead}: the front tray is ${monthYear(front)}.`;
 }

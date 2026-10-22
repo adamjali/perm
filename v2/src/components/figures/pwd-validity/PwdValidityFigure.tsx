@@ -20,6 +20,7 @@ import { longDate } from "@convex/lib/months";
 import { BACK, CAR_DAYS, CARRIAGE, DAY_ON_SCREEN, GATE_DAYS, GATE_H, HEIGHT, WIDTH, armAt, carriageAt, gateAt } from "./geometry";
 import { DETERMINED, EXPIRES, FIRST_MAX, FIRST_MIN, VALID_DAYS, readPwdValidity } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 const LABEL =
   "An illustration of a prevailing wage determination's validity as a bench. A lime band on the ruler runs from the determination date to its expiry. A carriage marks the first recruitment step, and an arm runs from it to the last day to file. A gate at the expiry rises when the expiry still limits the filing.";
@@ -238,9 +239,9 @@ export default function PwdValidityFigure() {
   const inside = readPwdValidity(47);
   const before = readPwdValidity(-20);
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -260,15 +261,20 @@ export default function PwdValidityFigure() {
             </g>
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {start.sentence}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="sweep" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {`An illustration, on an example determination issued ${longDate(DETERMINED)} and valid through ${longDate(EXPIRES)}. Drag the carriage, or scroll, to move the first recruitment step. A first step on or between those dates begins recruitment inside the validity, so only the 180-day rule closes the window: a first step on ${longDate(inside.first)} means filing by ${longDate(inside.closes)}, after the determination has expired. A first step before ${longDate(DETERMINED)}, such as ${longDate(before.first)}, means filing by ${longDate(before.closes)}. A first step after ${longDate(EXPIRES)} can't use this determination. Here the job order is the first step; a notice of filing doesn't begin recruitment for this test. The dates come from the same rule the app uses on every case.`}
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

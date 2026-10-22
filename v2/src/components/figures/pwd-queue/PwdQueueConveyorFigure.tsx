@@ -20,6 +20,7 @@ import { longDate, monthYear } from "@convex/lib/months";
 import { HEIGHT, WIDTH, buildConveyor } from "../dol-queue/geometry";
 import { pwdFrontMonth, pwdReading, pwdRemainingAt, type PwdQueueRun } from "./model";
 import { MotionToggle } from "../MotionToggle";
+import { CAPTION_CLASS, FIGURE_CLASS, READOUT_CLASS, SUMMARY_CLASS } from "../frame";
 
 /** Real seconds for the whole run, and the holds at the picked month's arrival and at its end. */
 const RUN_S = 11;
@@ -264,9 +265,9 @@ export default function PwdQueueConveyorFigure({ run }: { run: PwdQueueRun }) {
   // Painter's order: the back of the line (the newest month) first, the front last.
   const order = Array.from({ length: n }, (_, j) => n - 1 - j);
   return (
-    <figure className="not-prose my-8 max-w-[800px]">
-      <div ref={stage} className="border-2 border-border bg-background">
-        <div className="iso px-1 pt-4 sm:px-6">
+    <figure className={FIGURE_CLASS}>
+      <div ref={stage}>
+        <div className="iso">
           <svg
             ref={svg}
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -294,15 +295,20 @@ export default function PwdQueueConveyorFigure({ run }: { run: PwdQueueRun }) {
             <g ref={stamp} dangerouslySetInnerHTML={{ __html: art.stamp }} />
           </svg>
         </div>
-        <div className="flex items-center gap-3 border-t-2 border-border px-4 py-2 sm:px-6">
+        <div className={READOUT_CLASS}>
           <p ref={readout} className="min-h-12 flex-1 py-1 text-base tabular-nums sm:min-h-0">
             {pwdReading(run, 0)}
           </p>
           <MotionToggle paused={paused} onToggle={toggle} what="time-lapse" />
         </div>
       </div>
-      <figcaption className="mt-2 text-sm text-muted-foreground">
+      <figcaption className={CAPTION_CLASS}>
+        <details>
+          <summary className={SUMMARY_CLASS}>What this shows</summary>{" "}
+          <p className="mt-1 leading-relaxed">
         {`An illustration of DOL's PERM wage-request line as DOL left it on ${longDate(run.counted)}, by our count of its record, run forward. Each tray is one filing month. Its stack is that month's requests still in process, drawn to scale. The ${run.earlier.toLocaleString("en-US")} older requests still waiting sit on the desk and go first. ${run.dolAsOf ? `DOL's own published month was ${monthYear(run.dolMonth)} on ${longDate(run.dolAsOf)}. ` : ""}The reviewer works at DOL's average over the last ${run.paceDays} working days we measured: about ${pace.toLocaleString("en-US")} requests a working day, oldest first. Weekends and federal holidays don't count, because DOL doesn't work them. There are ${ahead.toLocaleString("en-US")} requests ahead of one filed on the first day of ${monthYear(run.pick)}, so the line reaches it around ${longDate(run.reachDate)}. ${monthYear(run.pick)} itself holds ${inPick.toLocaleString("en-US")}, and a request filed on its last day is decided around ${longDate(run.endDate)}. Those are the dates the wage-request lookup gives, if DOL keeps that pace. New requests joining the back aren't drawn. Drag along the line, or scroll, to move through the days.`}
+      </p>
+        </details>
       </figcaption>
     </figure>
   );

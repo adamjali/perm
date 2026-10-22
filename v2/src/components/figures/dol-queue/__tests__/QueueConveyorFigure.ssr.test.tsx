@@ -32,7 +32,7 @@ describe("QueueConveyorFigure on the server", () => {
   });
 
   it("starts today and gives the estimate's dates in words", () => {
-    expect(html).toContain("October 21, 2026: the front tray is November 2025.");
+    expect(html).toContain("October 21, 2026: DOL is finishing November 2025&#x27;s last cases.");
     expect(html).toContain("DOL&#x27;s own published month was December 2025 on October 5, 2026.");
     expect(html).toContain("about 541 cases a day");
     expect(html).toContain(`so the line reaches it around`);

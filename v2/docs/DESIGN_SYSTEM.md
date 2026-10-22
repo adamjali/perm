@@ -199,7 +199,10 @@ drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every p
 
 A still drawing is a file loaded as an image, below the fold: `SpotPicture` (`src/components/ui/spot-picture.tsx`)
 with a light and a dark file, lazy, so a page fetches only its theme's; all are drawn by `scripts/spot-pictures/build.mjs`
-into `public/images/spots/` and `src/lib/spotPictures.ts`, grey with lime and nothing else (wood drawn grey). A moving one
+into `public/images/spots/` and `src/lib/spotPictures.ts`, grey with lime and nothing else (wood drawn grey). With a mouse,
+one part of each answers the pointer (`SpotMotion`, `src/components/ui/spot-motion.tsx`): the root's `data-spot-act` says
+how (`near`, `show-near`, `toward`, `show-toward`, `lift`) and the build marks the parts (`data-spot-item`, `data-spot-lift`).
+Never the whole picture moving; the still file on a phone, a pen or reduced motion. A moving one
 is a client component that renders its first pose on the server (`src/components/figures/`, the kit in
 `src/components/iso/`, the one lime part classed `iso-accent`), its dates from the central rules or the readers the site's
 own pages use, and its caption saying in words what the motion shows. **Every moving drawing is the owner's exception to
