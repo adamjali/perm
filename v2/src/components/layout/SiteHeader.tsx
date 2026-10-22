@@ -4,7 +4,11 @@
  * The public site's header: one 64px bar, the page's own colour, on every
  * public page (Oct 14 2026).
  *
- *   PERM Tracker | Case status · Processing times · Data · Learn · For attorneys | search | Sign in
+ *   PERM Tracker | Case status · Processing times · Data · Learn · For attorneys | search | Sign in | Sign up
+ *
+ * Sign up came back on Oct 22 2026: the Oct 14 header had dropped it, and people stopped reaching /signup from
+ * the pages with no sign-up button of their own (the tools, the case lookup, processing times; measured in
+ * PostHog, about 6.7 people a day before and 2.4 after).
  *
  * The first two are what most people come for. Data opens one panel with the
  * six groups of data pages side by side, so nothing is hunted for group by
@@ -230,14 +234,23 @@ export default function SiteHeader() {
           <MenuButton id="learn-menu" label="Learn" open={menu === "learn"} current={onLearn} onToggle={() => toggle("learn")} />{" "}
           <BarLink page={HEADER_PAGES.forAttorneys} current={pathname === HEADER_PAGES.forAttorneys.href} />
         </nav>{" "}
-        <div className="ml-auto flex items-center gap-1 lg:gap-3">
-          <SiteSearch className="w-[22rem] 2xl:w-96" />{" "}
+        <div className="ml-auto flex items-center gap-1 lg:gap-2 min-[1400px]:gap-3">
+          <SiteSearch className="w-72 min-[1400px]:w-[22rem] 2xl:w-96" />{" "}
           {pathname !== "/login" ? (
             <IntentLink
               href="/login"
-              className="relative hidden h-10 items-center whitespace-nowrap border border-input bg-card px-4 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex"
+              className="relative hidden h-10 items-center whitespace-nowrap border border-input bg-card px-3 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex min-[1400px]:px-4"
             >
               Sign in
+              <LinkPending kind="button" />
+            </IntentLink>
+          ) : null}{" "}
+          {pathname !== "/signup" ? (
+            <IntentLink
+              href="/signup"
+              className="relative hidden h-10 items-center whitespace-nowrap border border-primary bg-primary px-3 text-base font-semibold text-black transition-colors hover:bg-primary/90 lg:flex min-[1400px]:px-4"
+            >
+              Sign up
               <LinkPending kind="button" />
             </IntentLink>
           ) : null}{" "}
@@ -351,6 +364,12 @@ export default function SiteHeader() {
             {pathname !== "/login" ? (
               <IntentLink href="/login" className="flex min-h-12 items-center text-lg font-semibold">
                 Sign in
+                <LinkPending kind="row" />
+              </IntentLink>
+            ) : null}
+            {pathname !== "/signup" ? (
+              <IntentLink href="/signup" className="flex min-h-12 items-center text-lg font-semibold">
+                Sign up
                 <LinkPending kind="row" />
               </IntentLink>
             ) : null}
