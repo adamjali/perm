@@ -14,9 +14,11 @@ interface ContentGridProps {
   showType?: boolean;
   /** 3 under a topic heading on the sectioned listings, 2 where the grid is the page. */
   headingLevel?: 2 | 3;
+  /** Paging: the slugs on the current page. Every post is rendered; the rest are hidden, so their links stay. */
+  shown?: Set<string>;
 }
 
-export default function ContentGrid({ posts, showType, headingLevel = 2 }: ContentGridProps) {
+export default function ContentGrid({ posts, showType, headingLevel = 2, shown }: ContentGridProps) {
   if (posts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -32,9 +34,16 @@ export default function ContentGrid({ posts, showType, headingLevel = 2 }: Conte
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {posts.map((post) => (
-        <ContentCard key={`${post.type}-${post.slug}`} headingLevel={headingLevel} post={post} showType={showType} />
-      ))}
+      {posts.map((post) =>
+        shown ? (
+          // Off the current page, a card stays in the HTML (every article keeps its link from the list) and is hidden.
+          <div key={`${post.type}-${post.slug}`} className={shown.has(post.slug) ? "contents" : "hidden"}>
+            <ContentCard headingLevel={headingLevel} post={post} showType={showType} />
+          </div>
+        ) : (
+          <ContentCard key={`${post.type}-${post.slug}`} headingLevel={headingLevel} post={post} showType={showType} />
+        ),
+      )}
     </div>
   );
 }

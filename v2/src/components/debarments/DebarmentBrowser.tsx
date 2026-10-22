@@ -59,12 +59,15 @@ export function filterDebarments(rows: readonly DebarmentView[], q: DebarmentQue
   return [...kept].sort(by[q.sort]);
 }
 
-function Row({ d }: { d: DebarmentView }) {
+function Row({ d, off = false }: { d: DebarmentView; off?: boolean }) {
   // An ENDED debarment is history and is dimmed. An UPCOMING one is not: it is
   // a live warning about a sponsor who is about to be barred, so it keeps full
   // contrast and says so.
   return (
-    <li className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${d.phase === "ended" ? "text-muted-foreground" : ""}`}>
+    <li
+      hidden={off}
+      className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${d.phase === "ended" ? "text-muted-foreground" : ""}`}
+    >
       <div>
         <span className="font-bold">{d.entity}</span>{" "}
         {d.entityType ? <span className="text-sm text-muted-foreground">{d.entityType}</span> : null}{" "}
@@ -93,19 +96,22 @@ function Row({ d }: { d: DebarmentView }) {
 /** Entries a page in one program's list (owner, Oct 21 2026: "pagination not endless scroll"). */
 const PER_PAGE = 25;
 
-/** One program's entries, a page at a time; a new search or order starts again at page 1 (the key). */
+/**
+ * One program's entries, a page at a time; a new search or order starts again at page 1 (the key). Every entry stays
+ * in the HTML and the ones off the page are hidden, so the whole record is in the page for search engines.
+ */
 function ProgramList({ list, label }: { list: DebarmentView[]; label: string }) {
   const [page, setPage] = useState(1);
   const top = useRef<HTMLUListElement>(null);
   const pageCount = Math.max(1, Math.ceil(list.length / PER_PAGE));
-  const slice = list.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const first = (page - 1) * PER_PAGE;
   return (
     <>
       <ul ref={top} className="mt-3 scroll-mt-28 divide-y divide-border border-y-2 border-border">
-        {slice.map((d) => (
+        {list.map((d, i) => (
           <Fragment key={`${d.program}-${d.entity}-${d.startDate}`}>
             {" "}
-            <Row d={d} />
+            <Row d={d} off={i < first || i >= first + PER_PAGE} />
           </Fragment>
         ))}
       </ul>{" "}

@@ -69,10 +69,16 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
   const shown = ordered.length;
   const pageCount = Math.max(1, Math.ceil(shown / PER_PAGE));
   const page = clampPage(pageParam, pageCount);
-  const onPage = new Set(ordered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
+  // Every matching article stays in the page, so each keeps its link from this list (Google follows links, not the
+  // page buttons); the ones off the current page are hidden. Measured live Oct 22 2026: cut to twelve, /guides linked
+  // 29 of 86 guides and /blog 15 of 27.
+  const onPage = new Set(ordered.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((p) => p.slug));
   const sections = topics
     .filter((t) => !active || t.id === active)
-    .map((t) => ({ topic: t, posts: matches.filter((p) => p.meta.category === t.id && onPage.has(p)) }))
+    .map((t) => {
+      const list = matches.filter((p) => p.meta.category === t.id);
+      return { topic: t, posts: list, here: list.some((p) => onPage.has(p.slug)) };
+    })
     .filter((s) => s.posts.length > 0);
   const counts = new Map(topics.map((t) => [t.id, posts.filter((p) => p.meta.category === t.id).length]));
 
@@ -104,8 +110,8 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
         </p>
       ) : null}
 
-      {sections.map(({ topic, posts: list }) => (
-        <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} >
+      {sections.map(({ topic, posts: list, here }) => (
+        <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} hidden={!here}>
           <div className="mb-5 flex items-center gap-3 border-b-2 border-border pb-3 sm:gap-4">
             <SpotPicture name={topic.picture} alt="" className="w-16 shrink-0 sm:w-24" />{" "}
             <div className="min-w-0">
@@ -115,7 +121,7 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
               <p className="mt-1 text-base text-soft">{topic.blurb}</p>
             </div>
           </div>
-          <ContentGrid posts={list} headingLevel={3} />
+          <ContentGrid posts={list} headingLevel={3} shown={onPage} />
         </section>
       ))}
 
