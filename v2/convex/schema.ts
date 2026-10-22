@@ -1670,6 +1670,42 @@ export default defineSchema({
     .index("by_email_perm", ["email", "permCaseNumber"])
     .index("by_told", ["toldAt"]),
 
+  /**
+   * The founder's congratulations note, one row per watched case that earned one (convex/congratsNotes.ts,
+   * words in convex/lib/congratsNote.ts). Nothing here sends: a person reads each note and sends it from the
+   * press mailbox, then records it. `state`: due (waiting for its day and a read), scheduled (in Zoho's
+   * Outbox), sent, or skipped with a reason.
+   */
+  congratsNotes: defineTable({
+    alertId: v.id("caseStatusAlerts"),
+    email: v.string(),
+    caseNumber: v.string(),
+    program: v.union(v.literal("perm"), v.literal("lca"), v.literal("pwd")),
+    /** The status the note congratulates, as our alert reported it. */
+    status: v.string(),
+    decidedAt: v.number(),
+    /** The Eastern day it's due, "YYYY-MM-DD". */
+    dueOn: v.string(),
+    state: v.union(v.literal("due"), v.literal("scheduled"), v.literal("sent"), v.literal("skipped")),
+    reason: v.optional(v.string()),
+    zohoMessageId: v.optional(v.string()),
+    /** When Zoho is to send it ("MM/DD/YYYY HH:MM:SS" Eastern, Zoho's own form). */
+    scheduledFor: v.optional(v.string()),
+    scheduledAt: v.optional(v.number()),
+    sentAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_alert", ["alertId"])
+    .index("by_email", ["email"])
+    .index("by_state_due", ["state", "dueOn"]),
+
+  /** Addresses that asked not to get another note ("if you'd rather I didn't write again"). */
+  congratsNoteOptOuts: defineTable({
+    email: v.string(),
+    at: v.number(),
+    note: v.optional(v.string()),
+  }).index("by_email", ["email"]),
+
   bulletinAlerts: defineTable({
     email: v.string(),
     /** Employment category as the bulletin prints it: EB1..EB5, EW3. */
