@@ -7323,6 +7323,11 @@ before and after Sep 27, reading every browser exception since, and walking the 
   the retired Turso database, which bills per row read. Next refuses a second dev server in the same
   folder, and Turbopack refuses a `node_modules` symlinked from outside the project root, so a
   second copy runs from a git worktree with its own `pnpm install --offline`.
+  **Since the LCA split (Oct 20) it takes both databases, with keepalives** (a dropped tunnel turns every data page
+  into a 500): `ssh -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=4 -fN -L
+  127.0.0.1:18081:127.0.0.1:8080 -L 127.0.0.1:18082:127.0.0.1:8082 permtracker`, then `DATABASE_URL=http://127.0.0.1:18081
+  DATABASE_LCA_URL=http://127.0.0.1:18082` and the token as `DATABASE_AUTH_TOKEN` (read from the server's
+  production.env into a variable, never printed).
 
 
 ## Oct 1 2026: the visual pass, one email list, breadcrumbs, and a cleanup
@@ -10102,3 +10107,40 @@ first when the app's data shape changes (`UPDATE_TOUR_FIXTURES=1 pnpm exec vites
 Juniper now has three notes). The article capture hides `.fixed`, which caught the chat panel mid-animation and made a
 blank figure: its recipe forces opacity and transform. **Look at every clip's frames and every figure** before shipping:
 a 2 KB WebP was a blank picture, and the case-page clip is what showed the "Expired" defect.
+
+## Oct 21 2026 (night): image-led pages, scroll stages that stay smooth, and pictures of the site's own pages
+
+The owner's direction since Oct 21: the picture is the content, few words. What's built and how to extend it:
+
+- **Two shapes, and only one page gets the moving one.** `TourStage` (`src/components/home/TourStage.tsx`) pins its
+  bands in a sideways ribbon stage; only the attorney page uses it ("keep that sideways scroll for attorney page, rest
+  dont need it"). Everywhere else a page is a run of `StageBand`s (`src/components/scroll/StageBand.tsx`): full-width
+  paper and ink bands, words on one side, a real picture on the other, stacked. Props: `pinned` (only inside
+  `TourStage`), `bleed` (the picture runs off the right edge; off for a picture whose point is at its right, like the
+  extension's panel), `measure` (the page's own column, so the band's left edge lines up with the page heading).
+  The homepage road (`RoadStage`) and the guides and blog topic cards (`TopicStack`) are the other two pinned pieces,
+  kept by the owner.
+- **Scroll stages write CSS variables registered non-inherited** (the `@property` block at the top of
+  `globals.css`), each on the element that reads it, once per animation frame, skipping frames where nothing moved
+  (`useScrollStage`, which no longer writes `--progress`). Before: the guides card stack restyled every card on every
+  frame, 1,110 ms of style work over one scroll and 9 jerky frames in 100; after, 76 ms and 1 in 100 (A B B A, a
+  Chrome trace; `~/.claude/skills/site-forge/scripts/scroll-perf.mjs`). A new per-frame variable gets an `@property`
+  line, and a pseudo-element can't read one from its parent.
+- **Topic cards take the height the pinned frame leaves** (`--card-h`, at most 600px) and drop the blurb under 840px
+  of screen height and the third article under 700px, so the "All N" button keeps its room
+  (`node_modules/.cache/qa/card-fit.mjs` checked 9 screen sizes).
+- **Pictures of the site's own pages** come from `scripts/page-pictures.json` (url, clip, sample inputs, alt text
+  with the figures it shows): `CAPTURE_SPEC=scripts/page-pictures.json node scripts/capture_article_heroes.mjs <base>
+  <dir>/light [keys]`, again with `CAPTURE_DARK=1` into `<dir>/dark`, then `python3 scripts/page_shots.py <dir> <set>`,
+  which writes `public/images/<set>/` and the set's typed table (`calculatorShots.ts`, `dataShots.ts`). Captions date
+  every capture; re-take a set when the page it shows changes. The capture script hides the data rail and waits for
+  any other headless Chrome.
+- **For a developer the answer is the picture**: `CodeWindow` (`src/components/marketing/CodeWindow.tsx`), a real
+  request and its reply as text, dated (the keyless employer lookup on /developers, the live security headers on
+  /security). Badges and open data already open with their real thing and have no band.
+- **Small pictures answer the mouse part by part** (`src/components/ui/spot-motion.tsx`; parts marked by
+  `scripts/spot-pictures/build.mjs`), fetched with `cache: "no-cache"` so an old copy can't stop them.
+- **A full-page capture shows below-fold sections blank** (`AutoReveal` holds them until they scroll into view):
+  scroll the page through first, or measure the boxes. **The breadcrumb's "Updated" date ends with a space**: it ran
+  into every page's H1 as text ("2026Live"), found by the glued-text audit only when a class name changed its window.
+- Ledger: `.planning/image-led-2026-10-21.md`.

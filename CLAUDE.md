@@ -1068,7 +1068,8 @@ The picture rules are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md),
 
 ## Oct 21 2026 (night): drawings beside the text, pictures that turn, and pages instead of endless lists
 
-Built on branch `preview/image-led`; the owner saw the four previews and kept all of them (10:19 PM EDT), so they go to `main`.
+Built on branch `preview/image-led`; the owner saw the four previews and kept all of them (10:19 PM EDT), so they go to `main`. Ledger with the measurements: [`.planning/image-led-2026-10-21.md`](.planning/image-led-2026-10-21.md); mechanics in
+[`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 21 2026 (night)".
 
 - **A moving drawing sits beside the text, with no box** (owner: "smaller on the side ... not main thing full width",
   "naked on the screen not in container"): `src/components/figures/frame.ts` floats it right at a third of the

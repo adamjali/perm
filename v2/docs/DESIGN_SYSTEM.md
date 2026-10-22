@@ -186,6 +186,16 @@ if any, is one scroll-scrubbed move the reader drives (a list that lights with i
 stack), with the finished layout under reduced motion and a simple stack on phones. The patterns and which fit this site:
 `~/.claude/explanations/20261021_details_so/RELEVANCE-PERMTRACKER.md`. The case box stays above the fold.
 
+**One moving piece per page, and few pages have one** (owner, Oct 21 2026: "keep that sideways scroll for attorney
+page, rest dont need it lol doing too much"). Pinned pieces: the homepage road (`RoadStage`), the attorney page's
+sideways ribbon (`TourStage`), the guides and blog topic cards (`TopicStack`). Every other page that wants pictures uses
+plain bands (`StageBand`): paper and ink alternating, words on one side, a real capture on the other, stacked, in the
+page's own column (`measure`). For a developer the picture is a real request and its reply as text (`CodeWindow`).
+
+**Scroll-written values are registered CSS variables** (the `@property` block in `globals.css`, `inherits: false`),
+written on the element that reads them, once per frame. An inherited variable written on a section restyles the whole
+section every frame: the topic cards spent 1,110 ms of style work over one scroll before, 76 ms after.
+
 The real thing first: a capture of our own page or app, the agency's own document page, a chart drawn from the data.
 A drawing only where nothing real can be photographed (a mechanism, a topic), and then from the real numbers; where
 drawings go and where they don't is `.planning/anatomy-figures-plan.md`. Every picture:
