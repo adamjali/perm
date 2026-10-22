@@ -1246,10 +1246,25 @@ def perf_verdict(doc: dict | None, now_ms: int) -> dict:
     return section("perf", title, status, summary, fails + warns + lines)
 
 
-def perf_section(now_ms: int) -> dict:
-    from lib_db import Database, read_doc  # noqa: PLC0415 - only needed here
+def with_computed_at(doc: dict | None, column_ms) -> dict | None:
+    """The speed job stores its time in perm_docs' computed_at column, not in the
+    document (scripts/oracle/bin/permtracker-perf), and the judge reads
+    doc["computedAt"]: without this the report called fresh readings 497,963
+    hours old (Oct 22 2026). A time inside the document wins when there is one."""
+    if doc is None or doc.get("computedAt"):
+        return doc
+    try:
+        return {**doc, "computedAt": int(float(column_ms))} if column_ms not in (None, "") else doc
+    except (TypeError, ValueError):
+        return doc
 
-    return perf_verdict(read_doc(Database(), "server_perf"), now_ms)
+
+def perf_section(now_ms: int) -> dict:
+    from lib_db import Database, query_rows, read_doc  # noqa: PLC0415 - only needed here
+
+    db = Database()
+    rows = query_rows(db, "SELECT computed_at FROM perm_docs WHERE key = ?", ["server_perf"])
+    return perf_verdict(with_computed_at(read_doc(db, "server_perf"), rows[0][0] if rows else None), now_ms)
 
 
 # ── assembly ──────────────────────────────────────────────────────────────

@@ -53,6 +53,15 @@ def main() -> int:
     hot = dict(healthy, day={"runs": 24, "warnings": ["src/lib/content/index.ts is under 75% of the copy's busy time."]})
     v = dm.perf_verdict(hot, pnow)
     check(v["status"] == "warn" and "index.ts" in v["summary"], "perf: a warning from any hour of the day is raised", str(v))
+    # The real job keeps its time in perm_docs' computed_at column, not in the document (Oct 22 2026: the report
+    # called fresh readings 497,963 hours old). Shaped like the real row: no computedAt inside.
+    as_written = {k: v for k, v in healthy.items() if k != "computedAt"}
+    check(dm.perf_verdict(dm.with_computed_at(as_written, str(pnow - 600_000)), pnow)["status"] == "ok",
+          "perf: the time comes from the row's computed_at when the document has none")
+    check(dm.with_computed_at(healthy, "1")["computedAt"] == healthy["computedAt"],
+          "perf: a time inside the document wins over the column")
+    check(dm.with_computed_at(as_written, None) == as_written and dm.with_computed_at(None, "5") is None,
+          "perf: no column time and no document leave things as they are")
     broke = dict(healthy, errors={"profile": "the copy's inspector didn't open"})
     v = dm.perf_verdict(broke, pnow)
     check(v["status"] == "warn" and "inspector" in v["summary"], "perf: a failed reading is said, never skipped", str(v))
