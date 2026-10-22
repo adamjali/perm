@@ -1300,3 +1300,48 @@ Still to request, in order (after the "Oct 21 inspection" list above):
 5. `/guides/complete-perm-filing-guide` (a re-taken figure)
 6. `/about`, `/blog`, `/changelog`, `/glossary`, `/guides`, `/policy-changes`, `/tools/ead-extension`,
    `/tools/perm-timeline-calculator`: inspect only; request any crawled before Oct 21
+
+## Queue after the Oct 22 night deploy (42d8b433, about 2 AM EDT), and Search Console's Oct 22 emails
+
+Merged order for the round of Thursday Oct 22 2026. It comes from `node scripts/gsc_queue.mjs --since 55a9c3a7`
+(47 pages: the image-led bands, the guide drawings, the breadcrumb fix) and the two Oct 21 lists above. Pages
+whose words changed lead; pages that changed only through shared parts follow, and get a request only when
+crawled before Oct 21.
+
+**The Oct 22 emails, read on the report (its footer says "Last update 10/15/26"):**
+- "Server error (5xx)": validation started Oct 15 and failed Oct 17, on 235 URLs crawled Oct 6 to 17 (213
+  employer pages, then law firms, cities and old `?q=` searches). They were the site's own busy replies during
+  the crawl bursts. Googlebot got 503s on Oct 17 to 21 (4,128, 8,829, 3,604, 9,984, 6,152 a day), and none since
+  5 PM EDT Oct 21, the deploy that cut the server's CPU. A sample of 20 answers 200 now. Re-starting "Validate
+  fix" is the owner's call; it isn't part of a round.
+- "Blocked due to other 4xx issue": one URL, `/perm-employers/duk-j-corporation`, crawled Oct 17. It isn't in the
+  origin's logs, so Cloudflare answered at the edge; it answers 200 now.
+- Googlebot's crawl fell about tenfold after the 5xx bursts (about 4,500 an hour at the peak, 100 to 350 now).
+  Expect it to recover over days as the pages answer cleanly.
+
+Still to request, in order:
+1. `/guides/getting-started` (rewritten Oct 21; the welcome email's link)
+2. `/tools/i140-calculator` (unknown to Google on Oct 21)
+3. `/tools/pwd-calculator` (discovered, not indexed)
+4. `/guides/track-a-prevailing-wage-request` (unknown to Google; gained the wage-request line drawing)
+5. `/guides/perm-denied-what-happens-next` (DOL's FAQ on the 30 calendar days)
+6. `/guides/perm-appeal-reconsideration-balca` (DOL's FAQ on asking for both at once)
+7. `/guides/perm-rfi-issued-what-to-do` (DOL's case search answering RFI ISSUED, and the RFI drawing)
+8. `/for-attorneys` (the sideways tour of the app's pages)
+9. `/calculators` (each calculator shown answering)
+10. `/guides/the-perm-deadlines-that-matter` (the filing-window drawing)
+11. `/guides/how-the-perm-queue-works` (the queue drawing)
+12. `/developers` (the keyless lookup's real answer), `/security` (the headers the site sends), `/extension`
+13. `/guides/file-perm-after-prevailing-wage-expires`, `/guides/three-180-day-clocks`,
+    `/guides/how-the-visa-bulletin-works`, `/guides/read-your-priority-date-history` (each gained a drawing)
+14. `/about` (the federal documents around the portrait)
+15. `/blog/why-perm-cases-are-denied`, `/blog/what-dol-publishes-about-perm`, `/blog/how-perm-wage-data-is-published`
+16. The three guides the inspection API couldn't read (`/guides/look-up-a-law-firm`,
+    `/guides/look-up-a-perm-case-by-number`, `/guides/look-up-an-lca-by-number`), if not indexed
+17. `/perm-employers/duk-j-corporation` (the one 4xx), `/perm-attorneys/browse/u`
+18. **Only after the Oct 23 2 AM deploy** (5f705da3, which puts every article and entry back in the paged
+    lists' HTML): `/guides`, `/blog`, `/debarments`. Asked earlier, Google would read lists that link only one page.
+19. Inspect only; request any crawled before Oct 21: `/`, `/tools`, `/case-search`, `/visa-bulletin`,
+    `/perm-employers`, `/perm-attorneys`, `/perm-wages`, `/perm-employers/under-review`, `/open-data`, `/badges`,
+    `/press`, `/methodology`, then the data pages in the list above.
+20. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
