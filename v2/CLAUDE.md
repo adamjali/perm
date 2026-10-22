@@ -10040,8 +10040,9 @@ The public calculator now hands them over three ways, and the last is the funnel
   working while a request is owed, under review once one is pending; a certification after a denial is a reversal and
   wins. A missed request leaves the deadline overdue and the case open: no auto-close (a closure reason would need a
   schema change, and the dates can't tell a missed deadline from a request not yet recorded). Validator V-DEN-01 to 04.
-- **The day count, flagged for the attorney**: letter date + 30 (counted like the RFI's 30), not + 29 the way DOL
-  prints a certification's expiry.
+- **The day count is letter date + 30** (counted like the RFI's 30), not + 29 the way DOL prints a certification's
+  expiry. The attorney confirmed + 30 on Thursday Oct 22 2026, 7:31 AM EDT. Whether a weekend or holiday last day
+  moves forward is still unanswered, so the date never moves.
 - **"Next up" opened its quick-edit box for none of nine steps** after the Oct 11 sentence-case rename; `ACTION_CONFIG`
   is typed by `NextActionName` now. A step can save on either of several outcomes (`optional` fields: a certification
   or a denial).
