@@ -1314,6 +1314,8 @@ crawled before Oct 21.
   the crawl bursts. Googlebot got 503s on Oct 17 to 21 (4,128, 8,829, 3,604, 9,984, 6,152 a day), and none since
   5 PM EDT Oct 21, the deploy that cut the server's CPU. A sample of 20 answers 200 now. Re-starting "Validate
   fix" is the owner's call; it isn't part of a round.
+  **Restarted on the owner's yes, Thursday Oct 22 2026, 9:02 AM EDT**: "Validation started 10/22/26", 235 pending,
+  0 failed.
 - "Blocked due to other 4xx issue": one URL, `/perm-employers/duk-j-corporation`, crawled Oct 17. It isn't in the
   origin's logs, so Cloudflare answered at the edge; it answers 200 now.
 - Googlebot's crawl fell about tenfold after the 5xx bursts (about 4,500 an hour at the peak, 100 to 350 now).
