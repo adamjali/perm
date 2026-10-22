@@ -15,16 +15,7 @@ import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { PageBasics } from "@/components/data/PageBasics";
-import {
-  BulletinStepsMini,
-  CertaintyRangeMini,
-  QueueDepthMini,
-  ScaleBarsMini,
-  TapeMini,
-  TwoBarsMini,
-  WageLevelsMini,
-  WindowSpansMini,
-} from "@/components/tools/MiniDiagrams";
+import { CalculatorTour } from "@/components/tools/CalculatorTour";
 import { SITE_URL } from "@/lib/constants/site";
 
 const TITLE = "Free PERM Timeline and Deadline Calculators";
@@ -63,7 +54,6 @@ export const dynamic = "force-static";
 const TOOLS = [
   {
     href: "/tools/perm-timeline-calculator",
-    viz: "tape" as const,
     icon: CalendarClock,
     name: "PERM processing time calculator",
     kind: "Estimate",
@@ -72,7 +62,6 @@ const TOOLS = [
   },
   {
     href: "/tools/perm-deadline-calculator",
-    viz: "spans" as const,
     icon: CalendarCheckIcon,
     name: "PERM deadline calculator",
     kind: "Exact",
@@ -81,7 +70,6 @@ const TOOLS = [
   },
   {
     href: "/tools/pwd-calculator",
-    viz: "queue" as const,
     icon: Scale,
     name: "Prevailing wage queue calculator",
     kind: "Count",
@@ -90,7 +78,6 @@ const TOOLS = [
   },
   {
     href: "/tools/i140-calculator",
-    viz: "twobars" as const,
     icon: FileTextIcon,
     kind: "Count",
     name: "I-140 queue calculator",
@@ -99,7 +86,6 @@ const TOOLS = [
   },
   {
     href: "/tools/i485-queue-position",
-    viz: "range" as const,
     icon: UsersIcon,
     kind: "Range",
     name: "I-485 queue position",
@@ -108,7 +94,6 @@ const TOOLS = [
   },
   {
     href: "/tools/green-card-line",
-    viz: "range" as const,
     icon: UsersThreeIcon,
     kind: "Range",
     name: "Green card line",
@@ -117,7 +102,6 @@ const TOOLS = [
   },
   {
     href: "/tools/eb2-vs-eb3",
-    viz: "twobars" as const,
     icon: Scale,
     kind: "Compare",
     name: "EB-2 vs EB-3",
@@ -126,7 +110,6 @@ const TOOLS = [
   },
   {
     href: "/tools/which-green-card",
-    viz: "steps" as const,
     icon: CompassIcon,
     kind: "Match",
     name: "Which green card fits",
@@ -134,7 +117,6 @@ const TOOLS = [
   },
   {
     href: "/tools/priority-date-calculator",
-    viz: "steps" as const,
     icon: CalendarRange,
     kind: "History",
     name: "Priority date calculator",
@@ -143,7 +125,6 @@ const TOOLS = [
   },
   {
     href: "/tools/green-card-timeline",
-    viz: "scale" as const,
     icon: Route,
     kind: "Overview",
     name: "Green card timeline",
@@ -152,7 +133,6 @@ const TOOLS = [
   },
   {
     href: "/tools/rfi-deadline",
-    viz: "tape" as const,
     icon: CalendarCheckIcon,
     kind: "Exact",
     name: "RFI and audit deadline",
@@ -161,7 +141,6 @@ const TOOLS = [
   },
   {
     href: "/tools/pwd-validity",
-    viz: "spans" as const,
     icon: CalendarRange,
     kind: "Exact",
     name: "Wage determination validity",
@@ -170,7 +149,6 @@ const TOOLS = [
   },
   {
     href: "/tools/h1b-six-year-limit",
-    viz: "scale" as const,
     icon: CalendarClock,
     kind: "Exact",
     name: "H-1B six-year limit",
@@ -179,7 +157,6 @@ const TOOLS = [
   },
   {
     href: "/tools/h1b-lottery-odds-calculator",
-    viz: "levels" as const,
     icon: ChartBarIcon,
     kind: "Estimate",
     name: "H-1B lottery odds",
@@ -188,7 +165,6 @@ const TOOLS = [
   },
   {
     href: "/tools/priority-date-retention",
-    viz: "steps" as const,
     icon: FileTextIcon,
     kind: "Exact",
     name: "Priority date retention",
@@ -197,7 +173,6 @@ const TOOLS = [
   },
   {
     href: "/tools/wage-levels",
-    viz: "levels" as const,
     icon: CurrencyDollarIcon,
     kind: "Live",
     name: "Prevailing wage levels",
@@ -206,7 +181,6 @@ const TOOLS = [
   },
   {
     href: "/tools/green-card-fees",
-    viz: "twobars" as const,
     icon: CurrencyDollarIcon,
     kind: "Schedule",
     name: "Green card government fees",
@@ -270,7 +244,8 @@ export default function CalculatorsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+    <>
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
       <JsonLdScript schema={itemList} />      <header className="pt-10 sm:pt-12">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           PERM calculators
@@ -281,6 +256,12 @@ export default function CalculatorsPage() {
           government&apos;s own data.
         </p>
       </header>
+    </div>{" "}
+    {/* Every calculator, stretch by stretch, each band showing one of them answered. */}
+    <div className="mt-10">
+      <CalculatorTour />
+    </div>{" "}
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
 
       {/* The hub's real job: route the reader's situation to the right
           tool, in the order the process happens. */}
@@ -326,47 +307,6 @@ export default function CalculatorsPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      </section>
-
-      <section className="mt-12">
-        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-8">
-          {TOOLS.map((t) => {
-            const Icon = t.icon;
-            const card = (
-              <Link
-                key={t.href}
-                href={t.href}
-                className="group flex h-full flex-col border-2 p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lift border-border bg-card shadow-hard-sm hover:bg-accent"
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="size-6 shrink-0 text-primary-text" aria-hidden="true" />
-                  <span className="text-sm text-muted-foreground">
-                    {t.kind}
-                  </span>
-                </div>
-                <h3 className="mt-4 font-heading text-xl font-bold leading-tight">
-                  <span className="u-title">{t.name}</span>
-                </h3>{" "}
-                {/* The tool's idea, drawn in the shared mini-diagram system. */}
-                <div className="mt-4 max-w-[170px]">
-                  {t.viz === "tape" ? <TapeMini /> : null}
-                  {t.viz === "spans" ? <WindowSpansMini /> : null}
-                  {t.viz === "queue" ? <QueueDepthMini /> : null}
-                  {t.viz === "twobars" ? <TwoBarsMini /> : null}
-                  {t.viz === "steps" ? <BulletinStepsMini /> : null}
-                  {t.viz === "scale" ? <ScaleBarsMini /> : null}
-                  {t.viz === "range" ? <CertaintyRangeMini /> : null}
-                  {t.viz === "levels" ? <WageLevelsMini /> : null}
-                </div>{" "}
-                <p className="mt-3 flex-1 text-base leading-relaxed text-soft">
-                  {t.blurb}
-                </p>{" "}
-                <span className="link mt-5">Open</span>
-              </Link>
-            );
-            return card;
-          })}
         </div>
       </section>
 
@@ -440,5 +380,6 @@ export default function CalculatorsPage() {
       </section>{" "}
       <PageBasics page="calculators" />
     </div>
+    </>
   );
 }

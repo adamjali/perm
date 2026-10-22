@@ -1,0 +1,88 @@
+{
+  "calculators/pwd": {
+    "capture": {
+      "url": "/tools/pwd-calculator",
+      "clip": "fromm:Prevailing wage queue calculator",
+      "maxHeight": 1150,
+      "wait": 3000
+    },
+    "alt": "The prevailing wage queue calculator for a request DOL received in September 2026: 34,515 requests ahead of it of 49,034 pending, and the backlog month by month."
+  },
+  "calculators/deadlines": {
+    "capture": {
+      "url": "/tools/perm-deadline-calculator",
+      "clip": "fromm:Your PERM deadlines",
+      "maxHeight": 1150,
+      "fill": [
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 1)",
+          "text": "2026-08-03"
+        },
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 2)",
+          "text": "2026-08-23"
+        },
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 3)",
+          "text": "2026-09-20"
+        }
+      ]
+    },
+    "alt": "The deadline calculator for a determination on August 3, 2026 and recruitment from August 23 to September 20: the wage determination's validity, the recruitment, the quiet period and the filing window, drawn to scale."
+  },
+  "calculators/decision": {
+    "capture": {
+      "url": "/tools/perm-timeline-calculator",
+      "clip": "fromm:PERM processing time calculator",
+      "maxHeight": 1150,
+      "fill": [
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 1)",
+          "text": "2026-01-15"
+        }
+      ]
+    },
+    "alt": "The PERM processing time calculator for a case DOL received on January 15, 2026: most likely around Tuesday, November 3, 2026, between October 28 and November 12, at DOL's pace of 644 decisions a working day."
+  },
+  "calculators/i140": {
+    "capture": {
+      "url": "/tools/i140-calculator",
+      "clip": "fromm:I-140",
+      "maxHeight": 1150,
+      "wait": 3000
+    },
+    "alt": "The I-140 queue calculator for advanced-degree petitions: 8,644 waiting, 12,477 decided last quarter, and USCIS's published time of 3 months."
+  },
+  "calculators/line": {
+    "capture": {
+      "url": "/tools/green-card-line",
+      "clip": "fromm:Your place in the green card line",
+      "maxHeight": 1150,
+      "fill": [
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 1)",
+          "text": "2019-06-15"
+        }
+      ]
+    },
+    "alt": "The green card line for an EB-2 India priority date of June 15, 2019: 146,000 to 366,000 people ahead, 37 to 94 years at the pace of fiscal year 2024."
+  },
+  "calculators/h1b": {
+    "capture": {
+      "url": "/tools/h1b-six-year-limit",
+      "clip": "fromm:H-1B six-year limit",
+      "maxHeight": 1150,
+      "fill": [
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 1)",
+          "text": "2021-10-01"
+        },
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 2)",
+          "text": "2026-03-02"
+        }
+      ]
+    },
+    "alt": "The H-1B six-year limit for status that began October 1, 2021: six years end September 30, 2027, 344 days left, and a PERM filed March 2, 2026 meets the 365-day rule."
+  }
+}
