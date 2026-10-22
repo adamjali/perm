@@ -151,6 +151,7 @@ export function CalculatorTour() {
         const shot = CALCULATOR_SHOTS[b.shot];
         return (
           <StageBand
+            measure="max-w-7xl px-4 sm:px-6"
             key={b.id}
             id={b.id}
             index={i}

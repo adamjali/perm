@@ -19,6 +19,8 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { SpotPicture } from "@/components/ui/spot-picture";
+import { CodeWindow } from "@/components/marketing/CodeWindow";
+import { StageBand } from "@/components/scroll/StageBand";
 
 const TITLE = "PERM Tracker API and MCP Server";
 const DESCRIPTION =
@@ -37,6 +39,14 @@ export const metadata: Metadata = withSocialCard(
 export const dynamic = "force-static";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
+
+/**
+ * A real answer from the keyless lookup, kept as printed (the site's own address in place of the local server it
+ * was asked on), with the day it was asked. Ask again and replace both when the figures in it change much.
+ */
+const SAMPLE_ASKED = "October 22, 2026";
+const SAMPLE_COMMAND = `curl "${API_BASE}/lookup/employer?name=Google"`;
+const SAMPLE_ANSWER = "{\n  \"data\": {\n    \"query\": \"Google\",\n    \"match\": \"exact\",\n    \"employer\": {\n      \"name\": \"Google LLC\",\n      \"slug\": \"google-llc\",\n      \"url\": \"https://permtracker.app/perm-employers/google-llc\",\n      \"page\": \"perm\",\n      \"perm\": {\n        \"published\": 1617,\n        \"certified\": 1608,\n        \"denied\": 4,\n        \"certifiedShare\": 0.998,\n        \"pending\": 15,\n        \"newestFiling\": \"2026-09-25\",\n        \"filingsLast12Months\": 15\n      },\n      \"h1bLcas\": 66768,\n      \"wageRequests\": null\n    },\n    \"shareFloor\": 30\n  },\n  \"meta\": {\n    \"source\": \"U.S. Department of Labor, OFLC PERM and LCA disclosure files (decided cases) and FLAG case status (pending)\",\n    \"asOf\": \"2026-06-30\",\n    \"url\": \"https://permtracker.app/perm-employers/google-llc\"\n  }\n}";
 
 function Code({ children }: { children: string }) {
   return (
@@ -126,14 +136,37 @@ export default function DevelopersPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
+    <>
+    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
       <header className="pt-10 sm:pt-12">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">API and AI assistants</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
           The federal records behind this site, as JSON for your code and as tools for Claude, Cursor and other assistants.
         </p>
       </header>
-
+    </div>{" "}
+    {/* One request and the answer it got: for a developer, the answer is the picture. */}
+    <div className="mt-10 border-t-2 border-black">
+      <StageBand
+        measure="max-w-6xl px-4 sm:px-6"
+        id="first-request"
+        index={0}
+        flip={false}
+        ink={false}
+        bleed={false}
+        title="One request, the federal record"
+        lead="The employer lookup needs no key. Every answer names its source, the date its data reaches and the page it came from."
+        picture={
+          <CodeWindow
+            command={SAMPLE_COMMAND}
+            output={SAMPLE_ANSWER}
+            label="The employer lookup asked about Google, and its answer: Google LLC, 1,617 published PERM cases, 1,608 certified, 15 waiting at DOL, and 66,768 H-1B applications, from DOL's files."
+            caption={`Asked ${SAMPLE_ASKED}.`}
+          />
+        }
+      />
+    </div>{" "}
+    <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
       <ol className="mt-10 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-3">
         {steps.map((s, i) => (
           <li key={s.title} className="bg-tint p-5 border-3 shadow-hard border-border">
@@ -440,5 +473,6 @@ export default function DevelopersPage() {
         </p>
       </section>
     </div>
+    </>
   );
 }

@@ -82,6 +82,7 @@ export function DataTour() {
         const shot = DATA_SHOTS[band.shot];
         return (
           <StageBand
+            measure="max-w-7xl px-4 sm:px-6"
             key={g}
             id={`data-${band.shot}`}
             index={i}

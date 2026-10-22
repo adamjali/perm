@@ -89,6 +89,7 @@ export function ExtensionTour() {
         const ink = i % 2 === 1;
         return (
           <StageBand
+            measure="max-w-6xl px-4 sm:px-6"
             key={b.id}
             id={b.id}
             index={i}

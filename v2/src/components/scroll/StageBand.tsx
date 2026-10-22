@@ -23,6 +23,7 @@ export function StageBand({
   extra,
   bleed = true,
   pinned = false,
+  measure = "max-w-[1400px] px-4 sm:px-8",
 }: {
   id: string;
   index: number;
@@ -45,6 +46,8 @@ export function StageBand({
   bleed?: boolean;
   /** A layer of TourStage's pinned frame (the attorney page). Off, the band is an ordinary section. */
   pinned?: boolean;
+  /** The column's width and side padding: the page's own, so the band's left edge lines up with its heading. */
+  measure?: string;
 }) {
   return (
     <section
@@ -63,7 +66,8 @@ export function StageBand({
       <div
         data-tour-grid=""
         className={cn(
-          "mx-auto grid max-w-[1400px] gap-10 px-4 py-14 [&>*]:min-w-0 sm:px-8 sm:py-20 lg:grid-cols-12 lg:items-center lg:gap-14",
+          "mx-auto grid gap-10 py-14 [&>*]:min-w-0 sm:py-20 lg:grid-cols-12 lg:items-center lg:gap-14",
+          measure,
           pinned && "lg:motion-safe:h-full lg:motion-safe:py-8",
         )}
       >
