@@ -154,7 +154,7 @@ export function ProcessingTimeEstimate({
             : range.subtypes.length > 1
               ? "Each figure is the time USCIS took to finish 80% of the petitions of that kind it decided over the past six months; the top line spans the fastest and slowest."
               : "The time USCIS took to finish 80% of the petitions of this kind it decided over the past six months."}{" "}
-          USCIS published these on {formatAsOf(PROCESSING_TIMES_AS_OF)}.{" "}
+          Read from USCIS&apos;s page on {formatAsOf(PROCESSING_TIMES_AS_OF)}.{" "}
           <a
             href={PROCESSING_TIMES_SOURCE_URL}
             target="_blank"

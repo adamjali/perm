@@ -78,13 +78,15 @@ export interface ProcessingTimeRange {
 // ============================================================================
 
 /**
- * USCIS's own as-of stamp for the figures below.
+ * The day the figures below were last read from USCIS's page. USCIS prints no
+ * date beside them, so this is when they were read, not when USCIS set them.
+ * Read again Oct 22 2026: all eight unchanged since Sep 26.
  *
  * A test asserts this stays current. The previous table sat untouched for
  * sixteen months while quietly reporting numbers a quarter of the real value,
  * because nothing in the codebase could tell that it had gone stale.
  */
-export const PROCESSING_TIMES_AS_OF = "2026-09-26";
+export const PROCESSING_TIMES_AS_OF = "2026-10-22";
 
 /** Where these came from, rendered next to the figures. */
 export const PROCESSING_TIMES_SOURCE_URL =
