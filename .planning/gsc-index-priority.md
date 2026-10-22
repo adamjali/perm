@@ -1347,3 +1347,50 @@ Still to request, in order:
     `/perm-employers`, `/perm-attorneys`, `/perm-wages`, `/perm-employers/under-review`, `/open-data`, `/badges`,
     `/press`, `/methodology`, then the data pages in the list above.
 20. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
+
+### Round, Thursday Oct 22 2026 (about 11:13 to 11:32 AM EDT)
+
+Worked Thursday's merged list from the top. Live at the start: 42d8b433 (the 2 AM deploy). Nothing newer is live:
+the header's Sign up button and the paged lists ship at 2 AM Friday. Google answered Quota Exceeded on the 12th
+request.
+
+Requested (last crawl before the request):
+- `/guides/getting-started` (Oct 20, 8:42 PM; rewritten Oct 21)
+- `/tools/i140-calculator` (unknown to Google)
+- `/tools/pwd-calculator` (discovered, never crawled)
+- `/guides/track-a-prevailing-wage-request` (discovered, never crawled)
+- `/guides/perm-rfi-issued-what-to-do` (Oct 14, 8:26 PM)
+- `/guides/the-perm-deadlines-that-matter` (Oct 2, 5:45 PM)
+- `/guides/how-the-perm-queue-works` (Oct 17, 3:18 AM)
+- `/developers` (Oct 10, 5:46 PM)
+- `/security` (Oct 2, 10:23 PM)
+- `/extension` (Oct 21, 12:53 PM)
+- `/guides/file-perm-after-prevailing-wage-expires` (today 12:03 AM, two hours before its drawing went live)
+
+Skipped, each crawled after its last change went live:
+- `/guides/perm-denied-what-happens-next` (today 4:43 AM)
+- `/guides/perm-appeal-reconsideration-balca` (today 12:26 AM; it last changed Oct 21 afternoon)
+- `/for-attorneys` (today 8:31 AM)
+- `/calculators` (today 9:57 AM)
+
+Stopped at Quota Exceeded on `/guides/three-180-day-clocks` (last crawled Oct 9, 5:26 PM; not requested).
+
+This window is 1280 wide, so the inspector's buttons sit left of the round's usual points: the Page indexing
+chevron at (1204,451) and Request indexing at (1149,363). Take a screenshot first when a click lands outside the
+frame.
+
+Still to request, in order:
+1. `/guides/three-180-day-clocks` (Oct 9; gained a drawing)
+2. `/guides/how-the-visa-bulletin-works`, `/guides/read-your-priority-date-history` (each gained a drawing)
+3. `/about` (the federal documents around the portrait)
+4. `/blog/why-perm-cases-are-denied`, `/blog/what-dol-publishes-about-perm`, `/blog/how-perm-wage-data-is-published`
+5. The three guides the inspection API couldn't read (`/guides/look-up-a-law-firm`,
+   `/guides/look-up-a-perm-case-by-number`, `/guides/look-up-an-lca-by-number`), if not indexed
+6. `/perm-employers/duk-j-corporation` (the one 4xx), `/perm-attorneys/browse/u`
+7. **Only after the Oct 23 2 AM deploy** (5f705da3): `/guides`, `/blog`, `/debarments`. Then run
+   `node scripts/gsc_queue.mjs --since 42d8b433` for anything else that deploy touches (the header's Sign up
+   button changes every page by two words; leave those to the sitemap).
+8. Inspect only; request any crawled before Oct 21: `/`, `/tools`, `/case-search`, `/visa-bulletin`,
+   `/perm-employers`, `/perm-attorneys`, `/perm-wages`, `/perm-employers/under-review`, `/open-data`, `/badges`,
+   `/press`, `/methodology`
+9. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
