@@ -65,6 +65,61 @@ def map_label(body: str):
     return pick
 
 
+def map_body(head: str, out_var: str) -> tuple[str, str]:
+    """(source expression, body) of the map that sets `out_var`."""
+    m = re.search(r"map\s+(\"[^\"]*\"|\S+)\s+\$" + out_var + r"\s*\{([^}]*)\}", head)
+    return (m.group(1).strip('"'), m.group(2)) if m else ("", "")
+
+
+def eval_map(head: str, out_var: str, env: dict[str, str]) -> str:
+    """The value nginx gives `out_var`: its source with variables filled in,
+    the first matching regex in file order (~* ignores case), an exact key,
+    or the default. A value naming a capture (`$bot`) takes the capture."""
+    source, body = map_body(head, out_var)
+    value_of = lambda v: env.get(v, eval_map(head, v, env) if map_body(head, v)[1] else "")
+    text = re.sub(r"\$(\w+)", lambda m: value_of(m.group(1)), source)
+    entries = re.findall(r'(\S+|"[^"]*")\s+(\S+?);', body)
+    default = ""
+    for key, val in entries:
+        key, val = key.strip('"'), val.strip('"')
+        if key == "default":
+            default = val
+            continue
+        if key.startswith("~"):
+            flags = re.I if key.startswith("~*") else 0
+            pattern = key[2:] if key.startswith("~*") else key[1:]
+            m = re.search(pattern.replace("(?<", "(?P<"), text, flags)
+            if m:
+                return m.group(val[1:]) if val.startswith("$") else val
+        elif key == text:
+            return val
+    return default
+
+
+def crawler_keys(head: str, verified: str, ua: str) -> tuple[str, str]:
+    env = {"http_x_pt_verified_bot": verified, "http_user_agent": ua}
+    return eval_map(head, "pt_bot_key", env), eval_map(head, "pt_assist_key", env)
+
+
+# (who, Cloudflare's verdict, user agent, crawler pool key, assistants' pool key)
+ASSIST_CASES = [
+    ("ChatGPT fetching for a person", "true",
+     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot", "", "assist"),
+    ("Claude fetching for a person", "true", "Claude-User/1.0; +Claude-User@anthropic.com", "", "assist"),
+    ("a look-alike ChatGPT-User", "false",
+     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot", "", ""),
+    ("Googlebot", "true", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", "", ""),
+    ("ClaudeBot", "true", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
+     "ClaudeBot", ""),
+    ("OpenAI's search crawler", "true",
+     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot", "OAI-SearchBot", ""),
+    ("Ahrefs' site audit", "true",
+     "Mozilla/5.0 (Linux; Android 13) Mobile Safari/537.36 (compatible; AhrefsSiteAudit/6.1; +http://ahrefs.com/robot/site-audit)",
+     "robot", ""),
+    ("a verified crawler with no bot word", "true", "SomeVerifiedThing/1.0", "verified", ""),
+]
+
+
 def run(conf_text: str) -> None:
     conf = strip_comments(conf_text)
     server_start = conf.index("server {")
@@ -200,6 +255,7 @@ def run(conf_text: str) -> None:
         conn = set(zones_in(b, "limit_conn"))
         check(f"{sel}: crawler rate limits", crawler_req <= req, str(crawler_req - req))
         check(f"{sel}: crawler in-flight caps", crawler_conn <= conn, str(crawler_conn - conn))
+        check(f"{sel}: people's assistants' rate and in-flight cap", "pt_assist" in req and "pt_assist_conn" in conn)
         check(f"{sel}: per-address in-flight cap", "pt_perip" in conn)
         check(f"{sel}: some per-person rate limit", bool(req & {"pt_page", "pt_api", "pt_lookup"}))
 
@@ -233,7 +289,12 @@ def run(conf_text: str) -> None:
     # People are SLOWED before they are refused; crawlers are refused at once.
     # Search engines too (Oct 21 2026): Googlebot's bursts ran past the 12 in
     # flight and got 503s while its average stayed under the rate.
-    for zone in ("pt_page", "pt_lookup", "pt_api", "pt_search"):
+    for zone, conn in (("pt_search", "pt_search_conn"), ("pt_assist", "pt_assist_conn")):
+        delays = [int(d) for d in re.findall(rf"limit_req\s+zone={zone}\s+burst=\d+\s+delay=(\d+);", server)]
+        caps = [int(c) for c in re.findall(rf"limit_conn\s+{conn}\s+(\d+);", server)]
+        check(f"{zone}: the part of a burst let through at once fits its in-flight cap",
+              bool(delays) and bool(caps) and max(delays) + 1 <= min(caps), f"delay {delays} cap {caps}")
+    for zone in ("pt_page", "pt_lookup", "pt_api", "pt_search", "pt_assist"):
         lines = re.findall(rf"limit_req\s+zone={zone}\s+([^;]*);", server)
         check(f"{zone}: two-stage (delay=), never nodelay",
               bool(lines) and all("delay=" in x and "nodelay" not in x for x in lines), str(lines))
@@ -265,6 +326,9 @@ def run(conf_text: str) -> None:
     lookup_map = re.search(r"\$pt_lookup_key\s*\{([^}]*)\}", head)
     check("pre-load exempt from lookup limit", lookup_map is not None and '"1:1"   "";' in lookup_map.group(1))
     bot_map = re.search(r"\$pt_bot_key\s*\{([^}]*)\}", head)
+    for name, verified, ua, want_bot, want_assist in ASSIST_CASES:
+        bot, assist = crawler_keys(head, verified, ua)
+        check(f"pools for {name}", (bot, assist) == (want_bot, want_assist), f"bot={bot!r} assist={assist!r}")
     check("search engines kept out of the shared crawler pool",
           bot_map is not None and bot_map.group(1).lstrip().startswith('"~^true:[a-z]+:"  "";'))
 
@@ -398,6 +462,14 @@ def probe() -> None:
         "Perplexity limited only when verified": good.replace("map $http_user_agent $pt_perplexity_key", "map $pt_bot_key $pt_perplexity_key", 1),
         "ClaudeBot's allowance dropped from a page": good.replace("        limit_req zone=pt_slowcrawl burst=15 nodelay;\n", "", 1),
         "pre-load cap dropped from a page": good.replace("        limit_conn pt_prefetch_conn 16;\n", "", 1),
+        "assistants back in the crawlers' pool": good.replace(
+            '"$http_x_pt_verified_bot:$pt_search_family:$pt_assist_ua:$http_user_agent"',
+            '"$http_x_pt_verified_bot:$pt_search_family::$http_user_agent"', 1),
+        "a look-alike assistant gets their allowance": good.replace('{ "true:1" assist; default ""; }', '{ "~:1$" assist; default ""; }', 1),
+        "assistants' cap dropped from a page": good.replace("        limit_conn pt_assist_conn 12;\n", "", 1),
+        "assistants' burst let through past their cap": good.replace("zone=pt_assist burst=60 delay=8", "zone=pt_assist burst=60 delay=12", 1),
+        "assistants refused instead of paced": good.replace("zone=pt_assist burst=60 delay=8", "zone=pt_assist burst=60 nodelay", 1),
+        "every crawler counted as an assistant": good.replace('"~*(ChatGPT-User|Claude-User|', '"~*(bot|ChatGPT-User|Claude-User|', 1),
         "pre-load cap counts every request": good.replace('{ "1" prefetch; default ""; }', '{ default prefetch; }', 1),
         "defense log loses the pre-load flag": good.replace(' $http_next_router_prefetch\';', "';", 1),
         "refusal views no longer logged": good.replace("        access_log /var/log/permtracker-busy/seen.log pt_busy_seen;\n", "", 1),

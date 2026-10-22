@@ -1111,3 +1111,13 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   (`node_modules/.cache/qa/card-fit.mjs` checks every card at nine sizes).
 - **A picture a script fetches is fetched with `cache: "no-cache"`**: `force-cache` handed back files kept from before the
   pictures had moving parts, and they never reacted.
+
+## Oct 22 2026, in three lines
+
+- **People's AI assistants have their own room at the front door** (owner's yes): ChatGPT-User, Claude-User,
+  Perplexity-User, Meta's fetcher and DuckAssistBot, verified by Cloudflare, left the crawlers' 4 slots for 12 of their
+  own (240 a minute, bursts paced past 8); 26.9% of ChatGPT's fetches for people had got a 503 on Oct 21.
+- **Sign up is back in the header**: the Oct 14 header had dropped it, and visits to /signup from pages without their
+  own button fell from about 6.7 a day to 2.4.
+- **Ahrefs' site audit mostly measures its own limits**: its free crawl stops at 5,000 pages, guesses page types, and
+  its visitor count includes the scraper. Its Oct 20 503s were our crawler cap on a slow evening, fixed Oct 21.
