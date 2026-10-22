@@ -2,18 +2,15 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
-import { TourStage } from "@/components/home/TourStage";
 import { AppWindow } from "@/components/marketing/AppWindow";
-import { STAGE_BAND_NO_SCRIPT_CSS, StageBand } from "@/components/scroll/StageBand";
+import { StageBand } from "@/components/scroll/StageBand";
 import { CALCULATOR_SHOTS, type CalculatorShot } from "@/components/tools/calculatorShots";
 import { cn } from "@/lib/utils";
 
 /**
- * The calculators page as one pinned stage, in the order a case moves (owner, Oct 21 2026, on the attorney page's
- * stage: "keep going more like that"). Each band is one stretch of the process: the calculators for it as links on
- * the left, and one of them answered, captured from the site itself with sample inputs, running off the right edge.
- * From 1024px with motion allowed the bands wipe in over each other under a ribbon of their names; below that and
- * under reduced motion they stack as alternating paper and ink sections.
+ * The calculators page as bands in the order a case moves, one after another as the reader scrolls (the attorney
+ * page's pinned sideways stage stays that page's alone: owner, Oct 21 2026). Each band is one stretch of the
+ * process: its calculators as links, and one of them answered, captured from the site itself with sample inputs.
  */
 
 interface Tool {
@@ -24,7 +21,6 @@ interface Tool {
 
 interface Band {
   id: string;
-  short: string;
   title: string;
   lead: string;
   shot: CalculatorShot;
@@ -36,7 +32,6 @@ interface Band {
 const BANDS: Band[] = [
   {
     id: "wage",
-    short: "Wage",
     title: "The wage determination",
     lead: "Before recruitment, DOL sets the wage the job must pay. These count the queue for it and read the levels.",
     shot: "pwd",
@@ -52,7 +47,6 @@ const BANDS: Band[] = [
   },
   {
     id: "deadlines",
-    short: "Deadlines",
     title: "Recruitment and the filing window",
     lead: "Enter the determination date and the recruitment dates. Every deadline under 20 CFR 656 is worked out and drawn to scale.",
     shot: "deadlines",
@@ -65,7 +59,6 @@ const BANDS: Band[] = [
   },
   {
     id: "decision",
-    short: "Decision",
     title: "Waiting on DOL",
     lead: "Once the ETA 9089 is filed, DOL works its queue in order. These say when it's likely to reach yours.",
     shot: "decision",
@@ -78,7 +71,6 @@ const BANDS: Band[] = [
   },
   {
     id: "i140",
-    short: "I-140",
     title: "The I-140",
     lead: "After certification the employer has 180 days to file with USCIS. These cover its queue, the category and what keeps the priority date.",
     shot: "i140",
@@ -93,7 +85,6 @@ const BANDS: Band[] = [
   },
   {
     id: "line",
-    short: "The line",
     title: "Your place in the line",
     lead: "The visa bulletin decides when a priority date can move to a green card. These show who is ahead of yours and how the cutoff has moved.",
     shot: "line",
@@ -108,7 +99,6 @@ const BANDS: Band[] = [
   },
   {
     id: "h1b",
-    short: "H-1B",
     title: "H-1B time and work permits",
     lead: "A green card case runs alongside the H-1B clock. These count the six years and what a PERM filing keeps open.",
     shot: "h1b",
@@ -155,30 +145,25 @@ function ToolLinks({ tools, ink }: { tools: Tool[]; ink: boolean }) {
 
 export function CalculatorTour() {
   return (
-    <>
-      <noscript>
-        <style>{STAGE_BAND_NO_SCRIPT_CSS}</style>
-      </noscript>
-      <TourStage labels={BANDS.map((b) => b.short)}>
-        {BANDS.map((b, i) => {
-          const ink = i % 2 === 1;
-          const shot = CALCULATOR_SHOTS[b.shot];
-          return (
-            <StageBand
-              key={b.id}
-              id={b.id}
-              index={i}
-              flip={i % 2 === 1}
-              ink={ink}
-              title={b.title}
-              lead={b.lead}
-              picture={<AppWindow url={b.url} shots={shot.shots} alt={shot.alt} caption={b.caption} onBand={ink} />}
-            >
-              <ToolLinks tools={b.tools} ink={ink} />
-            </StageBand>
-          );
-        })}
-      </TourStage>
-    </>
+    <div>
+      {BANDS.map((b, i) => {
+        const ink = i % 2 === 1;
+        const shot = CALCULATOR_SHOTS[b.shot];
+        return (
+          <StageBand
+            key={b.id}
+            id={b.id}
+            index={i}
+            flip={i % 2 === 1}
+            ink={ink}
+            title={b.title}
+            lead={b.lead}
+            picture={<AppWindow url={b.url} shots={shot.shots} alt={shot.alt} caption={b.caption} onBand={ink} />}
+          >
+            <ToolLinks tools={b.tools} ink={ink} />
+          </StageBand>
+        );
+      })}
+    </div>
   );
 }

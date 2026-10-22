@@ -20,24 +20,10 @@ import {
   analystReviewQueue,
   analystReviewAverage,
 } from "@convex/lib/dolProcessingTimes";
-import {
-  AttestationStackMini,
-  BulletinStepsMini,
-  DailyBarsMini,
-  DetourMini,
-  QueueDepthMini,
-  RecordMatchMini,
-  ScaleBarsMini,
-  ShareBarsMini,
-  TapeMini,
-  UnionMini,
-  WageLevelsMini,
-  WindowSpansMini,
-} from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
-import { StatesMapMini } from "@/components/tools/StatesMapMini";
+import { DataTour } from "@/components/tools/DataTour";
 
 const TITLE = "Live PERM Data Overview";
 const DESCRIPTION =
@@ -75,7 +61,8 @@ export default async function ToolsPage() {
   const frontierMonth = analyst?.priorityDate ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+    <>
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
       {/* The page's title on its own ink band (round 3, Oct 15 2026: a plain
           heading on the white ground read as a blank page), with DOL's date
           under it and DOL's three figures fastened to its foot. */}
@@ -171,134 +158,19 @@ export default async function ToolsPage() {
         </Link>
       </section>
 
-      {/* The two sides of the product, connected in one band. */}
-      {/* The disclosure aggregates: three cuts of the same quarterly files. */}
-      <section className="mt-12 border-2 border-border bg-tint p-5 sm:p-8">
-        <h2 className="font-heading text-2xl font-bold">Data fields</h2>
-        {/* Flex-wrap, not a 3-column grid: the card count changes as pages are
-            added, and a fixed third column leaves an empty cell in the last
-            row that reads as a card that failed to load. Wrapping lets the
-            last row share the width instead, whatever the count. */}
-        <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-72">
-          {[
-            {
-              href: "/case-search",
-              label: "Search all programs",
-              blurb: "One box across PERM, wage requests, LCAs and H-2A, H-2B and CW-1.",
-              viz: "union" as const,
-            },
-            {
-              href: "/perm-by-state",
-              label: "By state",
-              blurb: "An interactive map of filings, approval rates and wages by state.",
-              viz: "map" as const,
-            },
-            {
-              href: "/perm-wages",
-              label: "Wages",
-              blurb: "Median offered wage by occupation, from what employers committed to pay.",
-              viz: "scale" as const,
-            },
-            {
-              href: "/perm-employers",
-              label: "Employers",
-              blurb: "Every sponsor in DOL's files, ranked, with track records.",
-              viz: "queue" as const,
-            },
-            {
-              href: "/perm-attorneys",
-              label: "Law firms",
-              blurb: "Who files the most PERM cases, and how fast.",
-              viz: "spans" as const,
-            },
-            {
-              href: "/perm-denial-risk",
-              label: "Denial rates",
-              blurb: "What gets denied, by wage, by year, and by what the form declares.",
-              viz: "shares" as const,
-            },
-            {
-              href: "/perm-cases",
-              label: "Case search",
-              blurb: "Every decided case DOL has published, by employer, job and outcome.",
-              viz: "records" as const,
-            },
-            {
-              href: "/pwd-cases",
-              label: "Wage requests",
-              blurb: "Prevailing wage requests, searchable before the PERM exists.",
-              viz: "levels" as const,
-            },
-            {
-              href: "/lca-cases",
-              label: "H-1B LCAs",
-              blurb: "Labor condition applications as DOL confirms them, by employer and title.",
-              viz: "attest" as const,
-            },
-            {
-              href: "/seasonal-cases",
-              label: "H-2A, H-2B and CW-1",
-              blurb: "Seasonal farm and non-farm filings as DOL confirms them, by employer.",
-              viz: "records" as const,
-            },
-          ].map((c) => (
-            <a
-              key={c.href}
-              href={c.href}
-              className="group flex flex-col border-2 p-6 lift border-border bg-card shadow-hard-sm hover:bg-sage-hover"
-            >
-              <h3 className="font-heading text-lg font-bold"><span className="u-title">{c.label}</span></h3>{" "}
-              {/* The card's own subject, drawn. */}
-              <div className="mt-3 max-w-[150px] text-foreground">
-                {c.viz === "map" ? <StatesMapMini /> : null}
-                {c.viz === "scale" ? <ScaleBarsMini /> : null}
-                {c.viz === "queue" ? <QueueDepthMini /> : null}
-                {c.viz === "spans" ? <WindowSpansMini /> : null}
-                {c.viz === "shares" ? <ShareBarsMini /> : null}
-                {c.viz === "union" ? <UnionMini /> : null}
-                {c.viz === "records" ? <RecordMatchMini /> : null}
-                {c.viz === "levels" ? <WageLevelsMini /> : null}
-                {c.viz === "attest" ? <AttestationStackMini /> : null}
-              </div>{" "}
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">
-                {c.blurb}
-              </p>{" "}
-            </a>
-          ))}
-        </div>
-      </section>
-
-      {/* The queue, day by day - the pages the strip's Queue and Risk groups
-          hold, so the hub reaches everything the nav does. */}
-      <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">The queue, day by day</h2>{" "}
-        <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-64">
-          {[
-            { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, by DOL queue.", viz: <TapeMini /> },
-            { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day.", viz: <DailyBarsMini /> },
-            { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what follows.", viz: <DetourMini /> },
-            { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "Every cutoff since October 2014, and whether your date is current.", viz: <BulletinStepsMini /> },
-          ].map((c) => (
-            <Link
-              key={c.href}
-              href={c.href}
-              className="group flex flex-col border-2 p-5 lift border-border bg-card shadow-hard-sm hover:bg-sage-hover"
-            >
-              <h3 className="font-heading text-lg font-bold"><span className="u-title">{c.label}</span></h3>{" "}
-              {/* The page's subject, drawn, as on the tiles above. */}
-              <div className="mt-3 max-w-[150px] text-foreground">{c.viz}</div>{" "}
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">{c.blurb}</p>{" "}
-            </Link>
-          ))}
-        </div>{" "}
-        <p className="mt-4 text-sm text-muted-foreground">
-          How every figure is computed:{" "}
-          <Link href="/methodology" className="link">
-            the methodology page
-          </Link>
-          .
-        </p>
-      </section>
+    </div>{" "}
+    {/* Every data page, group by group, each band beside a capture of the group's main page. */}
+    <div className="mt-12">
+      <DataTour />
+    </div>{" "}
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <p className="mt-10 text-sm text-muted-foreground">
+        How every figure is computed:{" "}
+        <Link href="/methodology" className="link">
+          the methodology page
+        </Link>
+        .
+      </p>
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="bg-sage p-6 sm:p-8 border-2 shadow-hard border-border">
@@ -342,5 +214,6 @@ export default async function ToolsPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

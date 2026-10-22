@@ -18,6 +18,7 @@ import { SITES } from "../../../../../extension/src/extract";
 import { panelFor, type PanelModel } from "../../../../../extension/src/model";
 import type { LookupAnswer } from "../../../../../extension/src/api";
 import { buttonVariants } from "@/components/ui/button";
+import { ExtensionTour } from "@/components/marketing/ExtensionTour";
 
 /** The listing's address, once the Chrome Web Store publishes it. */
 const CHROME_STORE_URL: string | null = null;
@@ -108,7 +109,8 @@ export default async function ExtensionPage() {
   const sites = SITES.map((s) => s.label);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
+    <>
+    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
       <header className="grid grid-cols-1 items-center gap-10 pt-10 [&>*]:min-w-0 sm:pt-12 lg:grid-cols-[1.2fr_1fr]">
         <div>
           <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">PERM Tracker for Chrome</h1>{" "}
@@ -135,7 +137,12 @@ export default async function ExtensionPage() {
         </div>{" "}
         {model ? <ExamplePanel model={model} /> : null}
       </header>
-
+    </div>{" "}
+    {/* The three answers the panel gives, each over an example posting. */}
+    <div className="mt-14">
+      <ExtensionTour />
+    </div>{" "}
+    <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
       <section className="mt-14" aria-labelledby="where">
         <h2 id="where" className="font-heading text-2xl font-bold">
           Where it works
@@ -161,29 +168,6 @@ export default async function ExtensionPage() {
             </div>
           </li>
         </ul>
-      </section>
-
-      <section className="mt-14" aria-labelledby="reading">
-        <h2 id="reading" className="font-heading text-2xl font-bold">
-          Reading the panel
-        </h2>{" "}
-        <dl className="mt-5 grid grid-cols-1 gap-2 [&>*]:min-w-0 md:grid-cols-2">
-          {(
-            [
-              ["PERM cases published", "Green card labor certifications in DOL's quarterly files: decided cases only."],
-              ["Certified", "The share of decided cases DOL certified, once the employer has 30 or more decided. Fewer, and the panel says it's too few to say."],
-              ["Waiting at DOL now", "Its cases still open in DOL's live case status, which we check every day."],
-              ["H-1B applications (LCAs)", "Labor condition applications in DOL's files: the first step of an H-1B, not the visa itself."],
-              ["Possible match", "The panel picked the busiest employer whose name starts with the posting's, and names it. A brand like \"Amazon\" files under several legal names. Check it's the same company."],
-              ["No record", "Nothing under that name. Companies often file under their legal name, so it may still sponsor under another."],
-            ] as const
-          ).map(([term, meaning]) => (
-            <div key={term} className="bg-tint px-5 py-4">
-              <dt className="font-heading text-base font-bold">{term}</dt>{" "}
-              <dd className="mt-1 text-base leading-relaxed text-soft">{meaning}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
       <section id="privacy" className="mt-14 scroll-mt-24" aria-labelledby="privacy-h">
@@ -233,5 +217,6 @@ export default async function ExtensionPage() {
         </p>
       </section>
     </div>
+    </>
   );
 }

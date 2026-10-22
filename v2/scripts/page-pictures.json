@@ -84,5 +84,59 @@
       ]
     },
     "alt": "The H-1B six-year limit for status that began October 1, 2021: six years end September 30, 2027, 344 days left, and a PERM filed March 2, 2026 meets the 365-day rule."
+  },
+  "data/cases": {
+    "capture": {
+      "url": "/perm-cases",
+      "clip": "fromm:Every PERM case, decided and waiting",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The PERM cases page: 373,939 decided cases in DOL's published files, October 2023 to June 2026, and 160,716 newer from DOL's live service, with the cases DOL decides each month since 2015."
+  },
+  "data/wait": {
+    "capture": {
+      "url": "/perm-processing-times",
+      "clip": "fromm:PERM processing times",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The PERM processing times page: DOL is reviewing applications filed in January 2026, 336 days on average to a determination, the audit review queue at December 2025 and wage requests at June 2026, as DOL published them on October 5, 2026."
+  },
+  "data/employers": {
+    "capture": {
+      "url": "/perm-employers/google-llc",
+      "clip": "fromm:Google LLC",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "Google LLC's employer page: 1,617 PERM filings, 1,608 certified, a 99.8% approval rate, a median wage of $119,350, a median 347 days, and 15 cases waiting at DOL now."
+  },
+  "data/wages": {
+    "capture": {
+      "url": "/tools/salary-explorer",
+      "clip": "fromm:PERM salary explorer",
+      "maxHeight": 1150,
+      "wait": 5000
+    },
+    "alt": "The PERM salary explorer: 343,211 cases with a usable wage, a median of $103,272, the 5th percentile at $24,960 and the 95th at $199,597, and where the wages land in $10,000 bands."
+  },
+  "data/line": {
+    "capture": {
+      "url": "/visa-bulletin",
+      "clip": "fromm:The",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The visa bulletin page for November 2026: of 96 past bulletins first seen before their month, half were out by the 13th of the month before and nine in ten by the 22nd, drawn by day."
+  },
+  "data/denials": {
+    "capture": {
+      "url": "/perm-denial-risk",
+      "clip": "fromm:What gets denied",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The denial rates page: a PERM case is denied 3.2% of the time, and 54.29% of the time when the position isn't full time, with where the denials sit by wage band and declared factor."
   }
 }

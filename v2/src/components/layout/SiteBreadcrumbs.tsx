@@ -111,7 +111,7 @@ export function SiteBreadcrumbs({
       </nav>{" "}
       {day ? (
         <p className="pb-1 text-sm text-muted-foreground sm:pb-0">
-          Updated <time dateTime={updated!}>{day}</time>
+          Updated <time dateTime={updated!}>{day}</time>{" "}
         </p>
       ) : null}
     </div>

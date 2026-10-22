@@ -52,7 +52,7 @@ export function TourStage({ labels, children }: { labels: string[]; children: Re
           className="hidden shrink-0 border-b-2 border-black bg-background lg:motion-safe:block"
         >
           <div className="mx-auto max-w-[1400px] px-8">
-            <div className="relative grid grid-cols-6">
+            <div className="relative grid grid-cols-[repeat(var(--steps),minmax(0,1fr))]">
               {labels.map((label, i) => (
                 <Fragment key={label}>
                   {i > 0 ? " " : null}
@@ -73,7 +73,7 @@ export function TourStage({ labels, children }: { labels: string[]; children: Re
               <span
                 aria-hidden="true"
                 data-tour-bar=""
-                className="absolute bottom-0 left-0 h-1 w-1/6 translate-x-[calc(var(--bar)*100%)] bg-primary"
+                className="absolute bottom-0 left-0 h-1 w-[calc(100%/var(--steps))] translate-x-[calc(var(--bar)*100%)] bg-primary"
               />
             </div>
           </div>

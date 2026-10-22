@@ -1091,8 +1091,11 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   four new files and the data rail's sticky offset used it and fell back to 72px. The notes in v2/CLAUDE.md that
   describe the two variables are history.
 - **The owner kept all four previews** ("PERFECT THANK YOU KEEP ALL"; the attorney page's ribbon stage: "BEAUTIFUL keep
-  going more like that"). The stage's band is shared now (`src/components/scroll/StageBand.tsx`), so another page can
-  take the same shape: the calculators page is the next.
+  going more like that"). **The sideways stage is the attorney page's alone** (11:50 PM EDT: "keep that sideways scroll
+  for attorney page, rest dont need it lol doing too much"): the calculators, extension and data overview pages are
+  plain picture bands (`StageBand`, pinned only inside `TourStage`), one after another, each with a real capture.
+  Captures of the site's own pages: `scripts/page-pictures.json`, `CAPTURE_SPEC=... node scripts/capture_article_heroes.mjs`
+  (add `CAPTURE_DARK=1` for the dark run), then `python3 scripts/page_shots.py <dir> <set>`.
 - **A value a scroll stage writes every frame is a registered, non-inherited CSS variable, written on the element that
   reads it** (`@property` block at the top of `globals.css`). An inherited variable written on a section restyles the
   whole section every frame: the guides page's card stack spent 1,110 ms of style work over one scroll (measured A B B A

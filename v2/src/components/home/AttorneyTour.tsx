@@ -143,6 +143,7 @@ function Facts({ facts, ink = false }: { facts: string[]; ink?: boolean }) {
 function Section({ s, index, flip, ink }: { s: TourSection; index: number; flip: boolean; ink: boolean }) {
   return (
     <StageBand
+      pinned
       id={s.id}
       index={index}
       flip={flip}
