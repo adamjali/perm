@@ -1394,3 +1394,29 @@ Still to request, in order:
    `/perm-employers`, `/perm-attorneys`, `/perm-wages`, `/perm-employers/under-review`, `/open-data`, `/badges`,
    `/press`, `/methodology`
 9. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
+
+## Queue after the Oct 23 night deploy (about 2 AM EDT), replacing Thursday's Still-to-request list
+
+Written Thu Oct 22, 8:20 PM EDT. That deploy carries the paged lists (5f705da3), the header's Sign up button, the
+USCIS processing-times date (038915da) and the homepage rating, now 4.7 from 3 reviews in the visible line and in the
+homepage's rating markup (4b267329). Everything marked "after the deploy" waits until
+`ssh permtracker 'sudo permtracker-deploy status'` shows 4b267329 or later live. This list replaces the Still to
+request list in Thursday's round above; work it top down.
+
+1. `/` after the deploy: its rating markup changed, and it's the brand query's page. Request if last crawled before
+   the Oct 23 deploy.
+2. `/guides/three-180-day-clocks` (last crawled Oct 9; gained a drawing).
+3. `/guides`, `/blog`, `/debarments` after the deploy: paged now, with every article's link still in the HTML.
+4. `/guides/how-the-visa-bulletin-works`, `/guides/read-your-priority-date-history` (each gained a drawing).
+5. `/about` (the federal documents around the portrait).
+6. `/blog/why-perm-cases-are-denied`, `/blog/what-dol-publishes-about-perm`, `/blog/how-perm-wage-data-is-published`.
+7. The three guides the inspection API couldn't read (`/guides/look-up-a-law-firm`,
+   `/guides/look-up-a-perm-case-by-number`, `/guides/look-up-an-lca-by-number`), if not indexed.
+8. After the deploy, only if last crawled before it: `/changelog`, `/uscis-processing-times`,
+   `/tools/green-card-timeline` (the USCIS date line).
+9. `/perm-employers/duk-j-corporation` (the one 4xx), `/perm-attorneys/browse/u`.
+10. Inspect only; request any crawled before Oct 21: `/tools`, `/case-search`, `/visa-bulletin`, `/perm-employers`,
+    `/perm-attorneys`, `/perm-wages`, `/perm-employers/under-review`, `/open-data`, `/badges`, `/press`, `/methodology`.
+11. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last).
+
+After this list: `node scripts/gsc_queue.mjs --since 4b267329` for anything newer.
