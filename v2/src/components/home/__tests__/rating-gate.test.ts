@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewsLine, starFills } from "../ReviewsLine";
-import { REVIEW_URL } from "@/lib/constants/externalLinks";
 import { APP_RATING, MIN_REVIEWS_TO_ADVERTISE, shouldAdvertiseRating } from "@/lib/structuredData";
 
 // Only the gate is swapped; APP_RATING and the threshold stay real, because
@@ -43,7 +42,7 @@ describe("the review rating", () => {
     mockAdvertise.mockReturnValue(false);
     const html = render();
     expect(html).not.toContain("from ");
-    expect(html).toContain(REVIEW_URL);
+    expect(html).toContain('href="/reviews#write"');
   });
 
   it("loads nothing from a third party", () => {

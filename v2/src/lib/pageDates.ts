@@ -29,7 +29,9 @@ export type DateSource =
   /** The newest day the H-1B employer rankings cover. */
   | "h1b"
   /** The last decision day in DOL's published PERM files. */
-  | "corpus";
+  | "corpus"
+  /** The day the newest outside review was left on Senja (Eastern). */
+  | "reviews";
 
 export type DateSources = { readonly [K in DateSource]?: string | null };
 
@@ -136,6 +138,8 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/perm-cities/[slug]": "corpus",
   "/perm-industries/[slug]": "corpus",
   "/perm-countries/[slug]": "corpus",
+
+  "/reviews": "reviews",
 };
 
 /**
@@ -143,14 +147,16 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
  * bar with it, the way an article does; the layout's bar steps aside there.
  * An employer with no published record is dated by the newest change among
  * its own cases, a bulletin month by whether it's the newest bulletin, and
- * the H-1B rankings by a doc too large for every page to read; the layout
- * can't know any of them from the address.
+ * the H-1B rankings by a doc too large for every page to read, and the
+ * reviews page by Senja's list, which every other page would wait on if the
+ * layout read it; the layout can't know any of them from the address.
  */
 export const OWN_DATE: ReadonlySet<string> = new Set([
   "/perm-employers/[slug]",
   "/visa-bulletin/[month]",
   "/h1b-employers",
   "/h1b-employers/[state]",
+  "/reviews",
 ]);
 
 /** A route's date, from its code and its figures. */

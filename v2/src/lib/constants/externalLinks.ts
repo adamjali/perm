@@ -36,8 +36,16 @@ export const DC_BAR_SABRINA_URL = "https://my.dcbar.org/directorymemberships?id=
  */
 export const X_PROFILE_URL = "https://x.com/adamj3ali";
 
-/** Where people leave a review of the site (Senja's hosted form). */
-export const REVIEW_URL = "https://senja.io/p/perm-tracker/r/FXAjpr";
+/**
+ * Where people leave a review of the site: the form on /reviews (since Oct 23 2026; Senja's hosted form before,
+ * whose reviews a daily job still copies in for links already sent).
+ */
+export const REVIEW_URL = "https://permtracker.app/reviews#write";
+
+/** The review form with the stars already picked, for someone who just rated their alerts that high. */
+export function reviewUrlWithRating(stars: number): string {
+  return Number.isInteger(stars) && stars >= 1 && stars <= 5 ? `https://permtracker.app/reviews?rating=${stars}#write` : REVIEW_URL;
+}
 
 /** The one support address, also rendered on the contact page. */
 export const SUPPORT_EMAIL_ADDRESS = "support@permtracker.app";

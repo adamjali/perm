@@ -18,6 +18,8 @@ import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/db/groups";
 import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/db/otherEmployers";
 import { lcaOnlyCities } from "@/lib/db/lcaCities";
 import { getH1bSummary } from "@/lib/db/h1bRanks";
+import { getSiteReviews } from "@/lib/reviews/read";
+import { newestReviewDay } from "@/lib/reviews/senjaParse";
 import { rankedStates, stateSlug } from "@/lib/h1bRanks";
 import {
   countEntityRanks,
@@ -186,6 +188,8 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     h1bStates = [];
   }
+  // The reviews page is dated by its newest review, from the same Senja read the page makes (never throws).
+  const reviewsAsOf = newestReviewDay((await getSiteReviews()).reviews);
   const allPosts = getAllPosts();
   if (allPosts.length === 0) {
     captureError(
@@ -227,6 +231,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     sweep: queueAsOf,
     h1b: h1bAsOf,
     corpus: await corpusAsOf(),
+    reviews: reviewsAsOf,
   };
   const at = (route: string) => pageDate(route, sources);
   const statics: Entry[] = [
@@ -293,6 +298,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/methodology`, lastModified: at("/methodology"), images: [`${base}/og/methodology.jpg`] },
     { url: `${base}/about`, lastModified: at("/about"), images: [`${base}/og/about.jpg`] },
     { url: `${base}/press`, lastModified: at("/press"), images: [`${base}/og/press.jpg`] },
+    { url: `${base}/reviews`, lastModified: at("/reviews"), images: [`${base}/og/reviews.jpg`] },
     { url: `${base}/visa-bulletin`, lastModified: at("/visa-bulletin"), images: [`${base}/og/visa-bulletin.jpg`] },
     // One page per archived bulletin. An older month's table is that month's
     // bulletin and nothing else, so its lastmod is the bulletin's own month;

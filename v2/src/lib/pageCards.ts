@@ -64,6 +64,7 @@ export const PAGE_CARD_ALT = {
   "wage-levels": "Prevailing wage levels by occupation and area. DOL's four wage levels for an occupation in a metro or non-metro area, read live from the OFLC wage search.",
   "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney.",
   "press": "Press and data for journalists. What DOL's records can tell a reporter, and how to credit PERM Tracker.",
+  "reviews": "Leave a review of PERM Tracker. The site's review form: a star rating, the review, and a name to show.",
   "blog": "PERM Tracker blog. What DOL's own files show about processing times, denials, wages and the queue.",
   "calculators": "PERM calculators. A calculator for each question about your case, all free, on data the government publishes, beside the table that matches a situation to its calculator.",
   "case-search": "Search every DOL case an employer filed. PERM, prevailing wage and H-1B LCA, open and decided, in one search.",

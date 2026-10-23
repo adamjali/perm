@@ -682,6 +682,20 @@
   ]
  },
  {
+  "slug": "reviews",
+  "path": "/reviews",
+  "title": "Leave a review of PERM Tracker",
+  "label": "What people who use PERM Tracker say about it, newest first.",
+  "shot": "reviews.png",
+  "crop": [
+   0,
+   0,
+   1568,
+   1072
+  ],
+  "from": "Leave a review"
+ },
+ {
   "slug": "blog",
   "path": "/blog",
   "title": "PERM Tracker blog",

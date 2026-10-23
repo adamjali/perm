@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 17, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 23, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -148,6 +148,25 @@ export default function PrivacyPage() {
               <li>
                 Submissions are stored and forwarded to our support inbox so we
                 can reply; they’re never used for marketing and never shared
+              </li>
+            </ul>{" "}
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Reviews
+            </h3>{" "}
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
+              <li>
+                The rating, review and name you submit through the review form.
+                Once we approve a review, its rating, text and name show on the
+                site
+              </li>{" "}
+              <li>
+                An email address, if you give one. It&apos;s never shown or
+                shared, and is used only to follow up about your review
+              </li>{" "}
+              <li>
+                The submitting IP address, used only to limit spam and never
+                stored with the review
               </li>
             </ul>{" "}
 

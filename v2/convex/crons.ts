@@ -501,4 +501,19 @@ crons.interval(
   {},
 );
 
+// ============================================================================
+// REVIEWS LEFT ON SENJA
+// ============================================================================
+
+/**
+ * Copy reviews left on Senja's form (links in emails sent before Oct 23 2026) into the site's own review queue,
+ * where they wait for the owner like any other. 2:20 PM UTC: Senja rebuilds its widget within minutes of a review.
+ */
+crons.daily(
+  "site-reviews-from-senja",
+  { hourUTC: 14, minuteUTC: 20 },
+  internal.siteReviews.importFromSenja,
+  {},
+);
+
 export default crons;

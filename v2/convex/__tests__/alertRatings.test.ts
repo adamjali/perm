@@ -137,7 +137,8 @@ describe("the page", () => {
     const html = await tap(t, { r: "5" });
     expect(html).toMatch(/Thanks, glad they helped/);
     expect(html).toMatch(/You rated these alerts 5 of 5/);
-    expect(html).toContain('href="https://senja.io/p/perm-tracker/r/FXAjpr"');
+    // The site's own review form, the stars they just gave already picked.
+    expect(html).toContain('href="https://permtracker.app/reviews?rating=5#write"');
     expect(html).toMatch(/Anything we could do better\?/);
     expect(html).toMatch(/name="anon" value="1"/);
     expect((await ratings(t))[0]).toMatchObject({ score: 5 });
@@ -149,7 +150,7 @@ describe("the page", () => {
     const html = await tap(t, { r: "2" });
     expect(html).toMatch(/Sorry they fell short/);
     expect(html).toMatch(/What went wrong\?/);
-    expect(html).not.toContain("senja.io");
+    expect(html).not.toContain("/reviews");
   });
 
   it("sends a certified case onward to the green card, and a denied one to its options", async () => {
@@ -170,7 +171,7 @@ describe("the page", () => {
     await watching(t);
     const html = await tap(t, { r: "3" });
     expect(html).toMatch(/What would have made it a 5\?/);
-    expect(html).not.toContain("senja.io");
+    expect(html).not.toContain("/reviews");
   });
 
   it("takes the note from the thanks page and stops asking for one", async () => {

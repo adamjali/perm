@@ -1112,7 +1112,7 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
 - **A picture a script fetches is fetched with `cache: "no-cache"`**: `force-cache` handed back files kept from before the
   pictures had moving parts, and they never reacted.
 
-## Oct 22 2026, in six lines
+## Oct 22 2026, in seven lines
 
 - **People's AI assistants have their own room at the front door** (owner's yes): ChatGPT-User, Claude-User,
   Perplexity-User, Meta's fetcher and DuckAssistBot, verified by Cloudflare, left the crawlers' 4 slots for 12 of their
@@ -1126,10 +1126,17 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   `convex/congratsNotes.ts` only keeps who is due and the approved words (`convex/lib/congratsNote.ts`), and a
   script on the owner's Mac schedules each note once it's read. One email per address naming every case it's owed
   (owner's call, Oct 23), never a second once one is scheduled or sent, none to people written to by hand.
-- **The homepage reads its reviews from Senja once a day** (`getSiteReviews`, `src/lib/reviews/`; owner's call Oct 23):
-  the widget's own script carries every review as one JSON array, read on our server, so the rating line, the newest
-  reviews and the aggregateRating update on their own and agree. Insiders' reviews are left out by Senja id
-  (`INSIDER_REVIEW_IDS`; FTC 16 CFR 465.5): 4.5 from 2 on Oct 23. `APP_RATING` is only the fallback if Senja can't be read.
+- **Reviews are the site's own** (owner's call, Oct 23 2026, 7:06 PM EDT): Senja's free plan hides every review past
+  its 15th and counts deleted ones, so reviews are left on `/reviews#write` and stored in Convex (`siteReviews`,
+  `convex/siteReviews.ts`). Each waits for the owner (Admin > Reviews, one email a day when any wait); approving or
+  declining refreshes `/reviews` and the homepage (`/api/revalidate-reviews`). Declining is for spam and abuse, never
+  stars (16 CFR 465.7(b)); insiders' reviews are kept and never shown or counted (465.5). A daily job copies anything
+  still left on Senja's form (links in mail already sent) into the same queue, once per Senja id. `getSiteReviews`
+  (`src/lib/reviews/read.ts`) feeds the page, the homepage's rating line and aggregateRating alike; `/reviews` dates
+  itself by its newest review (OWN_DATE). Its social card shows the form, never a figure.
+- **Convex answers HTTP 200 for a failed query, and Next's data cache keeps any 200**, so a `queryStatic` read that
+  failed (a function not deployed yet, a transient error) is served for the page's whole window. Deploy Convex before
+  the site whenever a page starts reading a new function. A fix for the general case is still open.
 - **An index file costs the page-change walker no import level** (`scripts/lib_page_inputs.mjs`): the homepage reaches
   its sections through `components/home/index.ts`, so at two levels a change to the rating line reached no list. The
   same walk feeds the Search Console queue, the deploy's Cloudflare purge, IndexNow and the sitemap's dates.

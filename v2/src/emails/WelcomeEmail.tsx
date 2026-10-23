@@ -8,7 +8,7 @@
  * - The three things it does, on one black panel with lime markers
  * - Guide links, and a line for anyone waiting on a case of their own
  * - CTA button to create first case
- * - Senja review ask
+ * - A review ask (the form on /reviews)
  * - A team sign-off
  * - Dark mode support via CSS classes
  */

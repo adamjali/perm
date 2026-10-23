@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { INSIDER_REVIEW_IDS, outsideReviews, parseSenjaWidget, ratingOf } from "../senjaParse";
+import { INSIDER_REVIEW_IDS, newestReviewDay, outsideReviews, parseSenjaWidget, ratingOf, reviewDay } from "../senjaParse";
 
 const [INSIDER] = [...INSIDER_REVIEW_IDS];
 
@@ -58,5 +58,23 @@ describe("which reviews count", () => {
     const all = parseSenjaWidget(widget([review("a", 5, "2026-10-23 21:00:00+00"), review("b", 4, "2026-10-22 21:00:00+00")]))!;
     expect(ratingOf(all)).toEqual({ value: "4.5", count: "2", best: "5", worst: "1" });
     expect(ratingOf([])).toEqual({ value: "0.0", count: "0", best: "5", worst: "1" });
+  });
+});
+
+describe("the day a review was left", () => {
+  it("is the Eastern day, so a review left at 9:30 PM EDT isn't dated tomorrow", () => {
+    expect(reviewDay("2026-10-24 01:30:00+00")).toBe("2026-10-23");
+    expect(reviewDay("2026-10-23 21:00:32.914+00")).toBe("2026-10-23");
+    expect(reviewDay("2026-01-15 04:59:00+00")).toBe("2026-01-14");
+  });
+
+  it("is null for a date it can't read", () => {
+    expect(reviewDay("not a date")).toBeNull();
+  });
+
+  it("names the newest review's day, or null when there are none", () => {
+    const all = parseSenjaWidget(widget([review("a", 5, "2026-10-20 15:00:00+00"), review("b", 4, "2026-10-24 01:30:00+00")]))!;
+    expect(newestReviewDay(outsideReviews(all))).toBe("2026-10-23");
+    expect(newestReviewDay([])).toBeNull();
   });
 });

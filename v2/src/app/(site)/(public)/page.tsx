@@ -48,7 +48,7 @@ import { deriveFigures } from "@/components/home/dataPageFigures";
 import { getDisclosureStats } from "@/lib/db/publicData";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getRecordCounts } from "@/lib/db/recordCounts";
-import { getSiteReviews } from "@/lib/reviews/senja";
+import { getSiteReviews } from "@/lib/reviews/read";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { PermPulse } from "@/components/pulse/PermPulse";
@@ -124,7 +124,7 @@ export default async function HomePage() {
     getRecordCounts(),
     getObservedDays().catch(() => []),
     getSweepCoverage().catch(() => null),
-    // Senja's reviews, once a day; never throws (falls back to the last recorded rating).
+    // The site's approved reviews; never throws (falls back to the last recorded rating).
     getSiteReviews(),
   ]);
   const analyst = snapshot

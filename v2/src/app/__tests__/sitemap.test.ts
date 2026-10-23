@@ -61,6 +61,14 @@ vi.mock("@/lib/db/publicData", () => ({
 // because the route 404s an empty month and the sitemap must omit it.
 // Cities with H-1B filings and no PERM page: none by default.
 vi.mock("@/lib/db/lcaCities", () => ({ lcaOnlyCities: vi.fn(async () => []) }));
+// The reviews page's day comes from Senja's list; read here, it would ask Senja over the network.
+vi.mock("@/lib/reviews/read", () => ({
+  getSiteReviews: vi.fn(async () => ({
+    rating: { value: "5.0", count: "1", best: "5", worst: "1" },
+    reviews: [{ id: "r1", rating: 5, text: "Useful.", name: "Pat", date: "2026-10-20 15:00:00+00" }],
+    live: true,
+  })),
+}));
 // The top H-1B employer state pages: one ranked state, so the family is listed.
 vi.mock("@/lib/db/h1bRanks", () => ({
   getH1bSummary: vi.fn(async () => ({
@@ -136,6 +144,7 @@ function arrangeEntities(sizes: Record<string, number>) {
 }
 
 import { getAllPosts } from "@/lib/content";
+import { getSiteReviews } from "@/lib/reviews/read";
 import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { countEntityRanks, countLiveOnlyRanks, getEntitySlugWindow, getLiveOnlySlugWindow } from "@/lib/db/publicData";
@@ -429,6 +438,21 @@ describe("sitemap.ts", () => {
     const page = (PAGE_DATES as Record<string, string>)["/"]!;
     // The sweep is mocked to 2026-09-15; a newer post no longer dates the homepage.
     expect(root!.lastModified).toBe(page > "2026-09-15" ? page : "2026-09-15");
+  });
+
+  it("dates /reviews by its newest review once that's newer than the page's code", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    vi.mocked(getSiteReviews).mockResolvedValueOnce({
+      rating: { value: "4.0", count: "2", best: "5", worst: "1" },
+      reviews: [
+        { id: "new", rating: 4, text: "Useful.", name: "Pat", date: "2099-03-02 02:00:00+00" },
+        { id: "old", rating: 4, text: "Useful.", name: "Sam", date: "2026-01-05 15:00:00+00" },
+      ],
+      live: true,
+    });
+    const entries = await sitemap();
+    // 2:00 AM UTC on Mar 2 is still Mar 1 in Eastern time.
+    expect(entries.find((e) => e.url === "https://permtracker.app/reviews")?.lastModified).toBe("2099-03-01");
   });
 
   it("does NOT include /login or /signup (they are noindex per their page metadata)", async () => {

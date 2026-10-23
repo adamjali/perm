@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { ChatDotsIcon, StarHalfIcon, StarIcon } from "@phosphor-icons/react/ssr";
 
-import { REVIEW_URL } from "@/lib/constants/externalLinks";
 import { APP_RATING, shouldAdvertiseRating, type RatingFields } from "@/lib/structuredData";
 import type { SiteReview } from "@/lib/reviews/senjaParse";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,8 +8,8 @@ import { buttonVariants } from "@/components/ui/button";
 /**
  * The site's review rating, the newest reviews, and the link to leave one.
  *
- * Server markup, no third-party script: the homepage reads its reviews from
- * Senja on the server (`getSiteReviews`) and passes the same rating here and to
+ * Server markup, no third-party script: the homepage reads the site's own
+ * approved reviews on the server (`getSiteReviews`) and passes the same rating here and to
  * its aggregateRating structured data, which needs the rating visible on the
  * page. Both sit behind one threshold (`shouldAdvertiseRating`), so the rating
  * never shows where the markup doesn't, and the other way round. The link
@@ -19,6 +19,21 @@ import { buttonVariants } from "@/components/ui/button";
 export function starFills(value: number): Array<"full" | "half" | "empty"> {
   const halves = Math.round(value * 2);
   return Array.from({ length: 5 }, (_, i) => (halves >= (i + 1) * 2 ? "full" : halves === i * 2 + 1 ? "half" : "empty"));
+}
+
+/** A rating's stars, drawn only: the number beside them says it in words. */
+export function ReviewStars({ value, className = "size-5" }: { value: number; className?: string }) {
+  return (
+    <span className="flex" aria-hidden="true">
+      {starFills(value).map((fill, i) =>
+        fill === "half" ? (
+          <StarHalfIcon key={i} weight="fill" className={`${className} text-primary`} />
+        ) : (
+          <StarIcon key={i} weight={fill === "full" ? "fill" : "regular"} className={`${className} text-primary`} />
+        ),
+      )}
+    </span>
+  );
 }
 
 /** How many reviews show under the rating; the count covers all of them. */
@@ -38,28 +53,15 @@ export function ReviewsLine({
     <div className="flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
       {advertise ? (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="flex" aria-hidden="true">
-            {starFills(Number(rating.value)).map((fill, i) =>
-              fill === "half" ? (
-                <StarHalfIcon key={i} weight="fill" className="size-5 text-primary" />
-              ) : (
-                <StarIcon key={i} weight={fill === "full" ? "fill" : "regular"} className="size-5 text-primary" />
-              ),
-            )}
-          </span>{" "}
+          <ReviewStars value={Number(rating.value)} />{" "}
           <span className="font-heading text-lg font-bold">{Number(rating.value).toFixed(1)}</span>{" "}
-          <span className="text-sm text-muted-foreground">from {rating.count} reviews</span>
+          <Link href="/reviews" className="link inline-flex min-h-11 items-center text-sm">{`from ${rating.count} reviews`}</Link>
         </p>
       ) : null}{" "}
-      <a
-        href={REVIEW_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={buttonVariants({ variant: "outline", size: "lg" })}
-      >
+      <Link href="/reviews#write" className={buttonVariants({ variant: "outline", size: "lg" })}>
         <ChatDotsIcon className="size-4" aria-hidden="true" />
         Leave a review
-      </a>{" "}
+      </Link>{" "}
       {advertise && reviews.length ? (
         <ul className="w-full space-y-4 border-t-2 border-border pt-4">
           {reviews.slice(0, SHOWN_REVIEWS).map((r) => (

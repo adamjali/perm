@@ -63,7 +63,7 @@ function decode(text: string): string {
 }
 
 /** Senja's dates ("2026-10-23 21:00:32.914+00") as milliseconds; JavaScript wants the T and a full "+00:00". */
-function timeOf(date: string): number {
+export function senjaTime(date: string): number {
   return Date.parse(date.replace(" ", "T").replace(/([+-]\d\d)$/, "$1:00"));
 }
 
@@ -77,7 +77,7 @@ function asReview(raw: unknown): SiteReview | null {
   if (typeof r.id !== "string" || typeof rating !== "number" || !Number.isInteger(rating) || rating < 1 || rating > 5) {
     return null;
   }
-  if (!text || Number.isNaN(timeOf(date))) return null;
+  if (!text || Number.isNaN(senjaTime(date))) return null;
   const name = typeof customer.name === "string" && customer.name.trim() ? customer.name.trim() : "A reviewer";
   return { id: r.id, rating, text, name, date };
 }
@@ -106,7 +106,30 @@ export function parseSenjaWidget(js: string): SiteReview[] | null {
 export function outsideReviews(all: SiteReview[]): SiteReview[] {
   return all
     .filter((r) => !INSIDER_REVIEW_IDS.has(r.id))
-    .sort((a, b) => timeOf(b.date) - timeOf(a.date));
+    .sort((a, b) => senjaTime(b.date) - senjaTime(a.date));
+}
+
+const EASTERN_DAY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** The Eastern day a review was left (YYYY-MM-DD), the site's own clock; null when Senja's date can't be read. */
+export function reviewDay(date: string): string | null {
+  const ms = senjaTime(date);
+  return Number.isNaN(ms) ? null : EASTERN_DAY.format(ms);
+}
+
+/** The day the newest of these reviews was left, for the reviews page's "Updated" day; null when there are none. */
+export function newestReviewDay(reviews: SiteReview[]): string | null {
+  let newest: string | null = null;
+  for (const r of reviews) {
+    const day = reviewDay(r.date);
+    if (day && (!newest || day > newest)) newest = day;
+  }
+  return newest;
 }
 
 /** The rating of a set of reviews, to one decimal place, as schema.org wants it (strings). */

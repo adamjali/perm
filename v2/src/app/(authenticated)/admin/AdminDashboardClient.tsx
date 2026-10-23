@@ -15,6 +15,7 @@ import { ScorecardPanel } from "@/components/admin/ScorecardPanel";
 import { DevelopersPanel } from "@/components/admin/DevelopersPanel";
 import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { FirmClaimsPanel } from "@/components/admin/FirmClaimsPanel";
+import { ReviewsPanel } from "@/components/admin/ReviewsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -32,6 +33,7 @@ export default function AdminDashboardClient() {
   const signals = useQuery(api.adminSignals.getSignals, skip ? "skip" : {});
   const delivery = useQuery(api.adminDelivery.getDelivery, skip ? "skip" : {});
   const firmClaims = useQuery(api.firmClaims.listForAdmin, skip ? "skip" : {});
+  const reviews = useQuery(api.siteReviews.listForAdmin, skip ? "skip" : {});
 
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
@@ -223,6 +225,12 @@ export default function AdminDashboardClient() {
                 ? `${firmClaims.review.length + firmClaims.edits.length} waiting`
                 : null,
             content: <FirmClaimsPanel data={firmClaims} />,
+          },
+          {
+            id: "reviews",
+            label: "Reviews",
+            badge: reviews && reviews.waiting.length > 0 ? `${reviews.waiting.length} waiting` : null,
+            content: <ReviewsPanel data={reviews} />,
           },
           {
             id: "developers",

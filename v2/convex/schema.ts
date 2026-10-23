@@ -2266,6 +2266,35 @@ export default defineSchema({
     .index("by_ip_created", ["ip", "createdAt"]),
 
   /**
+   * Reviews of PERM Tracker (convex/siteReviews.ts), shown on /reviews and the homepage once the owner approves
+   * them. Left on the site's own form since Oct 23 2026, and copied from Senja, the form used before, by a daily
+   * job so old links still reach the queue. Approval is never by stars (16 CFR 465.7(b)): the owner declines
+   * spam, abuse and reviews of something else. A review by someone who runs the site is kept and never shown or
+   * counted (16 CFR 465.5).
+   */
+  siteReviews: defineTable({
+    /** 1 to 5. */
+    rating: v.number(),
+    text: v.string(),
+    /** Shown with the review, as the reviewer wrote it. */
+    name: v.string(),
+    /** Private: never shown and never sent anywhere. Lets the owner follow up and see the reviewer watches a case. */
+    email: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("declined")),
+    source: v.union(v.literal("site"), v.literal("senja")),
+    /** Senja's id for a copied review: the copy is made once. */
+    senjaId: v.optional(v.string()),
+    /** Someone who runs PERM Tracker: kept, never shown or counted. */
+    insider: v.optional(v.boolean()),
+    /** When the review was left (Senja's own date for a copy). */
+    createdAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+  })
+    .index("by_status_created", ["status", "createdAt"])
+    .index("by_created", ["createdAt"])
+    .index("by_senja_id", ["senjaId"]),
+
+  /**
    * Someone following ONE employer's PERM cases as a group.
    *
    * Fourth sibling of the alert tables, same consent grammar: double opt-in,

@@ -17,7 +17,9 @@ import {
   type PrefsState,
 } from "./lib/mailPages";
 import { RATING_PATH, parseScore } from "./alertRatings";
-import { REVIEW_URL } from "../src/lib/constants/externalLinks";
+import { reviewUrlWithRating } from "../src/lib/constants/externalLinks";
+import { checkReview } from "./lib/siteReview";
+import { THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
 import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
 import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
 import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
@@ -677,7 +679,7 @@ http.route({
       action: ratingAction(target),
       noted: saved.noted,
       anonymous: saved.anonymous,
-      reviewUrl: REVIEW_URL,
+      reviewUrl: reviewUrlWithRating(saved.score),
       status: saved.status,
     });
   }),
@@ -752,6 +754,47 @@ http.route({
       message: cleanMessage,
       ip,
     });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+/**
+ * A review from the site's own form (convex/siteReviews.ts). The same posture
+ * as the contact form: the route owns the shape (checkReview: cheap checks and
+ * length caps before the email pattern) and the honeypot; the internal
+ * mutation owns the budgets. Nothing shows until the owner approves it.
+ */
+http.route({
+  path: "/review/submit",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/review/submit",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
+    const fields = body as Record<string, unknown>;
+    // Honeypot: a filled "website" field is a bot. Answer as if it worked, store nothing.
+    if (typeof fields.website === "string" && fields.website.trim() !== "") {
+      return json({ ok: true, message: SITE_REVIEW_THANKS });
+    }
+    const checked = checkReview(fields);
+    if (!checked.ok) return json({ ok: false, message: checked.message }, 400);
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown";
+    const result = await ctx.runMutation(internal.siteReviews.submit, { ...checked.review, ip });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
 });
