@@ -7,19 +7,27 @@
 
 import type { MutationCtx } from "./_generated/server";
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { buildSampleCaseDates } from "./lib/sampleCase";
 
-/** Lookup the authenticated user's profile. Throws if not found. */
+/**
+ * Lookup the authenticated user's profile. Throws if not found.
+ *
+ * Each failure is a ConvexError so its words reach the browser and Sentry: a plain Error arrives as a masked
+ * "Server Error", and that was all Sentry 46, 4B, 57 and 5C (Oct 23 2026, skipping the wizard three minutes after
+ * sign-up) could show.
+ */
 async function requireProfile(ctx: MutationCtx) {
-  const userId = await getCurrentUserId(ctx);
-  const profile = await ctx.db
+  const userId = await getCurrentUserIdOrNull(ctx);
+  if (userId === null) throw new ConvexError("Not signed in");
+  const profiles = await ctx.db
     .query("userProfiles")
     .withIndex("by_user_id", (q) => q.eq("userId", userId))
-    .unique();
-  if (!profile) throw new Error("User profile not found");
-  return profile;
+    .take(2);
+  if (profiles.length === 0) throw new ConvexError("User profile not found");
+  if (profiles.length > 1) throw new ConvexError("More than one user profile");
+  return profiles[0]!;
 }
 
 /**
@@ -175,13 +183,10 @@ export const createSampleCase = mutation({
   handler: async (ctx) => {
     const userId = await getCurrentUserId(ctx);
 
-    // Check if user already has a sample case (idempotent)
-    const existingSample = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("isSample"), true))
-      .first();
-    if (existingSample) return existingSample._id;
+    // Check if user already has a sample case (idempotent). Reads only this user's cases, stopping at the first sample.
+    for await (const existing of ctx.db.query("cases").withIndex("by_user_id", (q) => q.eq("userId", userId))) {
+      if (existing.isSample === true) return existing._id;
+    }
 
     const now = Date.now();
 

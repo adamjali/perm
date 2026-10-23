@@ -114,12 +114,12 @@ describe("getOnboardingState", () => {
 // updateOnboardingStep
 
 describe("updateOnboardingStep", () => {
-  it("throws for unauthenticated user", async () => {
+  it("throws for unauthenticated user, with a reason Sentry can read", async () => {
     const t = createTestContext();
 
     await expect(
       t.mutation(api.onboarding.updateOnboardingStep, { step: "welcome" })
-    ).rejects.toThrow();
+    ).rejects.toThrow("Not signed in");
   });
 
   it("throws when profile does not exist", async () => {
@@ -386,5 +386,17 @@ describe("dismissChecklist", () => {
     const state = await authT.query(api.onboarding.getOnboardingState, {});
     expect(state?.onboardingChecklistDismissed).toBe(true);
     expect(state?.onboardingChecklist).toEqual(["create_case", "add_dates"]);
+  });
+});
+
+describe("createSampleCase", () => {
+  it("makes one sample case however often it's called", async () => {
+    const t = createTestContext();
+    const authT = await createAuthenticatedContext(t, "Test User");
+    const first = await authT.mutation(api.onboarding.createSampleCase, {});
+    const again = await authT.mutation(api.onboarding.createSampleCase, {});
+    expect(again).toBe(first);
+    const all = await t.run(async (ctx) => ctx.db.query("cases").collect());
+    expect(all.filter((c) => c.isSample)).toHaveLength(1);
   });
 });
