@@ -1126,9 +1126,10 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   `convex/congratsNotes.ts` only keeps who is due and the approved words (`convex/lib/congratsNote.ts`), and a
   script on the owner's Mac schedules each note once it's read. One email per address naming every case it's owed
   (owner's call, Oct 23), never a second once one is scheduled or sent, none to people written to by hand.
-- **The homepage rating is typed by hand** (`APP_RATING` in `src/lib/structuredData.ts`): Senja's three reviews read
-  4.7 from 3 since a real user's 4 stars on Oct 22. Update it with each new review. One of the three is by the
-  attorney who manages the LLC; by the owner's call they stay until two outside reviews exist, then only outside ones count.
+- **The homepage reads its reviews from Senja once a day** (`getSiteReviews`, `src/lib/reviews/`; owner's call Oct 23):
+  the widget's own script carries every review as one JSON array, read on our server, so the rating line, the newest
+  reviews and the aggregateRating update on their own and agree. Insiders' reviews are left out by Senja id
+  (`INSIDER_REVIEW_IDS`; FTC 16 CFR 465.5): 4.5 from 2 on Oct 23. `APP_RATING` is only the fallback if Senja can't be read.
 - **An index file costs the page-change walker no import level** (`scripts/lib_page_inputs.mjs`): the homepage reaches
   its sections through `components/home/index.ts`, so at two levels a change to the rating line reached no list. The
   same walk feeds the Search Console queue, the deploy's Cloudflare purge, IndexNow and the sitemap's dates.
