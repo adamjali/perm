@@ -68,15 +68,63 @@ describe("congratsNotes.due", () => {
     expect(await t.mutation(internal.congratsNotes.markSent, { id: note!.id, now: FRI })).toBe(true);
   });
 
-  it("one note per address, even with two certified cases", async () => {
+  it("two certified cases for one address go in one email naming both", async () => {
     const t = createTestContext();
     await watch(t, { caseNumber: "G-100-26070-111111" });
     await watch(t, { caseNumber: "G-100-26070-222222" });
     const r = await t.mutation(internal.congratsNotes.due, { now: FRI });
     expect(r.added).toBe(2);
     expect(r.notes).toHaveLength(1);
+    const note = r.notes[0]!;
+    expect(note.ids).toHaveLength(2);
+    expect(note.cases.map((c) => c.caseNumber)).toEqual(["G-100-26070-111111", "G-100-26070-222222"]);
+    expect(note.body).toContain(
+      "your PERM cases, G-100-26070-111111 and G-100-26070-222222, and DOL has certified both",
+    );
+    // Scheduling the email records both cases, so neither is handed back again.
+    for (const id of note.ids) {
+      await t.mutation(internal.congratsNotes.markScheduled, {
+        id,
+        zohoMessageId: "z1",
+        scheduledFor: "10/23/2026 10:15:00",
+        now: FRI,
+      });
+    }
+    expect((await t.mutation(internal.congratsNotes.due, { now: FRI + 3600_000 })).notes).toHaveLength(0);
+  });
+
+  it("a case whose day hasn't come rides along in the email that goes today", async () => {
+    const t = createTestContext();
+    await watch(t, { caseNumber: "G-100-26070-111111" });
+    // Decided Thursday Oct 22: its own day would be Monday Oct 26.
+    const thu = Date.parse("2026-10-22T18:15:00Z");
+    await watch(t, { caseNumber: "I-200-26290-222222", decidedAt: thu, lastAlertSentAt: thu });
+    const r = await t.mutation(internal.congratsNotes.due, { now: FRI });
+    expect(r.notes).toHaveLength(1);
+    expect(r.notes[0]!.cases.map((c) => c.program)).toEqual(["perm", "lca"]);
+    expect(r.notes[0]!.body).toContain("Next comes the I-140.");
+    expect(r.notes[0]!.body).toContain("Next comes the H-1B petition.");
+  });
+
+  it("never a second note: a case certified after the email went is skipped", async () => {
+    const t = createTestContext();
+    await watch(t, { caseNumber: "G-100-26070-111111" });
+    const [note] = (await t.mutation(internal.congratsNotes.due, { now: FRI })).notes;
+    await t.mutation(internal.congratsNotes.markScheduled, {
+      id: note!.id,
+      zohoMessageId: "z1",
+      scheduledFor: "10/23/2026 10:15:00",
+      now: FRI,
+    });
+    await t.mutation(internal.congratsNotes.markSent, { id: note!.id, now: FRI });
+    const tue = Date.parse("2026-10-27T18:15:00Z");
+    await watch(t, { caseNumber: "G-100-26070-222222", decidedAt: tue, lastAlertSentAt: tue });
+    const r = await t.mutation(internal.congratsNotes.due, { now: Date.parse("2026-10-30T13:15:00Z") });
+    expect(r.notes).toHaveLength(0);
     const rows = await t.run((ctx) => ctx.db.query("congratsNotes").collect());
-    expect(rows.find((n) => n.state === "skipped")?.reason).toBe("already has a note (one per address)");
+    expect(rows.find((n) => n.caseNumber === "G-100-26070-222222")?.reason).toBe(
+      "already had a note (one per address)",
+    );
   });
 
   it("skips someone written to by hand in an earlier round", async () => {

@@ -16,17 +16,16 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { isEmailBlocked, isOwnTestAddress } from "./lib/emailBlocklist";
 import { easternDay } from "./lib/time";
 import {
   NOTES_FROM_MS,
-  composeNote,
+  composeNotes,
   dueOn,
   earnsNote,
   lateAfter,
   noteProgram,
-  type NoteProgram,
 } from "./lib/congratsNote";
 
 /** Live case alerts one run reads. Far above how many exist (436 rows on Oct 22 2026). */
@@ -48,11 +47,14 @@ async function addressBlocked(ctx: MutationCtx, row: Doc<"caseStatusAlerts">): P
     .withIndex("by_email", (q) => q.eq("email", email))
     .first();
   if (optedOut) return "asked not to be written to again";
+  // A note still waiting doesn't block: this case joins it in the same email. One already scheduled or sent does.
   const before = await ctx.db
     .query("congratsNotes")
     .withIndex("by_email", (q) => q.eq("email", email))
     .take(20);
-  if (before.some((n) => n.state !== "skipped")) return "already has a note (one per address)";
+  if (before.some((n) => n.state === "scheduled" || n.state === "sent")) {
+    return "already had a note (one per address)";
+  }
   // The rounds sent by hand covered every good decision our alerts told before NOTES_FROM_MS.
   const watched = await ctx.db
     .query("caseStatusAlerts")
@@ -119,12 +121,20 @@ async function stale(ctx: MutationCtx, note: Doc<"congratsNotes">, today: string
   return null;
 }
 
+const program = v.union(v.literal("perm"), v.literal("lca"), v.literal("pwd"));
+
+/**
+ * One email: every case this address is owed a note for. `id`, `caseNumber`, `program` and `status` describe the
+ * first case; `ids` and `cases` hold all of them, and every id is recorded when the email is scheduled.
+ */
 const dueNote = v.object({
   id: v.id("congratsNotes"),
+  ids: v.array(v.id("congratsNotes")),
   email: v.string(),
   caseNumber: v.string(),
-  program: v.union(v.literal("perm"), v.literal("lca"), v.literal("pwd")),
+  program,
   status: v.string(),
+  cases: v.array(v.object({ caseNumber: v.string(), program, status: v.string() })),
   decidedOn: v.string(),
   dueOn: v.string(),
   subject: v.string(),
@@ -132,9 +142,10 @@ const dueNote = v.object({
 });
 
 /**
- * Today's notes: records any newly earned ones, closes the ones that went stale, and hands back every note due
- * today or earlier with its text. A mutation because it writes the record; `now` is passed in so a run can be
- * repeated and tested.
+ * Today's notes: records any newly earned ones, closes the ones that went stale, and hands back one email per
+ * address with a note due today or earlier, naming every case that address is still owed a note for (a later
+ * case's note rides along rather than wait for a day that would come after this email). A mutation because it
+ * writes the record; `now` is passed in so a run can be repeated and tested.
  */
 export const due = internalMutation({
   args: { now: v.number() },
@@ -147,37 +158,49 @@ export const due = internalMutation({
       .withIndex("by_state_due", (q) => q.eq("state", "due").lte("dueOn", today))
       .take(DUE_READ);
     let dropped = 0;
-    const notes: Array<{
-      id: Id<"congratsNotes">;
-      email: string;
-      caseNumber: string;
-      program: NoteProgram;
-      status: string;
-      decidedOn: string;
-      dueOn: string;
-      subject: string;
-      body: string;
-    }> = [];
-    for (const note of waiting) {
+    const byEmail = new Map<string, Array<Doc<"congratsNotes">>>();
+    const keep = async (note: Doc<"congratsNotes">): Promise<boolean> => {
       const why = await stale(ctx, note, today);
-      if (why) {
-        await ctx.db.patch(note._id, { state: "skipped", reason: why });
-        dropped += 1;
-        continue;
+      if (!why) return true;
+      await ctx.db.patch(note._id, { state: "skipped", reason: why });
+      dropped += 1;
+      return false;
+    };
+    for (const note of waiting) {
+      if (!(await keep(note))) continue;
+      const group = byEmail.get(note.email) ?? [];
+      group.push(note);
+      byEmail.set(note.email, group);
+    }
+    for (const [email, group] of byEmail) {
+      const later = await ctx.db
+        .query("congratsNotes")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .take(20);
+      for (const note of later) {
+        if (note.state === "due" && note.dueOn > today && (await keep(note))) group.push(note);
       }
-      const { subject, body } = composeNote(note.program, note.caseNumber);
-      notes.push({
-        id: note._id,
-        email: note.email,
-        caseNumber: note.caseNumber,
-        program: note.program,
-        status: note.status,
-        decidedOn: easternDay(note.decidedAt),
-        dueOn: note.dueOn,
+      group.sort((a, b) => a.decidedAt - b.decidedAt || a.caseNumber.localeCompare(b.caseNumber));
+    }
+    const notes = [...byEmail.values()].map((group) => {
+      const firstNote = group[0]!;
+      const { subject, body } = composeNotes(
+        group.map((n) => ({ program: n.program, caseNumber: n.caseNumber })),
+      );
+      return {
+        id: firstNote._id,
+        ids: group.map((n) => n._id),
+        email: firstNote.email,
+        caseNumber: firstNote.caseNumber,
+        program: firstNote.program,
+        status: firstNote.status,
+        cases: group.map((n) => ({ caseNumber: n.caseNumber, program: n.program, status: n.status })),
+        decidedOn: easternDay(firstNote.decidedAt),
+        dueOn: group.reduce((d, n) => (n.dueOn < d ? n.dueOn : d), firstNote.dueOn),
         subject,
         body,
-      });
-    }
+      };
+    });
     return { added, dropped, notes };
   },
 });

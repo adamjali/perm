@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   NOTES_FROM_MS,
   composeNote,
+  composeNotes,
   dueOn,
   earnsNote,
   lateAfter,
@@ -107,6 +108,58 @@ describe("the note's words", () => {
       const { body } = composeNote(p, "G-100-26070-123456");
       expect(body).not.toMatch(/—/);
       expect(body).not.toMatch(/ {2}/);
+    }
+  });
+});
+
+describe("one note for several cases", () => {
+  it("one case reads exactly as the approved note", () => {
+    expect(composeNotes([{ program: "perm", caseNumber: "G-100-26070-123456" }])).toEqual(
+      composeNote("perm", "G-100-26070-123456"),
+    );
+  });
+
+  it("two of one kind are named together and certified both", () => {
+    const { body } = composeNotes([
+      { program: "perm", caseNumber: "G-100-26070-111111" },
+      { program: "perm", caseNumber: "G-100-26070-222222" },
+    ]);
+    expect(body).toContain(
+      "You signed up for alerts on your PERM cases, G-100-26070-111111 and G-100-26070-222222, and DOL has " +
+        "certified both, so congratulations!",
+    );
+    expect(body.match(/Next comes the I-140\./g)).toHaveLength(1);
+  });
+
+  it("mixed kinds: each named, each next step once, the first kind's question", () => {
+    const { body } = composeNotes([
+      { program: "lca", caseNumber: "I-200-26070-333333" },
+      { program: "perm", caseNumber: "G-100-26070-111111" },
+      { program: "perm", caseNumber: "G-100-26070-222222" },
+    ]);
+    expect(body).toContain(
+      "on your PERM cases, G-100-26070-111111 and G-100-26070-222222, and your H-1B LCA, I-200-26070-333333, " +
+        "and DOL has certified all of them, so congratulations!",
+    );
+    expect(body.indexOf("Next comes the I-140.")).toBeLessThan(body.indexOf("Next comes the H-1B petition."));
+    expect(body).toContain("3. What would help you next: the I-140, the I-485, priority date alerts, or something else?");
+  });
+
+  it("a wage request and a PERM case: decided in your favor, never a verb that fits only one", () => {
+    const { body } = composeNotes([
+      { program: "perm", caseNumber: "G-100-26070-111111" },
+      { program: "pwd", caseNumber: "P-100-26070-222222" },
+    ]);
+    expect(body).toContain("and your prevailing wage request, P-100-26070-222222, and DOL has decided both in your favor");
+    const two = composeNotes([
+      { program: "pwd", caseNumber: "P-100-26070-111111" },
+      { program: "pwd", caseNumber: "P-100-26070-222222" },
+    ]).body;
+    expect(two).toContain("and DOL has issued determinations on both, so congratulations!");
+    for (const b of [body, two]) {
+      expect(b).not.toMatch(/—/);
+      expect(b).not.toMatch(/ {2}/);
+      expect(b).not.toMatch(/,,/);
     }
   });
 });
