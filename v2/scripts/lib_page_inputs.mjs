@@ -69,16 +69,25 @@ export function inputsOf(pageFile) {
   frontier.forEach((f) => seen.add(f));
   for (let depth = 0; depth < DEPTH; depth++) {
     const next = [];
-    for (const f of frontier) {
+    for (let i = 0; i < frontier.length; i++) {
+      const f = frontier[i];
       for (const m of readFileSync(f, "utf8").matchAll(IMPORT)) {
         const dep = resolve(m[1] || m[2] || m[3], f);
         if (dep && !seen.has(dep) && counts(dep, pageDir)) {
           seen.add(dep);
-          next.push(dep);
+          // An index file only passes its folder's parts along, so it costs no level: what it re-exports is
+          // walked as if imported here. The homepage reaches its sections through components/home/index.ts,
+          // and at two levels the rating line two files further in was never seen (Oct 22 2026).
+          if (isBarrel(dep)) frontier.push(dep);
+          else next.push(dep);
         }
       }
     }
     frontier = next;
   }
   return [...seen];
+}
+
+function isBarrel(file) {
+  return /(^|\/)index\.tsx?$/.test(file);
 }
