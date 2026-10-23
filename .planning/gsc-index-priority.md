@@ -1412,7 +1412,7 @@ request list in Thursday's round above; work it top down.
 6. `/blog/why-perm-cases-are-denied`, `/blog/what-dol-publishes-about-perm`, `/blog/how-perm-wage-data-is-published`.
 7. The three guides the inspection API couldn't read (`/guides/look-up-a-law-firm`,
    `/guides/look-up-a-perm-case-by-number`, `/guides/look-up-an-lca-by-number`), if not indexed.
-8. After the deploy, only if last crawled before it: `/changelog`, `/uscis-processing-times`,
+8. After the deploy, only if last crawled before it: `/for-attorneys`, `/changelog`, `/uscis-processing-times`,
    `/tools/green-card-timeline` (the USCIS date line).
 9. `/perm-employers/duk-j-corporation` (the one 4xx), `/perm-attorneys/browse/u`.
 10. Inspect only; request any crawled before Oct 21: `/tools`, `/case-search`, `/visa-bulletin`, `/perm-employers`,
