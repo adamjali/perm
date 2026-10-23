@@ -1112,7 +1112,7 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
 - **A picture a script fetches is fetched with `cache: "no-cache"`**: `force-cache` handed back files kept from before the
   pictures had moving parts, and they never reacted.
 
-## Oct 22 2026, in four lines
+## Oct 22 2026, in six lines
 
 - **People's AI assistants have their own room at the front door** (owner's yes): ChatGPT-User, Claude-User,
   Perplexity-User, Meta's fetcher and DuckAssistBot, verified by Cloudflare, left the crawlers' 4 slots for 12 of their
@@ -1125,3 +1125,9 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   press mailbox and read by a person first: Zoho's usage policy (Oct 13 2026) bars automated mail, so
   `convex/congratsNotes.ts` only keeps who is due and the approved words (`convex/lib/congratsNote.ts`), and a
   script on the owner's Mac schedules each note once it's read. One per address, none to people written to by hand.
+- **The homepage rating is typed by hand** (`APP_RATING` in `src/lib/structuredData.ts`): Senja's three reviews read
+  4.7 from 3 since a real user's 4 stars on Oct 22. Update it with each new review. One of the three is by the
+  attorney who manages the LLC; by the owner's call they stay until two outside reviews exist, then only outside ones count.
+- **An index file costs the page-change walker no import level** (`scripts/lib_page_inputs.mjs`): the homepage reaches
+  its sections through `components/home/index.ts`, so at two levels a change to the rating line reached no list. The
+  same walk feeds the Search Console queue, the deploy's Cloudflare purge, IndexNow and the sitemap's dates.
