@@ -1124,7 +1124,8 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
 - **A congratulations note goes two business days after DOL decides a watched case well** (owner's yes), from the
   press mailbox and read by a person first: Zoho's usage policy (Oct 13 2026) bars automated mail, so
   `convex/congratsNotes.ts` only keeps who is due and the approved words (`convex/lib/congratsNote.ts`), and a
-  script on the owner's Mac schedules each note once it's read. One per address, none to people written to by hand.
+  script on the owner's Mac schedules each note once it's read. One email per address naming every case it's owed
+  (owner's call, Oct 23), never a second once one is scheduled or sent, none to people written to by hand.
 - **The homepage rating is typed by hand** (`APP_RATING` in `src/lib/structuredData.ts`): Senja's three reviews read
   4.7 from 3 since a real user's 4 stars on Oct 22. Update it with each new review. One of the three is by the
   attorney who manages the LLC; by the owner's call they stay until two outside reviews exist, then only outside ones count.
