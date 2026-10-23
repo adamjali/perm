@@ -48,6 +48,7 @@ import { deriveFigures } from "@/components/home/dataPageFigures";
 import { getDisclosureStats } from "@/lib/db/publicData";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getRecordCounts } from "@/lib/db/recordCounts";
+import { getSiteReviews } from "@/lib/reviews/senja";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { PermPulse } from "@/components/pulse/PermPulse";
@@ -117,12 +118,14 @@ export default async function HomePage() {
   // The pulse reads our own sweep's record, a third clock: it moves when the
   // sweep finishes, and /api/revalidate-sweep expires this page then. Either
   // read failing drops the band, never the page.
-  const [snapshot, disclosure, record, observed, coverage] = await Promise.all([
+  const [snapshot, disclosure, record, observed, coverage, siteReviews] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
     getObservedDays().catch(() => []),
     getSweepCoverage().catch(() => null),
+    // Senja's reviews, once a day; never throws (falls back to the last recorded rating).
+    getSiteReviews(),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
@@ -144,8 +147,8 @@ export default async function HomePage() {
   // not emitted at all, which also keeps Google's visible-rating rule
   // trivially satisfied - no markup, nothing to render. One constant
   // (MIN_REVIEWS_TO_ADVERTISE) brings both back when the count grows.
-  const ratingPartial = shouldAdvertiseRating()
-    ? getHomepageRatingPartialSchema(baseUrl)
+  const ratingPartial = shouldAdvertiseRating(siteReviews.rating.count)
+    ? getHomepageRatingPartialSchema(baseUrl, siteReviews.rating)
     : null;
 
   return (
@@ -178,7 +181,7 @@ export default async function HomePage() {
       <RoadSection pwdPending={pwdPending} frontierMonth={analyst?.priorityDate ?? null} />
       <DataShelf figures={deriveFigures(disclosure)} />
       <AudienceBlocks />
-      <AboutSection record={record} />
+      <AboutSection record={record} rating={siteReviews.rating} reviews={siteReviews.reviews} />
       <FAQSection />
       {/* A stepped seam into the lime close, as the original had. */}
       <SectionDivider kind="step" above="var(--tint)" fill="var(--primary)" />

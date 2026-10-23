@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { ABOUT_ONE_LINER, SABRINA } from "@/lib/constants/about";
 import type { RecordFigure } from "@/lib/recordCounts";
+import type { SiteReview } from "@/lib/reviews/senjaParse";
+import type { RatingFields } from "@/lib/structuredData";
 
 import { RecordStrip } from "./RecordStrip";
 import { ReviewsLine } from "./ReviewsLine";
@@ -16,7 +18,15 @@ import { ReviewsLine } from "./ReviewsLine";
  * serializes as an inline `opacity:0` in the prerendered HTML, and this is the
  * one passage on the page that most needs to be readable before hydration.
  */
-export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
+export function AboutSection({
+  record = [],
+  rating,
+  reviews = [],
+}: {
+  record?: RecordFigure[];
+  rating?: RatingFields;
+  reviews?: SiteReview[];
+}) {
   return (
     <section id="about" className="py-12 sm:py-16 border-b-3 border-border">
       {/* One arrangement at every width from a tablet up (round 3, Oct 15
@@ -37,7 +47,7 @@ export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
               </Link>
             </p>
           </div>{" "}
-          <ReviewsLine />
+          <ReviewsLine rating={rating} reviews={reviews} />
         </div>{" "}
         <RecordStrip record={record} className="mt-10" />
       </div>

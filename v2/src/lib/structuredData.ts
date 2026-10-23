@@ -233,20 +233,29 @@ export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
 }
 
 /**
- * The app's review rating, defined ONCE.
+ * The app's review rating when Senja can't be read.
  *
- * Three consumers must agree or Google's policy is violated from one side or
- * another: the JSON-LD below, the visible rating line in
- * TestimonialsSection, and the Senja widget config. The first two import
- * THIS. Update it when the Senja count changes.
+ * Since Oct 23 2026 the homepage reads its reviews from Senja itself, once a
+ * day (`getSiteReviews` in src/lib/reviews/senja.ts), and passes that rating to
+ * both the visible line (ReviewsLine) and the JSON-LD below, so the two always
+ * agree. This is the last rating recorded by hand, used only when Senja is
+ * unreachable: the outside reviews of Oct 23 2026, 5 and 4 stars (insiders'
+ * reviews are left out, INSIDER_REVIEW_IDS in src/lib/reviews/senjaParse.ts).
  */
 export const APP_RATING = {
-  // Senja, Oct 22 2026: 5, 5 and 4 stars (4.67).
-  value: '4.7',
-  count: '3',
+  value: '4.5',
+  count: '2',
   best: '5',
   worst: '1',
 } as const;
+
+/** A rating as schema.org's AggregateRating wants it: every field a string. */
+export interface RatingFields {
+  value: string;
+  count: string;
+  best: string;
+  worst: string;
+}
 
 /**
  * Below this, the aggregate score is not ADVERTISED - no big 5.0 on the page,
@@ -264,8 +273,8 @@ export const APP_RATING = {
  */
 export const MIN_REVIEWS_TO_ADVERTISE = 2;
 
-export function shouldAdvertiseRating(): boolean {
-  return Number(APP_RATING.count) >= MIN_REVIEWS_TO_ADVERTISE;
+export function shouldAdvertiseRating(count: string = APP_RATING.count): boolean {
+  return Number(count) >= MIN_REVIEWS_TO_ADVERTISE;
 }
 
 /**
@@ -273,9 +282,8 @@ export function shouldAdvertiseRating(): boolean {
  *
  * Why this is its own helper (and not part of `getSoftwareApplicationSchema`):
  * Google's rich-results policy requires aggregate ratings to be rendered
- * visibly on the SAME page as the structured data. The Senja review widget is
- * only mounted on the homepage (src/components/home/TestimonialsSection.tsx),
- * so the rating must only ship on `/`. The base SoftwareApplication schema
+ * visibly on the SAME page as the structured data. The rating is shown only on
+ * the homepage (src/components/home/ReviewsLine.tsx), so it must only ship on `/`. The base SoftwareApplication schema
  * lives in the root layout's `@graph` and renders on every page; emitting
  * `aggregateRating` there would put a rating on /blog, /privacy, etc., where
  * no widget is visible, a policy violation that can suppress all rich
@@ -286,10 +294,10 @@ export function shouldAdvertiseRating(): boolean {
  * the rating attaches to the existing SoftwareApplication on the homepage
  * only.
  *
- * Counts and value must match what Senja renders on the page. Update both
- * the schema below and the widget config when review count changes.
+ * The page passes the same rating it shows (from `getSiteReviews`), so the
+ * markup and the visible line can't disagree.
  */
-export function getHomepageRatingPartialSchema(baseUrl: string) {
+export function getHomepageRatingPartialSchema(baseUrl: string, rating: RatingFields = APP_RATING) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication' as const,
@@ -317,10 +325,10 @@ export function getHomepageRatingPartialSchema(baseUrl: string) {
     },
     aggregateRating: {
       '@type': 'AggregateRating' as const,
-      ratingValue: APP_RATING.value,
-      reviewCount: APP_RATING.count,
-      bestRating: APP_RATING.best,
-      worstRating: APP_RATING.worst,
+      ratingValue: rating.value,
+      reviewCount: rating.count,
+      bestRating: rating.best,
+      worstRating: rating.worst,
     },
   };
 }

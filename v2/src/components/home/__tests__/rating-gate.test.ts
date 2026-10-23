@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -46,6 +48,39 @@ describe("the review rating", () => {
 
   it("loads nothing from a third party", () => {
     expect(render()).not.toMatch(/<script/);
+  });
+
+  it("shows the rating it's given and the newest reviews under it", () => {
+    const reviews = [
+      { id: "a", rating: 5, text: "Alerts came fast.", name: "Pat", date: "2026-10-23 21:00:00+00" },
+      { id: "b", rating: 4, text: "Good tool.", name: "Sam", date: "2026-10-22 21:00:00+00" },
+    ];
+    const html = renderToStaticMarkup(
+      React.createElement(ReviewsLine, { rating: { value: "4.5", count: "2", best: "5", worst: "1" }, reviews }),
+    );
+    expect(html).toContain("4.5");
+    expect(html).toContain("from 2 reviews");
+    expect(html).toContain("Alerts came fast.");
+    expect(html).toContain("Pat, 5 of 5 stars");
+    expect(html.indexOf("Alerts came fast.")).toBeLessThan(html.indexOf("Good tool."));
+  });
+
+  it("shows no reviews when the rating is withheld", () => {
+    mockAdvertise.mockReturnValue(false);
+    const html = renderToStaticMarkup(
+      React.createElement(ReviewsLine, {
+        rating: { value: "5.0", count: "1", best: "5", worst: "1" },
+        reviews: [{ id: "a", rating: 5, text: "Alerts came fast.", name: "Pat", date: "2026-10-23 21:00:00+00" }],
+      }),
+    );
+    expect(html).not.toContain("Alerts came fast.");
+  });
+
+  it("the homepage gives the visible line and the structured data the same rating", () => {
+    const page = readFileSync(join(__dirname, "..", "..", "..", "app", "(site)", "(public)", "page.tsx"), "utf8");
+    expect(page).toMatch(/getHomepageRatingPartialSchema\(baseUrl, siteReviews\.rating\)/);
+    expect(page).toMatch(/shouldAdvertiseRating\(siteReviews\.rating\.count\)/);
+    expect(page).toMatch(/rating=\{siteReviews\.rating\} reviews=\{siteReviews\.reviews\}/);
   });
 });
 
