@@ -241,8 +241,9 @@ export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
  * THIS. Update it when the Senja count changes.
  */
 export const APP_RATING = {
-  value: '5',
-  count: '2',
+  // Senja, Oct 22 2026: 5, 5 and 4 stars (4.67).
+  value: '4.7',
+  count: '3',
   best: '5',
   worst: '1',
 } as const;

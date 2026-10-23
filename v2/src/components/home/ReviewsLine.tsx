@@ -1,4 +1,4 @@
-import { ChatDotsIcon, StarIcon } from "@phosphor-icons/react/ssr";
+import { ChatDotsIcon, StarHalfIcon, StarIcon } from "@phosphor-icons/react/ssr";
 
 import { REVIEW_URL } from "@/lib/constants/externalLinks";
 import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
@@ -13,6 +13,12 @@ import { buttonVariants } from "@/components/ui/button";
  * never shows where the markup doesn't, and the other way round. The link
  * shows at every count, since it's how the count grows.
  */
+/** Five stars for a rating, to the nearest half: 4.7 is four full and a half. */
+export function starFills(value: number): Array<"full" | "half" | "empty"> {
+  const halves = Math.round(value * 2);
+  return Array.from({ length: 5 }, (_, i) => (halves >= (i + 1) * 2 ? "full" : halves === i * 2 + 1 ? "half" : "empty"));
+}
+
 export function ReviewsLine() {
   return (
     // Beside the founder line on the homepage: the rating over its button, in
@@ -21,9 +27,13 @@ export function ReviewsLine() {
       {shouldAdvertiseRating() ? (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="flex" aria-hidden="true">
-            {Array.from({ length: 5 }, (_, i) => (
-              <StarIcon key={i} weight="fill" className="size-5 text-primary" />
-            ))}
+            {starFills(Number(APP_RATING.value)).map((fill, i) =>
+              fill === "half" ? (
+                <StarHalfIcon key={i} weight="fill" className="size-5 text-primary" />
+              ) : (
+                <StarIcon key={i} weight={fill === "full" ? "fill" : "regular"} className="size-5 text-primary" />
+              ),
+            )}
           </span>{" "}
           <span className="font-heading text-lg font-bold">{Number(APP_RATING.value).toFixed(1)}</span>{" "}
           <span className="text-sm text-muted-foreground">from {APP_RATING.count} reviews</span>

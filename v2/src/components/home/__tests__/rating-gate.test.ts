@@ -2,7 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ReviewsLine } from "../ReviewsLine";
+import { ReviewsLine, starFills } from "../ReviewsLine";
 import { REVIEW_URL } from "@/lib/constants/externalLinks";
 import { APP_RATING, MIN_REVIEWS_TO_ADVERTISE, shouldAdvertiseRating } from "@/lib/structuredData";
 
@@ -46,5 +46,14 @@ describe("the review rating", () => {
 
   it("loads nothing from a third party", () => {
     expect(render()).not.toMatch(/<script/);
+  });
+});
+
+describe("the stars", () => {
+  it("follow the rating to the nearest half", () => {
+    expect(starFills(5)).toEqual(["full", "full", "full", "full", "full"]);
+    expect(starFills(4.7)).toEqual(["full", "full", "full", "full", "half"]);
+    expect(starFills(4.2)).toEqual(["full", "full", "full", "full", "empty"]);
+    expect(starFills(4.8)).toEqual(["full", "full", "full", "full", "full"]);
   });
 });
