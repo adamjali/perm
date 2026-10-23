@@ -1420,3 +1420,42 @@ request list in Thursday's round above; work it top down.
 11. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last).
 
 After this list: `node scripts/gsc_queue.mjs --since 4b267329` for anything newer.
+
+### Round, Friday Oct 23 2026 (about 11:13 to 11:29 AM EDT)
+
+Worked the "Queue after the Oct 23 night deploy" list from the top. Live at the start: fc078734, switched at 2:10 AM
+EDT, so every "after the deploy" item was open. `gsc_queue.mjs --since 4b267329` found no public page changed since.
+Google answered Quota Exceeded on the 12th request.
+
+Requested (last crawl before the request):
+- `/` (Oct 22, 9:28 PM; the rating line and its markup went live at 2:10 AM)
+- `/guides/three-180-day-clocks` (Oct 9, 5:26 PM)
+- `/guides` (Oct 19, 5:56 PM)
+- `/blog` (Oct 20, 7:50 PM)
+- `/debarments` (today 1:15 AM, an hour before the paged list went live)
+- `/guides/how-the-visa-bulletin-works` (Oct 8, 3:28 PM)
+- `/guides/read-your-priority-date-history` (Sep 3, 6:25 AM)
+- `/blog/why-perm-cases-are-denied` (discovered, never crawled)
+- `/blog/what-dol-publishes-about-perm` (unknown to Google, though the sitemap lists it)
+- `/blog/how-perm-wage-data-is-published` (unknown to Google, though the sitemap lists it)
+- `/for-attorneys` (Oct 22, 8:31 AM)
+
+Skipped:
+- `/about`: crawled Oct 22, 10:00 PM, after its last change went live (the Oct 22 2 AM deploy).
+- `/guides/look-up-a-law-firm`, `/guides/look-up-a-perm-case-by-number`, `/guides/look-up-an-lca-by-number`: all
+  three indexed.
+
+Stopped at Quota Exceeded on `/changelog` (last crawled Oct 19, 8:20 AM; not requested).
+
+The window was 1440 wide today: the Page indexing chevron sat at (1316,450) and Request indexing at (1258,363) on an
+indexed page, (1254,363) on one Google doesn't know.
+
+Still to request, in order:
+1. `/changelog` (Oct 19)
+2. `/uscis-processing-times`, `/tools/green-card-timeline`, only if last crawled before the Oct 23 2:10 AM deploy
+3. `/perm-employers/duk-j-corporation` (the one 4xx), `/perm-attorneys/browse/u`
+4. Inspect only; request any crawled before Oct 21: `/tools`, `/case-search`, `/visa-bulletin`, `/perm-employers`,
+   `/perm-attorneys`, `/perm-wages`, `/perm-employers/under-review`, `/open-data`, `/badges`, `/press`, `/methodology`
+5. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
+
+After this list: `node scripts/gsc_queue.mjs --since fc078734` for anything newer.
