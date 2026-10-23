@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PaperPlaneTiltIcon, StarIcon } from "@phosphor-icons/react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { CharLimit } from "@/components/ui/char-limit";
-import { choiceVariants } from "@/components/ui/choice";
 import { useQueryParam } from "@/components/ui/pagination";
 import { analytics } from "@/lib/analytics";
 import { convexSiteUrl } from "@/lib/convexSite";
@@ -15,8 +14,12 @@ import { REVIEW_NAME_MAX, REVIEW_TEXT_MAX, REVIEW_TEXT_MIN } from "@convex/lib/s
 /**
  * The site's review form. Posts to the Convex route (`/review/submit`), which owns the shape checks and the
  * budgets; this side owns honest states (sending, sent, refused) and never pretends. Nothing shows until the
- * owner approves it, and the thanks says so. `?rating=4` (from a rating email) picks the stars ahead. The hidden
- * "website" field is the honeypot: people never see it, bots fill it, the route answers as if it worked.
+ * owner approves it, and the thanks says so. `?rating=4` (from a rating email) picks the stars ahead.
+ *
+ * The stars are five radio buttons drawn as empty stars: pointing at one fills the stars up to it, a click or a
+ * tap picks, the arrow keys move between them, and the number picked is said in words beside them. The hidden
+ * "website" field and `elapsed` (time since the form appeared) let the route tell a script from a person
+ * (`looksAutomated`); a script is answered as if it worked and nothing is stored.
  */
 
 type Phase = "idle" | "sending" | "sent" | "error";
@@ -28,6 +31,11 @@ export function ReviewForm() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [note, setNote] = useState("");
   const [picked, setPicked] = useState<number | null>(null);
+  const [pointing, setPointing] = useState<number | null>(null);
+  const shownAt = useRef(0);
+  useEffect(() => {
+    shownAt.current = Date.now();
+  }, []);
   const [fromLink] = useQueryParam("rating");
   const linked = /^[1-5]$/.test(fromLink) ? Number(fromLink) : null;
   const rating = picked ?? linked;
@@ -58,6 +66,7 @@ export function ReviewForm() {
           email: data.get("email"),
           consent: data.get("consent") === "yes",
           website: data.get("website"),
+          elapsed: shownAt.current ? Date.now() - shownAt.current : 0,
         }),
       });
       const body = (await res.json()) as { ok: boolean; message: string };
@@ -89,27 +98,37 @@ export function ReviewForm() {
     <form onSubmit={onSubmit} className="relative border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
       <fieldset>
         <legend className="text-sm font-bold text-muted-foreground">Your rating</legend>{" "}
-        <div className="mt-2 flex flex-wrap gap-2">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <label
-              key={n}
-              className={cn(
-                choiceVariants({ on: rating === n }),
-                "cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
-              )}
-            >
-              <input
-                type="radio"
-                name="rating"
-                value={n}
-                checked={rating === n}
-                onChange={() => setPicked(n)}
-                className="sr-only"
-              />
-              <StarIcon weight="fill" className="size-4" aria-hidden="true" />
-              {`${n} ${n === 1 ? "star" : "stars"}`}
-            </label>
-          ))}
+        <div className="mt-1 flex flex-wrap items-center gap-x-3">
+          <div className="flex" onMouseLeave={() => setPointing(null)}>
+            {[1, 2, 3, 4, 5].map((n) => {
+              const filled = n <= (pointing ?? rating ?? 0);
+              return (
+                <label
+                  key={n}
+                  onMouseEnter={() => setPointing(n)}
+                  className="grid size-11 cursor-pointer place-items-center has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+                >
+                  <input
+                    type="radio"
+                    name="rating"
+                    value={n}
+                    checked={rating === n}
+                    onChange={() => setPicked(n)}
+                    aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
+                    className="sr-only"
+                  />
+                  <StarIcon
+                    weight={filled ? "fill" : "regular"}
+                    className={cn("size-8", filled ? "text-primary" : "text-foreground")}
+                    aria-hidden="true"
+                  />
+                </label>
+              );
+            })}
+          </div>{" "}
+          <span aria-live="polite" className="text-sm text-muted-foreground">
+            {rating ? `${rating} of 5` : "Pick from 1 to 5 stars"}
+          </span>
         </div>
       </fieldset>{" "}
       <label className="mt-5 block">
@@ -162,7 +181,8 @@ export function ReviewForm() {
         <PaperPlaneTiltIcon className="size-4" aria-hidden="true" />
       </button>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
-        We read each review before it shows, and turn away only spam and abuse, never a review for its stars.
+        We read each review before it shows. Links and email addresses can&apos;t be included. We turn away spam and
+        abuse, never a review for its stars.
       </p>
     </form>
   );

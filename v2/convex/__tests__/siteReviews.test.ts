@@ -27,7 +27,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const REVIEW = { rating: 4, text: "It told me the day my case moved.", name: "Pat", consent: true };
+const REVIEW = { rating: 4, text: "It told me the day my case moved.", name: "Pat", consent: true, elapsed: 30_000 };
 
 function post(t: T, body: Record<string, unknown>, ip = "203.0.113.7") {
   return t.fetch("/review/submit", {
@@ -59,6 +59,21 @@ describe("the review form's route", () => {
     const t = createTestContext();
     const res = await post(t, { ...REVIEW, website: "https://spam.example" });
     expect(res.status).toBe(200);
+    expect(await rows(t)).toHaveLength(0);
+  });
+
+  it("answers a post faster than anyone could write as if it worked, and stores nothing", async () => {
+    const t = createTestContext();
+    const res = await post(t, { ...REVIEW, elapsed: 400 });
+    expect(res.status).toBe(200);
+    expect(await rows(t)).toHaveLength(0);
+  });
+
+  it("refuses a review carrying a link, and says why", async () => {
+    const t = createTestContext();
+    const res = await post(t, { ...REVIEW, text: "Great site, also try https://spam.example" });
+    expect(res.status).toBe(400);
+    expect((await res.json()).message).toMatch(/links/);
     expect(await rows(t)).toHaveLength(0);
   });
 

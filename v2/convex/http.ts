@@ -18,7 +18,7 @@ import {
 } from "./lib/mailPages";
 import { RATING_PATH, parseScore } from "./alertRatings";
 import { reviewUrlWithRating } from "../src/lib/constants/externalLinks";
-import { checkReview } from "./lib/siteReview";
+import { checkReview, looksAutomated } from "./lib/siteReview";
 import { THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
 import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
 import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
@@ -787,10 +787,8 @@ http.route({
     }
     if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
     const fields = body as Record<string, unknown>;
-    // Honeypot: a filled "website" field is a bot. Answer as if it worked, store nothing.
-    if (typeof fields.website === "string" && fields.website.trim() !== "") {
-      return json({ ok: true, message: SITE_REVIEW_THANKS });
-    }
+    // A script (the hidden field filled, or posted faster than anyone can write): answer as if it worked, store nothing.
+    if (looksAutomated(fields)) return json({ ok: true, message: SITE_REVIEW_THANKS });
     const checked = checkReview(fields);
     if (!checked.ok) return json({ ok: false, message: checked.message }, 400);
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown";
