@@ -106,7 +106,7 @@ export function ReviewForm() {
                 <label
                   key={n}
                   onMouseEnter={() => setPointing(n)}
-                  className="grid size-11 cursor-pointer place-items-center has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+                  className="flex size-11 cursor-pointer items-center justify-center has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
                 >
                   <input
                     type="radio"
