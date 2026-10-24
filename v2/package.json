@@ -138,7 +138,7 @@
     "eslint-config-next": "16.4.0",
     "eslint-plugin-security": "^4.0.1",
     "eslint-plugin-storybook": "^10.6.0",
-    "happy-dom": "^20.14.0",
+    "happy-dom": "^21.0.3",
     "jsdom": "29.1.1",
     "playwright-core": "1.63.0",
     "serwist": "^9.5.12",
