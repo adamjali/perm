@@ -1173,7 +1173,7 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   its sections through `components/home/index.ts`, so at two levels a change to the rating line reached no list. The
   same walk feeds the Search Console queue, the deploy's Cloudflare purge, IndexNow and the sitemap's dates.
 
-## Oct 24 2026, in six lines
+## Oct 24 2026, in seven lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026".
 
@@ -1191,3 +1191,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026".
 - **Replies to people who write back are warm and about what they said** (the approved model is in project memory).
 - **After a deploy, read `cf-cache-status` and `age` before calling a fix missing**: Cloudflare served `/login` 65
   minutes old.
+- **robots.txt is served by nginx from the built file, outside every limit**: Googlebot was refused it 10 to 41 times a
+  day Oct 17 to 21 (with up to 37% of its requests), Google pauses a site whose robots.txt fails, and its crawl fell
+  from about 45,000 a day to 5,000. Errors were 0 from Oct 22; Google raises the rate again as the site stays healthy.

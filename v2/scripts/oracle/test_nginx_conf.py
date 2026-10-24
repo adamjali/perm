@@ -401,6 +401,15 @@ def run(conf_text: str) -> None:
     check("php probes: no real page matches", pattern is not None and not any(pattern.search(p) for p in misses),
           str([p for p in misses if pattern and pattern.search(p)]))
 
+    # robots.txt is served from the live release's built file and never waits
+    # behind a limit (Oct 24 2026): a refused robots.txt pauses Google's crawl of
+    # the whole site.
+    robots = locs.get("= /robots.txt", "")
+    check("robots.txt: served from the built file in the live release",
+          "root /srv/permtracker/app/live/.next/server/app;" in robots and "try_files /robots.txt.body @app;" in robots)
+    check("robots.txt: no limit can refuse it",
+          robots != "" and not zones_in(robots, "limit_req") and not zones_in(robots, "limit_conn"))
+
     # The automatic defense's log (bin/permtracker-defend reads it every
     # minute). Declared at server level, beside the main log: an access_log
     # there replaces the one nginx.conf sets, so naming only the new one would
@@ -467,6 +476,9 @@ def probe() -> None:
             '"$http_x_pt_verified_bot:$pt_search_family::$http_user_agent"', 1),
         "a look-alike assistant gets their allowance": good.replace('{ "true:1" assist; default ""; }', '{ "~:1$" assist; default ""; }', 1),
         "assistants' cap dropped from a page": good.replace("        limit_conn pt_assist_conn 12;\n", "", 1),
+        "robots.txt back behind the app's limits": good.replace(
+            "        try_files /robots.txt.body @app;\n", "        try_files /robots.txt.body @app;\n        limit_conn pt_app 64;\n", 1),
+        "robots.txt served by the app again": good.replace("    location = /robots.txt {", "    location = /robots-off.txt {", 1),
         "assistants' burst let through past their cap": good.replace("zone=pt_assist burst=60 delay=8", "zone=pt_assist burst=60 delay=12", 1),
         "assistants refused instead of paced": good.replace("zone=pt_assist burst=60 delay=8", "zone=pt_assist burst=60 nodelay", 1),
         "every crawler counted as an assistant": good.replace('"~*(ChatGPT-User|Claude-User|', '"~*(bot|ChatGPT-User|Claude-User|', 1),

@@ -10201,3 +10201,16 @@ arriving in the 800 ms after that scroll is ignored (`hoverQuietUntil`). A test 
 remount (the stars' row remounts to shake) holds a detached node: query again after it. Cloudflare served `/login` 65
 minutes after the deploy that changed it (`age: 3898`, `cf-cache-status: UPDATING`): read those headers before calling
 a fix missing. Ledger: `.planning/reviews-and-ratings-2026-10-24.md`.
+
+**robots.txt never waits behind a limit** (`location = /robots.txt` in `scripts/oracle/nginx/permtracker.conf`,
+installed 6:57 AM EDT Oct 24 2026, new workers confirmed). Next writes it at build as
+`.next/server/app/robots.txt.body` (byte for byte what the route serves); nginx serves that file from the live
+release with no limit and falls through to Next if a release lacks it. From the server's own log, Googlebot's
+requests a day and the share refused with nginx's busy page (all 503s, mostly employer pages, the search engines' 12
+slots full of slow renders before the Oct 21 speed fix): Oct 17 to 21 between 37,000 and 48,000 a day, 9% to 37%
+refused, robots.txt refused 6 to 41 times a day; Oct 22 on, 0 refused, but Googlebot down to about 5,000 and then
+3,700 a day. Google's own docs: while robots.txt answers 5xx "Google stops crawling the site" (up to 12 hours), and
+the crawl capacity limit falls on 5xx and slow responses and rises when the site "responds consistently". Search
+Console's Host status ("robots.txt fetch" and "Server connectivity": high fail rate) describes that week; read its
+"Last updated" day before reading it as current. `test_nginx_conf.py` checks the location and probes both a limit
+put back on it and the location removed.
