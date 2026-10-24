@@ -1145,10 +1145,18 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   have made it a 5, a 1 or 2 fades in with an apology and "What should we do better?". Those notes are private
   (`/review/note`, `siteReviews.addNote`: one per review, within two hours, 3 stars or fewer), shown only on the
   admin page and deleted 90 days after they're written. Errors are calm: the reason goes in the field's own hint,
-  read out by a status line, and the field is brought to the middle of the screen.
+  read out by a status line, and the field is brought to the middle of the screen; the box that needs something gets a
+  red edge (`--destructive`, 3.2:1 on the page), and a missing star rating shakes the stars.
+- **Reviews are tiles, counted exactly, and all reachable** (owner, Oct 23 2026 night): `ReviewCard` (homepage and
+  /reviews alike) sits on the tint with no edge or shadow, since a shadow read as a button that did nothing; a long
+  review is cut with an ellipsis and opens with "Read more". The homepage shows the newest 3 under "What people say"
+  with "See all N reviews". The average, the count and the star breakdown come from `siteReviewTally` (five numbers,
+  kept by approve, decline and the Senja copy; `rebuildTally` makes or corrects it), not from the newest 500 the page
+  reads; past those, "Show older reviews" loads 100 at a time (`listOlder`, `/api/reviews/older`). Approved reviews
+  are never deleted; the form takes at most 30 a day.
 - **The review form is built to be frictionless and safe** (owner's notes, Oct 23 2026 evening): five empty stars
   (an APG rating radio group: mouse hover fills, tap picks, arrows move), the words optional, a name, an optional
-  email, no checkbox (a notice above "Post review" says what shows and what's declined). Prefill: `?rating=` picks
+  email, no checkbox (a notice above "Submit review" says what shows and what's declined). Prefill: `?rating=` picks
   the stars; `?t=` is the reader's address sealed with AES-GCM (`convex/lib/sealedEmail.ts`, 120 days, never
   readable in the link), opened by `/review/prefill` and stripped from the address bar and from analytics; a
   signed-in reader's name and address come from `/api/review-prefill`. The rating email's thank-you page offers the

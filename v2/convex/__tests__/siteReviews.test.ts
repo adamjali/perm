@@ -314,6 +314,78 @@ describe("a private note after a low rating", () => {
   });
 });
 
+describe("the tally of shown reviews", () => {
+  const tally = (t: T) => t.query(api.siteReviews.publicTally, {});
+  const insert = (t: T, rating: number, status: "pending" | "approved" | "declined", insider = false) =>
+    t.run((ctx) => ctx.db.insert("siteReviews", { rating, text: "", name: "X", status, source: "site", createdAt: Date.now(), ...(insider ? { insider: true } : {}) }));
+
+  it("counts a review in when it's approved and out when it's declined, never an insider's", async () => {
+    const t = createTestContext();
+    const admin = await adminAuth(t);
+    const a = await insert(t, 5, "pending");
+    const b = await insert(t, 2, "pending");
+    const inside = await insert(t, 5, "pending", true);
+    await admin.mutation(api.siteReviews.approve, { id: a });
+    await admin.mutation(api.siteReviews.approve, { id: b });
+    await admin.mutation(api.siteReviews.approve, { id: inside });
+    expect(await tally(t)).toEqual({ stars: [0, 1, 0, 0, 1], exact: true });
+    // Approving twice counts once; declining takes it out.
+    await admin.mutation(api.siteReviews.approve, { id: a });
+    await admin.mutation(api.siteReviews.decline, { id: b, reason: "spam" });
+    expect(await tally(t)).toEqual({ stars: [0, 0, 0, 0, 1], exact: true });
+  });
+
+  it("starts from the table when no tally exists, so reviews shown before it are counted", async () => {
+    const t = createTestContext();
+    await insert(t, 4, "approved");
+    await insert(t, 3, "approved");
+    expect(await tally(t)).toEqual({ stars: [0, 0, 1, 1, 0], exact: false });
+    const admin = await adminAuth(t);
+    await admin.mutation(api.siteReviews.approve, { id: await insert(t, 5, "pending") });
+    expect(await tally(t)).toEqual({ stars: [0, 0, 1, 1, 1], exact: true });
+  });
+
+  it("drops a shown review from the count when it's deleted for good, and only the admin can delete", async () => {
+    const t = createTestContext();
+    const admin = await adminAuth(t);
+    const id = await insert(t, 5, "pending");
+    await admin.mutation(api.siteReviews.approve, { id });
+    await expect(t.mutation(api.siteReviews.remove, { id })).rejects.toThrow();
+    await admin.mutation(api.siteReviews.remove, { id });
+    expect(await t.run((ctx) => ctx.db.get(id))).toBeNull();
+    expect(await tally(t)).toEqual({ stars: [0, 0, 0, 0, 0], exact: true });
+  });
+
+  it("is rebuilt from the table and says when it had drifted", async () => {
+    const t = createTestContext();
+    await insert(t, 4, "approved");
+    await t.run((ctx) => ctx.db.insert("siteReviewTally", { key: "shown", stars: [9, 0, 0, 0, 0], updatedAt: 0 }));
+    expect(await t.mutation(internal.siteReviews.rebuildTally, {})).toEqual({ stars: [0, 0, 0, 1, 0], drifted: true });
+    expect(await tally(t)).toEqual({ stars: [0, 0, 0, 1, 0], exact: true });
+  });
+});
+
+describe("older reviews, a page at a time", () => {
+  it("reaches every shown review in order, never an insider's, and says when there are no more", async () => {
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      for (let i = 1; i <= 130; i++) {
+        await ctx.db.insert("siteReviews", { rating: 5, text: `R${i}`, name: "X", status: "approved", source: "site", createdAt: i * 1000 });
+      }
+      await ctx.db.insert("siteReviews", { rating: 5, text: "inside", name: "Y", status: "approved", source: "site", createdAt: 65_500, insider: true });
+    });
+    const first = await t.query(api.siteReviews.listOlder, { before: 200_000 });
+    expect(first.reviews[0]?.text).toBe("R130");
+    expect(first.more).toBe(true);
+    const next = await t.query(api.siteReviews.listOlder, { before: first.reviews[first.reviews.length - 1]!.createdAt });
+    expect(next.more).toBe(false);
+    const all = [...first.reviews, ...next.reviews].map((r) => r.text);
+    expect(all).toHaveLength(130);
+    expect(new Set(all).size).toBe(130);
+    expect(all).not.toContain("inside");
+  });
+});
+
 describe("copying reviews left on Senja", () => {
   const senja = (senjaId: string, name: string) => ({ senjaId, rating: 5, text: "Left on Senja.", name, createdAt: 5000 });
 
@@ -335,5 +407,9 @@ describe("copying reviews left on Senja", () => {
     const t = createTestContext();
     await t.mutation(internal.siteReviews.storeFromSenja, { reviews: [senja("s1", "Pat")], approve: true });
     expect((await t.query(api.siteReviews.listPublished, {})).map((r) => r.name)).toEqual(["Pat"]);
+    // The copy counts in the tally; an insider's never does.
+    await t.mutation(internal.siteReviews.storeFromSenja, { reviews: [senja([...INSIDER_REVIEW_IDS][0]!, "Insider")], approve: true });
+    const { stars } = await t.query(api.siteReviews.publicTally, {});
+    expect(stars.reduce((a, n) => a + n, 0)).toBe(1);
   });
 });

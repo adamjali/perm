@@ -2312,6 +2312,17 @@ export default defineSchema({
     .index("by_note_at", ["privateNoteAt"]),
 
   /**
+   * How many reviews the site shows, by stars (index 0 is one star): kept as reviews are approved, declined and
+   * copied, so the average and the count stay exact however many there are. The public read hands back only the
+   * newest 500. One row, keyed "shown"; `siteReviews.rebuildTally` makes it from the table when it's missing.
+   */
+  siteReviewTally: defineTable({
+    key: v.literal("shown"),
+    stars: v.array(v.number()),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
+  /**
    * Someone following ONE employer's PERM cases as a group.
    *
    * Fourth sibling of the alert tables, same consent grammar: double opt-in,

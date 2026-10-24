@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CircleNotchIcon, StarIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, StarIcon, WarningCircleIcon } from "@phosphor-icons/react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { CharLimit } from "@/components/ui/char-limit";
@@ -27,9 +27,10 @@ import { NOTE_MAX, REVIEW_NAME_MAX, REVIEW_TEXT_MAX, type ReviewField } from "@c
  * - The stars are five radio buttons drawn as empty stars (the APG rating radio group): pointing with a mouse
  *   fills them up to the pointer, a tap picks, the arrow keys move, and "3 of 5" says the pick in words.
  * - `method="post"` and `noValidate`: before the script loads a native submit never puts a name or address in the
- *   URL, and every problem is the form's own, said calmly (owner: no red text, no boxes): with no star picked the
- *   stars give one small wiggle and their hint turns bold; anything else turns its field's hint into the reason
- *   and moves the cursor there. Each is also read out by a polite status line, and logged.
+ *   URL, and every problem is the form's own (owner, Oct 23 2026: no red text, but a red edge on the box that
+ *   needs something, or a shake of the stars): with no star picked the stars shake and their hint turns bold;
+ *   anything else outlines its box in red, turns its hint into the reason and moves the cursor there. Each is also
+ *   read out by a polite status line, and logged.
  * - The hidden "website" field is a honeypot; `elapsed` lets the route mark a very fast send for the owner.
  * - The thanks fits the stars: a 4 or 5 is cheered; a 3 is asked what would have made it a 5, and a 1 or 2 gets an
  *   apology and "What should we do better?", each in a private box tied to the review just posted (NoteBox).
@@ -39,7 +40,7 @@ type Phase = "idle" | "sending" | "sent";
 type FieldError = { field: ReviewField | "form"; message: string };
 
 const FIELD =
-  "mt-2 min-h-14 w-full min-w-0 border-2 border-input bg-background px-4 py-3 text-lg outline-hidden transition-shadow focus:ring-2 focus:ring-primary aria-[invalid=true]:border-foreground disabled:opacity-60";
+  "mt-2 min-h-14 w-full min-w-0 border-2 border-input bg-background px-4 py-3 text-lg outline-hidden transition-shadow focus:ring-2 focus:ring-primary aria-[invalid=true]:border-destructive aria-[invalid=true]:focus:ring-destructive disabled:opacity-60";
 const LABEL = "text-base font-bold";
 const HINT = "text-base text-muted-foreground";
 
@@ -64,17 +65,27 @@ export function sentMotion(rating: number): string {
   return rating >= 4 ? "review-star-hop" : rating === 3 ? "review-star-settle" : "review-star-calm";
 }
 
-/** The burst behind a 4 or 5: eight small squares fanning up and out (never down across the words below). */
+/**
+ * The burst behind a 4 or 5: twelve small squares that leave from the middle of the stars and spread all the way round
+ * them, on an oval as wide as the row, flatter underneath so none reaches the words below. Each is where it ends up.
+ */
 const BURST: [number, number][] = [
-  [-100, 104],
-  [-72, 124],
-  [-44, 112],
-  [-14, 130],
-  [14, 118],
-  [44, 128],
-  [72, 110],
-  [100, 120],
+  [172, 10],
+  [106, 22],
+  [46, 37],
+  [-39, 30],
+  [-126, 27],
+  [-145, 8],
+  [-172, -17],
+  [-106, -37],
+  [-46, -62],
+  [39, -50],
+  [126, -45],
+  [145, -13],
 ];
+
+/** The fixed header's height and the section's own top margin (scroll-mt-24), which a scrolled-to section sits under. */
+const HEADER_ROOM = 96;
 
 export function ReviewForm() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -93,6 +104,7 @@ export function ReviewForm() {
   const shownAt = useRef(0);
   const linkToken = useRef<string | null>(null);
   const thanks = useRef<HTMLHeadingElement>(null);
+  const thanksBox = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -133,12 +145,24 @@ export function ReviewForm() {
       .catch((e: unknown) => failed("account", String(e)));
   }, []);
 
-  useEffect(() => {
-    if (phase === "sent") thanks.current?.focus();
+  // The form is tall and the thanks is short, so a reader who pressed Submit at the bottom would be left looking at
+  // empty page while the stars played out of sight. Before the thanks is painted it's brought to the middle of the
+  // screen, so it arrives in view and its motion is seen; focus follows without moving the page again.
+  // The whole section (its heading, the rating and the thanks) is brought into view when it fits under the header,
+  // so nothing sits cut off at the top; on a screen too short for all of it, the thanks itself is centred. "instant":
+  // the page scrolls smoothly by default (globals.css), and a glide here is the blank moment.
+  useLayoutEffect(() => {
+    if (phase !== "sent") return;
+    const box = thanksBox.current;
+    const section = box?.closest("section");
+    const room = window.innerHeight - HEADER_ROOM;
+    if (section && section.getBoundingClientRect().height <= room) section.scrollIntoView?.({ block: "start", behavior: "instant" });
+    else box?.scrollIntoView?.({ block: "center", behavior: "instant" });
+    thanks.current?.focus({ preventScroll: true });
   }, [phase]);
 
   // The cursor goes to a box that needs something; never onto a star (a focus ring there read as a mistake).
-  // The stars are only brought into view, so a press of Post review far below them still shows what's missing.
+  // The stars are only brought into view, so a press of Submit review far below them still shows what's missing.
   // Each is brought to the middle of the screen, so its label and the note in it aren't under the header.
   const focusField = (field: FieldError["field"]) => {
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -205,13 +229,13 @@ export function ReviewForm() {
   if (phase === "sent" && sent) {
     const words = thanksWords(sent.rating, sent.name);
     return (
-      <div className="mx-auto max-w-lg py-8 text-center">
+      <div ref={thanksBox} className="review-thanks-in mx-auto max-w-lg py-8 text-center">
         {/* The stars arrive once, in a way that fits what was given (sentMotion); still under reduced motion. */}
         <div className="relative flex justify-center gap-1" aria-hidden="true">
           {sent.rating >= 4 ? (
             <span className="review-burst">
-              {BURST.map(([angle, reach], i) => (
-                <span key={i} style={{ "--a": `${angle}deg`, "--d": `${reach}px` } as React.CSSProperties} />
+              {BURST.map(([dx, dy], i) => (
+                <span key={i} style={{ "--dx": `${dx}px`, "--dy": `${dy}px`, "--r": `${i % 2 ? -1 : 1}` } as React.CSSProperties} />
               ))}
             </span>
           ) : null}
@@ -244,16 +268,25 @@ export function ReviewForm() {
   const sending = phase === "sending";
   const invalid = (f: ReviewField) => (error?.field === f ? { "aria-invalid": true as const } : {});
   /** A field's hint, or the reason it needs something, in the same quiet place. */
-  const hint = (f: ReviewField, normal: string) =>
+  /** A field's own hint, beside its label, always the same. */
+  const hint = (f: ReviewField, normal: string) => (
+    <span id={`review-hint-${f}`} className={HINT}>
+      {normal}
+    </span>
+  );
+  /** What's wrong with a field, on its own line under the box, marked as an error so it can't be mistaken for a hint. */
+  const problem = (f: ReviewField) =>
     error?.field === f ? (
-      <span id={`review-hint-${f}`} className="text-base font-bold text-foreground">
-        {error.message}
-      </span>
-    ) : (
-      <span id={`review-hint-${f}`} className={HINT}>
-        {normal}
-      </span>
-    );
+      <p id={`review-error-${f}`} className="mt-2 flex items-start gap-2 text-base font-bold text-destructive-text">
+        <WarningCircleIcon weight="fill" className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+        <span>{error.message}</span>
+      </p>
+    ) : null;
+  const described = (f: ReviewField) => (error?.field === f ? `review-hint-${f} review-error-${f}` : `review-hint-${f}`);
+  /** Typing in a box that needed something takes its error away. */
+  const settle = (f: ReviewField) => {
+    if (error?.field === f) setError(null);
+  };
 
   return (
     <form method="post" noValidate onSubmit={onSubmit} className="relative mx-auto max-w-lg">
@@ -262,7 +295,7 @@ export function ReviewForm() {
         <p role="status" className="sr-only">
           {error ? error.message : ""}
         </p>
-        <fieldset ref={starsRef} aria-describedby="review-hint-rating" className="scroll-mt-24 text-center">
+        <fieldset ref={starsRef} aria-describedby={error?.field === "rating" ? "review-error-rating" : "review-hint-rating"} className="scroll-mt-24 text-center">
           <legend className="block w-full text-center text-xl font-bold">How would you rate PERM Tracker?</legend>{" "}
           <div className="mt-3 flex flex-col items-center">
             <div key={nudge} className={cn("flex", nudge > 0 && "review-stars-nudge")} onPointerLeave={() => setPointing(null)}>
@@ -298,22 +331,27 @@ export function ReviewForm() {
                 );
               })}
             </div>{" "}
-            <span className="mt-1">{rating ? <span className={HINT}>{`${rating} of 5`}</span> : hint("rating", "Tap a star")}</span>
+            {error?.field === "rating" ? (
+              problem("rating")
+            ) : (
+              <span className="mt-1">{rating ? <span id="review-hint-rating" className={HINT}>{`${rating} of 5`}</span> : hint("rating", "Tap a star")}</span>
+            )}
           </div>
         </fieldset>{" "}
         <div className="mt-10">
           <label htmlFor="review-text">
             <span className={LABEL}>Your review</span> {hint("text", "(optional)")}
           </label>{" "}
-          <CharLimit max={REVIEW_TEXT_MAX} aria-describedby="review-hint-text" {...invalid("text")}>
-            <textarea id="review-text" ref={textRef} name="text" rows={4} autoComplete="off" className={FIELD} />
-          </CharLimit>
+          <CharLimit max={REVIEW_TEXT_MAX} aria-describedby={described("text")} {...invalid("text")}>
+            <textarea id="review-text" ref={textRef} name="text" rows={4} autoComplete="off" onInput={() => settle("text")} className={FIELD} />
+          </CharLimit>{" "}
+          {problem("text")}
         </div>{" "}
         <div className="mt-6">
           <label htmlFor="review-name">
             <span className={LABEL}>Your name</span> {hint("name", "(a first name is fine)")}
           </label>{" "}
-          <CharLimit max={REVIEW_NAME_MAX} aria-describedby="review-hint-name" {...invalid("name")}>
+          <CharLimit max={REVIEW_NAME_MAX} aria-describedby={described("name")} {...invalid("name")}>
             <input
               id="review-name"
               ref={nameRef}
@@ -321,10 +359,14 @@ export function ReviewForm() {
               name="name"
               autoComplete="given-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                settle("name");
+              }}
               className={FIELD}
             />
-          </CharLimit>
+          </CharLimit>{" "}
+          {problem("name")}
         </div>{" "}
         <div className="mt-6">
           <label htmlFor="review-email">
@@ -338,11 +380,15 @@ export function ReviewForm() {
             autoComplete="email"
             maxLength={254}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              settle("email");
+            }}
             className={FIELD}
-            aria-describedby="review-hint-email"
+            aria-describedby={described("email")}
             {...invalid("email")}
-          />
+          />{" "}
+          {problem("email")}
         </div>
         {/* Honeypot: visually gone, still in the form data. */}
         <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
@@ -356,13 +402,18 @@ export function ReviewForm() {
           people&apos;s personal details or reviews of something else, and never hold one back for its stars. No links,
           please. <Link href="/privacy" className="link">Privacy policy</Link>
         </p>{" "}
-        {error?.field === "form" ? <p className="mt-5 text-base font-bold">{error.message}</p> : null}{" "}
+        {error?.field === "form" ? (
+          <p className="mt-5 flex items-start gap-2 text-base font-bold text-destructive-text">
+            <WarningCircleIcon weight="fill" className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <span>{error.message}</span>
+          </p>
+        ) : null}{" "}
         <button
           type="submit"
           className={cn(buttonVariants({ variant: "default", size: "lg" }), "mt-5 h-14 w-full text-lg")}
         >
           {sending ? <CircleNotchIcon className="size-5 motion-safe:animate-spin" aria-hidden="true" /> : null}
-          {sending ? "Posting" : "Post review"}
+          {sending ? "Submitting" : "Submit review"}
         </button>
       </fieldset>
     </form>
@@ -455,7 +506,7 @@ function NoteBox({ reviewId, ask, rating }: { reviewId: string; ask: string; rat
         {problem ? (
           <span className="text-base font-bold text-foreground">{problem}</span>
         ) : (
-          <span className={HINT}>Only we read this. It isn&apos;t posted with your review.</span>
+          <span className={HINT}>Only we read this. It isn&apos;t shown with your review.</span>
         )}
       </p>{" "}
       <button type="submit" disabled={sending} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "mt-4 h-14 w-full text-lg")}>

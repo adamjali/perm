@@ -23,8 +23,8 @@
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
-import { internalAction, internalMutation, internalQuery, mutation, query, type MutationCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import { internalAction, internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getSecurityAlertEmail, requireAdmin } from "./lib/admin";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import { getResend } from "./lib/email";
@@ -168,6 +168,32 @@ export const addNote = internalMutation({
   },
 });
 
+/** A review the site shows and counts: approved, and not by someone who runs it. */
+const isShown = (r: Pick<Doc<"siteReviews">, "status" | "insider">) => r.status === "approved" && r.insider !== true;
+
+/** Every shown review counted from the table: for a missing tally, and to check one. Bounded by the read limit. */
+async function countShown(ctx: QueryCtx): Promise<number[]> {
+  const stars = [0, 0, 0, 0, 0];
+  for await (const r of ctx.db.query("siteReviews").withIndex("by_status_created", (q) => q.eq("status", "approved"))) {
+    if (r.insider !== true && r.rating >= 1 && r.rating <= 5) stars[r.rating - 1]! += 1;
+  }
+  return stars;
+}
+
+/** Move one review into or out of the tally. A missing tally is first made from the table, so it starts right. */
+async function adjustTally(ctx: MutationCtx, rating: number, delta: 1 | -1): Promise<void> {
+  if (rating < 1 || rating > 5) return;
+  const row = await ctx.db.query("siteReviewTally").withIndex("by_key", (q) => q.eq("key", "shown")).unique();
+  if (!row) {
+    // Counted after the change was written, so the fresh count already includes it.
+    await ctx.db.insert("siteReviewTally", { key: "shown", stars: await countShown(ctx), updatedAt: Date.now() });
+    return;
+  }
+  const stars = [...row.stars];
+  stars[rating - 1] = Math.max(0, (stars[rating - 1] ?? 0) + delta);
+  await ctx.db.patch(row._id, { stars, updatedAt: Date.now() });
+}
+
 /** Tell the owner reviews wait: one email a day at most, charged before it's scheduled. */
 async function noteWaiting(ctx: MutationCtx): Promise<void> {
   const notice = await checkAndRecordRateLimit(ctx, "admin", "site_review_notice", NOTICE_LIMIT);
@@ -262,6 +288,59 @@ export const listPublished = query({
   },
 });
 
+/** How many older reviews one "Show older reviews" press loads. */
+export const OLDER_PAGE = 100;
+
+/**
+ * Shown reviews older than a moment, newest first, a page at a time: the way past the newest PUBLIC_READ, however
+ * many there are. `more` says whether another page waits. Public, and the same fields as listPublished.
+ */
+export const listOlder = query({
+  args: { before: v.number() },
+  returns: v.object({ reviews: v.array(publicReview), more: v.boolean() }),
+  handler: async (ctx, { before }) => {
+    const rows = await ctx.db
+      .query("siteReviews")
+      .withIndex("by_status_created", (q) => q.eq("status", "approved").lt("createdAt", before))
+      .order("desc")
+      .take(OLDER_PAGE + 1);
+    const shown = rows.slice(0, OLDER_PAGE).filter((r) => r.insider !== true);
+    return {
+      reviews: shown.map((r) => ({ id: r._id as string, rating: r.rating, text: r.text, name: r.name, createdAt: r.createdAt })),
+      more: rows.length > OLDER_PAGE,
+    };
+  },
+});
+
+/**
+ * How many reviews the site shows, by stars (index 0 is one star), and whether that's the kept tally (`exact`) or
+ * a count of the table made because no tally exists yet. Public: counts only, nothing about any reviewer.
+ */
+export const publicTally = query({
+  args: {},
+  returns: v.object({ stars: v.array(v.number()), exact: v.boolean() }),
+  handler: async (ctx) => {
+    const row = await ctx.db.query("siteReviewTally").withIndex("by_key", (q) => q.eq("key", "shown")).unique();
+    if (row) return { stars: row.stars, exact: true };
+    return { stars: await countShown(ctx), exact: false };
+  },
+});
+
+/** Make the tally from the table (when it's missing, or to correct it), and say whether it had drifted. */
+export const rebuildTally = internalMutation({
+  args: {},
+  returns: v.object({ stars: v.array(v.number()), drifted: v.boolean() }),
+  handler: async (ctx) => {
+    const stars = await countShown(ctx);
+    const row = await ctx.db.query("siteReviewTally").withIndex("by_key", (q) => q.eq("key", "shown")).unique();
+    const drifted = row !== null && row.stars.some((n, i) => n !== stars[i]);
+    if (row) await ctx.db.patch(row._id, { stars, updatedAt: Date.now() });
+    else await ctx.db.insert("siteReviewTally", { key: "shown", stars, updatedAt: Date.now() });
+    if (drifted) log.warn("review tally had drifted from the table; rebuilt", { kept: row?.stars, counted: stars });
+    return { stars, drifted };
+  },
+});
+
 // ============================================================================
 // The owner
 // ============================================================================
@@ -344,6 +423,7 @@ export const approve = mutation({
     if (!row) throw new Error("That review no longer exists.");
     if (row.scrubbedAt !== undefined) throw new Error("That review's words were deleted after it was declined, so it can't be shown.");
     await ctx.db.patch(id, { status: "approved", reviewedAt: Date.now(), declineReason: undefined });
+    if (!isShown(row) && isShown({ status: "approved", insider: row.insider })) await adjustTally(ctx, row.rating, 1);
     log.info("review approved", { rating: row.rating });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
     return null;
@@ -359,10 +439,43 @@ export const decline = mutation({
     const row = await ctx.db.get(id);
     if (!row) throw new Error("That review no longer exists.");
     await ctx.db.patch(id, { status: "declined", reviewedAt: Date.now(), declineReason: reason });
+    if (isShown(row)) await adjustTally(ctx, row.rating, -1);
     log.info("review declined", { rating: row.rating, reason });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
     return null;
   },
+});
+
+/** Delete a review for good, and take it out of the count if it was shown. The one shared step of the two below. */
+async function removeReview(ctx: MutationCtx, id: Id<"siteReviews">): Promise<boolean> {
+  const row = await ctx.db.get(id);
+  if (!row) return false;
+  await ctx.db.delete(id);
+  if (isShown(row)) await adjustTally(ctx, row.rating, -1);
+  log.info("review deleted", { rating: row.rating, wasShown: isShown(row), source: row.source });
+  if (isShown(row)) await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
+  return true;
+}
+
+/**
+ * Delete a review for good: the reviewer asked for it to be removed (the thanks screen says they can), or it was a
+ * test. Declining keeps the rating and reason; this keeps nothing. SECURITY: requireAdmin.
+ */
+export const remove = mutation({
+  args: { id: v.id("siteReviews") },
+  returns: v.null(),
+  handler: async (ctx, { id }) => {
+    await requireAdmin(ctx);
+    if (!(await removeReview(ctx, id))) throw new Error("That review no longer exists.");
+    return null;
+  },
+});
+
+/** The same, from the command line (`npx convex run siteReviews:removeById`), for cleaning up tests. */
+export const removeById = internalMutation({
+  args: { id: v.id("siteReviews") },
+  returns: v.boolean(),
+  handler: async (ctx, { id }) => removeReview(ctx, id),
 });
 
 export const waitingCount = internalQuery({
@@ -559,6 +672,7 @@ export const storeFromSenja = internalMutation({
         createdAt: r.createdAt,
         ...(shown ? { reviewedAt: now } : {}),
       });
+      if (shown && !insider) await adjustTally(ctx, r.rating, 1);
       added += 1;
       if (!shown) waiting += 1;
     }

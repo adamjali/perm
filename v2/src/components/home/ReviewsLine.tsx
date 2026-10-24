@@ -2,8 +2,10 @@ import Link from "next/link";
 import { ChatDotsIcon, StarHalfIcon, StarIcon } from "@phosphor-icons/react/ssr";
 
 import { APP_RATING, shouldAdvertiseRating, type RatingFields } from "@/lib/structuredData";
-import type { SiteReview } from "@/lib/reviews/senjaParse";
+import { reviewDay, type SiteReview } from "@/lib/reviews/senjaParse";
 import { buttonVariants } from "@/components/ui/button";
+import { ReviewCard } from "@/components/reviews/ReviewCard";
+import { longDate } from "@convex/lib/months";
 
 /**
  * The site's review rating, the newest reviews, and the link to leave one.
@@ -36,9 +38,16 @@ export function ReviewStars({ value, className = "size-5" }: { value: number; cl
   );
 }
 
-/** How many reviews show under the rating; the count covers all of them. */
+/** How many reviews the homepage shows: the newest. The count and "See all" cover every one. */
 const SHOWN_REVIEWS = 3;
+/** The tiles' columns from a tablet up, by how many there are, so two never leave a third column empty. */
+const COLUMNS: Record<number, string> = { 1: "md:max-w-md", 2: "md:grid-cols-2", 3: "md:grid-cols-3" };
 
+/**
+ * "What people say" on the homepage: the rating, the newest reviews as the same tiles /reviews shows, a button
+ * to leave one and a link to all of them. Full width under the About line (owner, Oct 23 2026: the framed box
+ * beside the prose read awkwardly).
+ */
 export function ReviewsLine({
   rating = APP_RATING,
   reviews = [],
@@ -47,33 +56,43 @@ export function ReviewsLine({
   reviews?: SiteReview[];
 } = {}) {
   const advertise = shouldAdvertiseRating(rating.count);
+  const count = Number(rating.count) || 0;
+  const newest = advertise ? reviews.slice(0, SHOWN_REVIEWS) : [];
   return (
-    // Beside the founder line on the homepage: the rating over its button, in
-    // a framed box so it holds its place next to the prose.
-    <div className="flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
-      {advertise ? (
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <ReviewStars value={Number(rating.value)} />{" "}
-          <span className="font-heading text-lg font-bold">{Number(rating.value).toFixed(1)}</span>{" "}
-          <Link href="/reviews" className="link inline-flex min-h-11 items-center text-sm">{`from ${rating.count} reviews`}</Link>
-        </p>
-      ) : null}{" "}
-      <Link href="/reviews#write" className={buttonVariants({ variant: "outline", size: "lg" })}>
-        <ChatDotsIcon className="size-4" aria-hidden="true" />
-        Leave a review
-      </Link>{" "}
-      {advertise && reviews.length ? (
-        <ul className="w-full space-y-4 border-t-2 border-border pt-4">
-          {reviews.slice(0, SHOWN_REVIEWS).map((r) => (
-            <li key={r.id}>
-              <figure>
-                {r.text ? (
-                  <blockquote className="line-clamp-4 text-sm leading-relaxed [overflow-wrap:anywhere]">{`\u201C${r.text}\u201D`}</blockquote>
-                ) : null}{" "}
-                <figcaption className="mt-1 text-sm text-muted-foreground">
-                  {`${r.name}, ${r.rating} of 5 stars`}
-                </figcaption>
-              </figure>{" "}
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div>
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">What people say</h2>{" "}
+          {advertise ? (
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <ReviewStars value={Number(rating.value)} />{" "}
+              <span className="font-heading text-lg font-bold">{`${Number(rating.value).toFixed(1)} out of 5`}</span>{" "}
+              <span className="text-base text-muted-foreground">{`from ${rating.count} reviews`}</span>
+            </p>
+          ) : null}
+        </div>{" "}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <Link href="/reviews#write" className={buttonVariants({ variant: "outline", size: "lg" })}>
+            <ChatDotsIcon className="size-4" aria-hidden="true" />
+            Leave a review
+          </Link>{" "}
+          {advertise && count > 0 ? (
+            <Link href="/reviews#said" className="link inline-flex min-h-11 items-center text-base">
+              {`See all ${count} ${count === 1 ? "review" : "reviews"}`}
+            </Link>
+          ) : null}
+        </div>
+      </div>{" "}
+      {newest.length ? (
+        <ul aria-label="The newest reviews" className={`mt-6 grid grid-cols-1 gap-5 [&>*]:min-w-0 ${COLUMNS[newest.length] ?? ""}`}>
+          {newest.map((r) => (
+            <li key={r.id} className="flex">
+              <ReviewCard
+                review={{ id: r.id, rating: r.rating, text: r.text, name: r.name, day: longDate(reviewDay(r.date)) }}
+                lines={5}
+                compact
+                className="w-full"
+              />
             </li>
           ))}
         </ul>

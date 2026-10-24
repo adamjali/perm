@@ -2459,6 +2459,15 @@ a:focus-visible .u-title,
   }
 }
 
+/* The thanks after sending rises in once, gently, as the stars start (ReviewForm); still under reduced motion. */
+@keyframes review-thanks-in {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .review-thanks-in { animation: review-thanks-in 420ms cubic-bezier(0.25, 1, 0.5, 1) both; }
+}
+
 /* After sending, a 3 settles in and a 1 or 2 fades in (sentMotion in ReviewForm): no bounce, nothing celebratory.
    Once each; under reduced motion the stars are simply there. */
 @keyframes review-star-settle {
@@ -2477,8 +2486,8 @@ a:focus-visible .u-title,
   .review-star-calm { animation: review-star-calm 360ms ease-out both; }
 }
 
-/* A 4 or 5 also gets a small burst of square lime pieces from behind the stars, once, as the last star lands. Under
-   reduced motion the pieces never show. */
+/* A 4 or 5 also gets a small burst of square lime pieces from the middle of the stars, spreading all round them on an
+   oval, once, as the last star lands. Under reduced motion the pieces never show. */
 .review-burst {
   position: absolute;
   inset: 0;
@@ -2495,24 +2504,29 @@ a:focus-visible .u-title,
   opacity: 0;
 }
 @keyframes review-burst {
-  0% { transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(0.4); opacity: 0; }
+  0% { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0; }
   12% { opacity: 1; }
   60% { opacity: 1; }
-  100% { transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(90deg) scale(0.9); opacity: 0; }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.9) rotate(calc(var(--r, 1) * 135deg));
+    opacity: 0;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   /* Starts as the last star of the hop lands (five stars, 70ms apart). */
   .review-burst > span { animation: review-burst 820ms cubic-bezier(0.2, 0.6, 0.35, 1) 540ms both; }
 }
 
-/* The review form's stars give one small wiggle when someone sends without picking one (ReviewForm). Once, about a
-   third of a second; under reduced motion only the bold hint changes. */
+/* The review form's stars shake when someone sends without picking one (ReviewForm). Once, about half a second;
+   under reduced motion only the bold hint changes. */
 @keyframes review-stars-nudge {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  45% { transform: translateX(5px); }
-  70% { transform: translateX(-3px); }
+  15% { transform: translateX(-12px); }
+  30% { transform: translateX(10px); }
+  45% { transform: translateX(-8px); }
+  60% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .review-stars-nudge { animation: review-stars-nudge 360ms ease-out 1; }
+  .review-stars-nudge { animation: review-stars-nudge 480ms ease-out 1; }
 }

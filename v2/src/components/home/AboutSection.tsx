@@ -29,27 +29,26 @@ export function AboutSection({
 }) {
   return (
     <section id="about" className="py-12 sm:py-16 border-b-3 border-border">
-      {/* One arrangement at every width from a tablet up (round 3, Oct 15
-          2026: below full screen the columns stacked and read awkwardly): the
-          founder line beside the reviews, then the ledger across both. */}
+      {/* The founder line on its own, then what people say across the full width, then the ledger (owner, Oct 23
+          2026: the reviews box beside the prose left an empty space above it and read awkwardly). */}
       <div className="mx-auto max-w-[1200px] px-4 sm:px-8">
-        <div className="grid grid-cols-1 gap-8 [&>*]:min-w-0 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-end md:gap-12">
-          <div>
-            <h2 className="font-heading text-2xl font-bold sm:text-3xl">About PERM Tracker</h2>{" "}
-            {/* The definition is the hero's opening line; screen readers and
-                crawlers get it here too, readers aren't shown it twice. */}
-            <p className="sr-only">{ABOUT_ONE_LINER}</p>{" "}
-            <p className="mt-4 text-base leading-relaxed text-soft sm:text-lg">
-              PERM Tracker was founded by {SABRINA.name}, an immigration attorney. PERM Tracker is not affiliated
-              with any law firms and nothing on the site constitutes legal advice.{" "}
-              <Link href="/about" className="link">
-                More about us
-              </Link>
-            </p>
-          </div>{" "}
+        <div className="max-w-3xl">
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">About PERM Tracker</h2>{" "}
+          {/* The definition is the hero's opening line; screen readers and
+              crawlers get it here too, readers aren't shown it twice. */}
+          <p className="sr-only">{ABOUT_ONE_LINER}</p>{" "}
+          <p className="mt-4 text-base leading-relaxed text-soft sm:text-lg">
+            PERM Tracker was founded by {SABRINA.name}, an immigration attorney. PERM Tracker is not affiliated
+            with any law firms and nothing on the site constitutes legal advice.{" "}
+            <Link href="/about" className="link">
+              More about us
+            </Link>
+          </p>
+        </div>{" "}
+        <div className="mt-12">
           <ReviewsLine rating={rating} reviews={reviews} />
         </div>{" "}
-        <RecordStrip record={record} className="mt-10" />
+        <RecordStrip record={record} className="mt-12" />
       </div>
     </section>
   );

@@ -15,6 +15,8 @@
 import type { Metadata } from "next";
 
 import { ReviewStars } from "@/components/home/ReviewsLine";
+import { OlderReviews } from "@/components/reviews/OlderReviews";
+import { ReviewCard } from "@/components/reviews/ReviewCard";
 import { ReviewCarousel, type CarouselReview } from "@/components/reviews/ReviewCarousel";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
@@ -57,8 +59,9 @@ const PER_PAGE = 12;
 const BREAKDOWN_FROM = 5;
 
 export default async function ReviewsPage() {
-  const { rating, reviews, live } = await getSiteReviews();
-  const count = reviews.length;
+  const { rating, reviews, byStars, live } = await getSiteReviews();
+  // Every shown review, from the kept tally; the words below are the newest of them (at most 500).
+  const count = Number(rating.count) || reviews.length;
   const updated = pageDate("/reviews", { reviews: newestReviewDay(reviews) });
   const cards: CarouselReview[] = reviews.map((r) => ({
     id: r.id,
@@ -67,8 +70,8 @@ export default async function ReviewsPage() {
     name: r.name,
     day: longDate(reviewDay(r.date)),
   }));
-  const byStars = [5, 4, 3, 2, 1].map((n) => ({ n, count: reviews.filter((r) => r.rating === n).length }));
-  const most = Math.max(1, ...byStars.map((b) => b.count));
+  const breakdown = [5, 4, 3, 2, 1].map((n) => ({ n, count: byStars[n - 1] ?? 0 }));
+  const most = Math.max(1, ...breakdown.map((b) => b.count));
 
   return (
     <>
@@ -103,7 +106,7 @@ export default async function ReviewsPage() {
           </p>{" "}
           {count >= BREAKDOWN_FROM ? (
             <dl className="mx-auto mt-8 grid max-w-md grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 [&>*]:min-w-0">
-              {byStars.map((b) => (
+              {breakdown.map((b) => (
                 <div key={b.n} className="contents">
                   <dt className="text-sm font-bold">{`${b.n} ${b.n === 1 ? "star" : "stars"}`}</dt>{" "}
                   <dd className="h-3 border-2 border-border" aria-hidden="true">
@@ -115,7 +118,7 @@ export default async function ReviewsPage() {
             </dl>
           ) : null}{" "}
           <div className="mt-10">
-            {count > 0 ? (
+            {cards.length > 0 ? (
               <ReviewCarousel reviews={cards} />
             ) : (
               <p className="text-center text-lg text-muted-foreground">
@@ -123,28 +126,20 @@ export default async function ReviewsPage() {
               </p>
             )}
           </div>{" "}
-          {count > IN_ROWS_MAX ? (
+          {cards.length > IN_ROWS_MAX ? (
             <details className="mx-auto mt-10 max-w-3xl">
-              <summary className="cursor-pointer text-center font-heading text-lg font-bold">{`All ${count} reviews`}</summary>{" "}
-              <ul id="review-list" className="mt-6 scroll-mt-24 divide-y-2 divide-border border-y-2 border-border">
+              <summary className="cursor-pointer text-center font-heading text-lg font-bold">
+                {cards.length < count ? `The newest ${cards.length} of ${count} reviews` : `All ${count} reviews`}
+              </summary>{" "}
+              <ul id="review-list" className="mt-6 grid scroll-mt-24 grid-cols-1 gap-5 sm:grid-cols-2 [&>*]:min-w-0">
                 {cards.map((r) => (
-                  <li key={r.id} className="py-6">
-                    <figure>
-                      <p className="flex items-center gap-2">
-                        <ReviewStars value={r.rating} className="size-4" />{" "}
-                        <span className="text-sm text-muted-foreground">{`${r.rating} of 5`}</span>
-                      </p>{" "}
-                      {r.text ? (
-                        <blockquote className="mt-3 whitespace-pre-line text-base leading-relaxed [overflow-wrap:anywhere]">
-                          {`“${r.text}”`}
-                        </blockquote>
-                      ) : null}{" "}
-                      <figcaption className="mt-3 text-sm text-muted-foreground">{r.day ? `${r.name}, ${r.day}` : r.name}</figcaption>
-                    </figure>{" "}
+                  <li key={r.id} className="flex">
+                    <ReviewCard review={r} compact lines={6} className="w-full" />
                   </li>
                 ))}
               </ul>{" "}
-              <ListPages listId="review-list" total={count} perPage={PER_PAGE} noun="reviews" />
+              <ListPages listId="review-list" total={cards.length} perPage={PER_PAGE} noun="reviews" />{" "}
+              {cards.length < count && reviews.length ? <OlderReviews before={Date.parse(reviews[reviews.length - 1]!.date)} /> : null}
             </details>
           ) : null}
         </section>

@@ -60,8 +60,12 @@ describe("the review rating", () => {
     expect(html).toContain("4.5");
     expect(html).toContain("from 2 reviews");
     expect(html).toContain("Alerts came fast.");
-    expect(html).toContain("Pat, 5 of 5 stars");
+    expect(html).toMatch(/>Pat<\/span>/);
+    expect(html).toContain("5 of 5");
     expect(html.indexOf("Alerts came fast.")).toBeLessThan(html.indexOf("Good tool."));
+    // Every review is reachable from here, and leaving one is one click.
+    expect(html).toContain('href="/reviews#said"');
+    expect(html).toContain("See all 2 reviews");
   });
 
   it("shows a rating left without words as its stars and name, with no empty quote", () => {
@@ -71,7 +75,8 @@ describe("the review rating", () => {
         reviews: [{ id: "a", rating: 4, text: "", name: "Lee", date: "2026-10-23 21:00:00+00" }],
       }),
     );
-    expect(html).toContain("Lee, 4 of 5 stars");
+    expect(html).toMatch(/>Lee<\/span>/);
+    expect(html).toContain("Rated without words.");
     expect(html).not.toContain("<blockquote");
   });
 
@@ -100,5 +105,17 @@ describe("the stars", () => {
     expect(starFills(4.7)).toEqual(["full", "full", "full", "full", "half"]);
     expect(starFills(4.2)).toEqual(["full", "full", "full", "full", "empty"]);
     expect(starFills(4.8)).toEqual(["full", "full", "full", "full", "full"]);
+  });
+});
+
+describe("the newest reviews", () => {
+  it("shows the newest three, and counts every review in See all", () => {
+    const reviews = Array.from({ length: 5 }, (_, i) => ({ id: `r${i}`, rating: 5, text: `Review ${i}.`, name: `N${i}`, date: "2026-10-23 21:00:00+00" }));
+    const html = renderToStaticMarkup(
+      React.createElement(ReviewsLine, { rating: { value: "5.0", count: "40", best: "5", worst: "1" }, reviews }),
+    );
+    expect(html).toContain("Review 2.");
+    expect(html).not.toContain("Review 3.");
+    expect(html).toContain("See all 40 reviews");
   });
 });

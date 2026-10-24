@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CaretLeftIcon, CaretRightIcon, PauseIcon, PlayIcon, QuotesIcon, StarIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, CaretRightIcon, PauseIcon, PlayIcon } from "@phosphor-icons/react";
+
+import { ReviewCard, type ReviewCardData } from "@/components/reviews/ReviewCard";
 
 import { DRIFT_FROM, IN_ROWS_MAX, dealRows, rowsFor } from "@/lib/reviews/rows";
 import { cn } from "@/lib/utils";
@@ -26,14 +28,7 @@ import { cn } from "@/lib/utils";
  *   them reads as more to come, not as cut off.
  */
 
-export interface CarouselReview {
-  id: string;
-  rating: number;
-  text: string;
-  name: string;
-  /** "October 23, 2026", or null when the date couldn't be read. */
-  day: string | null;
-}
+export type CarouselReview = ReviewCardData;
 
 /** The gap between cards, in pixels (gap-5). */
 const GAP = 20;
@@ -48,38 +43,8 @@ const RESUME_AFTER_MS = 5000;
 
 type Stepper = (forward: 1 | -1) => void;
 
-function Card({ r, compact, hidden = false }: { r: CarouselReview; compact: boolean; hidden?: boolean }) {
-  return (
-    <figure
-      aria-hidden={hidden || undefined}
-      className={cn(
-        "flex shrink-0 snap-start flex-col border-2 border-border bg-card shadow-hard-sm",
-        compact ? "w-[min(20rem,78vw)] p-5" : "w-[min(22rem,82vw)] p-6",
-      )}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex" aria-hidden="true">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <StarIcon key={n} weight={n <= r.rating ? "fill" : "regular"} className={cn("size-5", n <= r.rating ? "text-primary" : "text-foreground")} />
-          ))}
-        </span>{" "}
-        <span className="text-sm text-muted-foreground">{`${r.rating} of 5`}</span>
-      </div>{" "}
-      {r.text ? (
-        <blockquote className={cn("relative mt-4 flex-1 leading-relaxed [overflow-wrap:anywhere]", compact ? "text-base" : "text-lg")}>
-          <QuotesIcon weight="fill" className="mb-1 size-6 text-primary" aria-hidden="true" />
-          <span className={cn("whitespace-pre-line", compact ? "line-clamp-[6]" : "line-clamp-[8]")}>{r.text}</span>
-        </blockquote>
-      ) : (
-        <p className={cn("mt-4 flex-1 text-muted-foreground", compact ? "text-base" : "text-lg")}>Rated without words.</p>
-      )}{" "}
-      <figcaption className="mt-5 border-t-2 border-border pt-3">
-        <span className="font-heading text-base font-bold">{r.name}</span>{" "}
-        {r.day ? <span className="block text-sm text-muted-foreground">{r.day}</span> : null}
-      </figcaption>
-    </figure>
-  );
-}
+/** A card's width in a row: a few show at once, and a phone sees most of one with the next peeking in. */
+const cardSize = (compact: boolean) => cn("shrink-0 snap-start", compact ? "w-[min(20rem,78vw)]" : "w-[min(22rem,82vw)]");
 
 function DriftRow({
   reviews,
@@ -201,12 +166,12 @@ function DriftRow({
         )}
       >
         {reviews.map((r) => (
-          <Card key={r.id} r={r} compact={compact} />
+          <ReviewCard key={r.id} review={r} compact={compact} lines={compact ? 6 : 8} className={cardSize(compact)} />
         ))}
         {drifts
           ? reviews.map((r) => (
               <div key={`again-${r.id}`} inert className="contents">
-                <Card r={r} compact={compact} hidden />
+                <ReviewCard review={r} compact={compact} lines={compact ? 6 : 8} className={cardSize(compact)} hidden />
               </div>
             ))
           : null}

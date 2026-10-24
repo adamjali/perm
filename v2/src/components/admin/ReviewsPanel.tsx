@@ -47,7 +47,9 @@ const REASON_LABEL = Object.fromEntries(REASONS.map((x) => [x.id, x.label])) as 
 
 function ReviewCard({ r }: { r: Row }) {
   const [choosing, setChoosing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const approve = useMutation(api.siteReviews.approve);
+  const remove = useMutation(api.siteReviews.remove);
   const decline = useMutation(api.siteReviews.decline);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -116,9 +118,30 @@ function ReviewCard({ r }: { r: Row }) {
             <button type="button" disabled={busy} onClick={() => setChoosing(true)} className={`${BTN} bg-background`}>
               {r.status === "approved" ? "Take it down" : "Decline"}
             </button>
+          ) : null}{" "}
+          {!deleting ? (
+            <button type="button" disabled={busy} onClick={() => setDeleting(true)} className={`${BTN} bg-background`}>
+              Delete for good
+            </button>
           ) : null}
         </div>
       )}{" "}
+      {deleting ? (
+        <div className="mt-3">
+          <p className="text-sm font-bold">
+            Delete this review and its note for good? Use it when the reviewer asks, or for a test. Declining keeps the
+            rating and reason; this keeps nothing.
+          </p>{" "}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" disabled={busy} onClick={() => run(() => remove({ id }))} className={`${BTN} bg-background`}>
+              Yes, delete it
+            </button>{" "}
+            <button type="button" disabled={busy} onClick={() => setDeleting(false)} className={`${BTN} bg-background`}>
+              Keep it
+            </button>
+          </div>
+        </div>
+      ) : null}{" "}
       {choosing ? (
         <fieldset className="mt-3">
           <legend className="text-sm font-bold">Why? Never for its stars.</legend>{" "}

@@ -36,25 +36,31 @@ describe("ReviewForm", () => {
     expect((screen.getByRole("textbox", { name: /Email/ }) as HTMLInputElement).value).toBe("pat@example.com");
   });
 
-  it("asks calmly for a star, out loud and in the stars' own hint, and sends nothing", async () => {
+  it("asks for a star under the stars, out loud, and sends nothing", async () => {
     render(<ReviewForm />);
-    fireEvent.click(screen.getByRole("button", { name: "Post review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Tap a star first"));
-    expect(document.getElementById("review-hint-rating")?.textContent).toBe("Tap a star first");
+    expect(document.getElementById("review-error-rating")?.textContent).toBe("Tap a star first");
+    // One message, not the hint and the error both.
+    expect(document.getElementById("review-hint-rating")).toBeNull();
     // No focus ring dropped onto a star.
     expect(document.activeElement?.getAttribute("type")).not.toBe("radio");
     // Only the prefill call went out.
     expect(vi.mocked(global.fetch).mock.calls.every(([u]) => String(u).includes("/api/review-prefill"))).toBe(true);
   });
 
-  it("asks for a name in the name box's own hint, marking it invalid and described", async () => {
+  it("says a name is missing under the name box, marks the box invalid and points it at the message", async () => {
     render(<ReviewForm />);
     fireEvent.click(screen.getByLabelText("4 stars"));
-    fireEvent.click(screen.getByRole("button", { name: "Post review" }));
-    await waitFor(() => expect(document.getElementById("review-hint-name")?.textContent).toMatch(/Add a name/));
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+    await waitFor(() => expect(document.getElementById("review-error-name")?.textContent).toMatch(/Add a name/));
     const box = screen.getByRole("textbox", { name: /Your name/ });
     expect(box.getAttribute("aria-invalid")).toBe("true");
-    expect(box.getAttribute("aria-describedby") ?? "").toContain("review-hint-name");
+    expect(box.getAttribute("aria-describedby") ?? "").toContain("review-error-name");
+    // Typing a name takes the error away.
+    fireEvent.change(box, { target: { value: "Pat" } });
+    expect(document.getElementById("review-error-name")).toBeNull();
+    expect(box.getAttribute("aria-invalid")).toBeNull();
   });
 });
 
@@ -76,7 +82,7 @@ describe("the thanks, by the stars given", () => {
     render(<ReviewForm />);
     fireEvent.click(screen.getByLabelText(`${stars} ${stars === 1 ? "star" : "stars"}`));
     fireEvent.change(screen.getByRole("textbox", { name: /Your name/ }), { target: { value: "Pat" } });
-    fireEvent.click(screen.getByRole("button", { name: "Post review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   }
 
   beforeEach(() => {
