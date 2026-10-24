@@ -92,6 +92,8 @@ export function ReviewForm() {
   const [error, setError] = useState<FieldError | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
   const [pointing, setPointing] = useState<number | null>(null);
+  /** Until this time, a pointer arriving over the stars is ignored: the page just scrolled them under a resting cursor. */
+  const hoverQuietUntil = useRef(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [prefilled, setPrefilled] = useState(false);
@@ -167,7 +169,13 @@ export function ReviewForm() {
   const focusField = (field: FieldError["field"]) => {
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const show = (el: HTMLElement | null) => el?.scrollIntoView?.({ block: "center", behavior: still ? "auto" : "smooth" });
-    if (field === "rating") return show(starsRef.current);
+    if (field === "rating") {
+      // Scrolling the stars up can slide them under a cursor that hasn't moved, which would fill them as if picked
+      // while the message says no star is picked.
+      hoverQuietUntil.current = Date.now() + 800;
+      setPointing(null);
+      return show(starsRef.current);
+    }
     const target = field === "text" ? textRef.current : field === "name" ? nameRef.current : field === "email" ? emailRef.current : null;
     show(target);
     target?.focus({ preventScroll: true });
@@ -305,12 +313,12 @@ export function ReviewForm() {
                   <label
                     key={n}
                     onPointerEnter={(e) => {
-                      if (e.pointerType === "mouse") setPointing(n);
+                      if (e.pointerType === "mouse" && Date.now() >= hoverQuietUntil.current) setPointing(n);
                     }}
                     className="flex size-16 cursor-pointer items-center justify-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-foreground"
                   >
                     <input
-                        type="radio"
+                      type="radio"
                       name="rating"
                       value={n}
                       checked={rating === n}

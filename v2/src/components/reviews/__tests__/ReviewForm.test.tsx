@@ -49,6 +49,30 @@ describe("ReviewForm", () => {
     expect(vi.mocked(global.fetch).mock.calls.every(([u]) => String(u).includes("/api/review-prefill"))).toBe(true);
   });
 
+  it("doesn't fill stars under a resting mouse right after asking for one", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    try {
+      render(<ReviewForm />);
+      const lit = () => document.querySelectorAll("label svg.text-primary").length;
+      fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+      await waitFor(() => expect(document.getElementById("review-error-rating")).toBeTruthy());
+      // The form scrolls to the stars on the next frame.
+      await new Promise((done) => requestAnimationFrame(() => done(null)));
+      // Read after the shake: the row remounts for it.
+      const third = screen.getByLabelText("3 stars").closest("label")!;
+      // The scroll just moved the stars under the cursor: no fill, the message stands.
+      fireEvent.pointerEnter(third, { pointerType: "mouse" });
+      expect(lit()).toBe(0);
+      // A moment later, pointing works again.
+      now.mockReturnValue(1_001_000);
+      fireEvent.pointerLeave(third, { pointerType: "mouse" });
+      fireEvent.pointerEnter(third, { pointerType: "mouse" });
+      expect(lit()).toBe(3);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
   it("says a name is missing under the name box, marks the box invalid and points it at the message", async () => {
     render(<ReviewForm />);
     fireEvent.click(screen.getByLabelText("4 stars"));
