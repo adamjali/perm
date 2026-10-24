@@ -40,8 +40,13 @@ export default function PwdQueueConveyorFigure({ run }: { run: PwdQueueRun }) {
   const pickIndex = run.months.findIndex((m) => m.month === run.pick);
   // The working day each month runs out (the few older requests on the desk go first).
   const emptyAt = useMemo(() => {
+    const out: number[] = [];
     let through = run.earlier;
-    return run.months.map((m) => (through += m.inLine) / run.pace);
+    for (const m of run.months) {
+      through += m.inLine;
+      out.push(through / run.pace);
+    }
+    return out;
   }, [run]);
 
   const stage = useRef<HTMLDivElement>(null);

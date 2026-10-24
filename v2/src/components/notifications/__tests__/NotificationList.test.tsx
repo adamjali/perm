@@ -158,6 +158,18 @@ describe("NotificationList - Pagination", () => {
     expect(screen.queryByRole("button", { name: /load more/i })).not.toBeInTheDocument();
   });
 
+  it("keeps the last page on screen while the next one loads", () => {
+    (useQuery as Mock).mockReturnValue({
+      notifications: [createMockNotification({ title: "Kept on screen" })],
+      hasMore: true,
+      nextCursor: "123",
+    });
+    const { rerender } = renderWithProviders(<NotificationList activeTab="all" />);
+    (useQuery as Mock).mockReturnValue(undefined);
+    rerender(<NotificationList activeTab="all" />);
+    expect(screen.getByText("Kept on screen")).toBeInTheDocument();
+  });
+
   it("draws no page controls when everything fits on one page", () => {
     (useQuery as Mock).mockReturnValue({ notifications: [createMockNotification()], hasMore: false, nextCursor: null });
     renderWithProviders(<NotificationList activeTab="all" />);

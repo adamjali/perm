@@ -29,7 +29,7 @@ function findGlued(src: string): string[] {
   const out: string[] = [];
   for (const m of src.matchAll(/"([^"\n]*[A-Za-z0-9\]\)])"\s*\+\s*/g)) {
     if (!looksLikeClasses(m[1]!)) continue;
-    let i = m.index! + m[0].length;
+    const i = m.index! + m[0].length;
     let operand = "";
     if (src[i] === '"') {
       const end = src.indexOf('"', i + 1);

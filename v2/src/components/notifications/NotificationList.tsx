@@ -352,9 +352,9 @@ export default function NotificationList({
   }
 
   // The last page shown stays on screen while the next one loads, so a press never blanks the list.
-  const lastShown = useRef<Notification[]>([]);
   const fresh = result?.notifications as Notification[] | undefined;
-  if (fresh) lastShown.current = fresh;
+  const [lastShown, setLastShown] = useState<Notification[]>([]);
+  if (fresh && fresh !== lastShown) setLastShown(fresh);
   const loading = result === undefined;
 
   // Mutations
@@ -390,7 +390,7 @@ export default function NotificationList({
   };
   const goPrevious = () => setStack((st) => (st.length > 1 ? st.slice(0, -1) : st));
 
-  const shown = fresh ?? lastShown.current;
+  const shown = fresh ?? lastShown;
 
   if (result === undefined && shown.length === 0) {
     return <NotificationListSkeleton />;
