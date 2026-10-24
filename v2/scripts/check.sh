@@ -7,9 +7,9 @@
 #
 # It runs both typecheckers, the data scripts' lint and tests, and the vitest
 # tests that import something changed since the base (vitest's --changed,
-# uncommitted and untracked files included). A test that reads source as a file
-# rather than importing it (the gates that scan src/) is not "affected" by that
-# reasoning, so this is the first look, never the last word: CI runs the whole
+# uncommitted and untracked files included), the tests that name a changed file,
+# and, when src/ or convex/ changed, every gate that walks the tree. It's still
+# the first look, never the last word: CI runs the whole
 # suite on every push and the deploy waits for it to pass (test.yml,
 # oracle-deploy.yml). `pnpm test:run` is still the full local run.
 set -eu
@@ -63,6 +63,16 @@ if [ -n "$(printf '%s' "$extra" | tr -d ' ')" ]; then
   echo "   and the tests that read a changed file as text:"
   # shellcheck disable=SC2086
   pnpm exec vitest run $extra
+fi
+# The gates that walk the whole tree (glued text, grid tracks, nothing pressable
+# in a summary, every page in the palette...) name no file, so neither run above
+# finds them, and three pushes went red on them (Oct 11, 16 and 23 2026). Any
+# change under src/ or convex/ runs every test that reads a directory: about 90 s.
+if { git diff --name-only --relative "$base" 2>/dev/null; git ls-files --others --exclude-standard; } | grep -qE '^(src|convex)/'; then
+  walkers=$(grep -rlE "readdirSync|globSync|readdir\(|opendirSync" --include='*.test.ts' --include='*.test.tsx' src convex test-utils 2>/dev/null | xargs -n1 basename | sort -u | tr '\n' ' ')
+  echo "   and the gates that walk the whole tree:"
+  # shellcheck disable=SC2086
+  pnpm exec vitest run $walkers
 fi
 took
 echo "== passed in $(( $(date +%s) - t0 ))s"
