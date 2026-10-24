@@ -88,8 +88,8 @@ const DEADLINE_TYPE_GROUPS: {
     types: [
       { value: "jobOrderStart", label: "Job order start" },
       { value: "jobOrderEnd", label: "Job order end" },
-      { value: "sundayAdFirst", label: "1st Sunday Ad" },
-      { value: "sundayAdSecond", label: "2nd Sunday Ad" },
+      { value: "sundayAdFirst", label: "1st Sunday ad" },
+      { value: "sundayAdSecond", label: "2nd Sunday ad" },
       { value: "noticeOfFilingStart", label: "Notice posted" },
       { value: "noticeOfFilingEnd", label: "Notice end" },
     ],

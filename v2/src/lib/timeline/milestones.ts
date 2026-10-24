@@ -356,7 +356,7 @@ export function extractRfiDeadlines(entries: RfiEntry[]): Milestone[] {
   sortedEntries.forEach((entry, index) => {
     milestones.push({
       field: `rfiDeadline_${entry.id}`,
-      label: entry.title || `RFI Due${sortedEntries.length > 1 ? ` #${index + 1}` : ""}`,
+      label: entry.title || `RFI due${sortedEntries.length > 1 ? ` #${index + 1}` : ""}`,
       date: entry.responseDueDate,
       stage: "rfi",
       color: STAGE_COLORS.rfi,
@@ -398,7 +398,7 @@ export function extractRfeDeadlines(entries: RfeEntry[]): Milestone[] {
   sortedEntries.forEach((entry, index) => {
     milestones.push({
       field: `rfeDeadline_${entry.id}`,
-      label: entry.title || `RFE Due${sortedEntries.length > 1 ? ` #${index + 1}` : ""}`,
+      label: entry.title || `RFE due${sortedEntries.length > 1 ? ` #${index + 1}` : ""}`,
       date: entry.responseDueDate,
       stage: "rfe",
       color: STAGE_COLORS.rfe,
@@ -443,7 +443,7 @@ export function extractAdditionalMethodMilestones(
     if (method.date) {
       milestones.push({
         field: `additionalMethod_${index}`,
-        label: method.method ? getMethodLabel(method.method) : `Addl Method #${index + 1}`,
+        label: method.method ? getMethodLabel(method.method) : `Additional method #${index + 1}`,
         date: method.date,
         stage: "recruitment",
         color: STAGE_COLORS.recruitment,

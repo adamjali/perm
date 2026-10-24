@@ -118,8 +118,8 @@ export const MILESTONE_CONFIG: readonly MilestoneConfig[] = [
   { field: "pwdExpirationDate", label: "PWD expires", stage: "pwd" },
 
   // Recruitment phase
-  { field: "sundayAdFirstDate", label: "1st Sunday Ad", stage: "recruitment" },
-  { field: "sundayAdSecondDate", label: "2nd Sunday Ad", stage: "recruitment" },
+  { field: "sundayAdFirstDate", label: "1st Sunday ad", stage: "recruitment" },
+  { field: "sundayAdSecondDate", label: "2nd Sunday ad", stage: "recruitment" },
   { field: "jobOrderStartDate", label: "Job order start", stage: "recruitment" },
   { field: "jobOrderEndDate", label: "Job order end", stage: "recruitment" },
   { field: "noticeOfFilingStartDate", label: "Notice posted", stage: "recruitment" },
