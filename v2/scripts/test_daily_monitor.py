@@ -129,6 +129,15 @@ def main() -> int:
     check(by["Tests"]["cancelled"] == 1 and by["Tests"]["running"] == 1, "cancelled and still-running are told apart")
     check(dm.summarize_runs([{"name": "npm_and_yarn in /v2 for next - Update #1", "status": "completed"}]) == {},
           "Dependabot version-update runs are left out")
+    pr_runs = [
+        {"name": "Tests", "head_branch": "main", "status": "completed", "conclusion": "success",
+         "updated_at": "2026-10-24T13:00:00Z"},
+        {"name": "Tests", "head_branch": "dependabot/npm_and_yarn/v2/next-16.4.1", "status": "completed",
+         "conclusion": "failure", "updated_at": "2026-10-24T14:00:00Z"},
+    ]
+    t = dm.summarize_runs(pr_runs)["Tests"]
+    check(t["failed"] == 0 and t["branch_failed"] == 1 and t["runs"] == 1 and not dm.recovered(t),
+          f"a red Dependabot branch never reads as main still failing ({t})")
     # One workflow file, three titles: the name before a rename, and per-file
     # titles after it (Oct 3 2026). Grouped by the file, the old title's
     # failure is followed by the newer passes, so nothing reads still failing.
@@ -483,20 +492,33 @@ def main() -> int:
     now_ms = int(dt.datetime(2026, 10, 20, 11, 30, tzinfo=dt.timezone.utc).timestamp() * 1000)
     base = {"services": {"permtracker-db-lca": "active"},
             "now": {"lcaDataBytes": 2_468_593_664, "lcaSnapshotBytes": 0, "lcaLogBytes": 2_483_058_144},
-            "backup": {"lcaOk": {"at": "2026-10-20T07:20:00Z", "current": True}}}
+            "backup": {"lcaOk": {"at": "2026-10-20T07:20:00Z", "current": True},
+                       "lcaRestoreOk": {"at": "2026-10-20T09:00:00Z", "file": "lca-x.sql.zst", "rows": 3_754_961}}}
     f, w, ln = dm.lca_db_checks(base, now_ms)
     check(f == [] and w == [] and any("LCA database parts" in x for x in ln), f"a healthy LCA database is a line ({f}, {w})")
     check(dm.lca_db_checks({"services": {}, "now": {}}, now_ms) == ([], [], []), "no LCA database, nothing said")
     down = {**base, "services": {"permtracker-db-lca": "failed"}}
     check(any("permtracker-db-lca" in x for x in dm.lca_db_checks(down, now_ms)[0]), "a stopped LCA database fails")
-    stale = {**base, "backup": {"lcaOk": {"at": "2026-10-18T07:20:00Z", "current": False}}}
+    stale = {**base, "backup": {**base["backup"], "lcaOk": {"at": "2026-10-18T07:20:00Z", "current": False}}}
     check(any("changed after its newest backup" in x for x in dm.lca_db_checks(stale, now_ms)[1]),
           "an LCA database changed since a two-day-old backup warns")
-    fresh = {**base, "backup": {"lcaOk": {"at": "2026-10-20T07:20:00Z", "current": False}}}
+    fresh = {**base, "backup": {**base["backup"], "lcaOk": {"at": "2026-10-20T07:20:00Z", "current": False}}}
     check(dm.lca_db_checks(fresh, now_ms)[1] == [], "changed since this morning's backup: not yet a warning")
     none = {**base, "backup": {}}
     check(any("no backup of the H-1B LCA database" in x for x in dm.lca_db_checks(none, now_ms)[1]),
           "no LCA backup on record warns")
+    check(any("never been restore-tested" in x for x in dm.lca_db_checks(none, now_ms)[1]),
+          "an LCA copy never restore-tested warns")
+    check(any(x.startswith("LCA restore test: 3,754,961 filings") for x in dm.lca_db_checks(base, now_ms)[2]),
+          "a restored LCA copy is a line with its count")
+    old_rest = {**base, "backup": {**base["backup"], "lcaRestoreOk": {"at": "2026-08-20T09:00:00Z", "rows": 3_754_961}}}
+    check(any("last LCA restore test 61 days ago" in x for x in dm.lca_db_checks(old_rest, now_ms)[1]),
+          "an LCA restore test past 40 days warns")
+    restore = (HERE / "oracle" / "bin" / "permtracker-restore-test").read_text()
+    health = (HERE / "oracle" / "bin" / "permtracker-health").read_text()
+    check("LCA_RESTORE_OK" in restore and "LCA_RESTORE_OK" in health and '"lcaRestoreOk"' in health
+          and "r2:permtracker-backups/$1/" in restore and "newest_in lca" in restore,
+          "the restore test writes LCA_RESTORE_OK and the health file reads it")
     big = {**base, "now": {**base["now"], "lcaLogBytes": 6_000_000_000}}
     check(any(x.startswith("LCA database replication log") for x in dm.lca_db_checks(big, now_ms)[1]),
           "an LCA log past sqld's cap warns, by the main database's rule")

@@ -4,16 +4,42 @@
 # server), loads it into a scratch SQLite database, counts tables and rows, and
 # deletes the scratch copy. RESTORE_OK records the result; the daily report
 # warns when it is more than 40 days old.
+#
+# Since Oct 24 2026 it also restores the newest copy of the H-1B LCA filings'
+# own database (lca/ in R2, written by permtracker-backup since the split on
+# Oct 19) and counts lca_cases: LCA_RESTORE_OK. Until then nothing had ever
+# proved that copy loads. `permtracker-restore-test lca` runs that half alone.
 set -euo pipefail
 . /usr/local/lib/permtracker/r2-env
 B=/srv/permtracker/backups
 work=$(mktemp -d /srv/permtracker/restore-test.XXXXXX)
 trap 'rm -rf "$work"' EXIT
 
-newest=$(rclone lsjson r2:permtracker-backups/db/ | python3 -c '
+newest_in(){ rclone lsjson "r2:permtracker-backups/$1/" | python3 -c '
 import json, sys
 rows = [r for r in json.load(sys.stdin) if r["Name"].endswith(".sql.zst")]
-print(max(rows, key=lambda r: r["ModTime"])["Name"] if rows else "")')
+print(max(rows, key=lambda r: r["ModTime"])["Name"] if rows else "")'; }
+
+restore_lca(){
+  lnew=$(newest_in lca)
+  if [ -z "$lnew" ]; then
+    systemctl is-enabled --quiet permtracker-db-lca 2>/dev/null || { echo "restore test: no LCA database here; skipped"; return 0; }
+    echo "restore test: the LCA database runs but R2 holds no copy of it"; return 1
+  fi
+  rclone copyto "r2:permtracker-backups/lca/$lnew" "$work/$lnew" -q
+  zstd -q -t "$work/$lnew"
+  zstd -dc "$work/$lnew" | sqlite3 "$work/lca.db"
+  lrows=$(sqlite3 "$work/lca.db" 'SELECT count(*) FROM lca_cases')
+  rm -f "$work/lca.db" "$work/$lnew"
+  # 3,754,961 LCA filings at the split (Oct 19 2026); the table only grows.
+  [ "$lrows" -ge 3000000 ] || { echo "restore test: the LCA copy holds only $lrows filings"; return 1; }
+  printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$lnew" "$lrows" > "$B/LCA_RESTORE_OK"
+  echo "restore test ok: $lnew restored $lrows LCA filings"
+}
+
+if [ "${1:-}" = "lca" ]; then restore_lca; exit $?; fi
+
+newest=$(newest_in db)
 [ -n "$newest" ] || { echo "restore test: no backup in R2"; exit 1; }
 
 rclone copyto "r2:permtracker-backups/db/$newest" "$work/$newest" -q
@@ -31,3 +57,5 @@ PY
 [ "$tables" -ge 40 ] && [ "$rows" -ge 6000000 ] || { echo "restore test: only $tables tables / $rows rows"; exit 1; }
 printf '%s %s %s %s\n' "$(date -u +%FT%TZ)" "$newest" "$tables" "$rows" > "$B/RESTORE_OK"
 echo "restore test ok: $newest restored $tables tables, $rows rows"
+rm -f "$work/restore.db" "$work/$newest"
+restore_lca

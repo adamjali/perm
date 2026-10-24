@@ -286,7 +286,7 @@ def main():
         pass
     # The copy in Cloudflare R2 (bin/permtracker-backup) and the monthly proof
     # that it restores (bin/permtracker-restore-test).
-    offsite_ok = restore_ok = None
+    offsite_ok = restore_ok = lca_restore_ok = None
     try:
         at, size, name = (APP / "backups" / "OFFSITE_OK").read_text().split()
         offsite_ok = {"at": at, "bytes": int(size), "file": name}
@@ -300,6 +300,11 @@ def main():
     try:
         at, name, tables, rows = (APP / "backups" / "RESTORE_OK").read_text().split()
         restore_ok = {"at": at, "file": name, "tables": int(tables), "rows": int(rows)}
+    except (OSError, ValueError):
+        pass
+    try:
+        at, name, rows = (APP / "backups" / "LCA_RESTORE_OK").read_text().split()
+        lca_restore_ok = {"at": at, "file": name, "rows": int(rows)}
     except (OSError, ValueError):
         pass
 
@@ -416,7 +421,7 @@ def main():
             "memMin": min(s["mem"] for s in samples),
             "netP95": p95([s["net"] for s in week if s.get("net") is not None]),
         },
-        "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok,
+        "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok, "lcaRestoreOk": lca_restore_ok,
                    "diskCopy": disk_copy, "lcaOk": lca_ok, **sealed},
         # The live slot's second copy (one per CPU) is a service too; the old
         # slot's second copy is stopped on purpose and not listed.

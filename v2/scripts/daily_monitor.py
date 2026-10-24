@@ -187,9 +187,19 @@ def summarize_runs(runs: list[dict], names: dict[str, str] | None = None) -> dic
             continue
         w = by.setdefault(names.get(r.get("path") or "") or r.get("name") or "?", {"runs": 0, "failed": 0, "cancelled": 0,
                                                  "reruns": 0, "running": 0,
-                                                 "last_fail": "", "last_ok": ""})
-        w["runs"] += 1
+                                                 "last_fail": "", "last_ok": "",
+                                                 "branch_runs": 0, "branch_failed": 0})
         c = r.get("conclusion")
+        # A run on another branch (Dependabot's pull requests above all) says
+        # nothing about main: a red one used to read "still failing" whenever
+        # no later main run had passed. Counted apart, never ranked (Oct 24 2026).
+        branch = r.get("head_branch")
+        if branch and branch != "main":
+            w["branch_runs"] += 1
+            if r.get("status") == "completed" and c in ("failure", "timed_out", "startup_failure"):
+                w["branch_failed"] += 1
+            continue
+        w["runs"] += 1
         at = str(r.get("updated_at") or r.get("created_at") or "")
         if r.get("status") != "completed":
             w["running"] += 1
@@ -266,6 +276,9 @@ def github_section(since: dt.datetime) -> dict:
             bits.append(f"{w['cancelled']} cancelled")
         if w["running"]:
             bits.append(f"{w['running']} still running")
+        if w.get("branch_runs"):
+            bits.append(f"{w['branch_runs']} on other branches"
+                        + (f", {w['branch_failed']} of them failed" if w.get("branch_failed") else ""))
         lines.append(f"{name}: {', '.join(bits)}")
     failed = sum(w["failed"] for w in by.values())
     if not failed:
@@ -1035,6 +1048,16 @@ def lca_db_checks(doc: dict, now_ms: int) -> tuple[list[str], list[str], list[st
         if not ok.get("current") and age_h > LCA_BACKUP_LAG_H:
             warns.append(f"the H-1B LCA database changed after its newest backup ({et_time(ok['at'])})")
         lines.append(f"LCA database backup: {et_time(ok['at'])}" + ("" if ok.get("current") else ", changed since"))
+    # The monthly restore test loads the newest LCA copy too, since Oct 24 2026:
+    # until then nothing had proved that copy restores.
+    rest = (doc.get("backup") or {}).get("lcaRestoreOk") or {}
+    if not rest.get("at"):
+        warns.append("the H-1B LCA database's off-site copy has never been restore-tested")
+    else:
+        rest_d = (now_ms / 1000 - dt.datetime.fromisoformat(rest["at"].replace("Z", "+00:00")).timestamp()) / 86400
+        if rest_d > RESTORE_WARN_D:
+            warns.append(f"last LCA restore test {rest_d:.0f} days ago")
+        lines.append(f"LCA restore test: {rest.get('rows', 0):,} filings, {et_time(rest['at'])}")
     return fails, warns, lines
 
 
