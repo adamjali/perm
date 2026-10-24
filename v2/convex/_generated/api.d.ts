@@ -189,6 +189,7 @@ import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_reminderDigest from "../lib/reminderDigest.js";
 import type * as lib_replyName from "../lib/replyName.js";
 import type * as lib_sampleCase from "../lib/sampleCase.js";
+import type * as lib_sealedEmail from "../lib/sealedEmail.js";
 import type * as lib_sentry from "../lib/sentry.js";
 import type * as lib_serverDoor from "../lib/serverDoor.js";
 import type * as lib_serverWatch from "../lib/serverWatch.js";
@@ -428,6 +429,7 @@ declare const fullApi: ApiFromModules<{
   "lib/reminderDigest": typeof lib_reminderDigest;
   "lib/replyName": typeof lib_replyName;
   "lib/sampleCase": typeof lib_sampleCase;
+  "lib/sealedEmail": typeof lib_sealedEmail;
   "lib/sentry": typeof lib_sentry;
   "lib/serverDoor": typeof lib_serverDoor;
   "lib/serverWatch": typeof lib_serverWatch;

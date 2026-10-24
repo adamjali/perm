@@ -69,10 +69,12 @@ if (typeof Node === "function") {
  */
 function redactCaseParam(props: Record<string, unknown> | undefined): void {
   if (!props) return;
-  for (const key of ["$current_url", "$referrer", "$pathname", "url"]) {
+  for (const key of ["$current_url", "$referrer", "$pathname", "url", "$initial_current_url", "$initial_referrer"]) {
     const v = props[key];
-    if (typeof v !== "string" || !v.includes("case=")) continue;
-    props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted");
+    if (typeof v !== "string" || !(v.includes("case=") || v.includes("t="))) continue;
+    // `t` is the sealed review-link token (/reviews?t=...): it opens to the reader's address on our server, so it
+    // never goes to a third party either.
+    props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted").replace(/([?&]t=)[^&#]*/g, "$1redacted");
   }
 }
 

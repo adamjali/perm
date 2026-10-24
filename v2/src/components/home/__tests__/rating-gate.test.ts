@@ -64,6 +64,17 @@ describe("the review rating", () => {
     expect(html.indexOf("Alerts came fast.")).toBeLessThan(html.indexOf("Good tool."));
   });
 
+  it("shows a rating left without words as its stars and name, with no empty quote", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(ReviewsLine, {
+        rating: { value: "4.5", count: "2", best: "5", worst: "1" },
+        reviews: [{ id: "a", rating: 4, text: "", name: "Lee", date: "2026-10-23 21:00:00+00" }],
+      }),
+    );
+    expect(html).toContain("Lee, 4 of 5 stars");
+    expect(html).not.toContain("<blockquote");
+  });
+
   it("shows no reviews when the rating is withheld", () => {
     mockAdvertise.mockReturnValue(false);
     const html = renderToStaticMarkup(

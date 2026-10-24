@@ -64,7 +64,8 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative object p-6 sm:p-8">
+    // POST: before the script loads, a native submit must never put a name or an address in the URL.
+    <form method="post" onSubmit={onSubmit} className="relative object p-6 sm:p-8">
       {/* Placeholders show the shape of a good answer; the visible label above
           each field stays, because a placeholder used as the label vanishes
           as soon as someone types. */}

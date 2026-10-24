@@ -1133,7 +1133,30 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   stars (16 CFR 465.7(b)); insiders' reviews are kept and never shown or counted (465.5). A daily job copies anything
   still left on Senja's form (links in mail already sent) into the same queue, once per Senja id. `getSiteReviews`
   (`src/lib/reviews/read.ts`) feeds the page, the homepage's rating line and aggregateRating alike; `/reviews` dates
-  itself by its newest review (OWN_DATE). Its social card shows the form, never a figure.
+  itself by its newest review (OWN_DATE). Its social card shows the stars, then a row of review cards with their
+  words and names drawn as grey bars (`css` and `script` in `scripts/page-cards.json`): a reviewer's name can't be
+  taken back out of a shared image, and a card holds no figure.
+- **The page opens with the form and then the reviews as drifting rows** (owner, Oct 23 2026 night): `ReviewCarousel`
+  holds the newest 36 (`src/lib/reviews/rows.ts`, a plain module so the server page reads the cap as a number), one
+  row, a second from 12 reviews and a third from 24, each at its own pace with the middle one running the other way,
+  edges faded. Under 4 reviews nothing moves. One Pause for all rows (WCAG 2.2.2), Back and Next a card at a time, a
+  row stops while pointed at, touched, scrolled or focused, nothing moves under reduced motion. The thanks fits the
+  stars (`sentMotion`): a 4 or 5 hops in with a small burst of lime squares, a 3 settles in and is asked what would
+  have made it a 5, a 1 or 2 fades in with an apology and "What should we do better?". Those notes are private
+  (`/review/note`, `siteReviews.addNote`: one per review, within two hours, 3 stars or fewer), shown only on the
+  admin page and deleted 90 days after they're written. Errors are calm: the reason goes in the field's own hint,
+  read out by a status line, and the field is brought to the middle of the screen.
+- **The review form is built to be frictionless and safe** (owner's notes, Oct 23 2026 evening): five empty stars
+  (an APG rating radio group: mouse hover fills, tap picks, arrows move), the words optional, a name, an optional
+  email, no checkbox (a notice above "Post review" says what shows and what's declined). Prefill: `?rating=` picks
+  the stars; `?t=` is the reader's address sealed with AES-GCM (`convex/lib/sealedEmail.ts`, 120 days, never
+  readable in the link), opened by `/review/prefill` and stripped from the address bar and from analytics; a
+  signed-in reader's name and address come from `/api/review-prefill`. The rating email's thank-you page offers the
+  review link at every score (inviting only happy raters is deceptive, 16 CFR 255.2 Example 11). Server: a size
+  cap before the body is read, links refused on an NFKC copy, direction overrides stripped (zero-width joiners
+  kept for Indic and Persian), a double send stored once, a fast send kept and flagged (never dropped), the
+  honeypot answered as stored. Declining needs a 465.7(b) reason; a declined review's words, name and email go 90
+  days later (`scrubDeclined`). Convex sets `x-forwarded-for` itself (measured: a faked header is replaced).
 - **Convex answers HTTP 200 for a failed query, and Next's data cache keeps any 200**, so a `queryStatic` read that
   failed (a function not deployed yet, a transient error) is served for the page's whole window. Deploy Convex before
   the site whenever a page starts reading a new function. A fix for the general case is still open.

@@ -67,7 +67,9 @@ export function ReviewsLine({
           {reviews.slice(0, SHOWN_REVIEWS).map((r) => (
             <li key={r.id}>
               <figure>
-                <blockquote className="line-clamp-4 text-sm leading-relaxed">{`\u201C${r.text}\u201D`}</blockquote>{" "}
+                {r.text ? (
+                  <blockquote className="line-clamp-4 text-sm leading-relaxed [overflow-wrap:anywhere]">{`\u201C${r.text}\u201D`}</blockquote>
+                ) : null}{" "}
                 <figcaption className="mt-1 text-sm text-muted-foreground">
                   {`${r.name}, ${r.rating} of 5 stars`}
                 </figcaption>

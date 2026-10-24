@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { checkReview, looksAutomated, MIN_FILL_MS, REVIEW_NAME_MAX, REVIEW_TEXT_MAX } from "./siteReview";
+import { checkReview, isHoneypot, isQuick, MIN_FILL_MS, REVIEW_NAME_MAX, REVIEW_TEXT_MAX, checkNote, NOTE_MAX } from "./siteReview";
 
-const good = { rating: 5, text: "Told me the day my case moved.", name: "Pat", consent: true };
+const good = { rating: 5, text: "Told me the day my case moved.", name: "Pat" };
 
 describe("checkReview", () => {
   it("accepts a complete review and tidies it", () => {
@@ -17,27 +17,40 @@ describe("checkReview", () => {
     expect(r.ok && "email" in r.review).toBe(false);
   });
 
-  it("refuses a rating that isn't a whole number from 1 to 5", () => {
+  it("refuses a rating that isn't a whole number from 1 to 5, naming the stars", () => {
     for (const rating of [0, 6, 4.5, "5", null, Number.NaN]) {
-      expect(checkReview({ ...good, rating }).ok).toBe(false);
+      const r = checkReview({ ...good, rating });
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.field).toBe("rating");
     }
   });
 
-  it("refuses text that's too short or too long, and a missing or overlong name", () => {
-    expect(checkReview({ ...good, text: "Great" }).ok).toBe(false);
-    expect(checkReview({ ...good, text: "x".repeat(REVIEW_TEXT_MAX + 1) }).ok).toBe(false);
-    expect(checkReview({ ...good, name: "   " }).ok).toBe(false);
+  it("takes a rating on its own, or with a word or two", () => {
+    for (const text of [undefined, null, "", "   ", "Great"]) {
+      const r = checkReview({ ...good, text });
+      expect(r.ok, String(text)).toBe(true);
+      if (r.ok) expect(r.review.text).toBe(text === "Great" ? "Great" : "");
+    }
+  });
+
+  it("keeps paragraphs but no runs of blank lines", () => {
+    const r = checkReview({ ...good, text: "First line.\r\n\r\n\r\n\r\nSecond   line.  \n  Third." });
+    expect(r.ok && r.review.text).toBe("First line.\n\nSecond line.\nThird.");
+  });
+
+  it("refuses an overlong review, and a missing or overlong name, each naming its field", () => {
+    const long = checkReview({ ...good, text: "x".repeat(REVIEW_TEXT_MAX + 1) });
+    expect(!long.ok && long.field).toBe("text");
+    expect(checkReview({ ...good, text: 42 }).ok).toBe(false);
+    const blank = checkReview({ ...good, name: "   " });
+    expect(!blank.ok && blank.field).toBe("name");
     expect(checkReview({ ...good, name: "x".repeat(REVIEW_NAME_MAX + 1) }).ok).toBe(false);
   });
 
   it("refuses a malformed or overlong email before trying the pattern", () => {
-    expect(checkReview({ ...good, email: "not an email" }).ok).toBe(false);
+    const bad = checkReview({ ...good, email: "not an email" });
+    expect(!bad.ok && bad.field).toBe("email");
     expect(checkReview({ ...good, email: `${"a".repeat(260)}@example.com` }).ok).toBe(false);
-  });
-
-  it("needs the box ticked to show the review", () => {
-    expect(checkReview({ ...good, consent: false }).ok).toBe(false);
-    expect(checkReview({ ...good, consent: "true" }).ok).toBe(false);
   });
 
   it("refuses links, web addresses and email addresses in the review or the name", () => {
@@ -46,12 +59,15 @@ describe("checkReview", () => {
       "Visit www.cheap-meds.example today, really",
       "Loved it. Buy followers at followersnow.com now",
       "Write to me at someone@example.com about it",
+      "Full-width trick: ｈｔｔｐｓ://spam.example",
+      "Full-width domain: followersnow．ｃｏｍ",
     ]) {
       const r = checkReview({ ...good, text });
       expect(r.ok, text).toBe(false);
       if (!r.ok) expect(r.message).toMatch(/link|address/i);
     }
-    expect(checkReview({ ...good, name: "Pat from spam.example.com" }).ok).toBe(false);
+    const name = checkReview({ ...good, name: "Pat from spam.example.com" });
+    expect(!name.ok && name.field).toBe("name");
   });
 
   it("keeps ordinary writing that only looks a little like an address", () => {
@@ -64,22 +80,38 @@ describe("checkReview", () => {
     }
   });
 
-  it("strips invisible characters before measuring", () => {
-    const r = checkReview({ ...good, text: "Told me\u200B the day\u202E my case moved.", name: "Pa\u200Dt" });
+  it("strips direction overrides and control characters, and keeps the joiners Indic and Persian need", () => {
+    const r = checkReview({ ...good, text: "Told me‮ the day\u0007 my case﻿ moved.", name: "Pat⁦" });
     expect(r.ok && r.review.text).toBe("Told me the day my case moved.");
     expect(r.ok && r.review.name).toBe("Pat");
+    const hindi = "क्‍ष"; // a conjunct written with a zero-width joiner
+    const persian = "می‌خواهم"; // a word written with a zero-width non-joiner
+    const kept = checkReview({ ...good, text: `${hindi} ${persian}` });
+    expect(kept.ok && kept.review.text).toBe(`${hindi} ${persian}`);
   });
 });
 
-describe("looksAutomated", () => {
-  it("passes a person who took their time and left the hidden field empty", () => {
-    expect(looksAutomated({ elapsed: 45_000, website: "" })).toBe(false);
+describe("telling a script from a person", () => {
+  it("the hidden field filled is a script", () => {
+    expect(isHoneypot({ website: "https://spam.example" })).toBe(true);
+    expect(isHoneypot({ website: "" })).toBe(false);
+    expect(isHoneypot({})).toBe(false);
   });
 
-  it("catches the hidden field filled, a post faster than anyone types, and a post with no timing", () => {
-    expect(looksAutomated({ elapsed: 45_000, website: "https://spam.example" })).toBe(true);
-    expect(looksAutomated({ elapsed: MIN_FILL_MS - 1 })).toBe(true);
-    expect(looksAutomated({})).toBe(true);
-    expect(looksAutomated({ elapsed: "60000" })).toBe(true);
+  it("a send faster than a person, or with no timing, is marked quick", () => {
+    expect(isQuick({ elapsed: 45_000 })).toBe(false);
+    expect(isQuick({ elapsed: MIN_FILL_MS - 1 })).toBe(true);
+    expect(isQuick({})).toBe(true);
+    expect(isQuick({ elapsed: "60000" })).toBe(true);
+  });
+});
+
+describe("checkNote", () => {
+  it("tidies a private note like a review, keeps a link (only the owner reads it), and refuses an empty or huge one", () => {
+    expect(checkNote("  Add RFI\u202E alerts.\r\n\r\n\r\nThanks  ")).toEqual({ ok: true, note: "Add RFI alerts.\n\nThanks" });
+    expect(checkNote("See https://example.com/page")).toEqual({ ok: true, note: "See https://example.com/page" });
+    expect(checkNote("   ").ok).toBe(false);
+    expect(checkNote(42).ok).toBe(false);
+    expect(checkNote("x".repeat(NOTE_MAX + 1)).ok).toBe(false);
   });
 });

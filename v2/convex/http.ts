@@ -18,8 +18,9 @@ import {
 } from "./lib/mailPages";
 import { RATING_PATH, parseScore } from "./alertRatings";
 import { reviewUrlWithRating } from "../src/lib/constants/externalLinks";
-import { checkReview, looksAutomated } from "./lib/siteReview";
-import { THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
+import { checkNote, checkReview, isHoneypot, isQuick, REVIEW_BODY_MAX } from "./lib/siteReview";
+import { openEmail } from "./lib/sealedEmail";
+import { reviewLinkFor, THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
 import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
 import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
 import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
@@ -31,9 +32,13 @@ import { verifyExpiringToken } from "./lib/expiringToken";
 import { firmBadLinkPage, firmEditPage, type EditNotice } from "./lib/firmClaimPages";
 import { profileFromForm, type ProfileInput } from "../src/lib/firmProfile";
 import { SITE_URL } from "./lib/links";
+import { createLogger } from "./lib/logging";
 import { watchedSecretOk, sharedSecretOk } from "./watchedCases";
 
 const http = httpRouter();
+
+/** The review routes' log: what was refused and why, never the words or the address. */
+const reviewLog = createLogger("SiteReviews");
 auth.addHttpRoutes(http);
 
 // ============================================================================
@@ -345,12 +350,13 @@ http.route({
         ? queue
         : undefined;
 
-    // Best-effort caller identity for the per-IP limit. Convex populates
-    // `x-forwarded-for`; the leftmost hop is client-supplied and therefore
-    // spoofable, so this raises the cost of naive abuse rather than preventing
-    // it. The control that actually bounds damage to the shared Resend quota
-    // is the global confirmation budget inside `subscribe`, which no amount of
-    // IP or address rotation can get around.
+    // The caller's address for the per-IP limit. Convex sets `x-forwarded-for`
+    // to the connecting address and drops whatever the client sent (measured on
+    // the dev deployment, Oct 23 2026: a request carrying "6.6.6.6" arrived
+    // with the real address), so it can't be faked by a header, only rotated
+    // by changing networks. The control that bounds damage to the shared Resend
+    // quota is still the global confirmation budget inside `subscribe`, which
+    // no amount of IP or address rotation can get around.
     const forwarded = req.headers.get("x-forwarded-for") ?? "";
     const ip = forwarded.split(",")[0]?.trim() || "unknown";
 
@@ -673,13 +679,17 @@ http.route({
       anonymous: form.get("anon") === "1",
     });
     if (!saved) return badLinkPage("This rating link doesn't match a case this address was watching.", "Nothing was recorded. The rating boxes are in the last email about the case.");
+    // The review link carries their address sealed in, so the form fills it in, and the stars they just gave.
+    const secret = process.env.UNSUBSCRIBE_SECRET;
+    const raterEmail = secret ? await verifyUnsubscribeToken(target.token, secret, "alert-rating") : null;
+    const reviewUrl = raterEmail ? await reviewLinkFor(raterEmail, saved.score) : reviewUrlWithRating(saved.score);
     return ratingThanksPage({
       score: saved.score,
       caseNumber: saved.caseNumber,
       action: ratingAction(target),
       noted: saved.noted,
       anonymous: saved.anonymous,
-      reviewUrl: reviewUrlWithRating(saved.score),
+      reviewUrl,
       status: saved.status,
     });
   }),
@@ -760,9 +770,11 @@ http.route({
 
 /**
  * A review from the site's own form (convex/siteReviews.ts). The same posture
- * as the contact form: the route owns the shape (checkReview: cheap checks and
- * length caps before the email pattern) and the honeypot; the internal
- * mutation owns the budgets. Nothing shows until the owner approves it.
+ * as the contact form: the route owns the shape (a size cap before the body is
+ * read, then checkReview: cheap checks and length caps before any pattern) and
+ * the honeypot; the internal mutation owns the budgets. Nothing shows until the
+ * owner approves it. Every refusal names the field it's about, so the form can
+ * put the message under that field.
  */
 http.route({
   path: "/review/submit",
@@ -772,6 +784,21 @@ http.route({
   }),
 });
 
+/** A request body of at most REVIEW_BODY_MAX characters as JSON, or why not. */
+async function smallJson(req: Request): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; status: number; message: string }> {
+  const declared = Number(req.headers.get("content-length") ?? "0");
+  if (declared > REVIEW_BODY_MAX * 4) return { ok: false, status: 413, message: "That review is too long to send." };
+  const raw = await req.text();
+  if (raw.length > REVIEW_BODY_MAX) return { ok: false, status: 413, message: "That review is too long to send." };
+  try {
+    const body: unknown = JSON.parse(raw);
+    if (typeof body !== "object" || body === null || Array.isArray(body)) return { ok: false, status: 400, message: "Malformed request." };
+    return { ok: true, body: body as Record<string, unknown> };
+  } catch {
+    return { ok: false, status: 400, message: "Malformed request." };
+  }
+}
+
 http.route({
   path: "/review/submit",
   method: "POST",
@@ -779,43 +806,42 @@ http.route({
     const cors = corsHeaders(req.headers.get("Origin"));
     const json = (body: unknown, status = 200) =>
       new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return json({ ok: false, message: "Malformed request." }, 400);
+    const parsed = await smallJson(req);
+    if (!parsed.ok) {
+      reviewLog.warn("review refused before reading", { status: parsed.status });
+      return json({ ok: false, message: parsed.message }, parsed.status);
     }
-    if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
-    const fields = body as Record<string, unknown>;
-    // A script (the hidden field filled, or posted faster than anyone can write): answer as if it worked, store nothing.
-    if (looksAutomated(fields)) return json({ ok: true, message: SITE_REVIEW_THANKS });
+    const fields = parsed.body;
+    // The hidden field filled is a script: answer as if it worked, store nothing.
+    if (isHoneypot(fields)) {
+      reviewLog.info("review honeypot filled; answered as stored, nothing kept", {});
+      return json({ ok: true, message: SITE_REVIEW_THANKS });
+    }
     const checked = checkReview(fields);
-    if (!checked.ok) return json({ ok: false, message: checked.message }, 400);
+    if (!checked.ok) {
+      reviewLog.info("review refused", { field: checked.field });
+      return json({ ok: false, field: checked.field, message: checked.message }, 400);
+    }
+    const secret = process.env.UNSUBSCRIBE_SECRET;
+    const linkEmail = secret && typeof fields.t === "string" ? await openEmail(fields.t, secret, Date.now()) : null;
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown";
-    const result = await ctx.runMutation(internal.siteReviews.submit, { ...checked.review, ip });
+    const result = await ctx.runMutation(internal.siteReviews.submit, {
+      ...checked.review,
+      ip,
+      quick: isQuick(fields),
+      ...(linkEmail ? { linkEmail } : {}),
+    });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
 });
 
-// ============================================================================
-// Visa-bulletin movement alerts
-//
-// Same posture as the queue-alert and case-alert routes: the internal
-// mutation owns the budgets, the route owns the shape, GET never mutates,
-// and 429 is distinguished from 400.
-// ============================================================================
-
-const BULLETIN_CATEGORIES = new Set(["EB1", "EB2", "EB3", "EW3", "EB4", "EB5"]);
-const BULLETIN_COUNTRIES = new Set([
-  "worldwide",
-  "china",
-  "india",
-  "mexico",
-  "philippines",
-]);
-
+/**
+ * The thanks screen's private note after a rating of 3 or fewer: what could be better. Tied to the review the same
+ * browser just posted (siteReviews.addNote holds the rules: one note, within two hours, low ratings only). Only the
+ * owner reads it.
+ */
 http.route({
-  path: "/bulletin-alert/subscribe",
+  path: "/review/note",
   method: "OPTIONS",
   handler: httpAction(async (_ctx, req) => {
     return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
@@ -823,118 +849,67 @@ http.route({
 });
 
 http.route({
-  path: "/bulletin-alert/subscribe",
+  path: "/review/note",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const cors = corsHeaders(req.headers.get("Origin"));
     const json = (body: unknown, status = 200) =>
-      new Response(JSON.stringify(body), {
-        status,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return json({ ok: false, message: "Malformed request." }, 400);
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    const parsed = await smallJson(req);
+    if (!parsed.ok) {
+      reviewLog.warn("review note refused before reading", { status: parsed.status });
+      return json({ ok: false, message: parsed.message }, parsed.status);
     }
-    if (typeof body !== "object" || body === null) {
-      return json({ ok: false, message: "Malformed request." }, 400);
+    const { reviewId, note } = parsed.body;
+    if (typeof reviewId !== "string" || reviewId.length === 0 || reviewId.length > 64) {
+      reviewLog.warn("review note refused: no review named", {});
+      return json({ ok: false, message: "That note couldn't be sent. Write to support@permtracker.app instead." }, 400);
     }
-
-    const { email, category, country, source, news, newsletter } = body as Record<string, unknown>;
-    if (
-      typeof email !== "string" ||
-      typeof category !== "string" ||
-      typeof country !== "string" ||
-      !BULLETIN_CATEGORIES.has(category) ||
-      !BULLETIN_COUNTRIES.has(country)
-    ) {
-      return json(
-        { ok: false, message: "Email, category and country are all required." },
-        400,
-      );
+    const checked = checkNote(note);
+    if (!checked.ok) {
+      reviewLog.info("review note refused", { reason: checked.message });
+      return json({ ok: false, message: checked.message }, 400);
     }
-
-    const result = await ctx.runMutation(internal.bulletinAlerts.subscribe, {
-      email: email.slice(0, 320),
-      category: category as "EB1" | "EB2" | "EB3" | "EW3" | "EB4" | "EB5",
-      country: country as "worldwide" | "china" | "india" | "mexico" | "philippines",
-      source: typeof source === "string" ? source.slice(0, 64) : undefined,
-      // Same staged news opt-in as the sibling routes; the bulletin-alert
-      // confirm click completes both, and the confirmation email says so.
-      news: news === true,
-      newsletter: newsletter === true,
-      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
-    });
-
-    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+    const result = await ctx.runMutation(internal.siteReviews.addNote, { reviewId, note: checked.note });
+    return json(result, result.ok ? 200 : 409);
   }),
 });
 
+/**
+ * The review form's prefill from a link we sent: the sealed token opens to the
+ * address it was made for, and to a first name when that address has an
+ * account. A token that won't open answers empty; the form then simply starts
+ * blank. Nothing is written.
+ */
 http.route({
-  path: "/bulletin-alert/confirm",
-  method: "GET",
+  path: "/review/prefill",
+  method: "OPTIONS",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
-    return messagePage(
-      "Confirm your visa bulletin alert",
-      "We'll email you when a new visa bulletin moves the final-action cutoff you're watching. Nothing else will be sent.",
-      {
-        post: `/bulletin-alert/confirm?token=${encodeURIComponent(token)}`,
-        label: "Confirm",
-      },
-    );
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
   }),
 });
 
 http.route({
-  path: "/bulletin-alert/confirm",
+  path: "/review/prefill",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
-    const result = await ctx.runMutation(internal.bulletinAlerts.confirmByToken, { token });
-    if (!result) {
-      return badLinkPage("This confirmation link is no longer valid.");
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    const parsed = await smallJson(req);
+    if (!parsed.ok) return json({}, parsed.status);
+    const secret = process.env.UNSUBSCRIBE_SECRET;
+    if (!secret) {
+      reviewLog.warn("UNSUBSCRIBE_SECRET isn't set; review links can't prefill", {});
+      return json({});
     }
-    return messagePage(
-      "You're on the list",
-      `We'll email you when the State Department moves the final-action cutoff for ${result.series
-        .map(escapeHtml)
-        .join(", ")}. The full board is always on permtracker.app/tools/priority-date-calculator.`,
-    );
-  }),
-});
-
-http.route({
-  path: "/bulletin-alert/unsubscribe",
-  method: "POST",
-  handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
-    const ok = await ctx.runMutation(internal.bulletinAlerts.unsubscribeByToken, { token });
-    if (!ok) return badLinkPage("This link has expired or was changed.");
-    return messagePage(
-      "You're unsubscribed",
-      "You won't receive visa bulletin alerts from us.",
-    );
-  }),
-});
-
-http.route({
-  path: "/bulletin-alert/unsubscribe",
-  method: "GET",
-  handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
-    return messagePage(
-      "Stop your visa bulletin alerts?",
-      "You'll stop receiving emails when the cutoffs you watch move.",
-      { post: `/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}` },
-    );
+    const email = await openEmail(parsed.body.t, secret, Date.now());
+    if (!email) {
+      reviewLog.info("review link didn't open (expired, altered or not ours)", {});
+      return json({});
+    }
+    const name = await ctx.runQuery(internal.siteReviews.nameForEmail, { email });
+    return json({ email, ...(name ? { name } : {}) });
   }),
 });
 

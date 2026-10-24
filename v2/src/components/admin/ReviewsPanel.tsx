@@ -35,7 +35,18 @@ function when(ms: number | undefined): string {
   });
 }
 
+/** The reasons 16 CFR 465.7(b) allows for keeping a review off the site, in the owner's words. */
+const REASONS: { id: "spam" | "abusive" | "personal" | "unrelated" | "other"; label: string }[] = [
+  { id: "spam", label: "Spam or fake" },
+  { id: "abusive", label: "Abusive or obscene" },
+  { id: "personal", label: "Someone's personal details" },
+  { id: "unrelated", label: "Not about PERM Tracker" },
+  { id: "other", label: "Other lawful reason" },
+];
+const REASON_LABEL = Object.fromEntries(REASONS.map((x) => [x.id, x.label])) as Record<string, string>;
+
 function ReviewCard({ r }: { r: Row }) {
+  const [choosing, setChoosing] = useState(false);
   const approve = useMutation(api.siteReviews.approve);
   const decline = useMutation(api.siteReviews.decline);
   const [busy, setBusy] = useState(false);
@@ -61,7 +72,26 @@ function ReviewCard({ r }: { r: Row }) {
           {r.insider ? "Insider: never shown" : r.status === "pending" ? "Waiting" : shown ? "Shown on the site" : "Declined"}
         </span>
       </div>{" "}
-      <p className="mt-2 whitespace-pre-line border-l-4 border-border pl-3 text-sm">{r.text}</p>{" "}
+      {r.scrubbed ? (
+        <p className="mt-2 text-sm text-muted-foreground">Its words, name and email were deleted 90 days after it was declined.</p>
+      ) : r.text ? (
+        <p className="mt-2 whitespace-pre-line border-l-4 border-border pl-3 text-sm [overflow-wrap:anywhere]">{r.text}</p>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">A rating with no words.</p>
+      )}{" "}
+      {r.privateNote ? (
+        <div className="mt-3 border-2 border-dashed border-border p-3">
+          <p className="text-sm font-bold">Private note from the reviewer (never shown; deleted after 90 days)</p>{" "}
+          <p className="mt-1 whitespace-pre-line text-sm [overflow-wrap:anywhere]">{r.privateNote}</p>
+        </div>
+      ) : null}{" "}
+      {r.quick || r.viaLink ? (
+        <p className="mt-2 text-sm font-bold">
+          {[r.quick ? "Sent unusually fast (could be a script)" : null, r.viaLink ? "Email confirmed by a link we sent" : null]
+            .filter(Boolean)
+            .join(". ")}
+        </p>
+      ) : null}{" "}
       <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr] [&>*]:min-w-0">
         <dt className="font-bold">Left</dt> <dd>{`${when(r.createdAt)}${r.source === "senja" ? ", on Senja" : ""}`}</dd>{" "}
         <dt className="font-bold">Email</dt>{" "}
@@ -70,24 +100,49 @@ function ReviewCard({ r }: { r: Row }) {
         </dd>{" "}
         {r.reviewedAt ? (
           <>
-            <dt className="font-bold">Decided</dt> <dd>{when(r.reviewedAt)}</dd>{" "}
+            <dt className="font-bold">Decided</dt>{" "}
+            <dd>{`${when(r.reviewedAt)}${r.declineReason ? `: ${REASON_LABEL[r.declineReason] ?? r.declineReason}` : ""}`}</dd>{" "}
           </>
         ) : null}
       </dl>{" "}
       {r.insider ? null : (
         <div className="mt-3 flex flex-wrap gap-2">
-          {r.status !== "approved" ? (
+          {r.status !== "approved" && !r.scrubbed ? (
             <button type="button" disabled={busy} onClick={() => run(() => approve({ id }))} className={`${BTN} bg-primary text-primary-foreground`}>
               Approve and show
             </button>
           ) : null}{" "}
-          {r.status !== "declined" ? (
-            <button type="button" disabled={busy} onClick={() => run(() => decline({ id }))} className={`${BTN} bg-background`}>
+          {r.status !== "declined" && !choosing ? (
+            <button type="button" disabled={busy} onClick={() => setChoosing(true)} className={`${BTN} bg-background`}>
               {r.status === "approved" ? "Take it down" : "Decline"}
             </button>
           ) : null}
         </div>
       )}{" "}
+      {choosing ? (
+        <fieldset className="mt-3">
+          <legend className="text-sm font-bold">Why? Never for its stars.</legend>{" "}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {REASONS.map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                disabled={busy}
+                onClick={() => run(async () => {
+                  await decline({ id, reason: x.id });
+                  setChoosing(false);
+                })}
+                className={`${BTN} bg-background`}
+              >
+                {x.label}
+              </button>
+            ))}{" "}
+            <button type="button" disabled={busy} onClick={() => setChoosing(false)} className={`${BTN} bg-background`}>
+              Cancel
+            </button>
+          </div>
+        </fieldset>
+      ) : null}{" "}
       {error ? (
         <p role="alert" className="mt-2 text-sm font-bold">
           {error}

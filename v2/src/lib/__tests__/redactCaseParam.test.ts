@@ -17,10 +17,12 @@ import { join } from "node:path";
 // Kept byte-identical to the copy in src/instrumentation-client.ts.
 function redactCaseParam(props: Record<string, unknown> | undefined): void {
   if (!props) return;
-  for (const key of ["$current_url", "$referrer", "$pathname", "url"]) {
+  for (const key of ["$current_url", "$referrer", "$pathname", "url", "$initial_current_url", "$initial_referrer"]) {
     const v = props[key];
-    if (typeof v !== "string" || !v.includes("case=")) continue;
-    props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted");
+    if (typeof v !== "string" || !(v.includes("case=") || v.includes("t="))) continue;
+    // `t` is the sealed review-link token (/reviews?t=...): it opens to the reader's address on our server, so it
+    // never goes to a third party either.
+    props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted").replace(/([?&]t=)[^&#]*/g, "$1redacted");
   }
 }
 
@@ -33,13 +35,25 @@ describe("redactCaseParam", () => {
       "utf8",
     );
     expect(src).toContain(
-      'props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted");',
+      'props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted").replace(/([?&]t=)[^&#]*/g, "$1redacted");',
     );
     expect(src).toContain(
-      'for (const key of ["$current_url", "$referrer", "$pathname", "url"])',
+      'for (const key of ["$current_url", "$referrer", "$pathname", "url", "$initial_current_url", "$initial_referrer"])',
     );
     // And that it is actually wired in, not merely defined.
     expect(src).toContain("redactCaseParam(event.properties);");
+  });
+
+  it("redacts the review-link token and keeps the rest of the address", () => {
+    const p: Record<string, unknown> = {
+      $current_url: "https://permtracker.app/reviews?rating=5&t=abc123-_XYZ#write",
+      $initial_current_url: "https://permtracker.app/reviews?t=abc123",
+      $referrer: "https://permtracker.app/guides?topic=queue",
+    };
+    redactCaseParam(p);
+    expect(p.$current_url).toBe("https://permtracker.app/reviews?rating=5&t=redacted#write");
+    expect(p.$initial_current_url).toBe("https://permtracker.app/reviews?t=redacted");
+    expect(p.$referrer).toBe("https://permtracker.app/guides?topic=queue");
   });
 
   it("redacts a case number from a full URL", () => {

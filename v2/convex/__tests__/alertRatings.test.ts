@@ -137,20 +137,25 @@ describe("the page", () => {
     const html = await tap(t, { r: "5" });
     expect(html).toMatch(/Thanks, glad they helped/);
     expect(html).toMatch(/You rated these alerts 5 of 5/);
-    // The site's own review form, the stars they just gave already picked.
-    expect(html).toContain('href="https://permtracker.app/reviews?rating=5#write"');
+    // The site's own review form, the stars they just gave already picked, the address sealed into the link.
+    expect(html).toMatch(/href="https:\/\/permtracker\.app\/reviews\?rating=5&amp;t=[A-Za-z0-9_%-]+#write"/);
+    // The review link carries the address sealed: neither plain nor base64 is readable in it.
+    const reviewHref = /href="(https:\/\/permtracker\.app\/reviews[^"]*)"/.exec(html)?.[1] ?? "";
+    expect(reviewHref).not.toContain("waiting");
+    expect(reviewHref).not.toContain(btoa(EMAIL).replace(/=+$/, "").slice(0, 12));
     expect(html).toMatch(/Anything we could do better\?/);
     expect(html).toMatch(/name="anon" value="1"/);
     expect((await ratings(t))[0]).toMatchObject({ score: 5 });
   });
 
-  it("says sorry to a 1 or a 2, asks what went wrong, and offers no review link", async () => {
+  it("says sorry to a 1 or a 2, asks what went wrong, and still offers the review link", async () => {
     const t = createTestContext();
     await watching(t);
     const html = await tap(t, { r: "2" });
     expect(html).toMatch(/Sorry they fell short/);
     expect(html).toMatch(/What went wrong\?/);
-    expect(html).not.toContain("/reviews");
+    // Inviting only happy raters to review is deceptive (16 CFR 255.2, Example 11).
+    expect(html).toContain("permtracker.app/reviews?rating=");
   });
 
   it("sends a certified case onward to the green card, and a denied one to its options", async () => {
@@ -166,12 +171,13 @@ describe("the page", () => {
     expect(html).not.toContain("/tools/green-card-line");
   });
 
-  it("asks a 3 what would have made it a 5, without a review link", async () => {
+  it("asks a 3 what would have made it a 5, and offers the review link too", async () => {
     const t = createTestContext();
     await watching(t);
     const html = await tap(t, { r: "3" });
     expect(html).toMatch(/What would have made it a 5\?/);
-    expect(html).not.toContain("/reviews");
+    // Inviting only happy raters to review is deceptive (16 CFR 255.2, Example 11).
+    expect(html).toContain("permtracker.app/reviews?rating=");
   });
 
   it("takes the note from the thanks page and stops asking for one", async () => {

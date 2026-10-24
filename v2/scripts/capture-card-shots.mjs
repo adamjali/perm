@@ -50,7 +50,11 @@ try {
       // The data pages' side list keeps its room but is hidden: its current-page marker
       // reaches into the column the frame starts at.
       await page.addStyleTag({ content: "nextjs-portal,[data-floating],.fixed{display:none!important}nav[aria-label=\"All data pages\"]{visibility:hidden!important}" });
+      // `css` and `script`: what one card needs that the page as served can't give it, such as a composition
+      // that leaves out words a card mustn't carry (a reviewer's name lives on in shared copies of an image).
+      if (card.css) await page.addStyleTag({ content: card.css });
       await page.waitForTimeout(2500);
+      if (card.script) await page.evaluate(card.script);
       const box = await page.evaluate(([from, fromEl, viewW]) => {
         const start = fromEl
           ? document.querySelector(fromEl)

@@ -3,30 +3,37 @@
  * hides every review past its 15th, deleted ones counted, so the reviews come to us instead).
  *
  * - A review waits for the owner (Admin > Reviews). Approval is never by stars (16 CFR 465.7(b)): the owner
- *   declines spam, abuse and reviews of something else. Approving or declining refreshes /reviews and the
- *   homepage at once (`/api/revalidate-reviews`).
+ *   declines only with one of the reasons that rule allows, and the reason is kept. Approving or declining
+ *   refreshes /reviews and the homepage (`/api/revalidate-reviews`).
  * - The public read (`listPublished`) carries approved reviews only, never an address, and never a review by
  *   someone who runs the site (`insider`, 16 CFR 465.5); those are kept, never shown or counted.
  * - Senja's form stays up for links already sent; `importFromSenja` copies anything new there into the same
  *   queue once a day, by Senja's id, so nothing is copied twice.
+ * - Prefill: a signed-in reader's name and address (`prefillForMe`), or the address sealed into a link we sent
+ *   (`reviewLinkFor`, opened by the `/review/prefill` route). A review sent with a valid link is marked `viaLink`.
+ * - Nothing grows forever: the form takes at most GLOBAL_PER_DAY a day, and a declined review's words, name and
+ *   address are deleted 90 days after the decision (`scrubDeclined`, daily); its rating and reason stay.
  *
  * Public-endpoint checklist: the write is an internal mutation behind the HTTP route (`/review/submit`), which
- * owns the shape and the honeypot; the global daily budget is checked before anything is written, and the per-
- * address limit after it, before the insert. The owner hears of waiting reviews at most once a day.
+ * owns the shape, the size cap and the honeypot; the global daily budget is checked before anything is written,
+ * and the per-address limit after it, before the insert. Every refusal and failure is logged with its reason and
+ * no personal data; the owner hears of waiting reviews at most once a day.
  */
 
 import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, mutation, query, type MutationCtx } from "./_generated/server";
 import { getSecurityAlertEmail, requireAdmin } from "./lib/admin";
+import { getCurrentUserIdOrNull } from "./lib/auth";
 import { getResend } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 import { SITE_URL } from "./lib/links";
 import { createLogger } from "./lib/logging";
 import { sendOwnerMail } from "./lib/ownerMail";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { REVIEW_LINK_TTL_MS, sealEmail } from "./lib/sealedEmail";
 import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import { INSIDER_REVIEW_IDS, parseSenjaWidget, senjaTime } from "../src/lib/reviews/senjaParse";
 
@@ -34,21 +41,39 @@ const log = createLogger("SiteReviews");
 
 /** Reviews the form takes from everyone together in a day; past it the form says so. */
 export const GLOBAL_PER_DAY = 30;
-/** Reviews one address may send in an hour. */
+/** Reviews one address may send in an hour. Convex sets the caller's address itself; a header can't fake it. */
 export const IP_LIMIT = { limit: 5, windowMs: MS_PER_HOUR };
+/** The same rating, name and words again within this is a double send, stored once. */
+export const DUPLICATE_WINDOW_MS = 10 * MS_PER_MINUTE;
+/** A declined review's words, name and address are deleted this long after the decision. */
+export const DECLINED_KEEP_MS = 90 * MS_PER_DAY;
+/** A private note can follow a rating of this many stars or fewer (the thanks screen asks what could be better). */
+export const NOTE_UP_TO = 3;
+/** How long after posting the reviewer can add that note; one note per review. */
+export const NOTE_WINDOW_MS = 2 * MS_PER_HOUR;
+/** A private note is deleted this long after it was written, whatever became of the review. */
+export const NOTE_KEEP_MS = 90 * MS_PER_DAY;
 /** The owner's "reviews are waiting" email: at most one a day. */
 const NOTICE_LIMIT = { limit: 1, windowMs: MS_PER_DAY };
 /** The most reviews the public read hands back; the page shows them twelve at a time. */
 const PUBLIC_READ = 500;
 const ADMIN_READ = 100;
+/** Declined reviews scrubbed per run; the daily run reschedules itself while a full batch remains. */
+const SCRUB_BATCH = 200;
 
 /** The Senja widget whose script carries the reviews left there (its id is in the widget's own public URL). */
 export const SENJA_WIDGET_URL = "https://widget.senja.io/widget/3563db96-3a71-4d2a-b7e8-70550d4dd814/platform.js";
 
-export const THANKS =
-  "Thanks. Your review will show here once we've checked it isn't spam, usually within a day.";
+export const THANKS = "Thanks. Your review will show here once we've read it, usually within a day.";
 
 const status = v.union(v.literal("pending"), v.literal("approved"), v.literal("declined"));
+const declineReason = v.union(
+  v.literal("spam"),
+  v.literal("abusive"),
+  v.literal("personal"),
+  v.literal("unrelated"),
+  v.literal("other"),
+);
 
 // ============================================================================
 // The form
@@ -61,40 +86,152 @@ export const submit = internalMutation({
     name: v.string(),
     email: v.optional(v.string()),
     ip: v.string(),
+    quick: v.boolean(),
+    /** The address a valid sealed link opened to; the HTTP route checked it. */
+    linkEmail: v.optional(v.string()),
   },
-  returns: v.object({ ok: v.boolean(), throttled: v.optional(v.boolean()), message: v.string() }),
+  returns: v.object({
+    ok: v.boolean(),
+    throttled: v.optional(v.boolean()),
+    message: v.string(),
+    /** The stored review, for the thanks screen's private note; only the browser that sent it is told. */
+    reviewId: v.optional(v.string()),
+  }),
   handler: async (ctx, args) => {
     const now = Date.now();
     let today = 0;
     for await (const row of ctx.db.query("siteReviews").withIndex("by_created", (q) => q.gte("createdAt", now - MS_PER_DAY))) {
-      void row;
+      // A double send (a second tap, a retry after a dropped reply) is one review.
+      if (
+        row.createdAt >= now - DUPLICATE_WINDOW_MS &&
+        row.source === "site" &&
+        row.rating === args.rating &&
+        row.name === args.name &&
+        row.text === args.text
+      ) {
+        log.info("duplicate review ignored", { rating: args.rating });
+        return { ok: true, message: THANKS, reviewId: row._id };
+      }
       today += 1;
       if (today >= GLOBAL_PER_DAY) {
+        log.warn("review refused: the day's budget is spent", { budget: GLOBAL_PER_DAY });
         return { ok: false, throttled: true, message: "The review form has taken all it can for today. Please try again tomorrow." };
       }
     }
     const perIp = await checkAndRecordRateLimit(ctx, args.ip, "site_review_ip", IP_LIMIT);
     if (!perIp.allowed) {
+      log.warn("review refused: one address sent too many", { limit: IP_LIMIT.limit });
       return { ok: false, throttled: true, message: "That's a few reviews in a row. Please try again in an hour." };
     }
-    await ctx.db.insert("siteReviews", {
+    const email = args.email ?? args.linkEmail;
+    const viaLink = args.linkEmail !== undefined && email === args.linkEmail;
+    const reviewId = await ctx.db.insert("siteReviews", {
       rating: args.rating,
       text: args.text,
       name: args.name,
-      ...(args.email ? { email: args.email } : {}),
+      ...(email ? { email } : {}),
       status: "pending",
       source: "site",
       createdAt: now,
+      ...(args.quick ? { quick: true } : {}),
+      ...(viaLink ? { viaLink: true } : {}),
     });
+    log.info("review stored, waiting for the owner", { rating: args.rating, hasText: args.text.length > 0, quick: args.quick, viaLink });
     await noteWaiting(ctx);
-    return { ok: true, message: THANKS };
+    return { ok: true, message: THANKS, reviewId };
+  },
+});
+
+/**
+ * A private note after a low rating: what could be better. One per review, within NOTE_WINDOW_MS of posting, only
+ * for NOTE_UP_TO stars or fewer, so knowing a review's id gains a stranger nothing worth having. The route has
+ * already checked and tidied the words (checkNote).
+ */
+export const addNote = internalMutation({
+  args: { reviewId: v.string(), note: v.string() },
+  returns: v.object({ ok: v.boolean(), message: v.string() }),
+  handler: async (ctx, { reviewId, note }) => {
+    const id = ctx.db.normalizeId("siteReviews", reviewId);
+    const row = id ? await ctx.db.get(id) : null;
+    const now = Date.now();
+    if (!row || row.source !== "site") {
+      log.warn("review note refused: no such review");
+      return { ok: false, message: "That review couldn't be found. Write to support@permtracker.app instead." };
+    }
+    if (row.rating > NOTE_UP_TO || row.privateNote !== undefined || now - row.createdAt > NOTE_WINDOW_MS) {
+      log.warn("review note refused", { rating: row.rating, hasNote: row.privateNote !== undefined, ageMs: now - row.createdAt });
+      return { ok: false, message: "A note can't be added to this review any more. Write to support@permtracker.app instead." };
+    }
+    await ctx.db.patch(row._id, { privateNote: note, privateNoteAt: now });
+    log.info("private note added to a review", { rating: row.rating, length: note.length });
+    return { ok: true, message: "Thank you. Only we read this." };
   },
 });
 
 /** Tell the owner reviews wait: one email a day at most, charged before it's scheduled. */
-async function noteWaiting(ctx: Parameters<typeof checkAndRecordRateLimit>[0]): Promise<void> {
+async function noteWaiting(ctx: MutationCtx): Promise<void> {
   const notice = await checkAndRecordRateLimit(ctx, "admin", "site_review_notice", NOTICE_LIMIT);
   if (notice.allowed) await ctx.scheduler.runAfter(0, internal.siteReviews.notifyOwner, {});
+}
+
+// ============================================================================
+// Prefill
+// ============================================================================
+
+/** A first name to greet with, from an account's full name; null when there's nothing usable. */
+function firstName(full: string | undefined): string | null {
+  const first = (full ?? "").trim().split(/\s+/)[0] ?? "";
+  return first.length > 0 && first.length <= 80 ? first : null;
+}
+
+/** The signed-in reader's name and address, to fill the form. Null when no one is signed in. */
+export const prefillForMe = query({
+  args: {},
+  returns: v.union(v.null(), v.object({ name: v.optional(v.string()), email: v.optional(v.string()) })),
+  handler: async (ctx) => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return null;
+    const user = await ctx.db.get(userId);
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+    const name = firstName(profile?.fullName ?? user?.name);
+    return { ...(name ? { name } : {}), ...(user?.email ? { email: user.email } : {}) };
+  },
+});
+
+/** A first name for an address that has an account, for a sealed link's prefill. */
+export const nameForEmail = internalQuery({
+  args: { email: v.string() },
+  returns: v.union(v.null(), v.string()),
+  handler: async (ctx, { email }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", email))
+      .first();
+    if (!user) return null;
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+      .first();
+    return firstName(profile?.fullName ?? user.name);
+  },
+});
+
+/**
+ * The review form's address for someone we're writing to: their address sealed into the link (never readable in
+ * it), and the stars they gave already picked when there are some. Plain form link when the secret is missing.
+ */
+export async function reviewLinkFor(email: string, rating?: number): Promise<string> {
+  const stars = rating !== undefined && Number.isInteger(rating) && rating >= 1 && rating <= 5 ? `rating=${rating}&` : "";
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!secret) {
+    log.warn("UNSUBSCRIBE_SECRET isn't set; review links go out without the address prefill", {});
+    return `${SITE_URL}/reviews${stars ? `?${stars.slice(0, -1)}` : ""}#write`;
+  }
+  const t = await sealEmail(email, secret, Date.now() + REVIEW_LINK_TTL_MS);
+  return `${SITE_URL}/reviews?${stars}t=${encodeURIComponent(t)}#write`;
 }
 
 // ============================================================================
@@ -140,6 +277,12 @@ const adminReview = v.object({
   insider: v.boolean(),
   /** The address watches a case on the site: a sign the reviewer is a real user, never shown publicly. */
   watchesCase: v.boolean(),
+  quick: v.boolean(),
+  viaLink: v.boolean(),
+  declineReason: v.optional(declineReason),
+  scrubbed: v.boolean(),
+  /** What the reviewer said could be better, after a low rating; private, never shown with the review. */
+  privateNote: v.optional(v.string()),
   createdAt: v.number(),
   reviewedAt: v.optional(v.number()),
 });
@@ -167,6 +310,11 @@ export const listForAdmin = query({
         source: r.source,
         insider: r.insider === true,
         watchesCase: watcher !== null && watcher.confirmedAt !== undefined,
+        quick: r.quick === true,
+        viaLink: r.viaLink === true,
+        ...(r.declineReason ? { declineReason: r.declineReason } : {}),
+        ...(r.privateNote ? { privateNote: r.privateNote } : {}),
+        scrubbed: r.scrubbedAt !== undefined,
         createdAt: r.createdAt,
         ...(r.reviewedAt !== undefined ? { reviewedAt: r.reviewedAt } : {}),
       };
@@ -194,21 +342,24 @@ export const approve = mutation({
     await requireAdmin(ctx);
     const row = await ctx.db.get(id);
     if (!row) throw new Error("That review no longer exists.");
-    await ctx.db.patch(id, { status: "approved", reviewedAt: Date.now() });
+    if (row.scrubbedAt !== undefined) throw new Error("That review's words were deleted after it was declined, so it can't be shown.");
+    await ctx.db.patch(id, { status: "approved", reviewedAt: Date.now(), declineReason: undefined });
+    log.info("review approved", { rating: row.rating });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
     return null;
   },
 });
 
-/** Keep a review off the site (spam, abuse, a review of something else; never its stars). SECURITY: requireAdmin. */
+/** Keep a review off the site, for one of the reasons 16 CFR 465.7(b) allows; never its stars. SECURITY: requireAdmin. */
 export const decline = mutation({
-  args: { id: v.id("siteReviews") },
+  args: { id: v.id("siteReviews"), reason: declineReason },
   returns: v.null(),
-  handler: async (ctx, { id }) => {
+  handler: async (ctx, { id, reason }) => {
     await requireAdmin(ctx);
     const row = await ctx.db.get(id);
     if (!row) throw new Error("That review no longer exists.");
-    await ctx.db.patch(id, { status: "declined", reviewedAt: Date.now() });
+    await ctx.db.patch(id, { status: "declined", reviewedAt: Date.now(), declineReason: reason });
+    log.info("review declined", { rating: row.rating, reason });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
     return null;
   },
@@ -232,13 +383,16 @@ export const notifyOwner = internalAction({
   returns: v.null(),
   handler: async (ctx) => {
     const to = getSecurityAlertEmail();
-    if (!to) return null;
+    if (!to) {
+      log.warn("no owner address configured; the waiting-reviews email wasn't sent", {});
+      return null;
+    }
     try {
       const waiting = await ctx.runQuery(internal.siteReviews.waitingCount, {});
       if (waiting.length === 0) return null;
       const lines = waiting
         .slice(0, 20)
-        .map((w) => `- ${w.name}, ${w.rating} of 5: ${w.text.length > 160 ? `${w.text.slice(0, 157)}...` : w.text}`);
+        .map((w) => `- ${w.name}, ${w.rating} of 5${w.text ? `: ${w.text.length > 160 ? `${w.text.slice(0, 157)}...` : w.text}` : " (no words)"}`);
       const text = [
         "These reviews wait for you before they show on the site:",
         "",
@@ -246,7 +400,7 @@ export const notifyOwner = internalAction({
         "",
         `Approve or decline on the admin page: ${SITE_URL}/admin#reviews`,
         "",
-        "Decline only spam, abuse or a review of something else, never a review for its stars.",
+        "Decline only spam or fake reviews, abuse, someone's personal information, or a review of something else; never a review for its stars.",
         "You get this at most once a day.",
       ].join("\n");
       const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -254,12 +408,13 @@ export const notifyOwner = internalAction({
         .split("\n")
         .map((l) => (l ? `<p>${esc(l)}</p>` : ""))
         .join("");
-      await sendOwnerMail(ctx, "site-review", getResend(), {
+      const result = await sendOwnerMail(ctx, "site-review", getResend(), {
         to,
         subject: `Reviews waiting for you: ${waiting.length}`,
         html,
         text,
       });
+      if (result.error) await recordError(ctx, "action", "siteReviews.notifyOwner", new Error(`owner email failed: ${JSON.stringify(result.error)}`));
     } catch (error) {
       await recordError(ctx, "action", "siteReviews.notifyOwner", error);
     }
@@ -313,6 +468,55 @@ export const refreshPages = internalAction({
       new Error(`/reviews and the homepage weren't refreshed after ${attempt + 1} tries (${failure}); they show the change within a day.`),
     );
     return null;
+  },
+});
+
+// ============================================================================
+// Retention
+// ============================================================================
+
+/**
+ * Delete the words, name and address of reviews declined more than DECLINED_KEEP_MS ago (daily, crons.ts). The
+ * rating, the reason and Senja's id stay, so the record of what was declined and why survives, and a Senja review
+ * is never copied in again. Reschedules itself while a full batch remains.
+ */
+export const scrubDeclined = internalMutation({
+  args: {},
+  returns: v.object({ scrubbed: v.number(), notes: v.number() }),
+  handler: async (ctx) => {
+    const now = Date.now();
+    const cutoff = now - DECLINED_KEEP_MS;
+    let scrubbed = 0;
+    let looked = 0;
+    let more = false;
+    for await (const r of ctx.db.query("siteReviews").withIndex("by_status_created", (q) => q.eq("status", "declined"))) {
+      looked += 1;
+      if (looked > SCRUB_BATCH * 5) break;
+      if (r.scrubbedAt !== undefined || r.reviewedAt === undefined || r.reviewedAt > cutoff) continue;
+      await ctx.db.patch(r._id, { text: "", name: "", email: undefined, scrubbedAt: now });
+      scrubbed += 1;
+      if (scrubbed >= SCRUB_BATCH) {
+        more = true;
+        break;
+      }
+    }
+    if (scrubbed > 0) log.info("declined reviews' words deleted", { scrubbed });
+    // Private notes go after NOTE_KEEP_MS whatever became of the review; the index reads only rows that have one.
+    let notes = 0;
+    for await (const r of ctx.db
+      .query("siteReviews")
+      .withIndex("by_note_at", (q) => q.gt("privateNoteAt", 0).lt("privateNoteAt", now - NOTE_KEEP_MS))) {
+      await ctx.db.patch(r._id, { privateNote: undefined, privateNoteAt: undefined });
+      notes += 1;
+      if (notes >= SCRUB_BATCH) {
+        more = true;
+        break;
+      }
+    }
+    if (notes > 0) log.info("private review notes deleted", { notes });
+    // A full batch of either: one more run, scheduled once.
+    if (more) await ctx.scheduler.runAfter(0, internal.siteReviews.scrubDeclined, {});
+    return { scrubbed, notes };
   },
 });
 

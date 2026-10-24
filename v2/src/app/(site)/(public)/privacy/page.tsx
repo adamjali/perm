@@ -162,11 +162,24 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 An email address, if you give one. It&apos;s never shown or
-                shared, and is used only to follow up about your review
+                shared, and is used only to follow up about your review. If
+                you&apos;re signed in, or arrive from a link in our email, the
+                form fills in your name and address for you to keep or change
               </li>{" "}
               <li>
                 The submitting IP address, used only to limit spam and never
                 stored with the review
+              </li>{" "}
+              <li>
+                A review we don&apos;t show (spam, abuse, someone&apos;s
+                personal details, or not about PERM Tracker) has its words,
+                name and email deleted 90 days after we decide; its rating and
+                the reason stay
+              </li>{" "}
+              <li>
+                After a rating of 3 stars or fewer, an optional private note on
+                what we could do better. Only we read it; it&apos;s never shown
+                with the review, and it&apos;s deleted 90 days after you send it
               </li>
             </ul>{" "}
 

@@ -2289,10 +2289,27 @@ export default defineSchema({
     /** When the review was left (Senja's own date for a copy). */
     createdAt: v.number(),
     reviewedAt: v.optional(v.number()),
+    /** Sent faster than a person likely could, or with no timing: kept for the owner to judge, never dropped. */
+    quick: v.optional(v.boolean()),
+    /** The email came from a sealed link we sent that address, so the address is confirmed. */
+    viaLink: v.optional(v.boolean()),
+    /** Why the owner declined it, from the reasons 16 CFR 465.7(b) allows. */
+    declineReason: v.optional(
+      v.union(v.literal("spam"), v.literal("abusive"), v.literal("personal"), v.literal("unrelated"), v.literal("other")),
+    ),
+    /** A declined review's words, name and email are deleted 90 days after the decision; the rating and reason stay. */
+    scrubbedAt: v.optional(v.number()),
+    /**
+     * What a reviewer who gave 3 stars or fewer said could be better, added on the thanks screen. Private: only the
+     * admin page shows it, never the review. Deleted 90 days after it was written.
+     */
+    privateNote: v.optional(v.string()),
+    privateNoteAt: v.optional(v.number()),
   })
     .index("by_status_created", ["status", "createdAt"])
     .index("by_created", ["createdAt"])
-    .index("by_senja_id", ["senjaId"]),
+    .index("by_senja_id", ["senjaId"])
+    .index("by_note_at", ["privateNoteAt"]),
 
   /**
    * Someone following ONE employer's PERM cases as a group.

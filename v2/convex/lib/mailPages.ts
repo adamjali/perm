@@ -211,10 +211,9 @@ export function ratingThanksPage(opts: {
   const words = ratingWords(score);
   const caseUrl = `${SITE_URL}/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
   const lead = `You rated these alerts ${score} of 5.${noted ? (anonymous ? " Thanks for the note, kept without your email." : " Thanks for the note too.") : ""}`;
-  const review =
-    score >= 4
-      ? `<div class="review"><b>Would you say so in a short review?</b><p class="muted">It helps other people waiting on a case find the site.</p><p class="actions" style="margin-top:12px"><a class="btn go" href="${escapeHtml(reviewUrl)}">Leave a review</a></p></div>`
-      : "";
+  // Everyone is asked, whatever they rated: inviting only the happy ones to review is what the FTC's Endorsement
+  // Guides call deceptive (16 CFR 255.2, Example 11).
+  const review = `<div class="review"><b>Would you leave a short review?</b><p class="muted">It helps other people waiting on a case decide whether to use the site. We show reviews whatever their stars.</p><p class="actions" style="margin-top:12px"><a class="btn go" href="${escapeHtml(reviewUrl)}">Leave a review</a></p></div>`;
   const note = noted
     ? ""
     : `<form method="POST" action="${action}">
@@ -225,8 +224,8 @@ export function ratingThanksPage(opts: {
 <span class="hint">Then we can't reply, and the note isn't tied to your case.</span>
 <p class="actions"><button type="submit" class="btn go">Send</button></p>
 </form>`;
-  // A good rating asks for the review first; a poor one asks what went wrong first.
-  const asks = score >= 4 ? `${review}${note}` : `${note}`;
+  // A good rating asks for the review first; a poor one asks what went wrong first, then for the review.
+  const asks = score >= 4 ? `${review}${note}` : `${note}${review}`;
   return htmlPage(
     "Thanks for rating",
     `<style>${RATING_STYLE}</style><h1>${escapeHtml(words.title)}</h1><p class="muted">${escapeHtml(lead)}</p>${asks}

@@ -67,6 +67,8 @@ function measure(w) {
     const label = el.matches("input[type=checkbox], input[type=radio]")
       ? el.closest("label") ?? (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null)
       : null;
+    // Nothing a person can reach (a form's hidden honeypot, an inert copy) is a tap target.
+    if (el.closest('[aria-hidden="true"], [inert]')) continue;
     const b = (label ?? el).getBoundingClientRect();
     const inline = getComputedStyle(el).display === "inline" && el.closest("p, li, dd, td");
     const shortcut = el.tabIndex === -1 && [...(el.parentElement?.querySelectorAll("input") ?? [])].some((i) => i.getBoundingClientRect().height >= 43);

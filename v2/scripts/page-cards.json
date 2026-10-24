@@ -685,15 +685,18 @@
   "slug": "reviews",
   "path": "/reviews",
   "title": "Leave a review of PERM Tracker",
-  "label": "What people who use PERM Tracker say about it, newest first.",
+  "label": "Rate PERM Tracker in a tap, and read what the people who use it say.",
   "shot": "reviews.png",
   "crop": [
    0,
    0,
-   1568,
-   1072
+   2048,
+   1400
   ],
-  "from": "Leave a review"
+  "fromEl": "#write form",
+  "above": 60,
+  "css": "footer { visibility: hidden !important; } #write > h1, #write > p { display: none !important; } #write > div { margin-top: 0 !important; } #write form > fieldset > :not(fieldset) { display: none !important; } #write legend { font-size: 1.75rem !important; } #write fieldset fieldset label { width: 5.5rem !important; height: 5.5rem !important; } #write fieldset fieldset label svg { width: 4.5rem !important; height: 4.5rem !important; } #said { margin-top: 2.5rem !important; } #said > h2, #said > p, #said > details, #said button { display: none !important; } #said figure blockquote > span { color: transparent !important; background: repeating-linear-gradient(transparent 0 0.45em, #E2E2E2 0.45em 1.2em, transparent 1.2em 1.625em); } #said figcaption > span { color: transparent !important; background: #E2E2E2; display: inline !important; } #said figcaption > span + span { margin-left: 0.5em; }",
+  "script": "(async () => { document.querySelector('#write input[name=rating][value=\"5\"]')?.click(); const row = document.querySelector('#said [role=group]'); if (!row) throw new Error('no review row'); const cards = [...row.querySelectorAll('figure')]; while (row.querySelectorAll('figure').length < 6) for (const c of cards) row.appendChild(c.cloneNode(true)); const fade = 'linear-gradient(to right, transparent, #000 10%, #000 90%, transparent)'; row.parentElement.style.maskImage = fade; row.parentElement.style.webkitMaskImage = fade; row.style.justifyContent = 'flex-start'; row.style.scrollbarWidth = 'none'; row.scrollLeft = 150; await new Promise((r) => setTimeout(r, 600)); })()"
  },
  {
   "slug": "blog",

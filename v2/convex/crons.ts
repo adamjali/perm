@@ -516,4 +516,12 @@ crons.daily(
   {},
 );
 
+/** A declined review's words, name and address go 90 days after the decision; its rating and reason stay. */
+crons.daily(
+  "site-reviews-scrub-declined",
+  { hourUTC: 8, minuteUTC: 50 },
+  internal.siteReviews.scrubDeclined,
+  {},
+);
+
 export default crons;
