@@ -226,6 +226,7 @@ import type * as serverWatch from "../serverWatch.js";
 import type * as siteReviews from "../siteReviews.js";
 import type * as supportEmail from "../supportEmail.js";
 import type * as systemErrors from "../systemErrors.js";
+import type * as testData from "../testData.js";
 import type * as timeline from "../timeline.js";
 import type * as toolCache from "../toolCache.js";
 import type * as turnstile from "../turnstile.js";
@@ -466,6 +467,7 @@ declare const fullApi: ApiFromModules<{
   siteReviews: typeof siteReviews;
   supportEmail: typeof supportEmail;
   systemErrors: typeof systemErrors;
+  testData: typeof testData;
   timeline: typeof timeline;
   toolCache: typeof toolCache;
   turnstile: typeof turnstile;
