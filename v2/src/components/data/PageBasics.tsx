@@ -562,6 +562,20 @@ export const BASICS: Record<string, BasicsEntry[]> = {
         </>
       ),
     },
+    {
+      q: "Where are the DACA figures?",
+      a: (
+        <>
+          DACA is{" "}
+          <Link href="/uscis-processing-times#daca" className={link}>
+            Form I-821D
+          </Link>
+          , in the Humanitarian table under every form USCIS reports, and its
+          work permit is with the I-765 lines. Both pending counts include
+          first-time requests, which USCIS accepts but doesn&apos;t process.
+        </>
+      ),
+    },
   ],
   "i485-by-field-office": [
     {

@@ -56,6 +56,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/h1b-employers": "h-1b h1b top employers sponsors biggest largest busiest companies ranking lca uscis data hub approvals by state",
   "/lca-wage-sources": "prevailing wage source survey oes radford aon mercer willis towers watson cba union h-1b lca",
   "/uscis-rfe-rates": "rfe request for evidence rate rates h-1b h1b l-1 l1 o-1 tn h-2a h-2b i-129 uscis denial",
+  "/uscis-processing-times": "uscis processing time times median wait form i-140 i-485 i-765 i-131 ead advance parole daca deferred action i-821d",
   "/tools/h1b-lottery-odds-calculator": "h-1b h1b lottery registration cap selection odds chance wage level weighted",
   "/perm-employers/under-review": "on hold rfi audit appeals census",
   "/perm-employers/compare": "compare sponsors side by side",

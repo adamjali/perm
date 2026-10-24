@@ -415,7 +415,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/uscis-processing-times",
     label: "USCIS processing times, the median, by form",
     blurb:
-      "The median months USCIS took to decide every form last quarter, from its quarterly performance workbook, beside receipts, completions and pending, and the historical medians back to FY2016. A different number from USCIS's processing-times page, and both are shown.",
+      "The median months USCIS took to decide every form last quarter, from its quarterly performance workbook, beside receipts, completions and pending, and the historical medians back to FY2016. A different number from USCIS's processing-times page, and both are shown. DACA is Form I-821D there; its pending count, and its work permit's, include first-time requests USCIS accepts but doesn't process.",
   },
   {
     path: "/i485-by-field-office",

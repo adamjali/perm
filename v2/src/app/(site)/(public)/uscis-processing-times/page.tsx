@@ -89,6 +89,23 @@ const KEY_FORMS: ReadonlyArray<{ form: string; contains?: string; equals?: strin
   { form: "N-400", equals: "Application for Naturalization", label: "N-400 naturalization" },
 ];
 
+/**
+ * The two DACA lines, under the name people search for, and why their pending counts read high. USCIS accepts
+ * first-time DACA requests but doesn't process them ("USCIS will continue to accept initial requests but will not
+ * process initial DACA requests at this time", its DACA page, Last Reviewed/Updated 01/24/2025, read Oct 24 2026),
+ * and a request is rejected unless filed with its work permit (I-765), so both counts carry them. USCIS's workbook
+ * doesn't split first-time from renewal, so no share is given.
+ */
+const USCIS_DACA_PAGE = "https://www.uscis.gov/DACA";
+const DACA_LINES: ReadonlyArray<{ form: string; contains?: string; suffix: string; id: string; firstTime: boolean }> = [
+  { form: "I-821D", suffix: " (DACA)", id: "daca", firstTime: true },
+  { form: "I-765", contains: "(DACA)", suffix: "", id: "daca-work-permit", firstTime: false },
+];
+
+function dacaLine(r: UscisFormRow) {
+  return DACA_LINES.find((d) => r.form === d.form && (d.contains ? r.title.includes(d.contains) : true)) ?? null;
+}
+
 function pick(forms: readonly UscisFormRow[], spec: { form: string; contains?: string; equals?: string }): UscisFormRow | null {
   return (
     forms.find((r) =>
@@ -454,16 +471,42 @@ export default async function UscisProcessingTimesPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {rowsIn.map((r) => (
-                            <tr key={`${r.form}|${r.title}`} className="border-b border-border/50">
-                              <td className="px-4 py-1.5 font-mono font-bold">{r.form}{" "}</td>
-                              <td className="px-2 py-1.5">{r.title}{" "}</td>
-                              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.received === null ? "n/a" : r.received.toLocaleString("en-US")}{" "}</td>
-                              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.completed === null ? "n/a" : r.completed.toLocaleString("en-US")}{" "}</td>
-                              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.pending === null ? "n/a" : r.pending.toLocaleString("en-US")}{" "}</td>
-                              <td className="px-4 py-1.5 text-right font-mono font-bold tabular-nums">{monthsLabel(r.medianMonths)}{" "}</td>
-                            </tr>
-                          ))}
+                          {rowsIn.map((r) => {
+                            const daca = dacaLine(r);
+                            return (
+                              <Fragment key={`${r.form}|${r.title}`}>
+                                <tr id={daca?.id} className={daca ? "scroll-mt-24" : "border-b border-border/50"}>
+                                  <td className="px-4 py-1.5 font-mono font-bold">{r.form}{" "}</td>
+                                  <td className="px-2 py-1.5">{r.title}{daca?.suffix}{" "}</td>
+                                  <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.received === null ? "n/a" : r.received.toLocaleString("en-US")}{" "}</td>
+                                  <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.completed === null ? "n/a" : r.completed.toLocaleString("en-US")}{" "}</td>
+                                  <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.pending === null ? "n/a" : r.pending.toLocaleString("en-US")}{" "}</td>
+                                  <td className="px-4 py-1.5 text-right font-mono font-bold tabular-nums">{monthsLabel(r.medianMonths)}{" "}</td>
+                                </tr>
+                                {daca ? (
+                                  <tr className="border-b border-border/50">
+                                    <td colSpan={6} className="px-4 pb-2 text-sm text-muted-foreground">
+                                      {daca.firstTime ? (
+                                        <>
+                                          Pending includes first-time DACA requests. USCIS still accepts them but
+                                          doesn&apos;t process them, as{" "}
+                                          <a href={USCIS_DACA_PAGE} target="_blank" rel="noopener noreferrer" className="link">
+                                            its DACA page
+                                          </a>{" "}
+                                          says (last updated January 24, 2025).
+                                        </>
+                                      ) : (
+                                        <>
+                                          A first-time DACA request is filed with this work permit, so its pending count
+                                          includes those requests too.
+                                        </>
+                                      )}{" "}
+                                    </td>
+                                  </tr>
+                                ) : null}
+                              </Fragment>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </ScrollBox>
