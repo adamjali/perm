@@ -2454,7 +2454,7 @@ a:focus-visible .u-title,
 }
 @media (prefers-reduced-motion: no-preference) {
   .review-star-hop {
-    animation: review-star-hop 480ms cubic-bezier(0.2, 0.8, 0.3, 1.25) both;
+    animation: review-star-hop 480ms cubic-bezier(0.25, 1, 0.5, 1) both;
     animation-delay: calc(var(--i, 0) * 70ms);
   }
 }
