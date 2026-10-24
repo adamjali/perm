@@ -1201,8 +1201,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026".
   hour when a page was slow or 20+ page requests were turned away busy (`permtracker-perf`, `REFUSED_PAGES`), and a
   report section's lead warning isn't printed twice.
 - **Google's extensionless font address no longer fails deploys** (`/l/font?kit=`, four failures Oct 5 to 24):
-  `patches/next@16.4.0.patch` back-ports Next 16.5's fix. **Carry it to the new version with any Next bump** (Dependabot
-  #63 moves Next to 16.4.1), or drop it at 16.5; `next-font-kit-url.ssr.test.ts` holds the case either way.
+  `patches/next@16.4.0.patch` back-ported Next 16.5's fix. *(Superseded the same afternoon: Next 16.4.3 carries the
+  fix and the patch is gone; `next-font-kit-url.ssr.test.ts` still holds the case.)*
 - **`pnpm check` runs every gate that walks the tree** (any change under `src/` or `convex/`, about 90 s): three pushes
   had gone red in CI on one.
 - **The morning report has "Security alerts and updates"**: any open code-scanning alert warns (44 had piled up unseen
@@ -1211,3 +1211,23 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026".
 - **The monthly restore test loads the LCA database's off-site copy too** (`LCA_RESTORE_OK`; nothing had proved it
   restores since the Oct 19 split). `permtracker-restore-test lca` runs that half alone.
 - **Local test runs don't count as visits**: PostHog doesn't start on localhost unless `NEXT_PUBLIC_POSTHOG_LOCAL=1`.
+
+## Oct 24 2026 (afternoon), in seven lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026 (afternoon)".
+
+- **Bulletin alerts were down from Fri Oct 23, 9:34 PM to Sat 12:13 PM EDT**: the reviews commit wrote its two routes over
+  the bulletin block in `convex/http.ts`. No bulletin email went out in that window and nobody tried to sign up.
+  `convex-routes-exist.test.ts` now fails when an emailed link, a page's button, a form or a rewrite names a missing route.
+- **The weekly digest may send 30 a day** (`NEWSLETTER_DAILY_CAP` on production, from 15).
+- **Next 16.4.3, Sentry 10.75, Storybook 10.6.2, React 19.3.1 and the rest of Dependabot's groups went in together**, and
+  `pnpm audit` went from 21 advisories to none. Versions and reasons: `v2/.planning/VERSION-DECISIONS.md`.
+- **The morning report runs `pnpm audit`** (production and full): a critical or high advisory in what the site ships
+  fails the security section.
+- **Run the suite on this Mac under nvm's Node 24.22.1** (`PATH="$HOME/.nvm/versions/node/v24.22.1/bin:$PATH"`):
+  jsdom 30 needs 24.15+, and `/usr/local/bin/node` is 22.22.1.
+- **happy-dom 21 matches attribute selectors with case**, which showed the timeline's "1st Sunday Ad" and "RFE Due" had
+  missed the Sep 29 sentence-case pass; they're sentence case now.
+- **No DACA section** (owner's call): the DACA lines on `/uscis-processing-times` say their pending counts include
+  first-time requests, which USCIS accepts but doesn't process.
+

@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | All 5 projects. Baseline 634 files / 9,026 tests (2026-10-08; 15.3 min on the old Mac while it swapped). GitHub runs it on every push and the deploy waits for it; run it locally for a broad change |
+| `pnpm test:run` | All 5 projects. Baseline 787 files / 10,530 tests (2026-10-24; 12 min on the old Mac under nvm's Node 24.22.1, which jsdom 30 needs). GitHub runs it on every push and the deploy waits for it; run it locally for a broad change |
 | `pnpm check` | **The pre-push gate (owner, Oct 8 2026, 3:09 PM EDT)**: typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`, about 2 min). CI runs the whole suite and the deploy waits for it, and the site goes live with the 2 AM night run (`-f when=now` for an urgent fix); deploy Convex only once that suite is green |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
@@ -3587,7 +3587,7 @@ pages and both PDFs across in one session without a tool result carrying them.
 
 **Deploy checklist for this batch:** `npx convex deploy -y` (three new tables,
 two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and
-`NEWSLETTER_DAILY_CAP=15` on prod Convex; add a Firewall bypass for `/badge/*`
+`NEWSLETTER_DAILY_CAP=15` (30 since Oct 24 2026) on prod Convex; add a Firewall bypass for `/badge/*`
 so GitHub's camo proxy is not challenged; then push and the GSC queue in
 `.planning/gsc-reindex-queue-2026-09-08.md` (deleted Oct 1 2026; in git history) plus the new pages.
 
@@ -10214,3 +10214,60 @@ the crawl capacity limit falls on 5xx and slow responses and rises when the site
 Console's Host status ("robots.txt fetch" and "Server connectivity": high fail rate) describes that week; read its
 "Last updated" day before reading it as current. `test_nginx_conf.py` checks the location and probes both a limit
 put back on it and the location removed.
+
+## Oct 24 2026 (afternoon): a route lost under another commit, and every update at once
+
+**A commit can delete a route and nothing fails.** `58db2f37` (Fri Oct 23, 9:34 PM EDT) added `/review/note` and
+`/review/prefill` to `convex/http.ts` and, in the same edit, replaced the whole visa-bulletin block: OPTIONS and POST
+`/bulletin-alert/subscribe`, GET and POST `/confirm` and `/unsubscribe`, and the two category sets. The form kept
+posting, the emails kept carrying links, and everything answered 404 until 12:13 PM Saturday, when the block came back
+unchanged from `58db2f37^` and Convex was deployed. Read from Convex and PostHog: no bulletin confirmation or alert went
+out in the window, and the form recorded no sign-up attempt (4 in the 30 days before). Checked live on both
+permtracker.app and the `.convex.site` origin, then end to end with the owner's address: sign-up, the confirmation
+email, confirm, a signed unsubscribe link; the test row was removed with `testData:removeOwnerBulletinTest`, which
+refuses an address holding any real bulletin watch, because one bulletin link confirms or stops every watch an address
+holds.
+
+**`src/app/__tests__/convex-routes-exist.test.ts`** reads the router's registrations (literal paths, constants such as
+`RATING_PATH`, and the `for (const path of [...])` loops) and checks four kinds of pointer against them: every
+`actionUrl("/...")` in `convex/` needs a GET, and an unsubscribe link a POST too; every `post:` button and `action="/..."`
+form on a Convex-rendered page needs a POST; every `convexSiteUrl("/...")` in `src/` needs a route, and an OPTIONS
+beside a POST; every Convex rewrite family in `next.config.ts` needs a route, and nginx's relay must carry every emailed
+link. Probed by removing the bulletin block again: three of its checks fail and name each path.
+
+**Every update in one batch** (versions and reasons: `.planning/VERSION-DECISIONS.md`, "October 24 2026"). Next 16.4.3,
+`@sentry/nextjs` ~10.75.2, Storybook 10.6.2, React 19.3.1, jsdom 30.1.3, happy-dom 21.0.4 and the rest of Dependabot's
+#64 and #62, with the overrides tightened. Three versions younger than the 7-day floor are excluded by exact version in
+`pnpm-workspace.yaml`, each with its removal date. `pnpm audit` went from 21 advisories (5 critical, 7 high) to none,
+with and without `--prod`. The Next font patch is gone (16.4.3 has the fix); the Storybook adapter patch carried over to
+10.6.2, which still lacks the field.
+
+**Two things the batch taught:**
+- **happy-dom 21 matches CSS attribute selectors with case, as the spec says; 20 didn't.** Two timeline tests asked for
+  `aria-label*="1st Sunday ad"` and `"RFE due"` and had passed against labels reading "1st Sunday Ad" and "RFE Due", the
+  ones the Sep 29 sentence-case pass missed (`src/lib/timeline/types.ts`, `milestones.ts`, the calendar filter). The
+  labels are sentence case now, and "Addl Method #N" reads "Additional method #N".
+- **This Mac's shell runs `/usr/local/bin/node` (22.22.1), not nvm's.** jsdom 30 needs 22.22.2+ or 24.15+, so run the
+  suite with `PATH="$HOME/.nvm/versions/node/v24.22.1/bin:$PATH"` in front (24.22.1 installed Oct 24 2026). CI runs 24.x.
+
+**ESLint had 8 errors on `main`, none from the batch** (the hooks plugin is 7.1.1 on both): the two conveyor figures
+bumped a running total inside a `.map` callback (a plain loop now), the notification list read and wrote a ref during
+render to keep the last page on screen (state set during render now, as its `tabSeen` already did; Convex's `useQuery`
+returns the same object until a new result arrives, so it can't loop), and one `let` that never changed. A test now
+holds the kept page, probed by dropping it. `pnpm exec eslint src convex`: 0 errors, 36 warnings.
+
+**The morning report runs `pnpm audit`** (`run_audit` in `scripts/daily_monitor.py`, production and full, output
+captured and never printed). A critical or high advisory in what the site ships fails the security section, a moderate or
+low one warns, one only the test and build tools reach is a line, and an entry in `ACCEPTED_ADVISORIES` is a line until
+its review date, then warns. An audit that couldn't run warns. `daily-monitor.yml` installs pnpm and Node for it; the
+audit reads the lockfile alone, so there's no install.
+
+**The DACA lines on `/uscis-processing-times`** read "(DACA)" (the I-821D line carries the anchor `#daca`), and each says
+its pending count includes first-time requests: USCIS accepts them but doesn't process them (its DACA page, "Last
+Reviewed/Updated: 01/24/2025", read Oct 24), and a request is rejected unless filed with its I-765. USCIS's workbook
+doesn't split first-time from renewal, so no share is printed. The page's questions, the site search (daca, deferred action,
+i-821d) and llms.txt point there. No DACA section: the site's subject is work-based immigration (owner's call, Oct 24).
+
+**The weekly digest may send 30 a day** (`NEWSLETTER_DAILY_CAP=30` on production, from 15; the code's default and the
+email ledger already counted 30).
+
