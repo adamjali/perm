@@ -67,6 +67,11 @@ ENTITY_BUILD_P50 = 1.5   # seconds
 ENTITY_BUILD_P90 = 5.0
 CACHED_P50 = 0.2         # a cached answer this slow means the copies are starved
 PRELOAD_SHARE = 0.40
+# Pre-loads are named only in an hour when someone was hurt: a page slower than
+# its line, or this many page requests turned away busy. A high share on its own
+# is the site doing what Next does with visible links (Oct 24 2026: 25 to 40%
+# every day, builds 266 ms, nobody shown busy in four days).
+REFUSED_PAGES = 20
 SLOW_STATEMENT_MS = 1000  # mean, over 5+ runs in the hour
 REGRESSION = 2.0          # twice the week's typical hour
 
@@ -209,9 +214,11 @@ def page_costs(lines: list[str], since: float) -> dict:
 
 
 def preload_share(lines: list[str], since: float) -> dict:
-    total = pre = 0
+    """Pre-loads' share of the hour, and the page requests (not pre-loads, not
+    verified crawlers) the app turned away with its busy 503."""
+    total = pre = refused = 0
     for line in lines:
-        parts = line.split(" ", 2)
+        parts = line.split(" ", 4)
         try:
             t = float(parts[0])
         except (ValueError, IndexError):
@@ -221,7 +228,10 @@ def preload_share(lines: list[str], since: float) -> dict:
         total += 1
         if line.rstrip("\n").endswith(" 1"):
             pre += 1
-    return {"requests": total, "preloads": pre, "share": round(pre / total, 3) if total else None}
+        elif len(parts) > 3 and parts[1] == "503" and parts[3] != "true":
+            refused += 1
+    return {"requests": total, "preloads": pre, "refusedPages": refused,
+            "share": round(pre / total, 3) if total else None}
 
 
 # ── 3: the database ───────────────────────────────────────────────────────
@@ -531,7 +541,10 @@ def judge(pages: dict | None, pre: dict | None, db: list[dict] | None, prof: dic
                 w.append(f"Employer, law firm and job page builds are {e['p50'] / usual:.1f} times their usual "
                          f"({secs(e['p50'])} against {secs(usual)} over the week).")
     if pre and pre.get("share") is not None and pre["requests"] >= 500 and pre["share"] > PRELOAD_SHARE:
-        w.append(f"Background pre-loads are {pre['share']:.0%} of requests.")
+        refused = pre.get("refusedPages") or 0
+        if w or refused >= REFUSED_PAGES:
+            hurt = f"{refused:,} page requests were turned away busy" if refused >= REFUSED_PAGES else "pages were slow"
+            w.append(f"Background pre-loads are {pre['share']:.0%} of requests in an hour when {hurt}.")
     for s in (db or []):
         if s["runs"] >= 5 and s["meanMs"] > SLOW_STATEMENT_MS:
             w.append(f"A database statement averages {s['meanMs'] / 1000:.1f} s over {s['runs']} runs: {s['sql'][:90]}")

@@ -22,6 +22,12 @@ import daily_monitor as dm  # noqa: E402
 FAILS: list[str] = []
 
 
+
+def says(sec: dict) -> list[str]:
+    """Everything a section says: its summary, then its lines (the lead warning
+    is the summary and isn't repeated under it)."""
+    return [sec["summary"], *sec["lines"]]
+
 def check(ok: bool, msg: str, detail: str = "") -> None:
     print(("PASS " if ok else "FAIL ") + msg + ("" if ok or not detail else f"\n    {detail[:600]}"))
     if not ok:
@@ -315,10 +321,10 @@ def main() -> int:
     check(v(doc(now={"dbBytes": 25_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "warn",
           "an older report past the summed ceiling still warns")
     unmerged = v(doc(now={**oct11, "dbSnapshotBytes": 25_000_000_000}), now_ms)
-    check(unmerged["status"] == "warn" and any("isn't merging" in w for w in unmerged.get("warns", unmerged["lines"])),
+    check(unmerged["status"] == "warn" and any("isn't merging" in w for w in says(unmerged)),
           "snapshots past 3x the data plus one log warn that sqld isn't merging", str(unmerged))
     stuck_log = v(doc(now={**oct11, "dbLogBytes": 6_000_000_000}), now_ms)
-    check(stuck_log["status"] == "warn" and any("isn't compacting" in w for w in stuck_log.get("warns", stuck_log["lines"])),
+    check(stuck_log["status"] == "warn" and any("isn't compacting" in w for w in says(stuck_log)),
           "a log past its cap warns that sqld isn't compacting", str(stuck_log))
     cap = int(re.search(r"--max-log-size (\d+)", (HERE / "oracle/systemd/permtracker-db.service").read_text()).group(1))
     check(dm.SQLD_LOG_CAP_BYTES == cap * 1_000_000, "the report's log cap is the server's --max-log-size",
@@ -353,7 +359,7 @@ def main() -> int:
     check(ts_retired == dm.RETIRED_METHODS and len(ts_retired) >= 2,
           "the report's retired methods are the site's", f"{ts_retired} vs {dm.RETIRED_METHODS}")
     stopped = v(doc(stoppedUnits=["pmlogger.service"]), now_ms)
-    check(stopped["status"] == "warn" and "pmlogger.service" in " ".join(stopped.get("warns", []) + stopped["lines"]),
+    check(stopped["status"] == "warn" and "pmlogger.service" in " ".join(says(stopped)),
           "a service stopped after an error (not marked failed) warns by name", str(stopped))
     check(v(doc(backup={"convexOk": None}), now_ms)["status"] == "warn", "no sealed Convex copy on record warns")
     check(v(doc(backup={"serverOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
@@ -374,7 +380,7 @@ def main() -> int:
     check(len(all_timers) >= 20 and "permtracker-prune.timer" in all_timers, "the repo's timers are found")
     check(v(doc(timers=all_timers), now_ms)["status"] == "ok", "every repo timer enabled reads ok")
     gone = v(doc(timers=[t for t in all_timers if t != "permtracker-backup-server.timer"]), now_ms)
-    check(gone["status"] == "fail" and any("permtracker-backup-server.timer" in f for f in gone.get("fails", gone["lines"])),
+    check(gone["status"] == "fail" and any("permtracker-backup-server.timer" in f for f in says(gone)),
           "a repo timer missing on the server fails and is named")
     check(v(doc(pageCache=None), now_ms)["status"] == "warn", "no page-cache result on record warns")
     check(v(doc(pageCache={"at": "2026-09-28T08:05:00Z"}), now_ms)["status"] == "warn",
@@ -412,17 +418,17 @@ def main() -> int:
     def ms(*a):
         return int(dt.datetime(*a, tzinfo=dt.timezone.utc).timestamp() * 1000)
     near = dm.server_verdict(doc(busySeen=b12), now_ms, [ms(2026, 9, 28, 6, 20)])
-    check(near["status"] == "warn" and any("8 of them within an hour of a deploy" in ln for ln in near["lines"]),
+    check(near["status"] == "warn" and any("8 of them within an hour of a deploy" in ln for ln in says(near)),
           "busy people mostly in a deploy's hour are put down to the deploy")
     check(any(ln == "By hour (Eastern): Mon 2 AM 8, Mon 5 AM 4" for ln in near["lines"]), "the hours are named, Eastern")
     far = dm.server_verdict(doc(busySeen=b12), now_ms, [ms(2026, 9, 27, 18, 0)])
-    check(any("the most around Mon 2 AM (none near a deploy): the server is too small" in ln for ln in far["lines"]),
+    check(any("the most around Mon 2 AM (none near a deploy): the server is too small" in ln for ln in says(far)),
           "busy people away from any deploy still say the server is too small, and when")
     blind = dm.server_verdict(doc(busySeen=b12), now_ms, None)
-    check(any("the most around Mon 2 AM: the server is too small" in ln for ln in blind["lines"]),
+    check(any("the most around Mon 2 AM: the server is too small" in ln for ln in says(blind)),
           "no deploy record says nothing about deploys")
     check(any(ln.startswith("12 people were shown \"busy\" in 24 h: the server is too small")
-              for ln in v(doc(busySeen=busy(12, [(28, 12)])), now_ms)["lines"]),
+              for ln in says(v(doc(busySeen=busy(12, [(28, 12)])), now_ms))),
           "a doc from before the hours keeps the plain sentence")
     steps = {1: [{"name": "Build", "conclusion": "success", "completed_at": "2026-10-19T06:05:00Z"},
                  {"name": dm.SHIP_STEP, "conclusion": "success", "completed_at": "2026-10-19T06:11:20Z"}],
@@ -600,6 +606,15 @@ def long_lines_end_at_a_sentence() -> None:
     cap = re.search(r"\.map\(\(l\) => String\(l\)\.slice\(0, (\d+)\)\)", ts)
     check(cap is not None and int(cap.group(1)) == dm.LINE_MAX,
           f"LINE_MAX matches the cap Convex puts on each line ({cap.group(1) if cap else None})")
+    scap = re.search(r"summary: String\(x\.summary \?\? \"\"\)\.slice\(0, (\d+)\)", ts)
+    check(scap is not None and int(scap.group(1)) == dm.SUMMARY_MAX,
+          f"SUMMARY_MAX matches the cap Convex puts on a summary ({scap.group(1) if scap else None})")
+    once = dm.section("perf", "Page speed", "warn", "Pages are slow.", ["Pages are slow.", "Last hour: fine."])
+    check(once["lines"] == ["Last hour: fine."], f"a section's lead warning isn't printed twice ({once['lines']})")
+    long_warn = "A warning that runs long. " * 20
+    kept = dm.section("perf", "Page speed", "warn", long_warn, [long_warn])
+    check(len(kept["summary"]) <= dm.SUMMARY_MAX and len(kept["lines"]) == 1,
+          "a lead warning too long for the summary keeps its line under it")
     short = "Scorecard, ours: typically 4 days off."
     check(dm.fit(short) == short, "a short line is left alone")
     # The shape that was cut on Oct 9 2026: a headline, then one sentence per point.

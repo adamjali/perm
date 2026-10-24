@@ -84,6 +84,10 @@ def test_tail() -> None:
         share = perf.preload_share(got, T0 - 10)
         check("pre-loads are the lines ending in the flag", share["preloads"] == 1800 and share["requests"] == 3601,
               str(share))
+        mixed = [f"{T0} 503 1 false \"/a\" \"ua\" -", f"{T0} 503 1 true \"/b\" \"bot\" -",
+                 f"{T0} 503 1 false \"/c\" \"ua\" 1", f"{T0} 200 1 false \"/d\" \"ua\" -"]
+        check("a turned-away page counts; a crawler's or a pre-load's doesn't",
+              perf.preload_share(mixed, T0 - 1)["refusedPages"] == 1, str(perf.preload_share(mixed, T0 - 1)))
         perf.TAIL_CHUNK = 4 << 20
 
 
@@ -178,8 +182,17 @@ def test_judge() -> None:
     mid = {"entityBuilds": {"n": 200, "p50": 0.9, "p90": 1.2}, "cached": {"n": 900, "p50": 0.02, "p90": 0.05}}
     w = perf.judge(mid, None, None, None, history)
     check("three times the week's usual is a regression under the fixed lines", len(w) == 1 and "3.0 times" in w[0], str(w))
-    w = perf.judge(None, {"share": 0.5, "requests": 9000}, None, None, [])
-    check("pre-loads over 40% are named", len(w) == 1, str(w))
+    w = perf.judge(None, {"share": 0.5, "requests": 9000, "refusedPages": 0}, None, None, [])
+    check("pre-loads over 40% alone, with nobody hurt, are not a warning", w == [], str(w))
+    w = perf.judge(None, {"share": 0.5, "requests": 9000, "refusedPages": 120}, None, None, [])
+    check("pre-loads over 40% in an hour people were turned away are named",
+          len(w) == 1 and "120 page requests" in w[0], str(w))
+    slow = {"entityBuilds": {"n": 200, "p50": 2.0, "p90": 3.0}, "cached": {"n": 900, "p50": 0.02, "p90": 0.05}}
+    w = perf.judge(slow, {"share": 0.5, "requests": 9000, "refusedPages": 0}, None, None, [])
+    check("pre-loads over 40% in a slow hour are named beside the slow pages",
+          len(w) == 2 and "pages were slow" in w[1], str(w))
+    w = perf.judge(None, {"share": 0.3, "requests": 9000, "refusedPages": 500}, None, None, [])
+    check("pre-loads under 40% aren't named, whatever else happened", w == [], str(w))
     w = perf.judge(None, None, [{"runs": 6, "meanMs": 1500, "sql": "SELECT slow"}], None, [])
     check("a statement averaging over a second is named", len(w) == 1 and "SELECT slow" in w[0], str(w))
     w = perf.judge(None, None, None, {"busyShare": 0.2, "ours": [], "inspectorLeftOpen": True}, [])

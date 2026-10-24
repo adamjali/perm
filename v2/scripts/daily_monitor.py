@@ -72,6 +72,7 @@ RANK = {"fail": 4, "warn": 3, "unknown": 2, "off": 1, "ok": 0}
 # longer line has to be shortened here, at a sentence. The scorecard's rival
 # readings ran past it on Oct 9 2026 and the email ended them mid-word.
 LINE_MAX = 400
+SUMMARY_MAX = 300
 MORE = " More on the admin page."
 
 # Answers a second try can cure: the far end was busy or briefly down.
@@ -100,8 +101,15 @@ def worst(statuses) -> str:
 
 
 def section(key: str, title: str, status: str, summary: str, lines=None) -> dict:
-    return {"key": key, "title": title, "status": status, "summary": summary,
-            "lines": [fit(str(l)) for l in (lines or [])]}
+    """A report section. A warning section leads with its first warning as the
+    summary; that warning isn't printed again under it unless the summary had to
+    be shortened (Convex keeps SUMMARY_MAX characters of it)."""
+    lines = [str(l) for l in (lines or [])]
+    short = fit(summary, SUMMARY_MAX)
+    if lines and lines[0] == summary and short == summary:
+        lines = lines[1:]
+    return {"key": key, "title": title, "status": status, "summary": short,
+            "lines": [fit(l) for l in lines]}
 
 
 def http_json(url: str, headers=None, data=None, timeout=45, waits=RETRY_WAITS):
