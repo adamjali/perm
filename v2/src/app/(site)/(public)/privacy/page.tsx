@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 23, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 24, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -180,6 +180,13 @@ export default function PrivacyPage() {
                 After a rating of 3 stars or fewer, an optional private note on
                 what we could do better. Only we read it; it&apos;s never shown
                 with the review, and it&apos;s deleted 90 days after you send it
+              </li>{" "}
+              <li>
+                The 1 to 5 rating you tap in a case&apos;s last alert email,
+                kept with your address and the case, the time of each tap, and
+                the browser line your browser sends with it. We keep that line
+                so a mail scanner opening the links isn&apos;t counted as your
+                rating. A note you add can be kept without your address
               </li>
             </ul>{" "}
 

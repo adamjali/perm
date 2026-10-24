@@ -15,6 +15,7 @@ import { ScorecardPanel } from "@/components/admin/ScorecardPanel";
 import { DevelopersPanel } from "@/components/admin/DevelopersPanel";
 import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { FirmClaimsPanel } from "@/components/admin/FirmClaimsPanel";
+import { AlertRatingsPanel } from "@/components/admin/AlertRatingsPanel";
 import { ReviewsPanel } from "@/components/admin/ReviewsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +35,7 @@ export default function AdminDashboardClient() {
   const delivery = useQuery(api.adminDelivery.getDelivery, skip ? "skip" : {});
   const firmClaims = useQuery(api.firmClaims.listForAdmin, skip ? "skip" : {});
   const reviews = useQuery(api.siteReviews.listForAdmin, skip ? "skip" : {});
+  const alertRatings = useQuery(api.alertRatings.forAdmin, skip ? "skip" : {});
 
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
@@ -230,7 +232,12 @@ export default function AdminDashboardClient() {
             id: "reviews",
             label: "Reviews",
             badge: reviews && reviews.waiting.length > 0 ? `${reviews.waiting.length} waiting` : null,
-            content: <ReviewsPanel data={reviews} />,
+            content: (
+              <div className="space-y-10">
+                <ReviewsPanel data={reviews} />
+                <AlertRatingsPanel data={alertRatings} />
+              </div>
+            ),
           },
           {
             id: "developers",

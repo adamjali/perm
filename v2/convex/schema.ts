@@ -1516,10 +1516,28 @@ export default defineSchema({
     caseNumber: v.optional(v.string()),
     /** They ticked "leave my email off this note"; never undone by a later tap. */
     anonymous: v.optional(v.boolean()),
-    /** 1 (not useful) to 5 (very useful). */
-    score: v.number(),
+    /**
+     * 1 (not useful) to 5 (very useful): the newest pick a person made. Absent while every open of the links
+     * looks like a mail scanner (a burst of different scores within a minute), which is no one's rating.
+     */
+    score: v.optional(v.number()),
     /** Their own words, plain text, at most NOTE_MAX characters. */
     note: v.optional(v.string()),
+    /**
+     * Every open of a rating link and every tap on the page, newest last, the newest CLICKS_KEPT kept: when, which
+     * score, where (the email's box or the page), the browser it came from, and whether it looked like a scanner.
+     */
+    clicks: v.optional(
+      v.array(
+        v.object({
+          score: v.number(),
+          at: v.number(),
+          via: v.union(v.literal("email"), v.literal("page")),
+          browser: v.optional(v.string()),
+          scanner: v.optional(v.boolean()),
+        }),
+      ),
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

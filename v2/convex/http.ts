@@ -17,7 +17,6 @@ import {
   type PrefsState,
 } from "./lib/mailPages";
 import { RATING_PATH, parseScore } from "./alertRatings";
-import { reviewUrlWithRating } from "../src/lib/constants/externalLinks";
 import { checkNote, checkReview, isHoneypot, isQuick, REVIEW_BODY_MAX } from "./lib/siteReview";
 import { openEmail } from "./lib/sealedEmail";
 import { reviewLinkFor, THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
@@ -623,9 +622,11 @@ http.route({
 });
 
 // Rating the alerts, from the boxes in a case's last alert (convex/alertRatings.ts).
-// GET shows the page with the email's pick marked and records nothing: mail
-// gateways open every link, and five boxes are five links. The POST is the
-// reader's own tap on the page.
+// Opening a box saves the pick at once and goes straight on (owner, Oct 24 2026):
+// a 3, 4 or 5 to the review form, a 1 or 2 to the page that asks what went wrong.
+// Mail gateways open every link, so each open is kept with its browser and time,
+// and opens that look like a scanner's are kept apart from the rating
+// (`recordClick`). The POST is a tap on the page: another pick, or a note.
 
 /** The token and case number from a rating link, checked, or null. */
 async function ratingTarget(url: URL): Promise<{ token: string; caseNumber: string } | null> {
@@ -648,13 +649,44 @@ function ratingAction(t: { token: string; caseNumber: string }): string {
 http.route({
   path: RATING_PATH,
   method: "GET",
-  handler: httpAction(async (_ctx, req) => {
+  handler: httpAction(async (ctx, req) => {
     const url = new URL(req.url);
     const target = await ratingTarget(url);
     if (!target) return badLinkPage("This rating link is incomplete or out of date.", "Nothing was recorded. The rating boxes are in the last email about the case.");
-    return ratingPage(ratingAction(target), parseScore(url.searchParams.get("r")));
+    const score = parseScore(url.searchParams.get("r"));
+    // A link without a score (typed or cut short): show the boxes to pick from.
+    if (score === null) return ratingPage(ratingAction(target), null);
+    const saved = await ctx.runMutation(internal.alertRatings.recordClick, {
+      token: target.token,
+      caseNumber: target.caseNumber,
+      score,
+      browser: (req.headers.get("user-agent") ?? "").slice(0, 600),
+    });
+    if (!saved) return badLinkPage("This rating link doesn't match a case this address was watching.", "Nothing was recorded. The rating boxes are in the last email about the case.");
+    return afterRating(target, saved, false);
   }),
 });
+
+/** Where a saved pick goes: a 3, 4 or 5 to the review form, its stars picked and the address sealed in; a 1 or 2, or a note, to the page that asks what went wrong. */
+async function afterRating(
+  target: { token: string; caseNumber: string },
+  saved: { email: string; score: number; caseNumber: string; noted: boolean; anonymous: boolean; status: string | null },
+  withNote: boolean,
+): Promise<Response> {
+  const reviewUrl = await reviewLinkFor(saved.email, saved.score);
+  if (saved.score >= REVIEW_PAGE_FROM && !withNote) {
+    return new Response(null, { status: 303, headers: { Location: reviewUrl, "Cache-Control": "no-store" } });
+  }
+  return ratingThanksPage({
+    score: saved.score,
+    caseNumber: saved.caseNumber,
+    action: ratingAction(target),
+    noted: saved.noted,
+    anonymous: saved.anonymous,
+    reviewUrl,
+    status: saved.status,
+  });
+}
 
 http.route({
   path: RATING_PATH,
@@ -680,27 +712,11 @@ http.route({
       score,
       note: typeof note === "string" ? note.slice(0, 4000) : undefined,
       anonymous: form.get("anon") === "1",
+      browser: (req.headers.get("user-agent") ?? "").slice(0, 600),
     });
     if (!saved) return badLinkPage("This rating link doesn't match a case this address was watching.", "Nothing was recorded. The rating boxes are in the last email about the case.");
-    // The review link carries their address sealed in, so the form fills it in, and the stars they just gave.
-    const secret = process.env.UNSUBSCRIBE_SECRET;
-    const raterEmail = secret ? await verifyUnsubscribeToken(target.token, secret, "alert-rating") : null;
-    const reviewUrl = raterEmail ? await reviewLinkFor(raterEmail, saved.score) : reviewUrlWithRating(saved.score);
-    // A 3, 4 or 5 tapped in the email goes straight to the review form, its stars picked and the address filled in
-    // (owner, Oct 23 2026). A 1 or 2 stays here, where the page asks what went wrong. A note sent from this page is
-    // a second post with the same score, and lands on the thanks page as before.
-    if (saved.score >= REVIEW_PAGE_FROM && note === null) {
-      return new Response(null, { status: 303, headers: { Location: reviewUrl, "Cache-Control": "no-store" } });
-    }
-    return ratingThanksPage({
-      score: saved.score,
-      caseNumber: saved.caseNumber,
-      action: ratingAction(target),
-      noted: saved.noted,
-      anonymous: saved.anonymous,
-      reviewUrl,
-      status: saved.status,
-    });
+    // A note sent from the page is a second post with the same score, and lands back on this page.
+    return afterRating(target, saved, note !== null);
   }),
 });
 
