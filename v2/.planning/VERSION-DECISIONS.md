@@ -176,3 +176,25 @@ ships.
 2026 and clears the 7-day `minimumReleaseAge` on Oct 19. Whether it carries the
 fix isn't confirmed: install it without the patch, open a story with a link (the
 "Tour/App pages" stories have many), and drop the patch only if they render.
+
+## `next` 16.4.0, patched for Google's extensionless font addresses (Oct 24 2026)
+
+Google Fonts sometimes answers the build with a font address that has no file
+extension (`fonts.gstatic.com/l/font?kit=...`). Next 16.4's `next/font/google`
+loader read the type off the address with `/\.(woff|woff2|eot|ttf|otf)$/.exec(url)[1]`,
+got null, and the build died with "An error occurred in `next/font`. TypeError:
+Cannot read properties of null (reading '1')". It failed four deploys: Oct 5,
+Oct 11 (twice, 40 minutes apart, so a quick retry wouldn't have helped) and
+Oct 24 2026. 16.4.2 still has the line; the 16.5 canary reads the type from the
+CSS's `format()` hint instead, with the comment "Google can return extensionless
+/l/font?kit=... URLs".
+
+`patches/next@16.4.0.patch` falls back to woff2 when the address has no
+extension (the Chrome user agent Next sends always gets woff2). It ships: the
+build runs it. `src/lib/__tests__/next-font-kit-url.ssr.test.ts` drives the real
+loader through Next's own `NEXT_FONT_GOOGLE_MOCKED_RESPONSES` hook with both
+address forms; with the patch removed it fails with the production error.
+
+**Remove it with the Next 16.5 upgrade**, and keep the test: it checks 16.5's
+own fix against the same case. A Next bump without updating the patch fails
+`pnpm install` loudly (the patch names `next@16.4.0`), so it can't be lost silently.
