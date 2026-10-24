@@ -422,8 +422,9 @@ export function DataRail() {
         // The header's measured height, not a constant: it shrinks on scroll.
         style={{ top: "calc(var(--site-header-h, 4.5rem) + 4px)" }}
         className={cn(
-          // `z-[41]`: above the panel, below the header's 50. At equal z-index
-          // the panel (rendered later) would paint its border over the handle.
+          // `z-[41]`: above the panel (40), below the header (45), so the
+          // header's phone menu covers it. At equal z-index the panel (rendered
+          // later) would paint its border over the handle.
           "fixed left-[env(safe-area-inset-left,0px)] z-[41] flex size-11 items-center justify-center",
           "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
@@ -467,7 +468,7 @@ export function DataRail() {
         aria-hidden={!panelOpen}
         inert={!panelOpen}
         className={cn(
-          // Below the header (`z-40`), starting at its bottom edge, so the
+          // Below the header (`z-[45]`), starting at its bottom edge, so the
           // header and its menu are always on top and nothing overlaps.
           //
           // Here the current tab runs the panel's full width: the panel

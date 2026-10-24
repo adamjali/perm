@@ -3608,10 +3608,15 @@ House layers, and nothing may hardcode a competing value:
 | layer | who |
 |---|---|
 | `z-[100]` | the Cmd+K search palette |
-| `z-[60]` | bottom-fixed chrome: ScrollToTop, SelectionBar, the open chat panel, ReadingProgress, and the mobile data drawer |
-| `z-50` | `AuthHeader` and its dropdowns, dialogs, the phone menu |
-| `z-40` | the chat bubble (since Sep 29 2026: dialogs and menus draw over it) |
-| `z-10` | `Footer` |
+| `z-[60]` | bottom-fixed chrome: ScrollToTop, SelectionBar, the open chat panel, ReadingProgress |
+| `z-50` | dialogs, popovers, dropdowns, tooltips (portalled, so they also paint after the header) |
+| `z-[45]` | `SiteHeader`, its menus and the phone menu (since Oct 24 2026; it was `z-40` from Oct 15) |
+| `z-[41]` | the data menu's phone handle |
+| `z-40` | the data menu's phone panel, and the chat bubble (since Sep 29 2026: dialogs and menus draw over it) |
+| `z-10` | `Footer` (since then: no z-index at all, in normal flow) |
+
+*(Updated Oct 24 2026. The footer row and the `AuthHeader` name were history: `footer-stacking.test.ts` holds the
+current order, header below dialogs and above the data handle and panel.)*
 
 `scroll-to-top-stacking.test.tsx` and `footer-stacking.test.ts` pin the
 relationship rather than the numbers. **`elementFromPoint` is the decisive
@@ -10267,6 +10272,11 @@ its pending count includes first-time requests: USCIS accepts them but doesn't p
 Reviewed/Updated: 01/24/2025", read Oct 24), and a request is rejected unless filed with its I-765. USCIS's workbook
 doesn't split first-time from renewal, so no share is printed. The page's questions, the site search (daca, deferred action,
 i-821d) and llms.txt point there. No DACA section: the site's subject is work-based immigration (owner's call, Oct 24).
+
+**The phone menu covers the data menu's handle again.** The handle sits at `z-[41]` on the assumption that the header
+is at 50, and the Oct 15 header had gone to `z-40`, so it drew over the open phone menu's first row (reported from an
+iPhone). The header is `z-[45]` now; `footer-stacking.test.ts` holds the handle and panel under it. The house layer
+table above was updated with it.
 
 **The weekly digest may send 30 a day** (`NEWSLETTER_DAILY_CAP=30` on production, from 15; the code's default and the
 email ledger already counted 30).

@@ -64,4 +64,17 @@ describe("header, footer and dialog stacking", () => {
   it("keeps a dialog above the header", () => {
     expect(zIndexIn(dialogClasses)!).toBeGreaterThan(zIndexIn(headerClasses)!);
   });
+
+  it("keeps the data menu's phone handle and panel under the header and its menu", () => {
+    // The handle sat at 41 over a header at 40 (Oct 15 to Oct 24 2026) and drew
+    // on top of the open phone menu's first row.
+    const rail = read("src/components/tools/DataRail.tsx");
+    const handle = rail.match(/"(fixed left-\[env\(safe-area-inset-left,0px\)\] z-[^"]*)"/)?.[1] ?? "";
+    const panel = rail.match(/"(fixed bottom-0 left-0 z-[^"]*)"/)?.[1] ?? "";
+    expect(zIndexIn(handle), "handle z-index").not.toBeNull();
+    expect(zIndexIn(panel), "panel z-index").not.toBeNull();
+    expect(zIndexIn(handle)!).toBeLessThan(zIndexIn(headerClasses)!);
+    expect(zIndexIn(panel)!).toBeLessThan(zIndexIn(headerClasses)!);
+    expect(zIndexIn(handle)!).toBeGreaterThan(zIndexIn(panel)!);
+  });
 });

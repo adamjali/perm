@@ -203,7 +203,7 @@ export default function SiteHeader() {
       ref={barRef}
       data-site-header=""
       style={{ height: "var(--site-header-h)" }}
-      className="fixed inset-x-0 top-0 z-40 border-b-2 border-black bg-[#141414] print:hidden"
+      className="fixed inset-x-0 top-0 z-[45] border-b-2 border-black bg-[#141414] print:hidden"
     >
       {/* Black in both themes, like the footer (owner, Oct 15 2026): the bar is
           dark-scoped, its dropdown panels below keep the page's theme. */}
