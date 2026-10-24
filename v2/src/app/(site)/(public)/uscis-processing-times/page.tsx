@@ -458,7 +458,7 @@ export default async function UscisProcessingTimesPage() {
                       <span>{cat}</span>{" "}
                       <span className="font-mono text-sm font-bold text-muted-foreground">{rowsIn.length} lines</span>
                     </summary>{" "}
-                    <ScrollBox label="Every form USCIS reports" className="border-t border-border">
+                    <ScrollBox label="Every form USCIS reports" className="@container border-t border-border">
                       <table className="min-w-[760px] w-full text-sm">
                         <thead>
                           <tr className="border-b border-border text-left">
@@ -485,22 +485,25 @@ export default async function UscisProcessingTimesPage() {
                                 </tr>
                                 {daca ? (
                                   <tr className="border-b border-border/50">
-                                    <td colSpan={6} className="px-4 pb-2 text-sm text-muted-foreground">
-                                      {daca.firstTime ? (
-                                        <>
-                                          Pending includes first-time DACA requests. USCIS still accepts them but
-                                          doesn&apos;t process them, as{" "}
-                                          <a href={USCIS_DACA_PAGE} target="_blank" rel="noopener noreferrer" className="link">
-                                            its DACA page
-                                          </a>{" "}
-                                          says (last updated January 24, 2025).
-                                        </>
-                                      ) : (
-                                        <>
-                                          A first-time DACA request is filed with this work permit, so its pending count
-                                          includes those requests too.
-                                        </>
-                                      )}{" "}
+                                    <td colSpan={6} className="p-0">
+                                      {/* As wide as the box shows, pinned left, so a phone reads it without scrolling the table. */}
+                                      <p className="sticky left-0 w-[100cqw] px-4 pb-2 text-sm text-muted-foreground">
+                                        {daca.firstTime ? (
+                                          <>
+                                            Pending includes first-time DACA requests. USCIS still accepts them but
+                                            doesn&apos;t process them, as{" "}
+                                            <a href={USCIS_DACA_PAGE} target="_blank" rel="noopener noreferrer" className="link">
+                                              its DACA page
+                                            </a>{" "}
+                                            says (last updated January 24, 2025).
+                                          </>
+                                        ) : (
+                                          <>
+                                            A first-time DACA request is filed with this work permit, so its pending count
+                                            includes those requests too.
+                                          </>
+                                        )}{" "}
+                                      </p>
                                     </td>
                                   </tr>
                                 ) : null}
