@@ -68,6 +68,53 @@ def security_section_says_what_is_open() -> None:
     src = (HERE / "daily_monitor.py").read_text()
     check('guarded("security"' in src, "the section is in the report")
 
+def audit_findings_are_sorted() -> None:
+    """pnpm audit's findings: a critical or high one in what the site ships fails, a moderate one warns, one in
+    the test and build tools alone is a line, an accepted one is a line until its date, and an audit that didn't
+    run warns. Fixtures in pnpm's own JSON shape, so no network is needed."""
+    now = dt.datetime(2026, 10, 24, 12, tzinfo=dt.timezone.utc)
+    def doc(*advisories: tuple[str, str, str]) -> str:
+        return json.dumps({"actions": [], "metadata": {}, "advisories": {
+            str(i): {"github_advisory_id": gid, "severity": sev, "module_name": mod} for i, (gid, sev, mod) in enumerate(advisories)}})
+    crit = ("GHSA-mchm-gjx6-7h55", "critical", "@sentry/nextjs")
+    mod = ("GHSA-aaaa-bbbb-cccc", "moderate", "dompurify")
+    dev = ("GHSA-f2ph-cmg5-wxc8", "critical", "storybook")
+    clean = {"prod": dm.audit_findings(doc()), "full": dm.audit_findings(doc())}
+    sec = dm.security_verdict([], [], [], now, clean)
+    check(sec["status"] == "ok" and sec["summary"].endswith("pnpm audit finds nothing"), f"a clean audit reads ok ({sec['summary']})")
+    shipped = {"prod": dm.audit_findings(doc(crit)), "full": dm.audit_findings(doc(crit, dev))}
+    sec = dm.security_verdict([], [], [], now, shipped)
+    check(sec["status"] == "fail" and "@sentry/nextjs critical (GHSA-mchm-gjx6-7h55)" in sec["summary"],
+          f"a critical advisory in what the site ships fails and is named ({sec['summary']})")
+    check(any("test and build tools only: storybook critical" in ln for ln in sec["lines"]),
+          "an advisory only the tools reach is its own line")
+    tools = {"prod": dm.audit_findings(doc()), "full": dm.audit_findings(doc(dev))}
+    sec = dm.security_verdict([], [], [], now, tools)
+    check(sec["status"] == "ok" and "nothing in what the site ships" in sec["summary"],
+          f"tools alone don't warn, and the summary says so ({sec['summary']})")
+    moderate = {"prod": dm.audit_findings(doc(mod)), "full": dm.audit_findings(doc(mod))}
+    check(dm.security_verdict([], [], [], now, moderate)["status"] == "warn", "a moderate advisory in what ships warns")
+    dm.ACCEPTED_ADVISORIES["GHSA-mchm-gjx6-7h55"] = ("not reachable here", "2026-11-01")
+    try:
+        sec = dm.security_verdict([], [], [], now, shipped)
+        check(sec["status"] == "ok" and any("accepted until 2026-11-01" in ln for ln in sec["lines"]),
+              f"an accepted advisory is a line, never a failure ({sec['status']})")
+        dm.ACCEPTED_ADVISORIES["GHSA-mchm-gjx6-7h55"] = ("not reachable here", "2026-10-01")
+        sec = dm.security_verdict([], [], [], now, shipped)
+        check(sec["status"] == "warn" and "which has passed" in sec["summary"], "an acceptance past its date warns")
+    finally:
+        dm.ACCEPTED_ADVISORIES.clear()
+    for broken, why in (("not json", "unreadable output"), (json.dumps({"error": {"code": "ERR_PNPM_AUDIT_BAD_RESPONSE"}}),
+                                                          "ERR_PNPM_AUDIT_BAD_RESPONSE")):
+        sec = dm.security_verdict([], [], [], now, {"prod": dm.audit_findings(broken), "full": dm.audit_findings(doc())})
+        check(sec["status"] == "warn" and f"pnpm audit couldn't run ({why})" in sec["summary"],
+              f"an audit that couldn't run warns, never reads as clean ({why})")
+    yml = (HERE.parent.parent / ".github" / "workflows" / "daily-monitor.yml").read_text()
+    check("pnpm/action-setup@" in yml and "actions/setup-node@" in yml, "the workflow gives the audit pnpm and Node")
+    src = (HERE / "daily_monitor.py").read_text()
+    check('"full": run_audit(prod=False)' in src and '"prod": run_audit(prod=True)' in src,
+          "the report runs both audits")
+
 def main() -> int:
     # The ranking is shared with convex/lib/dailyReportCompose.ts.
     ts = (HERE.parent / "convex" / "lib" / "dailyReportCompose.ts").read_text()
@@ -552,6 +599,7 @@ def main() -> int:
     data_section_reads_the_scorecard_alarms()
     long_lines_end_at_a_sentence()
     security_section_says_what_is_open()
+    audit_findings_are_sorted()
     busy_replies_are_tried_again()
 
     # The API and the assistants: keyed calls by account, keyless ones by bucket.

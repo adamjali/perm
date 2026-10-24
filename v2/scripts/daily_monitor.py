@@ -295,6 +295,82 @@ def github_section(since: dt.datetime) -> dict:
 
 SEVERE = {"critical", "high", "error"}
 
+# `pnpm audit` reads the lockfile and finds what Dependabot's alert list can't raise: a pinned or transitive
+# version. On Oct 24 2026 it listed 21 advisories (5 critical, 7 high) while Dependabot showed none open.
+AUDIT_SEVERE = {"critical", "high"}
+# An advisory left in place on purpose, by GHSA id: (why, look again by YYYY-MM-DD). Empty is the aim; an entry
+# past its date warns until someone looks.
+ACCEPTED_ADVISORIES: dict[str, tuple[str, str]] = {}
+
+
+def audit_findings(raw: str) -> dict[str, dict] | str:
+    """`pnpm audit --json`'s advisories by GHSA id, or why its output couldn't be read."""
+    try:
+        doc = json.loads(raw)
+    except ValueError:
+        return "unreadable output"
+    if not isinstance(doc, dict) or not isinstance(doc.get("advisories"), dict):
+        err = doc.get("error") if isinstance(doc, dict) else None
+        return str(err.get("code") if isinstance(err, dict) and err.get("code") else "unexpected output")
+    found: dict[str, dict] = {}
+    for a in doc["advisories"].values():
+        gid = str(a.get("github_advisory_id") or a.get("id") or "?")
+        found[gid] = {"severity": str(a.get("severity") or "unknown").lower(), "module": str(a.get("module_name") or "?")}
+    return found
+
+
+def run_audit(prod: bool) -> dict[str, dict] | str:
+    """One `pnpm audit` from v2/. Its output is captured and never printed: the Actions log is public."""
+    try:
+        done = subprocess.run(["pnpm", "audit", "--json", *(["--prod"] if prod else [])], cwd=HERE.parent,
+                              capture_output=True, text=True, timeout=180)
+    except FileNotFoundError:
+        return "pnpm isn't installed"
+    except subprocess.TimeoutExpired:
+        return "timed out"
+    # It exits non-zero whenever it finds anything, so the output decides, never the exit code.
+    return audit_findings(done.stdout)
+
+
+def audit_lines(audit: dict, today: str, fails: list[str], warns: list[str], lines: list[str]) -> str:
+    """Sort pnpm audit's findings: a critical or high one in what the site ships fails, a moderate or low one
+    there warns, an accepted one is a line until its date passes, and what reaches only the test and build tools
+    is a line. Returns how the summary should end when nothing failed or warned."""
+    prod, full = audit.get("prod"), audit.get("full")
+    unread = next((x for x in (prod, full) if isinstance(x, str) or x is None), False)
+    if unread is not False:
+        warns.append(f"pnpm audit couldn't run ({unread or 'not run'}).")
+        return ""
+    severe: list[str] = []
+    other: list[str] = []
+    for gid, a in sorted(prod.items()):
+        name = f"{a['module']} {a['severity']} ({gid})"
+        accepted = ACCEPTED_ADVISORIES.get(gid)
+        if accepted:
+            why, until = accepted
+            if until < today:
+                warns.append(f"pnpm audit: {name} was accepted until {until}, which has passed: look at it again.")
+            else:
+                lines.append(f"pnpm audit: {name} accepted until {until}: {why}")
+        elif a["severity"] in AUDIT_SEVERE:
+            severe.append(name)
+        else:
+            other.append(name)
+    def plural(n: int) -> str:
+        return f"{n} advisor{'y' if n == 1 else 'ies'}"
+    if severe:
+        fails.append(f"pnpm audit: {plural(len(severe))} rated critical or high in what the site ships: {', '.join(severe)}.")
+    if other:
+        warns.append(f"pnpm audit: {plural(len(other))} rated moderate or low in what the site ships: {', '.join(other)}.")
+    tools = sorted(f"{a['module']} {a['severity']} ({gid})" for gid, a in full.items() if gid not in prod)
+    if tools:
+        lines.append(f"pnpm audit: {plural(len(tools))} in the test and build tools only: {', '.join(tools)}.")
+    if not prod and not full:
+        return ", and pnpm audit finds nothing"
+    if not prod:
+        return ", and pnpm audit finds nothing in what the site ships"
+    return ", and pnpm audit finds only accepted advisories in what the site ships"
+
 
 def alert_severity(a: dict) -> str:
     """A code-scanning alert's security severity, else the rule's own level."""
@@ -302,13 +378,14 @@ def alert_severity(a: dict) -> str:
     return str(rule.get("security_severity_level") or rule.get("severity") or "unknown").lower()
 
 
-def security_verdict(scanning, dependabot, prs, now: dt.datetime) -> dict:
+def security_verdict(scanning, dependabot, prs, now: dt.datetime, audit: dict | None = None) -> dict:
     """Open code-scanning alerts, open Dependabot alerts and Dependabot's update
     pull requests. Every code-scanning alert is fixed or dismissed with a reason,
     so an open one hasn't been looked at: 44 had piled up unseen over two weeks
     before this section existed (Oct 24 2026). Each argument is a list, or a
     string saying why it couldn't be read; an unread list is a warning, never
-    a silent zero."""
+    a silent zero. `audit` is {"prod": ..., "full": ...} from run_audit, or
+    None where it wasn't run."""
     title = "Security alerts and updates"
     fails: list[str] = []
     warns: list[str] = []
@@ -346,11 +423,12 @@ def security_verdict(scanning, dependabot, prs, now: dt.datetime) -> dict:
         lines.append(f"{len(prs)} Dependabot update pull request{'s' if len(prs) != 1 else ''} waiting for a "
                      f"decision, the oldest {days} day{'s' if days != 1 else ''}: "
                      + "; ".join(f"#{pr.get('number')} {pr.get('title', '')[:70]}" for pr in prs[:4]))
+    audit_tail = audit_lines(audit, now.date().isoformat(), fails, warns, lines) if audit is not None else ""
     status = "fail" if fails else "warn" if warns else "ok"
     if fails or warns:
         summary = (fails + warns)[0]
     else:
-        summary = "no open code-scanning or Dependabot alerts"
+        summary = "no open code-scanning or Dependabot alerts" + audit_tail
         if isinstance(prs, list) and prs:
             summary += f", {len(prs)} update pull request{'s' if len(prs) != 1 else ''} waiting"
     return section("security", title, status, summary, fails + warns + lines)
@@ -386,7 +464,8 @@ def security_section(now: dt.datetime) -> dict:
     pulls = read(f"{base}/pulls?state=open")
     prs = pulls if isinstance(pulls, str) else [p for p in pulls
                                                 if (p.get("user") or {}).get("login") == "dependabot[bot]"]
-    return security_verdict(scanning, dependabot, prs, now)
+    audit = {"prod": run_audit(prod=True), "full": run_audit(prod=False)}
+    return security_verdict(scanning, dependabot, prs, now, audit)
 
 
 # ── how long things take ──────────────────────────────────────────────────
