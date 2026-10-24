@@ -308,7 +308,7 @@ export default function SiteHeader() {
       {menu === "mobile" ? (
         <div
           id="mobile-menu"
-          className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b-2 border-black bg-popover px-4 pb-8 shadow-hard md:left-auto md:right-4 md:w-[26rem] md:border-x-2 lg:hidden"
+          className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b-2 border-black bg-popover px-4 pb-8 shadow-hard md:left-auto md:right-[calc(1rem_+_env(safe-area-inset-right,0px))] md:w-[26rem] md:border-x-2 lg:hidden"
         >
           <nav aria-label="Menu" className="divide-y divide-border">
             {[HEADER_PAGES.caseStatus, HEADER_PAGES.processingTimes].map((p) => (

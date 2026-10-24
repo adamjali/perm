@@ -62,7 +62,7 @@ export function ScrollToTop() {
           onClick={() =>
             window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" })
           }
-          className="fixed bottom-6 right-6 z-[60] flex h-11 w-11 cursor-pointer items-center justify-center border-2 border-border bg-background shadow-hard transition-[transform,box-shadow] duration-150 motion-safe:hover:-translate-x-0.5 motion-safe:hover:-translate-y-0.5 hover:shadow-hard-lg motion-safe:active:translate-x-0.5 motion-safe:active:translate-y-0.5 active:shadow-none"
+          className="fixed bottom-[calc(1.5rem_+_env(safe-area-inset-bottom,0px))] right-[calc(1.5rem_+_env(safe-area-inset-right,0px))] z-[60] flex h-11 w-11 cursor-pointer items-center justify-center border-2 border-border bg-background shadow-hard transition-[transform,box-shadow] duration-150 motion-safe:hover:-translate-x-0.5 motion-safe:hover:-translate-y-0.5 hover:shadow-hard-lg motion-safe:active:translate-x-0.5 motion-safe:active:translate-y-0.5 active:shadow-none"
           aria-label="Back to top"
         >
           <svg

@@ -54,7 +54,7 @@ export function FormHelpPanel() {
         className={cn(
           "hidden md:block",
           "fixed right-0 top-16 z-30 h-[calc(100vh-4rem)] w-80 sm:w-96",
-          "border-l-2 border-border bg-background shadow-hard-lg",
+          "border-l-2 border-border bg-background pr-[env(safe-area-inset-right,0px)] shadow-hard-lg",
           "transition-transform duration-200 ease-out",
           "overflow-y-auto overscroll-contain",
           isOpen ? "translate-x-0" : "translate-x-full",

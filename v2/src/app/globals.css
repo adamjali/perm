@@ -2530,3 +2530,29 @@ a:focus-visible .u-title,
 @media (prefers-reduced-motion: no-preference) {
   .review-stars-nudge { animation: review-stars-nudge 480ms ease-out 1; }
 }
+
+/*
+ * The device's own insets (Oct 24 2026). With viewport-fit=cover (src/app/layout.tsx) the page runs under a
+ * phone's notch, punch hole, rounded corners or home bar, so the header, footer and coloured bands fill the screen
+ * edge to edge. Each wide content column takes a transparent border exactly as wide as the inset the device reports
+ * on that side, so its words and buttons stay clear. A device that reports no inset (most of them, and every phone
+ * held upright) gets a zero-width border, so nothing moves; borders sit inside the column's width (border-box), so
+ * the column never grows. Columns that draw a border of their own are left out, so it isn't overwritten. Controls
+ * pinned to an edge add the inset themselves (chat button, back to top, the data menu, side panels, bottom bars).
+ */
+:is(
+  .mx-auto.container,
+  .mx-auto.max-w-2xl,
+  .mx-auto.max-w-3xl,
+  .mx-auto.max-w-4xl,
+  .mx-auto.max-w-5xl,
+  .mx-auto.max-w-6xl,
+  .mx-auto.max-w-7xl,
+  .mx-auto.max-w-\[1200px\],
+  .mx-auto.max-w-\[1300px\],
+  .mx-auto.max-w-\[1400px\],
+  .mx-auto.max-w-\[1440px\]
+):not([class*="border"]) {
+  border-left: env(safe-area-inset-left, 0px) solid transparent;
+  border-right: env(safe-area-inset-right, 0px) solid transparent;
+}

@@ -780,7 +780,7 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
     // late second arrival of the page's main controls.
     // One row at every width, about 72px tall: on a phone Delete is its icon
     // and "Unsaved changes" its mark, both still named for screen readers.
-    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t-2 border-[var(--object-border)] bg-background px-4 py-3 border-2 shadow-hard-sm sm:shadow-hard">
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t-2 border-[var(--object-border)] bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] border-2 shadow-hard-sm sm:shadow-hard">
       <div className="mx-auto flex max-w-5xl items-center gap-2 md:gap-4">
         {mode === "edit" && caseId && (
           <Button

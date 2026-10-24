@@ -271,7 +271,7 @@ export function ChatPanel({
         // Mobile: full screen
         'inset-0 md:inset-auto',
         // Desktop: positioned bottom-right
-        'md:bottom-20 md:right-4',
+        'md:bottom-[calc(5rem_+_env(safe-area-inset-bottom,0px))] md:right-[calc(1rem_+_env(safe-area-inset-right,0px))]',
         'md:w-[380px] md:h-[560px] md:max-h-[80vh]',
         'flex flex-col',
         'bg-background border-2 border-black md:shadow-hard-lg',

@@ -102,7 +102,7 @@ export function ChatHistory({
           className={cn(
             'ph-no-capture',
             'fixed right-0 top-0 bottom-0 z-[61]',
-            'w-80 max-w-[85vw]',
+            'w-80 max-w-[85vw] pr-[env(safe-area-inset-right,0px)]',
             'bg-background border-l-2 border-border shadow-hard-lg',
             'flex flex-col focus:outline-none',
             'data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right motion-reduce:animate-none'

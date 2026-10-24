@@ -36,6 +36,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // The page may run under a phone's notch, punch hole or rounded corners (held sideways, mostly), so the
+  // header, footer and bands fill the screen; globals.css ("The device's own insets") keeps text clear of them.
+  viewportFit: "cover",
   themeColor: "#22c55e", // green-500 matching logo
 };
 

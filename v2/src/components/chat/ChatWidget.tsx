@@ -102,7 +102,7 @@ export function ChatWidget({
             // Anchored to the corner, lifted over a bottom bar when one shows
             // (--bottom-bar-h, published by usePublishBottomBar). z-40 keeps
             // dialogs, menus and the phone nav (z-50) drawn over it.
-            className="fixed right-4 bottom-[calc(var(--bottom-bar-h,0px)+1rem)] z-40 transition-[bottom] duration-150 motion-reduce:transition-none md:right-6 md:bottom-[calc(var(--bottom-bar-h,0px)+1.5rem)]"
+            className="fixed right-[calc(1rem_+_env(safe-area-inset-right,0px))] bottom-[calc(var(--bottom-bar-h,0px)_+_1rem_+_env(safe-area-inset-bottom,0px))] z-40 transition-[bottom] duration-150 motion-reduce:transition-none md:right-[calc(1.5rem_+_env(safe-area-inset-right,0px))] md:bottom-[calc(var(--bottom-bar-h,0px)_+_1.5rem_+_env(safe-area-inset-bottom,0px))]"
             data-tour="chat-bubble"
           >
             <Button

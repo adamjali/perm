@@ -424,7 +424,7 @@ export function DataRail() {
         className={cn(
           // `z-[41]`: above the panel, below the header's 50. At equal z-index
           // the panel (rendered later) would paint its border over the handle.
-          "fixed left-0 z-[41] flex size-11 items-center justify-center",
+          "fixed left-[env(safe-area-inset-left,0px)] z-[41] flex size-11 items-center justify-center",
           "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
@@ -474,7 +474,7 @@ export function DataRail() {
           // scrolls, and a scrolling box can't let a tab protrude (one axis
           // `auto` makes the other `auto`), so its negative margin is zeroed.
           // The protrusion stays a desktop move.
-          "fixed bottom-0 left-0 z-40 flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-sage pb-4 pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
+          "fixed bottom-0 left-0 z-40 flex w-[calc(17rem_+_env(safe-area-inset-left,0px))] flex-col overflow-y-auto border-r-2 border-border bg-sage pb-[calc(1rem_+_env(safe-area-inset-bottom,0px))] pl-[env(safe-area-inset-left,0px)] pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "lg:hidden",
           panelOpen ? "translate-x-0" : "-translate-x-full",

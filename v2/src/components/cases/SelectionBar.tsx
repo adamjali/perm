@@ -81,7 +81,7 @@ export function SelectionBar({
     <div
       ref={barRef}
       data-testid="selection-bar"
-      className="fixed bottom-0 left-0 right-0 z-[60] border-t-2 border-black bg-background shadow-hard-lg"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-t-2 border-black bg-background pb-[env(safe-area-inset-bottom,0px)] shadow-hard-lg"
     >
       <div className="container mx-auto px-6 py-4">
         {/* Desktop Layout */}
