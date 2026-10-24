@@ -24,20 +24,31 @@ export interface WorkerMessage {
   replyTo?: string;
 }
 
-/** A readable plain-text copy of an HTML body, for mail clients that show text. */
+/** Apply a replacement until the text stops changing, so a tag split by another ("<scr<b>ipt>") can't survive one pass. */
+function untilStable(text: string, re: RegExp, by: string): string {
+  let prev: string;
+  let out = text;
+  do {
+    prev = out;
+    out = out.replace(re, by);
+  } while (out !== prev);
+  return out;
+}
+
+const ENTITIES: Record<string, string> = { nbsp: " ", lt: "<", gt: ">", quot: '"', "#39": "'", "#x27": "'", amp: "&" };
+
+/**
+ * A readable plain-text copy of an HTML body, for mail clients that show text.
+ * Its output is only ever a text/plain part, never HTML. Entities are decoded in
+ * one pass, so "&amp;lt;" reads "&lt;" as it should (decoding &amp; first made it "<").
+ */
 export function textFromHtml(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|tr|h[1-6]|li)>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&#x27;/g, "'")
+  let out = untilStable(html, /<(style|script)\b[\s\S]*?<\/\1\s*>/gi, "");
+  out = out.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|tr|h[1-6]|li)\s*>/gi, "\n");
+  out = untilStable(out, /<[^<>]*>/g, "");
+  return out
+    .replace(/[<>]/g, "")
+    .replace(/&(nbsp|lt|gt|quot|#39|#x27|amp);/g, (_, name: string) => ENTITIES[name] ?? "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();

@@ -74,6 +74,15 @@ describe("pieces", () => {
   it("textFromHtml keeps the words and drops the markup", () => {
     expect(textFromHtml("<style>p{}</style><p>One &amp; two</p><br/><div>Three</div>")).toBe("One & two\n\nThree");
   });
+
+  it("textFromHtml decodes each entity once, so an escaped entity stays as written", () => {
+    expect(textFromHtml("<p>Write &amp;lt;b&amp;gt; for bold</p>")).toBe("Write &lt;b&gt; for bold");
+  });
+
+  it("textFromHtml drops a script whose closing tag has a space, and a tag split by another", () => {
+    expect(textFromHtml("<p>Hi</p><script>alert(1)</script ><p>there</p>")).toBe("Hi\nthere");
+    expect(textFromHtml("<scr<b>ipt>x")).toBe("x");
+  });
 });
 
 describe("any email to one of the owner's inboxes (Oct 12 2026)", () => {
