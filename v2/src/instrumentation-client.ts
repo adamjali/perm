@@ -33,6 +33,7 @@ import {
 import { scrubClickEvent } from "@/lib/analyticsRedact";
 import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 import { guardStorage } from "@/lib/storageGuard";
+import { isLocalDevHost } from "@/lib/localHost";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -278,7 +279,14 @@ function startPostHog(key: string, country: string | null): void {
   }
 }
 
-if (posthogKey) {
+// Local test runs (the dev server, a local production build) don't count as
+// visits: they had been sending about 180 pageviews a week to the live project.
+const onLocalHost =
+  typeof window !== "undefined" &&
+  isLocalDevHost(window.location.hostname) &&
+  process.env.NEXT_PUBLIC_POSTHOG_LOCAL !== "1";
+
+if (posthogKey && !onLocalHost) {
   // Calls the app makes before PostHog is up are held, then replayed.
   holdUntilStarted();
   // Held with the rest until PostHog is up, then sent: how often a browser
