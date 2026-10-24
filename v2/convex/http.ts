@@ -637,6 +637,9 @@ async function ratingTarget(url: URL): Promise<{ token: string; caseNumber: stri
   return { token, caseNumber: parsed.caseNumber };
 }
 
+/** From this many stars, a rating tapped in the email goes on to the review form; below it, to the feedback page. */
+const REVIEW_PAGE_FROM = 3;
+
 /** The form's own path; every part is URL-encoded and the whole is escaped for the attribute. */
 function ratingAction(t: { token: string; caseNumber: string }): string {
   return escapeHtml(`${RATING_PATH}?token=${encodeURIComponent(t.token)}&c=${encodeURIComponent(t.caseNumber)}`);
@@ -683,6 +686,12 @@ http.route({
     const secret = process.env.UNSUBSCRIBE_SECRET;
     const raterEmail = secret ? await verifyUnsubscribeToken(target.token, secret, "alert-rating") : null;
     const reviewUrl = raterEmail ? await reviewLinkFor(raterEmail, saved.score) : reviewUrlWithRating(saved.score);
+    // A 3, 4 or 5 tapped in the email goes straight to the review form, its stars picked and the address filled in
+    // (owner, Oct 23 2026). A 1 or 2 stays here, where the page asks what went wrong. A note sent from this page is
+    // a second post with the same score, and lands on the thanks page as before.
+    if (saved.score >= REVIEW_PAGE_FROM && note === null) {
+      return new Response(null, { status: 303, headers: { Location: reviewUrl, "Cache-Control": "no-store" } });
+    }
     return ratingThanksPage({
       score: saved.score,
       caseNumber: saved.caseNumber,

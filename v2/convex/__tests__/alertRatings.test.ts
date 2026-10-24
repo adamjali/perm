@@ -121,31 +121,42 @@ describe("the page", () => {
     expect(await ratings(t)).toHaveLength(0);
   });
 
+  const post = (t: ReturnType<typeof createTestContext>, fields: Record<string, string>) =>
+    linkPath().then((path) =>
+      t.fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(fields).toString(),
+        redirect: "manual",
+      }),
+    );
   const tap = async (t: ReturnType<typeof createTestContext>, fields: Record<string, string>) => {
-    const res = await t.fetch(await linkPath(), {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(fields).toString(),
-    });
+    const res = await post(t, fields);
     expect(res.status).toBe(200);
     return res.text();
   };
 
-  it("thanks a 4 or a 5 with gladness and a review link, then asks for a note", async () => {
+  it("sends a 3, 4 or 5 straight to the review form, its stars picked and the address sealed in", async () => {
+    for (const score of [3, 4, 5]) {
+      const t = createTestContext();
+      await watching(t);
+      const res = await post(t, { r: String(score) });
+      expect(res.status).toBe(303);
+      const to = res.headers.get("Location") ?? "";
+      expect(to).toMatch(new RegExp(`^https://permtracker\\.app/reviews\\?rating=${score}&t=[A-Za-z0-9_%-]+#write$`));
+      // The address is sealed: neither plain nor base64 is readable in the link.
+      expect(to).not.toContain("waiting");
+      expect(to).not.toContain(btoa(EMAIL).replace(/=+$/, "").slice(0, 12));
+      expect((await ratings(t))[0]).toMatchObject({ score });
+    }
+  });
+
+  it("still takes a note sent with a 3, 4 or 5 and thanks for it", async () => {
     const t = createTestContext();
     await watching(t);
-    const html = await tap(t, { r: "5" });
+    const html = await tap(t, { r: "5", note: "Faster alerts please" });
     expect(html).toMatch(/Thanks, glad they helped/);
-    expect(html).toMatch(/You rated these alerts 5 of 5/);
-    // The site's own review form, the stars they just gave already picked, the address sealed into the link.
-    expect(html).toMatch(/href="https:\/\/permtracker\.app\/reviews\?rating=5&amp;t=[A-Za-z0-9_%-]+#write"/);
-    // The review link carries the address sealed: neither plain nor base64 is readable in it.
-    const reviewHref = /href="(https:\/\/permtracker\.app\/reviews[^"]*)"/.exec(html)?.[1] ?? "";
-    expect(reviewHref).not.toContain("waiting");
-    expect(reviewHref).not.toContain(btoa(EMAIL).replace(/=+$/, "").slice(0, 12));
-    expect(html).toMatch(/Anything we could do better\?/);
-    expect(html).toMatch(/name="anon" value="1"/);
-    expect((await ratings(t))[0]).toMatchObject({ score: 5 });
+    expect((await ratings(t))[0]).toMatchObject({ score: 5, note: "Faster alerts please" });
   });
 
   it("says sorry to a 1 or a 2, asks what went wrong, and still offers the review link", async () => {
@@ -161,23 +172,14 @@ describe("the page", () => {
   it("sends a certified case onward to the green card, and a denied one to its options", async () => {
     const certified = createTestContext();
     await watching(certified);
-    expect(await tap(certified, { r: "5" })).toContain("/guides/waiting-on-your-green-card");
+    expect(await tap(certified, { r: "2" })).toContain("/guides/waiting-on-your-green-card");
 
     const denied = createTestContext();
     await watching(denied, CASE, "DENIED");
-    const html = await tap(denied, { r: "4" });
+    const html = await tap(denied, { r: "1" });
     expect(html).toContain("/guides/perm-denied-what-happens-next");
     expect(html).not.toContain("/guides/waiting-on-your-green-card");
     expect(html).not.toContain("/tools/green-card-line");
-  });
-
-  it("asks a 3 what would have made it a 5, and offers the review link too", async () => {
-    const t = createTestContext();
-    await watching(t);
-    const html = await tap(t, { r: "3" });
-    expect(html).toMatch(/What would have made it a 5\?/);
-    // Inviting only happy raters to review is deceptive (16 CFR 255.2, Example 11).
-    expect(html).toContain("permtracker.app/reviews?rating=");
   });
 
   it("takes the note from the thanks page and stops asking for one", async () => {
