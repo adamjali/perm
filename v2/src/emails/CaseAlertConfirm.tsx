@@ -45,11 +45,8 @@ export interface CaseAlertConfirmProps {
   /** The employer on the case, when the mirror carries one. */
   employerName?: string | null;
   /**
-   * When THIS case was last checked, formatted, or null when unknown.
-   *
-   * The upstream tracker's check time, not ours. See the note in
-   * `CaseStatusChanged`: this product does not check DOL, it mirrors something
-   * that does, so "we checked" would be false.
+   * The day DOL's record was first seen showing the current status, formatted, or null when unknown. See the
+   * note in `CaseStatusChanged`.
    */
   asOf?: string | null;
   /** Absolute, purpose-scoped confirmation URL. */
@@ -110,8 +107,8 @@ export function CaseAlertConfirm({
             </Text>
             <Text className="em-text-secondary" style={styles.provenance}>
               {asOf
-                ? `Last checked ${asOf}`
-                : "We don\u2019t have a check date for this case"}
+                ? `Shown since at least ${asOf}`
+                : "We don\u2019t have a date for this status yet"}
             </Text>
           </>
         ) : (
@@ -132,7 +129,7 @@ export function CaseAlertConfirm({
           <Text className="em-text-secondary" style={styles.lag}>
             We ask DOL about watched cases every 5 minutes on weekdays from 7 AM
             to 9 PM Eastern, and every half hour otherwise, and email a change as
-            soon as we see it. Every alert says when the status was last checked.
+            soon as we see it. Every alert says since when DOL&rsquo;s record has shown the status.
           </Text>
         </>
       ) : (

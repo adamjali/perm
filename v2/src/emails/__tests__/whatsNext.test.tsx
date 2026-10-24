@@ -60,7 +60,7 @@ describe("what comes next, in the email", () => {
 
   it("never ends the preview line with two periods after a name ending in one", async () => {
     const html = await render(CaseStatusChanged({ ...base, next: null }));
-    expect(html).toContain("G-100-26070-123456 at Example Systems, Inc. DOL last checked it on October 15, 2026.");
+    expect(html).toContain("G-100-26070-123456 at Example Systems, Inc. DOL\u2019s record has shown it since at least October 15, 2026.");
     expect(html).not.toContain("Inc..");
   });
 

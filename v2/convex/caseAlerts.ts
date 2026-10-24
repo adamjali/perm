@@ -185,7 +185,7 @@ import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { formatInt } from "./lib/format";
 import { scaled } from "./lib/emailAllowance";
-import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
+import { MS_PER_HOUR, MS_PER_MINUTE, easternDay } from "./lib/time";
 import { isPlausibleEmail } from "./lib/emailShape";
 import {
   alsoLinksFor,
@@ -284,26 +284,20 @@ function casePageUrl(caseNumber: string): string {
 }
 
 /**
- * The upstream's per-case check stamp, formatted, or null.
+ * The day DOL's record first showed this case's current status to our sweep, as an Eastern date, or null.
  *
- * `perm_case_status.last_checked_at` is an ISO-8601 STRING like
- * "2026-08-05T22:31:24", written from a retired third-party mirror's own
- * field. Two things follow:
+ * It reads `fetched_at`, the millisecond stamp our own sweep writes when a case is first recorded and again only
+ * when its status, employer or title changes: so it's the day the current status was first seen, and DOL's change
+ * can't be later than it. It used to read `last_checked_at`, a retired third-party mirror's stamp that nothing has
+ * written since Aug 27 2026, and every alert printed that mirror's July date (fixed Oct 24 2026).
  *
- * 1. **It is THEIR check time, not ours.** No email may say "we checked" or
- *    "we verified" on the strength of it.
- * 2. **Never compare it numerically.** SQLite sorts any string above any
- *    number, so `last_checked_at >= 1787000000` is TRUE for every non-null row
- *    and yields a clean-looking result that is entirely artefact. Compare as
- *    text, or do what this does and only ever format it.
- *
- * Returns null for a missing or unparseable stamp so the caller must render
- * something rather than silently omitting it. A missing check date dropped
- * from the copy reads as a fresh observation.
+ * Returns null for a missing or unreadable stamp so the caller renders its own sentence rather than silently
+ * omitting it: a missing date dropped from the copy reads as a fresh observation.
  */
 function observedLabel(raw: string | number | null | undefined): string | null {
-  if (typeof raw !== "string" || raw.length < 10) return null;
-  return formatAsOf(raw.slice(0, 10));
+  const ms = typeof raw === "number" ? raw : typeof raw === "string" && /^\d{12,14}$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  return formatAsOf(easternDay(ms));
 }
 
 /**
@@ -762,14 +756,13 @@ export const sendConfirmation = internalAction({
       let asOf: string | null = null;
       try {
         current = await one(
-          `SELECT current_status, employer_name, last_checked_at
+          `SELECT current_status, employer_name, fetched_at
              FROM ${tableForCase(args.caseNumber)} WHERE case_number = ?`,
           [args.caseNumber],
         );
-        // This case's own check date, not the corpus-wide freshness stamp. The
-        // corpus figure would say "August 26" for a case nobody has looked at
-        // since May, which is the precise claim this product must not make.
-        asOf = observedLabel(current?.last_checked_at);
+        // The day this case's own status was first seen, not the corpus-wide
+        // freshness stamp, which would date every case alike.
+        asOf = observedLabel(current?.fetched_at);
       } catch (error) {
         log.error("mirror unreadable during confirmation", {
           caseNumber: args.caseNumber,
@@ -1541,7 +1534,7 @@ export const sweepCaseChanges = internalAction({
       const marks = placeholders(numbers.length);
       if (!marks) continue;
       statements.push({
-        sql: `SELECT case_number, current_status, is_final, last_checked_at
+        sql: `SELECT case_number, current_status, is_final, fetched_at
                 FROM ${statusTableFor(program)} WHERE case_number IN (${marks})`,
         args: numbers,
       });
@@ -1562,10 +1555,9 @@ export const sweepCaseChanges = internalAction({
       nowByCase.set(numKey, {
         status: canonicalStatus(status),
         isFinal: isFinalFlag(row.is_final),
-        // May legitimately be null: 11,955 pending rows carry no check date.
-        // Passed through as null rather than defaulted, so the template says
-        // so instead of implying a fresh observation.
-        observedAt: observedLabel(row.last_checked_at),
+        // Null only when the stamp can't be read. Passed through as null rather
+        // than defaulted, so the template says so instead of inventing a date.
+        observedAt: observedLabel(row.fetched_at),
       });
     }
 
@@ -1896,8 +1888,8 @@ export const sweepCaseChanges = internalAction({
             ...(meaning ? ["", meaning] : []),
             "",
             observedAt
-              ? `DOL showed this status when the case was last checked, on ${observedAt}.`
-              : "We don't have a check date for this case, so we can't say when DOL showed this.",
+              ? `DOL's record has shown this status since at least ${observedAt}.`
+              : "We don't have a date for when DOL's record first showed this status.",
             // A final status IS the decision, so the disclaimer is for the rest.
             ...(isFinal ? [] : ["It isn't a decision on your case and it isn't a prediction of one."]),
             "",

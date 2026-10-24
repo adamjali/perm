@@ -9,19 +9,11 @@
  * waited fourteen months has been told plenty of guesses already, and the only
  * thing we can offer that nobody else does is figures that are checkable.
  *
- * ## Who checked, and when
+ * ## Whose record, and since when
  *
- * It never says "we checked" or "we verified", because we did not. This
- * product mirrors a third-party tracker that reads DOL, and
- * `perm_case_status.last_checked_at` is written straight from that tracker's
- * own field: it is THEIR check time. So the email attributes the status to DOL
- * and dates it, and attributes nothing to us but the counting.
- *
- * It also never claims the present tense. "Your case is in ANALYST REVIEW" is
- * a claim about now that a batch-refreshed mirror cannot support; measured,
- * 79.8% of pending cases had not been re-checked within the month. "DOL showed
- * it as ANALYST REVIEW on 12 August" is a fact, and it lets the reader judge
- * the age themselves rather than trusting us to have judged it for them.
+ * The status is DOL's, and the email says so. Its date is the day our sweep first saw DOL's record show the
+ * status (`fetched_at`), worded "since at least": DOL's change can't be later than that day, and may be a little
+ * earlier. Until Oct 24 2026 it printed a retired mirror's July stamp instead.
  *
  * `fromStatus` and `toStatus` both arrive as props and both are always present.
  * The sweep only sends when it has two known, different statuses, so this
@@ -78,18 +70,10 @@ export interface CaseStatusChangedProps {
   /** True when this status is final, so the subscription retires itself. */
   isFinal: boolean;
   /**
-   * When THIS case was last checked, formatted, or null when unknown.
+   * The day DOL's record was first seen showing the new status, formatted, or null when unknown.
    *
-   * Not our check and not a claim about now. It comes from
-   * `perm_case_status.last_checked_at`, which the ingest writes straight from
-   * the upstream tracker's own field, so it is the moment the UPSTREAM looked.
-   * Cases are re-checked in batches, so it can be days old, and the reader has
-   * to be able to see that: "your case is in ANALYST REVIEW" is a claim about
-   * the present that this data cannot support, while "DOL showed it as ANALYST
-   * REVIEW on 12 August" is a fact.
-   *
-   * A null renders its own sentence rather than being dropped. A missing check
-   * date silently omitted reads as a fresh observation.
+   * A null renders its own sentence rather than being dropped: a missing date silently omitted reads as a fresh
+   * observation.
    */
   observedAt?: string | null;
 
@@ -181,7 +165,7 @@ export function CaseStatusChanged({
       previewText={
         // "Example Systems, Inc." already ends the sentence; a second period read "Inc..".
         `${caseNumber}${employerName ? ` at ${employerName}` : ""}`.replace(/\.?$/, ".") +
-        (observedAt ? ` DOL last checked it on ${observedAt}.` : "")
+        (observedAt ? ` DOL\u2019s record has shown it since at least ${observedAt}.` : "")
       }
       hideSettingsLink={!prefsUrl}
       settingsUrl={prefsUrl}
@@ -238,8 +222,8 @@ export function CaseStatusChanged({
 
       <Text className="em-text-secondary" style={styles.caveat}>
         {observedAt
-          ? `DOL showed this status when the case was last checked, on ${observedAt}.`
-          : "We don\u2019t have a check date for this case, so we can\u2019t say when DOL showed this."}
+          ? `DOL\u2019s record has shown this status since at least ${observedAt}.`
+          : "We don\u2019t have a date for when DOL\u2019s record first showed this status."}
         {/* A final status IS DOL's decision, so the disclaimer written for the
             statuses before one would contradict the email (fixed Oct 6 2026). */}
         {isFinal ? null : (

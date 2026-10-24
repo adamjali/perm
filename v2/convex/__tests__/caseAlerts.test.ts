@@ -70,9 +70,8 @@ interface MirrorFixture {
   /**
    * Case number to its current row in `perm_case_status`.
    *
-   * `lastCheckedAt` is an ISO-8601 STRING, matching the real column. It is the
-   * UPSTREAM's check time, not ours, and 11,955 pending rows carry none, so
-   * `null` is a first-class fixture value rather than an edge case.
+   * `seenAt` is the millisecond `fetched_at` our sweep writes when it first
+   * sees a status. `null` stands for a stamp that can't be read.
    */
   cases: Record<
     string,
@@ -84,7 +83,7 @@ interface MirrorFixture {
        * integer column back as a string, which `Boolean()` reads backwards.
        */
       isFinal: boolean | string | number;
-      lastCheckedAt?: string | null;
+      seenAt?: number | null;
     }
   >;
 }
@@ -183,10 +182,11 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
               current_status: fixture.cases[n]!.status,
               is_final: typeof raw === "boolean" ? (raw ? 1 : 0) : raw,
               employer_name: "Psomagen, Inc.",
-              last_checked_at:
-                fixture.cases[n]!.lastCheckedAt === undefined
-                  ? "2026-08-05T22:31:24"
-                  : fixture.cases[n]!.lastCheckedAt,
+              // Aug 5 2026, 10:31 PM EDT: past midnight UTC, so a UTC date would say August 6.
+              fetched_at:
+                fixture.cases[n]!.seenAt === undefined
+                  ? Date.UTC(2026, 7, 6, 2, 31, 24)
+                  : fixture.cases[n]!.seenAt,
             };
           });
         return hranaResult(rowsOut);
@@ -1058,7 +1058,7 @@ describe("the alert that goes out", () => {
         [CASE]: {
           status: "RFI ISSUED",
           isFinal: false,
-          lastCheckedAt: "2026-08-05T22:31:24",
+          seenAt: Date.UTC(2026, 7, 6, 2, 31, 24),
         },
       },
     });
@@ -1066,9 +1066,8 @@ describe("the alert that goes out", () => {
     await t.action(internal.caseAlerts.sweepCaseChanges, {});
 
     const text = String(alerts()[0]!.text);
-    // We mirror a tracker that reads DOL; we do not check DOL. The email dates
-    // the reading and attributes it to DOL, and claims nothing about now.
-    expect(text).toContain("DOL showed this status when the case was last checked, on August 5, 2026");
+    // The status is DOL's, dated by the Eastern day our sweep first saw it.
+    expect(text).toContain("DOL's record has shown this status since at least August 5, 2026");
     expect(text).not.toMatch(/\bwe (?:checked|verified)\b/i);
   });
 
@@ -1076,7 +1075,7 @@ describe("the alert that goes out", () => {
     const t = createTestContext();
     const { alerts } = stubMirrorAndResend({
       cases: {
-        [CASE]: { status: "RFI ISSUED", isFinal: false, lastCheckedAt: null },
+        [CASE]: { status: "RFI ISSUED", isFinal: false, seenAt: null },
       },
     });
     await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
@@ -1086,11 +1085,11 @@ describe("the alert that goes out", () => {
     // the same class of bug as a truthiness change detector: the absent case
     // and the good case become indistinguishable to the reader.
     const text = String(alerts()[0]!.text);
-    expect(text).toContain("don't have a check date");
-    expect(text).not.toContain("last checked, on");
+    expect(text).toContain("don't have a date for when");
+    expect(text).not.toContain("since at least");
   });
 
-  it("never compares the check stamp as a number", async () => {
+  it("dates an alert by the sweep's own stamp, never the retired mirror's", async () => {
     const t = createTestContext();
     const sqls: string[] = [];
     const inner = global.fetch;
@@ -1112,9 +1111,9 @@ describe("the alert that goes out", () => {
     await t.action(internal.caseAlerts.sweepCaseChanges, {});
     global.fetch = inner;
 
-    // SQLite sorts any string above any number, so `last_checked_at >= <int>`
-    // is TRUE for every non-null row and returns a clean-looking result that is
-    // entirely artefact. The column is only ever selected, never compared.
+    // `last_checked_at` is a retired mirror's string stamp (July, for most
+    // cases); `fetched_at` is ours. SQLite sorts any string above any number,
+    // so the old column must never be compared numerically either.
     expect(sqls.length).toBeGreaterThan(0);
     for (const sql of sqls) {
       expect(sql, `numeric comparison on the check stamp: ${sql}`).not.toMatch(
@@ -1123,7 +1122,9 @@ describe("the alert that goes out", () => {
     }
     // Control: the sweep really did read the column, so the sweep above is not
     // passing because it never touched it.
-    expect(sqls.some((q) => q.includes("last_checked_at"))).toBe(true);
+    expect(sqls.some((q) => q.includes("fetched_at"))).toBe(true);
+    // The retired mirror's stamp is never read again.
+    expect(sqls.some((q) => q.includes("last_checked_at"))).toBe(false);
   });
 
   it("never predicts a date or odds for this reader's own case", async () => {

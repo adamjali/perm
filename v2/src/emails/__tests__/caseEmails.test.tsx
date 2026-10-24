@@ -347,10 +347,9 @@ describe("case email templates", () => {
   // -------------------------------------------------------------------------
 
   it("never claims WE checked or verified anything", async () => {
-    // This product mirrors a third-party tracker that reads DOL. It does not
-    // check DOL. `last_checked_at` is written straight from that tracker's own
-    // field, so it is THEIR check time, and an email is a claim delivered to
-    // someone who did not ask a question at that moment.
+    // The status is DOL's, and the date is the day our sweep first saw DOL's
+    // record show it: the email attributes the status to DOL and dates it,
+    // and claims no check of ours at the moment it's read.
     const all = await renderAll();
     for (const [name, html] of Object.entries(all)) {
       const text = withoutStylesheets(html).replace(/\s+/g, " ");
@@ -369,7 +368,7 @@ describe("case email templates", () => {
     expect(hits("We verified this with DOL.")).toBe(true);
     expect(hits("We checked your case this morning.")).toBe(true);
     // The corrected one, and ordinary copy that must stay clean.
-    expect(hits("DOL showed this status when the case was last checked, on August 5, 2026.")).toBe(false);
+    expect(hits("DOL\u2019s record has shown this status since at least August 5, 2026.")).toBe(false);
     expect(hits("Counted from DOL's own case status, checked daily, as of August 26, 2026.")).toBe(false);
   });
 
@@ -378,15 +377,15 @@ describe("case email templates", () => {
     // "Your case is in ANALYST REVIEW" is a claim about the present that a
     // batch-refreshed mirror cannot support: measured, 79.8% of pending cases
     // had not been re-checked within the month. The date makes it a fact.
-    expect(live).toContain("when the case was last checked, on August 5, 2026");
+    expect(live).toContain("has shown this status since at least August 5, 2026");
 
     // 11,955 pending rows carry no check date. A null renders its own sentence:
     // silently omitting it reads as a fresh observation.
     const undated = await render(
       CaseStatusChanged({ ...liveProps, observedAt: null }),
     );
-    expect(undated).toContain("have a check date");
-    expect(undated).not.toContain("last checked, on");
+    expect(undated).toContain("have a date for when");
+    expect(undated).not.toContain("since at least");
   });
 
   it("tells a new subscriber how often the case is checked, and for how long", async () => {
@@ -399,7 +398,7 @@ describe("case email templates", () => {
     expect(confirm).toContain("every 5 minutes on weekdays from 7 AM");
     expect(confirm).toContain("for a year after");
     expect(confirm).not.toContain("re-checked in batches");
-    expect(confirm).toContain("when the status was last checked");
+    expect(confirm).toContain("has shown the status");
   });
 
   it("says so plainly when the status has no sourced meaning", async () => {
