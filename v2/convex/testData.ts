@@ -7,6 +7,11 @@
  * watch marked "owner-test", so it can't remove a real subscriber's row, and it runs dry unless told otherwise.
  *
  *   npx convex run testData:removeOwnerTest '{"email":"...","caseNumber":"G-100-...","dryRun":true}' --prod
+ *
+ * The same for a visa-bulletin watch (removeOwnerBulletinTest): every bulletin watch on the address must be marked
+ * "owner-test", because a bulletin link confirms or stops every watch an address holds.
+ *
+ *   npx convex run testData:removeOwnerBulletinTest '{"email":"...","dryRun":true}' --prod
  */
 
 import { v } from "convex/values";
@@ -80,5 +85,38 @@ export const removeOwnerTest = internalMutation({
       outbox: waiting.length,
       refused: null,
     };
+  },
+});
+
+export const removeOwnerBulletinTest = internalMutation({
+  args: { email: v.string(), dryRun: v.boolean() },
+  returns: v.object({
+    dryRun: v.boolean(),
+    watches: v.number(),
+    outbox: v.number(),
+    refused: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args) => {
+    const email = args.email.trim().toLowerCase();
+    const none = { dryRun: args.dryRun, watches: 0, outbox: 0 };
+    const watches = await ctx.db
+      .query("bulletinAlerts")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .collect();
+    if (watches.length === 0) return { ...none, refused: "No bulletin watch for that address." };
+    if (watches.some((w) => w.source !== OWNER_TEST_SOURCE)) {
+      return { ...none, refused: `A bulletin watch on that address isn't marked "${OWNER_TEST_SOURCE}"; nothing removed.` };
+    }
+    const refs = new Set(watches.map((w) => `bulletin:${w._id}`));
+    const waiting = (
+      await ctx.db
+        .query("alertOutbox")
+        .withIndex("by_email_status", (q) => q.eq("email", email))
+        .collect()
+    ).filter((o) => refs.has(o.ref));
+    if (!args.dryRun) {
+      for (const row of [...waiting, ...watches]) await ctx.db.delete(row._id);
+    }
+    return { dryRun: args.dryRun, watches: watches.length, outbox: waiting.length, refused: null };
   },
 });

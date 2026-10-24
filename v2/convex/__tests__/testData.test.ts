@@ -51,3 +51,40 @@ describe("removeOwnerTest", () => {
     expect(await counts(t)).toEqual({ watches: 1, ratings: 1, notes: 1 });
   });
 });
+
+describe("removeOwnerBulletinTest", () => {
+  const seedBulletin = (t: ReturnType<typeof createTestContext>, sources: string[]) =>
+    t.run(async (ctx) => {
+      for (const [i, source] of sources.entries()) {
+        await ctx.db.insert("bulletinAlerts", {
+          email: EMAIL,
+          category: i === 0 ? "EB2" : "EB3",
+          country: "india",
+          source,
+          createdAt: 1,
+          confirmedAt: 1,
+        });
+      }
+    });
+  const bulletinRows = (t: ReturnType<typeof createTestContext>) =>
+    t.run(async (ctx) => (await ctx.db.query("bulletinAlerts").collect()).length);
+
+  it("counts on a dry run, then removes the owner's test watches", async () => {
+    const t = createTestContext();
+    await seedBulletin(t, ["owner-test"]);
+    const dry = await t.mutation(internal.testData.removeOwnerBulletinTest, { email: EMAIL, dryRun: true });
+    expect(dry).toMatchObject({ watches: 1, refused: null });
+    expect(await bulletinRows(t)).toBe(1);
+    await t.mutation(internal.testData.removeOwnerBulletinTest, { email: EMAIL, dryRun: false });
+    expect(await bulletinRows(t)).toBe(0);
+  });
+
+  it("refuses when any bulletin watch on the address is a real one", async () => {
+    const t = createTestContext();
+    await seedBulletin(t, ["owner-test", "visa-bulletin"]);
+    const res = await t.mutation(internal.testData.removeOwnerBulletinTest, { email: EMAIL, dryRun: false });
+    expect(res.refused).toMatch(/isn't marked "owner-test"/);
+    expect(await bulletinRows(t)).toBe(2);
+  });
+});
+
