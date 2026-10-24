@@ -114,6 +114,12 @@ never black-weight. Prose runs at 68 characters at most (`max-w-prose` or
 - A grid holding form controls needs `grid-cols-1` and `[&>*]:min-w-0` below its
   breakpoint (`responsive-grid-tracks.test.ts`), or iOS sizes the track from the
   control and it overflows.
+- **Phones with a notch** (Oct 24 2026): the page runs edge to edge (`viewport-fit=cover`), colours
+  fill the screen, and words and buttons keep clear by the inset the device reports. A new wide
+  column uses `mx-auto` with one of the listed widths (globals.css, "The device's own insets") or is
+  added to that list; a new control pinned to an edge adds `env(safe-area-inset-*)` to its offset
+  (`device-insets.test.ts`). Chrome on iPhone keeps pages inside the safe area anyway; leave its
+  side strips alone.
 
 ## Parts
 

@@ -1159,8 +1159,9 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   email, no checkbox (a notice above "Submit review" says what shows and what's declined). Prefill: `?rating=` picks
   the stars; `?t=` is the reader's address sealed with AES-GCM (`convex/lib/sealedEmail.ts`, 120 days, never
   readable in the link), opened by `/review/prefill` and stripped from the address bar and from analytics; a
-  signed-in reader's name and address come from `/api/review-prefill`. The rating email's thank-you page offers the
-  review link at every score (inviting only happy raters is deceptive, 16 CFR 255.2 Example 11). Server: a size
+  signed-in reader's name and address come from `/api/review-prefill`. A score tapped in an alert email goes on at
+  once: a 3, 4 or 5 to this form, a 1 or 2 to the page that asks what went wrong, which still offers the review link
+  (inviting only happy raters is deceptive, 16 CFR 255.2 Example 11; owner: "keep", Oct 24). Server: a size
   cap before the body is read, links refused on an NFKC copy, direction overrides stripped (zero-width joiners
   kept for Indic and Persian), a double send stored once, a fast send kept and flagged (never dropped), the
   honeypot answered as stored. Declining needs a 465.7(b) reason; a declined review's words, name and email go 90
@@ -1171,3 +1172,22 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
 - **An index file costs the page-change walker no import level** (`scripts/lib_page_inputs.mjs`): the homepage reaches
   its sections through `components/home/index.ts`, so at two levels a change to the rating line reached no list. The
   same walk feeds the Search Console queue, the deploy's Cloudflare purge, IndexNow and the sitemap's dates.
+
+## Oct 24 2026, in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026".
+
+- **A box opened in an alert email saves the rating at once and goes straight on** (owner: "note what was clicked ...
+  then just open straight to it"): every open is kept with its time and browser line; opens of several scores within a
+  minute, or from a fetcher's browser line, are a mail scanner's and never the rating (`convex/alertRatings.ts`).
+  Admin > Reviews lists every rating with who gave it, the case, the watch, their review and every open.
+- **Case alerts and confirmations date the status by our sweep's own record** (`fetched_at`, "DOL's record has shown
+  this status since at least <day>"): they had printed a retired mirror's July stamp (`last_checked_at`) for months.
+- **The page runs edge to edge on phones with a notch** (`viewport-fit=cover`), and every wide column and edge control
+  keeps clear by the inset the device reports, zero on a device without one. Chrome on iPhone keeps pages inside the
+  safe area anyway (Chromium's own code, crbug 40199143); the light side strips there stay (owner: "leave it").
+- **The owner's end-to-end alert tests are signed up with source "owner-test"** and removed with
+  `testData:removeOwnerTest` (dry run first; it refuses any other watch).
+- **Replies to people who write back are warm and about what they said** (the approved model is in project memory).
+- **After a deploy, read `cf-cache-status` and `age` before calling a fix missing**: Cloudflare served `/login` 65
+  minutes old.

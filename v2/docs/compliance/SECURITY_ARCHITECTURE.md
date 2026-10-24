@@ -94,7 +94,7 @@ Applied to all routes via `next.config.ts`:
 
 ## Bot Protection
 
-- **Cloudflare Turnstile** (interaction-only widget) on `/signup`, `/login`, `/reset-password` — invisible to low-risk users, challenges appear only when Cloudflare's ML flags the attempt. Token verified server-side via `turnstile.verifyTurnstileToken`.
+- **Cloudflare Turnstile** (interaction-only widget) on `/signup` and `/reset-password`, invisible to low-risk users, challenges appear only when Cloudflare's ML flags the attempt. Token verified server-side via `turnstile.verifyTurnstileToken` (`requireSignupPass`). Sign-in has none since Oct 23 2026: it was advisory there and only confused people; sign-in is held by the password and the per-address and per-email limits in `src/proxy.ts`.
 - **Cloudflare** in front of every request (bot scoring, flood backstop) and **nginx** rate limits per address and per crawler. BotID was removed with the move off Vercel (Sep 29 2026); `/api/chat` is guarded by sign-in, its per-IP and per-user limits and the AI quotas.
 - Name validation server-side for sign-up (`convex/lib/nameValidation.ts`) to filter obvious spam.
 
@@ -103,7 +103,7 @@ Applied to all routes via `next.config.ts`:
 | # | Surface | Entry Point | Auth | Rate Limits | Bot Protection |
 |---|---------|-------------|------|-------------|----------------|
 | 1 | Sign-up | `/api/auth` (flow=signUp) | No | per-IP + per-email | Turnstile |
-| 2 | Sign-in | `/api/auth` (flow=signIn) | No | per-IP + per-email + suspension gate | Turnstile |
+| 2 | Sign-in | `/api/auth` (flow=signIn) | No | per-IP + per-email + suspension gate | None (password and limits) |
 | 3 | Google OAuth | `/api/auth/callback/google` | No | per-IP | Google |
 | 4 | Password reset | `/api/auth` (flow=reset) | No | per-IP + per-email | Turnstile |
 | 5 | OTP verify | `/api/auth` (flow=email-verification) | No | per-IP + per-email | Turnstile |
@@ -116,6 +116,7 @@ Applied to all routes via `next.config.ts`:
 | 12 | Demo page | `/demo` | No | None | None (localStorage only) |
 | 13 | Contact | `/contact` (mailto:) | N/A | N/A | N/A |
 | 14 | Admin dashboard | `/admin`, `/admin/security` | **Yes + admin** | per-user | N/A |
+| 15 | Alert rating link (emailed) | `/case-alert/rate` GET and POST | Signed token (`alert-rating`) + a watch for that case | 20 written opens per link an hour | Scanner opens kept apart (a burst of scores, a fetcher's browser line), never the rating; fixed redirect target |
 
 ### Defense-in-depth layering (request flow)
 

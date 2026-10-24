@@ -293,6 +293,9 @@ learned from a real defect in `convex/queueAlerts.ts`:
 - **GET must not mutate.** Outlook Safe Links, Mimecast, Proofpoint and
   Barracuda all fetch URLs in inbound mail, so a GET that acts lets a
   recipient's own mail gateway click their links. Render a POST button instead.
+  One deliberate exception, the alert rating (owner, Oct 24 2026): its GET saves
+  the pick, keeps every open, and treats a burst of different scores or a
+  fetcher's browser line as a scanner's, never the rating. See "Oct 24 2026".
 - **Distinguish 400 from 429** in the response, or every typo reads as
   rate-limiting in monitoring.
 
@@ -10145,3 +10148,56 @@ The owner's direction since Oct 21: the picture is the content, few words. What'
   scroll the page through first, or measure the boxes. **The breadcrumb's "Updated" date ends with a space**: it ran
   into every page's H1 as text ("2026Live"), found by the glued-text audit only when a class name changed its window.
 - Ledger: `.planning/image-led-2026-10-21.md`.
+
+## Oct 24 2026: ratings that save on open, honest check dates, phones with a notch
+
+**The alert rating saves on open** (`convex/alertRatings.ts`, `recordClick`; the GET in `convex/http.ts`). A box in a
+case's last alert opens `/case-alert/rate?token&c&r=N`; the GET verifies the `alert-rating` token, requires a watch for
+that address and case, saves the pick, then answers 303 to the review form (3, 4 or 5; `reviewLinkFor` seals the
+address) or renders the "what went wrong" page (1 or 2). Every open and tap is kept in `alertRatings.clicks` (score,
+time, `email` or `page`, the browser line cut to 300 characters, `scanner`), newest 20. An open is a scanner's when a
+different score was opened within `BURST_MS` (60 s; every open in that minute is marked) or its browser line names a
+fetcher (`SCANNER_BROWSER`, a missing line included); a page tap is always a person. `score` is the newest pick that
+wasn't a scanner's and is absent on a row only a scanner opened; `ratingsSince` skips those. An address opening its
+link in a loop stops writing after `CLICKS_PER_HOUR` (20) and still goes on to its page. The redirect target is fixed
+(our own pages), so the link can't be turned into an open redirect. Admin > Reviews shows `alertRatings.forAdmin`
+(admin only): each rating with the account name, the watch (signed up, confirmed, source, alerts sent, last status),
+the newest review from that address and every open. The Privacy Policy names the browser line (Oct 24 2026).
+`convex/__tests__/alertRatings.test.ts` probes the burst, the browser check, the loop cap (the oldest kept open must
+survive, since the list is trimmed to 20 either way) and the watched-case check.
+
+**Case alerts and confirmations read `fetched_at`** (`observedLabel` in `convex/caseAlerts.ts`): the millisecond stamp
+the sweep writes when it first records a status, as an Eastern day, worded "DOL's record has shown this status since at
+least <day>". Every program's live table has it. `last_checked_at` is a retired mirror's string stamp nothing has
+written since Aug 27 2026; an alert for a case certified Oct 22 said "DOL last checked it on July 16". The test asserts
+the sweep never reads `last_checked_at` again.
+
+**Testing the alert emails end to end on production** (owner, Oct 24 2026). Sign the owner's own address up for a
+real decided case with `npx convex run caseAlerts:subscribe '{"email":..,"caseNumber":..,"source":"owner-test"}'
+--prod` (that sends the real confirmation); confirm with `caseAlerts:confirmByToken`, its `case-confirm` token signed
+in a script that reads `UNSUBSCRIBE_SECRET` from `npx convex env get ... --prod` on stdin (never printed); set the
+watch back one step with `caseAlerts:seedObserved` (status "ANALYST REVIEW"); run `caseAlerts:sweepCaseChanges` until
+it sends: it reads 300 watches a run, oldest check first, and `seedObserved` stamps the row as just checked, so it
+falls in a later run. Clean up with `testData:removeOwnerTest` (dry run first): watch, rating, congratulations note and
+outbox row, and it refuses any watch whose source isn't "owner-test".
+
+**Phones with a notch** (`src/app/layout.tsx` `viewportFit: "cover"`; globals.css "The device's own insets";
+`src/app/__tests__/device-insets.test.ts`). The page runs under the notch, punch hole, rounded corners and home bar,
+so the header, footer and bands fill the screen. Each wide content column (`mx-auto` with `container`, `max-w-2xl` to
+`max-w-7xl`, or `max-w-[1200px]` to `[1440px]`, and no border of its own) takes a transparent border as wide as the
+inset the device reports on that side: zero on a device without one, inside the column's width (border-box), so nothing
+moves anywhere else. Margins were rejected because numeric margins change content-sized flex items, padding because it
+overrides each column's own gutter. Edge controls add the inset in their own arbitrary values, written with
+underscores (`right-[calc(1rem_+_env(safe-area-inset-right,0px))]`): the chat button and panel, back to top, the data
+menu tab and drawer, the header's menu panel, side panels, the selection bar and the case form's save bar. Measured
+with a simulated 59px notch (Chrome's `Emulation.setSafeAreaInsetsOverride` over a Playwright CDP session): logo 16
+to 75px, no sideways scroll; upright phones identical to the live site. **Chrome on iPhone keeps every page inside the
+safe area whatever the page says**: `AdjustInsetsForSafeArea` in `ios/web/web_state/ui/crw_web_view_content_view.mm`
+widens the side insets to at least the safe area with no viewport-fit check (open bug crbug 40199143), so light side
+strips stay there; owner: "it's fine just leave it". Safari runs edge to edge.
+
+**Smaller:** asking for a star scrolls the stars up, and a resting mouse then filled them as if picked; a pointer
+arriving in the 800 ms after that scroll is ignored (`hoverQuietUntil`). A test that keeps an element across a keyed
+remount (the stars' row remounts to shake) holds a detached node: query again after it. Cloudflare served `/login` 65
+minutes after the deploy that changed it (`age: 3898`, `cf-cache-status: UPDATING`): read those headers before calling
+a fix missing. Ledger: `.planning/reviews-and-ratings-2026-10-24.md`.
