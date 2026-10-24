@@ -1194,3 +1194,20 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026".
 - **robots.txt is served by nginx from the built file, outside every limit**: Googlebot was refused it 10 to 41 times a
   day Oct 17 to 21 (with up to 37% of its requests), Google pauses a site whose robots.txt fails, and its crawl fell
   from about 45,000 a day to 5,000. Errors were 0 from Oct 22; Google raises the rate again as the site stays healthy.
+
+## Oct 24 2026 (morning): every monitoring surface checked, and the causes fixed
+
+- **A warning names harm, not activity**: background pre-loads (25 to 43% of requests every hour) are named only in an
+  hour when a page was slow or 20+ page requests were turned away busy (`permtracker-perf`, `REFUSED_PAGES`), and a
+  report section's lead warning isn't printed twice.
+- **Google's extensionless font address no longer fails deploys** (`/l/font?kit=`, four failures Oct 5 to 24):
+  `patches/next@16.4.0.patch` back-ports Next 16.5's fix. **Carry it to the new version with any Next bump** (Dependabot
+  #63 moves Next to 16.4.1), or drop it at 16.5; `next-font-kit-url.ssr.test.ts` holds the case either way.
+- **`pnpm check` runs every gate that walks the tree** (any change under `src/` or `convex/`, about 90 s): three pushes
+  had gone red in CI on one.
+- **The morning report has "Security alerts and updates"**: any open code-scanning alert warns (44 had piled up unseen
+  since Oct 11; all are now fixed or dismissed with a reason), a high Dependabot alert fails, update PRs are listed.
+  Runs on other branches (Dependabot's) no longer count against `main`.
+- **The monthly restore test loads the LCA database's off-site copy too** (`LCA_RESTORE_OK`; nothing had proved it
+  restores since the Oct 19 split). `permtracker-restore-test lca` runs that half alone.
+- **Local test runs don't count as visits**: PostHog doesn't start on localhost unless `NEXT_PUBLIC_POSTHOG_LOCAL=1`.
