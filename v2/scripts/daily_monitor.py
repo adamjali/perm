@@ -278,6 +278,104 @@ def github_section(since: dt.datetime) -> dict:
     return section("github", "GitHub Actions (24 h)", worst(statuses), summary, lines)
 
 
+# ── the repository's security alerts and update pull requests ─────────────
+
+SEVERE = {"critical", "high", "error"}
+
+
+def alert_severity(a: dict) -> str:
+    """A code-scanning alert's security severity, else the rule's own level."""
+    rule = a.get("rule") or {}
+    return str(rule.get("security_severity_level") or rule.get("severity") or "unknown").lower()
+
+
+def security_verdict(scanning, dependabot, prs, now: dt.datetime) -> dict:
+    """Open code-scanning alerts, open Dependabot alerts and Dependabot's update
+    pull requests. Every code-scanning alert is fixed or dismissed with a reason,
+    so an open one hasn't been looked at: 44 had piled up unseen over two weeks
+    before this section existed (Oct 24 2026). Each argument is a list, or a
+    string saying why it couldn't be read; an unread list is a warning, never
+    a silent zero."""
+    title = "Security alerts and updates"
+    fails: list[str] = []
+    warns: list[str] = []
+    lines: list[str] = []
+    if isinstance(scanning, str):
+        warns.append(f"Code-scanning alerts couldn't be read ({scanning}).")
+    elif scanning:
+        by: dict[str, int] = {}
+        for a in scanning:
+            sev = alert_severity(a)
+            by[sev] = by.get(sev, 0) + 1
+        sevs = ", ".join(f"{n} {k}" for k, n in sorted(by.items(), key=lambda kv: -kv[1]))
+        warns.append(f"{len(scanning)} code-scanning alert{'s' if len(scanning) != 1 else ''} open ({sevs}): "
+                     "fix each or dismiss it with its reason.")
+        for a in scanning[:5]:
+            loc = ((a.get("most_recent_instance") or {}).get("location") or {})
+            lines.append(f"#{a.get('number')} {(a.get('rule') or {}).get('id', '?')} at "
+                         f"{loc.get('path', '?')}:{loc.get('start_line', '?')}")
+    if isinstance(dependabot, str):
+        warns.append(f"Dependabot alerts couldn't be read ({dependabot}).")
+    elif dependabot:
+        severe = [a for a in dependabot
+                  if str((a.get("security_advisory") or {}).get("severity", "")).lower() in SEVERE]
+        named = ", ".join(sorted({str(((a.get("dependency") or {}).get("package") or {}).get("name", "?"))
+                                  for a in dependabot}))
+        msg = f"{len(dependabot)} Dependabot security alert{'s' if len(dependabot) != 1 else ''} open: {named}."
+        (fails if severe else warns).append(msg)
+    if isinstance(prs, str):
+        lines.append(f"Dependabot's update pull requests couldn't be read ({prs}).")
+    elif prs:
+        def opened(pr):
+            return dt.datetime.fromisoformat(str(pr.get("created_at", "")).replace("Z", "+00:00"))
+        oldest = min(prs, key=opened)
+        days = max(0, (now - opened(oldest)).days)
+        lines.append(f"{len(prs)} Dependabot update pull request{'s' if len(prs) != 1 else ''} waiting for a "
+                     f"decision, the oldest {days} day{'s' if days != 1 else ''}: "
+                     + "; ".join(f"#{pr.get('number')} {pr.get('title', '')[:70]}" for pr in prs[:4]))
+    status = "fail" if fails else "warn" if warns else "ok"
+    if fails or warns:
+        summary = (fails + warns)[0]
+    else:
+        summary = "no open code-scanning or Dependabot alerts"
+        if isinstance(prs, list) and prs:
+            summary += f", {len(prs)} update pull request{'s' if len(prs) != 1 else ''} waiting"
+    return section("security", title, status, summary, fails + warns + lines)
+
+
+def read_all(url: str, numbered: bool = True) -> list:
+    """Every page of a GitHub list endpoint (up to 1,000 rows). The Dependabot
+    alerts list pages by cursor and answers 400 to a page number, so it is read
+    as one page of 100 (numbered=False); more than 100 open is its own alarm."""
+    out: list = []
+    sep = "&" if "?" in url else "?"
+    if not numbered:
+        return list(http_json(f"{url}{sep}per_page=100", gh_headers()))
+    for page in range(1, 11):
+        got = http_json(f"{url}{sep}per_page=100&page={page}", gh_headers())
+        out += got
+        if len(got) < 100:
+            break
+    return out
+
+
+def security_section(now: dt.datetime) -> dict:
+    def read(url: str, numbered: bool = True):
+        try:
+            return read_all(url, numbered)
+        except urllib.error.HTTPError as e:
+            return f"HTTP {e.code}"
+        except Exception as e:  # noqa: BLE001 - said in the section, never dropped
+            return type(e).__name__
+    base = f"https://api.github.com/repos/{REPO}"
+    scanning = read(f"{base}/code-scanning/alerts?state=open")
+    dependabot = read(f"{base}/dependabot/alerts?state=open", numbered=False)
+    pulls = read(f"{base}/pulls?state=open")
+    prs = pulls if isinstance(pulls, str) else [p for p in pulls
+                                                if (p.get("user") or {}).get("login") == "dependabot[bot]"]
+    return security_verdict(scanning, dependabot, prs, now)
+
+
 # ── how long things take ──────────────────────────────────────────────────
 
 TESTS_PATH = ".github/workflows/test.yml"
@@ -1296,6 +1394,8 @@ def build(now: dt.datetime) -> dict:
     sections = [
         guarded("health", "Ingests and data freshness", health_section),
         guarded("github", "GitHub Actions (24 h)", github_section, since),
+        guarded("security", "Security alerts and updates", security_section,
+                dt.datetime.now(dt.timezone.utc)),
         guarded("speed", "How long things take (24 h)", speed_section, since),
         guarded("site", "The site", site_section),
         guarded("data", "The data", data_section, now_ms),

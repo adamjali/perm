@@ -26,6 +26,11 @@ on:
 permissions:
   contents: read
   actions: read
+  # The security section: open code-scanning alerts, Dependabot alerts and
+  # Dependabot's update pull requests (scripts/daily_monitor.py, security_section).
+  security-events: read
+  vulnerability-alerts: read
+  pull-requests: read
 
 concurrency:
   group: daily-monitor

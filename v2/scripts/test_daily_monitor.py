@@ -34,6 +34,40 @@ def check(ok: bool, msg: str, detail: str = "") -> None:
         FAILS.append(msg)
 
 
+
+def security_section_says_what_is_open() -> None:
+    """Every open code-scanning alert is untriaged, a severe Dependabot alert
+    fails, update pull requests are lines, and an unread list is never a zero."""
+    now = dt.datetime(2026, 10, 24, 12, tzinfo=dt.timezone.utc)
+    alert = {"number": 457, "rule": {"id": "js/double-escaping", "security_severity_level": "high"},
+             "most_recent_instance": {"location": {"path": "v2/convex/lib/ownerWorker.ts", "start_line": 29}}}
+    note = {"number": 451, "rule": {"id": "unsafe-formatstring", "severity": "note"}}
+    pr = {"number": 63, "title": "chore(deps): Bump the production-dependencies group", "created_at": "2026-10-20T09:00:00Z",
+          "user": {"login": "dependabot[bot]"}}
+    clean = dm.security_verdict([], [], [], now)
+    check(clean["status"] == "ok" and clean["summary"] == "no open code-scanning or Dependabot alerts",
+          f"nothing open reads ok ({clean['summary']})")
+    open_ = dm.security_verdict([alert, note], [], [pr], now)
+    check(open_["status"] == "warn" and "2 code-scanning alerts open (1 high, 1 note)" in open_["summary"]
+          and any("ownerWorker.ts:29" in ln for ln in open_["lines"]), f"open alerts warn and are named ({open_})")
+    check(any("waiting for a decision, the oldest 4 days" in ln for ln in open_["lines"]),
+          "an update pull request is a line with its age")
+    waiting = dm.security_verdict([], [], [pr], now)
+    check(waiting["status"] == "ok" and "1 update pull request waiting" in waiting["summary"],
+          "update pull requests alone don't warn")
+    dep = {"security_advisory": {"severity": "high"}, "dependency": {"package": {"name": "next"}}}
+    check(dm.security_verdict([], [dep], [], now)["status"] == "fail", "a high Dependabot alert fails")
+    low = {"security_advisory": {"severity": "low"}, "dependency": {"package": {"name": "braces"}}}
+    check(dm.security_verdict([], [low], [], now)["status"] == "warn", "a low Dependabot alert warns")
+    unread = dm.security_verdict("HTTP 403", [], [], now)
+    check(unread["status"] == "warn" and "couldn't be read (HTTP 403)" in unread["summary"],
+          "a list the token can't read warns, never reads as zero")
+    yml = (HERE.parent.parent / ".github" / "workflows" / "daily-monitor.yml").read_text()
+    check("security-events: read" in yml and "vulnerability-alerts: read" in yml,
+          "the workflow grants the permissions the section reads with")
+    src = (HERE / "daily_monitor.py").read_text()
+    check('guarded("security"' in src, "the section is in the report")
+
 def main() -> int:
     # The ranking is shared with convex/lib/dailyReportCompose.ts.
     ts = (HERE.parent / "convex" / "lib" / "dailyReportCompose.ts").read_text()
@@ -495,6 +529,7 @@ def main() -> int:
 
     data_section_reads_the_scorecard_alarms()
     long_lines_end_at_a_sentence()
+    security_section_says_what_is_open()
     busy_replies_are_tried_again()
 
     # The API and the assistants: keyed calls by account, keyless ones by bucket.
