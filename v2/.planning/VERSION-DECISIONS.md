@@ -126,7 +126,7 @@ this upgrade was `@openrouter/ai-sdk-provider`, whose 3.0.0 declares
 
 | Package | Held at | Latest | Why |
 |---------|---------|--------|-----|
-| `@sentry/nextjs` | **~10.70.0** | 10.73.0 | 10.72+ stopped depending on `@apm-js-collab/code-transformer-bundler-plugins` and **vendors** it instead, copying an ESM file that runs `fileURLToPath(import.meta.url)` at module load into their CJS build. Vitest cannot resolve that to a `file://` URL, so importing it throws `ERR_INVALID_URL_SCHEME`. Measured on 10.73.0: **24 test files failed and 109 more never ran** (2,759 tests collected against a 6,092 baseline). **The production webpack build is unaffected**, which is why this is invisible until the suite runs. `dependabot.yml` ignores `>=10.71.0` with the same reasoning. Revisit when upstream ships a vendored copy that does not touch `import.meta.url`. |
+| `@sentry/nextjs` | ~10.70.0 until Oct 24 2026, then ~10.75.2 | 10.73.0 (Sep) | 10.72+ stopped depending on `@apm-js-collab/code-transformer-bundler-plugins` and **vendors** it instead, copying an ESM file that runs `fileURLToPath(import.meta.url)` at module load into their CJS build. Vitest cannot resolve that to a `file://` URL, so importing it throws `ERR_INVALID_URL_SCHEME`. Measured on 10.73.0: **24 test files failed and 109 more never ran** (2,759 tests collected against a 6,092 baseline). **The production webpack build is unaffected**, which is why this is invisible until the suite runs. Superseded: see "October 24 2026". |
 | `image-size` (transitive, via `@storybook/nextjs-vite`) | <=2.0.2 | — | Unchanged from the Audit 7 policy, re-verified: **2.0.2 IS the latest published version** and it is the vulnerable one, so there is no override target. devDependency only, never ships. |
 
 **Superseded Dependabot PRs:** #23, #24, #25 (Actions, superseded by normalising
@@ -172,10 +172,11 @@ adapter's router context built no `parentRenderTree`, so every story rendering a
 builds; `package.json` `pnpm.patchedDependencies` applies it. Dev only, never
 ships.
 
-**Remove it when a fixed release can be installed.** 10.6.2 was published Oct 12
-2026 and clears the 7-day `minimumReleaseAge` on Oct 19. Whether it carries the
-fix isn't confirmed: install it without the patch, open a story with a link (the
-"Tour/App pages" stories have many), and drop the patch only if they render.
+**Remove it when a fixed release can be installed.** 10.6.2 doesn't carry the fix
+(checked Oct 24 2026: the patch applied to it unchanged, and `bfcacheId` appears
+nowhere else in its build), so the patch was renamed to
+`patches/@storybook__nextjs-vite@10.6.2.patch` with that upgrade. 10.6.3 was out
+the same day; check it the same way before moving on.
 
 ## `next` 16.4.0, patched for Google's extensionless font addresses (Oct 24 2026)
 
@@ -195,6 +196,34 @@ build runs it. `src/lib/__tests__/next-font-kit-url.ssr.test.ts` drives the real
 loader through Next's own `NEXT_FONT_GOOGLE_MOCKED_RESPONSES` hook with both
 address forms; with the patch removed it fails with the production error.
 
-**Remove it with the Next 16.5 upgrade**, and keep the test: it checks 16.5's
-own fix against the same case. A Next bump without updating the patch fails
-`pnpm install` loudly (the patch names `next@16.4.0`), so it can't be lost silently.
+**Removed Oct 24 2026 with Next 16.4.3**, which shipped the same fix (Oct 23
+2026). The test stays: it passed against 16.4.3 with no patch, and it checks
+every later Next against the same case.
+
+## October 24 2026: Next 16.4.3, Sentry 10.75, and everything Dependabot held
+
+`pnpm audit` listed 21 advisories (5 critical, 7 high) that Dependabot's alert list didn't, because Dependabot
+can't raise a pinned or transitive version. None was reachable here (no `use cache`, no Server Actions, sharp
+0.35.5 on the server), and all were taken in one batch, tested together. `pnpm audit` read clean afterwards,
+with and without `--prod`.
+
+| Package | From | To | Why, and how it was checked |
+|---------|------|----|-----------------------------|
+| `next`, `eslint-config-next`, `@next/bundle-analyzer` | 16.4.0 | **16.4.3** | GHSA-673q-mjm6-r5xr and GHSA-2464-fhr4-w9xw (critical), GHSA-p3m5-59mp-jv5r (high); the font fix let the local Next patch go. Taken a day after release, past the 7-day floor: every package of the release is named in `minimumReleaseAgeExclude` with a removal date. |
+| `@sentry/nextjs` | ~10.70.0 | **~10.75.2** (10.75.3) | GHSA-mchm-gjx6-7h55 (critical). 10.75.3's CommonJS build has no `fileURLToPath(import.meta.url)` and the full suite passed with it. Dependabot ignores `>=10.76.0`: a static read of 10.76.2 couldn't rule its load-time code in or out, so a newer one comes in by hand after the full suite passes with it. |
+| `storybook` and the `@storybook/*` addons | 10.6.0 | **10.6.2** | GHSA-f2ph-cmg5-wxc8 (critical, dev only). The adapter patch carried over (above). |
+| `react`, `react-dom`; `@types/react`, `@types/react-dom` | 19.2.7 | **19.3.1**; 19.3.0 | Dependabot's production group. |
+| `jsdom` | 29.1.1 | **30.1.3** | Needs Node 22.22.2+ or 24.15+. CI runs 24.x; this Mac runs the suite under nvm's 24.22.1 (installed Oct 24 2026, owner's yes) because `/usr/local/bin/node` is 22.22.1. |
+| `happy-dom` | 20.14.0 | **21.0.4** | Dependabot's #55 offered 21.0.3, still vulnerable; 21.0.4 excluded from the floor until Oct 27. |
+| The rest of Dependabot's #64 and #62 | | | Radix minors, `@libsql/client` 0.18, `@convex-dev/rate-limiter` 0.4.2 with `convex-test` 0.0.62 (the limiter's new nested component needs it), `@convex-dev/auth` 0.0.96, `ai` 7.0.143 with its providers, `convex` 1.47, Remotion 4.0.536, Playwright 1.64.1 (it drives the installed Chrome, so no browser download), `vitest` 4.1.12. |
+
+**Overrides:** `dompurify >=3.4.17 <4`, `fast-uri >=3.1.9 <4` (3.1.9 excluded from the floor until Oct 26),
+`zod >=4.6.7 <5` (`@serwist/next` pinned an older zod), and undici split by major, `undici@<8 >=7.30.1 <8` and
+`undici@>=8 >=8.12.2 <9`, because jsdom 30 needs undici 8 while the rest of the tree is on 7.
+
+**Not taken:** `vitest` 5 and `@vitest/coverage-v8` 5 (a major, not offered by Dependabot's groups),
+`convex-test` 0.0.65 and `storybook` 10.6.3 (newer than this batch's checks).
+
+**The morning report now runs `pnpm audit`** (production and full), so an advisory Dependabot can't see still
+reaches the owner. **Superseded Dependabot PRs:** #64, #62, #56, #55, each closed with a pointer to the merge.
+

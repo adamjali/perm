@@ -17,13 +17,34 @@ minimumReleaseAge: 10080
 # These are optional platform packages pulled in by vite, never imported here.
 minimumReleaseAgeExclude:
   - "@rolldown/*"
-  # A package under an ACTIVE advisory is excluded by name, because the whole
-  # point of its entry in pnpm.overrides is to take the patch now. Remove the
-  # name once the patched version is old enough to clear the window on its own
-  # (browserslist, the first one, left Oct 5 2026). source-map-js 1.2.2 fixes
-  # GHSA-68fv-2mgg-jv7q (HIGH, event-loop denial of service through indexed
-  # source-map offsets) and was published Sep 30 2026: remove after Oct 7 2026.
-  - "source-map-js"
+  # A package under an ACTIVE advisory is excluded by exact version, because
+  # the point of taking it is to take the patch now. Remove each line once that
+  # version is old enough to clear the window on its own (browserslist, the
+  # first one, left Oct 5 2026; source-map-js Oct 24 2026).
+  #
+  # Next 16.4.3 (Oct 23 2026) carries GHSA-673q-mjm6-r5xr (critical, `use
+  # cache`), GHSA-2464-fhr4-w9xw (critical, image optimizer) and
+  # GHSA-p3m5-59mp-jv5r (high, Server Actions), none reachable here, and the
+  # extensionless Google font fix that let patches/next@16.4.0.patch go. Each
+  # package of the release is named. Remove after Oct 30 2026.
+  - "next@16.4.3"
+  - "@next/env@16.4.3"
+  - "@next/swc-darwin-arm64@16.4.3"
+  - "@next/swc-darwin-x64@16.4.3"
+  - "@next/swc-linux-arm64-gnu@16.4.3"
+  - "@next/swc-linux-arm64-musl@16.4.3"
+  - "@next/swc-linux-x64-gnu@16.4.3"
+  - "@next/swc-linux-x64-musl@16.4.3"
+  - "@next/swc-win32-arm64-msvc@16.4.3"
+  - "@next/swc-win32-x64-msvc@16.4.3"
+  - "eslint-config-next@16.4.3"
+  - "@next/eslint-plugin-next@16.4.3"
+  - "@next/bundle-analyzer@16.4.3"
+  # happy-dom 21.0.4 (Oct 20 2026) is the first release past the vulnerable
+  # 21.0.3; remove after Oct 27 2026. fast-uri 3.1.9 (Oct 19 2026) is the
+  # override's new floor; remove after Oct 26 2026.
+  - "happy-dom@21.0.4"
+  - "fast-uri@3.1.9"
 trustPolicy: no-downgrade
 # A version excluded by name has been checked by hand: semver 6.3.1 is npm's
 # own 2023 patch to the old 6.x line (published Jul 10 2023 by a semver

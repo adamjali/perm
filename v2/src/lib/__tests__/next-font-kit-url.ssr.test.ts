@@ -2,10 +2,10 @@
  * Google Fonts sometimes answers the build with an extensionless font address
  * (`fonts.gstatic.com/l/font?kit=...`). Next 16.4's loader read the file type
  * off the address and threw "Cannot read properties of null (reading '1')",
- * which failed four deploys between Oct 5 and Oct 24 2026. patches/next@16.4.0.patch
- * falls back to woff2, as Next 16.5 does. This drives the real loader with
- * Next's own mock hook in both address forms, so dropping the patch on the
- * Next 16.5 upgrade is checked against the same case.
+ * which failed four deploys between Oct 5 and Oct 24 2026. A local patch fell
+ * back to woff2 until Next 16.4.3 shipped the same fix (Oct 23 2026), and the
+ * patch went with that upgrade. This drives the real loader with Next's own
+ * mock hook in both address forms, so any later Next is checked against it.
  */
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";

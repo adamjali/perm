@@ -35,12 +35,14 @@ updates:
       # upgraded by hand; minors and patches come through here.
       - dependency-name: "next"
         update-types: ["version-update:semver-major"]
-      # @sentry/nextjs 10.72+ vendors an ESM file into its CJS build that reads
-      # `import.meta.url` at load, which Vitest cannot resolve: the suite fails
-      # on import while the production build is fine. Pinned to ~10.70.0 in
-      # v2/package.json; drop this rule once upstream fixes the vendored copy.
+      # @sentry/nextjs 10.72 vendored an ESM file into its CJS build that reads
+      # `import.meta.url` at load, which Vitest can't resolve: the suite failed
+      # on import while the production build was fine. 10.75 runs under Vitest
+      # (the full suite passed with it, Oct 24 2026), so v2/package.json pins
+      # ~10.75.2 for its critical-advisory fix (GHSA-mchm-gjx6-7h55). A newer
+      # version comes in by hand, after the full suite passes with it.
       - dependency-name: "@sentry/nextjs"
-        versions: [">=10.71.0"]
+        versions: [">=10.76.0"]
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
