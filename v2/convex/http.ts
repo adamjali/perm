@@ -939,6 +939,147 @@ http.route({
 });
 
 // ============================================================================
+// Visa-bulletin movement alerts
+//
+// Same posture as the queue-alert and case-alert routes: the internal
+// mutation owns the budgets, the route owns the shape, GET never mutates,
+// and 429 is distinguished from 400.
+// ============================================================================
+
+const BULLETIN_CATEGORIES = new Set(["EB1", "EB2", "EB3", "EW3", "EB4", "EB5"]);
+const BULLETIN_COUNTRIES = new Set([
+  "worldwide",
+  "china",
+  "india",
+  "mexico",
+  "philippines",
+]);
+
+http.route({
+  path: "/bulletin-alert/subscribe",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/subscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+
+    const { email, category, country, source, news, newsletter } = body as Record<string, unknown>;
+    if (
+      typeof email !== "string" ||
+      typeof category !== "string" ||
+      typeof country !== "string" ||
+      !BULLETIN_CATEGORIES.has(category) ||
+      !BULLETIN_COUNTRIES.has(country)
+    ) {
+      return json(
+        { ok: false, message: "Email, category and country are all required." },
+        400,
+      );
+    }
+
+    const result = await ctx.runMutation(internal.bulletinAlerts.subscribe, {
+      email: email.slice(0, 320),
+      category: category as "EB1" | "EB2" | "EB3" | "EW3" | "EB4" | "EB5",
+      country: country as "worldwide" | "china" | "india" | "mexico" | "philippines",
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      // Same staged news opt-in as the sibling routes; the bulletin-alert
+      // confirm click completes both, and the confirmation email says so.
+      news: news === true,
+      newsletter: newsletter === true,
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+    });
+
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return badLinkPage();
+    return messagePage(
+      "Confirm your visa bulletin alert",
+      "We'll email you when a new visa bulletin moves the final-action cutoff you're watching. Nothing else will be sent.",
+      {
+        post: `/bulletin-alert/confirm?token=${encodeURIComponent(token)}`,
+        label: "Confirm",
+      },
+    );
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/confirm",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return badLinkPage();
+    const result = await ctx.runMutation(internal.bulletinAlerts.confirmByToken, { token });
+    if (!result) {
+      return badLinkPage("This confirmation link is no longer valid.");
+    }
+    return messagePage(
+      "You're on the list",
+      `We'll email you when the State Department moves the final-action cutoff for ${result.series
+        .map(escapeHtml)
+        .join(", ")}. The full board is always on permtracker.app/tools/priority-date-calculator.`,
+    );
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return badLinkPage();
+    const ok = await ctx.runMutation(internal.bulletinAlerts.unsubscribeByToken, { token });
+    if (!ok) return badLinkPage("This link has expired or was changed.");
+    return messagePage(
+      "You're unsubscribed",
+      "You won't receive visa bulletin alerts from us.",
+    );
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return badLinkPage();
+    return messagePage(
+      "Stop your visa bulletin alerts?",
+      "You'll stop receiving emails when the cutoffs you watch move.",
+      { post: `/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+    );
+  }),
+});
+
+// ============================================================================
 // Employer follows
 //
 // Same posture as the three sibling alert families. One extra rule: the
