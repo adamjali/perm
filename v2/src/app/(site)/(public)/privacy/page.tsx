@@ -641,7 +641,7 @@ export default function PrivacyPage() {
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
-              To protect our sign-up, sign-in, and password-reset forms from
+              To protect our sign-up and password-reset forms from
               automated abuse, we use Cloudflare Turnstile, operated by
               Cloudflare, Inc.
             </p>{" "}

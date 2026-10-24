@@ -60,7 +60,7 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 17, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 23, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -584,8 +584,8 @@ export default function TermsPage() {
               session replays for advertising and never sell them, and we honor
               the Global Privacy Control (GPC) browser signal by sending no
               analytics at all from your browser. We also use Cloudflare
-              Turnstile on our authentication forms (sign-up, sign-in, password
-              reset) to prevent automated abuse; it processes limited device and
+              Turnstile on our sign-up and password-reset forms to prevent
+              automated abuse; it processes limited device and
               interaction signals but doesn’t read the contents of form fields. We additionally enforce per-IP and per-email rate
               limits on these endpoints. By using the Service, you consent to
               this data collection as described in our{" "}

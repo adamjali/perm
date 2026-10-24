@@ -188,7 +188,7 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     h1bStates = [];
   }
-  // The reviews page is dated by its newest review, from the same Senja read the page makes (never throws).
+  // The reviews page is dated by its newest review, from the same read the page makes (never throws).
   const reviewsAsOf = newestReviewDay((await getSiteReviews()).reviews);
   const allPosts = getAllPosts();
   if (allPosts.length === 0) {

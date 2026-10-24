@@ -107,8 +107,8 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
     // aggregateRating is intentionally omitted from this root schema because
     // it lives in the root @graph that ships on every page. Google's
     // rich-results policy requires the rating to be rendered on the same page
-    // as the structured data — and the rating widget (Senja) only renders on
-    // the homepage. The homepage emits a separate partial via
+    // as the structured data, and the rating line only renders on the homepage
+    // (and /reviews). The homepage emits a separate partial via
     // getHomepageRatingPartialSchema() below; Google's @id-graph merge
     // attaches the rating to this SoftwareApplication on that page only.
   };
@@ -233,14 +233,14 @@ export function getFAQPageSchema(faqs: { question: string; answer: string }[]) {
 }
 
 /**
- * The app's review rating when Senja can't be read.
+ * The app's review rating when the site's own reviews can't be read.
  *
- * Since Oct 23 2026 the homepage reads its reviews from Senja itself, once a
- * day (`getSiteReviews` in src/lib/reviews/senja.ts), and passes that rating to
- * both the visible line (ReviewsLine) and the JSON-LD below, so the two always
- * agree. This is the last rating recorded by hand, used only when Senja is
- * unreachable: the outside reviews of Oct 23 2026, 5 and 4 stars (insiders'
- * reviews are left out, INSIDER_REVIEW_IDS in src/lib/reviews/senjaParse.ts).
+ * Since Oct 23 2026 the homepage and /reviews read the site's own approved
+ * reviews (`getSiteReviews` in src/lib/reviews/read.ts, from convex/siteReviews.ts)
+ * and pass that rating to both the visible line (ReviewsLine) and the JSON-LD
+ * below, so the two always agree. This is the last rating recorded by hand,
+ * used only when that read fails: the outside reviews of Oct 23 2026, 5 and 4
+ * stars (insiders' reviews are never shown or counted).
  */
 export const APP_RATING = {
   value: '4.5',

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useAction, useMutation, useConvex } from "convex/react";
+import { useMutation, useConvex } from "convex/react";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@convex/_generated/api";
@@ -16,7 +16,6 @@ import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { AuthField } from "@/components/auth/AuthField";
-import { AuthTurnstile } from "@/components/auth/AuthTurnstile";
 import { validateEmailValue, fieldMessage } from "@/lib/auth/signup-validation";
 import {
   isNetworkError,
@@ -28,11 +27,9 @@ import {
   blockedResponseMessage,
 } from "@/lib/auth/auth-errors";
 import {
-  trackTurnstileFail,
   trackLoginSucceeded,
   trackLoginFailed,
   trackAbuseEvent,
-  captureTurnstileServiceError,
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
@@ -47,7 +44,6 @@ export function LoginPageClient() {
   const convex = useConvex();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
   const clearRateLimitMut = useMutation(api.authRateLimit.clearAuthRateLimit);
-  const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { completeSignOut } = useAuthContext();
@@ -60,11 +56,6 @@ export function LoginPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showExpiredBanner, setShowExpiredBanner] = useState(false);
-
-  // Interaction-only Turnstile: widget is invisible for low-risk users and
-  // emits a token silently. A challenge appears only if Cloudflare's ML
-  // flags the attempt. Token may be null briefly at mount.
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const emailValidation = validateEmailValue(email, emailTouched);
   const emailInvalid = emailValidation.state === "invalid";
@@ -126,29 +117,9 @@ export function LoginPageClient() {
         console.warn("[Login] suspension check failed:", suspensionError);
       }
 
-      // Interaction-only Turnstile: if Cloudflare decided no challenge was
-      // needed, token may be missing — that’s a legitimate low-risk user,
-      // proceed without pre-flight verification. If a token IS present, we
-      // verify it server-side (catches bot-mimic + replay attempts).
-      if (turnstileToken) {
-        try {
-          const verifyResult = await verifyTurnstile({ token: turnstileToken });
-          if (!verifyResult.success) {
-            trackTurnstileFail("login", "siteverify_rejected");
-            setTurnstileToken(null);
-            toast.error(verifyResult.error || "Security check failed. Please try again.");
-            setIsLoading(false);
-            return;
-          }
-          authBreadcrumb("login_turnstile_verified");
-        } catch (verifyError) {
-          captureTurnstileServiceError(verifyError, "login");
-          trackTurnstileFail("login", "service_error");
-          // Fail open — login shouldn’t be blocked by a Cloudflare outage.
-          console.warn("[Login] Turnstile verify threw; proceeding without check");
-        }
-      }
-
+      // No Cloudflare check here (owner, Oct 23 2026): sign-in never waited for one, so a box that could be
+      // skipped only confused people. The password and the per-address and per-email limits on /api/auth
+      // (src/lib/auth/authGate.ts) guard sign-in; sign-up and password reset still require the check.
       const formData = new FormData();
       formData.set("email", email);
       formData.set("password", password);
@@ -403,30 +374,6 @@ export function LoginPageClient() {
               Forgot password?
             </NavLink>
           </div>
-
-          {/* Interaction-only: widget self-hides when not needed. Takes zero
-              visual space for real users; appears inline above the button if
-              Cloudflare needs a challenge. */}
-          <AuthTurnstile
-            disabled={isLoading}
-            action="login"
-            appearance="interaction-only"
-            onVerify={(token) => {
-              setTurnstileToken(token);
-              authBreadcrumb("login_turnstile_token_received");
-            }}
-            onError={() => {
-              setTurnstileToken(null);
-              trackTurnstileFail("login", "service_error");
-            }}
-            onExpire={() => {
-              setTurnstileToken(null);
-              // Not a failure: the widget refreshes an idle token on its own
-              // (refreshExpired: "auto"), and counting each refresh as one
-              // would read as hundreds of failed checks a day from a few open
-              // tabs.
-            }}
-          />
 
           <Button
             type="submit"

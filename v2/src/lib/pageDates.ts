@@ -30,7 +30,7 @@ export type DateSource =
   | "h1b"
   /** The last decision day in DOL's published PERM files. */
   | "corpus"
-  /** The day the newest outside review was left on Senja (Eastern). */
+  /** The day the newest shown review was left (Eastern). */
   | "reviews";
 
 export type DateSources = { readonly [K in DateSource]?: string | null };
@@ -148,7 +148,7 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
  * An employer with no published record is dated by the newest change among
  * its own cases, a bulletin month by whether it's the newest bulletin, and
  * the H-1B rankings by a doc too large for every page to read, and the
- * reviews page by Senja's list, which every other page would wait on if the
+ * reviews page by its newest review, which every other page would wait on if the
  * layout read it; the layout can't know any of them from the address.
  */
 export const OWN_DATE: ReadonlySet<string> = new Set([

@@ -971,9 +971,9 @@ Ledger: [`.planning/search-unification-2026-10-18.md`](.planning/search-unificat
   afternoon at capacity. `withhold.py` redeploys at once: unless a request is urgent, run it after midnight Eastern.
   While Under Attack Mode is on, outside checks see Cloudflare's 403; check the origin from the server
   (`curl -H "Host: permtracker.app" http://127.0.0.1:8081/...`).
-- **Sign-in's Cloudflare check is advisory**: the login page's Turnstile is interaction-only and the server requires a
-  pass only to create a password account (`requireSignupPass`); sign-in is held by the per-address and per-email
-  limits in `src/proxy.ts`.
+- **Sign-in has no Cloudflare check** (owner's call, Oct 23 2026): it was advisory, so a box anyone could skip only
+  confused people. Sign-up and password reset still require one (`requireSignupPass`); sign-in is held by the password
+  and the per-address and per-email limits in `src/proxy.ts`.
 
 
 ## Oct 21 2026, in eight lines
