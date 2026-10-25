@@ -130,7 +130,7 @@ export function buildSorter(): Sorter {
   back.push(D(vent, { size: 0.45, tone: "mid" }));
   // the power switch on the end, above the vent
   back.push(S(k.slabOf({ x: 200, y: 31, w: 1.4, d: 5, r: 0.4 }, 31, 4, P, 2, 0.2), { tone: "mid", crease: "none" }));
-  back.push(S(k.slabOf({ x: 201.2, y: 32.6, w: 0.8, d: 1.8, r: 0.3 }, 32.2, 1.6, P, 2), { tone: "hi", crease: "none" }));
+  back.push(S(k.slabOf({ x: 201.2, y: 32.6, w: 0.8, d: 1.8, r: 0.3 }, 32.2, 1.6, P, 2), { tone: "mid", crease: "none" }));
 
   // --- the deck: plate, rails, ruler, wear plates ------------------------------------------
   const DECK: Plan = { x: 2, y: 2, w: 196, d: 42, r: 1.5 };
@@ -171,13 +171,18 @@ export function buildSorter(): Sorter {
   const POST: Plan = { x: 157, y: 3, w: 6, d: 6, r: 0.8 };
   back.push(S(k.slabOf({ x: 155, y: 1, w: 10, d: 10, r: 1 }, DECK_Z, 1.2, P, 3, 0.3), { tone: "lo" }));
   back.push(S(k.slabOf(POST, DECK_Z + 1.2, 12.8, P, 3, 0.3), { tone: "mid" }));
-  // the head's cable, down the post's front face from under the arm (the arm, drawn over, hides where it enters)
-  back.push(k.wireSvg(at([158, 9, 57]), at([158, 9, 47]), { tone: "lo", via: [at([156.4, 10.5, 52])], size: 0.6 }));
 
   const over: string[] = [];
-  over.push(S(k.slabOf({ x: 157.5, y: 4, w: 5, d: 23, r: 0.6 }, 56, 3, P, 3, 0.3), { tone: "mid" }));
-  over.push(S(k.cylinder(READ_X, TRACK_Y, 3.4, 50.6, 5.4, P, 28, 0.3), { tone: "mid", inner: L(k.sideArc(READ_X, TRACK_Y, 3.4, 52.4, P), { tone: "faint" }) }));
+  // bottom up: the reading ring, the head over it, then the arm that holds the head, resting on its top
   over.push(S(k.cylinder(READ_X, TRACK_Y, 2, 49.4, 1.2, P, 20), { tone: "lo", crease: "none" }));
+  over.push(S(k.cylinder(READ_X, TRACK_Y, 3.4, 50.6, 5.4, P, 28, 0.3), { tone: "mid", inner: L(k.sideArc(READ_X, TRACK_Y, 3.4, 52.4, P), { tone: "faint" }) }));
+  const ARM_SIDE_X = 162.5;
+  over.push(S(k.slabOf({ x: 157.5, y: 4, w: 5, d: 23, r: 0.6 }, 56, 3, P, 3, 0.3), { tone: "mid" }));
+  // the head's lead, up from under the arm's front and along its open side into the post, held by two clips
+  over.push(
+    k.wireSvg(at([ARM_SIDE_X, 26.4, 56]), at([ARM_SIDE_X, 4.6, 57.4]), { tone: "lo", via: [at([ARM_SIDE_X, 25.2, 57.4])], size: 0.6, ends: "none" }),
+  );
+  over.push(D([at([ARM_SIDE_X, 19, 57.4]), at([ARM_SIDE_X, 10, 57.4])], { size: 0.5, tone: "mid" }));
   // the knob that sets the reader's height
   over.push(S(k.cylinder(160, 6, 2.6, 59, 2.6, P, 24), { tone: "mid", inner: L(k.knurl(160, 6, 2.6, 59, 61.6, 22, P, 0), { tone: "lo" }) }));
 
