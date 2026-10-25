@@ -10429,3 +10429,19 @@ the inbox; a message the check holds is stored and listed, never deleted unread 
   morning report lists what was held by subject and domain (never an address).
 - **The Privacy Policy says so** (Section 9 and the contact form and Cloudflare entries, Last Updated Oct 25 2026),
   from Cloudflare's own Workers AI data-usage page: not kept after the request, not used for training.
+- **Tests for it, and two traps they hit**: `convex/lib/spamCheck.test.ts` (spam and real messages in five languages),
+  `convex/__tests__/inboundFilter.test.ts` (the route, held mail, Not spam, Delete, Spam, the clean-up, the contact
+  form's hold and Turnstile refusal), `convex/lib/turnstileVerify.test.ts`, the Worker's helpers in
+  `mailWorkerRules.test.ts`, and `mailWorkerEmail.test.ts`, which runs the Worker's real email handler on fake
+  messages and holds that only a clear hold keeps one out; each was probed by breaking the rule it holds. convex-test swallows a scheduled
+  action's throw: `sendReleased` died on a missing `AUTH_RESEND_KEY` and the test only saw nothing sent. And a
+  `vi.fn` declared with no parameters types `mock.calls` as empty tuples (TS2493 in the typecheck, fine in vitest).
+- **`publicMailReserve.test.ts` now filters the Worker stub's calls by URL**: the contact form asks `/classify` before
+  it sends, so "called once" became two calls.
+
+## Oct 25 2026 (afternoon): the attorney hero is one picture at every width
+
+Live 2:38 PM EDT (`af10f52b`, `-f when=now` on the owner's "live now"). Below 1280px the case card had dropped under the
+dashboard picture; now `AttorneyHero` is an `@container` and the hub, the card and the reminder keep their places,
+sized by share of its width and in container units (`AppWindow fluid` for the window chrome). The captions read
+"Sample cases." and the firm badge shows one tile, swapped by theme. Rules in `docs/DESIGN_SYSTEM.md`, "Pictures".

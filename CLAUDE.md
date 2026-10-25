@@ -1305,3 +1305,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 - **Replies to us, senders the owner let through and the services we hold accounts with always get through.**
 - **The contact form carries Turnstile**; a bad token is refused, a missing one only adds weight.
 - **The plain Llama 3.1 8B on Workers AI was retired May 30 2026**; the check uses Llama 3.3 70B fast.
+
+## Oct 25 2026 (afternoon): the attorney hero is one picture at every width
+
+- **It shrinks as a whole instead of breaking apart** (owner's call): an `@container` with its parts sized by share of
+  its width and in container units; `AppWindow fluid` scales the window chrome. Captions read "Sample cases.", and the
+  firm badge shows one tile, swapped by theme. Rules in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md), "Pictures".

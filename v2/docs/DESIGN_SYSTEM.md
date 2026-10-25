@@ -228,6 +228,16 @@ under reduced motion, where the figure holds still and only dragging moves it. N
 what's shown, no frame is empty, and every film is checked frame by frame before its final encode
 (`~/money/video/hyperframes/permtracker-campaign/SOURCES.md`).
 
+**A picture made of overlapping parts scales as one** (owner, Oct 25 2026: below 1280px the attorney hero's case card
+had dropped under the dashboard, "just make whole thing smaller instead"). `AttorneyHero` is an `@container`; the hub and
+the card are shares of its width, and the reminder's type is in container units. `AppWindow fluid` sizes the window's
+title bar, dots, URL and lime offset in `cqw`, equal to the fixed sizes at the 1,336px container. The hero keeps its
+wide capture at every width (`HUB_WIDE`): the phone capture would change the picture's shape.
+
+**A sample says so once**: "Sample cases." (owner, Oct 25 2026, cutting "The employers are invented."). `AppWindow`'s
+default caption still carries the longer line for its other callers. **A badge made for both themes shows one tile,
+swapped by theme** (`FirmSiteSection`), never light and dark side by side.
+
 ## The gates
 
 | Test | Holds |
