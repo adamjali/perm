@@ -63,7 +63,8 @@ DATA_WORKFLOWS = {
 
 # Pages a visitor reads every day. Each must answer 200 to a plain request.
 PROBES = ["/", "/perm-queue", "/perm-processing-times", "/visa-bulletin",
-          "/perm-employers", "/tools", "/sitemap.xml", "/llms.txt"]
+          "/perm-employers", "/perm-by-the-numbers", "/layoffs", "/tools",
+          "/sitemap.xml", "/llms.txt"]
 
 RANK = {"fail": 4, "warn": 3, "unknown": 2, "off": 1, "ok": 0}
 
@@ -365,10 +366,15 @@ def audit_lines(audit: dict, today: str, fails: list[str], warns: list[str], lin
     tools = sorted(f"{a['module']} {a['severity']} ({gid})" for gid, a in full.items() if gid not in prod)
     if tools:
         lines.append(f"pnpm audit: {plural(len(tools))} in the test and build tools only: {', '.join(tools)}.")
+    # The clean result is a line too, so a day with some other warning still says the audit ran and what it found.
     if not prod and not full:
+        lines.append("pnpm audit: nothing found.")
         return ", and pnpm audit finds nothing"
     if not prod:
+        lines.append("pnpm audit: nothing found in what the site ships.")
         return ", and pnpm audit finds nothing in what the site ships"
+    if not severe and not other:
+        lines.append("pnpm audit: only accepted advisories in what the site ships.")
     return ", and pnpm audit finds only accepted advisories in what the site ships"
 
 

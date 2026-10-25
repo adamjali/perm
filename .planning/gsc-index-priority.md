@@ -1459,3 +1459,25 @@ Still to request, in order:
 5. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
 
 After this list: `node scripts/gsc_queue.mjs --since fc078734` for anything newer.
+
+## Queue after the Oct 25 morning deploy (2e139f96, shipped by hand that morning)
+
+Written Sun Oct 25, 9:30 AM EDT. That deploy carries the new `/perm-by-the-numbers` page and layoff notices from 40
+states and DC (it read four). Everything here waits until `ssh permtracker 'sudo permtracker-deploy status'` shows
+2e139f96 or later live. Work it top down; it replaces Friday's Still to request list, which follows at the end.
+
+1. `/perm-by-the-numbers` (new; in pages.xml).
+2. `/layoffs` (40 states and DC now; request if last crawled before Oct 25).
+3. `/guides/employer-layoffs-and-your-perm`, `/guides/perm-layoff-rule-for-employers`,
+   `/blog/h1b-sponsors-layoff-notices-october-2026` (they name the states read; request if crawled before Oct 25).
+4. `/perm-employers/under-review` (its hold dates' wording moved into a shared helper; inspect only).
+5. `/perm-employers/google-llc` (sample of the employer family: layoff notices from more states can reach any
+   employer page; the sitemap's lastmod carries the rest).
+6. `/changelog` (Oct 19)
+7. `/uscis-processing-times`, `/tools/green-card-timeline`, only if last crawled before the Oct 23 2:10 AM deploy
+8. `/perm-employers/duk-j-corporation` (the one 4xx), `/perm-attorneys/browse/u`
+9. Inspect only; request any crawled before Oct 21: `/tools`, `/case-search`, `/visa-bulletin`, `/perm-employers`,
+   `/perm-attorneys`, `/perm-wages`, `/open-data`, `/badges`, `/press`, `/methodology`
+10. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
+
+After this list: `node scripts/gsc_queue.mjs --since 2e139f96` for anything newer.

@@ -82,6 +82,12 @@ def audit_findings_are_sorted() -> None:
     clean = {"prod": dm.audit_findings(doc()), "full": dm.audit_findings(doc())}
     sec = dm.security_verdict([], [], [], now, clean)
     check(sec["status"] == "ok" and sec["summary"].endswith("pnpm audit finds nothing"), f"a clean audit reads ok ({sec['summary']})")
+    # A day with another warning (an open scanning alert) still says the audit ran clean (Oct 25 2026: the
+    # morning report had no audit line because the summary went to the warning).
+    alert = [{"number": 494, "rule": {"id": "x", "security_severity_level": "medium"}}]
+    sec = dm.security_verdict(alert, [], [], now, clean)
+    check(sec["status"] == "warn" and "pnpm audit: nothing found." in sec["lines"],
+          f"a clean audit is a line on a day with another warning ({sec['lines']})")
     shipped = {"prod": dm.audit_findings(doc(crit)), "full": dm.audit_findings(doc(crit, dev))}
     sec = dm.security_verdict([], [], [], now, shipped)
     check(sec["status"] == "fail" and "@sentry/nextjs critical (GHSA-mchm-gjx6-7h55)" in sec["summary"],
