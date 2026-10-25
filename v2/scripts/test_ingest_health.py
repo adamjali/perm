@@ -532,6 +532,30 @@ def main() -> int:
     check("unclassified: every status classified reads ok, no warning",
           "::warning" not in out and out.count("every status on record is classified") == 3, out)
 
+    # --- layoff states that have never loaded -------------------
+    # No row means no budget to age past, so these warn by name every morning.
+    from ingest_warn import DATASET as WARN_DATASET, STATES as WARN_STATES  # noqa: PLC0415
+
+    class WarnRowsDB:
+        def __init__(self, keys):
+            self.keys = keys
+        def execute(self, sql, args=None):
+            rows = [[{"type": "text", "value": f"{WARN_DATASET}-{k}"}] for k in self.keys]
+            return {"response": {"result": {"rows": rows}}}
+
+    def warn_states(keys):
+        buf = _io.StringIO()
+        with _ctx.redirect_stdout(buf):
+            rc = health.check_warn_states(WarnRowsDB(keys))
+        return rc, buf.getvalue()
+
+    loaded = [k for k in WARN_STATES if k != "la"]
+    rc, out = warn_states(loaded)
+    check("layoff states: one never loaded warns and names it",
+          rc == 0 and "::warning::Layoff notices have never loaded for 1 state(s): Louisiana" in out, out)
+    rc, out = warn_states(list(WARN_STATES))
+    check("layoff states: every state loaded reads ok, no warning", "::warning" not in out, out)
+
     check_freshness_verdict()
     check_capped_partial_is_not_broken()
     check_hand_read_figures()
@@ -614,10 +638,11 @@ def check_main_combines_every_check() -> None:
                 {"type": "text", "value": "Daily"}, {"type": "integer", "value": str(int(NOW))}]]}}}
 
     saved = {name: getattr(health, name) for name in CHECKS + ("Database", "check_cap_streak",
-                                                              "check_unclassified_statuses", "check_hand_read_figures")}
+                                                              "check_unclassified_statuses", "check_warn_states",
+                                                              "check_hand_read_figures")}
     try:
         health.Database = FreshDB
-        for name in ("check_cap_streak", "check_unclassified_statuses", "check_hand_read_figures"):
+        for name in ("check_cap_streak", "check_unclassified_statuses", "check_warn_states", "check_hand_read_figures"):
             setattr(health, name, lambda *a: 0)
         for name in CHECKS:
             setattr(health, name, lambda db: 0)

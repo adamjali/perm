@@ -703,6 +703,31 @@ def check_unclassified_statuses(db) -> int:
     return 0
 
 
+def check_warn_states(db) -> int:
+    """Name every state the layoff reader covers that has never loaded. Freshness
+    is judged on each state's own `warn-notices-<st>` row, and a state that has
+    never written has no row, so it would never age into a failure: on Oct 25
+    2026 the five states read through the Internet Archive were refused on their
+    first run, and Kansas answered GitHub's runner with no results table. A
+    warning every morning until each one loads (ingest_warn.STATES is the list);
+    once a row exists, its own budget takes over."""
+    from ingest_warn import DATASET, STATES  # noqa: PLC0415
+    try:
+        have = {str(r[0]) for r in query_rows(
+            db, "SELECT dataset FROM data_freshness WHERE dataset LIKE ?", [f"{DATASET}-%"])}
+    except RuntimeError as exc:
+        print(f"layoff states     : unreadable ({str(exc)[:100]})")
+        return 0
+    never = sorted(cfg["name"] for st, cfg in STATES.items() if f"{DATASET}-{st}" not in have)
+    if not never:
+        print(f"layoff states     : all {len(STATES)} have loaded at least once  ok")
+        return 0
+    print(f"layoff states     : {len(never)} of {len(STATES)} never loaded  NEVER LOADED")
+    print(f"::warning::Layoff notices have never loaded for {len(never)} state(s): {', '.join(never)}. "
+          f"Each warns until it loads; read the WARN step of the newest Federal data ingest run")
+    return 0
+
+
 def check_lookup_demand(db) -> int:
     try:
         rows = query_rows(db, "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
@@ -878,6 +903,7 @@ def main() -> int:
     watched_bad = check_watched(db)
     check_cap_streak(db)        # a warning only; see CAP_STREAK_RUNS
     check_unclassified_statuses(db)   # a warning only; see its docstring
+    check_warn_states(db)             # a warning only; see its docstring
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)

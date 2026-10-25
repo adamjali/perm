@@ -172,7 +172,10 @@ def html_table(state: str, page: str, source_url: str, need: tuple[str, ...], sp
             found = True
             out.extend(from_rows(state, head, t[1:], source_url, spec, kinds))
     if not found:
-        raise ValueError(f"{state}: no table naming {need}")
+        # Quote the page's own title, so a refusal page reads as one in the run's log.
+        title = re.search(r"<title[^>]*>(.*?)</title>", page, re.I | re.S)
+        said = re.sub(r"\s+", " ", title.group(1)).strip()[:80] if title else "no title"
+        raise ValueError(f"{state}: no table naming {need} (the page's title: {said!r}, {len(page):,} characters)")
     return out
 
 
