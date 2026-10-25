@@ -9,18 +9,19 @@ import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { MoreText } from "@/components/data/MoreText";
+import { WARN_STATE_COUNT } from "@/lib/warnStates";
 
 /**
  * WARN layoff notices against the sponsor record. Every row is a filing as
  * the state printed it; a sponsor link means the filer's normalised name
- * equals a PERM employer's merge key, and nothing looser. Four states are read
- * (California, Texas, New York, Washington) and the page says which record
- * each comes from and what is still not covered.
+ * equals a PERM employer's merge key, and nothing looser. Forty states and DC
+ * are read (scripts/ingest_warn.py and scripts/warn_states.py name the
+ * sources), and the page says how they're read and which ten states aren't.
  */
 
 const TITLE = "Layoff Notices Against PERM Sponsors";
 const DESCRIPTION =
-  "WARN Act layoff and closing notices from California, Texas, New York and Washington, as each state publishes them, matched by name to DOL's PERM employers.";
+  "WARN Act layoff and closing notices from 40 states and DC, as each state publishes them, matched by name to DOL's PERM employers.";
 const PATH = "/layoffs";
 
 export const metadata: Metadata = withSocialCard({
@@ -75,28 +76,35 @@ export default async function LayoffsPage() {
           <WarnTable rows={matched} />
         )}{" "}
         <p className="mt-4 text-sm text-muted-foreground">
-          The table lists every one of the {matched.length.toLocaleString("en-US")} notices matched to a sponsor, out of{" "}
-          {totals.notices.toLocaleString("en-US")} held across the four states. Search by employer, site or county,
-          filter by state, kind, size or year, and sort on any column.
+          {matched.length < totals.matched
+            ? `The table lists the newest ${matched.length.toLocaleString("en-US")} of the ${totals.matched.toLocaleString("en-US")} notices matched to a sponsor,`
+            : `The table lists every one of the ${matched.length.toLocaleString("en-US")} notices matched to a sponsor,`}{" "}
+          out of {totals.notices.toLocaleString("en-US")} held across {WARN_STATE_COUNT - 1} states and DC. Search by
+          employer, site or county, filter by state, kind, size or year, and sort on any column.
         </p>
       </section>
 
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-2xl font-bold">What is read, and what is not</h2>{" "}
-        <MoreText gist={"Four states' WARN records only: a sponsor with layoffs elsewhere isn't cleared here."} className="mt-3">
+        <MoreText gist={"Forty states and DC are read. A sponsor with layoffs in the other ten isn't cleared here."} className="mt-3">
           <p className="text-base leading-relaxed text-soft">
-            Four states are read, each from the record it publishes, and all four refresh on their own. California&apos;s
-            Employment Development Department posts its WARN report as a spreadsheet; New York&apos;s current notices sit
-            in a public dashboard that also serves them as a table; Washington keeps a searchable database of every
-            notice received, walked newest first; and Texas publishes its notices on the state open data portal, which
-            reaches back to 2019. Texas is the one with a caveat worth stating: the portal trails the agency&apos;s own
-            yearly spreadsheet by a month or two, and that spreadsheet turns automated requests away, so the most recent
-            Texas weeks arrive only when someone loads the file by hand. Each state&apos;s newest notice is checked
-            against its own budget, so a source going quiet shows up as a stale date rather than shrinking to a silent
-            zero. Every other state, and anything published before the window read here, shows nothing, so a sponsor
-            with layoffs elsewhere is not cleared by this page. A match means the filer&apos;s
-            normalised name equals a PERM employer&apos;s, the same rule that groups DOL&apos;s own spellings of one
-            company; a subsidiary filing under its own name does not match its parent, on purpose.
+            Forty states and the District of Columbia are read, each from the record it publishes, and each refreshes on
+            its own. Most post a spreadsheet, a list or a page a year. A few print their notices in a PDF, and five share
+            one job-center search. Notices from 2019 on are kept, or from whenever a state&apos;s record begins. New
+            Jersey and Pennsylvania print only the month a notice was posted, so the month is shown. Oklahoma prints no
+            worker count, and Hawaii&apos;s notices before August 2026 are letters, so those rows carry no count.
+            Texas&apos;s open data portal trails the agency&apos;s own spreadsheet by a few months. Each state&apos;s
+            newest notice is checked against its own budget, so a source going quiet shows up as a stale date rather
+            than a silent zero.
+          </p>{" "}
+          <p className="mt-3 text-base leading-relaxed text-soft">
+            Ten states aren&apos;t read. Arkansas doesn&apos;t publish its notices, and Wyoming&apos;s site lists none.
+            Louisiana and New Mexico ask automated readers not to read their files. Rhode Island, Missouri, Nevada, New
+            Hampshire and Minnesota turn scripts away with a browser check, and West Virginia posts only the notice
+            letters. A sponsor with layoffs in those states, or before the window read here, isn&apos;t cleared by this
+            page. A match means the filer&apos;s normalised name equals a PERM employer&apos;s, the same rule that groups
+            DOL&apos;s own spellings of one company. A subsidiary filing under its own name doesn&apos;t match its
+            parent, on purpose.
           </p>
         </MoreText>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">

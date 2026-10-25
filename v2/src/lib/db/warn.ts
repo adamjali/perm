@@ -6,8 +6,8 @@ import { rows } from "@/lib/db/client";
 
 /**
  * WARN notices, as the states publish them, matched to PERM sponsors by the
- * entity merge key. California, Texas, New York and Washington, each from the
- * record its state publishes (scripts/ingest_warn.py names the sources).
+ * entity merge key. Forty states and DC, each from the record its state
+ * publishes (scripts/ingest_warn.py and scripts/warn_states.py name the sources).
  * A notice is one filing with the state's own numbers; nothing here is a
  * layoff count for a company.
  */
@@ -15,6 +15,7 @@ import { rows } from "@/lib/db/client";
 export interface WarnNotice {
   id: string;
   state: string;
+  /** The day, or the month alone ("2026-10") where a state prints no day: New Jersey, Pennsylvania. */
   noticeDate: string;
   effectiveDate: string | null;
   company: string;
@@ -25,8 +26,8 @@ export interface WarnNotice {
   employerSlug: string | null;
   sourceUrl: string;
   /**
-   * Where the notice applies, as the state printed it: the address in
-   * California and New York, the city in Texas, null in Washington (whose
+   * Where the notice applies, as the state printed it: an address where the
+   * state gives one, a city where it gives that, null in Washington (whose
    * location is already `county`). Display only; it is what tells apart two
    * notices one company filed the same day for different sites.
    */
@@ -117,7 +118,7 @@ export const warnTotals = cache(async (): Promise<WarnTotals> => {
 /**
  * Every notice matched to a sponsor, newest first, for the layoffs table.
  *
- * Taking the newest 400 notices of all four states and keeping the matched
+ * Taking the newest 400 notices of every state and keeping the matched
  * ones would drop every matched notice older than the 400th filing anywhere.
  * The whole table is a few thousand rows, so reading the matched set outright
  * is a walk of the date index the page's six-hour window pays for four times

@@ -5,14 +5,12 @@ import Link from "next/link";
 import { FilterableStatTable, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { WarnNotice } from "@/lib/db/warn";
-import { shortDate } from "@convex/lib/months";
 import { entityHref } from "@/lib/entityPayload";
-
-const long = (iso: string) => shortDate(iso) ?? iso;
+import { warnDate, warnStateName } from "@/lib/warnStates";
 
 
 export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
-  { key: "notice", label: "Notice", sortValue: (r) => r.noticeDate, render: (r) => long(r.noticeDate) },
+  { key: "notice", label: "Notice", sortValue: (r) => r.noticeDate, render: (r) => warnDate(r.noticeDate) },
   {
     key: "company",
     label: "Employer, as filed",
@@ -51,7 +49,7 @@ export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
     key: "effective",
     label: "Effective",
     sortValue: (r) => r.effectiveDate,
-    render: (r) => (r.effectiveDate ? long(r.effectiveDate) : ""),
+    render: (r) => (r.effectiveDate ? warnDate(r.effectiveDate) : ""),
     secondary: true,
   },
 ];
@@ -77,7 +75,7 @@ const SIZE_LABEL: Record<string, string> = {
 };
 
 export const WARN_FACETS: Facet<WarnNotice>[] = [
-  { key: "state", label: "State", value: (r) => r.state },
+  { key: "state", label: "State", value: (r) => r.state, format: warnStateName },
   { key: "kind", label: "Kind", value: (r) => r.kind },
   { key: "size", label: "Size", value: (r) => sizeBand(r.employees), format: (v) => SIZE_LABEL[v] ?? v },
   { key: "year", label: "Year", value: (r) => r.noticeDate.slice(0, 4) },

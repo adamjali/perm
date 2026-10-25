@@ -5,24 +5,27 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { formatInt } from "@/lib/format";
 import type { WarnNotice } from "@/lib/db/warn";
 import { entityHref } from "@/lib/entityPayload";
+import { warnStateName } from "@/lib/warnStates";
 
 /**
  * The notices matched to a sponsor, drawn two ways before the table: by the
  * state that published them, and by the sponsors whose notices named the
  * most employees. The page had opened on three counts and a 491-row table.
  *
- * NOT BY MONTH. The four states publish different windows (New York's list is
- * the current year, Texas's portal reaches back to 2019), so a month-by-month
- * chart climbs where coverage begins and reads as a wave of layoffs that isn't
- * one. Each state's bar says the dates its notices span instead.
+ * NOT BY MONTH. The states publish different windows (New York's list is the
+ * current year, Pennsylvania's starts in 2023, Texas's portal reaches back to
+ * 2019), so a month-by-month chart climbs where coverage begins and reads as a
+ * wave of layoffs that isn't one. Each state's bar says the dates its notices
+ * span instead. The states whose sponsors' notices named the most employees
+ * are drawn, and the rest are counted in one line, so the chart stays a chart
+ * with forty-one states read.
  *
  * Employees are as each state printed them; a notice that printed none adds
  * to the counts and nothing to the employees.
  */
 
 const SPONSORS_DRAWN = 8;
-
-const STATE_NAME: Record<string, string> = { CA: "California", NY: "New York", TX: "Texas", WA: "Washington" };
+const STATES_DRAWN = 12;
 
 const monthShort = (d: string) =>
   new Date(`${d.slice(0, 7)}-15T12:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
@@ -38,7 +41,10 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
     if (r.noticeDate > b.last) b.last = r.noticeDate;
     byState.set(r.state, b);
   }
-  const states = [...byState].sort((a, b) => b[1].employees - a[1].employees);
+  const ranked = [...byState].sort((a, b) => b[1].employees - a[1].employees);
+  const states = ranked.slice(0, STATES_DRAWN);
+  const rest = ranked.slice(STATES_DRAWN);
+  const restNotices = rest.reduce((n, [, b]) => n + b.notices, 0);
   const maxState = Math.max(1, ...states.map(([, b]) => b.employees));
 
   // One row per sponsor page, named by the spelling its notices use most.
@@ -74,11 +80,11 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
             {states.map(([st, b]) => (
               <Fragment key={st}>
                 <li
-                  data-tip={`${STATE_NAME[st] ?? st}\n${formatInt(b.notices)} ${b.notices === 1 ? "notice" : "notices"}\n${formatInt(b.employees)} employees\n${monthShort(b.first)} to ${monthShort(b.last)}`}
+                  data-tip={`${warnStateName(st)}\n${formatInt(b.notices)} ${b.notices === 1 ? "notice" : "notices"}\n${formatInt(b.employees)} employees\n${monthShort(b.first)} to ${monthShort(b.last)}`}
                   className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_4.5rem] items-center gap-3 [&>*]:min-w-0"
                 >
                   <span className="text-sm">
-                    <span className="block font-bold">{STATE_NAME[st] ?? st}</span>{" "}
+                    <span className="block font-bold">{warnStateName(st)}</span>{" "}
                     <span className="block text-muted-foreground">
                       {monthShort(b.first)} to {monthShort(b.last)}
                     </span>
@@ -94,7 +100,13 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
               </Fragment>
             ))}
           </ol>
-        </ChartTips>
+        </ChartTips>{" "}
+        {rest.length > 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {formatInt(rest.length)} more {rest.length === 1 ? "state" : "states"} hold {formatInt(restNotices)}{" "}
+            {restNotices === 1 ? "notice" : "notices"} from sponsors; filter the table by state to see them.
+          </p>
+        ) : null}
       </figure>{" "}
       <figure className="m-0 bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
         <figcaption>

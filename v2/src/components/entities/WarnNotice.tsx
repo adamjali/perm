@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { WarnNotice as Notice } from "@/lib/db/warn";
+import { warnDate, warnStateName } from "@/lib/warnStates";
 
 /**
  * A sponsor's WARN notices, on its own page. One line per filing as the
@@ -13,8 +14,8 @@ import type { WarnNotice as Notice } from "@/lib/db/warn";
  * and read as a duplicate.
  */
 
-const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-const STATE_NAME: Record<string, string> = { CA: "California", TX: "Texas", NY: "New York", WA: "Washington" };
+// New Jersey and Pennsylvania print a notice's month, not its day: "October 2026".
+const long = (iso: string) => warnDate(iso, "long");
 
 export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: string }) {
   if (rows.length === 0) return null;
@@ -40,7 +41,7 @@ export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: s
             {r.county ? `, ${r.county}` : ""}
             {r.effectiveDate ? `, effective ${long(r.effectiveDate)}` : ""}.{" "}
             <a href={r.sourceUrl} rel="noopener noreferrer" className="link">
-              {STATE_NAME[r.state] ?? r.state} WARN report
+              {warnStateName(r.state)} WARN report
             </a>{" "}
             {r.site ? <span className="block text-muted-foreground">{r.site}</span> : null}
           {" "}</li>
