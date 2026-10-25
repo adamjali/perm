@@ -23,14 +23,19 @@ export const WARN_STATE_NAMES: Readonly<Record<string, string>> = {
   IA: "Iowa",
   KS: "Kansas",
   KY: "Kentucky",
+  LA: "Louisiana",
   ME: "Maine",
   MD: "Maryland",
   MA: "Massachusetts",
   MI: "Michigan",
+  MN: "Minnesota",
   MS: "Mississippi",
+  MO: "Missouri",
   MT: "Montana",
   NE: "Nebraska",
+  NV: "Nevada",
   NJ: "New Jersey",
+  NM: "New Mexico",
   NY: "New York",
   NC: "North Carolina",
   ND: "North Dakota",
@@ -38,6 +43,7 @@ export const WARN_STATE_NAMES: Readonly<Record<string, string>> = {
   OK: "Oklahoma",
   OR: "Oregon",
   PA: "Pennsylvania",
+  RI: "Rhode Island",
   SC: "South Carolina",
   SD: "South Dakota",
   TN: "Tennessee",
@@ -46,10 +52,11 @@ export const WARN_STATE_NAMES: Readonly<Record<string, string>> = {
   VT: "Vermont",
   VA: "Virginia",
   WA: "Washington",
+  WV: "West Virginia",
   WI: "Wisconsin",
 };
 
-/** How many jurisdictions are read: 40 states and the District of Columbia. */
+/** How many jurisdictions are read: 47 states and the District of Columbia. */
 export const WARN_STATE_COUNT = Object.keys(WARN_STATE_NAMES).length;
 
 export function warnStateName(code: string): string {

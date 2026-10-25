@@ -10355,6 +10355,7 @@ plain request gets back), and every state a script may read now has a reader.
   2026 plus a week, never under the newest notice's age that day plus two weeks: 28 days for Illinois and Maryland,
   six to ten weeks for most, and ten months to a year for Alaska, Delaware and North Dakota, which post a few a
   year.
+- **Superseded the same day (Oct 25 2026, midday): 47 states and DC**, below. The list that follows is the morning's.
 - **Not read, and why** (checked Oct 25 2026; also in warn_states.py's docstring): Arkansas publishes none and
   Wyoming's site lists none; Louisiana and New Mexico serve their files but robots.txt disallows them; Rhode Island
   (Cloudflare), Missouri (Imperva), Nevada and New Hampshire (Akamai) answer scripts with a bot wall; Minnesota's page
@@ -10371,3 +10372,26 @@ plain request gets back), and every state a script may read now has a reader.
   first scheduled run.
 - **`/layoffs`** names the ten states it doesn't read, draws the twelve busiest states and sums the rest, and says when
   the table lists the newest of more notices than it holds.
+
+## Oct 25 2026 (midday): WARN notices from 47 states and DC
+
+- **Three states publish no list, each checked on the agency's own page**: Arkansas ("does not publish or
+  disseminate specific company data, including WARN notices, due to confidentiality requirements", A.C.A.
+  § 11-10-314); New Hampshire (neither Employment Security nor the Office of Workforce Opportunity lists notices);
+  Wyoming (its page says the state "follows the federal WARN Act requirements" and lists none).
+- **Seven states whose own sites turn scripts away are read from the Internet Archive's copies**: Louisiana and New
+  Mexico (robots.txt asks scripts off their files), Missouri (an hCaptcha check), Nevada, and Texas's agency
+  spreadsheet; Rhode Island's own page first, the Archive when it refuses. Nothing at the state's site is asked
+  for, nothing is solved or disguised, and the Archive has no robots.txt (404). The same reasoning as the visa
+  bulletin's Archive route. A copy is only as new as the Archive's last visit, so these states' budgets are long
+  (70 days for Louisiana and Missouri, 120 for Nevada and Rhode Island, 200 for New Mexico), from their visit gaps.
+- **Minnesota and West Virginia are read from their own sites**, inside what their robots.txt asks: Minnesota
+  only in its visit window (00:00 to 12:00 UTC, 10 requests a minute), else the Archive; West Virginia 10 seconds
+  between requests. West Virginia's compiled list covers 2022 to 2024; outside it, its notices are letters, so
+  those rows carry no count, and Minnesota prints none.
+- **Every copy is checked before it's read** (a PDF must be a PDF, a page must hold its table), so the Archive's
+  empty stub pages can't load as data. **The Archive answers 429 to a burst**: two runs at once from one
+  address got it refusing every request for a while. The readers back off (30, 30, 90 seconds) and then warn
+  and leave that state for the next day; its freshness row is the alarm. Never run two Archive readers at once.
+- **First real load**: Rhode Island parsed live on Oct 25 (69 notices, Jan 2019 to Oct 8 2026); the
+  Archive-sourced states load on the next daily run from GitHub's runners.

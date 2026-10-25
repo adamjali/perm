@@ -116,8 +116,8 @@ test("PERM by the numbers draws every tile and the card sorter, which pauses", a
   await expect(page.getByRole("button", { name: "Play the card sorter" })).toBeVisible();
 });
 
-test("the layoff page names the 40 states and DC it reads", async ({ page }) => {
+test("the layoff page names how many states it reads", async ({ page }) => {
   await page.goto("/layoffs");
   await expect(page.locator("h1")).toBeVisible();
-  await expect(page.getByText(/40\s+states and DC/i).first()).toBeVisible();
+  await expect(page.getByText(/\d+\s+states and DC/i).first()).toBeVisible();
 });

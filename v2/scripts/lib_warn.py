@@ -9,8 +9,16 @@ the same id rule.
 Every request goes through `get()` or `post()`, which ask the host's
 robots.txt first (lib_gov_data.robots_allowed, RFC 9309 longest match) and
 refuse a path the host asks automated clients not to read. Nothing here gets
-past a bot wall or a challenge page: a state that answers scripts with one is
-left out of the reader list, not worked around.
+past a bot wall or a challenge page: no proxy, no solved check, no faked
+browser state.
+
+Where a state's own host refuses scripts (a browser check, or robots.txt
+asking automated readers to stay out), its files are read from the Internet
+Archive's copy instead (`archive_copy`), and the state's host is never asked.
+The Archive is a public library of public pages built to be read by programs,
+so reading it gets past nothing. Its copy is only as new as its newest
+capture; each such state's freshness budget allows for that, and the run's
+note names the capture's date.
 """
 from __future__ import annotations
 
@@ -247,10 +255,23 @@ def assign_ids(rows: list[dict]) -> list[dict]:
     return rows
 
 
+# A notice dated more than this far ahead is a typing slip in the state's file
+# (Rhode Island printed 2108 for two 2018 notices), not a notice from the
+# future; it's left out and named. A few days ahead (Ohio, Utah) is kept, and
+# stamp_date never lets one date freshness past today.
+FUTURE_SLIP_DAYS = 366
+
+
 def finish(rows: list[dict], since: str | None) -> list[dict]:
-    """Drop rows with no company or no notice date and those before `since`,
-    then give the rest their ids. Every new state's parser ends here."""
-    kept = [r for r in rows if r["company"] and r["notice_date"]
+    """Drop rows with no company or no notice date, those before `since` and
+    those dated impossibly far ahead, then give the rest their ids. Every new
+    state's parser ends here."""
+    latest = (dt.date.today() + dt.timedelta(days=FUTURE_SLIP_DAYS)).isoformat()
+    slips = [r for r in rows if r["notice_date"] and as_of_date(r["notice_date"]) > latest]
+    if slips:
+        print(f"  {slips[0]['state']}: {len(slips)} notice(s) dated past {latest[:4]}, a slip in the state's file, "
+              f"left out: " + ", ".join(f"{r['company']} ({r['notice_date']})" for r in slips), flush=True)
+    kept = [r for r in rows if r["company"] and r["notice_date"] and r not in slips
             and (since is None or as_of_date(r["notice_date"]) >= since)]
     return assign_ids(kept)
 
@@ -342,6 +363,130 @@ def is_unreachable(exc: BaseException) -> bool:
         return exc.code in TRANSIENT_STATUS
     return isinstance(exc, (urllib.error.URLError, TimeoutError, ConnectionError, ssl.SSLError,
                             http.client.HTTPException))
+
+
+# --- the Internet Archive -----------------------------------------------------------
+# A state whose own host refuses scripts is read from the Archive's newest copy
+# of its file or page (see the module docstring). The Archive answers its own
+# "Temporarily Offline" page in bursts (seen several times on Oct 25 2026), so
+# each call is asked again a few times, a little longer apart each time, and a
+# copy that is still not there reads as the source being down: the state's
+# freshness row is the alarm, never the run.
+WAYBACK = "https://web.archive.org"
+ARCHIVE_OFFLINE = b"Internet Archive: Temporarily Offline"
+# The Archive answered 429 to a burst of about twenty requests in a minute
+# (Oct 25 2026), so its requests are spaced: a whole run asks it about forty
+# times, which this keeps to about three minutes. A request it refuses is
+# asked again after ARCHIVE_WAITS; one it still refuses marks the Archive
+# down for the rest of the run, and so does the run spending ARCHIVE_BUDGET_S
+# on it, so a bad day at the Archive costs one state's row a day's freshness,
+# never the whole WARN step its time limit.
+ARCHIVE_GAP_S = 4.0
+ARCHIVE_WAITS = (30, 90)
+ARCHIVE_BUDGET_S = 900
+_archive = {"last": 0.0, "spent": 0.0, "down": ""}
+
+
+class ArchiveCopy(NamedTuple):
+    data: bytes
+    captured: str   # the capture's day, ISO
+    url: str        # the address the Archive captured
+
+
+def _archive_read(url: str) -> bytes:
+    """One Archive request: spaced from the last, asked again while the Archive
+    says it is busy or offline, and refused at once when it was found down
+    earlier in the run.
+
+    A capture is served as the state sent it, so a page the state gzipped
+    arrives gzipped; it is unpacked here.
+    """
+    import gzip
+
+    if _archive["down"]:
+        raise urllib.error.URLError(f"the Internet Archive was found {_archive['down']} earlier in this run")
+    if _archive["spent"] > ARCHIVE_BUDGET_S:
+        _archive["down"] = f"too slow ({ARCHIVE_BUDGET_S} s spent on it)"
+        raise urllib.error.URLError(f"the Internet Archive has used this run's {ARCHIVE_BUDGET_S} s")
+    started = time.monotonic()
+    try:
+        for attempt, wait in enumerate((*ARCHIVE_WAITS, None), start=1):
+            idle = ARCHIVE_GAP_S - (time.monotonic() - _archive["last"])
+            if idle > 0:
+                time.sleep(idle)
+            try:
+                _archive["last"] = time.monotonic()
+                data = gov_fetch(url, attempts=1)
+                if data[:2] == b"\x1f\x8b":
+                    data = gzip.decompress(data)
+                if ARCHIVE_OFFLINE not in data[:4000]:
+                    return data
+                reason = "offline"
+            except urllib.error.HTTPError as exc:
+                if exc.code not in (429, 502, 503, 504):
+                    raise
+                reason = f"refusing (HTTP {exc.code})"
+            except (urllib.error.URLError, ConnectionError, TimeoutError) as exc:
+                reason = f"unreachable ({type(exc).__name__})"
+            if wait is None:
+                _archive["down"] = reason
+                raise urllib.error.URLError(f"the Internet Archive is {reason} ({url[:100]})")
+            print(f"  the Internet Archive is {reason}; asking again in {wait}s", flush=True)
+            time.sleep(wait)
+    finally:
+        _archive["spent"] += time.monotonic() - started
+    raise RuntimeError("unreachable")
+
+
+def _cdx(params: dict) -> list[list[str]]:
+    import json
+
+    body = _archive_read(f"{WAYBACK}/cdx/search/cdx?" + urllib.parse.urlencode({**params, "output": "json"}))
+    rows = json.loads(decode(body) or "[]")
+    return rows[1:] if rows else []
+
+
+def archive_captures(url: str, newest: int = 12) -> list[str]:
+    """The timestamps of the Archive's newest good captures of `url`, newest first."""
+    rows = _cdx({"url": url, "fl": "timestamp", "filter": "statuscode:200", "limit": f"-{newest}"})
+    return [r[0] for r in reversed(rows)]
+
+
+def archive_copy(url: str, accept=None, newest: int = 12) -> ArchiveCopy:
+    """The Archive's newest capture of `url` that `accept(data)` takes.
+
+    `accept` turns away a capture of the wrong thing: a bot wall's stub page
+    the Archive was itself handed, a page without the list. Raises LookupError
+    when no capture passes, which a caller reads as "this file was never
+    captured whole", never as an empty list.
+    """
+    for ts in archive_captures(url, newest):
+        data = _archive_read(f"{WAYBACK}/web/{ts}id_/{url}")
+        if accept is None or accept(data):
+            return ArchiveCopy(data, f"{ts[:4]}-{ts[4:6]}-{ts[6:8]}", url)
+        pause(0.5)
+    raise LookupError(f"the Internet Archive holds no usable copy of {url}")
+
+
+def archive_index(prefix: str, pattern: str) -> list[str]:
+    """Every address under `prefix` the Archive has captured whose last part
+    matches `pattern`: discovery from the Archive's own index, never a guessed
+    file name. One address per path (a file reached as www. and www2. is one)."""
+    seen: dict[str, str] = {}
+    for (orig,) in _cdx({"url": prefix, "matchType": "prefix", "collapse": "urlkey", "fl": "original",
+                         "filter": "statuscode:200"}):
+        name = urllib.parse.unquote(orig.rsplit("/", 1)[-1])
+        if re.search(pattern, name, re.I):
+            seen.setdefault(name.lower(), orig)
+    return list(seen.values())
+
+
+def is_pdf(data: bytes) -> bool:
+    return data[:5] == b"%PDF-"
+
+
+def is_xlsx(data: bytes) -> bool:
+    return data[:2] == b"PK"
 
 
 # --- pages ----------------------------------------------------------------------

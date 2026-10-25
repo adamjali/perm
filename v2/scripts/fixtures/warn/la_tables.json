@@ -1,0 +1,105 @@
+[
+[
+[
+"Company Name",
+"Address",
+"Notice\nDate",
+"Layoff\nDate",
+"Employees\nAffected",
+"Industry"
+],
+[
+"Westlake\nCorporation",
+"330 Belden Street\nLake Charles, LA 70601",
+"12/15/25",
+"2/14/26",
+"121",
+"Petrochemical\nManufacturing"
+],
+[
+"McGlinchey\nStafford PLLC",
+"601 Poydras Street,\nSuite 1200\nNew Orleans, LA 70130",
+"1/13/26",
+"3/16/26",
+"101",
+"Legal Services"
+],
+[
+"Denka Performance\nElastomer LLC",
+"560 Highway 44\nLaPlace, LA 70068",
+"1/30/26",
+"4/1/26",
+"45",
+"Chemical\nManufacturing"
+]
+],
+[
+[
+"Company Name",
+"Notice\nDate",
+"Layoff\nDate",
+"Employees\nAffected",
+"Industry"
+],
+[
+"Lost Boys Interactive, LLC\n6417 Normandy Lane\nSuite 201\nMadison, WI 53719",
+"1/11/24",
+"3/15/24",
+"125*\n*Only one\nemployee\naffected in\nLouisiana.",
+"Video Game Developer"
+],
+[
+"Diamond Offshore\nAuriga Rig\nU.S. Gulf of Mexico\n3550 Taxi Road\nHouma, LA 70363",
+"1/26/24",
+"3/01/24\n\u2013\n4/30/24",
+"176",
+"Oil & Gas"
+],
+[
+"ADT Solar\n233 General Patton Ave\nMandeville, LA 70471",
+"2/23/24",
+"2/23/24\n\u2013\n12/31/24",
+"*292\n*Only forty (40)\nemployees\naffected in\nLouisiana.",
+"Contractor/Special Trade\nContractor"
+]
+],
+[
+[
+"Company Name",
+"Notice\nDate",
+"Layoff\nDate",
+"Employees\nAffected",
+"Industry"
+],
+[
+"General Dynamics Information\nTechnology (GDIT)",
+"Not\nspecified",
+"11/14/25",
+"103",
+"IT Services / Federal\nContracting"
+]
+],
+[
+[
+"Company Name",
+"Notice Date",
+"Layoff\nDate",
+"E m p loyees\nAffected",
+"Industry"
+],
+[
+"Sears Roebuck and Co\n4400 Veterans Blvd\nMetairie, LA 70006",
+"1/3/19",
+"3/24/19",
+"68",
+"Retail"
+],
+[
+"Saint-Gobain\nCertainTeed\n3300 Pete Manena Road\nWestlake, LA 70669",
+"1/3/19",
+"3/2/19",
+"50",
+"Manufacturing"
+]
+]
+]

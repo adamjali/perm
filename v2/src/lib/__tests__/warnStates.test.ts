@@ -21,7 +21,7 @@ describe("WARN states", () => {
     // A control: a pattern that matched nothing would make the next line pass.
     expect(Object.keys(read).length).toBeGreaterThan(30);
     expect(WARN_STATE_NAMES).toEqual(read);
-    expect(WARN_STATE_COUNT).toBe(41);
+    expect(WARN_STATE_COUNT).toBe(48);
   });
 
   it("prints a month-only notice as the month, never a day", () => {

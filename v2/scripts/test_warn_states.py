@@ -166,10 +166,38 @@ CASES = [
     ("SC", "South Carolina PDF", lambda: ws.parse_south_carolina(js("sc_tables.json")), 5,
      {"company": "Saddle Creek Logistics Services", "notice_date": "2026-01-02", "employees": 130,
       "kind": "Permanent Layoff", "county": "Spartanburg"}),
+    # The states whose own host turns scripts away, read Oct 25 2026.
+    ("MN", "Minnesota layoff page", lambda: ws.parse_minnesota(b("mn_warn_page.html")), 7,
+     {"company": "Pearson's Candy Company", "notice_date": "2026-10-20", "kind": "Update", "employees": None}),
+    ("MN", "Minnesota archive page", lambda: ws.parse_minnesota(b("mn_warn_archive.html"), ws.MN_ARCHIVE), 2,
+     {"company": "Ferring Pharmaceuticals", "notice_date": "2023-12-06"}),
+    ("RI", "Rhode Island workbook", lambda: ws.parse_rhode_island(b("ri_warn.xlsx")), 5,
+     {"company": "Hasbro, Inc.", "notice_date": "2026-10-08", "effective_date": "2026-12-24", "employees": 587,
+      "kind": "Closure", "site": "Pawtucket, RI"}),
+    ("LA", "Louisiana files", lambda: ws.parse_louisiana(js("la_tables.json")), 8,
+     {"company": "Westlake Corporation", "notice_date": "2025-12-15", "effective_date": "2026-02-14",
+      "employees": 121, "industry": "Petrochemical Manufacturing", "site": "330 Belden Street Lake Charles, LA 70601"}),
+    ("NM", "New Mexico file", lambda: ws.parse_new_mexico(js("nm_tables.json")), 3,
+     {"company": "Atkore HDPE, LLC", "notice_date": "2026-04-27", "effective_date": "2026-06-30", "employees": 51,
+      "county": "Bernalillo", "site": "Albuquerque"}),
+    ("MO", "Missouri year page", lambda: ws.parse_missouri(b("mo_warn_2026.html")), 3,
+     {"company": "TelaForce, LLC", "notice_date": "2026-01-19", "effective_date": "2026-03-20", "employees": 104,
+      "kind": "Loss of Contract", "county": "Jackson", "industry": "Business Services", "site": "Kansas City"}),
+    ("NV", "Nevada master list", lambda: ws.parse_nevada(js("nv_lines_2026.json")), 5,
+     {"company": "Spirit Airlines", "notice_date": "2026-01-22", "effective_date": "2026-03-15", "employees": 1,
+      "kind": "Layoff", "county": "Clark", "site": "Las Vegas"}),
+    ("WV", "West Virginia compiled list", lambda: ws.parse_west_virginia_compiled(js("wv_compiled_tables.json")), 3,
+     {"company": "Vimo, Inc. dba GetInsured", "notice_date": "2024-12-20", "effective_date": "2024-12-06",
+      "employees": 1, "kind": "Terminations", "county": "Wetzel"}),
+    ("WV", "West Virginia letters", lambda: ws.parse_west_virginia(b("wv_warn_page.html"), ("2022-01-01", "2025-01-03")),
+     9, {"company": "ECM Energy Services", "notice_date": "2026-08-19", "employees": None}),
 ]
 
 # The states that print a notice's month and not its day.
 MONTH_ONLY = {"NJ", "PA"}
+# West Virginia dates a letter by its day where the link says it, else by the
+# month the link names or the file was posted.
+MIXED_DATES = {"WV"}
 
 
 def main() -> int:
@@ -191,7 +219,8 @@ def main() -> int:
         check(all(r.get("id") for r in rows) and len({r["id"] for r in rows}) == len(rows),
               f"{label}: every row has its own id", f)
         check([r["id"] for r in rows] == [r["id"] for r in parse()], f"{label}: ids are stable across parses", f)
-        shape = r"\d{4}-\d{2}" if st in MONTH_ONLY else r"\d{4}-\d{2}-\d{2}"
+        shape = (r"\d{4}-\d{2}" if st in MONTH_ONLY else r"\d{4}-\d{2}(?:-\d{2})?" if st in MIXED_DATES
+                 else r"\d{4}-\d{2}-\d{2}")
         check(all(re.fullmatch(shape, r["notice_date"]) for r in rows),
               f"{label}: notice dates are {'the month alone' if st in MONTH_ONLY else 'whole days'}", f)
         check(all(r["employees"] is None or isinstance(r["employees"], int) for r in rows),
@@ -450,14 +479,167 @@ def main() -> int:
     finally:
         iw.STATES, iw.Database, sys.argv = real_states, real_db, real_argv
 
+    # --- the states whose own host turns scripts away -------------------------------------
+    mn = {r["company"]: r for r in ws.parse_minnesota(b("mn_warn_page.html"))}
+    check(not any("September" in c or "Sample" in c for c in mn),
+          "Minnesota's monthly layoff report and the sample letter are not notices", f)
+    check(mn.get("Revol Greens MN, LLC", {}).get("kind") == "Update" and "Revol Greens MN, LLC (Revision)" not in mn,
+          "a Minnesota revision is an update under the company's own name", f)
+    check(mn["3M Company"]["source_url"].startswith("https://mn.gov/deed/assets/") and mn["3M Company"]["kind"] is None,
+          "a Minnesota notice links the state's own letter", f)
+    check(not any(r["company"] == "Marsden" for r in ws.parse_minnesota(b("mn_warn_archive.html"), ws.MN_ARCHIVE)),
+          "a Minnesota entry printed without a date is left out", f)
+
+    real_get, real_copy, real_pause = ws.get, ws.archive_copy, ws.pause
+    try:
+        asked = []
+        ws.pause = lambda *a: None
+        ws.archive_copy = lambda url, accept=None, newest=12: (asked.append(("archive", url)),
+                                                               lw.ArchiveCopy(b("mn_warn_page.html"), "2026-10-05", url))[1]
+        ws.get = lambda url, referer=None: (asked.append(("mn.gov", url)), b"<html>validate</html>")[1]
+        data, day = ws.mn_page(ws.MN_PAGE, dt.datetime(2026, 10, 25, 14, tzinfo=dt.timezone.utc))
+        check(day == "2026-10-05" and asked == [("archive", ws.MN_PAGE)],
+              "outside the hours mn.gov's robots.txt names, Minnesota is read from the Archive and mn.gov isn't asked", f)
+        asked.clear()
+        data, day = ws.mn_page(ws.MN_PAGE, dt.datetime(2026, 10, 25, 7, tzinfo=dt.timezone.utc))
+        check(day == "2026-10-05" and [a for a, _ in asked] == ["mn.gov", "archive"],
+              "a page from mn.gov without its list (a check page) falls back to the Archive's copy", f)
+        asked.clear()
+        ws.get = lambda url, referer=None: (asked.append(("mn.gov", url)), b("mn_warn_page.html"))[1]
+        data, day = ws.mn_page(ws.MN_PAGE, dt.datetime(2026, 10, 25, 7, tzinfo=dt.timezone.utc))
+        check(day is None and [a for a, _ in asked] == ["mn.gov"], "when mn.gov serves the list, it's read from mn.gov", f)
+    finally:
+        ws.get, ws.archive_copy, ws.pause = real_get, real_copy, real_pause
+
+    ri = {r["company"]: r for r in ws.parse_rhode_island(b("ri_warn.xlsx"))}
+    check(ri["Ideal US Talent Systems Worker OpCo LLC"]["employees"] == 2,
+          "Rhode Island's \"9,891 Remote Workers (2 from RI)\" keeps Rhode Island's share", f)
+    check(ri["CVS Health"]["employees"] == 309, "Rhode Island's \"309 *updated 10/26/23\" is 309", f)
+    check(not any(c.startswith("Matlet") for c in ri), "a notice dated 2108 is a slip in the state's file and left out", f)
+    page = ('<a href="/sites/g/files/xkgbur571/files/2026-10/Warn%20Report_0.xlsx">Warn Report</a>'
+            '<a href="/media/15796/download?language=en">Warn Report Excel file</a>')
+    check(ws.ri_report_link(page) == "https://dlt.ri.gov/sites/g/files/xkgbur571/files/2026-10/Warn%20Report_0.xlsx",
+          "Rhode Island's workbook is read off the page, under whatever address DLT gives it", f)
+
+    la = {r["company"]: r for r in ws.parse_louisiana(js("la_tables.json"))}
+    check(la["Lost Boys Interactive, LLC"]["employees"] == 1 and la["ADT Solar"]["employees"] == 40,
+          "Louisiana's \"Only one\" and \"Only forty (40)\" employees in Louisiana keep Louisiana's share", f)
+    check(la["Sears Roebuck and Co"]["site"] == "4400 Veterans Blvd, Metairie, LA 70006",
+          "a Louisiana name and address in one cell are split where the address begins", f)
+    check(not any(c.startswith("General Dynamics") for c in la), "a Louisiana notice printed \"Not specified\" is left out", f)
+    check(ws.la_name_and_site("The Service Companies, Inc.\n(Full Service Systems Corp.) –\nHorseshoe Bossier City")
+          == ("The Service Companies, Inc. (Full Service Systems Corp.) – Horseshoe Bossier City", None),
+          "a Louisiana cell with no address is all name", f)
+
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        nv = ws.parse_nevada(js("nv_lines_2026.json"))
+    check(not any(r["company"].startswith(("SMBC", "Ace Dragon")) for r in nv), "Nevada's Non-WARN rows are left out", f)
+    check("Intuit Inc" in out.getvalue(), "a Nevada WARN row printed without its received date is named, not dropped silently", f)
+    spirit = [r for r in nv if r["notice_date"] == "2026-05-04"]
+    check(spirit and spirit[0]["site"] == "Las Vegas/Reno" and spirit[0]["county"] == "Clark/Washoe",
+          "Nevada's columns are found from where its words sit, a two-city row included", f)
+
+    wv = {r["company"]: r for r in ws.parse_west_virginia(b("wv_warn_page.html"), ("2022-01-01", "2025-01-03"))}
+    check(wv["Eagle Horizon Resources"]["notice_date"] == "2026-08" and wv["Greenbrier Minerals"]["notice_date"] == "2026-07",
+          "a West Virginia letter that names only a month is dated by that month", f)
+    check(wv["Felman Productions"]["notice_date"] == "2026-07" and wv["West Virginia Conduent"]["notice_date"] == "2026-07",
+          "a letter whose link names no date reads it from the file name, else the month it was posted", f)
+    check(wv["Mettiki"]["notice_date"] == "2026-04-01" and wv["Mettiki"]["kind"] == "Update",
+          "a supplemental letter is an update, dated from its file name", f)
+    check("Mountain State Carbon" not in wv and "Mylan Pharmaceuticals" in wv,
+          "a letter inside the compiled list's span is left to that list; one before it is kept", f)
+    wvc = ws.parse_west_virginia_compiled(js("wv_compiled_tables.json"))
+    cyg = [r for r in wvc if r["company"].startswith("Cygnus")]
+    check(cyg and cyg[0]["employees"] == 54 and cyg[0]["notice_date"] == "2024-09-23" and cyg[0]["site"].count(";") == 4,
+          "a compiled notice that runs over a page break is read whole, its total and every site kept", f)
+
+    # --- the Internet Archive: the newest good copy, and a bad day costs only that state ----------
+    real_fetch, real_sleep, real_state = lw.gov_fetch, lw.time.sleep, dict(lw._archive)
+    try:
+        lw.time.sleep = lambda s: None
+        calls = []
+
+        def archive(url, referer=None, attempts=1):
+            calls.append(url)
+            if "/cdx/" in url:
+                return b'[["timestamp"],["20260917154158"],["20261019000000"]]'
+            return b"<html>Request unsuccessful</html>" if "20261019000000" in url else b("mo_warn_2026.html")
+        lw.gov_fetch = archive
+        lw._archive.update(last=0.0, spent=0.0, down="")
+        copy = lw.archive_copy("https://jobs.mo.gov/warn/2026", ws.has_mo_table)
+        check(copy.captured == "2026-09-17" and "20261019000000id_" in calls[1] and "20260917154158id_" in calls[2],
+              "the Archive's newest capture is tried first, and a capture of the check page is passed over", f)
+        lw._archive.update(last=0.0, spent=0.0, down="")
+        lw.gov_fetch = lambda url, referer=None, attempts=1: b"<title>Internet Archive: Temporarily Offline</title>"
+        try:
+            lw.archive_copy("https://jobs.mo.gov/warn/2026")
+            check(False, "an Archive that stays offline is the source being down", f)
+        except urllib.error.URLError as exc:
+            check(lw.is_unreachable(exc), "an Archive that stays offline is the source being down", f)
+        lw.gov_fetch = lambda *a, **k: (_ for _ in ()).throw(AssertionError("asked again"))
+        try:
+            lw.archive_copy("https://jobs.mo.gov/warn/2025")
+            check(False, "once the Archive is found down, the rest of the run doesn't ask it again", f)
+        except urllib.error.URLError:
+            check(True, "once the Archive is found down, the rest of the run doesn't ask it again", f)
+    finally:
+        lw.gov_fetch, lw.time.sleep = real_fetch, real_sleep
+        lw._archive.clear()
+        lw._archive.update(real_state)
+
+    # --- Texas: the agency spreadsheet from the Archive outranks the portal ------------------
+    real_index, real_copy2, real_fetch2 = lw.archive_index, lw.archive_copy, iw.fetch
+    tx_sheet = open(os.path.join(HERE, "fixtures", "tx_warn_2026-09-09.xlsx"), "rb").read()
+    try:
+        lw.archive_index = lambda prefix, pattern: [
+            "https://www.twc.texas.gov/sites/default/files/oei/docs/warn-act-listings-2026-twc.xlsx"]
+        lw.archive_copy = lambda url, accept=None, newest=12: lw.ArchiveCopy(tx_sheet, "2026-10-17", url)
+        rows, captured = iw.texas_sheets(2026)
+        check(rows and captured == ["2026-10-17"] and all(r["source_url"] == iw.TX_PAGE for r in rows),
+              "Texas's spreadsheet is read from the Archive's copy; a year it lists no file for is left to the portal", f)
+        iw.fetch = lambda url: open(os.path.join(HERE, "fixtures", "tx_warn_portal_2026-09-09.json"), "rb").read()
+        merged = iw.load_texas(None)
+        shared = {r["id"] for r in rows} & {r["id"] for r in iw.parse_texas_api(iw.fetch(iw.TX_API))}
+        by = {r["id"]: r for r in merged}
+        check(shared and all(by[i]["source_url"] == iw.TX_PAGE for i in shared) and len(by) == len(merged),
+              f"a notice both Texas sources hold is the spreadsheet's row, once ({len(shared)} shared)", f)
+        check("2026-10-17" in ws.SOURCE_NOTES.get("tx", ""), "Texas's freshness note names the copy it read", f)
+    finally:
+        lw.archive_index, lw.archive_copy, iw.fetch = real_index, real_copy2, real_fetch2
+
+    # --- a job-center state's counts: a short budget on an ordinary day, a long one to fill ----------
+    real_get, real_pause, real_held, real_secs = ws.get, ws.pause, ws.HELD["lookup"], ws.JC_DETAIL_SECONDS
+    try:
+        pages = []
+        ws.get = lambda u, referer=None: (pages.append(u), b("ks_notice.html") if "commit=" not in u else b("az_search.html"))[1]
+        ws.pause = lambda *a: None
+        listed = ws.parse_job_center("AZ", b("az_search.html"))
+        ws.HELD["lookup"] = lambda st: {listed[0]["id"]: {"employees": 31}} if st == "AZ" else {}
+        ws.JC_DETAIL_SECONDS = -1
+        off = (dt.date.today().weekday() - ws.walk_day("AZ")) % 7 != 0
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            rows = ws.load_job_center("AZ")(None)
+        if off:
+            check(not [u for u in pages if "commit=" not in u] and "wait for a later run" in out.getvalue(),
+                  "an ordinary day past its time budget asks no more pages, and says how many wait", f)
+        pages.clear()
+        ws.HELD["lookup"] = lambda st: {}
+        with contextlib.redirect_stdout(io.StringIO()):
+            rows = ws.load_job_center("AZ")(None)
+        check(len([u for u in pages if "commit=" not in u]) == len(rows),
+              "a first load fills every count in the one run, on the long budget", f)
+    finally:
+        ws.get, ws.pause, ws.HELD["lookup"], ws.JC_DETAIL_SECONDS = real_get, real_pause, real_held, real_secs
+
     # --- the registry and the site's words for it ------------------------------------------
     for st, s in ws.STATES.items():
         ok_entry = (s.get("name") and s.get("page", "").startswith("https://") and isinstance(s.get("days"), int)
                     and s["days"] >= 21 and callable(s.get("load")) and s.get("snapshot") is True)
         check(bool(ok_entry), f"{st}: the registry entry has a name, a page, a budget of 21+ days, a loader", f)
-    check(len(iw.STATES) == 41, f"41 jurisdictions are read: 40 states and DC (got {len(iw.STATES)})", f)
-    check(not set(iw.STATES) & {"ar", "wy", "nh", "la", "nm", "ri", "mo", "nv", "mn", "wv"},
-          "no reader for a state that publishes nothing, forbids it in robots.txt or walls scripts out", f)
+    check(len(iw.STATES) == 48, f"48 jurisdictions are read: 47 states and DC (got {len(iw.STATES)})", f)
+    check(not set(iw.STATES) & {"ar", "wy", "nh"}, "no reader for the three states that publish no list", f)
     cov = open(os.path.join(HERE, "..", "src", "lib", "datasetCoverage.ts"), encoding="utf8").read()
     missing = [st for st in iw.STATES if cov.count(f'"warn-notices-{st}"') < 2]
     check(not missing, f"every state's freshness row has a coverage sentence and a label (missing {missing})", f)

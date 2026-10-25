@@ -18,9 +18,12 @@ equals a PERM employer's `merge_key`, or has the same letters with the gaps
 elsewhere (Rule D in entity_identity.py). Never a prefix match: that would
 attach a foundation's layoff to a company that shares its first word.
 
-Forty states and the District of Columbia are read, each by its own parser
-into the same row shape: California, New York, Texas and Washington here, and
-the rest in warn_states.py, which also says which states aren't read and why.
+Forty-seven states and the District of Columbia are read, each by its own
+parser into the same row shape: California, New York, Texas and Washington
+here, and the rest in warn_states.py, which also says which states aren't read
+and why. Where a state's own site turns scripts away, its file is read from
+the Internet Archive's copy (lib_warn.archive_copy), and the note on that
+state's freshness row names the capture's date.
 Each state loads, writes and stamps its own freshness on its own, so one
 state's outage never costs the others. A state whose site is down or refusing
 that day is named in the run's note and leaves the run green, since its own
@@ -58,13 +61,20 @@ from lib_warn import as_of_date, assign_ids, get, is_unreachable  # noqa: E402
 CA_URL = "https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx"
 CA_PAGE = "https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/"
 # Texas posts one spreadsheet per calendar year on its WARN page, behind a bot
-# challenge that only a browser gets past, so `--state tx --from-file <xlsx>`
+# challenge that only a browser gets past. The Internet Archive captures this
+# year's file several times a week (measured Oct 25 2026: 21 captures from Oct
+# 6 to Oct 17), so its newest copy is read every run (`TX_YEAR_FILE`, found
+# through the Archive's own index), and `--state tx --from-file <xlsx>` still
 # loads one saved by hand.
 TX_PAGE = "https://www.twc.texas.gov/data-reports/warn-notice"
+TX_FILES = "twc.texas.gov/sites/default/files/oei/docs/warn-act-listings-"
+TX_YEAR_FILE = re.compile(r"^warn-act-listings-(20\d\d)-twc\.xlsx$", re.I)
 # The same notices on the state's open data portal, which serves scripts and
-# reaches back to 2019: the automatic source. It trails the agency spreadsheet
-# by a couple of months, so a saved spreadsheet is the optional top-up for the
-# newest weeks; the two produce identical ids for the notices they share.
+# reaches back to 2019. The two produce identical ids for the notices they
+# share, and the spreadsheet outranks the portal (SOURCE_RANK). Read from the
+# portal rows' own load times: it was loaded about monthly from February 2022
+# (the longest wait 75 days, 42 since 2024) and last on July 7 2026, so it
+# fills history and stands in when the Archive has no copy.
 TX_API = "https://data.texas.gov/resource/8w53-c4f6.json?$limit=50000&$order=notice_date"
 TX_DATA_PAGE = "https://data.texas.gov/d/8w53-c4f6"
 # New York's current notices live in a Tableau Public dashboard, which serves
@@ -629,18 +639,71 @@ def fetch(url: str) -> bytes:
 
 
 def load_texas(from_file: str | None) -> list[dict]:
-    """The spreadsheet when handed one, the open data portal otherwise."""
+    """The spreadsheet when handed one; otherwise the open data portal, topped
+    up with the Archive's newest copies of this year's and last year's
+    spreadsheets, the spreadsheet's row winning wherever both hold a notice."""
     if from_file:
         return parse_texas(open(from_file, "rb").read())
-    return parse_texas_api(fetch(TX_API))
+    portal = parse_texas_api(fetch(TX_API))
+    sheets, captured = texas_sheets()
+    by_id = {r["id"]: r for r in portal}
+    by_id.update({r["id"]: r for r in sheets})
+    if captured:
+        warn_states.note_source("TX", f"the spreadsheet {warn_states.captured_note(captured)}")
+    else:
+        warn_states.note_source("TX", "no copy of the spreadsheet could be read; the portal alone was read")
+    return list(by_id.values())
+
+
+def texas_sheets(this_year: int | None = None) -> tuple[list[dict], list[str]]:
+    """This year's and last year's agency spreadsheets, from the Archive's
+    newest copies. A year with no usable copy, or the Archive being down, is
+    logged and leaves the portal to cover it."""
+    from lib_warn import archive_copy, archive_index, is_xlsx, pause
+
+    year = this_year or dt.date.today().year
+    rows: list[dict] = []
+    captured: list[str] = []
+    try:
+        files = {}
+        for u in archive_index(TX_FILES, TX_YEAR_FILE.pattern):
+            m = TX_YEAR_FILE.match(urllib.parse.unquote(u.rsplit("/", 1)[-1]))
+            if m:
+                files[int(m[1])] = u
+    except Exception as exc:  # noqa: BLE001 - the Archive down leaves the portal; a defect raises
+        if not is_unreachable(exc):
+            raise
+        log(f"Texas: the Internet Archive's index couldn't be read ({str(exc)[:120]}); the portal alone is read")
+        return [], []
+    for y in (year, year - 1):
+        if y not in files:
+            log(f"Texas: the Internet Archive lists no {y} spreadsheet")
+            continue
+        try:
+            copy = archive_copy(files[y], is_xlsx)
+        except LookupError as exc:
+            log(f"Texas {y}: {exc}")
+            continue
+        except Exception as exc:  # noqa: BLE001
+            if not is_unreachable(exc):
+                raise
+            log(f"Texas {y}: the Internet Archive refused ({str(exc)[:120]}); the portal covers it")
+            continue
+        rows.extend(parse_texas(copy.data))
+        captured.append(copy.captured)
+        pause()
+    return rows, captured
 
 
 
 STATES: dict[str, dict] = {
     "ca": {"name": "California", "page": CA_PAGE, "days": 21, "load": lambda f: parse_california(open(f, "rb").read() if f else fetch(CA_URL))},
-    # Texas's budget is long because its automatic source, the open data
-    # portal, trails the agency's spreadsheet by a couple of months.
-    "tx": {"name": "Texas", "page": TX_DATA_PAGE, "days": 120, "load": load_texas},
+    # Texas is dated by its newest notice from either source. Its budget is
+    # the longest wait between two notices from July 2024 (19 days), plus the
+    # Archive's longest gap between captures of the spreadsheet since August
+    # 2026 (25 days), plus a week: with the portal stopped, this is what turns
+    # stale if the Archive stops capturing.
+    "tx": {"name": "Texas", "page": TX_PAGE, "days": 51, "load": load_texas},
     # New York: a snapshot (the file is the whole current-year list, so a row
     # it no longer carries is pruned), with freshness stamped from its own
     # "Date Posted": it posts notices about two months after their notice
@@ -756,6 +819,8 @@ def main() -> int:
         newest = newest or max(r["notice_date"] for r in rows)
         as_of = stamp_date(newest)
         note = f"{STATES[st]['name']}: {count} notices held ({len(rows)} in this load)"
+        if warn_states.SOURCE_NOTES.get(st):
+            note += f"; {warn_states.SOURCE_NOTES[st]}"
         if newest != as_of:
             note += f"; newest notice dated {newest}"
         stamp_key = STATES[st].get("stamp")
@@ -795,7 +860,8 @@ def report_parsed(parsed: dict[str, list[dict]], failed: list[str], unreachable:
         dates = sorted(r["notice_date"] for r in rows)
         counts = sum(1 for r in rows if r["employees"] is not None)
         sites = sum(1 for r in rows if r.get("site"))
-        print(f"{STATES[st]['name']:22} {len(rows):7}  {dates[0]:10}  {dates[-1]:10}  {counts:6}  {sites:5}")
+        print(f"{STATES[st]['name']:22} {len(rows):7}  {dates[0]:10}  {dates[-1]:10}  {counts:6}  {sites:5}"
+              + (f"  ({warn_states.SOURCE_NOTES[st]})" if warn_states.SOURCE_NOTES.get(st) else ""))
     for label, sts in (("site down or refusing", unreachable), ("FAILED", failed)):
         if sts:
             print(f"{label}: {', '.join(STATES[st]['name'] for st in sts)}")

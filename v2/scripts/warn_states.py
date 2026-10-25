@@ -14,17 +14,24 @@ month ("2026-10"), never an invented day. A state that prints no worker count
 for the notice; where it gives only when it received or posted the notice,
 that date is used and the reader says so.
 
-Not read, and why (checked Oct 25 2026):
-  - Arkansas publishes no notices (its page cites A.C.A. 11-10-314), and
-    Wyoming's site lists none.
-  - Louisiana and New Mexico serve their files, but their robots.txt asks
-    automated clients not to read them.
-  - Rhode Island (Cloudflare), Missouri (Imperva), Nevada and New Hampshire
-    (Akamai) answer scripts with a bot wall, and Minnesota's page with a
-    captcha; Minnesota's monthly PDFs fetch, but their names can only be found
-    on that page. A wall is never worked around: no proxy, no browser.
-  - West Virginia posts a list of notice letters: the company, the date and the
-    count are only inside each letter, often scanned.
+Read from the Internet Archive's copies (Oct 25 2026), because the state's
+own site turns scripts away: Louisiana and New Mexico (robots.txt asks
+automated readers to stay off their files), Missouri (an hCaptcha check on
+every page) and Nevada (its host refuses scripts and robots.txt alike); and
+Minnesota and Rhode Island when their page turns a request away. Nothing is
+worked around: no proxy, no solved check, no browser pretending. See the
+section above the registry.
+
+Not read, and why (checked Oct 25 2026 on each agency's own page):
+  - Arkansas: "The Arkansas Division of Workforce Services does not publish or
+    disseminate specific company data, including WARN notices, due to
+    confidentiality requirements" (A.C.A. 11-10-314). Its job-center site's
+    WARN search holds three entries, all from June 2019.
+  - New Hampshire: Employment Security's page on business compliance states
+    the law and links a postcard, and lists no notices.
+  - Wyoming: Workforce Services' page says "Wyoming follows the federal WARN
+    Act requirements" and names whom to send a notice to; its one WARN file
+    explains how to file, and lists no notices.
   - Massachusetts before July 2020 (.xls workbooks openpyxl can't read) and
     South Carolina before 2022 (reports with no notice date).
 """
@@ -33,13 +40,16 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
+import time
+import urllib.error
 import urllib.parse
 from collections.abc import Callable
 
 from lib_warn import (
-    DATE_TOKEN, cell, clean, col, csv_rows, decode, find_header, finish, first_date, get, get_text, header_of,
-    get_with, join_site, links, notice, parse_date, parse_int, parse_month, pause, pdf_tables, post, session,
-    table_with, tables, text_of, xlsx_sheets,
+    DATE_TOKEN, archive_copy, archive_captures, archive_index, cell, clean, col, csv_rows, decode, find_header,
+    finish, first_date, get, get_text, header_of, get_with, is_pdf, is_unreachable, is_xlsx, join_site, links,
+    notice, parse_date, parse_int, parse_month, pause, pdf_tables, post, session, table_with, tables, text_of,
+    xlsx_sheets,
 )
 
 # Notices dated before this are left out. It matches Texas's open data portal,
@@ -1469,7 +1479,18 @@ JOB_CENTERS = {
     "VT": "https://www.vermontjoblink.com",
 }
 JC_DAYS = 120          # the window a daily run lists; the weekly walk and a first load list from SINCE
-JC_DETAIL_CAP = 30     # notice pages asked for in one run, newest first; the rest wait for the next
+# Notice pages are asked for newest first, each once: a held count is reused.
+# A run stops asking at whichever comes first, the cap or the time budget, and
+# the rest wait for the next run. The budget is short on an ordinary day (a
+# day's new notices take seconds) and long on the state's walk day and on a
+# first load, long enough to fill a state's whole record in that one run:
+# Arizona's 489 notices since 2019 at about 1.3 seconds a page, the pause
+# included (measured from the laptop, Oct 25 2026), is about 10 minutes,
+# inside the WARN step's 35. The notices still waiting are counted in the
+# run's log and filled by a later run.
+JC_DETAIL_CAP = 1000
+JC_DETAIL_SECONDS = 120
+JC_FILL_SECONDS = 900
 
 
 def job_center_search(base: str, since: str, until: str, page: int) -> str:
@@ -1530,19 +1551,23 @@ def load_job_center(state: str) -> Callable[[str | None], list[dict]]:
             pause()
         rows = finish(rows, SINCE)
         held = held_for(state)
-        asked = 0
+        deadline = time.monotonic() + (JC_FILL_SECONDS if full_history(state) else JC_DETAIL_SECONDS)
+        asked = waiting = 0
         for r in sorted(rows, key=lambda x: x["notice_date"], reverse=True):
             h = held.get(r["id"])
             if h and h.get("employees") is not None:
                 r["employees"], r["site"] = h["employees"], h.get("site") or r["site"]
                 continue
-            if asked >= JC_DETAIL_CAP:
+            if asked >= JC_DETAIL_CAP or time.monotonic() > deadline:
+                waiting += 1
                 continue
             pause()
             asked += 1
             detail = parse_job_center_detail(decode(get(r["source_url"], referer=base)))
             r["employees"] = detail["employees"]
             r["site"] = detail["site"] or r["site"]
+        if waiting:
+            print(f"  {state}: read {asked} notice pages; {waiting} notices wait for a later run's count", flush=True)
         return rows
 
     return load
@@ -1861,6 +1886,653 @@ def load_south_carolina(f: str | None) -> list[dict]:
     return reassign(out)
 
 
+# --- States whose own host turns scripts away (read Oct 25 2026) -----------------------------
+# Minnesota and Rhode Island: the state's page answered this module's ordinary
+# request with the page, and the files it links are open to scripts. When the
+# page turns a request away, the Internet Archive's newest copy of it says
+# which files to read, and the files still come from the state.
+# Louisiana and New Mexico serve their yearly files, but robots.txt asks
+# automated readers to stay off them; Missouri puts an hCaptcha check in front
+# of every page, and Nevada's host refuses scripts outright. Those four are
+# read from the Archive's copies, and nothing at the state's host is asked.
+# An Archive copy is as new as its newest capture: about daily for Louisiana's
+# file, about monthly for Missouri's and Nevada's pages, a few times a year
+# for New Mexico's files. Each budget allows for that, and SOURCE_NOTES names
+# the copy a run read, for the note on the state's freshness row.
+SOURCE_NOTES: dict[str, str] = {}
+
+
+def note_source(state: str, text: str) -> None:
+    SOURCE_NOTES[state.lower()] = text
+
+
+def captured_note(dates: list[str]) -> str:
+    return f"read from the Internet Archive's copies, the newest captured {max(dates)}" if dates else ""
+
+
+def newest_copy(urls: list[str], accept) -> "object":
+    """The Archive's newest good copy among several addresses of one file
+    (New Mexico posts a year's file under two folders)."""
+    ranked = sorted(((archive_captures(u, 3) or [""])[0], u) for u in urls)
+    for _, url in reversed(ranked):
+        try:
+            return archive_copy(url, accept)
+        except LookupError:
+            continue
+    raise LookupError(f"the Internet Archive holds no usable copy of {urls[0]}")
+
+
+def plain_url(url: str) -> str:
+    """The address as a reader would open it: https, no port."""
+    parts = urllib.parse.urlsplit(url)
+    return urllib.parse.urlunsplit(("https", parts.hostname or parts.netloc, parts.path, parts.query, ""))
+
+
+# --- Minnesota ----------------------------------------------------------------------
+# DEED lists each notice it receives (the employer, the day and the letter as
+# a PDF) under a heading per year: this year's on the layoff page, earlier
+# years on its archive page. The list prints no count, and the letters are the
+# employers' own, worded every way, so a row carries the company and the day.
+MN_PAGE = "https://mn.gov/deed/business/layoff-resources/"
+MN_ARCHIVE = "https://mn.gov/deed/business/layoff-resources/warn-archive/"
+# mn.gov's robots.txt: "Visit-time: 0000-1200" (UTC) and "Request-rate: 10".
+MN_VISIT_UTC_HOURS = range(0, 12)
+MN_GAP_S = 10
+MN_LINK = re.compile(r'href\s*=\s*["\'][^"\']*/deed/assets/[^"\']*warn[^"\']*\.pdf', re.I)
+MN_YEAR = re.compile(r"<h4[^>]*>\s*(20\d\d)\s*</h4>\s*<ul\b[^>]*>(.*?)</ul>", re.S | re.I)
+MN_REVISION = re.compile(r"\(\s*(?:revision|revised|updated?|amended)[^)]*\)", re.I)
+
+
+def has_mn_list(data: bytes) -> bool:
+    return bool(MN_LINK.search(decode(data)))
+
+
+def parse_minnesota(data: bytes, base: str = MN_PAGE) -> list[dict]:
+    """Every "Company - date" in the list under a year heading, linked to its
+    letter. The list sits inside an accordion that is itself a list item, so
+    each year's own list is taken whole before its items are read."""
+    out = []
+    items = [li for m in MN_YEAR.finditer(decode(data)) for li in re.findall(r"<li\b[^>]*>(.*?)</li>", m[2], re.S | re.I)]
+    for li in items:
+        a = re.search(r'<a\b[^>]*href\s*=\s*["\']([^"\']+\.pdf)["\'][^>]*>(.*?)</a>(.*)', li, re.S | re.I)
+        if not a or "warn" not in a[1].lower() or "plant-closing" in a[1].lower():
+            continue
+        company, rest = text_of(a[2]), text_of(a[3])
+        d = first_date(rest)
+        if not d:
+            continue
+        url = urllib.parse.urljoin(base, a[1].replace("&amp;", "&"))
+        update = bool(MN_REVISION.search(company) or re.search(r"revis|update|amend", rest, re.I))
+        out.append(notice("MN", d, clean(MN_REVISION.sub("", company)), source_url=url,
+                          kind="Update" if update else None, extra=url))
+    return finish(out, SINCE)
+
+
+def mn_page(url: str, now: dt.datetime | None = None) -> tuple[bytes, str | None]:
+    """The page from mn.gov when it answers with the list inside the hours its
+    robots.txt names, else the Archive's newest copy and its day."""
+    if (now or dt.datetime.now(dt.timezone.utc)).hour in MN_VISIT_UTC_HOURS:
+        try:
+            data = get(url)
+            if has_mn_list(data):
+                return data, None
+            print(f"  Minnesota: {url} answered without its list; reading the Internet Archive's copy", flush=True)
+        except Exception as exc:  # noqa: BLE001 - a refusal falls back; a defect does not
+            if not is_unreachable(exc):
+                raise
+            print(f"  Minnesota: {url} refused ({type(exc).__name__}); reading the Internet Archive's copy", flush=True)
+    copy = archive_copy(url, has_mn_list)
+    return copy.data, copy.captured
+
+
+def load_minnesota(f: str | None) -> list[dict]:
+    if f:
+        return parse_minnesota(read(f))
+    out: list[dict] = []
+    captured: list[str] = []
+    for i, url in enumerate((MN_PAGE, MN_ARCHIVE)):
+        if i:
+            pause(MN_GAP_S)
+        data, day = mn_page(url)
+        if day:
+            captured.append(day)
+        out.extend(parse_minnesota(data, url))
+    note_source("MN", captured_note(captured))
+    return reassign(out)
+
+
+# --- Rhode Island -------------------------------------------------------------------
+# DLT's WARN page links one workbook, a sheet a year and one for earlier years,
+# which DLT says it updates within a day of a notice arriving. The workbook's
+# address changes when DLT uploads a new one, so it's read off the page.
+RI_PAGE = "https://dlt.ri.gov/employers/worker-adjustment-and-retraining-notification-warn"
+
+
+def ri_report_link(page: str) -> str | None:
+    for url, text in links(page, RI_PAGE):
+        if re.search(r"warn", url + " " + text, re.I) and (
+                re.search(r"\.xlsx?(?:$|\?)", url, re.I) or re.search(r"/media/\d+/download", url)):
+            return url
+    return None
+
+
+def parse_rhode_island(data: bytes) -> list[dict]:
+    """WARN Date, Date Received, Company Name, Location of Layoffs, Number
+    Affected, Effective Date, Closing Yes/No, Union Yes/No, Union Address.
+
+    The union address names a union's officers and is never read. A count
+    printed "9,891 Remote Workers (2 from RI)" keeps Rhode Island's share, as
+    Idaho's does.
+    """
+    out = []
+    for name, rows in xlsx_sheets(data).items():
+        i = find_header(rows, "warn date", "company")
+        if i is None:
+            continue
+        h = header_of(rows[i])
+        c = {k: col(h, *v) for k, v in {"date": ("warn date",), "recv": ("received",), "co": ("company",),
+                                         "loc": ("location",), "n": ("affected",), "eff": ("effective",),
+                                         "closing": ("closing",)}.items()}
+        for r in rows[i + 1:]:
+            d = parse_date(cell(r, c["date"])) or parse_date(cell(r, c["recv"]))
+            if not d or not clean(cell(r, c["co"])):
+                continue
+            raw_n = clean(cell(r, c["n"]))
+            share = re.search(r"\((\d[\d,]*) from RI\)", raw_n, re.I)
+            # "309 *updated 10/26/23": the count, then a note about it.
+            noted = re.match(r"^(\d[\d,]*)\s*\*", raw_n)
+            closing = clean(cell(r, c["closing"])).lower()
+            kind = "Closure" if closing.startswith("yes") else "Layoff" if closing.startswith("no") else None
+            loc = clean(cell(r, c["loc"]))
+            out.append(notice("RI", d, cell(r, c["co"]), source_url=RI_PAGE, effective_date=first_date(cell(r, c["eff"])),
+                              kind=kind, employees=parse_int((share or noted or [None, raw_n])[1]), site=loc or None,
+                              extra=loc))
+    return finish(out, SINCE)
+
+
+def load_rhode_island(f: str | None) -> list[dict]:
+    if f:
+        return parse_rhode_island(read(f))
+    captured: list[str] = []
+    url = None
+    try:
+        url = ri_report_link(get_text(RI_PAGE))
+        if not url:
+            print("  Rhode Island: the page answered without its workbook link; reading the Internet Archive's copy",
+                  flush=True)
+    except Exception as exc:  # noqa: BLE001
+        if not is_unreachable(exc):
+            raise
+        print(f"  Rhode Island: the page refused ({type(exc).__name__}); reading the Internet Archive's copy", flush=True)
+    if not url:
+        copy = archive_copy(RI_PAGE, lambda d: ri_report_link(decode(d)) is not None)
+        url = ri_report_link(decode(copy.data))
+        captured.append(copy.captured)
+    pause()
+    try:
+        data = get(url, referer=RI_PAGE)
+        if not is_xlsx(data):
+            raise urllib.error.URLError("the workbook's address answered with a page")
+    except Exception as exc:  # noqa: BLE001
+        if not is_unreachable(exc):
+            raise
+        copy = archive_copy(url, is_xlsx)
+        data = copy.data
+        captured.append(copy.captured)
+    note_source("RI", captured_note(captured))
+    return parse_rhode_island(data)
+
+
+# --- Louisiana ----------------------------------------------------------------------
+# The Workforce Commission posts a PDF a year. Its robots.txt lets only
+# Google's and Bing's crawlers in, so the files are read from the Archive's
+# copies (it captures the current year's about daily) and found through the
+# Archive's own index of the folder. Until 2025 a notice's address sits in the
+# company's cell, under the name; from 2026 it has its own column.
+LA_PAGE = "https://www.laworks.net/Downloads/Downloads_WFD.asp"
+LA_FOLDER = "laworks.net/Downloads/WFD/WarnNotices"
+LA_FILE = re.compile(r"^WarnNotices(20\d\d)\.pdf$", re.I)
+SMALL_NUMBERS = {w: i for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
+    "seventeen eighteen nineteen twenty".split())}
+
+
+def la_count(v) -> int | None:
+    """The notice's count, or Louisiana's share where the cell says so
+    ("*292 *Only forty (40) employees affected in Louisiana" is 40)."""
+    raw = clean(v)
+    if re.search(r"in louisiana", raw, re.I):
+        m = re.search(r"only\s+(\w+)(?:\s*\((\d[\d,]*)\))?", raw, re.I)
+        if not m:
+            return None
+        return parse_int(m[2]) if m[2] else parse_int(m[1]) if m[1].isdigit() else SMALL_NUMBERS.get(m[1].lower())
+    return parse_int(raw.replace("*", ""))
+
+
+def la_name_and_site(v) -> tuple[str, str | None]:
+    """A company cell that holds the address too: the lines before the first
+    one that reads as an address are the name."""
+    lines = [clean(x) for x in str(v or "").split("\n") if clean(x)]
+    for i, line in enumerate(lines[1:], start=1):
+        if re.match(r"\d|P\.?\s*O\.?\s+Box\b|One\s|Suite\b", line, re.I) or re.search(r"\b[A-Z]{2}\s+\d{5}", line):
+            return " ".join(lines[:i]), ", ".join(lines[i:])
+    return " ".join(lines), None
+
+
+def parse_louisiana(data, source_url: str = LA_PAGE) -> list[dict]:
+    header: list[str] | None = None
+    out = []
+    for t in pdf_tables(data) if isinstance(data, (bytes, bytearray)) else data:
+        for r in t:
+            raw = [c or "" for c in r]
+            low = [clean(c).lower() for c in raw]
+            if any("company" in c for c in low) and any("notice" in c for c in low):
+                header = low
+                continue
+            if header is None or not any(clean(c) for c in raw):
+                continue
+            c = {k: col(header, *v) for k, v in {"co": ("company",), "addr": ("address",), "date": ("notice",),
+                                                  "eff": ("layoff",), "n": ("affected",), "ind": ("industry",)}.items()}
+            d = parse_date(clean(cell(raw, c["date"])))
+            if not d:
+                continue
+            if c["addr"] is not None:
+                company, site = clean(cell(raw, c["co"])), clean(cell(raw, c["addr"])) or None
+            else:
+                company, site = la_name_and_site(cell(raw, c["co"]))
+            out.append(notice("LA", d, company, source_url=source_url, effective_date=first_date(clean(cell(raw, c["eff"]))),
+                              employees=la_count(cell(raw, c["n"])), industry=cell(raw, c["ind"]), site=site,
+                              extra=site or ""))
+    if header is None:
+        raise ValueError("no table naming Company and Notice Date in Louisiana's file")
+    return finish(out, SINCE)
+
+
+def load_louisiana(f: str | None) -> list[dict]:
+    if f:
+        return parse_louisiana(read(f))
+    files: dict[int, str] = {}
+    for url in archive_index(LA_FOLDER, LA_FILE.pattern):
+        m = LA_FILE.match(urllib.parse.unquote(url.rsplit("/", 1)[-1]))
+        files[int(m[1])] = url
+    years = [y for y in years_to_read("LA") if y in files]
+    if not years:
+        raise ValueError("the Internet Archive's index lists no Louisiana WARN file for the years read")
+    out: list[dict] = []
+    captured: list[str] = []
+    for y in years:
+        try:
+            copy = archive_copy(files[y], is_pdf)
+        except LookupError as exc:
+            print(f"  Louisiana {y}: {exc}", flush=True)
+            continue
+        captured.append(copy.captured)
+        out.extend(parse_louisiana(copy.data, plain_url(files[y])))
+        pause()
+    note_source("LA", captured_note(captured))
+    return reassign(out)
+
+
+# --- New Mexico ---------------------------------------------------------------------
+# Workforce Solutions posts a PDF a year, and robots.txt keeps scripts out of
+# the folder (`Disallow: /Portals/`), so the Archive's copies are read. It
+# captures them a few times a year, under two folders.
+NM_PAGE = "https://www.dws.nm.gov/Rapid-Response"
+NM_FOLDER = "dws.nm.gov/Portals/0/"
+NM_FILE = re.compile(r"^(20\d\d)[ _]WARN\.pdf$", re.I)
+
+
+def parse_new_mexico(data, source_url: str = NM_PAGE) -> list[dict]:
+    """Notice Date, Job Site Name, County, WDA, Total Layoff Number, Layoff
+    Date, Received Date, City."""
+    h, rows = pdf_rows(data, "notice date", "job site")
+    c = {k: col(h, *v) for k, v in {"date": ("notice date",), "co": ("job site",), "county": ("county",),
+                                     "n": ("total layoff",), "eff": ("layoff date",), "recv": ("received",),
+                                     "city": ("city",)}.items()}
+    out = []
+    for r in rows:
+        d = parse_date(cell(r, c["date"])) or parse_date(cell(r, c["recv"]))
+        if not d:
+            continue
+        city = clean(cell(r, c["city"]))
+        out.append(notice("NM", d, cell(r, c["co"]), source_url=source_url, effective_date=first_date(cell(r, c["eff"])),
+                          employees=parse_int(cell(r, c["n"])), county=cell(r, c["county"]), site=city or None,
+                          extra=city))
+    return finish(out, SINCE)
+
+
+def load_new_mexico(f: str | None) -> list[dict]:
+    if f:
+        return parse_new_mexico(read(f))
+    files: dict[int, list[str]] = {}
+    for url in archive_index(NM_FOLDER, r"WARN"):
+        m = NM_FILE.match(urllib.parse.unquote(url.rsplit("/", 1)[-1]))
+        if m:
+            files.setdefault(int(m[1]), []).append(url)
+    # archive_index keeps one address per file name; New Mexico's second folder
+    # holds the same names, so ask the Archive for both.
+    for y, urls in files.items():
+        for u in list(urls):
+            other = u.replace("/Portals/0/DM/Business/", "/Portals/0/") if "/DM/Business/" in u else \
+                u.replace("/Portals/0/", "/Portals/0/DM/Business/")
+            if other not in urls:
+                urls.append(other)
+    years = [y for y in years_to_read("NM") if y in files]
+    if not years:
+        raise ValueError("the Internet Archive's index lists no New Mexico WARN file for the years read")
+    out: list[dict] = []
+    captured: list[str] = []
+    for y in years:
+        try:
+            copy = newest_copy(files[y], is_pdf)
+        except LookupError as exc:
+            print(f"  New Mexico {y}: {exc}", flush=True)
+            continue
+        captured.append(copy.captured)
+        out.extend(parse_new_mexico(copy.data, plain_url(copy.url)))
+        pause()
+    note_source("NM", captured_note(captured))
+    return reassign(out)
+
+
+# --- Missouri -----------------------------------------------------------------------
+# The Office of Workforce Development lists a year's notices on a page per
+# year (received, employer, industry, location, county, type, layoff dates,
+# workers affected). Every page sits behind an hCaptcha check, so the
+# Archive's copies are read; it captures each about monthly, and a capture of
+# the check page itself is passed over.
+MO_PAGE = "https://jobs.mo.gov/warn/"
+MO_YEAR = "https://jobs.mo.gov/warn/{year}"
+
+
+def has_mo_table(data: bytes) -> bool:
+    return table_with(decode(data), "received", "affected") is not None
+
+
+def parse_missouri(data: bytes, source_url: str = MO_PAGE) -> list[dict]:
+    t = table_with(decode(data), "received", "affected")
+    if not t:
+        raise ValueError("no table naming Received and # affected on Missouri's page")
+    h, body = t
+    c = {k: col(h, *v) for k, v in {"date": ("received",), "co": ("title",), "ind": ("industry",),
+                                     "loc": ("location",), "county": ("county",), "type": ("type",),
+                                     "eff": ("layoff date",), "n": ("affected",)}.items()}
+    out = []
+    for r in body:
+        d = parse_date(cell(r, c["date"]))
+        if not d:
+            continue
+        loc = clean(cell(r, c["loc"]))
+        out.append(notice("MO", d, cell(r, c["co"]), source_url=source_url, effective_date=first_date(cell(r, c["eff"])),
+                          kind=cell(r, c["type"]), employees=parse_int(cell(r, c["n"])), county=cell(r, c["county"]),
+                          industry=cell(r, c["ind"]), site=loc or None, extra=loc))
+    return finish(out, SINCE)
+
+
+def load_missouri(f: str | None) -> list[dict]:
+    if f:
+        return parse_missouri(read(f))
+    out: list[dict] = []
+    captured: list[str] = []
+    for y in years_to_read("MO"):
+        url = MO_YEAR.format(year=y)
+        try:
+            copy = archive_copy(url, has_mo_table)
+        except LookupError as exc:
+            print(f"  Missouri {y}: {exc}", flush=True)
+            continue
+        captured.append(copy.captured)
+        out.extend(parse_missouri(copy.data, url))
+        pause()
+    if not captured:
+        raise ValueError("the Internet Archive holds no copy of any Missouri year page read")
+    note_source("MO", captured_note(captured))
+    return reassign(out)
+
+
+# --- Nevada -------------------------------------------------------------------------
+# DETR posts a master PDF a year, WARN and non-WARN notices together, linked
+# from its WARN page. Its host refuses scripts and its robots.txt alike, so the
+# Archive's copies are read. The PDF draws no table rules, so its columns are
+# read from where each word sits: the employer, city, county and notification
+# columns are left-aligned, so their left edges are the x positions nearly
+# every row shares.
+NV_PAGE = "https://detr.nv.gov/Page/WARN"
+NV_MASTER = re.compile(r"(20\d\d)\s*WARN Act Notices", re.I)
+
+
+def nv_masters(page: str) -> dict[int, str]:
+    out: dict[int, str] = {}
+    for url, text in links(page, NV_PAGE):
+        m = NV_MASTER.search(text)
+        if m and url.lower().endswith(".pdf"):
+            out.setdefault(int(m[1]), plain_url(url))
+    return out
+
+
+def pdf_word_lines(data) -> list[list[dict]]:
+    """Each printed line of a PDF as its words ({"text", "x0"}), top to bottom.
+    `data` is the PDF, or those lines as a test hands them in."""
+    if not isinstance(data, (bytes, bytearray)):
+        return data
+    import io as _io
+
+    import pdfplumber
+
+    if not is_pdf(data):
+        raise ValueError("not a PDF: the source answered with something else")
+    out: list[list[dict]] = []
+    with pdfplumber.open(_io.BytesIO(data)) as pdf:
+        for page in pdf.pages:
+            words = sorted(page.extract_words(x_tolerance=1.5), key=lambda w: (w["top"], w["x0"]))
+            line: list[dict] = []
+            top = None
+            for w in words:
+                if top is not None and abs(w["top"] - top) > 2:
+                    out.append(sorted(line, key=lambda x: x["x0"]))
+                    line = []
+                top = w["top"] if not line else top
+                line.append({"text": w["text"], "x0": round(w["x0"], 1)})
+            if line:
+                out.append(sorted(line, key=lambda x: x["x0"]))
+    return out
+
+
+NV_DATE = re.compile(r"^\d{1,2}/\d{1,2}/\d{2,4}$")
+
+
+def parse_nevada(data, source_url: str = NV_PAGE) -> list[dict]:
+    """Received Date, Effective Date, Type, Affected Total, Employer, City,
+    County, Notification. Only rows marked WARN are kept, as Mississippi's are.
+    A WARN row printed without its received date can't be dated and is named."""
+    lines = pdf_word_lines(data)
+    rows = [ln for ln in lines if ln and NV_DATE.match(ln[0]["text"])]
+    if not rows:
+        raise ValueError("no dated rows in Nevada's file")
+    from collections import Counter
+    share = Counter(round(w["x0"]) for ln in rows for w in {round(w["x0"]): w for w in ln}.values())
+    lefts = sorted(x for x, n in share.items() if n >= 0.6 * len(rows))
+    if len(lefts) < 4:
+        raise ValueError(f"Nevada's columns can't be found from where its words sit ({lefts})")
+    emp_x, city_x, county_x, notif_x = (x - 1.5 for x in lefts[-4:])
+    out = []
+    undated = [ln for ln in lines if ln and not NV_DATE.match(ln[0]["text"]) and ln[-1]["text"] == "WARN"
+               and any(w["x0"] >= emp_x for w in ln) and any(re.fullmatch(r"\d+", w["text"]) for w in ln)]
+    for ln in rows:
+        pre = [w["text"] for w in ln if w["x0"] < emp_x]
+        emp = " ".join(w["text"] for w in ln if emp_x <= w["x0"] < city_x)
+        city = " ".join(w["text"] for w in ln if city_x <= w["x0"] < county_x)
+        county = " ".join(w["text"] for w in ln if county_x <= w["x0"] < notif_x)
+        notif = (" ".join(w["text"] for w in ln if w["x0"] >= notif_x) or ln[-1]["text"]).upper()
+        if not notif.endswith("WARN") or "NON" in notif:
+            continue
+        kind = next((t for t in pre[1:] if re.fullmatch(r"layoffs?|closures?|closing", t, re.I)), None)
+        count = next((t for t in reversed(pre[1:]) if (re.match(r"\d", t) and not NV_DATE.match(t))
+                      or t.lower() == "unknown"), None)
+        eff = next((t for t in pre[1:2] if NV_DATE.match(t)), None)
+        out.append(notice("NV", parse_date(pre[0]), emp, source_url=source_url, effective_date=parse_date(eff),
+                          kind=kind, employees=parse_int(count),
+                          county=county, site=city or None, extra=city))
+    if undated:
+        names = ", ".join(" ".join(w["text"] for w in ln if emp_x <= w["x0"] < city_x) for ln in undated)
+        print(f"  Nevada: {len(undated)} WARN row(s) print no received date and are left out: {names}", flush=True)
+    return finish(out, SINCE)
+
+
+def load_nevada(f: str | None) -> list[dict]:
+    if f:
+        return parse_nevada(read(f))
+    page = archive_copy(NV_PAGE, lambda d: bool(nv_masters(decode(d))))
+    masters = nv_masters(decode(page.data))
+    captured = [page.captured]
+    out: list[dict] = []
+    for y in years_to_read("NV"):
+        if y not in masters:
+            continue
+        pause()
+        try:
+            copy = archive_copy(masters[y], is_pdf)
+        except LookupError as exc:
+            print(f"  Nevada {y}: {exc}", flush=True)
+            continue
+        captured.append(copy.captured)
+        out.extend(parse_nevada(copy.data, masters[y]))
+    note_source("NV", captured_note(captured))
+    return reassign(out)
+
+
+# --- West Virginia ------------------------------------------------------------------
+# WorkForce West Virginia posts each notice as the employer's letter, a PDF
+# per notice, the link's words naming the employer and usually the day. Its
+# compiled list of January 2022 to January 3 2025 prints every field; each
+# letter outside that span gives the company and the day (or the month, where
+# that's all the link says) and no count, because the count is only inside the
+# letter, often a scan. Contact names in the compiled list are never read.
+WV_PAGE = "https://workforcewv.org/job-seeker/layoffs-downsizing/warn-listing/"
+WV_GAP_S = 10  # robots.txt: "Crawl-delay: 10"
+WV_MONTHS = r"(january|february|march|april|may|june|july|august|september|october|november|december)"
+WV_WORDS = re.compile(r"\b(?:warn|notices?|state|supplemental|signed|revised|revisedsigned|workforce|letter|update)\b"
+                      r"|\br\d\b", re.I)
+
+
+def wv_letter(url: str, text: str) -> dict | None:
+    """One letter's link: the day from its words or its file name, else the
+    month they name ("08-2026", "July"), else the month the file was posted."""
+    path = urllib.parse.urlsplit(url).path
+    stem = re.sub(r"\.pdf$", "", urllib.parse.unquote(path.rsplit("/", 1)[-1]), flags=re.I)
+    words = clean(text).replace("_", " ")
+    spaced = stem.replace("_", " ").replace("-", " ")
+    posted = re.search(r"/uploads/(20\d\d)/(\d\d)/", path)
+    d = first_date(words) or first_date(stem.replace("_", "-"))
+    for src in ((words, spaced) if not d else ()):
+        mm = re.search(r"\b(\d{1,2})[-/](20\d\d)\b", src)
+        if mm and 1 <= int(mm[1]) <= 12:
+            d = f"{mm[2]}-{int(mm[1]):02d}"
+            break
+        mn = re.search(r"\b" + WV_MONTHS + r"\b(?:\D{0,3}(20\d\d))?", src, re.I)
+        d = parse_month(mn[1], mn[2] or (posted[1] if posted else None)) if mn else None
+        if d:
+            break
+    if not d and posted:
+        d = f"{posted[1]}-{posted[2]}"
+    if not d:
+        return None
+    co = DATE_TOKEN.sub(" ", words)
+    co = re.sub(r"\b\d{1,2}[-/]20\d\d\b|\b20\d\d\b|\b" + WV_MONTHS + r"\b", " ", co, flags=re.I)
+    co = clean(re.sub(r"\s[–—-]\s|^\s*[–—-]\s*|\s*[–—-]\s*$", " ", WV_WORDS.sub(" ", co)))
+    co = clean(re.sub(r"(?:\s+\d+)+$", "", co))
+    if not co:
+        return None
+    update = bool(re.search(r"\br\d\b|revis|supplemental|update|amend", words + " " + stem, re.I))
+    return notice("WV", d, co, source_url=url, kind="Update" if update else None, extra=url)
+
+
+def wv_compiled_span(data: bytes) -> tuple[str, str] | None:
+    """The span the compiled list covers, from its own title ("1/1/22 to 1/3/25")."""
+    import io as _io
+
+    import pdfplumber
+
+    with pdfplumber.open(_io.BytesIO(data)) as pdf:
+        text = pdf.pages[0].extract_text() or ""
+    m = re.search(r"(\d{1,2}/\d{1,2}/\d{2,4})\s+to\s+(\d{1,2}/\d{1,2}/\d{2,4})", text)
+    return (parse_date(m[1]), parse_date(m[2])) if m else None
+
+
+def parse_west_virginia_compiled(data, source_url: str = WV_PAGE) -> list[dict]:
+    """A two-column table per notice: Company, Address, Contact Information
+    (never read), Region, County, Date of Notice, Projected Date, Closure/Mass
+    Layoff, Number Affected.
+
+    A notice that runs over a page break continues in the next table, which
+    starts without a Company row. A notice for several sites lists the extra
+    addresses under its address and prints "Total" beside its whole count.
+    """
+    found: list[dict[str, list[str]]] = []
+    current: dict[str, list[str]] | None = None
+    last = ""
+    for t in pdf_tables(data) if isinstance(data, (bytes, bytearray)) else data:
+        for r in t:
+            cells = [clean(c) for c in (r or [])]
+            if not cells:
+                continue
+            key, values = cells[0].lower(), [c for c in cells[1:] if c]
+            if key == "company":
+                current = {}
+                found.append(current)
+            if current is None:
+                continue
+            if key:
+                current[key], last = values, key
+            elif last == "address" and values:
+                current["address"] = current.get("address", []) + values[:1]
+    out = []
+    for f in found:
+        first = {k: (v[0] if v else "") for k, v in f.items()}
+        d = parse_date(first.get("date of notice"))
+        if not d or not first.get("company"):
+            continue
+        n = f.get("number affected") or []
+        count = parse_int(n[-1]) if len(n) > 1 and n[0].lower() == "total" else parse_int(first.get("number affected"))
+        sites = f.get("address") or []
+        out.append(notice("WV", d, first["company"], source_url=source_url,
+                          effective_date=first_date(first.get("projected date")), kind=first.get("closure/mass layoff"),
+                          employees=count, county=first.get("county"), site="; ".join(sites) or None,
+                          extra=sites[0] if sites else ""))
+    return finish(out, SINCE)
+
+
+def parse_west_virginia(data: bytes, span: tuple[str, str] | None = None) -> list[dict]:
+    """The listing page's letters, leaving to the compiled list the span it covers."""
+    out = []
+    for url, text in links(decode(data), WV_PAGE):
+        if "/wp-content/uploads/" not in url or not url.lower().endswith(".pdf") or re.search(r"\bto\b", url):
+            continue
+        row = wv_letter(url, text)
+        if row and not (span and span[0] <= row["notice_date"][:10] <= span[1]):
+            out.append(row)
+    return finish(out, SINCE)
+
+
+def wv_compiled_url(page: str) -> str | None:
+    return next((u for u, _ in links(page, WV_PAGE) if re.search(r"/WV-WARN-Notices-[^/]*to[^/]*\.pdf$", u, re.I)), None)
+
+
+def load_west_virginia(f: str | None) -> list[dict]:
+    if f:
+        return parse_west_virginia(read(f))
+    page = get(WV_PAGE)
+    out: list[dict] = []
+    span = None
+    compiled = wv_compiled_url(decode(page))
+    if compiled:
+        pause(WV_GAP_S)
+        data = get(compiled, referer=WV_PAGE)
+        span = wv_compiled_span(data)
+        out.extend(parse_west_virginia_compiled(data, compiled))
+    return reassign(out + parse_west_virginia(page, span))
+
+
 # "days" is each state's freshness budget: its newest notice may be this old
 # before the health check says the state has gone quiet. Set Oct 25 2026 from
 # the longest gap between two notices in the two years before, plus a week,
@@ -1914,4 +2586,15 @@ STATES: dict[str, dict] = {
     "vt": {"name": "Vermont", "page": JOB_CENTERS["VT"] + "/search/warn_lookups/new", "days": 161, "snapshot": True,
            "load": load_job_center("VT")},
     "wi": {"name": "Wisconsin", "page": WI_PAGE, "days": 42, "snapshot": True, "load": load_wisconsin},
+    # Read since Oct 25 2026: each state's own host turns scripts away, so these
+    # read a page the host does serve, or the Internet Archive's copy (see the
+    # section above). Archive-read budgets add the Archive's longest gap
+    # between good captures of the state's file or page.
+    "mn": {"name": "Minnesota", "page": MN_PAGE, "days": 60, "snapshot": True, "load": load_minnesota},
+    "ri": {"name": "Rhode Island", "page": RI_PAGE, "days": 120, "snapshot": True, "load": load_rhode_island},
+    "la": {"name": "Louisiana", "page": LA_PAGE, "days": 70, "snapshot": True, "load": load_louisiana},
+    "nm": {"name": "New Mexico", "page": NM_PAGE, "days": 200, "snapshot": True, "load": load_new_mexico},
+    "mo": {"name": "Missouri", "page": MO_PAGE, "days": 70, "snapshot": True, "load": load_missouri},
+    "nv": {"name": "Nevada", "page": NV_PAGE, "days": 120, "snapshot": True, "load": load_nevada},
+    "wv": {"name": "West Virginia", "page": WV_PAGE, "days": 90, "snapshot": True, "load": load_west_virginia},
 }

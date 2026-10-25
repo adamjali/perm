@@ -1283,3 +1283,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: WARN notices from
 - **The card sorter on `/perm-by-the-numbers` is drawn the way it would work**: cards on the rails, a kicker at
   each pocket, stacks as tall as their cards, nothing floating (0 of 198 line ends), and the reader's arm resting
   on its head. Under Reduce Motion it holds still with no Pause button, which is why it can look frozen.
+
+## Oct 25 2026 (midday): WARN notices from 47 states and DC
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (midday)".
+
+- **Three states publish no list** (Arkansas by law, New Hampshire, Wyoming), each read on the agency's own page.
+- **Seven whose sites turn scripts away are read from the Internet Archive's copies**, never by solving a check or
+  posing as a browser; their freshness budgets allow for how rarely the Archive visits.
+- **The Archive throttles a burst for a while (HTTP 429)**: never run two Archive readers at once.

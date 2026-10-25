@@ -92,7 +92,7 @@ jobs:
           python3 scripts/ingest_oflc_news.py \
             || python3 scripts/record_ingest_failure.py --script ingest_oflc_news.py --note "OFLC announcements failed"
 
-      # Forty states and DC (scripts/ingest_warn.py and scripts/warn_states.py).
+      # Forty-seven states and DC (scripts/ingest_warn.py and scripts/warn_states.py).
       # A state whose site is down that day is named in the run's note and its
       # own freshness row is the alarm; a parse that breaks turns the run partial.
       # Texas's own site challenges scripts, so its automatic source is the state's

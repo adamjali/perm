@@ -6,7 +6,7 @@ import { rows } from "@/lib/db/client";
 
 /**
  * WARN notices, as the states publish them, matched to PERM sponsors by the
- * entity merge key. Forty states and DC, each from the record its state
+ * entity merge key. Forty-seven states and DC, each from the record its state
  * publishes (scripts/ingest_warn.py and scripts/warn_states.py name the sources).
  * A notice is one filing with the state's own numbers; nothing here is a
  * layoff count for a company.
