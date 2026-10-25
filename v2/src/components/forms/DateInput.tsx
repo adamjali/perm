@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useEffectEvent, useMemo, useCallback } from "react";
 import { CalendarIcon, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -157,6 +157,23 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       const externalValue = value != null ? String(value) : "";
       setInternalValue(externalValue);
     }, [value]);
+
+    // A date typed (or restored by the browser) before the page's script started stays in the box, but React
+    // has recorded it as the box's value, so typing the same date again counts as no change: the box shows a
+    // date and nothing answers it (found Oct 25 2026, on a slow load of the timeline calculator). Read the box
+    // once on mount and pass a complete date on.
+    const adoptTypedDate = useEffectEvent(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      const held = value != null ? String(value) : "";
+      if (input.value && input.value !== held && isValidDateString(input.value)) {
+        setInternalValue(input.value);
+        onChange?.({ target: input, currentTarget: input } as React.ChangeEvent<HTMLInputElement>);
+      }
+    });
+    useEffect(() => {
+      adoptTypedDate();
+    }, []);
 
     // For Sunday-only mode, adjust min date to next Sunday and use step="7"
     const effectiveMinDate = useMemo(() => {

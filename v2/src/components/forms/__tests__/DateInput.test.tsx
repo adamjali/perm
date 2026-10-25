@@ -209,3 +209,36 @@ describe("DateInput", () => {
     });
   });
 });
+
+describe("DateInput before its script starts", () => {
+  // A visitor on a slow load types a date into the server-rendered box; React then hydrates over it. The box
+  // must pass that date on, or it shows a date nothing answers (found Oct 25 2026 on the timeline calculator).
+  async function hydrateWithTyped(typed: string, value = "") {
+    const { renderToString } = await import("react-dom/server");
+    const { hydrateRoot } = await import("react-dom/client");
+    const { act } = await import("react");
+    const onChange = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    container.innerHTML = renderToString(<DateInput id="d" value={value} onChange={onChange} />);
+    (container.querySelector("input") as HTMLInputElement).value = typed;
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    await act(async () => {
+      root = hydrateRoot(container, <DateInput id="d" value={value} onChange={onChange} />);
+    });
+    await act(async () => root?.unmount());
+    container.remove();
+    return onChange;
+  }
+
+  it("passes on a complete date typed before hydration", async () => {
+    const onChange = await hydrateWithTyped("2026-08-26");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]![0].target.value).toBe("2026-08-26");
+  });
+
+  it("does nothing when the box holds what the page already has, or nothing", async () => {
+    expect(await hydrateWithTyped("2026-08-26", "2026-08-26")).not.toHaveBeenCalled();
+    expect(await hydrateWithTyped("")).not.toHaveBeenCalled();
+  });
+});

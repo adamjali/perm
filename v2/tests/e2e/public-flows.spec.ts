@@ -29,12 +29,20 @@ test("the case lookup answers a real case number", async ({ page }) => {
 });
 
 test("the processing time calculator gives a date for a filing date", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto("/tools/perm-timeline-calculator");
   await expect(page.getByText(/Pick a date above/)).toBeVisible();
   await expect(page.getByText(/isn.t enough published DOL data/)).toHaveCount(0);
-  await page.getByLabel(/DOL received your case/i).fill("2025-12-15");
+  // Two months back is always still in DOL's line (the queue runs about ten months behind), so it gets a date.
+  // A fixed date stops working once the queue passes its month: "2025-12-15" did in October 2026.
+  const filed = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
+  // A date typed before the page's script starts is dropped (the dev server takes about 8 s), so fill again
+  // until the answer shows.
+  await expect(async () => {
+    await page.getByLabel(/DOL received your case/i).fill(filed);
+    await expect(page.getByText(/^Around /).first()).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 45_000 });
   await expect(page.getByText(/^Most likely$/)).toBeVisible();
-  await expect(page.getByText(/^Around /).first()).toBeVisible();
 });
 
 test("the alert form refuses an invalid address before sending anything", async ({ page }) => {
@@ -62,14 +70,42 @@ test("a language guide sends its lookup form to the case page", async ({ page })
 });
 
 test("the search palette finds the new tools", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto("/");
-  await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
   const input = page.getByRole("combobox").or(page.getByPlaceholder(/search/i)).first();
+  // The shortcut does nothing until the page's script is listening (about 8 s on the dev server): press again
+  // until the palette opens.
+  await expect(async () => {
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
+    await expect(input).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 45_000 });
   await input.fill("green card line");
-  await expect(page.getByText("Green card line").first()).toBeVisible();
+  // The tool's name is "Your place in line" (its address and old name are "green card line").
+  await expect(page.getByRole("option", { name: /Your place in line/ }).first()).toBeVisible();
 });
 
 test("the estimate scorecard shows the backtest headline", async ({ page }) => {
   await page.goto("/estimate-scorecard");
-  await expect(page.getByText(/Typical miss, real decisions/i)).toBeVisible();
+  await expect(page.getByText(/Typical miss on real decisions/i).first()).toBeVisible();
+});
+
+test("PERM by the numbers draws every tile and the card sorter, which pauses", async ({ page }) => {
+  await page.goto("/perm-by-the-numbers");
+  await expect(page.locator("h1")).toHaveText(/PERM by the numbers/i);
+  // Every tile renders: each heading carries the tile's id, and the page throws rather than drawing a tile
+  // with no data.
+  for (const id of ["line", "decided", "holds", "filed", "jobs", "employers", "new-employers", "rfi", "wage-requests", "dol-page", "bulletins"]) {
+    await expect(page.locator(`#${id}-h`), `tile #${id}`).toHaveCount(1);
+  }
+  await expect(page.getByRole("link", { name: /Download the files/ })).toHaveAttribute("href", "/open-data");
+  const pause = page.getByRole("button", { name: "Pause the card sorter" });
+  await pause.scrollIntoViewIfNeeded();
+  await pause.click();
+  await expect(page.getByRole("button", { name: "Play the card sorter" })).toBeVisible();
+});
+
+test("the layoff page names the 40 states and DC it reads", async ({ page }) => {
+  await page.goto("/layoffs");
+  await expect(page.locator("h1")).toBeVisible();
+  await expect(page.getByText(/40\s+states and DC/i).first()).toBeVisible();
 });
