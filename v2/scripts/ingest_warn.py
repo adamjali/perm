@@ -848,7 +848,11 @@ def main() -> int:
                         cadence="Weekly", note=note, max_age_days=MAX_AGE_DAYS)
     if pruned:
         note += f"; pruned {pruned} the source no longer lists"
-    record_run(db, "ingest_warn.py", status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
+    # A one-state run is recorded under its own name, with no space, so a clean load of one state
+    # can't supersede the full run's failure (check_ingest_health clears a bare filename's failure
+    # with any later clean "<filename> --mode" run).
+    script = "ingest_warn.py" if a.state == "all" else f"ingest_warn.py:{a.state}"
+    record_run(db, script, status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
     log(f"wrote {written}; {note}")
     return 0
 
