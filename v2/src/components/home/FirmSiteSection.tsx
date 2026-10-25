@@ -64,21 +64,19 @@ export function FirmSiteSection() {
           </div>{" "}
 
           <div className="flex flex-col">
-            <div className="grid grid-cols-1 border-border sm:grid-cols-2 lg:grid-cols-1 border">
-              <div className="flex min-h-36 items-center justify-center bg-neutral-950 p-6 sm:p-8">
-                <span
-                  aria-hidden="true"
-                  className="block w-full max-w-[22rem] [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
-                  dangerouslySetInnerHTML={{ __html: badge("dark") }}
-                />
-              </div>{" "}
-              <div className="flex min-h-36 items-center justify-center border-t-3 border-border bg-neutral-50 p-6 sm:border-l-3 sm:border-t-0 sm:p-8 lg:border-l-0 lg:border-t-3">
-                <span
-                  aria-hidden="true"
-                  className="block w-full max-w-[22rem] [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
-                  dangerouslySetInnerHTML={{ __html: badge("light") }}
-                />
-              </div>
+            {/* One badge, in the page's own theme (owner, Oct 25 2026: the dark and light pair read as the
+                same badge twice). A firm's site gets the one that suits it from the badge route. */}
+            <div className="flex min-h-36 items-center justify-center border border-border bg-neutral-50 p-6 sm:p-8 dark:bg-neutral-950">
+              <span
+                aria-hidden="true"
+                className="block w-full max-w-[22rem] dark:hidden [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+                dangerouslySetInnerHTML={{ __html: badge("light") }}
+              />{" "}
+              <span
+                aria-hidden="true"
+                className="hidden w-full max-w-[22rem] dark:block [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+                dangerouslySetInnerHTML={{ __html: badge("dark") }}
+              />
             </div>{" "}
             <h3 className="mt-8 font-heading text-xl font-bold">A badge for a verified firm</h3>{" "}
             <ol className="mt-4 space-y-3">

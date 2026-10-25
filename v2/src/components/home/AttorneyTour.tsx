@@ -150,7 +150,7 @@ function Section({ s, index, flip, ink }: { s: TourSection; index: number; flip:
       ink={ink}
       title={s.title}
       lead={s.lead}
-      picture={<AppWindow url={s.url} shots={TOUR_SHOTS[s.surface]} alt={s.alt} onBand={ink} />}
+      picture={<AppWindow url={s.url} shots={TOUR_SHOTS[s.surface]} alt={s.alt} caption="Sample cases." onBand={ink} />}
       extra={s.extra}
     >
       <Facts facts={s.facts} ink={ink} />
@@ -227,7 +227,7 @@ function AssistantSection() {
                 <img src={shots.dark.src} width={shots.dark.width} height={shots.dark.height} alt={ASSISTANT_ALT} loading="lazy" decoding="async" className="block h-auto w-full" />
               </picture>
             </div>{" "}
-            <figcaption className="mt-6 text-sm text-muted-foreground sm:mt-7">Sample cases. The employers are invented.</figcaption>
+            <figcaption className="mt-6 text-sm text-muted-foreground sm:mt-7">Sample cases.</figcaption>
           </figure>
         </div>
       </div>

@@ -17,7 +17,15 @@ import { buttonVariants } from "@/components/ui/button";
  * Sized so the headline, both buttons and most of the hub fit one 1440x900
  * screen (the hub's top had sat 539px down, 60% of it visible; now about 80%,
  * and all of it at 1080 tall).
+ *
+ * The picture is one composition at every width, scaled as a whole (owner, Oct
+ * 25 2026: below 1280px the card had dropped under the hub on its own). It's a
+ * container, so the hub and card are shares of its width and the reminder is
+ * sized in container units; the hub keeps its wide capture at every width.
  */
+
+/** The hub's wide captures only: the phone capture would change the picture's shape. */
+const HUB_WIDE = { light: TOUR_SHOTS.hub.light, dark: TOUR_SHOTS.hub.dark };
 
 const HUB_ALT =
   "The dashboard's Deadlines panel for eight sample cases: none overdue, an RFI response due this week, an I-140 filing and a filing window this month, and nine deadlines later.";
@@ -26,17 +34,19 @@ const CARD_ALT =
 
 function Reminder({ className }: { className?: string }) {
   return (
+    // Sized in container units, so it shrinks with the picture: at full width
+    // 1cqw is about 13px, so 1.2cqw is the 16px title and 1.05cqw the 14px lines.
     <div
       aria-hidden="true"
-      className={`items-start gap-3 border-2 border-black bg-card p-3 text-foreground shadow-hard ${className ?? ""}`}
+      className={`items-start gap-[0.9cqw] border-2 border-black bg-card p-[0.9cqw] text-foreground shadow-hard ${className ?? ""}`}
     >
-      <span className="grid size-10 shrink-0 place-items-center border-border bg-primary text-primary-foreground border">
-        <BellSimpleRingingIcon weight="bold" className="size-5" />
+      <span className="grid size-[3cqw] shrink-0 place-items-center border border-border bg-primary text-primary-foreground">
+        <BellSimpleRingingIcon weight="bold" className="size-[1.5cqw]" />
       </span>{" "}
       <span className="min-w-0">
-        <span className="block font-heading text-base font-bold leading-tight">{deadlineTitle("rfi_due", 7)}</span>{" "}
-        <span className="mt-0.5 block text-sm text-muted-foreground">Juniper Biologics, Senior Statistician</span>{" "}
-        <span className="mt-1 block text-sm text-muted-foreground">Reminder email</span>
+        <span className="block font-heading text-[1.2cqw] font-bold leading-tight">{deadlineTitle("rfi_due", 7)}</span>{" "}
+        <span className="mt-[0.15cqw] block text-[1.05cqw] leading-snug text-muted-foreground">Juniper Biologics, Senior Statistician</span>{" "}
+        <span className="mt-[0.3cqw] block text-[1.05cqw] leading-snug text-muted-foreground">Reminder email</span>
       </span>
     </div>
   );
@@ -80,18 +90,20 @@ export function AttorneyHero() {
 
         {/* The picture: the Deadlines panel in an app window on a lime block, a
             case card over its lower-left corner and a reminder over its top.
-            On wide screens the card stands half off the window; narrower, the
-            phone capture of the hub stands in and the card follows it. */}
-        <div className="relative mt-12 sm:mt-14">
-          <Reminder className="absolute -top-9 right-4 z-20 hidden max-w-sm sm:flex xl:right-[6%]" />
+            The same picture at every width, smaller on a smaller screen; on a
+            phone the reminder is left out. */}
+        <div className="relative mt-12 @container sm:mt-14">
+          <Reminder className="absolute -top-[2.7cqw] right-[6%] z-20 hidden max-w-[28.7cqw] sm:flex" />
 
           <AppWindow
             url="permtracker.app/dashboard"
-            shots={TOUR_SHOTS.hub}
+            shots={HUB_WIDE}
             alt={HUB_ALT}
+            caption="Sample cases."
             priority
             onBand
-            className="xl:ml-[27%] xl:w-[73%]"
+            fluid
+            className="ml-[27%] w-[73%]"
           />
 
           <AppWindow
@@ -99,7 +111,8 @@ export function AttorneyHero() {
             shots={TOUR_SHOTS["case-card"]}
             alt={CARD_ALT}
             caption={null}
-            className="relative z-10 mx-auto mt-10 w-[86%] max-w-sm xl:absolute xl:bottom-[22%] xl:left-0 xl:mx-0 xl:mt-0 xl:w-[30%] xl:max-w-none"
+            fluid
+            className="absolute bottom-[22%] left-0 z-10 w-[30%]"
           />
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import { cn } from "@/lib/utils";
 
 /**
@@ -70,6 +72,7 @@ export function AppWindow({
   caption = "Sample cases. The employers are invented.",
   priority = false,
   onBand = false,
+  fluid = false,
   className,
 }: {
   url: string;
@@ -80,6 +83,14 @@ export function AppWindow({
   priority?: boolean;
   /** On a dark band the frame and caption take the band's light colour. */
   onBand?: boolean;
+  /**
+   * Inside a composition that's a container (`@container`), size the title bar
+   * and the lime offset in container units, so the whole window shrinks with
+   * the picture instead of keeping a full-size bar over a small capture. The
+   * values equal the fixed ones at a 1,336px container (the attorney hero's
+   * widest).
+   */
+  fluid?: boolean;
   className?: string;
 }) {
   const edge = onBand ? "border-[var(--band-ink)]" : "border-border";
@@ -90,7 +101,10 @@ export function AppWindow({
         <div
           aria-hidden="true"
           className={cn(
-            "absolute inset-0 translate-x-2.5 translate-y-2.5 border-2 bg-primary sm:translate-x-3.5 sm:translate-y-3.5",
+            "absolute inset-0 border-2 bg-primary",
+            fluid
+              ? "translate-x-[1.05cqw] translate-y-[1.05cqw]"
+              : "translate-x-2.5 translate-y-2.5 sm:translate-x-3.5 sm:translate-y-3.5",
             edge,
           )}
         />
@@ -100,13 +114,32 @@ export function AppWindow({
             edge,
           )}
         >
-          <div className="flex items-center gap-3 border-b-2 border-border bg-muted px-3 py-2">
-            <span aria-hidden="true" className="flex gap-1.5">
-              <span className="size-3 border-2 border-border bg-background" />{" "}
-              <span className="size-3 border-2 border-border bg-background" />{" "}
-              <span className="size-3 border-2 border-border bg-primary" />
+          <div
+            className={cn(
+              "flex items-center border-b-2 border-border bg-muted",
+              fluid ? "gap-[0.9cqw] px-[0.9cqw] py-[0.6cqw]" : "gap-3 px-3 py-2",
+            )}
+          >
+            <span aria-hidden="true" className={cn("flex", fluid ? "gap-[0.45cqw]" : "gap-1.5")}>
+              {["bg-background", "bg-background", "bg-primary"].map((fill, i) => (
+                <Fragment key={i}>
+                  {i > 0 ? " " : null}
+                  <span
+                    className={cn(
+                      "border-border",
+                      fluid ? "size-[0.9cqw] border-[max(1px,0.15cqw)]" : "size-3 border-2",
+                      fill,
+                    )}
+                  />
+                </Fragment>
+              ))}
             </span>{" "}
-            <span className="truncate font-mono text-sm text-muted-foreground">
+            <span
+              className={cn(
+                "truncate font-mono text-muted-foreground",
+                fluid ? "text-[1.05cqw] leading-[1.45]" : "text-sm",
+              )}
+            >
               {url}
             </span>
           </div>
