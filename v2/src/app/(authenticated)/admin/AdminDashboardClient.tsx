@@ -17,6 +17,7 @@ import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { FirmClaimsPanel } from "@/components/admin/FirmClaimsPanel";
 import { AlertRatingsPanel } from "@/components/admin/AlertRatingsPanel";
 import { ReviewsPanel } from "@/components/admin/ReviewsPanel";
+import { InboxFilterPanel } from "@/components/admin/InboxFilterPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -36,6 +37,7 @@ export default function AdminDashboardClient() {
   const firmClaims = useQuery(api.firmClaims.listForAdmin, skip ? "skip" : {});
   const reviews = useQuery(api.siteReviews.listForAdmin, skip ? "skip" : {});
   const alertRatings = useQuery(api.alertRatings.forAdmin, skip ? "skip" : {});
+  const inboxFilter = useQuery(api.inboundFilter.forAdmin, skip ? "skip" : {});
 
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
@@ -177,9 +179,15 @@ export default function AdminDashboardClient() {
           {
             id: "alerts",
             label: "Alerts and email",
-            badge: delivery && delivery.outbox.queued > 0 ? `${delivery.outbox.queued} waiting` : null,
+            badge:
+              inboxFilter && inboxFilter.held.length > 0
+                ? `${inboxFilter.held.length} held`
+                : delivery && delivery.outbox.queued > 0
+                  ? `${delivery.outbox.queued} waiting`
+                  : null,
             content: (
               <div className="space-y-8">
+                <InboxFilterPanel data={inboxFilter} />
                 {delivery ? <DeliveryPanel data={delivery} /> : <Skeleton className="h-96" />}
                 {signals ? <SubscriptionsPanel signals={signals} /> : <Skeleton className="h-64" />}
               </div>

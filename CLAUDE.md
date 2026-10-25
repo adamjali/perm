@@ -1293,3 +1293,15 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (midday)".
   posing as a browser; their freshness budgets allow for how rarely the Archive visits.
 - **The Archive refuses its page copies for long stretches (HTTP 429)**, from any address: the readers warn and try the
   next day, and the morning report names every state that has never loaded. Never retry by hand in a loop.
+
+## Oct 25 2026 (afternoon): a spam filter on our mail and the contact form
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
+
+- **Mail to our addresses and contact-form messages are checked before the inbox**: rules (`convex/lib/spamCheck.ts`)
+  plus Cloudflare's AI as a second opinion; a held message is stored, listed under Admin > Alerts and email, and
+  deleted 30 days later, never bounced. On the stored mail: 39 of 152 held, no real person among them.
+- **The mail Worker forwards unless the answer is a clear hold**, so a slow or broken check never loses mail.
+- **Replies to us, senders the owner let through and the services we hold accounts with always get through.**
+- **The contact form carries Turnstile**; a bad token is refused, a missing one only adds weight.
+- **The plain Llama 3.1 8B on Workers AI was retired May 30 2026**; the check uses Llama 3.3 70B fast.

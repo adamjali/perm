@@ -89,6 +89,11 @@ export const storeCloudflareInbound = internalMutation({
     inReplyTo: v.optional(v.string()),
     references: v.optional(v.string()),
     forwarded: v.boolean(),
+    /** The content check held it (convex/inboundFilter.ts): stored, not sent on. */
+    held: v.optional(v.boolean()),
+    notice: v.optional(v.boolean()),
+    spamScore: v.optional(v.number()),
+    spamReasons: v.optional(v.array(v.string())),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
@@ -97,12 +102,16 @@ export const storeCloudflareInbound = internalMutation({
       .withIndex("by_message_id", (q) => q.eq("messageId", args.messageId))
       .first();
     if (existing) return false;
-    const { forwarded, ...fields } = args;
+    const { forwarded, held, notice, spamReasons, ...fields } = args;
+    const now = Date.now();
     await ctx.db.insert("supportEmails", {
       ...fields,
+      ...(notice ? { notice: true } : {}),
+      ...(spamReasons && spamReasons.length > 0 ? { spamReasons: spamReasons.slice(0, 12) } : {}),
+      ...(held ? { heldAt: now } : {}),
       resendEmailId: `cloudflare:${args.messageId}`.slice(0, 600),
-      status: forwarded ? "forwarded" : "received",
-      createdAt: Date.now(),
+      status: held ? "held" : forwarded ? "forwarded" : "received",
+      createdAt: now,
     });
     return true;
   },
@@ -404,7 +413,8 @@ export const listSupportEmails = query({
         v.literal("received"),
         v.literal("replied"),
         v.literal("forwarded"),
-        v.literal("archived")
+        v.literal("archived"),
+        v.literal("held")
       )
     ),
     limit: v.optional(v.number()),

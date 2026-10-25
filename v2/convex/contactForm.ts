@@ -7,6 +7,7 @@ import { getSecurityAlertEmail } from "./lib/admin";
 import { sendOwnerMail } from "./lib/ownerMail";
 import { recordError } from "./lib/errorRecording";
 import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
+import { aiOpinionFromWorker } from "./inboundFilter";
 
 /**
  * The contact form's write path. Public-endpoint checklist applied:
@@ -33,6 +34,7 @@ export const submit = internalMutation({
     email: v.string(),
     message: v.string(),
     ip: v.string(),
+    checkSignals: v.optional(v.array(v.object({ weight: v.number(), why: v.string() }))),
   },
   returns: v.object({
     ok: v.boolean(),
@@ -84,6 +86,7 @@ export const submit = internalMutation({
       message: args.message,
       ip: args.ip,
       createdAt: now,
+      ...(args.checkSignals && args.checkSignals.length > 0 ? { checkSignals: args.checkSignals } : {}),
     });
     await ctx.scheduler.runAfter(0, internal.contactForm.forward, { id });
     return { ok: true, message: "Sent. We read everything and reply by email." };
@@ -100,6 +103,19 @@ export const forward = internalAction({
     const esc = (t: string) =>
       t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const subject = `Contact form: ${row.name}`;
+    // The spam check (convex/inboundFilter.ts): the rules, the owner's word on
+    // the sender, the route's Turnstile signal and Cloudflare's AI. A held
+    // message is filed for the admin page and not sent on.
+    const mail = {
+      from: row.email,
+      fromName: row.name,
+      subject: "Contact form message",
+      text: row.message,
+      extra: row.checkSignals,
+    };
+    const ai = await aiOpinionFromWorker(mail);
+    const verdict = await ctx.runQuery(internal.inboundFilter.verdict, { ...mail, ai });
+    const held = verdict.action === "hold";
     // Filed with the support mail, so supportEmail:replyToEmail answers it in a
     // thread, as when it went to support@ and came back in (Oct 12 2026: that
     // round trip spent a Resend send and the forward another).
@@ -110,8 +126,12 @@ export const forward = internalAction({
       subject,
       bodyText: row.message,
       messageId: `<contact-form-${id}@permtracker.app>`,
-      forwarded: true,
+      forwarded: !held,
+      held,
+      spamScore: verdict.score,
+      spamReasons: verdict.reasons,
     });
+    if (held) return null;
     const to = getSecurityAlertEmail();
     if (!to) {
       await recordError(ctx, "action", "contactForm.forward", new Error("no owner address configured"));
@@ -153,6 +173,7 @@ export const getById = internalQuery({
       name: v.string(),
       message: v.string(),
       notifiedAt: v.optional(v.number()),
+      checkSignals: v.optional(v.array(v.object({ weight: v.number(), why: v.string() }))),
     }),
     v.null(),
   ),
@@ -164,6 +185,7 @@ export const getById = internalQuery({
       name: row.name,
       message: row.message,
       notifiedAt: row.notifiedAt,
+      checkSignals: row.checkSignals,
     };
   },
 });

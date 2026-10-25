@@ -10395,3 +10395,37 @@ plain request gets back), and every state a script may read now has a reader.
   New Mexico wait on the Archive, and Kansas answered the runner with a page holding no results table (it reads
   fine from a home connection; the error now quotes the page's title). A one-state run is recorded as
   `ingest_warn.py:<st>`, so it can't clear the full run's failure.
+
+## Oct 25 2026 (afternoon): a spam filter on our mail and the contact form
+
+The owner's yes, Oct 25. Mail to an @permtracker.app address and contact-form messages are checked before they reach
+the inbox; a message the check holds is stored and listed, never deleted unread or bounced.
+
+- **The rules** (`convex/lib/spamCheck.ts`, pure): an upstream spam flag (+3), a web address typed into the name (+3),
+  3 or more linked sites (+1, 8 or more +2), a push to a messaging app (+2), sales pitches (the first +2, the next two
+  +1 each), a bulk unsubscribe header (+1), replies to another domain (+1), a shouting subject (+1). Held at 3.
+  Pitch phrases only add weight, so nobody is held for writing in Chinese, Korean or Vietnamese. On the 130
+  messages support@ had received (Feb 12 to Oct 23), the rules alone held 23 spam messages and no real one.
+- **Cloudflare's AI is the second opinion** (Workers AI, `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, JSON mode, about
+  7 neurons a message): "spam" adds 2, "not_spam" takes off 1. It can't hold a message alone and can't rescue a
+  strong hold. With it, 39 of the stored 152 (support@ and the other addresses) are held, no real person among
+  them. The plain llama-3.1-8b-instruct was retired May 30 2026: the binding answered error 5028 and every
+  opinion came back empty until the model changed, so `/classify` now reports the AI's error.
+- **Always through**: a reply to a message we answered (its thread names a `supportEmails` row with `repliedAt`), a
+  sender the owner let through, and the services we hold accounts with (`ACCOUNT_DOMAINS`: Oracle's account
+  activation read like a renewal pitch). **Always held**: a sender the owner marked as spam. Medium's mail is filed
+  as a notice (`notice`), still forwarded, kept off the admin list.
+- **The mail Worker asks before it forwards** (`workers/mail/README.md`, "The spam check"): it reads a message up to
+  256 KB, asks the AI and Convex `POST /inbound-email/verdict` with 4-second limits, and forwards unless the answer
+  is a clear `hold`. Proved before upload with fake messages: Convex missing, failing or silent, the AI failing or
+  absent, and a message too big to read all forward. Uploaded through the Cloudflare API with an `ai` binding.
+- **The contact form carries Turnstile** (invisible for most, `action="contact"`, a new token after each send). A bad
+  token is refused with a reason (`convex/lib/turnstileVerify.ts`); a missing one adds 2 and an outage 1, because a
+  hold loses nothing. The message then goes through the same check (`contactForm.forward`).
+- **Admin > Alerts and email, "Spam filter"**: held mail with why, Not spam (sends it on now through `sendOwnerMail`,
+  reply going to the sender, and lets that sender through from then on), Delete; below, mail that got through with
+  Spam (holds that sender from then on). Senders are keyed by address for free mail, by `@domain` otherwise
+  (`mailSenderVerdicts`). Held mail is deleted 30 days after it was held (`pruneHeld`, from `retention.ts`), and the
+  morning report lists what was held by subject and domain (never an address).
+- **The Privacy Policy says so** (Section 9 and the contact form and Cloudflare entries, Last Updated Oct 25 2026),
+  from Cloudflare's own Workers AI data-usage page: not kept after the request, not used for training.

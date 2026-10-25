@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 24, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 25, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -148,6 +148,12 @@ export default function PrivacyPage() {
               <li>
                 Submissions are stored and forwarded to our support inbox so we
                 can reply; they’re never used for marketing and never shared
+              </li>{" "}
+              <li>
+                Each submission, like each email sent to an @permtracker.app
+                address, goes through a spam check first (see Section 9). A
+                message the check holds is stored for us to read and deleted 30
+                days later
               </li>
             </ul>{" "}
 
@@ -648,7 +654,7 @@ export default function PrivacyPage() {
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
-              To protect our sign-up and password-reset forms from
+              To protect our sign-up, password-reset and contact forms from
               automated abuse, we use Cloudflare Turnstile, operated by
               Cloudflare, Inc.
             </p>{" "}
@@ -696,8 +702,28 @@ export default function PrivacyPage() {
                 <strong>Sign-in:</strong> widget is invisible for most
                 visitors; an interactive challenge only appears if Cloudflare&apos;s
                 risk analysis flags the attempt as suspicious
+              </li>{" "}
+              <li>
+                <strong>Contact form:</strong> invisible for most visitors, the
+                same as sign-in
               </li>
             </ul>{" "}
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              Spam Check on Email and the Contact Form
+            </h3>{" "}
+            <p className="text-soft leading-relaxed">
+              Email sent to an @permtracker.app address and messages sent
+              through our contact form are checked for spam before they reach
+              our inbox. The check uses our own rules (links, sales pitches,
+              bulk-mail headers) and a second opinion from an AI model run by
+              Cloudflare Workers AI, which reads the sender&apos;s domain, the
+              subject and the start of the message. Per Cloudflare&apos;s Workers
+              AI data-usage terms, Cloudflare doesn&apos;t keep that text after
+              the check and doesn&apos;t use it to train AI models. A message the
+              check holds is never deleted unread or bounced: it&apos;s stored,
+              listed for us to read, and deleted 30 days after it was held.
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Legal Basis
@@ -948,8 +974,10 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>Cloudflare, Inc.:</strong> DNS, encryption and the network
-                edge in front of the site (rate limiting and bot mitigation), and
-                Turnstile on authentication forms (see Section 9)
+                edge in front of the site (rate limiting and bot mitigation),
+                Turnstile on authentication and contact forms, email routing for
+                @permtracker.app addresses, and Workers AI for the spam check on
+                that email and contact form messages (see Section 9)
               </li>{" "}
               <li>
                 <strong>Browser Push Services:</strong> Google FCM, Mozilla Push

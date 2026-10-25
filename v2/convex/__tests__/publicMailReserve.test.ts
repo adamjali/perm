@@ -79,8 +79,10 @@ describe("the alert reserve", () => {
     vi.stubGlobal("fetch", calls);
     await countDay(t, PUBLIC_CEILING);
     await t.action(internal.contactForm.forward, { id: await contactMessage(t) });
-    expect(calls).toHaveBeenCalledTimes(1);
-    const [url, init] = calls.mock.calls[0]!;
+    // The spam check asks the Worker's /classify first; then the one send.
+    const sendsToOwner = calls.mock.calls.filter(([u]) => String(u) === "https://mail.example.com/owner");
+    expect(sendsToOwner).toHaveLength(1);
+    const [url, init] = sendsToOwner[0]!;
     expect(String(url)).toBe("https://mail.example.com/owner");
     expect(JSON.parse(String(init?.body))).toMatchObject({ to: "owner@example.com", replyTo: "visitor@example.com" });
     const filed = await t.run((ctx) => ctx.db.query("supportEmails").collect());

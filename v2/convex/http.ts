@@ -33,6 +33,7 @@ import { profileFromForm, type ProfileInput } from "../src/lib/firmProfile";
 import { SITE_URL } from "./lib/links";
 import { createLogger } from "./lib/logging";
 import { watchedSecretOk, sharedSecretOk } from "./watchedCases";
+import { checkTurnstile } from "./lib/turnstileVerify";
 
 const http = httpRouter();
 
@@ -754,7 +755,7 @@ http.route({
     if (typeof body !== "object" || body === null) {
       return json({ ok: false, message: "Malformed request." }, 400);
     }
-    const { name, email, message, website } = body as Record<string, unknown>;
+    const { name, email, message, website, turnstile } = body as Record<string, unknown>;
 
     // Honeypot: a filled "website" field is a bot. Pretend success, write
     // nothing, send nothing.
@@ -783,11 +784,26 @@ http.route({
     const forwarded = req.headers.get("x-forwarded-for") ?? "";
     const ip = forwarded.split(",")[0]?.trim() || "unknown";
 
+    // Turnstile last, after the cheap checks: a bad token is refused, a missing
+    // one or an outage only adds weight to the spam check (convex/lib/spamCheck.ts),
+    // which can hold the message but never loses it.
+    const human = await checkTurnstile(turnstile, { action: "contact", remoteIp: ip });
+    if (human === "fail") {
+      return json({ ok: false, message: "The check that you're a person didn't pass. Reload the page and send again." }, 400);
+    }
+    const checkSignals =
+      human === "missing"
+        ? [{ weight: 2, why: "sent without the form's check that it's a person" }]
+        : human === "unreachable"
+          ? [{ weight: 1, why: "the check that it's a person couldn't run" }]
+          : [];
+
     const result = await ctx.runMutation(internal.contactForm.submit, {
       name: cleanName,
       email: cleanEmail,
       message: cleanMessage,
       ip,
+      checkSignals,
     });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -1973,8 +1989,49 @@ http.route({
       inReplyTo: text(body.inReplyTo, 1000),
       references: text(body.references, 4000),
       forwarded: body.forwarded === true,
+      held: body.held === true,
+      notice: body.notice === true,
+      spamScore: typeof body.spamScore === "number" && Number.isFinite(body.spamScore) ? body.spamScore : undefined,
+      spamReasons: Array.isArray(body.spamReasons)
+        ? body.spamReasons.filter((r): r is string => typeof r === "string").map((r) => r.slice(0, 200)).slice(0, 12)
+        : undefined,
     });
     return serverJson({ ok: true, stored }, 200);
+  }),
+});
+
+/**
+ * The spam filter's verdict for one message, asked by the mail Worker before it
+ * forwards (convex/inboundFilter.ts). The Worker forwards anyway when this route
+ * is slow or says anything but "hold", so a fault here never loses mail.
+ */
+http.route({
+  path: "/inbound-email/verdict",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const gate = await sharedSecretOk(req.headers.get("x-inbound-key"), process.env.INBOUND_EMAIL_SECRET);
+    if (gate === "off") return serverJson({ ok: false, message: "This route is off." }, 503);
+    if (gate === "denied") return serverJson({ ok: false, message: "Not allowed." }, 401);
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return serverJson({ ok: false, message: "Bad JSON." }, 400);
+    }
+    const text = (x: unknown, max: number) => (typeof x === "string" && x.length > 0 ? x.slice(0, max) : undefined);
+    const ai = body.ai === "spam" || body.ai === "not_spam" || body.ai === "unsure" ? body.ai : undefined;
+    const verdict = await ctx.runQuery(internal.inboundFilter.verdict, {
+      from: text(body.from, 254) ?? "",
+      fromName: text(body.fromName, 200),
+      subject: text(body.subject, 500) ?? "",
+      text: text(body.text, 20_000),
+      listUnsubscribe: text(body.listUnsubscribe, 1000),
+      replyTo: text(body.replyTo, 254),
+      spamFlag: text(body.spamFlag, 100),
+      thread: text(body.thread, 4000),
+      ai,
+    });
+    return serverJson({ ok: true, ...verdict }, 200);
   }),
 });
 

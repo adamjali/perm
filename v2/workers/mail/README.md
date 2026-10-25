@@ -13,6 +13,25 @@ Callers: `convex/lib/ownerMail.ts` (`OWNER_MAIL_URL`, `OWNER_MAIL_KEY` on Convex
 (`/etc/permtracker/owner-mail.env`, root 600). Each falls back to Resend when the
 Worker isn't set up or doesn't answer.
 
+## The spam check (since Oct 25 2026)
+
+Before it forwards, the `email` handler reads a message up to `CHECK_MAX_BYTES` (256 KB) and asks two things,
+each with a 4-second limit: Cloudflare's AI (`env.AI`, model `AI_MODEL` in `rules.mjs` or the `AI_MODEL`
+binding) for "spam", "not_spam" or "unsure", then Convex `POST /inbound-email/verdict` (the same
+`x-inbound-key`) for the verdict, which weighs the rules in `convex/lib/spamCheck.ts`, the owner's word on the
+sender and whether the mail answers one we sent (`convex/inboundFilter.ts`). Only a clear `hold` keeps it out
+of the inbox: the message is stored with `held: true` and listed on the admin page (Alerts and email, "Spam
+filter") with Not spam and Delete, and deleted 30 days later. A slow, missing or failed answer forwards, so the
+check can never lose a message.
+
+`POST /classify` (the owner key): `{ from, subject, text? }` answers `{ verdict, error? }` from the same AI
+call. The contact form asks it (`aiOpinionFromWorker`), and it's how the check was calibrated on stored mail.
+
+The plain `@cf/meta/llama-3.1-8b-instruct` was retired May 30 2026 (the binding answered error 5028);
+`@cf/meta/llama-3.3-70b-instruct-fp8-fast` is on Cloudflare's JSON-mode list, measured about 7 neurons a message
+against 10,000 free a day. Cloudflare's Workers AI data-usage page (updated Oct 16 2026): inputs and outputs aren't
+kept after the request and aren't used for training.
+
 ## Files
 
 - `worker.mjs`: the two handlers. `rules.mjs`: forwarding rule (held to
@@ -24,8 +43,9 @@ Worker isn't set up or doesn't answer.
 
 `OWNER` (send_email, `destination_address` = the owner), `OWNER_EMAIL`, optional
 `OWNER_ADDRESSES` (comma-separated, more of the owner's inboxes), `FROM_EMAIL`
-(`alerts@permtracker.app`), `CONVEX_SITE`, and `KEYS`, the KV namespace
-`permtracker-mail-keys` holding `owner_mail_key` and `inbound_key`.
+(`alerts@permtracker.app`), `CONVEX_SITE`, `KEYS`, the KV namespace
+`permtracker-mail-keys` holding `owner_mail_key` and `inbound_key`, and `AI` (`{ "type": "ai", "name": "AI" }`,
+the spam check's second opinion; without it the rules decide alone). Optional `AI_MODEL` names another model.
 
 ## Keys
 

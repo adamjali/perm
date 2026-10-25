@@ -970,13 +970,24 @@ export default defineSchema({
     // Resend metadata
     resendEmailId: v.string(),
 
-    // Status tracking
+    // Status tracking. "held": the content check (convex/lib/spamCheck.ts) kept it
+    // out of the owner's inbox; listed on the admin page, deleted 30 days after heldAt.
     status: v.union(
       v.literal("received"),
       v.literal("replied"),
       v.literal("forwarded"),
-      v.literal("archived")
+      v.literal("archived"),
+      v.literal("held")
     ),
+
+    // The content check's verdict, for held mail and for the admin page's list.
+    spamScore: v.optional(v.number()),
+    spamReasons: v.optional(v.array(v.string())),
+    heldAt: v.optional(v.number()),
+    /** "Not spam" pressed on the admin page: sent on to the owner then. */
+    releasedAt: v.optional(v.number()),
+    /** A service's own notices (Medium's): sent on, kept out of the admin page's list. */
+    notice: v.optional(v.boolean()),
 
     // Admin reply (stored for history)
     replyBody: v.optional(v.string()),
@@ -990,7 +1001,20 @@ export default defineSchema({
     // A message Cloudflare delivers twice (a retry) is stored once.
     .index("by_message_id", ["messageId"])
     .index("by_created_at", ["createdAt"])
-    .index("by_from_email", ["fromEmail"]),
+    .index("by_from_email", ["fromEmail"])
+    .index("by_held_at", ["heldAt"]),
+
+  /**
+   * The owner's word on a sender, from the admin page: "allow" when a held message
+   * was let through ("Not spam"), "block" when mail that got through was marked as
+   * spam. Keyed by the address for free mail and by "@domain" otherwise
+   * (senderKey in convex/lib/spamCheck.ts). The newest word wins.
+   */
+  mailSenderVerdicts: defineTable({
+    key: v.string(),
+    verdict: v.union(v.literal("allow"), v.literal("block")),
+    at: v.number(),
+  }).index("by_key", ["key"]),
 
   /**
    * System Errors
@@ -2279,6 +2303,8 @@ export default defineSchema({
     createdAt: v.number(),
     /** Set when the forward to support@ actually succeeded. */
     notifiedAt: v.optional(v.number()),
+    /** What the route knew that the words don't show (the Turnstile check), for the spam check. */
+    checkSignals: v.optional(v.array(v.object({ weight: v.number(), why: v.string() }))),
   })
     .index("by_created", ["createdAt"])
     .index("by_ip_created", ["ip", "createdAt"]),

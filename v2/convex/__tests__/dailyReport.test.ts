@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import { easternDay } from "../lib/time";
+import { spamSection } from "../lib/dailyReportCompose";
 
 const ADMIN = "admin@report-test.com";
 beforeEach(() => vi.stubEnv("ADMIN_EMAIL", ADMIN));
@@ -41,6 +42,22 @@ describe("dailyReport.facts", () => {
     expect(f.developers.keys).toMatchObject({ live: 1, sandbox: 0, byScope: { read: 1, export: 1, webhooks: 0 } });
     expect(f.developers.webhooks).toMatchObject({ endpoints: 1, paused: 0, watches: 0 });
     expect(JSON.stringify(f)).not.toMatch(/@|hooks\.example\.org|acct_1/);
+  });
+
+  it("counts held mail by subject and domain, never an address", async () => {
+    const t = createTestContext();
+    const now = Date.now();
+    await t.run(async (ctx) => {
+      const base = { toEmail: "support@permtracker.app", resendEmailId: "x", createdAt: now };
+      await ctx.db.insert("supportEmails", { ...base, fromEmail: "sales@vendor.example", subject: "Reply to boss@vendor.example", messageId: "<1>", status: "held", heldAt: now - 1000 });
+      await ctx.db.insert("supportEmails", { ...base, fromEmail: "old@vendor.example", subject: "Old", messageId: "<2>", status: "held", heldAt: now - 3 * 86_400_000 });
+    });
+    const f = await t.query(internal.dailyReport.facts, {});
+    expect(f.spamFilter).toEqual({ heldSince: 1, waiting: 2, newest: [{ subject: "Reply to (an address)", domain: "vendor.example" }] });
+    expect(JSON.stringify(f.spamFilter)).not.toMatch(/@/);
+    const section = spamSection(f);
+    expect(section).toMatchObject({ key: "spam", status: "ok", summary: "1 held in 24 h, 2 on the held list" });
+    expect(spamSection({ ...f, spamFilter: { heldSince: 0, waiting: 0, newest: [] } })).toBeNull();
   });
 });
 

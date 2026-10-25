@@ -37,6 +37,7 @@ import { RETRY_MAX_ROWS } from "./lib/emailLimits";
 import { countAudiences } from "./lib/audience";
 import { ratingsSince } from "./alertRatings";
 import { waitingForReview } from "./firmClaims";
+import { heldSummary } from "./inboundFilter";
 import { keyCounts } from "./lib/apiKeyStats";
 import { webhookHealth } from "./webhookDelivery";
 
@@ -150,6 +151,8 @@ export const facts = internalQuery({
       },
       // Firm names are public; no address or role reaches the report.
       firmReview: { waiting: firmWaiting.map((w) => ({ firmName: w.firmName, kind: w.kind, since: w.since })) },
+      // Held mail: subjects and sender domains, never an address.
+      spamFilter: await heldSummary(ctx, since),
       // What people said about their alerts, the last week: scores and notes only.
       ratings: await ratingsSince(ctx, now - 7 * MS_PER_DAY),
       // API keys by scope and webhook health: counts only, no account or address.

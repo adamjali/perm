@@ -8,8 +8,9 @@
  * day of usage. So each keeps a margin well past its readers and the rest goes,
  * in batches so a backlog can never make one run too big.
  *
- * The run also starts `toolCache.cleanExpired`. Chat tool results expire by
- * their own TTL rather than by age, so that cleanup lives with the cache.
+ * The run also starts `toolCache.cleanExpired` (chat tool results expire by
+ * their own TTL rather than by age, so that cleanup lives with the cache) and
+ * `inboundFilter.pruneHeld` (mail the spam filter held, 30 days after it was held).
  *
  * Not here, on purpose: `auditLogs` (kept indefinitely by the retention
  * policy, docs/compliance/DATA_RETENTION.md, and removed with an account),
@@ -92,7 +93,11 @@ export const pruneOperationalLogs = internalMutation({
     // Guarded on progress, so an empty table can never spin a timer.
     if (more) await ctx.scheduler.runAfter(0, internal.retention.pruneOperationalLogs, { now });
     // Once per daily run: the last run of the chain is the one with no backlog left.
-    else await ctx.scheduler.runAfter(0, internal.toolCache.cleanExpired, {});
+    else {
+      await ctx.scheduler.runAfter(0, internal.toolCache.cleanExpired, {});
+      // Mail the spam filter held, 30 days after it was held (convex/inboundFilter.ts).
+      await ctx.scheduler.runAfter(0, internal.inboundFilter.pruneHeld, {});
+    }
     return out;
   },
 });

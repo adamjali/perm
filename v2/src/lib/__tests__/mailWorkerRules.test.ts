@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error: a plain ES module the Worker bundles; no type declarations.
-import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, ownerRecipient, provisionOpen, shouldForward } from '../../../workers/mail/rules.mjs';
+import { checkText, holdsIt, KEY_PATTERN, keyMatches, keyTag, ownerMessage, ownerRecipient, provisionOpen, shouldForward } from '../../../workers/mail/rules.mjs';
 import { shouldForwardInbound } from '@convex/lib/supportEmailForward';
 
 const OWNER = 'owner@example.com';
@@ -85,5 +85,27 @@ describe('the provisioning window', () => {
     expect(provisionOpen('2026-10-12T22:15:00Z', now)).toBe(true); // a rotation window
     expect(provisionOpen('2026-10-12T23:00:00Z', now)).toBe(true); // the hour itself
     expect(provisionOpen('2026-10-13T22:00:00Z', now)).toBe(false); // a day: too long to leave open
+  });
+});
+
+describe('the spam check in the Worker', () => {
+  it('holds only on a clear hold, so any fault forwards', () => {
+    expect(holdsIt({ ok: true, action: 'hold', score: 5, reasons: [] })).toBe(true);
+    expect(holdsIt({ ok: true, action: 'forward' })).toBe(false);
+    expect(holdsIt({ ok: true, action: 'notice' })).toBe(false);
+    expect(holdsIt({ ok: false, action: 'hold' })).toBe(false);
+    expect(holdsIt(undefined)).toBe(false);
+    expect(holdsIt(null)).toBe(false);
+    expect(holdsIt({ action: 'hold' })).toBe(false);
+  });
+
+  it('reads the text part, or the HTML with its tags out and its links kept', () => {
+    expect(checkText({ text: 'plain words', html: '<p>other</p>' })).toBe('plain words');
+    const read = checkText({ html: '<style>p{}</style><p>Buy <a href="https://shop.example/x">now</a></p>' });
+    expect(read).toContain('https://shop.example/x');
+    expect(read).toContain('Buy');
+    expect(read).not.toContain('<');
+    expect(read).not.toContain('p{}');
+    expect(checkText(null)).toBe('');
   });
 });

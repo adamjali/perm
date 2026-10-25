@@ -152,6 +152,8 @@ export interface Facts {
   retries?: { waiting: number; oldestQueuedAt: number | null; retriedYesterday: number; lostYesterday: number };
   /** Law-firm claims and profile changes waiting for the admin (convex/firmClaims.ts), oldest first. */
   firmReview?: { waiting: Array<{ firmName: string; kind: "claim" | "edit"; since: number }> };
+  /** Mail the spam filter held (convex/inboundFilter.ts): subjects and sender domains only; absent in older reports. */
+  spamFilter?: { heldSince: number; waiting: number; newest: Array<{ subject: string; domain: string }> };
   /** Alert ratings given in the last 7 days (convex/alertRatings.ts); absent in older reports. */
   ratings?: {
     count: number;
@@ -265,6 +267,8 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
   const sections: ReportSection[] = [app, email];
   const firms = firmSection(f, now);
   if (firms) sections.push(firms);
+  const spam = spamSection(f);
+  if (spam) sections.push(spam);
   const ratings = ratingSection(f);
   if (ratings) sections.push(ratings);
   const developers = developerSection(f);
@@ -340,6 +344,26 @@ function developerSection(f: Facts): ReportSection | null {
       `${w.endpoints} webhook endpoint${w.endpoints === 1 ? "" : "s"}, ` +
       `${w.deliveredSince} deliver${w.deliveredSince === 1 ? "y" : "ies"} in 24 h`,
     lines,
+  };
+}
+
+/**
+ * Mail the spam filter held. Information, not an alarm: spam arrives every day,
+ * and the list is there to catch a real message held by mistake. Absent when
+ * nothing is held.
+ */
+export function spamSection(f: Facts): ReportSection | null {
+  const s = f.spamFilter;
+  if (!s || s.waiting === 0) return null;
+  return {
+    key: "spam",
+    title: "Spam filter",
+    status: "ok",
+    summary: `${s.heldSince} held in 24 h, ${s.waiting} on the held list`,
+    lines: [
+      ...s.newest.map((m) => `${m.subject}${m.domain ? ` (from ${m.domain})` : ""}`),
+      `Held mail is deleted 30 days after it was held. Check the list at ${SITE_URL}/admin#alerts`,
+    ],
   };
 }
 

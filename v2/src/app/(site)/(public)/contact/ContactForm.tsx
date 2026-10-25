@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PaperPlaneTiltIcon as Send } from "@phosphor-icons/react";
+import { AuthTurnstile } from "@/components/auth/AuthTurnstile";
 import { CharLimit } from "@/components/ui/char-limit";
 import { convexSiteUrl } from "@/lib/convexSite";
 import { buttonVariants } from "@/components/ui/button";
@@ -11,6 +12,11 @@ import { buttonVariants } from "@/components/ui/button";
  * checks and budgets; this side owns honest states (sending, sent, refused)
  * and never pretends. The hidden "website" field is the honeypot: humans
  * never see it, bots fill it, the route answers success and writes nothing.
+ *
+ * Cloudflare Turnstile runs out of sight (it shows only when Cloudflare is
+ * unsure) and its token rides with the message. A token can be checked once,
+ * so the widget starts over after every send. A message sent before the token
+ * arrives still goes; the server's spam check weighs that (convex/lib/spamCheck.ts).
  */
 
 type Phase = "idle" | "sending" | "sent" | "error";
@@ -18,6 +24,8 @@ type Phase = "idle" | "sending" | "sent" | "error";
 export function ContactForm() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [note, setNote] = useState("");
+  const token = useRef<string | null>(null);
+  const [widget, setWidget] = useState(0);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,8 +45,12 @@ export function ContactForm() {
           email: data.get("email"),
           message: data.get("message"),
           website: data.get("website"),
+          turnstile: token.current ?? undefined,
         }),
       });
+      // Used once by the server whatever it answered: start the check over.
+      token.current = null;
+      setWidget((n) => n + 1);
       const body = (await res.json()) as { ok: boolean; message: string };
       if (body.ok) {
         setPhase("sent");
@@ -122,6 +134,20 @@ export function ContactForm() {
           Website
           <input type="text" name="website" tabIndex={-1} autoComplete="off" />
         </label>
+      </div>
+
+      <div className="mt-4">
+        <AuthTurnstile
+          key={widget}
+          action="contact"
+          appearance="interaction-only"
+          onVerify={(t) => {
+            token.current = t;
+          }}
+          onExpire={() => {
+            token.current = null;
+          }}
+        />
       </div>
 
       {phase === "error" ? (

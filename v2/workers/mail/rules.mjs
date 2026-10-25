@@ -101,3 +101,46 @@ export function provisionOpen(until, now = Date.now()) {
   const t = typeof until === "string" ? Date.parse(until) : NaN;
   return Number.isFinite(t) && now < t && t - now <= PROVISION_WINDOW_MS;
 }
+
+/**
+ * Messages up to this size are read before they're forwarded, so the spam check
+ * (convex/lib/spamCheck.ts) can see them. Bigger ones are forwarded unread, as
+ * before: reading a large message first could run out of the free plan's CPU
+ * before the forward happened. A pitch is a few kilobytes.
+ */
+export const CHECK_MAX_BYTES = 256_000;
+
+/**
+ * The Workers AI model for the spam check's second opinion, unless the AI_MODEL
+ * binding names another. Cloudflare retired the plain llama-3.1-8b-instruct on
+ * May 30 2026 and keeps the -fast variants; this one is on its JSON-mode list
+ * and measured about 7 neurons a message (Oct 25 2026), against 10,000 free a day.
+ */
+export const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
+/** How long the forward may wait on the AI and on Convex's verdict. Past it, it forwards. */
+export const CHECK_TIMEOUT_MS = 4_000;
+
+/** The words the check reads: the text part, or the HTML part with its tags taken out. */
+export function checkText(parsed) {
+  if (parsed?.text) return parsed.text.slice(0, 20_000);
+  if (!parsed?.html) return "";
+  return parsed.html
+    .replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<a\s[^>]*href="([^"]+)"[^>]*>/gi, " $1 ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 20_000);
+}
+
+/**
+ * Whether the check's answer holds the message. Only a clear "hold" does: a
+ * missing, slow or malformed answer forwards, so a fault in the check can never
+ * keep a person's mail out of the inbox.
+ */
+export function holdsIt(verdict) {
+  return !!verdict && verdict.ok === true && verdict.action === "hold";
+}
