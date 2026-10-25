@@ -197,7 +197,7 @@ jobs:
       - name: Placeholders fit their boxes
         if: steps.plan.outputs.build == 'true'
         run: |
-          python3 -m pip install --quiet fonttools
+          python3 -m pip install --quiet "fonttools[woff]"
           python3 scripts/audit_placeholders.py
 
       - name: Package the standalone server

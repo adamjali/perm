@@ -136,6 +136,7 @@ TEXTAREA_RE = re.compile(r"<textarea", re.I)
 def find_inter() -> str:
     """The latin Inter subset the build actually ships."""
     best: tuple[int, str] | None = None
+    unread: list[str] = []
     # A build writes the fonts to .next/static/media; the dev server to .next/dev/static/media.
     found = glob.glob(os.path.join(ROOT, ".next/static/media/*.woff2")) or glob.glob(
         os.path.join(ROOT, ".next/dev/static/media/*.woff2"))
@@ -151,9 +152,13 @@ def find_inter() -> str:
             n = len(cmap)
             if best is None or n < best[0]:
                 best = (n, p)
-        except Exception:
+        except Exception as e:  # noqa: BLE001
+            unread.append(f"{os.path.basename(p)}: {type(e).__name__}: {e}")
             continue
     if best is None:
+        if unread:
+            # The fonts are there but couldn't be opened (WOFF2 needs Brotli: pip install "fonttools[woff]").
+            sys.exit(f"Couldn't read the build's fonts ({len(unread)}), so nothing was measured. First: {unread[0]}")
         sys.exit(
             "No Inter latin subset under .next/static/media. Run a build (or "
             "`pnpm dev` once) so next/font materialises the file, then re-run."
