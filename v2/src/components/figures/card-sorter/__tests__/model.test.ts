@@ -67,6 +67,16 @@ describe("buildSorterRun", () => {
     expect(run.decidedOn).toBe("2026-10-23");
   });
 
+  it("sorts an appeal with an RFI as an appeal, and names NORD as DOL prints it", () => {
+    expect(pocketOf("RECONSIDERATION APPEALS - RFI ISSUED")).toBe("appeal");
+    expect(pocketOf("NORD ISSUED")).toBe("other");
+    const run = buildSorterRun({ statuses: STATUSES, decided: 753, decidedOn: "2026-10-23" })!;
+    const other = run.pockets.find((p) => p.key === "other")!;
+    expect(other.gloss).toContain("NORD");
+    // DOL publishes no expansion of NORD, so the site never spells one out.
+    expect(other.gloss.toLowerCase()).not.toMatch(/notice of/);
+  });
+
   it("draws nothing when no case is waiting", () => {
     expect(buildSorterRun({ statuses: [{ status: "CERTIFIED", count: 5, isFinal: true }], decided: 3, decidedOn: "2026-10-23" })).toBeNull();
   });

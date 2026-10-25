@@ -8,6 +8,9 @@
  * about 3 cards in 100. Its stacks show the batch, not the totals: the totals are printed beside it.
  */
 
+import { APPEAL_STATUSES } from "@/components/queue/stages";
+import { ORDINARY_QUEUE } from "@/lib/liveQueue";
+
 export type PocketKey = "analyst" | "hold" | "rfi" | "other" | "appeal" | "decided";
 
 export interface SorterPocket {
@@ -35,15 +38,16 @@ export interface SorterRun {
 /** One batch of cards per loop. */
 export const BATCH = 100;
 
-const APPEALS = new Set(["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FOR REVIEW", "DENIED - BALCA DISMISSED"]);
-
-/** Which pocket a pending DOL status belongs in. */
+/**
+ * Which pocket a pending DOL status belongs in. The appeals are the queue pages' own list
+ * (`APPEAL_STATUSES`), so the sorter and the waiting-line tile above it never sort a status two ways.
+ */
 export function pocketOf(status: string): Exclude<PocketKey, "decided"> {
   const s = status.trim().toUpperCase();
-  if (s === "ANALYST REVIEW") return "analyst";
+  if (s === ORDINARY_QUEUE) return "analyst";
   if (s === "APPLICATION ON HOLD") return "hold";
   if (s === "RFI ISSUED") return "rfi";
-  if (APPEALS.has(s)) return "appeal";
+  if (APPEAL_STATUSES.has(s)) return "appeal";
   return "other";
 }
 
@@ -94,7 +98,8 @@ const META: Record<PocketKey, { label: string; gloss: string }> = {
   analyst: { label: "Analyst review", gloss: "the ordinary line, worked in filing order" },
   hold: { label: "On hold", gloss: "set aside by DOL, often an employer at a time" },
   rfi: { label: "RFI", gloss: "DOL asked the employer for more" },
-  other: { label: "Other review", gloss: "a notice of intent to deny, an audit or supervised recruitment" },
+  // DOL prints NORD and publishes no expansion of it, so it's never spelled out.
+  other: { label: "Other review", gloss: "a NORD, supervised recruitment or an audit" },
   appeal: { label: "Appeal", gloss: "after a denial, at reconsideration or the Board" },
   decided: { label: "Decided", gloss: "certified, denied or withdrawn on DOL's last working day" },
 };

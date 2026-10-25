@@ -16,7 +16,24 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@/components/iso/iso.css";
 import { formatInt } from "@/lib/format";
-import { CARD_Z, CHUTE_Y, HEIGHT, HOPPER_EXIT_X, LAND_Y, READ_X, TRACK_Y, WIDTH, buildSorter, pocketX } from "./geometry";
+import {
+  CARD_HALF_D,
+  CARD_Z,
+  DECK_EDGE_Y,
+  DECK_Z,
+  HEIGHT,
+  HOPPER_EXIT_X,
+  KICK_MAX,
+  KICK_REST,
+  LAND_Y,
+  RAIL_FRONT_Y,
+  READ_X,
+  TRACK_Y,
+  WIDTH,
+  buildSorter,
+  kickReach,
+  pocketX,
+} from "./geometry";
 import type { SorterRun } from "./model";
 import { MotionToggle } from "../MotionToggle";
 
@@ -25,8 +42,9 @@ const EMIT_S = 0.3;
 const TO_READER_S = 0.22;
 const READ_S = 0.18;
 const SPEED = 220; // world units a second along the track
-const FORWARD_S = 0.14;
+const FORWARD_S = 0.16; // the kick, from the track to the deck's front edge
 const DROP_S = 0.24;
+const RETRACT_S = 0.12;
 const HOLD_END_S = 2.4;
 const FADE_S = 0.45;
 const RESUME_MS = 1000;
@@ -52,20 +70,48 @@ function legsOf(run: SorterRun): Leg[] {
 
 const lerp = (a: number, b: number, f: number) => a + (b - a) * Math.min(1, Math.max(0, f));
 
-/** Where a card is, `age` seconds after it left the hopper, and whether it's still on the deck. */
+/** How fast a kicked card crosses the deck, in world units a second; it leaves the edge at this speed. */
+const KICK_SPEED = (DECK_EDGE_Y - TRACK_Y) / FORWARD_S;
+/** The card's centre once its back edge clears the front rail, where it drops onto the deck. */
+const OFF_RAILS_Y = RAIL_FRONT_Y + CARD_HALF_D;
+
+/** When a card reaches its pocket and is kicked, in seconds after it left the hopper. */
+const kickAt = (pocket: number) => TO_READER_S + READ_S + (READ_X - pocketX(pocket)) / SPEED;
+
+/**
+ * Where a card is, `age` seconds after it left the hopper, and whether it's still over the deck.
+ * It rides the rails to its pocket; the kicker pushes it forward; it steps off the front rail onto
+ * the deck, slides off the front edge at the kick's speed and falls onto its pocket's stack.
+ */
 function cardAt(leg: Leg, age: number, top: number): { p: Point; onDeck: boolean; opacity: number } {
   const xc = pocketX(leg.pocket);
   const t1 = TO_READER_S;
   const t2 = t1 + READ_S;
-  const t3 = t2 + (READ_X - xc) / SPEED;
+  const t3 = kickAt(leg.pocket);
   const t4 = t3 + FORWARD_S;
   const opacity = Math.min(1, age / 0.08);
   if (age < t1) return { p: [lerp(HOPPER_EXIT_X, READ_X, age / t1), TRACK_Y, CARD_Z], onDeck: true, opacity };
   if (age < t2) return { p: [READ_X, TRACK_Y, CARD_Z], onDeck: true, opacity };
   if (age < t3) return { p: [lerp(READ_X, xc, (age - t2) / (t3 - t2)), TRACK_Y, CARD_Z], onDeck: true, opacity };
-  if (age < t4) return { p: [xc, lerp(TRACK_Y, CHUTE_Y, (age - t3) / FORWARD_S), CARD_Z], onDeck: true, opacity };
-  const f = Math.min(1, (age - t4) / DROP_S);
-  return { p: [xc, lerp(CHUTE_Y, LAND_Y, f), lerp(CARD_Z, top, f * f)], onDeck: f < 0.25, opacity };
+  if (age < t4) {
+    const y = lerp(TRACK_Y, DECK_EDGE_Y, (age - t3) / FORWARD_S);
+    // on the front rail until the card's middle passes it, then down onto the deck by the time it clears the rail
+    const z = lerp(CARD_Z, DECK_Z, (y - RAIL_FRONT_Y) / (OFF_RAILS_Y - RAIL_FRONT_Y));
+    return { p: [xc, y, z], onDeck: true, opacity };
+  }
+  const tau = age - t4;
+  const y = Math.min(LAND_Y, DECK_EDGE_Y + KICK_SPEED * tau);
+  const f = Math.min(1, tau / DROP_S);
+  return { p: [xc, y, DECK_Z - (DECK_Z - top) * f * f], onDeck: y - CARD_HALF_D < DECK_EDGE_Y, opacity };
+}
+
+/** How far a pocket's kicker reaches when a card it kicks is `age` seconds into its run. */
+function kickerAt(pocket: number, age: number): number {
+  const tau = age - kickAt(pocket);
+  if (tau <= 0) return KICK_REST;
+  const contact = ((OFF_RAILS_Y - TRACK_Y) / (DECK_EDGE_Y - TRACK_Y)) * FORWARD_S;
+  if (tau <= contact) return kickReach(lerp(TRACK_Y, DECK_EDGE_Y, tau / FORWARD_S));
+  return lerp(KICK_MAX, KICK_REST, (tau - contact) / RETRACT_S);
 }
 
 export default function CardSorterFigure({ run }: { run: SorterRun }) {
@@ -80,6 +126,7 @@ export default function CardSorterFigure({ run }: { run: SorterRun }) {
   const deck = useRef<SVGGElement>(null);
   const slots = useRef<(SVGGElement | null)[]>([]);
   const stacks = useRef<(SVGGElement | null)[]>([]);
+  const kickers = useRef<(SVGGElement | null)[]>([]);
   const pool = useRef<(SVGGElement | null)[]>([]);
   const readout = useRef<HTMLParagraphElement>(null);
   const [paused, setPaused] = useState(false);
@@ -110,7 +157,7 @@ export default function CardSorterFigure({ run }: { run: SorterRun }) {
     let visible = false;
     let frame = 0;
     let last = 0;
-    const shown = { landed: perPocket.slice(), text: endText };
+    const shown = { landed: perPocket.slice(), reach: run.pockets.map(() => KICK_REST), text: endText };
 
     const landedAt = (time: number) => {
       const counts = run.pockets.map(() => 0);
@@ -125,6 +172,18 @@ export default function CardSorterFigure({ run }: { run: SorterRun }) {
         shown.landed[i] = n;
         const g = stacks.current[i];
         if (g) g.innerHTML = art.stack(i, n, most);
+      });
+      // each pocket's kicker, out as far as the card it's pushing needs
+      const reach = run.pockets.map(() => KICK_REST);
+      for (const leg of legs) {
+        const age = t - leg.start;
+        if (age > 0 && age < leg.land - leg.start + RETRACT_S) reach[leg.pocket] = Math.max(reach[leg.pocket]!, kickerAt(leg.pocket, age));
+      }
+      reach.forEach((r, i) => {
+        if (Math.abs(r - shown.reach[i]!) < 0.01) return;
+        shown.reach[i] = r;
+        const g = kickers.current[i];
+        if (g) g.innerHTML = art.kicker(i, r);
       });
       // the cards in flight, nearest the hopper last so it paints over the one ahead of it
       const flying = legs.filter((leg) => leg.start <= t && t < leg.land).sort((a, b) => a.start - b.start).reverse();
@@ -281,6 +340,15 @@ export default function CardSorterFigure({ run }: { run: SorterRun }) {
             <title id="card-sorter-title">{`An illustration of the nightly check as a card sorter. Case cards leave a hopper on the right, pass under a reader and drop into one of six pockets along the front, one for each place a waiting case can be: ${run.pockets.map((p) => p.label.toLowerCase()).join(", ")}. Each batch is ${run.batch} cards at tonight's shares.`}</title>
             {/* The markup is the kit's own paths, built from numbers in ./geometry: no outside text reaches it. */}
             <g dangerouslySetInnerHTML={{ __html: art.back }} />
+            {run.pockets.map((p, i) => (
+              <g
+                key={p.key}
+                ref={(g) => {
+                  kickers.current[i] = g;
+                }}
+                dangerouslySetInnerHTML={{ __html: art.kicker(i, KICK_REST) }}
+              />
+            ))}
             <g ref={deck} />
             <g dangerouslySetInnerHTML={{ __html: art.over }} />
             {run.pockets.map((p, i) => (

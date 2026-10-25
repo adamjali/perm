@@ -37,9 +37,12 @@ export type QueueStage = "analyst" | "held" | "appeal";
  * outcome: DOL carries it as non-final, so it is a case still in the appeals
  * tail rather than a denial already counted.
  */
-const APPEAL_STATUSES: ReadonlySet<string> = new Set([
+export const APPEAL_STATUSES: ReadonlySet<string> = new Set([
   "BALCA APPEALS",
   "RECONSIDERATION APPEALS",
+  // A reconsideration request at which DOL asked the employer for more: still the appeal, not the ordinary
+  // queue (2 cases on Oct 25 2026, which the default had put out of filing order).
+  "RECONSIDERATION APPEALS - RFI ISSUED",
   "REQUEST FOR REVIEW",
   "DENIED - BALCA DISMISSED",
 ]);
@@ -139,7 +142,7 @@ export const STAGE_META: Record<QueueStage, StageMeta> = {
   held: {
     label: "Out of filing order",
     gloss:
-      "an information request, an audit, supervised recruitment or a hold takes a case off the ordinary queue",
+      "a hold, an information request, a NORD, supervised recruitment or an audit takes a case off the ordinary queue",
     fill: "bg-chart-blue",
     ink: "text-data-warn-ink",
   },

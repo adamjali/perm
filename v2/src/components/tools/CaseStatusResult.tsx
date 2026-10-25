@@ -220,7 +220,7 @@ export function CaseStatusResult({
     live.isFinal &&
     !live.status.toLowerCase().startsWith(decided.status.toLowerCase());
 
-  // An action stage (an RFI, a notice of intent to deny, an audit) carries a
+  // An action stage (an RFI, a NORD, an audit) carries a
   // clock and someone who has to act, so its meaning is shown in the open; any
   // other status is explained in a fold.
   const actionStage = meaning?.kind === "action";
