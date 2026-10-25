@@ -3392,6 +3392,8 @@ family-sponsored bulletin charts. Deploy was HELD throughout.
 
 ## WARN in four states, social cards for every page, and the posting request proved (2026-09-09)
 
+*(The four states are history: since Oct 25 2026 every state a script may read is read. See "Oct 25 2026: WARN notices from 40 states and DC".)*
+
 **WARN.** Measured from this laptop on Sep 9: New York's current notices are a
 Tableau Public dashboard, and Tableau Public serves any view as CSV
 (`.../views/<workbook>/<sheet>.csv?:showVizHome=no`, 194 rows for 2026); the
@@ -10308,3 +10310,53 @@ scorecard, estimates and grades are for the owner and are never pitched or liste
   next one's.
 - **Its first fit cut the machine off at the top**: `fitProjection` was given the hopper and the floor but not the
   body's own top corners, which are the highest point on screen. Give the fit every top corner of every big solid.
+
+## Oct 25 2026: WARN notices from 40 states and DC
+
+The owner's question: *"why only layoff from those? why not everyone and all?"* `/layoffs`, the employer pages and
+`warn_notices` read California, New York, Texas and Washington. Every state's site was checked (robots.txt, and what a
+plain request gets back), and every state a script may read now has a reader.
+
+- **Where the code is.** `scripts/ingest_warn.py` keeps the first four and runs everything. `scripts/warn_states.py`
+  holds one `parse_*` and one `load_*` per new state and the `STATES` registry (name, page, freshness budget).
+  `scripts/lib_warn.py` holds what they share: `notice()`, `finish()`, `assign_ids()` (moved from ingest_warn
+  unchanged, so no held id moved), the date and count readers, an HTML table reader, and `get` and `post`, which ask
+  robots.txt first through `lib_gov_data` and retry a dropped connection. Tests: `scripts/test_warn_states.py`, on a
+  trimmed real copy of each state's file in `scripts/fixtures/warn/`.
+- **Each row keeps what the state printed.** New Jersey and Pennsylvania print only the month a notice was posted. It's
+  stored as `"2026-10"`, never an invented day, and the site prints "Oct 2026" (`warnDate` in `src/lib/warnStates.ts`,
+  which also holds the state names and is held to the Python registries by its test). Oklahoma prints no worker count:
+  null, never 0. Hawaii's notices before August 2026 are letters with no count. Notices before 2019 (`SINCE`, Texas's
+  portal's own start) are left out.
+- **Five states share one job-center search** (Arizona, Delaware, Kansas, Maine, Vermont: `/search/warn_lookups`). The
+  count is only on each notice's own page, so a run asks for at most 30 of them, newest first (`JC_DETAIL_CAP`,
+  `--detail-cap`), and reuses a count the table holds. On a first load most older notices have no count yet; they
+  fill 30 a run on each state's walk day, or at once with one hand run and a higher `--detail-cap`.
+- **Each state reads its whole history once a week, on its own weekday** (`walk_day`, spread by the state's place in
+  `STATES`), and on its first load; other days read the newest two years or the newest window. Florida's server takes
+  about twenty seconds a page, so its walk alone is about ten minutes. A first load of every state is about 20
+  minutes; the WARN step has 35 and the job 50.
+- **A state's site being down isn't our failure.** A refusal or an outage (`is_unreachable`: 403, 429, 5xx, a
+  timeout, a dropped connection) is a `::warning::` and a line in the run's note, and that state's own freshness row
+  is the alarm. A parse that breaks or finds nothing turns the run `partial`.
+- **Each state has its own freshness row** (`warn-notices-<st>`, with a label and a coverage sentence in
+  `src/lib/datasetCoverage.ts`). Its budget is the longest gap between its notices in the two years before Oct 25
+  2026 plus a week, never under the newest notice's age that day plus two weeks: 28 days for Illinois and Maryland,
+  six to ten weeks for most, and ten months to a year for Alaska, Delaware and North Dakota, which post a few a
+  year.
+- **Not read, and why** (checked Oct 25 2026; also in warn_states.py's docstring): Arkansas publishes none and
+  Wyoming's site lists none; Louisiana and New Mexico serve their files but robots.txt disallows them; Rhode Island
+  (Cloudflare), Missouri (Imperva), Nevada and New Hampshire (Akamai) answer scripts with a bot wall; Minnesota's page
+  is behind a captcha, and its monthly PDFs are named only there; West Virginia posts only the notice letters.
+  Massachusetts before July 2020 (.xls workbooks) and South Carolina before 2022 (no notice date) are left out too.
+  Massachusetts is read from the State Library's DSpace copy (archives.lib.state.ma.us), not mass.gov (Akamai).
+- **No wall is worked around**: no proxy, no browser, no CAPTCHA. A public scraper project reaches some walled states
+  through a paid proxy; that isn't copied.
+- **`--parse-only`** fetches and parses every state with no database at all and prints a line a state: notices, first
+  and newest date, rows with a count and with a site. The first full one (Oct 25 2026, from this Mac, about 13
+  minutes): 41 parsed, none failed, 15,028 notices. It found Florida reading one page of a hundred a year, because
+  its pager's links are HTML-escaped (`&amp;page=2`); fixed and tested, Florida then read 2,674 notices where the run
+  had 800. Whether every state answers GitHub's runners the way it answers a home connection is untested until the
+  first scheduled run.
+- **`/layoffs`** names the ten states it doesn't read, draws the twelve busiest states and sums the rest, and says when
+  the table lists the newest of more notices than it holds.

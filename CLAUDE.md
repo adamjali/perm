@@ -1240,3 +1240,16 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: PERM by the numbe
 - **The nightly check drawn as a card sorter** under the board, one batch of 100 cards at tonight's shares.
 - **Estimates, the scorecard and grades are the owner's tools**: never pitched or listed as something the site offers.
 
+## Oct 25 2026: WARN notices from 40 states and DC
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: WARN notices from 40 states and DC".
+
+- **Every state a script may read has a reader** (`scripts/warn_states.py`, shared parts in `scripts/lib_warn.py`):
+  40 states and DC. The ten left out are named on `/layoffs` with the reason (no publication, robots.txt, a bot wall,
+  letters only), and no wall is worked around.
+- **A month-only notice stays a month** (New Jersey, Pennsylvania: `"2026-10"`, printed "Oct 2026"), and a missing count
+  stays null.
+- **Each state walks its whole history once a week on its own weekday** (`walk_day`), and has its own freshness budget
+  from its measured posting gaps. A site that's down warns; a broken parse turns the run partial.
+- **`ingest_warn.py --parse-only`** reads every live state with no database: 41 parsed on Oct 25, and it caught
+  Florida reading one page a year (escaped pager links).
