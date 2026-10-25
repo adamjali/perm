@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { isStaleDeploymentError } from "@/components/error/auth-error";
+import { sentryEventFromInjectedPageScript } from "@/lib/exceptionNoise";
 
 let sentryInitialized = false;
 
@@ -95,6 +96,9 @@ export function SentryClientInit() {
           return process.env.NODE_ENV === "production" ? 0.1 : 1.0;
         },
         beforeSend(event) {
+          // Chrome for iPhone's own Translate and form scripts, filed under the
+          // page's address (Sentry 5E): the same rule PostHog applies.
+          if (sentryEventFromInjectedPageScript(event, navigator.userAgent)) return null;
           if (event.request?.data) delete event.request.data;
           if (
             process.env.NODE_ENV === "development" &&

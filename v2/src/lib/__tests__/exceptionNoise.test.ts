@@ -9,6 +9,7 @@ import {
   fromInjectedBridge,
   fromInjectedPageScript,
   fromServiceWorkerRegister,
+  sentryEventFromInjectedPageScript,
 } from "../exceptionNoise";
 
 const frames = (...fns: string[]) => ({ $exception_list: [{ stacktrace: { frames: fns.map((f) => ({ function: f })) } }] });
@@ -72,6 +73,35 @@ describe("fromInjectedPageScript", () => {
     expect(fromInjectedPageScript({ $exception_list: [{}] }, CHROME_IOS)).toBe(false);
     expect(fromInjectedPageScript(at(""), CHROME_IOS)).toBe(false);
     expect(fromInjectedPageScript(undefined, CHROME_IOS)).toBe(false);
+  });
+});
+
+describe("sentryEventFromInjectedPageScript", () => {
+  const CHROME_IOS =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 26_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/155.0.8059 Mobile/15E148 Safari/604.1";
+  const SAFARI_IOS =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1";
+  const event = (...files: string[]) => ({
+    exception: { values: [{ stacktrace: { frames: files.map((filename) => ({ filename, function: "Hk" })) } }] },
+  });
+
+  it("drops Sentry 5E: Chrome for iPhone, every frame on a page document as Sentry names it", () => {
+    const page = "app:///perm-employers/merritt-hospitality-llc";
+    expect(sentryEventFromInjectedPageScript(event(page, page, page), CHROME_IOS)).toBe(true);
+    expect(sentryEventFromInjectedPageScript(event("https://permtracker.app/signup"), CHROME_IOS)).toBe(true);
+  });
+
+  it("keeps an error with one frame in the site's own scripts, or from any other browser", () => {
+    expect(
+      sentryEventFromInjectedPageScript(
+        event("app:///perm-employers/x", "app:///_next/static/chunks/app/page-1.js"),
+        CHROME_IOS,
+      ),
+    ).toBe(false);
+    expect(sentryEventFromInjectedPageScript(event("app:///sw.js"), CHROME_IOS)).toBe(false);
+    expect(sentryEventFromInjectedPageScript(event("app:///perm-employers/x"), SAFARI_IOS)).toBe(false);
+    expect(sentryEventFromInjectedPageScript({ exception: { values: [{}] } }, CHROME_IOS)).toBe(false);
+    expect(sentryEventFromInjectedPageScript(undefined, CHROME_IOS)).toBe(false);
   });
 });
 

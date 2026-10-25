@@ -1,6 +1,7 @@
 /**
  * Browser exceptions that are not ours, recognised by where they were thrown.
- * Used by PostHog's before_send in src/instrumentation-client.ts.
+ * Used by PostHog's before_send in src/instrumentation-client.ts, and Sentry's
+ * beforeSend in src/components/layout/SentryClientInit.tsx.
  *
  * Plain module, pure functions.
  */
@@ -44,23 +45,44 @@ export function fromInjectedBridge(msg = ""): boolean {
 }
 
 /**
+ * True when every file named is one of this site's page documents, never a
+ * script: `https://permtracker.app/<page>`, or Sentry's `app:///<page>`. The
+ * site's own code runs from script files under /_next/ (and sw.js); its few
+ * inline scripts don't throw.
+ */
+export function onlyPageDocuments(files: string[]): boolean {
+  if (files.length === 0) return false;
+  return files.every((file) => {
+    if (!/^(?:https?:\/\/[^/]+|app:\/\/)\//.test(file)) return false;
+    const path = file.replace(/^(?:https?:\/\/[^/]+|app:\/\/)/, "").replace(/[?#].*$/, "");
+    return !path.startsWith("/_next/") && !/\.m?js$/.test(path);
+  });
+}
+
+/**
  * True when Chrome for iPhone threw inside a script it put into the page itself
  * (its Translate and form helpers). Chrome files such a script's frames under
- * the page's own address, never a script file, and at lines past the page's end:
- * seen on 4 visits in the month to Oct 16 2026 ("La", "Maximum call stack size
- * exceeded."), at lines 192 to 495 of a page 130 lines long. This site's code
- * runs from script files under /_next/; its few inline scripts don't throw.
+ * the page's own address, never a script file, and the line and column it gives
+ * point at the page's markup, not at any script: past the page's end (4 visits
+ * in the month to Oct 16 2026, lines 192 to 495 of a 130-line page), or inside
+ * it on plain HTML (Sentry 5E, Oct 25 2026: "Maximum call stack size exceeded."
+ * on /signup, every frame on an employer page, lines 193 to 229 of 296, all in
+ * attribute text).
  */
 export function fromInjectedPageScript(props: Record<string, unknown> | undefined, userAgent = ""): boolean {
   if (!/\bCriOS\//.test(userAgent)) return false;
   const frames = ((props?.$exception_list as ExceptionList | undefined) || []).flatMap((e) => e.stacktrace?.frames || []);
-  if (frames.length === 0) return false;
-  return frames.every((f) => {
-    const file = f.filename || "";
-    if (!/^https?:\/\//.test(file)) return false;
-    const path = file.replace(/^https?:\/\/[^/]+/, "").replace(/[?#].*$/, "");
-    return !path.startsWith("/_next/") && !/\.m?js$/.test(path);
-  });
+  return onlyPageDocuments(frames.map((f) => f.filename || ""));
+}
+
+/** The same rule for a Sentry event (`exception.values[].stacktrace.frames`). */
+export function sentryEventFromInjectedPageScript(
+  event: { exception?: { values?: ExceptionList } } | undefined,
+  userAgent = "",
+): boolean {
+  if (!/\bCriOS\//.test(userAgent)) return false;
+  const frames = (event?.exception?.values || []).flatMap((e) => e.stacktrace?.frames || []);
+  return onlyPageDocuments(frames.map((f) => f.filename || ""));
 }
 
 /** A browser extension's own script: Chrome's, Firefox's and Safari's (packaged as an app on a Mac). */

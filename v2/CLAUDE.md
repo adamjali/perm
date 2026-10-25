@@ -10445,3 +10445,12 @@ Live 2:38 PM EDT (`af10f52b`, `-f when=now` on the owner's "live now"). Below 12
 dashboard picture; now `AttorneyHero` is an `@container` and the hub, the card and the reminder keep their places,
 sized by share of its width and in container units (`AppWindow fluid` for the window chrome). The captions read
 "Sample cases." and the firm badge shows one tile, swapped by theme. Rules in `docs/DESIGN_SYSTEM.md`, "Pictures".
+
+## Oct 25 2026 (afternoon): Sentry drops Chrome for iPhone's own scripts too
+
+Sentry 5E ("Maximum call stack size exceeded.", one iPhone visit on /signup, Chrome 155): every frame named an employer
+page as its file (`app:///perm-employers/...`), at lines 193 to 229 of a 296-line page that hold only markup. That's
+Chrome for iPhone's Translate or form script, which PostHog had dropped since Oct 16; Sentry's `beforeSend` in
+`SentryClientInit.tsx` now drops it by the same rule (`sentryEventFromInjectedPageScript`: Chrome for iPhone, and every
+frame a page document rather than a script, Sentry's `app:///` names included). An error with one frame in a `/_next/`
+script still reports.

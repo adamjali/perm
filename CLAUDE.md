@@ -819,7 +819,9 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   Safari's Translate move text nodes React holds, and React's next update threw NotFoundError (5 visits in a month, all
   in other languages). Each time the guard steps in it's counted once a page (`dom_guard_stepped_in`).
 - **Chrome for iPhone files its own scripts' errors under the page's address**, at lines past the page's end (a 130-line
-  page, frames at lines 192 to 495): check the served HTML's length before blaming our code (`fromInjectedPageScript`).
+  page, frames at lines 192 to 495) or inside it on plain markup (Sentry 5E, Oct 25: lines 193 to 229 of 296, all in
+  attribute text): read the served HTML at those lines before blaming our code. PostHog and, since Oct 25, Sentry drop
+  them (`fromInjectedPageScript`, `sentryEventFromInjectedPageScript` in `src/lib/exceptionNoise.ts`).
 - **React #419 on the case page follows a Cloudflare challenge** (`__cf_chl_tk` in the referrer, 5 in 44,880 post-challenge
   views) and the page still renders; left alone.
 - **Onboarding's writes retry twice** (`retryBriefly`, 1.2 s and 3 s): Sentry 57 failed twice in a row during a token refresh.
