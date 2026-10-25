@@ -1481,3 +1481,46 @@ states and DC (it read four). Everything here waits until `ssh permtracker 'sudo
 10. `/blog/free-immigration-case-management-software` and `/perm-wages/browse/v` (crawled and not indexed; last)
 
 After this list: `node scripts/gsc_queue.mjs --since 2e139f96` for anything newer.
+
+### Round, Sunday Oct 25 2026 (about 11:59 AM to 12:18 PM EDT)
+
+Live at the start: 2e139f96 (shipped by hand that morning). Everything committed since (40dfcbd4, 9f618944 and the
+sorter fixes) waits for the 2 AM run, so the pages it changes were held: the layoff page and the three layoff articles
+(47 states and DC now), the four articles whose figures now carry their window, the homepage and `/perm-by-the-numbers`.
+No quota stop: the list ran out first.
+
+Requested (last crawl before the request):
+- `/changelog` (Oct 19, 8:20 AM)
+- `/uscis-processing-times` (Oct 20, 3:24 PM)
+- `/tools/green-card-timeline` (Oct 22, 10:24 AM)
+- `/perm-attorneys/browse/u` (unknown to Google)
+- `/visa-bulletin` (Oct 18, 3:37 PM)
+- `/badges` (Sep 14, 2:08 AM)
+- `/press` (Oct 11, 6:51 AM)
+- `/perm-wages/browse/v` (crawled, not indexed; Oct 12, before the A to Z pages were paged on Oct 21)
+
+Skipped:
+- `/perm-by-the-numbers`: indexed, crawled today 9:37 AM, after it went live.
+- `/perm-employers/under-review`: crawled Oct 24, 6:56 AM; inspect only (shared wording moved).
+- `/perm-employers/duk-j-corporation`: indexed now; its error has cleared.
+- `/tools`, `/case-search`, `/perm-employers`, `/perm-attorneys`, `/perm-wages`, `/open-data`, `/methodology`: each
+  crawled Oct 22 or later.
+- `/blog/free-immigration-case-management-software`: crawled, not indexed, Oct 17, after its last change; asking again
+  changes nothing.
+
+## Queue after the Oct 26 night deploy (about 2 AM EDT)
+
+Everything here waits until `ssh permtracker 'sudo permtracker-deploy status'` shows 9f618944 or later live. Work it top
+down.
+
+1. `/layoffs` (47 states and DC; the seven new states load in the 3 AM run, so request after about 4 AM).
+2. `/guides/employer-layoffs-and-your-perm`, `/guides/perm-layoff-rule-for-employers`,
+   `/blog/h1b-sponsors-layoff-notices-october-2026` (they name the states read).
+3. `/blog/why-perm-cases-are-denied`, `/blog/what-an-employers-perm-record-shows`,
+   `/blog/how-perm-wage-data-is-published`, `/guides/read-the-denial-and-audit-rates` (figures now dated).
+4. `/` (the stage links' accessible names) and `/perm-by-the-numbers` (the sorter drawn true, 44px links); inspect,
+   and request only if crawled before the deploy.
+5. `/perm-employers/google-llc` (sample of the employer family: layoff notices from more states).
+6. `/sponsor-finder`, `/perm-employers`, `/policy-changes` (placeholders shortened; inspect only).
+
+After this list: `node scripts/gsc_queue.mjs --since 9f618944` for anything newer.
