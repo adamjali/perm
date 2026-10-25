@@ -10390,8 +10390,8 @@ plain request gets back), and every state a script may read now has a reader.
   between requests. West Virginia's compiled list covers 2022 to 2024; outside it, its notices are letters, so
   those rows carry no count, and Minnesota prints none.
 - **Every copy is checked before it's read** (a PDF must be a PDF, a page must hold its table), so the Archive's
-  empty stub pages can't load as data. **The Archive answers 429 to a burst**: two runs at once from one
-  address got it refusing every request for a while. The readers back off (30, 30, 90 seconds) and then warn
-  and leave that state for the next day; its freshness row is the alarm. Never run two Archive readers at once.
-- **First real load**: Rhode Island parsed live on Oct 25 (69 notices, Jan 2019 to Oct 8 2026); the
-  Archive-sourced states load on the next daily run from GitHub's runners.
+  empty stub pages can't load as data. **The Archive refuses its page copies for long stretches (HTTP 429)**: on Oct 25 2026 it refused every copy from this Mac from late morning, and from GitHub's runner at 12:45 PM, while its index still answered. The readers back off (30, 30, 90 seconds), then warn and leave the state for the next day; the health check names every state that has never loaded (`check_warn_states`). Never run two Archive readers at once, and never retry by hand in a loop: it only lengthens the refusal.
+- **First real load (Oct 25 2026)**: Rhode Island and West Virginia loaded; Louisiana, Minnesota, Missouri, Nevada and
+  New Mexico wait on the Archive, and Kansas answered the runner with a page holding no results table (it reads
+  fine from a home connection; the error now quotes the page's title). A one-state run is recorded as
+  `ingest_warn.py:<st>`, so it can't clear the full run's failure.

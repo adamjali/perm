@@ -1291,4 +1291,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (midday)".
 - **Three states publish no list** (Arkansas by law, New Hampshire, Wyoming), each read on the agency's own page.
 - **Seven whose sites turn scripts away are read from the Internet Archive's copies**, never by solving a check or
   posing as a browser; their freshness budgets allow for how rarely the Archive visits.
-- **The Archive throttles a burst for a while (HTTP 429)**: never run two Archive readers at once.
+- **The Archive refuses its page copies for long stretches (HTTP 429)**, from any address: the readers warn and try the
+  next day, and the morning report names every state that has never loaded. Never retry by hand in a loop.
