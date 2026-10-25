@@ -310,6 +310,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "Employers that file PERM cases for a job, typed in plain words: each employer's filings, approval rate, median offered wage and typical time to a decision for that job and state, filtered and sorted by any of them, and by industry, cases waiting with DOL now, H-1B transfers and likely cap-exempt status. Each links to its full record.",
   },
   {
+    path: "/perm-by-the-numbers",
+    label: "PERM by the numbers",
+    blurb: "The PERM totals DOL's own case records add up to and DOL doesn't publish, counted each night from its case-status search: cases waiting by stage and filing month, holds by employer with the day each began, decisions per day, new filings by week, job and employer, employers new to PERM, RFIs issued per week, wage requests waiting, and every reading of DOL's processing-times page.",
+  },
+  {
     path: "/perm-recruitment",
     label: "PERM recruitment: ads, steps and timing",
     blurb: "Where PERM employers recruit and how long before filing, from DOL's Form 9089 Section H over every decided case filed on the current form: the Sunday ads and the newspapers by state, the additional steps, the notice of filing, and the days from each step to filing.",

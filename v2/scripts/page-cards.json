@@ -630,6 +630,19 @@
   "from": "How long before filing"
  },
  {
+  "slug": "perm-by-the-numbers",
+  "path": "/perm-by-the-numbers",
+  "title": "PERM by the numbers",
+  "label": "The totals DOL's case records add up to and DOL doesn't publish: the line, holds, decisions and new filings.",
+  "shot": "perm-by-the-numbers.png",
+  "crop": [
+   0,
+   0,
+   1648,
+   1128
+  ]
+ },
+ {
   "slug": "ead-extension",
   "path": "/tools/ead-extension",
   "title": "Was my work permit extended?",

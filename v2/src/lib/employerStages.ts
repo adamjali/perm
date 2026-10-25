@@ -218,6 +218,15 @@ export function holdSincePhrase(row: EmployerStageRow, logFrom: string | null): 
   return parts.length ? parts.join("; ") : null;
 }
 
+/** "since Sep 24" when most of an employer's held cases share one entry day, "since before Aug 27" when most predate the record. */
+export function holdSinceShort(r: EmployerStageRow, logFrom: string | null): string | null {
+  const held = r.byStatus[HOLD_STATUS] ?? 0;
+  const short = (iso: string) => longDate(iso).replace(/, \d{4}$/, "").replace(/^(\w{3})\w*/, "$1");
+  if (r.holdSince && (r.holdSinceCases ?? 0) * 2 >= held) return `since ${short(r.holdSince)}`;
+  if (logFrom && (r.holdBeforeLog ?? 0) * 2 >= held) return `since before ${short(logFrom)}`;
+  return null;
+}
+
 const APPEAL_STATUSES = ["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FOR REVIEW"] as const;
 
 /**

@@ -17,6 +17,7 @@ import {
   dayHoldSentence,
   heldRanking,
   holdSincePhrase,
+  holdSinceShort,
   movesByDay,
   longDate,
   holdSentence,
@@ -97,14 +98,6 @@ function weekdayDate(iso: string): string {
   return `${WEEKDAYS[new Date(`${iso}T00:00:00Z`).getUTCDay()]}, ${longDate(iso)}`;
 }
 
-/** "since Sep 24" when most of an employer's held cases share one entry day. */
-function shortSince(r: EmployerStageRow, logFrom: string | null): string | null {
-  const held = r.byStatus[HOLD_STATUS] ?? 0;
-  const short = (iso: string) => longDate(iso).replace(/, \d{4}$/, "").replace(/^(\w{3})\w*/, "$1");
-  if (r.holdSince && (r.holdSinceCases ?? 0) * 2 >= held) return `since ${short(r.holdSince)}`;
-  if (logFrom && (r.holdBeforeLog ?? 0) * 2 >= held) return `since before ${short(logFrom)}`;
-  return null;
-}
 
 /** A news lead older than this reads as history, not news. */
 const NEWS_DAYS = 21;
@@ -240,7 +233,7 @@ export default async function EmployersUnderReviewPage() {
               <ol className="divide-y divide-border border-y-2 border-border">
                 {held.map((r) => {
                   const n = r.byStatus[HOLD_STATUS] ?? 0;
-                  const since = shortSince(r, doc.logFrom);
+                  const since = holdSinceShort(r, doc.logFrom);
                   return (
                     <Fragment key={r.slug ?? r.name}>{" "}
                     <li

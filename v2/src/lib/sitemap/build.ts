@@ -337,6 +337,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/ead-extension`, lastModified: at("/tools/ead-extension") },
     { url: `${base}/lca-wage-sources`, lastModified: at("/lca-wage-sources") },
     { url: `${base}/perm-recruitment`, lastModified: at("/perm-recruitment") },
+    { url: `${base}/perm-by-the-numbers`, lastModified: at("/perm-by-the-numbers"), images: [`${base}/og/perm-by-the-numbers.jpg`] },
     // `/perm-employers/compare` IS DELIBERATELY ABSENT. The page sets
     // `robots: { index: false }` - it is a tool that renders whatever two
     // slugs the query names, so there is nothing stable to index - and

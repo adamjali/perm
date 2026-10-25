@@ -213,6 +213,7 @@ export const HEADER_PAGES = {
 /** The foot of the Data menu: the hubs and the open files. */
 export const DATA_MENU_FOOTER: readonly SitePage[] = [
   { href: OVERVIEW.href, name: "All data" },
+  { href: "/perm-by-the-numbers", name: "PERM by the numbers" },
   { href: CALCULATORS.href, name: `All ${CALCULATOR_PAGES.length} calculators` },
   { href: "/open-data", name: "Open data" },
 ];
@@ -228,6 +229,7 @@ const OTHER_PAGES: readonly SitePage[] = [
   { href: "/press", name: "Press" },
   { href: "/reviews", name: "Reviews" },
   { href: "/open-data", name: "Open data" },
+  { href: "/perm-by-the-numbers", name: "PERM by the numbers" },
   { href: "/badges", name: "Badges" },
   { href: "/developers", name: "API and AI assistants" },
   { href: "/extension", name: "Browser extension" },

@@ -47,6 +47,8 @@ export const DOL_PAGES = [
   // The catalogue page reads the snapshot ITSELF: it prints federal figures
   // inline from one read, so it is on this list.
   "/badges",
+  // Prints where DOL's analyst review stood at every reading.
+  "/perm-by-the-numbers",
   "/open-data",
   "/open-data/dol-processing-times.csv",
   "/open-data/dol-processing-times.json",

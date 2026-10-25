@@ -22,6 +22,8 @@ export const SWEEP_PAGES = [
   "/perm-case-statuses",
   "/perm-rfi-audit",
   "/perm-employers/under-review",
+  // The board of totals: the census, holds, decisions per day, RFIs, new filings.
+  "/perm-by-the-numbers",
   // Opens with today's holds, from the same document as the page above.
   "/press",
   "/tools/perm-timeline-calculator",

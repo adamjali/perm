@@ -58,6 +58,7 @@ export const PAGE_CARD_ALT = {
   "salary-explorer": "PERM salary explorer. What employers offered on certified PERM cases, by occupation and state, from DOL's files.",
   "visa-bulletin-family": "Family-sponsored visa bulletin history. Every F1, F2A, F2B, F3 and F4 cutoff from the bulletin archive, by country, with every retrogression.",
   "sponsor-finder": "Find a green card sponsor. Employers that file PERM cases for a job, filtered by state, industry, recent filings, approval rate, offered wage and timing.",
+  "perm-by-the-numbers": "PERM by the numbers: the totals DOL's own case records add up to, from cases waiting by stage to holds, decisions per day and new filings.",
   "perm-recruitment": "Where PERM employers recruit, and when. Sunday ads, the newspapers by state, additional steps and the notice of filing, from DOL's own records.",
   "lca-wage-sources": "Where H-1B prevailing wages come from. The split between DOL's OES data, private salary surveys and union contracts by fiscal year, from DOL's LCA files.",
   "ead-extension": "Was my work permit extended? Whether a renewal automatically extended an expiring EAD, and to when, from 8 CFR 274a.13.",

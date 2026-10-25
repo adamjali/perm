@@ -19,6 +19,8 @@ export const BULLETIN_PAGES = [
   "/tools/i485-queue-position",
   "/tools/priority-date-calculator",
   "/badges",
+  // Draws every bulletin month held.
+  "/perm-by-the-numbers",
   "/open-data",
   "/open-data/visa-bulletins.csv",
   "/open-data/visa-bulletins.json",
