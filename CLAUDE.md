@@ -1263,7 +1263,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: WARN notices from
   queue has passed, a renamed label, a shortcut pressed before the script listens). Run `./run-e2e-tests.sh` against
   the dev server after a change to a public flow.
 - **Cloudflare inserts its Web Analytics script into every page** (automatic setup on the zone since Sep 28 2026), and
-  the site's script policy blocks it, so it has never recorded a visit and every page logs one console error. Whether
-  to switch it off or allow it is the owner's call.
+  the site's script policy blocks it, so it has never recorded a visit and every page logs one console error. The
+  owner decides whether to switch it off or allow it.
 - **The morning report checks `/perm-by-the-numbers` and `/layoffs`** with the other daily pages, and prints a clean
   `pnpm audit` as a line even on a day with another warning.
