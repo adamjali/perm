@@ -1508,10 +1508,10 @@ Skipped:
 - `/blog/free-immigration-case-management-software`: crawled, not indexed, Oct 17, after its last change; asking again
   changes nothing.
 
-## Queue after the Oct 26 night deploy (about 2 AM EDT)
+## Queue after the Oct 25 afternoon deploy (198d7d2d, shipped by hand at about 1:05 PM EDT)
 
-Everything here waits until `ssh permtracker 'sudo permtracker-deploy status'` shows 9f618944 or later live. Work it top
-down.
+The owner asked for the deploy at once rather than at 2 AM, so 198d7d2d went live that afternoon. Work it top down;
+the afternoon round below took the first three.
 
 1. `/layoffs` (47 states and DC; the seven new states load in the 3 AM run, so request after about 4 AM).
 2. `/guides/employer-layoffs-and-your-perm`, `/guides/perm-layoff-rule-for-employers`,
@@ -1524,3 +1524,24 @@ down.
 6. `/sponsor-finder`, `/perm-employers`, `/policy-changes` (placeholders shortened; inspect only).
 
 After this list: `node scripts/gsc_queue.mjs --since 9f618944` for anything newer.
+
+### Round, Sunday Oct 25 2026, afternoon (about 1:20 to 1:35 PM EDT)
+
+Live: 198d7d2d (shipped by hand at about 1:05 PM). Google answered Quota Exceeded on the 12th request of the day.
+
+Requested (last crawl before the request):
+- `/guides/employer-layoffs-and-your-perm` (Oct 17, 6:26 PM)
+- `/guides/perm-layoff-rule-for-employers` (Oct 22, 2:39 PM)
+- `/blog/h1b-sponsors-layoff-notices-october-2026` (Oct 17, 7:46 AM)
+
+Stopped at Quota Exceeded on `/blog/why-perm-cases-are-denied` (last crawled Oct 23, 11:29 AM; not requested).
+
+Still to request, in order:
+1. `/blog/why-perm-cases-are-denied`, `/blog/what-an-employers-perm-record-shows`,
+   `/blog/how-perm-wage-data-is-published`, `/guides/read-the-denial-and-audit-rates`
+2. `/layoffs`, once the five Archive states have loaded (the warning in the morning report names any still missing)
+3. `/perm-employers/google-llc`
+4. Inspect only: `/`, `/perm-by-the-numbers`, `/sponsor-finder`, `/perm-employers`, `/policy-changes`
+
+After this list: `node scripts/gsc_queue.mjs --since 198d7d2d` for anything newer.
+
