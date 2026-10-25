@@ -10281,3 +10281,30 @@ table above was updated with it.
 **The weekly digest may send 30 a day** (`NEWSLETTER_DAILY_CAP=30` on production, from 15; the code's default and the
 email ledger already counted 30).
 
+
+## Oct 25 2026: PERM by the numbers
+
+`/perm-by-the-numbers` is one board of the totals DOL's own case records add up to and DOL doesn't publish, one count per
+tile with its chart (owner: visual first; "only us, or only our group", never an estimate or a grade on it). The
+scorecard, estimates and grades are for the owner and are never pitched or listed as something the site offers.
+
+- **New reads live in `src/lib/db/byTheNumbers.ts`** (new filings by week, job and employer from `perm_live_recent`,
+  employers new to PERM from `perm_live_only_index`, RFIs per week from `perm_case_events`, the bulletin months held),
+  each bounded by a date and an index; the shaping is `src/lib/byTheNumbers.ts`, tested. A failed read throws, so the
+  page keeps its last good render. Weekly filings start the day after the newest published decision: before it, a
+  decided case lives in `perm_cases` and is missing from the live table, so a week would read short.
+- **"New to PERM"** means a first case in our live record within 90 days and no decided case in DOL's files back to
+  October 2015 under the same slug (`perm_cases`, `perm_cases_history`). A company that filed before under another
+  spelling can still appear, and the tile says so.
+- **The parts:** `ColumnChart` (soft fill with an ink cap for 3:1, lime for "now", hatched while a week is still
+  filling, `grow` to fill a tile) and `BulletinCalendar` in `src/components/numbers/`. The page reads the census,
+  holds, pulse, RFI clock, wage-request summary, DOL's readings and the bulletin, so it sits on the sweep, DOL and
+  bulletin refresh lists.
+- **The nightly check as a card sorter** (`src/components/figures/card-sorter/`, the anatomy kit): cards leave a
+  hopper, pass under the reader (DOL's case-status search) and drop into six pockets, one batch of 100 at tonight's
+  shares (largest-remainder `apportion`, spread by `interleave`). The stacks show the batch, the legend every pocket's
+  real total. Pause button; drag and scroll move it; still under reduced motion. Flying cards move between the deck
+  layer and each pocket's own layer, because a pocket's dividers sit in front of one pocket's cards and behind the
+  next one's.
+- **Its first fit cut the machine off at the top**: `fitProjection` was given the hopper and the floor but not the
+  body's own top corners, which are the highest point on screen. Give the fit every top corner of every big solid.

@@ -1231,3 +1231,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 24 2026 (afternoon)".
 - **No DACA section** (owner's call): the DACA lines on `/uscis-processing-times` say their pending counts include
   first-time requests, which USCIS accepts but doesn't process.
 
+## Oct 25 2026, in three lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: PERM by the numbers".
+
+- **`/perm-by-the-numbers`**: one board of the totals DOL's case records add up to and DOL doesn't publish (the line by
+  stage, holds by employer, decisions per day, new filings by job and employer, employers new to PERM, RFIs per week).
+- **The nightly check drawn as a card sorter** under the board, one batch of 100 cards at tonight's shares.
+- **Estimates, the scorecard and grades are the owner's tools**: never pitched or listed as something the site offers.
+
