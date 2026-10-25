@@ -1253,3 +1253,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: WARN notices from
   from its measured posting gaps. A site that's down warns; a broken parse turns the run partial.
 - **`ingest_warn.py --parse-only`** reads every live state with no database: 41 parsed on Oct 25, and it caught
   Florida reading one page a year (escaped pager links).
+
+## Oct 25 2026 (morning): the live check after shipping by hand
+
+- **A date typed before the page's script starts now reaches the calculator** (`DateInput` reads its box on mount). React
+  had recorded the typed value as the box's own, so the calculator showed a date and no answer. Found by the
+  end-to-end suite, which now covers the numbers page and `/layoffs` and passes 9 of 9 against the dev server.
+- **The end-to-end suite runs in no workflow**, so four of its flows had gone stale unseen (a fixed filing date the
+  queue has passed, a renamed label, a shortcut pressed before the script listens). Run `./run-e2e-tests.sh` against
+  the dev server after a change to a public flow.
+- **Cloudflare inserts its Web Analytics script into every page** (automatic setup on the zone since Sep 28 2026), and
+  the site's script policy blocks it, so it has never recorded a visit and every page logs one console error. Whether
+  to switch it off or allow it is the owner's call.
+- **The morning report checks `/perm-by-the-numbers` and `/layoffs`** with the other daily pages, and prints a clean
+  `pnpm audit` as a line even on a day with another warning.
