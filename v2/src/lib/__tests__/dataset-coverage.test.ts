@@ -87,7 +87,19 @@ describe("dataset coverage", () => {
     // Most ids are not scrapable (see the control), so this only asserts the
     // map has not grown wildly beyond what production registers.
     // 43 entries on Oct 3 2026 (the H-2A, H-2B and CW-1 files added three).
-    expect(Object.keys(DATASET_COVERAGE).length).toBeLessThanOrEqual(55);
+    // Each WARN state has its own row (`warn-notices-<st>`, stamped from a
+    // loop the scrape can't read), so those are held to the readers instead.
+    const ids = Object.keys(DATASET_COVERAGE);
+    const warnStates = ids.filter((d) => /^warn-notices-[a-z]{2}$/.test(d));
+    expect(ids.length - warnStates.length).toBeLessThanOrEqual(55);
+    const read = new Set<string>();
+    for (const f of ["ingest_warn.py", "warn_states.py"]) {
+      const src = readFileSync(join(ROOT, "scripts", f), "utf8");
+      for (const m of src.matchAll(/"([a-z]{2})": \{"name": "/g)) read.add(m[1]!);
+    }
+    // Control: the registry pattern found the readers' states.
+    expect(read.size).toBeGreaterThan(30);
+    expect(warnStates.filter((d) => !read.has(d.slice(-2))), "a WARN row for a state nothing reads").toEqual([]);
     void known;
   });
 

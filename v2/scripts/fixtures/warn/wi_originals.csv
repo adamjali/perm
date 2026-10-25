@@ -1,0 +1,6 @@
+PK,FK,PDF,Company,City,AffectedWorkers,NoticeRcvd,NoticeType,LayoffBeginDate,NAICSDescription,County,WDA,HasUpdates,,,,,,,,,,,,,
+2020010201,0,2020010201,Semco Windows and Doors,Merrill,141,20200102,CL,12/31/2019,Wood Window & Door Mfg.,Lincoln,North Central,,,,,,,,,,,,,,
+2020011001,0,2020011001,OEMMCCO Inc.,Kenosha,49,20200110,CL,3/31/2020,Machine Shops,Kenosha,Southeast,,,,,,,,,,,,,,
+2020012801,0,2020012801,Eastek Automated Circuit,Menomonee Falls,36,20200128,WR,3/31/2020,Printed Circuit Assembly Mfg,Waukesha,WOW,,,,,,,,,,,,,,
+2020012802,0,2020012802,Marquis Yachts,Pulaski,344,20200130,CL,3/1/2020,Boat Bldg,Brown,Bay Area,,,,,,,,,,,,,,
+2022012801,0,2022012801,"Briggs & Stratton, LLC","Richfield, Wauwatosa",56,20220128,"CL, WR",4/1/2022,Other Engine Equip Mfg,"Washington, Milwaukee","Milwaukee, WOW",,,,,,,,,,,,,,

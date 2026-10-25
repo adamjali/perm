@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""WARN notices from four states, matched to the PERM sponsors in the record.
+"""WARN notices from every state that publishes them for a script to read,
+matched to the PERM sponsors in the record.
 
 python3 scripts/ingest_warn.py                                # every state, write
-python3 scripts/ingest_warn.py --dry-run                      # print, write nothing
+python3 scripts/ingest_warn.py --dry-run                      # read the database, write nothing
+python3 scripts/ingest_warn.py --parse-only                   # no database at all: fetch, parse, count
 python3 scripts/ingest_warn.py --state tx --from-file x.xlsx  # parse a saved file
 
 The Worker Adjustment and Retraining Notification Act makes an employer file
@@ -16,9 +18,14 @@ equals a PERM employer's `merge_key`, or has the same letters with the gaps
 elsewhere (Rule D in entity_identity.py). Never a prefix match: that would
 attach a foundation's layoff to a company that shares its first word.
 
-California, New York, Texas and Washington are read, each by its own parser
-into the same row shape. Each state loads, writes and stamps its own freshness
-on its own, so one state's outage never costs the others.
+Forty states and the District of Columbia are read, each by its own parser
+into the same row shape: California, New York, Texas and Washington here, and
+the rest in warn_states.py, which also says which states aren't read and why.
+Each state loads, writes and stamps its own freshness on its own, so one
+state's outage never costs the others. A state whose site is down or refusing
+that day is named in the run's note and leaves the run green, since its own
+freshness row is what says it has gone quiet; a state whose page no longer
+parses turns the run partial, because that is ours to fix.
 
 What it is not: a layoff count for an employer, or a judgment about one. A
 notice is one filing as the state printed it, with the state's own numbers.
@@ -28,7 +35,6 @@ from __future__ import annotations
 import argparse
 import bisect
 import datetime as dt
-import hashlib
 import html
 import io
 import json
@@ -36,14 +42,18 @@ import re
 import os
 import sys
 import time
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import warn_states  # noqa: E402
 from entity_identity import SpacedKeyMap, entity_key, program_key  # noqa: E402
 from lib_db import (  # noqa: E402
     Database, add_missing_columns, query_rows, record_run, stamp_freshness,
 )
+from lib_gov_data import robots_allowed  # noqa: E402
+from lib_warn import as_of_date, assign_ids, get, is_unreachable  # noqa: E402
 
 CA_URL = "https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx"
 CA_PAGE = "https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/"
@@ -188,29 +198,6 @@ def parse_california(xlsx_bytes: bytes) -> list[dict]:
             }
         )
     return assign_ids(out)
-
-
-def assign_ids(rows: list[dict]) -> list[dict]:
-    """A stable id per notice.
-
-    One employer can file several notices on one day for several sites, and a
-    report can print identical rows outright; the parser's `_extra` field (an
-    address, a city, an index) separates the first and a sequence number the
-    second. Row order is stable between downloads of the same report, so the
-    ids are stable too.
-    """
-    seen: dict[str, int] = {}
-    for row in rows:
-        # `employees` is deliberately not in the identity: a state revises a
-        # worker count, and with the count in the hash a revision would become a
-        # second row instead of an update. Exact duplicates are still separated
-        # by the sequence number below, and `write()` compares the count, so a
-        # revision is picked up.
-        base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_extra", "") or ""])
-        n = seen.get(base, 0)
-        seen[base] = n + 1
-        row["id"] = hashlib.sha1(f"{base}|{n}".encode()).hexdigest()[:16]
-    return rows
 
 
 def parse_texas(xlsx_bytes: bytes) -> list[dict]:
@@ -383,8 +370,9 @@ def parse_washington_page(page_html: str) -> list[dict]:
 def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list[dict]:
     """Walk the grid newest-first until a page's oldest receipt is older than `days`."""
     import http.cookiejar
-    import urllib.parse
 
+    if not robots_allowed(WA_URL):
+        raise RuntimeError(f"{WA_URL} is a path the host's robots.txt asks automated clients not to read")
     jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 
@@ -636,9 +624,8 @@ def prune(db: Database, rows: list[dict], state: str) -> int:
 
 
 def fetch(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+    """Through lib_warn.get: the host's robots.txt first, then the request."""
+    return get(url)
 
 
 def load_texas(from_file: str | None) -> list[dict]:
@@ -661,38 +648,93 @@ STATES: dict[str, dict] = {
     "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "snapshot": True, "stamp": "posted_date",
            "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
     "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
+    # Every other state that publishes its notices for a script to read.
+    **warn_states.STATES,
 }
+
+
+def held_lookup(db: Database) -> Callable[[str], dict]:
+    """What the table holds for a state, read once per state per run.
+
+    The job-center states reuse a held count rather than ask for each notice's
+    page again, and the yearly states read only their newest years once a
+    state has rows (warn_states.full_history).
+    """
+    cache: dict[str, dict] = {}
+    cols = ("notice_date", "effective_date", "company", "kind", "employees", "county", "industry", "source_url", "site")
+
+    def lookup(state: str) -> dict:
+        st = state.upper()
+        if st not in cache:
+            try:
+                rows = query_rows(db, f"SELECT id, {', '.join(cols)} FROM warn_notices WHERE state = ?", [st])
+            except RuntimeError as exc:
+                if "no such table" not in str(exc).lower():
+                    raise
+                rows = []
+            held: dict[str, dict] = {}
+            for r in rows:
+                row = {k: (v if v not in ("",) else None) for k, v in zip(cols, r[1:])}
+                # libSQL hands integers back as strings (see _cmp).
+                row["employees"] = _cmp(row["employees"], None)[0]
+                held[str(r[0])] = row
+            cache[st] = held
+        return cache[st]
+
+    return lookup
+
+
+def stamp_date(d: str) -> str:
+    """A notice date the health check can age, never past today.
+
+    A month-only state's "2026-10" reads as its first day. Ohio and Utah have
+    each printed a notice dated days ahead (a typing slip); a future date would
+    read as fresh for as long as it stayed ahead.
+    """
+    return min(as_of_date(d), dt.date.today().isoformat())
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--dry-run", action="store_true", help="read the database to match employers; write nothing")
+    ap.add_argument("--parse-only", action="store_true",
+                    help="no database at all: fetch, parse and print what each state yields")
     ap.add_argument("--state", choices=[*STATES, "all"], default="all")
     ap.add_argument("--from-file", help="parse this file instead of fetching; needs --state")
+    ap.add_argument("--detail-cap", type=int, default=warn_states.JC_DETAIL_CAP,
+                    help="notice pages a job-center state may ask for in this run")
     a = ap.parse_args()
     if a.from_file and a.state == "all":
         ap.error("--from-file needs one --state")
+    warn_states.JC_DETAIL_CAP = a.detail_cap
     started = time.time()
     wanted = list(STATES) if a.state == "all" else [a.state]
+    db = None if a.parse_only else Database()
+    warn_states.HELD["lookup"] = held_lookup(db) if db is not None else None
     parsed: dict[str, list[dict]] = {}
-    failed: list[str] = []
+    failed: list[str] = []        # ours to fix: a parse that broke or found nothing
+    unreachable: list[str] = []   # the state's site was down or refusing; its freshness row is the alarm
     for st in wanted:
+        t0 = time.time()
         try:
             rows = STATES[st]["load"](a.from_file)
         except Exception as e:  # one state's outage must not cost the others
-            log(f"{STATES[st]['name']}: {type(e).__name__}: {str(e)[:200]}")
-            failed.append(st)
+            down = is_unreachable(e)
+            log(f"{'::warning::' if down else ''}{STATES[st]['name']}: {type(e).__name__}: {str(e)[:200]}")
+            (unreachable if down else failed).append(st)
             continue
         if not rows:
             log(f"{STATES[st]['name']}: no rows parsed; refusing to write it")
             failed.append(st)
             continue
         parsed[st] = rows
-        log(f"{STATES[st]['name']}: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to {max(r['notice_date'] for r in rows)}")
+        log(f"{STATES[st]['name']}: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to "
+            f"{max(r['notice_date'] for r in rows)} ({time.time() - t0:.0f}s)")
+    if a.parse_only:
+        return report_parsed(parsed, failed, unreachable)
     if not parsed:
         log("nothing parsed for any state")
         return 1
-    db = Database()
     every = [r for rows in parsed.values() for r in rows]
     matched = match_employers(db, every)
     log(f"matched {matched} of {len(every)} to a PERM sponsor by merge key")
@@ -711,12 +753,15 @@ def main() -> int:
         # must not move a state's date backwards.
         newest, count = query_rows(
             db, "SELECT MAX(notice_date), COUNT(*) FROM warn_notices WHERE state = ?", [st.upper()])[0]
-        as_of = newest or max(r["notice_date"] for r in rows)
+        newest = newest or max(r["notice_date"] for r in rows)
+        as_of = stamp_date(newest)
         note = f"{STATES[st]['name']}: {count} notices held ({len(rows)} in this load)"
+        if newest != as_of:
+            note += f"; newest notice dated {newest}"
         stamp_key = STATES[st].get("stamp")
         posted = [r[stamp_key] for r in rows if stamp_key and r.get(stamp_key)]
         if posted:
-            as_of = max(posted)
+            as_of = stamp_date(max(posted))
             note += f"; last posted {as_of}, newest notice dated {newest}"
         stamp_freshness(
             db, f"{DATASET}-{st}",
@@ -725,19 +770,37 @@ def main() -> int:
             note=note,
             max_age_days=STATES[st]["days"],
         )
-    note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items())
+    note = f"{len(parsed)} states, {len(every)} notices"
+    if unreachable:
+        note += f"; site down or refusing: {', '.join(STATES[st]['name'] for st in unreachable)}"
     if failed:
         note += f"; FAILED: {', '.join(STATES[st]['name'] for st in failed)}"
     # The dataset-wide row speaks for every state, so only an all-states run may
     # write it: a `--state tx` run that stamped it would move the whole
     # dataset's as_of to whatever one state happened to hold.
     if a.state == "all":
-        stamp_freshness(db, DATASET, as_of=max(r["notice_date"] for r in every), source=CA_PAGE, cadence="Weekly", note=note, max_age_days=MAX_AGE_DAYS)
+        stamp_freshness(db, DATASET, as_of=max(stamp_date(r["notice_date"]) for r in every), source=CA_PAGE,
+                        cadence="Weekly", note=note, max_age_days=MAX_AGE_DAYS)
     if pruned:
         note += f"; pruned {pruned} the source no longer lists"
     record_run(db, "ingest_warn.py", status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
     log(f"wrote {written}; {note}")
     return 0
+
+
+def report_parsed(parsed: dict[str, list[dict]], failed: list[str], unreachable: list[str]) -> int:
+    """What a parse-only run found, one line a state, nothing written anywhere."""
+    print(f"\n{'state':22} {'notices':>7}  {'first':10}  {'newest':10}  counts  sites")
+    for st, rows in parsed.items():
+        dates = sorted(r["notice_date"] for r in rows)
+        counts = sum(1 for r in rows if r["employees"] is not None)
+        sites = sum(1 for r in rows if r.get("site"))
+        print(f"{STATES[st]['name']:22} {len(rows):7}  {dates[0]:10}  {dates[-1]:10}  {counts:6}  {sites:5}")
+    for label, sts in (("site down or refusing", unreachable), ("FAILED", failed)):
+        if sts:
+            print(f"{label}: {', '.join(STATES[st]['name'] for st in sts)}")
+    print(f"{len(parsed)} states parsed, {sum(len(r) for r in parsed.values())} notices")
+    return 0 if parsed else 1
 
 
 if __name__ == "__main__":

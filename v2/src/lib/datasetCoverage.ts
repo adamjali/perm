@@ -87,7 +87,7 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   "policy-notices-oflc":
     "Announcements OFLC posts on its own page, which is where program changes appear before the Federal Register.",
   "warn-notices":
-    "State WARN layoff notices, from the four states that publish them in a readable form.",
+    "State WARN layoff notices from 40 states and DC, each from the record its state publishes. Ten states publish none a script may read.",
   "warn-notices-ca":
     "California WARN notices, from the state's own spreadsheet. Layoffs the employer announced, not layoffs that happened.",
   "warn-notices-ny":
@@ -96,6 +96,55 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Texas WARN notices from the state open data portal, which reaches further back than the agency spreadsheet does.",
   "warn-notices-wa":
     "Washington WARN notices, read a page at a time from the state's own searchable database.",
+  "warn-notices-al": "Alabama WARN notices from the Department of Workforce's list, since 2019.",
+  "warn-notices-ak": "Alaska WARN notices from the Department of Labor's list, since 2019.",
+  "warn-notices-az":
+    "Arizona WARN notices from the state's job-center search, since 2019. Counts come from each notice's own page, 30 a run, newest first, so an older notice may not show one yet.",
+  "warn-notices-co":
+    "Colorado WARN notices from the state's yearly sheets, since 2019, counting the workers in Colorado where the sheet says so.",
+  "warn-notices-ct": "Connecticut WARN notices from the Department of Labor's document library, since 2019.",
+  "warn-notices-dc": "District of Columbia WARN notices from the yearly pages DOES posts, since 2021.",
+  "warn-notices-de":
+    "Delaware WARN notices from the state's job-center search, since 2019. Counts come from each notice's own page, 30 a run, newest first, so an older notice may not show one yet.",
+  "warn-notices-fl": "Florida WARN notices from FloridaCommerce's list for each year, since 2019.",
+  "warn-notices-ga": "Georgia WARN notices from WorkSource Georgia's list, since 2023, dated by the day each was submitted.",
+  "warn-notices-hi":
+    "Hawaii WARN notices since 2020. Notices from August 2026 carry their counts; earlier ones are letters, so they carry the company and date only.",
+  "warn-notices-ia": "Iowa WARN notices from the state's WARN log, since October 2021. An amendment is its own row.",
+  "warn-notices-id":
+    "Idaho WARN notices from the state's list, since 2019, counting Idaho's share where a notice covers several states.",
+  "warn-notices-il":
+    "Illinois WARN notices from the state's layoff database, since 2019. Layoffs the database marks as not WARN notices are left out.",
+  "warn-notices-in": "Indiana WARN notices from the Department of Workforce Development's list, since 2019.",
+  "warn-notices-ks":
+    "Kansas WARN notices from the state's job-center search, since 2019. Kansas posts few, so months can pass with none. Counts come from each notice's own page, 30 a run, newest first, so an older notice may not show one yet.",
+  "warn-notices-ky": "Kentucky WARN notices from this year's report and the prior-year workbook, since 2019.",
+  "warn-notices-ma":
+    "Massachusetts WARN notices from the State Library's copy of the weekly report, since July 2020. Earlier years are in a format the loader can't read.",
+  "warn-notices-md": "Maryland WARN notices from the Department of Labor's page for each year, since 2019.",
+  "warn-notices-me": "Maine WARN notices from the state's job-center search, since 2019. Counts come from each notice's own page, 30 a run, newest first, so an older notice may not show one yet.",
+  "warn-notices-mi": "Michigan WARN notices from the state's list, since November 2024, dated by the day the state posted each.",
+  "warn-notices-ms":
+    "Mississippi WARN notices from the quarterly reports, since July 2020. Notices the state marks as not required by the WARN Act are left out.",
+  "warn-notices-mt": "Montana WARN notices from the Department of Labor and Industry's workbook, since 2019.",
+  "warn-notices-nc":
+    "North Carolina WARN notices since 2019: this year from the state's dashboard, earlier years from its yearly reports, dated by the day the state received each.",
+  "warn-notices-nd": "North Dakota WARN notices from Job Service's list, since 2019. The state updates it a few times a year.",
+  "warn-notices-ne": "Nebraska WARN notices from the Department of Labor's list, since March 2023.",
+  "warn-notices-nj":
+    "New Jersey WARN notices from the state's archive, since 2019. It prints the month a notice was posted, not the day, so the month is shown.",
+  "warn-notices-oh": "Ohio WARN notices from this year's list on the state's page. Earlier years aren't read.",
+  "warn-notices-ok": "Oklahoma WARN notices, since 2019. Oklahoma prints no worker count, so none is shown.",
+  "warn-notices-or": "Oregon WARN notices from the state's Rapid Response list, since late 2020.",
+  "warn-notices-pa":
+    "Pennsylvania WARN notices, since 2023. The state lists each by the month it was posted, not the day, and a notice for several sites is a row per site.",
+  "warn-notices-sc": "South Carolina WARN notices from the yearly reports, since 2022. Earlier reports print no notice date.",
+  "warn-notices-sd": "South Dakota WARN notices, since 2019, dated by the day the state received each. No layoff date is printed.",
+  "warn-notices-tn": "Tennessee WARN notices from the state's current page, dated by the day the state posted each.",
+  "warn-notices-ut": "Utah WARN notices from the state's yearly tables, since 2019. No layoff date is printed.",
+  "warn-notices-va": "Virginia WARN notices from Virginia Works's list, since 2019.",
+  "warn-notices-vt": "Vermont WARN notices from the state's job-center search, since 2019. Counts come from each notice's own page, 30 a run, newest first, so an older notice may not show one yet.",
+  "warn-notices-wi": "Wisconsin WARN notices, since 2020. Original notices only: the state's updates to a notice aren't read.",
 
   // --- USCIS quarterly performance workbooks --------------------------------
   "uscis-form-quarters":
@@ -181,6 +230,43 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "warn-notices-ny": "New York WARN notices",
   "warn-notices-tx": "Texas WARN notices",
   "warn-notices-wa": "Washington WARN notices",
+  "warn-notices-al": "Alabama WARN notices",
+  "warn-notices-ak": "Alaska WARN notices",
+  "warn-notices-az": "Arizona WARN notices",
+  "warn-notices-co": "Colorado WARN notices",
+  "warn-notices-ct": "Connecticut WARN notices",
+  "warn-notices-dc": "District of Columbia WARN notices",
+  "warn-notices-de": "Delaware WARN notices",
+  "warn-notices-fl": "Florida WARN notices",
+  "warn-notices-ga": "Georgia WARN notices",
+  "warn-notices-hi": "Hawaii WARN notices",
+  "warn-notices-ia": "Iowa WARN notices",
+  "warn-notices-id": "Idaho WARN notices",
+  "warn-notices-il": "Illinois WARN notices",
+  "warn-notices-in": "Indiana WARN notices",
+  "warn-notices-ks": "Kansas WARN notices",
+  "warn-notices-ky": "Kentucky WARN notices",
+  "warn-notices-ma": "Massachusetts WARN notices",
+  "warn-notices-md": "Maryland WARN notices",
+  "warn-notices-me": "Maine WARN notices",
+  "warn-notices-mi": "Michigan WARN notices",
+  "warn-notices-ms": "Mississippi WARN notices",
+  "warn-notices-mt": "Montana WARN notices",
+  "warn-notices-nc": "North Carolina WARN notices",
+  "warn-notices-nd": "North Dakota WARN notices",
+  "warn-notices-ne": "Nebraska WARN notices",
+  "warn-notices-nj": "New Jersey WARN notices",
+  "warn-notices-oh": "Ohio WARN notices",
+  "warn-notices-ok": "Oklahoma WARN notices",
+  "warn-notices-or": "Oregon WARN notices",
+  "warn-notices-pa": "Pennsylvania WARN notices",
+  "warn-notices-sc": "South Carolina WARN notices",
+  "warn-notices-sd": "South Dakota WARN notices",
+  "warn-notices-tn": "Tennessee WARN notices",
+  "warn-notices-ut": "Utah WARN notices",
+  "warn-notices-va": "Virginia WARN notices",
+  "warn-notices-vt": "Vermont WARN notices",
+  "warn-notices-wi": "Wisconsin WARN notices",
   "uscis-form-quarters": "USCIS quarterly form data",
   "uscis-i485-offices": "I-485 by field office",
   "uscis-eb-awaiting-visa": "Petitions awaiting a visa",

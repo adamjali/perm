@@ -38,7 +38,10 @@ concurrency:
 jobs:
   ingest:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # The WARN step reads 41 state sites one request at a time: about 5 to 8
+    # minutes most days, longer on the day Florida reads its whole history,
+    # and about 20 on a first load. Every other step is a minute or two.
+    timeout-minutes: 50
     env:
       DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
       # The H-1B LCA filings' own database (Oct 19 2026); empty means the main one.
@@ -65,8 +68,8 @@ jobs:
         run: node --experimental-strip-types scripts/ingest_processing_times.mts
 
       # openpyxl reads the WARN spreadsheets; pdfplumber reads the debarment
-      # and annual-limits PDFs. Installed here because nothing else in the
-      # tree needs them.
+      # and annual-limits PDFs and the states that post WARN notices as a PDF.
+      # Installed here because nothing else in the tree needs them.
       - name: Python dependencies
         if: always()
         run: |
@@ -89,11 +92,15 @@ jobs:
           python3 scripts/ingest_oflc_news.py \
             || python3 scripts/record_ingest_failure.py --script ingest_oflc_news.py --note "OFLC announcements failed"
 
-      # California, New York, Texas and Washington. Texas's own site challenges
-      # scripts, so its automatic source is the state's open data portal.
+      # Forty states and DC (scripts/ingest_warn.py and scripts/warn_states.py).
+      # A state whose site is down that day is named in the run's note and its
+      # own freshness row is the alarm; a parse that breaks turns the run partial.
+      # Texas's own site challenges scripts, so its automatic source is the state's
+      # open data portal.
       - name: WARN notices
         if: always() && inputs.quick != 'true'
         working-directory: v2
+        timeout-minutes: 35
         run: |
           python3 scripts/ingest_warn.py \
             || python3 scripts/record_ingest_failure.py --script ingest_warn.py --note "WARN notices failed"
