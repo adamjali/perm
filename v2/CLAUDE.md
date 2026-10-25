@@ -30,7 +30,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
 | `pnpm test:run` | All 5 projects. Baseline 787 files / 10,530 tests (2026-10-24; 12 min on the old Mac under nvm's Node 24.22.1, which jsdom 30 needs). GitHub runs it on every push and the deploy waits for it; run it locally for a broad change |
-| `pnpm check` | **The pre-push gate (owner, Oct 8 2026, 3:09 PM EDT)**: typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`, about 2 min). CI runs the whole suite and the deploy waits for it, and the site goes live with the 2 AM night run (`-f when=now` for an urgent fix); deploy Convex only once that suite is green |
+| `pnpm check` | **The pre-push gate (owner, Oct 8 2026, 3:09 PM EDT)**: typecheckers, pyflakes, every data script test, the source audits, eslint on the changed files, and the vitest tests affected since `origin/main` (`scripts/check.sh`, about 2 min). CI runs the whole suite and the deploy waits for it, and the site goes live with the 2 AM night run (`-f when=now` for an urgent fix); deploy Convex only once that suite is green |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -42,12 +42,23 @@ stops at the FIRST failure: a run reporting "78 passed of 305 files" is a bail,
 not pool poisoning. And a count meaningfully BELOW the baseline on a run that
 did not bail is a broken run, not a pass.
 
-**`eslint` runs in NO workflow.** The only "Lint" step in CI is the pyflakes
-pass over the Python ingests, so app-code lint errors accumulate silently (8 had
-by 2026-09-01, all `react-hooks`). Run `pnpm exec eslint src convex` as part of
-any audit. Note `--format unix` and `--format compact` were REMOVED from ESLint
-core: passing one exits 2, and a careless `2>/dev/null` turns that into a silent
-"0 errors".
+**eslint runs in CI since Oct 25 2026** (the `eslint` job in `test.yml`, errors fail, warnings
+don't) and on the changed files in `pnpm check`. Before that no workflow ran it, and errors
+piled up unseen twice (8 by Sep 1, 8 again by Oct 24). Note `--format unix` and `--format
+compact` were REMOVED from ESLint core: passing one exits 2, and a careless `2>/dev/null` turns
+that into a silent "0 errors".
+
+**Every check is run by something, or says why not** (`scripts/test_check_registry.py`, in CI).
+A new `scripts/audit_*`, `scripts/check_*`, browser flow or server script that no workflow,
+`pnpm check`, `scripts/page_checks.py`, server unit or cron table names fails CI, and so does a
+workflow that starts only by hand with nothing dispatching it, unless it's listed with its
+reason. `scripts/every_test_file_runs.mjs` fails on a test file no vitest project includes.
+**The rendered-page checks run against the live site each morning** (`scripts/page_checks.py`,
+the first step of `daily-monitor.yml`; the report's "The live pages, checked"): glued words,
+content hidden until scripts run, headings, titles and canonicals, internal links, figures typed
+into the copy with no date, axe, phone widths, and the Playwright flows. `pnpm qa` runs them by
+hand. Cloudflare's lookup check stands in front of `/perm-case-status?case=` for every scripted
+browser, so on the live site the flow checks the same lookup through `/embed/case-status`.
 
 ---
 

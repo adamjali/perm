@@ -211,7 +211,7 @@ export default async function SponsorFinderPage({
               type="search"
               name="job"
               defaultValue={pick.kind === "job" ? pick.title : asked.job}
-              placeholder="Software developers, registered nurses..."
+              placeholder="Software developer, nurse..."
               autoComplete="off"
               className={`mt-1 ${FIELD}`}
             />

@@ -136,7 +136,10 @@ TEXTAREA_RE = re.compile(r"<textarea", re.I)
 def find_inter() -> str:
     """The latin Inter subset the build actually ships."""
     best: tuple[int, str] | None = None
-    for p in glob.glob(os.path.join(ROOT, ".next/static/media/*.woff2")):
+    # A build writes the fonts to .next/static/media; the dev server to .next/dev/static/media.
+    found = glob.glob(os.path.join(ROOT, ".next/static/media/*.woff2")) or glob.glob(
+        os.path.join(ROOT, ".next/dev/static/media/*.woff2"))
+    for p in found:
         try:
             f = TTFont(p, lazy=True)
             if (f["name"].getDebugName(1) or "") != "Inter":

@@ -120,7 +120,7 @@ export default async function PermEmployersPage() {
           <IndexSearch
             title="Filter employers"
             action="/perm-employers#all"
-            placeholder="Microsoft, Infosys, a hospital"
+            placeholder="Microsoft, Infosys..."
             note="Searches every sponsor, including ones whose cases DOL hasn't published yet."
             footer={
               <>

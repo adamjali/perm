@@ -6,8 +6,9 @@
  * One browser, one page at a time. Each page is checked in light and dark at
  * 1440 and at 390, since a phone layout can hide or crowd what a desktop one
  * doesn't. Prints each rule broken with how many elements and an example, and
- * exits 1 when anything is serious or critical. Run it against a dev server
- * on production data, never against production in bulk.
+ * exits 1 when anything is serious or critical, or a page didn't load. Run it against a dev server
+ * on production data, or against production for a short list of pages (scripts/page_checks.py, each
+ * morning); never against production in bulk.
  *
  * axe can't judge everything: it skips contrast over images and gradients,
  * and says nothing about whether a label makes sense. A clean run is the
@@ -32,7 +33,8 @@ if (!base || paths.length === 0) throw new Error("usage: audit_axe.mjs <base-url
 
 const results = [];
 let serious = 0;
-const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+// The Mac's own Chrome here; installed Chrome by its channel anywhere else (GitHub's runners carry it).
+const browser = await chromium.launch(process.platform === "darwin" ? { executablePath: CHROME, headless: true } : { channel: "chrome", headless: true });
 try {
   for (const path of paths) {
     for (const scheme of ["light", "dark"]) {
@@ -52,6 +54,8 @@ try {
           console.log(`${r.violations.length === 0 ? "clean" : `${r.violations.length} rule(s)`}  ${where}`);
         } catch (e) {
           console.log(`FAIL  ${where}  ${String(e).slice(0, 100)}`);
+          // A page that didn't load wasn't checked, so it can't pass.
+          serious += 1;
           results.push({ where, rule: "load-failed", impact: "unknown", count: 0, help: String(e).slice(0, 200), example: "", why: "" });
         } finally {
           await ctx.close();

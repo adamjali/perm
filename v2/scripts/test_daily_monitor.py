@@ -35,6 +35,27 @@ def check(ok: bool, msg: str, detail: str = "") -> None:
 
 
 
+def page_checks_never_read_a_missing_check_as_a_pass() -> None:
+    """The live-page checks: all passing is ok, findings warn, a broken browser
+    flow or a check that didn't run fails, and no results at all fails."""
+    now = 1_761_400_000_000
+    def doc(*checks, age_h=0.5):
+        return {"base": "https://permtracker.app", "checkedAt": now - int(age_h * 3_600_000), "checks": list(checks)}
+    ok = {"key": "glued", "title": "Words run together", "ok": True, "exit": 0, "seconds": 9, "tail": []}
+    bad = {"key": "headings", "title": "Headings", "ok": False, "exit": 1, "seconds": 9, "tail": ["/layoffs: 2 h1"]}
+    flows = {"key": "flows", "title": "Browser flows (Playwright)", "ok": False, "exit": 1, "seconds": 9, "tail": ["1 failed"]}
+    slow = {"key": "axe", "title": "Accessibility (axe, WCAG AA)", "ok": False, "exit": -1, "seconds": 900, "tail": []}
+    v = dm.page_checks_verdict(doc(ok), now)
+    check(v["status"] == "ok" and "words run together" in v["summary"], "page checks: all passing is ok, named", str(v))
+    v = dm.page_checks_verdict(doc(ok, bad), now)
+    check(v["status"] == "warn" and any("/layoffs: 2 h1" in l for l in says(v)), "page checks: a finding warns and says what", str(v))
+    check(dm.page_checks_verdict(doc(ok, flows), now)["status"] == "fail", "page checks: a broken browser flow fails")
+    check(dm.page_checks_verdict(doc(ok, slow), now)["status"] == "fail", "page checks: a check that timed out fails")
+    check(dm.page_checks_verdict(None, now)["status"] == "fail", "page checks: no results fail")
+    check(dm.page_checks_verdict(doc(), now)["status"] == "fail", "page checks: results with no checks fail")
+    check(dm.page_checks_verdict(doc(ok, age_h=9), now)["status"] == "fail", "page checks: yesterday's results fail")
+
+
 def security_section_says_what_is_open() -> None:
     """Every open code-scanning alert is untriaged, a severe Dependabot alert
     fails, update pull requests are lines, and an unread list is never a zero."""
@@ -605,6 +626,7 @@ def main() -> int:
     data_section_reads_the_scorecard_alarms()
     long_lines_end_at_a_sentence()
     security_section_says_what_is_open()
+    page_checks_never_read_a_missing_check_as_a_pass()
     audit_findings_are_sorted()
     busy_replies_are_tried_again()
 

@@ -37,7 +37,7 @@
     "test:all": "vitest run && ./run-e2e-tests.sh",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "qa": "bash scripts/qa.sh",
+    "qa": "python3 scripts/page_checks.py",
     "audit:stale": "python3 scripts/audit_staleness.py",
     "audit:registration": "python3 scripts/audit_page_registration.py"
   },

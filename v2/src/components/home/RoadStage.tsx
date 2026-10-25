@@ -105,10 +105,12 @@ export function RoadStage({ stops }: { stops: RoadStop[] }) {
                 <Link
                   href={s.href}
                   onFocus={onFocus(i)}
-                  aria-label={`${s.name}, ${s.who}: ${s.fact}. Open the ${s.cta.toLowerCase()} tool`}
+                  // Named by its own visible words (WCAG 2.5.3, label in name), in reading order.
+                  aria-labelledby={["n", "name", "who", "fact", "doc", "cta"].map((part) => `road-${i}-${part}`).join(" ")}
                   className={`group grid grid-cols-[36px_minmax(0,1fr)] gap-x-4 lg:motion-reduce:grid-cols-1 lg:motion-reduce:gap-y-4 lg:motion-safe:w-[38%]`}
                 >
                   <span
+                    id={`road-${i}-n`}
                     aria-hidden="true"
                     className={`relative z-10 flex size-9 items-center justify-center bg-foreground font-heading text-lg font-bold text-background ring-4 ring-background group-hover:bg-primary group-hover:text-black lg:motion-safe:group-data-[on=true]/stop:bg-primary lg:motion-safe:group-data-[on=true]/stop:text-black`}
                   >
@@ -139,12 +141,17 @@ export function RoadStage({ stops }: { stops: RoadStop[] }) {
                       <span
                         className={`hidden items-center justify-between gap-4 border-2 border-t-0 border-[var(--object-border)] bg-card px-4 py-3 text-sm lg:motion-safe:flex lg:motion-safe:group-data-[on=false]/stop:invisible`}
                       >
-                        <span className="min-w-0 text-soft">{s.doc}</span>{" "}
-                        <span className="shrink-0 font-semibold text-primary-text underline underline-offset-4">{s.cta}</span>
+                        <span id={`road-${i}-doc`} className="min-w-0 text-soft">
+                          {s.doc}
+                        </span>{" "}
+                        <span id={`road-${i}-cta`} className="shrink-0 font-semibold text-primary-text underline underline-offset-4">
+                          {s.cta}
+                        </span>
                       </span>
                     </span>{" "}
                     <span className="min-w-0">
                       <span
+                        id={`road-${i}-name`}
                         className={`block font-heading text-lg font-bold leading-tight group-hover:underline lg:motion-safe:group-data-[on=false]/stop:text-muted-foreground`}
                       >
                         {s.name}
@@ -153,9 +160,10 @@ export function RoadStage({ stops }: { stops: RoadStop[] }) {
                         className={`mt-1 flex items-center gap-2 text-sm font-semibold text-soft lg:motion-safe:group-data-[on=false]/stop:text-muted-foreground`}
                       >
                         <span aria-hidden="true" className={`size-2.5 shrink-0 ${s.dot}`} />
-                        {s.who}
+                        <span id={`road-${i}-who`}>{s.who}</span>
                       </span>{" "}
                       <span
+                        id={`road-${i}-fact`}
                         className={`mt-1 block text-sm leading-snug text-soft lg:motion-safe:group-data-[on=false]/stop:text-muted-foreground`}
                       >
                         {s.fact}

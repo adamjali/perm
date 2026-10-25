@@ -24,6 +24,18 @@ test("the case lookup answers a real case number", async ({ page }) => {
   const href = await link.getAttribute("href");
   expect(href).toBeTruthy();
   await page.goto(href!);
+  // On the live site Cloudflare's lookup check stands in front of the case page
+  // for every scripted browser (rule 4, Oct 3 2026), and this test never tries to
+  // get past it. The embedded lookup runs the same lookup without it, so the
+  // morning check reads that instead, and says so in its output.
+  if (await page.getByRole("heading", { name: "Performing security verification" }).isVisible()) {
+    const number = new URL(href!, "https://permtracker.app").searchParams.get("case")!;
+    console.log("note: the case page is behind Cloudflare's lookup check here; checked the embedded lookup instead");
+    await page.goto(`/embed/case-status?case=${encodeURIComponent(number)}`);
+    await expect(page.getByText(number, { exact: true })).toBeVisible();
+    await expect(page.getByText("Employer", { exact: true })).toBeVisible();
+    return;
+  }
   await expect(page.getByText("The record", { exact: false })).toBeVisible();
   await expect(page.locator("h1")).toBeVisible();
 });

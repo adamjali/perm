@@ -5,7 +5,8 @@
 #   pnpm check            # against origin/main
 #   pnpm check HEAD~3     # against any other commit
 #
-# It runs both typecheckers, the data scripts' lint and tests, and the vitest
+# It runs both typecheckers, the data scripts' lint and tests, the source audits,
+# eslint on the changed files, and the vitest
 # tests that import something changed since the base (vitest's --changed,
 # uncommitted and untracked files included), the tests that name a changed file,
 # and, when src/ or convex/ changed, every gate that walks the tree. It's still
@@ -24,15 +25,15 @@ PY=python3
 t0=$(date +%s); tlast=$t0
 took(){ now=$(date +%s); echo "   ($(( now - tlast ))s)"; tlast=$now; }
 
-echo "== 1/4 typecheck (app, Convex, extension, SDK)"
+echo "== 1/6 typecheck (app, Convex, extension, SDK)"
 pnpm -s typecheck
 took
 
-echo "== 2/4 pyflakes over the data scripts"
+echo "== 2/6 pyflakes over the data scripts"
 "$PY" -m pyflakes scripts/*.py scripts/oracle/*.py
 took
 
-echo "== 3/4 data script tests"
+echo "== 3/6 data script tests"
 failed=0; n=0; log=$(mktemp)
 for t in scripts/test_*.py scripts/oracle/test_*.py; do
   n=$((n + 1))
@@ -43,7 +44,24 @@ echo "$n script tests, $failed failed"
 [ "$failed" -eq 0 ]
 took
 
-echo "== 4/4 vitest: tests affected since $base"
+echo "== 4/6 source audits (articles, contrast, every page registered, every test file run)"
+for a in audit_articles.py audit_contrast.py audit_page_registration.py; do
+  "$PY" "scripts/$a" > /dev/null 2>&1 || { echo "FAILED $a"; "$PY" "scripts/$a" 2>&1 | tail -20; exit 1; }
+done
+node scripts/every_test_file_runs.mjs
+took
+
+echo "== 5/6 eslint on the changed files"
+lintable=$( { git diff --name-only --relative "$base" 2>/dev/null; git ls-files --others --exclude-standard; } | sort -u | grep -E '^(src|convex)/.*\.(ts|tsx|mjs|js)$' | while read -r f; do [ -f "$f" ] && echo "$f"; done || true)
+if [ -n "$lintable" ]; then
+  # shellcheck disable=SC2086
+  pnpm exec eslint --cache --cache-location node_modules/.cache/eslint $lintable
+else
+  echo "   nothing to lint"
+fi
+took
+
+echo "== 6/6 vitest: tests affected since $base"
 # --changed follows imports, so a test that reads a changed file as text (a
 # parity test reading a Python ingest's status list, a gate scanning src/)
 # isn't picked up. Add every test file that names a changed file: by basename,

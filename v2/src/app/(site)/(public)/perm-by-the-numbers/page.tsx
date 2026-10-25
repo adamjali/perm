@@ -437,7 +437,8 @@ export default async function PermByTheNumbersPage() {
                   {" "}
                   <li className="flex min-h-[44px] items-baseline justify-between gap-3 border-t border-border py-2">
                     {e.slug ? (
-                      <Link href={entityHref("employer", e.slug)} className="link min-w-0 truncate">
+                      // the link fills its 44px row, so the whole row is the tap target
+                      <Link href={entityHref("employer", e.slug)} className="link -my-2 block min-w-0 truncate py-2.5">
                         {e.label}
                       </Link>
                     ) : (

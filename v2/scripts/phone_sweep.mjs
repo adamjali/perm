@@ -78,7 +78,8 @@ function measure(w) {
 }
 
 let bad = 0;
-const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+// The Mac's own Chrome here; installed Chrome by its channel anywhere else (GitHub's runners carry it).
+const browser = await chromium.launch(process.platform === "darwin" ? { executablePath: CHROME, headless: true } : { channel: "chrome", headless: true });
 try {
   for (const width of WIDTHS) {
     const ctx = await browser.newContext({ viewport: { width, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });

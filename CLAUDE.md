@@ -1267,3 +1267,19 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: WARN notices from
   owner decides whether to switch it off or allow it.
 - **The morning report checks `/perm-by-the-numbers` and `/layoffs`** with the other daily pages, and prints a clean
   `pnpm audit` as a line even on a day with another warning.
+
+## Oct 25 2026 (late morning): every check runs, and the card sorter drawn true
+
+- **Twelve page audits, the phone sweep, axe, eslint and the browser flows ran nowhere**: each by hand when
+  someone remembered. Two had broken unseen (the registration audit crashed on a file moved Oct 1; the staleness
+  audit read a Convex function deleted Oct 1 and printed "skipped" while passing), and four placeholders and ten
+  undated figures had piled up. Now eslint and the source audits run in CI and `pnpm check`, the placeholder
+  audit after each deploy build, and every rendered-page check against the live site each morning
+  (`scripts/page_checks.py`, the morning report's "The live pages, checked"; a failed one turns that run red).
+- **`scripts/test_check_registry.py` fails CI on a check nothing runs**, or a workflow nothing dispatches, unless
+  it's listed with its reason; `scripts/every_test_file_runs.mjs` fails on a test file no vitest project includes.
+- **A figure typed into copy needs its date beside it** ("DOL's files for October 2023 through June 2026"), or
+  the staleness audit fails it: undated, it goes wrong the day DOL's next quarterly file loads.
+- **The card sorter on `/perm-by-the-numbers` is drawn the way it would work**: cards on the rails, a kicker at
+  each pocket, stacks as tall as their cards, nothing floating (0 of 198 line ends), and the reader's arm resting
+  on its head. Under Reduce Motion it holds still with no Pause button, which is why it can look frozen.

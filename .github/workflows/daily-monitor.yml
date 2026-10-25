@@ -19,6 +19,13 @@ name: Daily monitor
 #
 # Optional secrets, each switching on one section (the report says "off" until
 # it is set): POSTHOG_PERSONAL_API_KEY, SENTRY_AUTH_TOKEN.
+#
+# Before the report, every check that reads rendered pages runs against the live
+# site (scripts/page_checks.py): glued words, content hidden until scripts run,
+# headings, titles and canonicals, internal links, figures typed into the copy,
+# axe, phone widths and the browser flows. They had run only by hand (found Oct
+# 25 2026). The report prints one line per check, and a failed check turns this
+# run red at the end, after the email has gone.
 
 on:
   workflow_dispatch:
@@ -40,7 +47,7 @@ concurrency:
 jobs:
   report:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -57,6 +64,23 @@ jobs:
         with:
           node-version: 24.x
 
+      # The browser checks (axe, the phone sweep, the browser flows) need the
+      # site's packages; Chrome itself is on GitHub's runner image.
+      - name: Install the site's packages
+        working-directory: v2
+        run: pnpm install --frozen-lockfile
+
+      - name: Check the live pages
+        working-directory: v2
+        env:
+          DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          DATABASE_LCA_URL: ${{ secrets.DATABASE_LCA_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          code=0
+          python3 scripts/page_checks.py --base https://permtracker.app --out "${RUNNER_TEMP}/page-checks.json" || code=$?
+          echo "$code" > "${RUNNER_TEMP}/page-checks.exit"
+
       - name: Gather the report
         working-directory: v2
         env:
@@ -67,6 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          PAGE_CHECKS_FILE: ${{ runner.temp }}/page-checks.json
         run: python3 scripts/daily_monitor.py --out "${RUNNER_TEMP}/report.json"
 
       - name: Add Convex's half, store it and email it
@@ -77,3 +102,12 @@ jobs:
           python3 -c 'import json,sys; json.dump({"report": json.load(open(sys.argv[1]))}, open(sys.argv[2], "w"))' \
             "${RUNNER_TEMP}/report.json" "${RUNNER_TEMP}/args.json"
           npx --yes convex run dailyReport:send "$(cat "${RUNNER_TEMP}/args.json")" --prod
+
+      # The checks carry on so the report still goes out; a failed one still
+      # ends this run red, so the failure shows in the Actions list too.
+      - name: A failed page check turns the run red
+        if: ${{ always() }}
+        run: |
+          code=$(cat "${RUNNER_TEMP}/page-checks.exit" 2>/dev/null || echo missing)
+          echo "page checks exit: $code"
+          test "$code" = 0

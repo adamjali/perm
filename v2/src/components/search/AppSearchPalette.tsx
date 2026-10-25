@@ -76,7 +76,7 @@ export function AppSearchPalette({ open, onOpenChange }: { open: boolean; onOpen
               autoFocus
               value={query}
               onValueChange={setQuery}
-              placeholder="Case number, employer or worker"
+              placeholder="Case number or name"
               className="min-h-[52px] w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
             />
           </div>

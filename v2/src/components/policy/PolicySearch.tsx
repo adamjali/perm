@@ -85,7 +85,7 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
               value={q.text}
               maxLength={120}
               autoComplete="off"
-              placeholder="e.g. prevailing wage, H-1B fee"
+              placeholder="e.g. prevailing wage"
               onChange={(e) => setQ({ ...q, text: e.target.value })}
               className={CONTROL}
             />

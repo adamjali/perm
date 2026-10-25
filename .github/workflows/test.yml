@@ -83,6 +83,56 @@ jobs:
           [ "$n" -ge 40 ] || { echo "::error::only $n tests found; the glob is wrong"; exit 1; }
           [ "$failed" -eq 0 ]
 
+      # The audits that read the source alone: the articles (links, pictures,
+      # house style), the design tokens' contrast in both themes, and every
+      # public page reachable from the sitemap and the data menu. Each had run
+      # only by hand until Oct 25 2026, and the registration audit had been
+      # crashing on a moved file since Oct 1. The audits that need rendered
+      # pages run against the live site each morning (scripts/page_checks.py).
+      - name: Source audits
+        if: ${{ !cancelled() }}
+        run: |
+          failed=0
+          for a in audit_articles.py audit_contrast.py audit_page_registration.py; do
+            echo "::group::$a"
+            python3 "scripts/$a" || { echo "::error::$a failed"; failed=$((failed + 1)); }
+            echo "::endgroup::"
+          done
+          [ "$failed" -eq 0 ]
+
+      # A test file no vitest project includes runs nowhere and the suite still
+      # goes green; this fails on one (scripts/every_test_file_runs.mjs).
+      - name: Every test file runs
+        if: ${{ !cancelled() }}
+        run: node scripts/every_test_file_runs.mjs
+
+
+  # eslint over the app and Convex. No workflow ran it until Oct 25 2026, so
+  # errors had piled up unseen more than once (8 by Sep 1, 8 again by Oct 24).
+  # Errors fail; warnings are listed and don't.
+  lint:
+    name: eslint
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: v2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: v2/package.json
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: v2/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: eslint
+        run: pnpm exec eslint src convex
 
   # The whole vitest suite in three parts at once: about 6 minutes in one job,
   # about a third of that each here, so the suite finishes before the deploy's
@@ -145,11 +195,12 @@ jobs:
   gate:
     name: Typecheck + Vitest
     if: ${{ always() }}
-    needs: [checks, vitest]
+    needs: [checks, lint, vitest]
     runs-on: ubuntu-24.04
     steps:
       - name: Every part passed
         run: |
-          echo "checks: ${{ needs.checks.result }}, vitest: ${{ needs.vitest.result }}"
+          echo "checks: ${{ needs.checks.result }}, lint: ${{ needs.lint.result }}, vitest: ${{ needs.vitest.result }}"
           test "${{ needs.checks.result }}" = success
+          test "${{ needs.lint.result }}" = success
           test "${{ needs.vitest.result }}" = success

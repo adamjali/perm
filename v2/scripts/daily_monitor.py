@@ -1481,6 +1481,59 @@ def perf_section(now_ms: int) -> dict:
     return perf_verdict(with_computed_at(read_doc(db, "server_perf"), rows[0][0] if rows else None), now_ms)
 
 
+# ── the live pages, checked (scripts/page_checks.py) ──────────────────────
+
+# The browser flows are what a reader does (look a case up, run a calculator):
+# one failing is the site broken, so it fails the section. Any other check's
+# findings are defects to fix, a warning. A check that didn't run, and results
+# that are missing or old, fail: a check nobody ran must never read as a pass.
+PAGE_CHECKS_MAX_AGE_H = 6
+
+
+def page_checks_verdict(doc: dict | None, now_ms: int) -> dict:
+    key, title = "pagechecks", "The live pages, checked"
+    if doc is None:
+        return section(key, title, "fail", "The page checks didn't run this morning: no results.")
+    checks = doc.get("checks") or []
+    if not checks:
+        return section(key, title, "fail", "The page checks ran nothing.")
+    age_h = (now_ms - int(doc.get("checkedAt") or 0)) / 3_600_000
+    if age_h > PAGE_CHECKS_MAX_AGE_H:
+        return section(key, title, "fail", f"The newest page checks are {round(age_h)} hours old.")
+    failed = [c for c in checks if not c.get("ok")]
+    names = ", ".join(str(c.get("title", c.get("key"))).split(" (")[0].lower() for c in checks)
+    if not failed:
+        return section(key, title, "ok", f"All {len(checks)} checks passed: {names}.")
+    status = "warn"
+    lines = []
+    for c in failed:
+        code = c.get("exit")
+        if code == -1:
+            why, status = "timed out", "fail"
+        elif code == -2:
+            why, status = "couldn't start", "fail"
+        else:
+            why = "found problems"
+            if c.get("key") == "flows":
+                status = "fail"
+        last = next((t for t in reversed(c.get("tail") or []) if t.strip()), "")
+        lines.append(f"{c.get('title')}: {why}." + (f" {last}" if last else ""))
+    summary = f"{len(failed)} of {len(checks)} checks failed: " + ", ".join(
+        str(c.get("title")).split(" (")[0].lower() for c in failed) + "."
+    return section(key, title, status, summary, lines)
+
+
+def page_checks_section(now_ms: int) -> dict:
+    path = os.environ.get("PAGE_CHECKS_FILE")
+    if not path:
+        return section("pagechecks", "The live pages, checked", "off", "Not run here (PAGE_CHECKS_FILE unset).")
+    try:
+        doc = json.loads(pathlib.Path(path).read_text())
+    except (OSError, ValueError):
+        doc = None
+    return page_checks_verdict(doc, now_ms)
+
+
 # ── assembly ──────────────────────────────────────────────────────────────
 
 
@@ -1506,6 +1559,7 @@ def build(now: dt.datetime) -> dict:
                 dt.datetime.now(dt.timezone.utc)),
         guarded("speed", "How long things take (24 h)", speed_section, since),
         guarded("site", "The site", site_section),
+        guarded("pagechecks", "The live pages, checked", page_checks_section, now_ms),
         guarded("data", "The data", data_section, now_ms),
         guarded("traffic", "Traffic", traffic_section),
         guarded("api", "The API and assistants", api_section),

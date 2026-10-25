@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Every public page must be reachable: sitemap entry + nav chip + canonical.
+"""Every public page must be reachable: in the sitemap, and in the data menu if it reads data.
 
 A page that renders perfectly and is listed nowhere is invisible. This repo has
 shipped that defect before, and the usual cause is exactly what happened here:
@@ -7,10 +7,9 @@ a page and its registration live in different files, so adding the page is one
 edit and registering it is three more that nobody makes.
 
 Checks, per public route:
-  1. it appears in `src/lib/sitemap/build.ts`'s `statics` array
-  2. its `DataNav active=` prop names a key that exists in the DataSection union
-  3. it declares `alternates.canonical`
-  4. that canonical matches its own route
+  1. it appears in `src/lib/sitemap/build.ts`'s `statics` array (SITEMAP_EXEMPT says why one isn't)
+  2. a page that reads data is reached by an entry of the data menu in `src/lib/siteMap.ts`
+Canonicals are checked on the rendered page by audit_all_pages.py.
 
 Prints its counts BEFORE its verdict, and fails loudly when it finds no pages
 at all -- a gate that cannot see its subject reads exactly like a pass.
@@ -24,6 +23,9 @@ PUB = ROOT / "src/app/(site)/(public)"
 
 # Data-reading pages that are deliberately outside the rail: the homepage, the
 # marketing pages that quote a live figure, and the auth pages that do the same.
+# Pages kept out of the sitemap on purpose: the comparison page is noindex (a comparison of any two
+# employers is a new URL each time).
+SITEMAP_EXEMPT = {"/perm-employers/compare"}
 RAIL_EXEMPT = {"/", "/about", "/for-attorneys", "/signup", "/login", "/faq", "/case-search", "/perm-case-status"}
 
 def routes() -> list[tuple[str, Path]]:
@@ -48,8 +50,10 @@ def main() -> int:
     # lib/db) is reachable from the rail, either as an entry's href or under
     # one by prefix. A data page the rail cannot reach is listed nowhere a
     # reader browses.
-    sections = (ROOT / "src/components/tools/dataSections.ts").read_text()
+    # The rail map lives in lib/siteMap.ts since Oct 2026, its entries written s(key, group, name, href).
+    sections = (ROOT / "src/lib/siteMap.ts").read_text()
     rail = set(re.findall(r'href:\s*"(/[\w\-/]*)"', sections))
+    rail |= set(re.findall(r'\bs\(\s*"[^"]+",\s*"[^"]+",\s*"[^"]*",\s*"(/[\w\-/]*)"', sections))
 
     rs = routes()
     print(f"public routes found : {len(rs)}")
@@ -62,17 +66,14 @@ def main() -> int:
     findings: list[str] = []
     for route, path in rs:
         src = path.read_text()
-        if route not in listed:
+        if route not in listed and route not in SITEMAP_EXEMPT:
             findings.append(f"{route}: not in sitemap statics ({path.relative_to(ROOT)})")
         reads_data = "lib/db" in src
         reachable = route in rail or any(route.startswith(h + "/") for h in rail)
         if reads_data and not reachable and route not in RAIL_EXEMPT:
-            findings.append(f"{route}: reads data but no rail entry reaches it (dataSections.ts)")
-        c = re.search(r'canonical:\s*"([^"]+)"', src)
-        if not c:
-            findings.append(f"{route}: no alternates.canonical")
-        elif c.group(1).rstrip("/") != route.rstrip("/") and route != "/":
-            findings.append(f"{route}: canonical says {c.group(1)}")
+            findings.append(f"{route}: reads data but no rail entry reaches it (lib/siteMap.ts)")
+        # Canonicals are set through helpers (withSocialCard, page metadata builders), so they're checked on
+        # the rendered page by audit_all_pages.py, never read from the source here.
 
     print(f"findings            : {len(findings)}")
     for f in findings:

@@ -189,6 +189,17 @@ jobs:
           WITHHELD_EMPLOYERS: ${{ secrets.WITHHELD_EMPLOYERS }}
         run: pnpm build
 
+      # A placeholder wider than its box on a 320px phone stops saying what the
+      # box takes. The audit measures each with the Inter file this build ships,
+      # so it runs here, where that file exists (it had run only by hand until
+      # Oct 25 2026, and four had grown too wide). A push builds at once, so a
+      # failure shows in the day, before the night run.
+      - name: Placeholders fit their boxes
+        if: steps.plan.outputs.build == 'true'
+        run: |
+          python3 -m pip install --quiet fonttools
+          python3 scripts/audit_placeholders.py
+
       - name: Package the standalone server
         if: steps.plan.outputs.build == 'true'
         env:
