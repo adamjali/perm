@@ -1318,7 +1318,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 
 - **A read from GitHub through the tunnel is cut at 100 seconds** (Cloudflare's HTTP 524): the employer map's LCA read
   took 184 s from a cold disk. Big reads go a slice of slugs at a time (`SLUG_WINDOWS`, the biggest slice 26 s).
-- **A WARN search with no notices in its window is an answer, not a failure** (Kansas, none in 120 days).
-- **The morning page checks report a failing check's findings, not its last 12 lines** (`clean` in `page_checks.py`):
-  the phone sweep's 390px problem had been hidden under clean 320px lines.
+- **A WARN search with no notices in its window is an answer** (Kansas, none in 120 days): the reader returns no rows.
+- **The morning page checks report a failing check's findings** (`clean` in `page_checks.py`): a tail of the last 12
+  lines had hidden the phone sweep's 390px problem under clean 320px lines.
 - **Reviewed scanner findings carry `nosemgrep` with the reason on the line above**, so they stop reopening when lines move.
+- **The law-firm and name reads of the employer map are sliced too** (afternoon): the 10:40 AM sweep hit the same 524
+  on the LCA firm read. Timed on the server, the slowest slice is 41 s and the whole read 317 s. If a slice ever nears
+  100 s, run the rebuild on the server, where no tunnel cuts it.
+- **DOL's current PERM files publish no worker nationality or visa**: the FY2026 layout has only
+  `FW_INFO_APPX_A_ATTACHED` (yes/no) for the worker, plus `OTHER_REQ_IS_FW_CURRENTLY_WRK` (does the worker already work
+  for the employer; 68% yes nationally). Our tables don't load it; `dol-perm-files.yml` fetches DOL's workbooks for
+  analysis on the Mac, since www.dol.gov refuses both the Mac and the server.
