@@ -1332,10 +1332,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 
 ## Oct 26 2026 (evening): what Sabrina's Facebook post showed
 
-- **Sign-up on a phone opens with the form, Google first** (owner's yes): the warning box filled a phone's first
-  screen, and both phone visitors from the post who reached sign-up left without a tap. Phones get one line for
-  people waiting on their own case (`SignupAudienceLine`); wide screens keep the box. Google sits above the email form
-  at every width, and the confirm-password box is gone (the password field's show button covers a typo).
+- **Sign-up is a heading, Google, email, name (optional), password, and one line of small print** (owner: "too much
+  text, simple calm minimal ez no friction"): the warning box filled a phone's first screen, and both phone visitors
+  from the post who reached sign-up left without a tap. Gone: the box (a phone gets one line, `SignupAudienceLine`;
+  the wide screen's left panel already says a lookup needs no account), the pitch paragraph, the confirm-password box,
+  the name's rule line, and a claim of session recording (off since Sep 6). The security check is still required but
+  shows only when Cloudflare wants a click.
 - **A tap on a menu link always closes the menu**, the page already open included; on `/for-attorneys` the phone
   menu's "For attorneys" had stayed open and looked dead (tapped three times each by two visitors).
 - **Sentry drops server errors a stranger's POST to a page sets off** (`serverEventFromStrayPost`): the site has no

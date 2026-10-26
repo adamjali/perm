@@ -10,7 +10,6 @@ import {
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { ProductShot } from "@/components/marketing/ProductShot";
 import { TOUR_SHOTS } from "@/components/marketing/tourShots";
-import { SignupAudienceFork } from "@/components/auth/SignupAudienceFork";
 import { SignupPageClient } from "./SignupPageClient";
 
 // Daily, the same window every data page uses, AND force-static. The (auth)
@@ -181,10 +180,6 @@ export default async function SignupPage() {
       {/* RIGHT: the form, centred in its column. */}
       <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="w-full max-w-xl">
-          {/* The tape box on wide screens only; a phone gets one line under the heading (SignupAudienceLine). */}
-          <div className="hidden lg:block">
-            <SignupAudienceFork />
-          </div>
           <SignupPageClient />
         </div>
       </div>

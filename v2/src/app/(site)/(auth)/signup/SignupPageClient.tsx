@@ -44,7 +44,7 @@ import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
-import { SignupAudienceLine } from "@/components/auth/SignupAudienceFork";
+import { SignupAudienceLine } from "@/components/auth/SignupAudienceLine";
 import { afterAuthPath } from "@/lib/carriedCase";
 
 type SignupStep = "credentials" | "verification";
@@ -408,11 +408,6 @@ export function SignupPageClient() {
         <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
           Sign up
         </h1>{" "}
-        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-          Track every case you&apos;re responsible for. Filing windows, wage
-          expirations and audit responses are computed from the dates you enter,
-          and you get an email before each one.
-        </p>{" "}
         <SignupAudienceLine className="lg:hidden" />
       </CardHeader>
       <CardContent className="space-y-6">
@@ -488,13 +483,8 @@ export function SignupPageClient() {
             onBlur={() => handleBlur("name")}
             state={nameValidation.state}
             error={fieldMessage(nameValidation)}
-            helperText={[
-              "Letters, numbers, and punctuation only. No web links or emojis.",
-              // The field stops at 80: say so as it nears it, not after.
-              charLimitMessage(name.length, 80, false),
-            ]
-              .filter(Boolean)
-              .join(" ")}
+            // The field stops at 80: say so as it nears it, not after.
+            helperText={charLimitMessage(name.length, 80, false) || undefined}
             disabled={isLoading}
             maxLength={80}
           />
@@ -519,7 +509,7 @@ export function SignupPageClient() {
             <AuthTurnstile
               disabled={isLoading}
               action="signup"
-              appearance="always"
+              appearance="interaction-only"
               onVerify={(token) => {
                 setTurnstileToken(token);
                 setTurnstileError(false);
@@ -559,49 +549,19 @@ export function SignupPageClient() {
           </Button>
         </form>
 
-        {/* Passive consent — terms acceptance via sign-in wrap.
-            LEFT-ALIGNED, like every other line in this form. Centred text sets
-            a ragged left edge, so each line starts somewhere new; tolerable for
-            one short line, not for the four-line disclosure below it. Both are
-            legally load-bearing - the session-recording sentence exists because
-            an earlier version of this page claimed the opposite - so the fix is
-            to make them readable, never to trim them. */}
+        {/* One line of small print (owner, Oct 26 2026: "too much text"). The terms acceptance and the
+            not-a-law-firm line stay, they're the load-bearing part. A sentence about session recording went:
+            recording has been off since Sep 6 2026 (disable_session_recording in instrumentation-client.ts). */}
         <p className="text-sm leading-relaxed text-muted-foreground">
-          By creating an account, you agree to our{" "}
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link"
-          >
-            Terms of Service
+          By signing up you agree to our{" "}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="link">
+            Terms
           </a>{" "}
           and{" "}
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link"
-          >
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="link">
             Privacy Policy
           </a>
-          .
-        </p>{" "}
-
-        {/* Cloud storage disclaimer */}
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          PERM Tracker is a case management tool, not a legal service, and an account
-          doesn&apos;t make you anyone&apos;s client. Your data
-          is stored securely on cloud infrastructure with encryption. We use
-          analytics and session-recording tools to improve the product (you can
-          opt out with Global Privacy Control).{" "}
-          <NavLink
-            href="/terms#attorney-privilege"
-            className="text-soft hover:text-primary-text hover:underline hover:underline-offset-2 transition-colors"
-            spinnerSize={8}
-          >
-            Learn more
-          </NavLink>
+          . PERM Tracker isn&apos;t a law firm, and an account doesn&apos;t make you anyone&apos;s client.
         </p>
 
         <div className="pt-4 text-center border-t-2 border-border">
