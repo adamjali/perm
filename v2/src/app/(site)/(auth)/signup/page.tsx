@@ -177,8 +177,8 @@ export default async function SignupPage() {
         </div>
       </section>
 
-      {/* RIGHT: the form, centred in its column. */}
-      <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+      {/* RIGHT: the form, from the top of its column so it lines up with the panel beside it (Oct 26 2026: centred, it left a band of empty page above the card). */}
+      <div className="flex items-start justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="w-full max-w-xl">
           <SignupPageClient />
         </div>
