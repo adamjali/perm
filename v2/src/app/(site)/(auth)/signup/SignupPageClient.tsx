@@ -44,7 +44,6 @@ import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
-import { SignupAudienceLine } from "@/components/auth/SignupAudienceLine";
 import { afterAuthPath } from "@/lib/carriedCase";
 
 type SignupStep = "credentials" | "verification";
@@ -407,8 +406,7 @@ export function SignupPageClient() {
       <CardHeader>
         <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
           Sign up
-        </h1>{" "}
-        <SignupAudienceLine className="lg:hidden" />
+        </h1>
       </CardHeader>
       <CardContent className="space-y-6">
         <StorageBlockedNotice />

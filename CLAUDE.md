@@ -1334,8 +1334,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 
 - **Sign-up is a heading, Google, email, name (optional), password, and one line of small print** (owner: "too much
   text, simple calm minimal ez no friction"): the warning box filled a phone's first screen, and both phone visitors
-  from the post who reached sign-up left without a tap. Gone: the box (a phone gets one line, `SignupAudienceLine`;
-  the wide screen's left panel already says a lookup needs no account), the pitch paragraph, the confirm-password box,
+  from the post who reached sign-up left without a tap. Gone: the box and any line about people waiting on their
+  own case (the wide screen's left panel still says a lookup needs no account), the pitch paragraph, the confirm-password box,
   the name's rule line, and a claim of session recording (off since Sep 6). The security check is still required but
   shows only when Cloudflare wants a click.
 - **A tap on a menu link always closes the menu**, the page already open included; on `/for-attorneys` the phone
