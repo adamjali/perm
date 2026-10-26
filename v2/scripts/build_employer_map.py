@@ -248,9 +248,12 @@ def read_sources(db: Database) -> dict[str, dict]:
         log(f"  {table}: {len(rows):,} slug and name pairs")
     for table, name_col in NAME_SOURCES:
         try:
-            rows = rows_of(db.execute(
-                f"SELECT employer_slug, {name_col}, COUNT(*) FROM {table} "
-                f"WHERE employer_slug IS NOT NULL GROUP BY employer_slug, {name_col}"))
+            rows = []
+            for lo, hi in SLUG_WINDOWS:
+                rows += rows_of(db.execute(
+                    f"SELECT employer_slug, {name_col}, COUNT(*) FROM {table} "
+                    f"WHERE employer_slug >= ? AND (? IS NULL OR employer_slug < ?) "
+                    f"GROUP BY employer_slug, {name_col}", [lo, hi, hi]))
         except Exception as e:  # noqa: BLE001 (the client raises RuntimeError, SQLite OperationalError)
             if missing_table(e):
                 continue
@@ -441,9 +444,14 @@ def read_firm_sources(db: Database) -> dict[str, Counter]:
     spellings: dict[str, Counter] = defaultdict(Counter)
     for table in FIRM_SOURCES:
         try:
-            rows = rows_of(db.execute(
-                f"SELECT attorney_slug, attorney_name, COUNT(*) FROM {table} "
-                f"WHERE attorney_slug IS NOT NULL GROUP BY attorney_slug, attorney_name"))
+            # Sliced like the employer reads: the whole LCA table in one read
+            # outlived the tunnel's 100-second cut (HTTP 524, Oct 26 2026).
+            rows = []
+            for lo, hi in SLUG_WINDOWS:
+                rows += rows_of(db.execute(
+                    f"SELECT attorney_slug, attorney_name, COUNT(*) FROM {table} "
+                    f"WHERE attorney_slug >= ? AND (? IS NULL OR attorney_slug < ?) "
+                    f"GROUP BY attorney_slug, attorney_name", [lo, hi, hi]))
         except Exception as e:  # noqa: BLE001
             if missing_table(e) or "no such column" in str(e):
                 log(f"  {table}: no firm column, skipped")
