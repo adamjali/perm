@@ -123,7 +123,7 @@ function CalendarEmptyState() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col h-full">
+    <div data-tour="calendar-view" className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
         <PageHeading
@@ -265,7 +265,7 @@ export function CalendarPageClient() {
   // No events after filtering (all hidden or no dates set)
   if (events.length === 0) {
     return (
-      <div className="flex flex-col h-full">
+      <div data-tour="calendar-view" className="flex flex-col h-full">
         {/* Header */}
         <div className="mb-6">
           <PageHeading

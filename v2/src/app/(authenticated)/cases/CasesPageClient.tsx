@@ -899,31 +899,38 @@ export function CasesPageClient() {
   // No cases at all (truly new user) — use totalUnfilteredCount to distinguish
   // "new user with 0 cases" from "has cases but filters (incl. activeOnly) hide them all"
   if (caseListData.pagination.totalUnfilteredCount === 0) {
-    return <NewUserEmptyState onAddCase={handleAddCase} isAddingCase={isAddingCase} />;
+    // The tour points at this page's list; an account with no cases still gets the step (Oct 26 2026).
+    return (
+      <div data-tour="cases-list">
+        <NewUserEmptyState onAddCase={handleAddCase} isAddingCase={isAddingCase} />
+      </div>
+    );
   }
 
   // No cases match filters
   if (processedCases.length === 0) {
     return (
-      <NoResultsEmptyState
-        filters={filters}
-        sort={sort}
-        pageSize={pageSize}
-        onAddCase={handleAddCase}
-        isAddingCase={isAddingCase}
-        onFiltersChange={handleFiltersChange}
-        onSortChange={handleSortChange}
-        onPageSizeChange={handlePageSizeChange}
-        onClearFilters={() => {
-          setFilters({});
-          setStoredFilters({}); // Persist cleared filters to localStorage
-          setSort(DEFAULT_SORT);
-          setStoredSort(DEFAULT_SORT); // Persist cleared sort to localStorage
-          setCurrentPage(1);
-          setLocalOrder([]);
-          updateURL({}, DEFAULT_SORT, 1);
-        }}
-      />
+      <div data-tour="cases-list">
+        <NoResultsEmptyState
+          filters={filters}
+          sort={sort}
+          pageSize={pageSize}
+          onAddCase={handleAddCase}
+          isAddingCase={isAddingCase}
+          onFiltersChange={handleFiltersChange}
+          onSortChange={handleSortChange}
+          onPageSizeChange={handlePageSizeChange}
+          onClearFilters={() => {
+            setFilters({});
+            setStoredFilters({}); // Persist cleared filters to localStorage
+            setSort(DEFAULT_SORT);
+            setStoredSort(DEFAULT_SORT); // Persist cleared sort to localStorage
+            setCurrentPage(1);
+            setLocalOrder([]);
+            updateURL({}, DEFAULT_SORT, 1);
+          }}
+        />
+      </div>
     );
   }
 

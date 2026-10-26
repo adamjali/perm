@@ -33,11 +33,7 @@ export function DashboardHeading({
           <h1 className="font-heading text-3xl font-bold leading-[1.08] sm:text-4xl">
             {firstName ? `${greeting}, ${firstName}` : greeting}
           </h1>
-        )}{" "}
-        <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
-          Every filing window, wage expiration and audit deadline in your
-          cases, worked out from the dates you&apos;ve entered.
-        </p>
+        )}
       </div>
       <div className="shrink-0">
         <AddCaseButton />

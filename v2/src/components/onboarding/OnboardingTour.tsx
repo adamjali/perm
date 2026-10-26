@@ -58,10 +58,13 @@ export function OnboardingTour({
     if (hasStartedPhase.current === tourPhase) return;
     hasStartedPhase.current = tourPhase;
 
-    // Poll for DOM elements — dashboard may still be loading data
+    // Poll for DOM elements while the page loads. A page that never shows its target (a layout that changed, a
+    // state the tour didn't know about) gets its first step in the middle of the screen: it had been skipped in
+    // silence after 4 seconds, which looked like the tour moving on by itself (Oct 26 2026: Cases and Calendar on
+    // an account with no cases).
     let attempts = 0;
-    const maxAttempts = 8;
-    const pollInterval = 500; // check every 500ms
+    const maxAttempts = 20;
+    const pollInterval = 500; // check every 500ms, for up to 10 seconds
 
     const pollTimer = setInterval(() => {
       attempts++;
@@ -85,12 +88,15 @@ export function OnboardingTour({
 
       // Keep waiting if no elements found yet (page still loading)
       if (availableSteps.length === 0) {
-        if (attempts >= maxAttempts) {
+        if (attempts < maxAttempts) return;
+        console.warn(`[OnboardingTour] Phase "${tourPhase}": no target on the page, showing its first step centred`);
+        const first = phaseConfig.steps[0];
+        if (!first) {
           clearInterval(pollTimer);
-          console.warn(`[OnboardingTour] Phase "${tourPhase}" skipped: no DOM elements found after ${maxAttempts} attempts`);
           onPhaseComplete();
+          return;
         }
-        return;
+        availableSteps.push({ popover: { title: first.title, description: first.description } });
       }
 
       clearInterval(pollTimer);
