@@ -1545,3 +1545,24 @@ Still to request, in order:
 
 After this list: `node scripts/gsc_queue.mjs --since 198d7d2d` for anything newer.
 
+
+### Round, Monday Oct 26 2026 (about 11:15 to 11:20 AM EDT)
+
+Live: c6ffffb4 (the Oct 26 2 AM run). Google answered Quota Exceeded on the first request: yesterday's requests ran
+from about noon to 1:35 PM, so today's allowance frees in that window.
+
+Requested: none. `/blog/why-perm-cases-are-denied` (last crawled Oct 23, 11:29 AM) was refused with Quota Exceeded.
+
+Still to request, in order:
+1. `/blog/why-perm-cases-are-denied`, `/blog/what-an-employers-perm-record-shows`,
+   `/blog/how-perm-wage-data-is-published`, `/guides/read-the-denial-and-audit-rates`
+2. `/for-attorneys` (the hero is one picture at every width), `/privacy` (the spam filter and Cloudflare's AI named),
+   `/contact` (the form carries Turnstile)
+3. `/layoffs`, once the Archive states have loaded (the morning report names any still missing)
+4. `/perm-employers/google-llc`
+5. Inspect only, and request only if crawled before Oct 25: `/`, `/perm-by-the-numbers`, `/sponsor-finder`,
+   `/perm-employers`, `/policy-changes`, `/about`, `/calculators`, `/extension`, `/perm-processing-times`, `/tools`,
+   `/visa-bulletin`, `/tools/perm-timeline-calculator`, `/tools/priority-date-calculator`, `/tools/pwd-calculator`,
+   `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
+
+After this list: `node scripts/gsc_queue.mjs --since c6ffffb4` for anything newer.
