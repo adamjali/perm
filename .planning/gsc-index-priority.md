@@ -1566,3 +1566,35 @@ Still to request, in order:
    `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
 
 After this list: `node scripts/gsc_queue.mjs --since c6ffffb4` for anything newer.
+
+### Round, Monday Oct 26 2026, afternoon (about 1:48 to 2:07 PM EDT)
+
+Live: c6ffffb4. Google answered Quota Exceeded on the 12th request.
+
+Requested (last crawl before the request):
+- `/blog/why-perm-cases-are-denied` (Oct 23, 11:29 AM)
+- `/blog/what-an-employers-perm-record-shows` (Oct 9, 11:02 PM)
+- `/blog/how-perm-wage-data-is-published` (Oct 23, 11:29 AM)
+- `/guides/read-the-denial-and-audit-rates` (Sep 3, 4:15 AM)
+- `/for-attorneys` (Oct 23, 11:32 AM)
+- `/privacy` (Oct 25, 9:35 PM; its change went live at 2 AM Oct 26)
+- `/contact` (Oct 20, 11:35 AM)
+- `/` (Oct 24, 11:58 PM)
+- `/perm-by-the-numbers` (Oct 25, 9:37 AM)
+- `/sponsor-finder` (Oct 15, 11:38 PM)
+- `/policy-changes` (Oct 21, 11:24 AM)
+
+Skipped, crawled after their last change: `/perm-employers/google-llc` (Oct 25, 11:56 PM), `/perm-employers`
+(Oct 25, 8:09 PM), `/about` (Oct 25, 7:59 PM; it changed only through the window frame shipped at 2:38 PM).
+
+Stopped at Quota Exceeded on `/calculators` (last crawled Oct 25, 1:19 PM; not requested).
+
+Still to request, in order:
+1. `/calculators`
+2. `/layoffs`, once the Archive states have loaded (the morning report names any still missing)
+3. Inspect, and request only if crawled before Oct 25, 2:38 PM: `/extension`, `/perm-processing-times`, `/tools`,
+   `/visa-bulletin`, `/tools/perm-timeline-calculator`, `/tools/priority-date-calculator`, `/tools/pwd-calculator`,
+   `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
+
+After this list: `node scripts/gsc_queue.mjs --since c6ffffb4` for anything newer. Today's requests ran 1:48 to
+2:07 PM, so tomorrow's allowance frees in that window: the 10:41 AM round will likely meet Quota Exceeded first.
