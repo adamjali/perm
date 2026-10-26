@@ -1313,3 +1313,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 - **It shrinks as a whole instead of breaking apart** (owner's call): an `@container` with its parts sized by share of
   its width and in container units; `AppWindow fluid` scales the window chrome. Captions read "Sample cases.", and the
   firm badge shows one tile, swapped by theme. Rules in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md), "Pictures".
+
+## Oct 26 2026: the four red lights of a Monday morning
+
+- **A read from GitHub through the tunnel is cut at 100 seconds** (Cloudflare's HTTP 524): the employer map's LCA read
+  took 184 s from a cold disk. Big reads go a slice of slugs at a time (`SLUG_WINDOWS`, the biggest slice 26 s).
+- **A WARN search with no notices in its window is an answer, not a failure** (Kansas, none in 120 days).
+- **The morning page checks report a failing check's findings, not its last 12 lines** (`clean` in `page_checks.py`):
+  the phone sweep's 390px problem had been hidden under clean 320px lines.
+- **Reviewed scanner findings carry `nosemgrep` with the reason on the line above**, so they stop reopening when lines move.
