@@ -251,6 +251,8 @@ def assign_ids(rows: list[dict]) -> list[dict]:
         base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_extra", "") or ""])
         n = seen.get(base, 0)
         seen[base] = n + 1
+        # A stable row id for a public notice, not a security hash; another hash would re-key every held row.
+        # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
         row["id"] = hashlib.sha1(f"{base}|{n}".encode()).hexdigest()[:16]
     return rows
 

@@ -131,6 +131,11 @@ def main() -> int:
     check("the rule: the legal name before d/b/a", program_key("FMR LLC d/b/a Fidelity Investments"), "fmr")
     check("the rule: Intellectt is not Intel", program_key("Intellectt Inc") == program_key("Intel Corporation"), False)
 
+    def windows_holding(slug: str) -> int:
+        return sum(1 for lo, hi in bem.SLUG_WINDOWS if slug >= lo and (hi is None or slug < hi))
+    samples = ["", "-x", "0", "3m", "9-lives", "a", "acme", "m", "s-corp", "z", "zz-top", "{", "~"]
+    check("every slug is read in exactly one slice", [s for s in samples if windows_holding(s) != 1], [])
+
     db = seed()
     slugs = bem.read_sources(db)
     rows, index_rows, stats = bem.plan(slugs, bem.read_pages(db))

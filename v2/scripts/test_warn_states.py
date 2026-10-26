@@ -363,6 +363,14 @@ def main() -> int:
         m = next((m for p in ws.HI_COUNT for m in [p.search(text)] if m), None)
         check((lw.parse_int(m[1]) if m else None) == want, f"a Hawaii count worded \"{text[:40]}...\" reads {want}", f)
 
+    check(ws.parse_job_center_list("KS", b("ks_search_empty.html").decode(), ws.JOB_CENTERS["KS"]) == [],
+          "a job-center search with no notices in its window reads as none, not a failure", f)
+    try:
+        ws.parse_job_center_list("KS", b("ks_notice.html").decode(), ws.JOB_CENTERS["KS"])
+        check(False, "a job-center page with neither the table nor the no-matches sentence still fails", f)
+    except ValueError:
+        pass
+
     detail = ws.parse_job_center_detail(b("ks_notice.html").decode())
     check(detail == {"employees": 67, "site": "7373 East 29th Street Wichita, Kansas 67226"},
           "a job-center notice page gives its count and address", f)

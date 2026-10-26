@@ -70,11 +70,14 @@ export function FirmSiteSection() {
               <span
                 aria-hidden="true"
                 className="block w-full max-w-[22rem] dark:hidden [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+                // Our own SVG from src/lib/badgeRender.ts: fixed labels and DOL figures, no visitor input.
+                // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
                 dangerouslySetInnerHTML={{ __html: badge("light") }}
               />{" "}
               <span
                 aria-hidden="true"
                 className="hidden w-full max-w-[22rem] dark:block [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+                // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
                 dangerouslySetInnerHTML={{ __html: badge("dark") }}
               />
             </div>{" "}

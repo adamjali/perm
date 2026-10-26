@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -61,7 +62,9 @@ def checks(base: str) -> list[dict]:
         # typed into the copy with no date beside them go stale when DOL's next file loads.
         {"key": "figures", "title": "Figures typed into the copy", "cmd": [py, "scripts/audit_staleness.py"], "limit": 300},
         {"key": "axe", "title": "Accessibility (axe, WCAG AA)", "cmd": ["node", "scripts/audit_axe.mjs", base, *PAGES], "limit": 900},
-        {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *PAGES], "limit": 600},
+        {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *PAGES], "limit": 600,
+         # A page with nothing wrong prints a line too; the report keeps the lines with findings.
+         "clean": r"overflow=0px\s+small=0\s+taps=0\s*$"},
         {
             "key": "flows",
             "title": "Browser flows (Playwright)",
@@ -86,6 +89,11 @@ def run(check: dict) -> dict:
         code = -2
         out = f"could not start: {e}"
     lines = [ln.rstrip() for ln in out.splitlines() if ln.strip()]
+    # A failing check's report keeps its findings, not merely its last lines:
+    # the phone sweep prints a line for every page at both widths, and on Oct 26
+    # 2026 its last 12 lines were the clean 320 pass while the problem sat at 390.
+    if code != 0 and check.get("clean"):
+        lines = [ln for ln in lines if not re.search(check["clean"], ln)] or lines
     return {
         "key": check["key"],
         "title": check["title"],

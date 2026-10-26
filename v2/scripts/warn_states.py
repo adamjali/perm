@@ -1507,6 +1507,11 @@ def parse_job_center_list(state: str, page: str, base: str) -> list[dict]:
     """One search page: a row per notice, its own page linked from the employer."""
     t = table_with(page, "employer", "notice date")
     if not t:
+        # A window with no notices draws no table, only this sentence (Kansas,
+        # Oct 26 2026: none in 120 days). Any other page without the table is
+        # a broken read and still fails.
+        if re.search(r"There were no matches for your search", text_of(page), re.I):
+            return []
         raise ValueError(f"{state}: no table naming Employer and Notice Date")
     h, body = t
     c_emp, c_city, c_zip, c_date = col(h, "employer"), col(h, "city"), col(h, "zip"), col(h, "notice date")

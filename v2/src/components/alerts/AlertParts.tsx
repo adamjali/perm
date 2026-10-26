@@ -101,8 +101,11 @@ export function OptInBox({
   onChange: (checked: boolean) => void;
   className?: string;
 }) {
+  // The whole row is the label and at least 44px tall: a one-line row on a
+  // 390px phone had been a 23px target. No negative margin: two boxes sit 12px
+  // apart, and stretched hit areas would overlap.
   return (
-    <div className={cn("flex items-start gap-2.5", className)}>
+    <label htmlFor={id} className={cn("flex min-h-11 cursor-pointer items-start gap-2.5 py-2.5", className)}>
       <input
         id={id}
         type="checkbox"
@@ -113,10 +116,8 @@ export function OptInBox({
           TICK,
         )}
       />{" "}
-      <label htmlFor={id} className="cursor-pointer text-sm leading-relaxed text-soft">
-        {OPT_IN_TEXT[kind]}
-      </label>
-    </div>
+      <span className="text-sm leading-relaxed text-soft">{OPT_IN_TEXT[kind]}</span>
+    </label>
   );
 }
 

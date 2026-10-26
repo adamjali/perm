@@ -210,6 +210,15 @@ def fold(slugs: dict, slug, name, n, program, first, last) -> None:
         rec["last"] = last
 
 
+# Each source is read a slice of slugs at a time, by first character. Whole,
+# the LCA read took 184 s from a cold disk (Oct 26 2026), past the 100 s
+# Cloudflare allows a request through the tunnel (HTTP 524), and failed the
+# night's sweep. A slice uses the slug index and the groups never cross a
+# slice, so the counts add up the same.
+_EDGES = [""] + list("0123456789abcdefghijklmnopqrstuvwxyz")
+SLUG_WINDOWS = [(lo, _EDGES[i + 1] if i + 1 < len(_EDGES) else None) for i, lo in enumerate(_EDGES)]
+
+
 def read_sources(db: Database) -> dict[str, dict]:
     """Every employer slug in every program table, with names and counts."""
     slugs: dict[str, dict] = {}
@@ -219,10 +228,12 @@ def read_sources(db: Database) -> dict[str, dict]:
             f" AND NOT EXISTS (SELECT 1 FROM {p} WHERE {p}.case_number = s.case_number)" for p in published)
         sql = (f"SELECT s.employer_slug, s.{name_col}, {PREFIX_SQL.replace('case_number', 's.case_number')}, "
                f"COUNT(*), MIN(s.{first_col}), MAX(s.{last_col}) FROM {table} s "
-               f"WHERE s.employer_slug IS NOT NULL{not_published} "
+               f"WHERE s.employer_slug >= ? AND (? IS NULL OR s.employer_slug < ?){not_published} "
                f"GROUP BY s.employer_slug, s.{name_col}, 3")
         try:
-            rows = rows_of(db.execute(sql))
+            rows = []
+            for lo, hi in SLUG_WINDOWS:
+                rows += rows_of(db.execute(sql, [lo, hi, hi]))
         except Exception as e:  # noqa: BLE001 (the client raises RuntimeError, SQLite OperationalError)
             # A missing published table is never a reason to skip the live
             # one: every live row would drop out of the map with the run green.
