@@ -10,6 +10,7 @@ import {
   fromInjectedPageScript,
   fromServiceWorkerRegister,
   sentryEventFromInjectedPageScript,
+  serverEventFromStrayPost,
 } from "../exceptionNoise";
 
 const frames = (...fns: string[]) => ({ $exception_list: [{ stacktrace: { frames: fns.map((f) => ({ function: f })) } }] });
@@ -158,5 +159,34 @@ describe("fromExtensionMessage", () => {
       /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\b(?:smartRules|curSiteRule)\b/.test(readFileSync(f, "utf8")),
     );
     expect(hits).toEqual([]);
+  });
+});
+
+describe("serverEventFromStrayPost", () => {
+  const event = (method: string, url: string, value: string) => ({
+    request: { method, url },
+    exception: { values: [{ type: "TypeError", value }] },
+  });
+
+  it("drops the malformed form body an exploit probe sent to a page that doesn't exist (Sentry 5F)", () => {
+    const url = "https://permtracker.app/logupload?logMetaData=%7B%22itrLogPath%22%3A+%22..%2F..%22%7D";
+    expect(serverEventFromStrayPost(event("POST", url, "Failed to parse body as FormData."))).toBe(true);
+  });
+
+  it("drops Next's RSC invariant from a POST to the homepage (Sentry 5B)", () => {
+    const value = "Invariant: Expected RSC response, got text/plain. This is a bug in Next.js.";
+    expect(serverEventFromStrayPost(event("POST", "https://permtracker.app/?_rsc=MhcDH", value))).toBe(true);
+  });
+
+  it("keeps the same errors from routes that take POSTs on purpose", () => {
+    for (const path of ["/api/auth", "/v1/cases", "/mcp", "/api/chat"]) {
+      expect(serverEventFromStrayPost(event("POST", `https://permtracker.app${path}`, "Failed to parse body as FormData.")), path).toBe(false);
+    }
+  });
+
+  it("keeps any other error, and any GET", () => {
+    expect(serverEventFromStrayPost(event("POST", "https://permtracker.app/", "database query deadline (20000ms)"))).toBe(false);
+    expect(serverEventFromStrayPost(event("GET", "https://permtracker.app/", "Failed to parse body as FormData."))).toBe(false);
+    expect(serverEventFromStrayPost(undefined)).toBe(false);
   });
 });

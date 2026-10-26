@@ -113,3 +113,33 @@ export function fromBrowserExtension(props: Record<string, unknown> | undefined)
 export function fromExtensionMessage(msg = ""): boolean {
   return /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\bself\.(?:smartRules|curSiteRule)\b/.test(msg);
 }
+
+type ServerEvent = {
+  request?: { method?: string; url?: string };
+  exception?: { values?: Array<{ type?: string; value?: string }> };
+};
+
+/** What Next throws when a stranger POSTs to a page: a malformed form body, or RSC headers on a prerendered page. */
+const STRAY_POST_ERROR = /Failed to parse body as FormData|header name does not match the field-name token|Expected RSC response, got /;
+
+/** Paths that take POSTs on purpose: an error there is ours to see. */
+const POST_ROUTES = /^\/(?:api|v1|mcp|ingest)(?:\/|$)/;
+
+/**
+ * True for a server error that a stranger's POST to a page set off. This site has no Server Actions, so none of its own
+ * pages ever posts to a page; scanners and broken clients do. Next still reads such a body as a possible action and
+ * throws on a malformed one ("Failed to parse body as FormData": an exploit probe of `/logupload`, Oct 26 2026, Sentry
+ * 5F), and RSC headers on a POST to a prerendered page make it throw "Expected RSC response, got text/plain" (Sentry
+ * 5B, 3 times since Oct 21). Neither touches anyone's page. An error from a POST to /api, /v1 or /mcp still reports.
+ */
+export function serverEventFromStrayPost(event: ServerEvent | undefined): boolean {
+  if ((event?.request?.method || "").toUpperCase() !== "POST") return false;
+  let path = "";
+  try {
+    path = new URL(event?.request?.url || "", "https://permtracker.app").pathname;
+  } catch {
+    return false;
+  }
+  if (POST_ROUTES.test(path)) return false;
+  return (event?.exception?.values || []).some((v) => STRAY_POST_ERROR.test(v.value || ""));
+}

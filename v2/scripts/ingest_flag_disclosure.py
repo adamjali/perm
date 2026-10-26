@@ -463,7 +463,15 @@ def index_ddl(table: str) -> list[str]:
         f"CREATE INDEX IF NOT EXISTS {table}_state_st_dec ON {table} (worksite_state, case_status, decision_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_soc_dec ON {table} (substr(soc_code, 1, 7), decision_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_soc_st_dec ON {table} (substr(soc_code, 1, 7), case_status, decision_date)",
-    ]
+    ] + ([
+        # A search naming both a job and a state (the H-1B wage explorer's live selections, the case search's two
+        # leads together). With no ANALYZE on the server, SQLite took the state index for "cost estimators,
+        # certified, California" and walked all 693,407 certified California LCAs to find 830; cold, that passed the
+        # 20-second deadline twice on Oct 26 2026 (Sentry 59). With three equalities this one wins the plan. Only on
+        # lca_cases, the one table big enough to need it; created on production by hand that night.
+        f"CREATE INDEX IF NOT EXISTS {table}_soc_state_st_dec ON {table} "
+        "(substr(soc_code, 1, 7), worksite_state, case_status, decision_date)",
+    ] if table == "lca_cases" else [])
 
 
 # ---------------------------------------------------------------------------

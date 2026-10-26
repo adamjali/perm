@@ -70,4 +70,29 @@ describe("SiteHeader", () => {
     expect(within(sheet).getAllByRole("link", { name: "Case status" })[0]).toHaveAttribute("href", "/perm-case-status");
     expect(within(sheet).getByText("Data", { selector: "summary" })).toBeInTheDocument();
   });
+
+  // Oct 26 2026: on /for-attorneys, two phone visitors tapped "For attorneys" in the menu three times each. The same
+  // page changes no route, so the menu stayed open over it and the tap did nothing they could see.
+  it("closes the phone menu when its link is the page already open, and marks that row", () => {
+    pathname.value = "/for-attorneys";
+    render(<SiteHeader />);
+    const button = screen.getByRole("button", { name: /Menu/ });
+    fireEvent.click(button);
+    const sheet = screen.getByRole("navigation", { name: "Menu" });
+    const here = within(sheet).getByRole("link", { name: "For attorneys" });
+    expect(here).toHaveAttribute("aria-current", "page");
+    fireEvent.click(here);
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+    expect(button).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes the Data panel when one of its links is tapped", () => {
+    pathname.value = "/perm-employers";
+    const { container } = render(<SiteHeader />);
+    const button = screen.getByRole("button", { name: /^Data/ });
+    fireEvent.click(button);
+    const panel = container.querySelector("#data-menu") as HTMLElement;
+    fireEvent.click(panel.querySelector('a[href="/perm-employers"]')!);
+    expect(button).toHaveAttribute("aria-expanded", "false");
+  });
 });

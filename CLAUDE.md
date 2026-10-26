@@ -1329,3 +1329,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
   `FW_INFO_APPX_A_ATTACHED` (yes/no) for the worker, plus `OTHER_REQ_IS_FW_CURRENTLY_WRK` (does the worker already work
   for the employer; 68% yes nationally). Our tables don't load it; `dol-perm-files.yml` fetches DOL's workbooks for
   analysis on the Mac, since www.dol.gov refuses both the Mac and the server.
+
+## Oct 26 2026 (evening): what Sabrina's Facebook post showed
+
+- **Sign-up on a phone opens with the form, Google first** (owner's yes): the warning box filled a phone's first
+  screen, and both phone visitors from the post who reached sign-up left without a tap. Phones get one line for
+  people waiting on their own case (`SignupAudienceLine`); wide screens keep the box. Google sits above the email form
+  at every width, and the confirm-password box is gone (the password field's show button covers a typo).
+- **A tap on a menu link always closes the menu**, the page already open included; on `/for-attorneys` the phone
+  menu's "For attorneys" had stayed open and looked dead (tapped three times each by two visitors).
+- **Sentry drops server errors a stranger's POST to a page sets off** (`serverEventFromStrayPost`): the site has no
+  Server Actions, so only scanners and broken clients post to pages. Errors on `/api`, `/v1` and `/mcp` still report.
+- **`lca_cases_soc_state_st_dec`**: with a job and a state both named, SQLite took the state index and read all
+  693,407 certified California LCAs to find 830 (two 40-second failures, Sentry 59). Created on production by a
+  one-time timer at 1:20 AM EDT Oct 27; the loader's `index_ddl` carries it for lca_cases only.

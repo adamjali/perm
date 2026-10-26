@@ -147,11 +147,12 @@ function Panel({ id, open, className, children }: { id: string; open: boolean; c
   );
 }
 
-function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
+function PanelLink({ page, pathname, onPick }: { page: SitePage; pathname: string; onPick: () => void }) {
   const here = pathname === page.href;
   return (
     <IntentLink
       href={page.href}
+      onClick={onPick}
       aria-current={here ? "page" : undefined}
       className={cn(
         "relative flex min-h-11 items-center gap-2 py-1 pl-3 pr-1 text-[15px] leading-snug transition-colors hover:text-foreground hover:underline",
@@ -161,6 +162,35 @@ function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
       )}
     >
       {page.name}
+      <LinkPending kind="row" />
+    </IntentLink>
+  );
+}
+
+/** A top-level row of the phone's menu, marked when it's the page open (the panel rows' lime edge). */
+function PhoneLink({
+  href,
+  label,
+  pathname,
+  onPick,
+}: {
+  href: string;
+  label: string;
+  pathname: string;
+  onPick: () => void;
+}) {
+  const here = pathname === href;
+  return (
+    <IntentLink
+      href={href}
+      onClick={onPick}
+      aria-current={here ? "page" : undefined}
+      className={cn(
+        "relative flex min-h-12 items-center text-lg font-semibold",
+        here && "pl-3 before:absolute before:inset-y-2.5 before:left-0 before:w-1 before:bg-primary before:content-['']",
+      )}
+    >
+      {label}
       <LinkPending kind="row" />
     </IntentLink>
   );
@@ -195,6 +225,10 @@ export default function SiteHeader() {
   }, [menu]);
 
   const toggle = (m: Exclude<Menu, null>) => setMenu((now) => (now === m ? null : m));
+  // A tap on a menu link closes the menu. A route change closes it too, but a link to the page already open changes
+  // no route, so the menu stayed over the page and the tap looked dead (Oct 26 2026: two phone visitors tapped "For
+  // attorneys" three times each while on that page, then left).
+  const close = () => setMenu(null);
   const onData = isDataPath(pathname);
   const onLearn = isLearnPath(pathname);
 
@@ -275,7 +309,7 @@ export default function SiteHeader() {
               <ul className="mt-2">
                 {pagesIn(group).map((p) => (
                   <li key={p.href}>
-                    <PanelLink page={p} pathname={pathname} />{" "}
+                    <PanelLink page={p} pathname={pathname} onPick={close} />{" "}
                   </li>
                 ))}
               </ul>
@@ -286,7 +320,7 @@ export default function SiteHeader() {
           <ul className="mx-auto flex max-w-[1440px] flex-wrap gap-x-8 px-6 py-2">
             {DATA_MENU_FOOTER.map((p) => (
               <li key={p.href}>
-                <PanelLink page={p} pathname={pathname} />{" "}
+                <PanelLink page={p} pathname={pathname} onPick={close} />{" "}
               </li>
             ))}
           </ul>
@@ -297,7 +331,7 @@ export default function SiteHeader() {
         <ul className="mx-auto grid max-w-[1440px] grid-cols-4 gap-x-10 px-6 py-5">
           {LEARN_PAGES.map((p) => (
             <li key={p.href}>
-              <PanelLink page={p} pathname={pathname} />{" "}
+              <PanelLink page={p} pathname={pathname} onPick={close} />{" "}
             </li>
           ))}
         </ul>
@@ -312,10 +346,7 @@ export default function SiteHeader() {
         >
           <nav aria-label="Menu" className="divide-y divide-border">
             {[HEADER_PAGES.caseStatus, HEADER_PAGES.processingTimes].map((p) => (
-              <IntentLink key={p.href} href={p.href} className="flex min-h-12 items-center text-lg font-semibold">
-                {p.name}
-                <LinkPending kind="row" />
-              </IntentLink>
+              <PhoneLink key={p.href} href={p.href} label={p.name} pathname={pathname} onPick={close} />
             ))}
             <details className="group">
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-lg font-semibold">
@@ -329,7 +360,7 @@ export default function SiteHeader() {
                     <ul>
                       {pagesIn(group).map((p) => (
                         <li key={p.href}>
-                          <PanelLink page={p} pathname={pathname} />{" "}
+                          <PanelLink page={p} pathname={pathname} onPick={close} />{" "}
                         </li>
                       ))}
                     </ul>
@@ -338,7 +369,7 @@ export default function SiteHeader() {
                 <ul>
                   {DATA_MENU_FOOTER.map((p) => (
                     <li key={p.href}>
-                      <PanelLink page={p} pathname={pathname} />{" "}
+                      <PanelLink page={p} pathname={pathname} onPick={close} />{" "}
                     </li>
                   ))}
                 </ul>
@@ -352,27 +383,19 @@ export default function SiteHeader() {
               <ul className="pb-4">
                 {LEARN_PAGES.map((p) => (
                   <li key={p.href}>
-                    <PanelLink page={p} pathname={pathname} />{" "}
+                    <PanelLink page={p} pathname={pathname} onPick={close} />{" "}
                   </li>
                 ))}
               </ul>
             </details>
-            <IntentLink href={HEADER_PAGES.forAttorneys.href} className="flex min-h-12 items-center text-lg font-semibold">
-              {HEADER_PAGES.forAttorneys.name}
-              <LinkPending kind="row" />
-            </IntentLink>
-            {pathname !== "/login" ? (
-              <IntentLink href="/login" className="flex min-h-12 items-center text-lg font-semibold">
-                Sign in
-                <LinkPending kind="row" />
-              </IntentLink>
-            ) : null}
-            {pathname !== "/signup" ? (
-              <IntentLink href="/signup" className="flex min-h-12 items-center text-lg font-semibold">
-                Sign up
-                <LinkPending kind="row" />
-              </IntentLink>
-            ) : null}
+            <PhoneLink
+              href={HEADER_PAGES.forAttorneys.href}
+              label={HEADER_PAGES.forAttorneys.name}
+              pathname={pathname}
+              onPick={close}
+            />
+            {pathname !== "/login" ? <PhoneLink href="/login" label="Sign in" pathname={pathname} onPick={close} /> : null}
+            {pathname !== "/signup" ? <PhoneLink href="/signup" label="Sign up" pathname={pathname} onPick={close} /> : null}
           </nav>
         </div>
       ) : null}

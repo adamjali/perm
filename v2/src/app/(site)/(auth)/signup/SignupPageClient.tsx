@@ -19,7 +19,6 @@ import {
   validateEmailValue,
   validateNameValue,
   validatePasswordValue,
-  validateConfirmPassword,
   fieldMessage,
 } from "@/lib/auth/signup-validation";
 import type { FieldValidation } from "@/lib/auth/signup-validation";
@@ -45,6 +44,7 @@ import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
+import { SignupAudienceLine } from "@/components/auth/SignupAudienceFork";
 import { afterAuthPath } from "@/lib/carriedCase";
 
 type SignupStep = "credentials" | "verification";
@@ -63,7 +63,6 @@ export function SignupPageClient() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   // "Touched" flags — a field only shows invalid state after first blur or
   // an attempted submit, so users aren’t yelled at while typing.
@@ -75,9 +74,7 @@ export function SignupPageClient() {
     email: setEmail,
     name: setName,
     password: setPassword,
-    confirmPassword: setConfirmPassword,
   });
-  const [confirmTouched, setConfirmTouched] = useState(false);
 
   // Track which fields have already had an "invalid" event reported, so
   // every keystroke doesn’t spam PostHog. A ref (not state) — we don’t
@@ -95,18 +92,16 @@ export function SignupPageClient() {
   const emailValidation = validateEmailValue(email, emailTouched);
   const nameValidation = validateNameValue(name, nameTouched);
   const passwordValidation = validatePasswordValue(password, passwordTouched);
-  const confirmValidation = validateConfirmPassword(confirmPassword, password, confirmTouched);
 
   const firstMissing = useMemo<
-    null | "email" | "name" | "password" | "confirm" | "turnstile"
+    null | "email" | "name" | "password" | "turnstile"
   >(() => {
     if (emailValidation.state !== "valid") return "email";
     if (nameValidation.state === "invalid") return "name";
     if (passwordValidation.state !== "valid") return "password";
-    if (confirmValidation.state !== "valid") return "confirm";
     if (!turnstileToken) return "turnstile";
     return null;
-  }, [emailValidation.state, nameValidation.state, passwordValidation.state, confirmValidation.state, turnstileToken]);
+  }, [emailValidation.state, nameValidation.state, passwordValidation.state, turnstileToken]);
 
   const submitLabel = useMemo(() => {
     if (isLoading) return "Creating account...";
@@ -114,7 +109,6 @@ export function SignupPageClient() {
       case "email": return "Enter your email";
       case "name": return "Fix your name";
       case "password": return "Enter a password";
-      case "confirm": return "Confirm your password";
       case "turnstile": return "Complete the security check";
       default: return "Create account";
     }
@@ -131,12 +125,12 @@ export function SignupPageClient() {
   );
 
   // Field config drives blur handling so each field's touched-setter +
-  // validator + telemetry key live in ONE place. The map key IS the reportKey,
-  // so the confirm field can’t drift between "confirm" and "confirm_password"
-  // across blur / cascade / submit-blocked reporting.
+  // validator + telemetry key live in ONE place. The map key IS the reportKey.
+  // There's no "confirm password" box (Oct 26 2026): the password field's own
+  // show button lets a typo be read, and web.dev's sign-up guidance drops it.
   const fieldConfig = useMemo<
     Record<
-      "email" | "name" | "password" | "confirm",
+      "email" | "name" | "password",
       { setTouched: (v: boolean) => void; validate: () => FieldValidation }
     >
   >(
@@ -144,16 +138,12 @@ export function SignupPageClient() {
       email: { setTouched: setEmailTouched, validate: () => validateEmailValue(email, true) },
       name: { setTouched: setNameTouched, validate: () => validateNameValue(name, true) },
       password: { setTouched: setPasswordTouched, validate: () => validatePasswordValue(password, true) },
-      confirm: {
-        setTouched: setConfirmTouched,
-        validate: () => validateConfirmPassword(confirmPassword, password, true),
-      },
     }),
-    [email, name, password, confirmPassword],
+    [email, name, password],
   );
 
   const handleBlur = useCallback(
-    (field: "email" | "name" | "password" | "confirm") => {
+    (field: "email" | "name" | "password") => {
       // `field` is a closed literal union, not user input — safe record access.
       const cfg = fieldConfig[field];
       cfg.setTouched(true);
@@ -173,7 +163,6 @@ export function SignupPageClient() {
       setEmailTouched(true);
       setNameTouched(true);
       setPasswordTouched(true);
-      setConfirmTouched(true);
       trackSubmitBlocked("signup", firstMissing);
       return;
     }
@@ -423,10 +412,54 @@ export function SignupPageClient() {
           Track every case you&apos;re responsible for. Filing windows, wage
           expirations and audit responses are computed from the dates you enter,
           and you get an email before each one.
-        </p>
+        </p>{" "}
+        <SignupAudienceLine className="lg:hidden" />
       </CardHeader>
       <CardContent className="space-y-6">
         <StorageBlockedNotice />
+        {/* Google first (Oct 26 2026): on a phone it had sat a screen and a half down, under the whole
+            form, and the one sign-up from a Facebook post went to /login to find it. */}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleGoogleSignIn}
+          loading={isGoogleLoading}
+          loadingText="Connecting..."
+          disabled={isLoading}
+        >
+          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
+          Sign up with Google
+        </Button>{" "}
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t-2 border-border" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-card px-3 mono font-bold">
+              Or sign up with email
+            </span>
+          </div>
+        </div>
+
         <form ref={credentialsFormRef} onSubmit={handleCredentialsSubmit} className="space-y-5" noValidate>
           <AuthField
             id="email"
@@ -472,34 +505,12 @@ export function SignupPageClient() {
             component="password"
             autoComplete="new-password"
             value={password}
-            onChange={(v) => {
-              setPassword(v);
-              // Cascade: confirm field's validity depends on password.
-              // If confirm was already touched, re-validate after password edit.
-              if (confirmTouched) {
-                const cv = validateConfirmPassword(confirmPassword, v, true);
-                if (cv.state === "invalid") reportIfNewInvalid("confirm", cv.reason);
-              }
-            }}
+            onChange={setPassword}
             onBlur={() => handleBlur("password")}
             state={passwordValidation.state}
             error={fieldMessage(passwordValidation)}
             helperText="At least 8 characters"
             helperMet={password.length >= 8}
-            disabled={isLoading}
-            required
-          />
-
-          <AuthField
-            id="confirmPassword"
-            label="Confirm password"
-            component="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            onBlur={() => handleBlur("confirm")}
-            state={confirmValidation.state}
-            error={fieldMessage(confirmValidation)}
             disabled={isLoading}
             required
           />
@@ -547,47 +558,6 @@ export function SignupPageClient() {
             {submitLabel}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t-2 border-border" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-card px-3 mono font-bold">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleGoogleSignIn}
-          loading={isGoogleLoading}
-          loadingText="Connecting..."
-          disabled={isLoading}
-        >
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-            <path
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              fill="#4285F4"
-            />
-            <path
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              fill="#34A853"
-            />
-            <path
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              fill="#FBBC05"
-            />
-            <path
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              fill="#EA4335"
-            />
-          </svg>
-          Sign up with Google
-        </Button>{" "}
 
         {/* Passive consent — terms acceptance via sign-in wrap.
             LEFT-ALIGNED, like every other line in this form. Centred text sets

@@ -24,7 +24,8 @@ import {
  * into `lca_cases` cover.
  *
  * Every filter is an equality on an indexed column (`lca_cases_soc_st_dec`,
- * `lca_cases_state_st_dec`), and a selection under thirty rows publishes no
+ * `lca_cases_state_st_dec`, and `lca_cases_soc_state_st_dec` when a job and a
+ * state are both named), and a selection under thirty rows publishes no
  * median, the same floor as the PERM explorer (`wageStats.ts`).
  */
 

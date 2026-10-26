@@ -9,6 +9,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+import { serverEventFromStrayPost } from "./src/lib/exceptionNoise";
 import { createSentryBudget } from "./src/lib/sentryBudget";
 
 // A per-process ceiling on what reaches Sentry in an hour (src/lib/sentryBudget.ts):
@@ -44,7 +45,8 @@ Sentry.init({
   ],
 
 
-  beforeSend: (event) => budget.error(event),
+  // A stranger's POST to a page (a scanner, a broken client) is not an error of ours: src/lib/exceptionNoise.ts.
+  beforeSend: (event) => (serverEventFromStrayPost(event) ? null : budget.error(event)),
   beforeSendLog: (log) => budget.log(log),
 
   integrations: [
