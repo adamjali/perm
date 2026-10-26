@@ -15,6 +15,12 @@ on:
         default: "2"
         type: choice
         options: ["1", "2", "3"]
+      what:
+        description: The PERM workbooks, or the DOL forms the site's article pictures are made from
+        required: true
+        default: perm-files
+        type: choice
+        options: ["perm-files", "picture-sources"]
 
 permissions:
   contents: read
@@ -34,6 +40,7 @@ jobs:
           python-version: "3.12"
 
       - name: Fetch the newest PERM disclosure files from DOL's own page
+        if: inputs.what == 'perm-files'
         working-directory: v2
         env:
           COUNT: ${{ inputs.count }}
@@ -56,10 +63,55 @@ jobs:
               print(f"{name}: {os.path.getsize(dest):,} bytes")
           PY
 
+      # The article pictures are made from DOL's own forms (scripts/article-heroes.json and
+      # article-figures.json name each one with its source); www.dol.gov refuses the Mac, so
+      # this fetches exactly those PDFs, nothing else, for scripts/make_article_heroes.py.
+      - name: Fetch the DOL forms the article pictures are made from
+        if: inputs.what == 'picture-sources'
+        working-directory: v2
+        run: |
+          mkdir -p "$RUNNER_TEMP/dol"
+          python3 - <<'PY'
+          import json, os, sys, time, urllib.parse, urllib.request
+          sys.path.insert(0, "scripts")
+          from ingest_flag_disclosure import BROWSER_HEADERS
+          out = os.path.join(os.environ["RUNNER_TEMP"], "dol")
+
+          def fetch_file(url, dest):
+              # A PDF, checked by its first bytes: DOL answers a refusal with an HTML page.
+              for attempt in range(4):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(url, headers=BROWSER_HEADERS), timeout=120) as r:
+                          body = r.read()
+                      break
+                  except urllib.error.HTTPError as e:
+                      if e.code not in (403, 429, 503) or attempt == 3:
+                          raise
+                      time.sleep(20 * 3 ** attempt)
+              if not body.startswith(b"%PDF"):
+                  raise SystemExit(f"FATAL: {url} is not a PDF ({len(body):,} bytes)")
+              open(dest, "wb").write(body)
+          seen = set()
+          for spec in ("scripts/article-heroes.json", "scripts/article-figures.json"):
+              for v in json.load(open(spec)).values():
+                  url, pdf = v.get("source", ""), v.get("pdf")
+                  host = urllib.parse.urlparse(url).hostname or ""
+                  if not pdf or not (host == "www.dol.gov" or host.endswith(".dol.gov")) or pdf["file"] in seen:
+                      continue
+                  if not url.lower().endswith(".pdf"):
+                      raise SystemExit(f"FATAL: not a PDF: {url!r}")
+                  seen.add(pdf["file"])
+                  dest = os.path.join(out, os.path.basename(pdf["file"]))
+                  fetch_file(url, dest)
+                  print(f"{pdf['file']}: {os.path.getsize(dest):,} bytes")
+          if not seen:
+              raise SystemExit("FATAL: no DOL form named in the picture lists.")
+          PY
+
       - name: Keep them one day
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: dol-perm-files
-          path: ${{ runner.temp }}/dol/*.xlsx
+          name: ${{ inputs.what == 'picture-sources' && 'dol-picture-sources' || 'dol-perm-files' }}
+          path: ${{ runner.temp }}/dol/*.${{ inputs.what == 'picture-sources' && 'pdf' || 'xlsx' }}
           retention-days: 1
           if-no-files-found: error
