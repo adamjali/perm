@@ -1357,4 +1357,11 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
   cut them. Photos still fill their frame. `drop_orphan_end` drops a capture's trailing section rule or lone heading.
   Twelve inline figures carry a measured `"trim"` in `article-figures.json`; re-measure it on a new capture.
 - **The 33 article page shots showed the site before the Oct 14 redesign**: re-shot from the dev server on production
-  data (`shoot.mjs` hides Next's dev badge on localhost).
+  data (`shoot.mjs` hides Next's dev badge on localhost, and sticky bars that land over a tall clip).
+- **Nobody is sent out of the app for their role** (owner, Oct 26): accounts that chose "Waiting on my own case" or Other
+  see a dismissible caution tape under the header (`AudienceBanner`) offering the free lookup and the role picker in
+  Settings; practice roles never see it. The only automatic exits are to the sign-in page.
+- **After an app change, retake what's drawn from the app**: the tour pictures (`capture-tour.mjs`, `tour_shots.py`),
+  the Storybook article figures and headers, the guide clips (`record_tour_videos.mjs`), both films (the campaign's
+  `tools/capture-app.mjs`, the hub boxes in `att-explainer-v2/src/build.py`, `render.sh`, `finish.py`, a 720p web copy
+  at crf 30, `make-film-posters.mjs`) and the attorney and About share cards. Done Oct 26 for the dashboard's two lines.
