@@ -433,7 +433,8 @@ def index_ddl(table: str) -> list[str]:
         # prefix search and cannot be indexed away: adding case_number as a
         # third column was tried and measured, and the plan did not change.
         # It is bounded by one employer's filings, which is the point - the
-        # read never touches rows belonging to anybody else.
+        # read never touches rows belonging to anybody else. A BROAD name on
+        # lca_cases is read on `_recv` instead (below).
         f"CREATE INDEX IF NOT EXISTS {table}_emp ON {table} (employer_slug, received_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_decided ON {table} (decision_date)",
         # The unified search's law-firm lead, the same shape as perm_cases'
@@ -471,6 +472,12 @@ def index_ddl(table: str) -> list[str]:
         # lca_cases, the one table big enough to need it; created on production by hand that night.
         f"CREATE INDEX IF NOT EXISTS {table}_soc_state_st_dec ON {table} "
         "(substr(soc_code, 1, 7), worksite_state, case_status, decision_date)",
+        # A broad employer name read newest-first (`disclosureByDateIndex`,
+        # `BROAD_NAME_ROWS` in src/lib/db/flagCases.ts): "Am" reaches 168,861
+        # LCAs, and sorting them all ran 40 s (Sentry 59, Oct 27 2026); on this
+        # index the search stops at its 200 in 0.6 s. Created on production by
+        # hand that evening (56 s).
+        f"CREATE INDEX IF NOT EXISTS {table}_recv ON {table} (received_date, employer_slug)",
     ] if table == "lca_cases" else [])
 
 

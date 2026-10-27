@@ -52,7 +52,27 @@ export interface FlagProgramConfig {
   disclosureDocKey?: string;
   /** `visa_class` value that means "this program's PERM half" in the file. */
   defaultVisaClass?: string;
+  /**
+   * An index on the disclosure table's (received_date, employer_slug), read
+   * newest-first when a name reaches more than `BROAD_NAME_ROWS` filings.
+   * Only `lca_cases` has one: it's the table big enough to need it.
+   */
+  disclosureByDateIndex?: string;
 }
+
+/**
+ * Past this many filings under a name, the published-file search reads
+ * newest-first on `disclosureByDateIndex` and stops at its limit, instead of
+ * fetching and sorting every filing under the name.
+ *
+ * MEASURED on lca_cases (3.75 million LCAs, Oct 27 2026). Typing "Am" reached
+ * 168,861 LCAs and the sort ran 40 s, past the 20-second deadline (Sentry 59);
+ * newest-first answered in 0.6 s. Newest-first already won at 2,213 filings
+ * (0.4 s against 1.5) and lost on a small old employer (23 filings: 7.8 s
+ * against 0.4, because it walks back to them), so a name is counted first,
+ * from the name index alone (about 0.1 s), and the read picked from that.
+ */
+export const BROAD_NAME_ROWS = 1000;
 
 /** One row of DOL's quarterly disclosure file: the decided record, wage included. */
 export interface FlagDisclosedRow {
@@ -603,8 +623,17 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       conds.push("visa_class = ?");
       params.push(config.defaultVisaClass);
     }
+    let index = `${disclosureTable}_emp`;
+    if (config.disclosureByDateIndex) {
+      const counted = await one<{ n: number | string }>(
+        `SELECT COUNT(*) AS n FROM (SELECT 1 FROM ${disclosureTable} INDEXED BY ${disclosureTable}_emp ` +
+          `WHERE ${scope.where} LIMIT ${BROAD_NAME_ROWS + 1})`,
+        scope.args,
+      );
+      if (Number(counted?.n) > BROAD_NAME_ROWS) index = config.disclosureByDateIndex;
+    }
     const found = await rows<DisclosedDbRow>(
-      `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} INDEXED BY ${disclosureTable}_emp ` +
+      `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} INDEXED BY ${index} ` +
         `WHERE ${conds.join(" AND ")} ` +
         "ORDER BY received_date DESC, case_number DESC LIMIT ?",
       [...params, take],

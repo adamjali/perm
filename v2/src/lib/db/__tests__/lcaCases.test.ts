@@ -10,11 +10,13 @@ const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 const exec = vi.fn<(sql: string, args?: unknown[]) => Promise<number>>();
 vi.mock("../client", () => ({ rows, one, exec }));
 
-const { LCA_FINAL_STATUSES, listLcaCases, normaliseLcaCaseNumber, searchLcaCases } = await import("../lcaCases");
+const { LCA_FINAL_STATUSES, listLcaCases, normaliseLcaCaseNumber, searchLcaCases, searchLcaDisclosed } = await import("../lcaCases");
+const { BROAD_NAME_ROWS } = await import("../flagCases");
 
 beforeEach(() => {
   rows.mockReset();
   rows.mockResolvedValue([]);
+  one.mockReset();
 });
 
 describe("LCA numbers and finality", () => {
@@ -48,5 +50,36 @@ describe("LCA reads have no program filter, because every row is an LCA", () => 
     const [sql, args] = rows.mock.calls[0]!;
     expect(sql).toMatch(/FROM lca_case_status WHERE is_final = \? ORDER BY filing_date DESC, case_number DESC LIMIT \? OFFSET \?/);
     expect(args).toEqual([0, 6, 0]);
+  });
+});
+
+describe("the published LCA file: a broad name is read newest-first (Sentry 59)", () => {
+  it("counts the name's filings on the name index, at most one past the line", async () => {
+    one.mockResolvedValueOnce({ n: 12 });
+    await searchLcaDisclosed({ text: "Am" });
+    const [sql, args] = one.mock.calls[0]!;
+    expect(sql).toContain(`FROM lca_cases INDEXED BY lca_cases_emp WHERE employer_slug >= ? AND employer_slug < ? LIMIT ${BROAD_NAME_ROWS + 1}`);
+    expect(args).toEqual(["am", "an"]);
+  });
+
+  it("reads a small name on the name index, sorted", async () => {
+    one.mockResolvedValueOnce({ n: BROAD_NAME_ROWS });
+    await searchLcaDisclosed({ text: "tuopu" });
+    expect(rows.mock.calls[0]![0]).toContain("FROM lca_cases INDEXED BY lca_cases_emp WHERE");
+  });
+
+  it("reads a broad name newest-first and stops at the limit", async () => {
+    // libSQL can hand the count back as a string.
+    one.mockResolvedValueOnce({ n: String(BROAD_NAME_ROWS + 1) });
+    await searchLcaDisclosed({ text: "Am" });
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toMatch(/FROM lca_cases INDEXED BY lca_cases_recv WHERE employer_slug >= \? AND employer_slug < \? ORDER BY received_date DESC, case_number DESC LIMIT \?/);
+    expect(args).toEqual(["am", "an", 200]);
+  });
+
+  it("falls back to the name index when the count can't be read", async () => {
+    one.mockResolvedValueOnce(null);
+    await searchLcaDisclosed({ text: "Am" });
+    expect(rows.mock.calls[0]![0]).toContain("INDEXED BY lca_cases_emp");
   });
 });

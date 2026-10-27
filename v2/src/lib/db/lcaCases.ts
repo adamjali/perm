@@ -31,6 +31,8 @@ export const lca = makeFlagProgram({
   // DOL's quarterly LCA file: the decided record with the OFFERED wage.
   disclosureTable: "lca_cases",
   disclosureDocKey: "flag_disclosure_summary_lca",
+  // A broad name ("Am": 168,861 LCAs) is read newest-first (BROAD_NAME_ROWS).
+  disclosureByDateIndex: "lca_cases_recv",
 });
 
 export const normaliseLcaCaseNumber = lca.normalise;
