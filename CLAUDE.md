@@ -1365,3 +1365,10 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
   the Storybook article figures and headers, the guide clips (`record_tour_videos.mjs`), both films (the campaign's
   `tools/capture-app.mjs`, the hub boxes in `att-explainer-v2/src/build.py`, `render.sh`, `finish.py`, a 720p web copy
   at crf 30, `make-film-posters.mjs`) and the attorney and About share cards. Done Oct 26 for the dashboard's two lines.
+- **A deploy now drops Cloudflare's copies of changed pictures, films and cards too** (`gsc_queue.mjs --purge` adds every
+  modified or deleted file under `public/`, 30 URLs a request): three retaken pictures had kept serving the old copies,
+  which Cloudflare holds a day. After the Oct 26 deploy all 31 changed files were purged by hand and read back identical.
+- **`extension/store/` no longer builds or ships the site** (`oracle-deploy.yml` paths and `deploy_plan.py`): it holds
+  only the Chrome Web Store and Product Hunt images. `extension/src` still ships it, because `/extension` imports it.
+- **A short looping clip beats a still where something happens** (owner, Oct 26): the getting-started guide's
+  `VideoFigure` pattern on the site, an animated GIF off it. Rule in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md), "Pictures".
