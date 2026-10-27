@@ -10,11 +10,13 @@ import AudienceBanner from "../AudienceBanner";
 
 /**
  * The tape replaced the box in front of the sign-up form (Oct 26 2026): it shows inside the app to someone who
- * said they're waiting on their own case or chose Other, and to nobody who files cases.
+ * said they're waiting on their own case, chose Other, or skipped the question since Oct 6, and to nobody who files cases.
  */
 describe("AudienceBanner", () => {
   const realStorage = window.localStorage;
-  const profile = (jobTitle?: string) => ({ _id: "profile_1", jobTitle });
+  const OCT_20 = Date.parse("2026-10-20T12:00:00-04:00");
+  const SEP_20 = Date.parse("2026-09-20T12:00:00-04:00");
+  const profile = (jobTitle?: string, createdAt = OCT_20) => ({ _id: "profile_1", jobTitle, createdAt, _creationTime: createdAt });
   const banner = () => screen.queryByRole("region", { name: /who this app is for/i });
 
   beforeEach(() => {
@@ -32,7 +34,7 @@ describe("AudienceBanner", () => {
     expect(screen.getByRole("link", { name: /i file cases/i })).toHaveAttribute("href", "/settings#role");
   });
 
-  it.each([["Immigration Attorney"], ["Paralegal"], ["HR Professional"], ["Employer/Petitioner"], ["Global Mobility counsel"], [undefined]])(
+  it.each([["Immigration Attorney"], ["Paralegal"], ["HR Professional"], ["Employer/Petitioner"], ["Global Mobility counsel"]])(
     "stays away from %s",
     (role) => {
       mockUseQuery.mockReturnValue(profile(role));
@@ -40,6 +42,18 @@ describe("AudienceBanner", () => {
       expect(banner()).not.toBeInTheDocument();
     },
   );
+
+  it("shows to an account that skipped the role question since setup began asking it", () => {
+    mockUseQuery.mockReturnValue(profile(undefined, OCT_20));
+    render(<AudienceBanner />);
+    expect(banner()).toBeInTheDocument();
+  });
+
+  it("stays away from an older account that never gave a role (mostly firms)", () => {
+    mockUseQuery.mockReturnValue(profile(undefined, SEP_20));
+    render(<AudienceBanner />);
+    expect(banner()).not.toBeInTheDocument();
+  });
 
   it("renders nothing while the profile loads", () => {
     mockUseQuery.mockReturnValue(undefined);

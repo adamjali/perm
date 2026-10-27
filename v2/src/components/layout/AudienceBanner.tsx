@@ -15,10 +15,11 @@ import { audienceOf } from "@/lib/audience";
  * It replaced the box that had stood in front of the sign-up form (owner, Oct 26 2026): nobody is turned away
  * before an account, and nobody is sent out of the app after it.
  *
- * Shown to accounts that said they're waiting on their own case or chose Other. An attorney, paralegal, HR
- * team or employer never sees it, and neither does an account that gave no role (older accounts, most of them
- * firms). Closing it is remembered in this browser for this account; a practice role in Settings removes it
- * everywhere.
+ * Shown to accounts that said they're waiting on their own case or chose Other, and to accounts made since setup
+ * began asking the question (Oct 6 2026) that skipped it: the 11 that skipped it by Oct 26 were all individuals.
+ * An attorney, paralegal, HR team or employer never sees it, and neither does an older account that gave no role
+ * (most of those are firms). Closing it is remembered in this browser for this account; a practice role in
+ * Settings removes it everywhere.
  *
  * The tape is fixed black and lime in both themes, like the header and the footer.
  */
@@ -28,6 +29,16 @@ const TAPE: React.CSSProperties = {
 };
 
 const KEY = "pt-audience-banner-closed:";
+
+/** Setup has asked who an account is for since Oct 6 2026; a newer account without a role skipped the question. */
+export const ROLE_ASKED_FROM = Date.parse("2026-10-06T00:00:00-04:00");
+
+/** Who sees the banner: anyone not in practice, except older accounts that never gave a role. */
+export function showsAudienceBanner(profile: { jobTitle?: string; createdAt?: number; _creationTime: number }): boolean {
+  const audience = audienceOf(profile.jobTitle);
+  if (audience === "own-case" || audience === "other") return true;
+  return audience === "unstated" && (profile.createdAt ?? profile._creationTime) >= ROLE_ASKED_FROM;
+}
 
 export function AudienceBannerView({ onClose }: { onClose: () => void }) {
   return (
@@ -92,8 +103,7 @@ export default function AudienceBanner() {
     setClosed(value);
   }, [id]);
 
-  const audience = profile ? audienceOf(profile.jobTitle) : null;
-  if (!profile || closed !== false || (audience !== "own-case" && audience !== "other")) return null;
+  if (!profile || closed !== false || !showsAudienceBanner(profile)) return null;
 
   const close = () => {
     setClosed(true);
