@@ -10648,3 +10648,9 @@ GitHub-output file, and the job POSTs the refresh through nginx (127.0.0.1:8081,
 **Two test traps.** The pipeline's glued-text test matched one closing and one opening tag, so "entry</a></p></li><li>"
 passed it while the rendered audit found 9 pairs; it matches any run of tags now. And the window on this Mac doesn't
 resize, so phone widths come from `scripts/phone_sweep.mjs` through `solo-headless.sh`.
+
+**An old copy that outlasts its stop isn't a failure** (Oct 27 2026, 11:40 AM EDT). After the switch, the deploy stops
+the old slot's second copy. `green2` held a long-lived connection (likely an MCP client's open stream), outlasted its
+30-second stop and was killed, and systemd marked it failed; the alarm emailed "a job or service failed". Traffic had
+already moved, and nothing reached a visitor. `stop_copy` in `permtracker-deploy` now logs such a kill and clears the
+failed mark (`systemctl reset-failed`); `test_deploy_guard.py` holds both cases, and was probed by removing the reset.

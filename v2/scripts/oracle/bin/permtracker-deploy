@@ -30,6 +30,16 @@ ensure_env(){ # $1 copy: blue2/green2 need a PORT file like blue's and green's
 }
 active=$(cat $A/active)
 log(){ echo "[deploy $(date -u +%H:%M:%S)] $*"; logger -t permtracker-deploy "$*"; }
+stop_copy(){ # $1 copy. One still holding a long-lived connection (an MCP client's
+  # stream) can outlast its 30 s stop and be killed (green2, Oct 27 2026, 11:40 AM
+  # EDT). Traffic had already moved, so that's the stop doing its job, not a
+  # failed unit: say so and clear the mark, or the alarm repeats it every 6 hours.
+  systemctl stop "permtracker-web@$1" 2>/dev/null || true
+  if [ "$(systemctl show -p Result --value "permtracker-web@$1" 2>/dev/null)" = timeout ]; then
+    log "$1 outlasted its 30 s stop and was killed; clearing its failed mark"
+    systemctl reset-failed "permtracker-web@$1" 2>/dev/null || true
+  fi
+}
 
 reload_nginx(){
   # A reload nginx REFUSES keeps the old rules running while `systemctl reload`
@@ -166,7 +176,7 @@ case "$action" in
       ensure_env "${to}2"; systemctl restart "permtracker-web@${to}2"
       healthy "$(port_of "${to}2")" && switch_to "$to" || log "second copy of $to did not start; serving on one"
     fi
-    systemctl stop "permtracker-web@${active}2" 2>/dev/null || true ;;
+    stop_copy "${active}2" ;;
   deploy)
     [[ "$rel" =~ ^[0-9a-f]{7,40}(-[0-9]{1,6})?$ ]] || { log "bad release id"; exit 2; }
     # A release a slot runs from is never replaced. Oct 8 2026, 2:19 PM EDT: a
@@ -202,7 +212,7 @@ case "$action" in
       if ! healthy "$(port_of "$w")"; then
         log "NEW RELEASE FAILED its health check on $w; traffic stays on $active"
         journalctl -u "permtracker-web@$w" -n 30 --no-pager | tail -30
-        systemctl stop "permtracker-web@${idle}2" || true
+        stop_copy "${idle}2"
         exit 4
       fi
     done
@@ -221,7 +231,7 @@ case "$action" in
     switch_to "$idle"
     # The previous release keeps its first copy running (instant rollback); its
     # second copy stops.
-    systemctl stop "permtracker-web@${active}2" 2>/dev/null || true
+    stop_copy "${active}2"
     # Old releases go in the background: traffic has already moved, and on a
     # busy server deleting a release folder (its node_modules and page cache)
     # took 7 minutes after the switch (Oct 8 2026, 2:50 to 2:57 PM EDT), all of

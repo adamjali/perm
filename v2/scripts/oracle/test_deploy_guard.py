@@ -88,6 +88,29 @@ def check_reload() -> None:
     check(reload_with("101 102", "103 104") == 0, "new workers mean the reload took")
 
 
+def stop_with(result: str) -> tuple[int, str]:
+    """The deploy's own stop_copy(), lifted out, against a systemctl stand-in
+    that reports `result` and records what was asked of it."""
+    text = SCRIPT.read_text()
+    start = text.index("stop_copy(){")
+    fn = text[start:text.index("\n}\n", start) + 3]
+    stubs = (
+        f'systemctl(){{ if [ "$1" = show ]; then echo "{result}"; else echo "systemctl $*"; fi; }}\n'
+        "log(){ echo \"$*\"; }\n"
+    )
+    r = subprocess.run(["bash", "-c", stubs + fn + "stop_copy green2"], capture_output=True, text=True, timeout=30)
+    return r.returncode, r.stdout + r.stderr
+
+
+def check_stop() -> None:
+    rc, out = stop_with("timeout")
+    check(rc == 0 and "reset-failed permtracker-web@green2" in out and "outlasted" in out,
+          f"a copy killed after its stop timeout has its failed mark cleared, and says so ({out!r})")
+    rc, out = stop_with("success")
+    check(rc == 0 and "reset-failed" not in out and "outlasted" not in out,
+          f"a clean stop clears nothing and says nothing ({out!r})")
+
+
 PRUNE_SHARED = 'find "$A/shared/_next/static" -type f -mtime +21 -delete'
 
 
@@ -136,6 +159,7 @@ def check_stamp() -> None:
 def main() -> int:
     check_order()
     check_reload()
+    check_stop()
     check_stamp()
     if platform.system() != "Linux":
         print("skipped the rest: Linux only (CI and the server run it)")
