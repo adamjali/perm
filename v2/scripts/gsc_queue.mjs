@@ -151,7 +151,15 @@ if (INDEXNOW) {
 if (PURGE) {
   const host = "permtracker.app";
   const statics = [...new Set([...fresh, ...edited])];
-  const files = statics.includes("/") ? [`https://${host}/`] : [];
+  // A changed or deleted file under public/ (a retaken picture, a re-cut film,
+  // a social card) keeps its name, and Cloudflare holds files a day: three
+  // pictures retaken Oct 26 2026 still served the old copies after the deploy.
+  // A new file has no stored copy to drop.
+  const assets = git(["diff", "--name-only", "--relative", "--no-renames", "--diff-filter=MD", ...range, "--", "public"])
+    .split("\n")
+    .filter(Boolean)
+    .map((f) => `https://${host}/${encodeURI(f.replace(/^public\//, ""))}`);
+  const files = [...(statics.includes("/") ? [`https://${host}/`] : []), ...assets];
   const prefixes = [
     ...statics.filter((r) => r !== "/").map((r) => `${host}${r}`),
     ...[...new Set(families)].map((f) => `${host}${f.slice(0, f.indexOf("["))}`),
@@ -177,7 +185,8 @@ if (PURGE) {
     return j.success === true;
   };
   let ok = true;
-  if (files.length) ok = (await send({ files })) && ok;
+  // Up to 30 URLs a request on every plan (Cloudflare's purge limits page).
+  for (let i = 0; i < files.length; i += 30) ok = (await send({ files: files.slice(i, i + 30) })) && ok;
   // Free plan: 100 prefixes a request, 5 prefix requests a minute (Cloudflare's
   // purge limits page). Cloudflare stores a page's click data (?_rsc=) under
   // the same path (MISS, then HIT, measured Oct 10 2026), so a prefix purge

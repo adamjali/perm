@@ -192,6 +192,14 @@ if any, is one scroll-scrubbed move the reader drives (a list that lights with i
 stack), with the finished layout under reduced motion and a simple stack on phones. The patterns and which fit this site:
 `~/.claude/explanations/20261021_details_so/RELEVANCE-PERMTRACKER.md`. The case box stays above the fold.
 
+**A short clip beats a still where something happens** (owner, Oct 26 2026: "vids animations looping etc are really
+good too and preferred if approp relevant ... prob mostly shorter, like in the getting started guide"). A lookup
+answering, a date moving the deadlines behind it, a filter narrowing a list: record the real app doing it, a few seconds
+long, with `scripts/record_tour_videos.mjs`, and show it in a `VideoFigure` (poster until the reader presses play, then a
+loop, Pause on the same button: WCAG 2.2.2). Longer only when the flow needs it. Off the site, where a platform plays no
+video (Medium, Product Hunt's gallery), the same clip goes as an animated GIF with alt text. A still stays a still when
+nothing in it moves.
+
 **One moving piece per page, and few pages have one** (owner, Oct 21 2026: "keep that sideways scroll for attorney
 page, rest dont need it lol doing too much"). Pinned pieces: the homepage road (`RoadStage`), the attorney page's
 sideways ribbon (`TourStage`), the guides and blog topic cards (`TopicStack`). Every other page that wants pictures uses
