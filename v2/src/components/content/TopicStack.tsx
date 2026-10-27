@@ -1,5 +1,7 @@
 import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
+
+import { isWholeHero, WHOLE_HERO_GROUND } from "@/lib/content/wholeHeroes";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
@@ -131,14 +133,19 @@ function Card({ data, index, type }: { data: TopicCardData; index: number; type:
       {/* The newest article's own picture. */}
       {meta?.image ? (
         <figure className="order-first flex min-w-0 flex-col border-b-2 border-border max-sm:hidden lg:motion-safe:order-last lg:motion-safe:border-b-0 lg:motion-safe:border-l-2">
-          <div className="relative aspect-[16/9] overflow-hidden lg:motion-safe:aspect-auto lg:motion-safe:flex-1">
+          <div
+            className={
+              "relative aspect-[16/9] overflow-hidden lg:motion-safe:aspect-auto lg:motion-safe:flex-1" +
+              (isWholeHero(meta.image) ? ` ${WHOLE_HERO_GROUND}` : "")
+            }
+          >
             <Image
               src={meta.image}
               alt={meta.imageAlt ?? meta.title}
               fill
               sizes="(min-width: 1024px) 40vw, 50vw"
-              className="object-cover"
-              style={{ objectPosition: meta.imagePosition ?? "center" }}
+              className={isWholeHero(meta.image) ? "object-contain" : "object-cover"}
+              style={isWholeHero(meta.image) ? undefined : { objectPosition: meta.imagePosition ?? "center" }}
             />
           </div>{" "}
           {meta.imageCredit ? (

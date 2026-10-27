@@ -12,6 +12,7 @@ import { CalendarIcon, CircleNotchIcon, ClockIcon } from "@phosphor-icons/react"
 import type { PostSummary } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { topicFor } from "@/lib/content/topics";
+import { isWholeHero, WHOLE_HERO_GROUND } from "@/lib/content/wholeHeroes";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
 import { Badge } from "@/components/ui/badge";
 
@@ -74,13 +75,18 @@ export default function ContentCard({
           )}
           {/* Image */}
           {meta.image && (
-            <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r-2">
+            <div
+              className={
+                "relative aspect-[16/9] overflow-hidden border-b-2 border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r-2" +
+                (isWholeHero(meta.image) ? ` ${WHOLE_HERO_GROUND}` : "")
+              }
+            >
               <Image
                 src={meta.image}
                 alt={meta.imageAlt ?? meta.title}
                 fill
-                className="object-cover"
-                style={{ objectPosition: meta.imagePosition ?? "center" }}
+                className={isWholeHero(meta.image) ? "object-contain" : "object-cover"}
+                style={isWholeHero(meta.image) ? undefined : { objectPosition: meta.imagePosition ?? "center" }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
               {/* Type badge overlay */}

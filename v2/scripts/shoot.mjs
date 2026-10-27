@@ -50,6 +50,10 @@ try {
     try {
       await page.goto(s.url, { waitUntil: "networkidle", timeout: 60_000 });
       if (s.wait) await page.waitForSelector(s.wait, { timeout: 30_000 });
+      // A shot of the dev server would carry Next's own badge in its corner.
+      if (new URL(s.url).hostname === "localhost") {
+        await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+      }
       // Entrance animations are whileInView; give them a beat to settle so a
       // shot never catches a half-faded element.
       await page.waitForTimeout(s.settle ?? 1200);

@@ -13,6 +13,8 @@
  */
 
 import Image from "next/image";
+
+import { isWholeHero, WHOLE_HERO_GROUND } from "@/lib/content/wholeHeroes";
 import Link from "next/link";
 import { CalendarIcon, ClockIcon, UserIcon } from "@phosphor-icons/react/ssr";
 import type { PostMeta, ContentType } from "@/lib/content/types";
@@ -69,14 +71,19 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
 
         {meta.image ? (
           <figure className="m-0">
-            <div className="relative aspect-[4/3] overflow-hidden border-border bg-muted border">
+            <div
+              className={
+                "relative aspect-[4/3] overflow-hidden border-border border" +
+                (isWholeHero(meta.image) ? ` ${WHOLE_HERO_GROUND}` : " bg-muted")
+              }
+            >
               <Image
                 src={meta.image}
                 alt={meta.imageAlt ?? ""}
                 fill
                 priority
-                className="object-cover"
-                style={{ objectPosition: meta.imagePosition ?? "center" }}
+                className={isWholeHero(meta.image) ? "object-contain" : "object-cover"}
+                style={isWholeHero(meta.image) ? undefined : { objectPosition: meta.imagePosition ?? "center" }}
                 sizes="(max-width: 1024px) 100vw, 560px"
               />
             </div>{" "}

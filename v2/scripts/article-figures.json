@@ -7,7 +7,10 @@
    "height": 0.62
   },
   "credit": "Form ETA-9141, page 2. U.S. Department of Labor",
-  "alt": "Page 2 of Form ETA-9141: the wage source and the job offer, the answers that set the wage level"
+  "alt": "Page 2 of Form ETA-9141: the wage source and the job offer, the answers that set the wage level",
+  "trim": {
+   "bottom": 16
+  }
  },
  "guides/ultimate-perm-guide-2026/perkins": {
   "photo": {
@@ -30,7 +33,10 @@
    "clip": "h:What they file, and where"
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "Microsoft Corporation's page: the jobs it files for, the industry it declared, where the jobs are, and the law firms that filed its cases"
+  "alt": "Microsoft Corporation's page: the jobs it files for, the industry it declared, where the jobs are, and the law firms that filed its cases",
+  "trim": {
+   "bottom": 54
+  }
  },
  "blog/what-law-firm-volume-tells-you/practice": {
   "capture": {
@@ -95,7 +101,10 @@
    "url": "/case-search"
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The case search: counts of PERM applications, wage requests, H-1B LCAs and H-2A, H-2B and CW-1 filings above one box for an employer or a case number"
+  "alt": "The case search: counts of PERM applications, wage requests, H-1B LCAs and H-2A, H-2B and CW-1 filings above one box for an employer or a case number",
+  "trim": {
+   "bottom": 33
+  }
  },
  "guides/track-a-prevailing-wage-request/pending-request": {
   "capture": {
@@ -175,7 +184,10 @@
    "url": "/sponsor-finder"
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The sponsor finder: filters for state, industry, recent PERM filings and approval rate above a table of matching sponsors"
+  "alt": "The sponsor finder: filters for state, industry, recent PERM filings and approval rate above a table of matching sponsors",
+  "trim": {
+   "bottom": 45
+  }
  },
  "guides/tracking-a-case-without-an-account/open-data": {
   "capture": {
@@ -235,7 +247,10 @@
    "maxHeight": 1100
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The case search narrowed to one law firm, listing its decided cases with employer, job, state, wage and filing date"
+  "alt": "The case search narrowed to one law firm, listing its decided cases with employer, job, state, wage and filing date",
+  "trim": {
+   "top": 62
+  }
  },
  "blog/what-dol-publishes-about-perm/certified-case": {
   "capture": {
@@ -403,7 +418,10 @@
    "url": "/perm-rfi-audit/rfi-issued"
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The RFI issued page: 664 cases at the stage, a typical wait so far of 327 days, and the filing months they come from"
+  "alt": "The RFI issued page: 664 cases at the stage, a typical wait so far of 327 days, and the filing months they come from",
+  "trim": {
+   "bottom": 52
+  }
  },
  "guides/what-perm-case-statuses-mean/hold-months": {
   "capture": {
@@ -471,7 +489,10 @@
    "height": 0.65
   },
   "credit": "Form ETA-9141, Section G, U.S. Department of Labor",
-  "alt": "Section G of Form ETA-9141, the part DOL fills in, ending with the determination date and the expiration date"
+  "alt": "Section G of Form ETA-9141, the part DOL fills in, ending with the determination date and the expiration date",
+  "trim": {
+   "bottom": 17
+  }
  },
  "guides/waiting-on-your-green-card/eb2-india": {
   "capture": {
@@ -505,7 +526,10 @@
    "url": "/i140-awaiting-visa"
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "Approved, and waiting for a visa number: 856,662 approved petitions waiting in every category, 356,360 of them India-born in EB-2"
+  "alt": "Approved, and waiting for a visa number: 856,662 approved petitions waiting in every category, 356,360 of them India-born in EB-2",
+  "trim": {
+   "bottom": 19
+  }
  },
  "blog/how-perm-wage-data-is-published/thin-job": {
   "capture": {
@@ -583,7 +607,10 @@
    "maxHeight": 700
   },
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
-  "alt": "Settings, email notifications: switches for deadline reminders, case updates and the weekly case summary"
+  "alt": "Settings, email notifications: switches for deadline reminders, case updates and the weekly case summary",
+  "trim": {
+   "top": 58
+  }
  },
  "guides/getting-started/assistant": {
   "capture": {
@@ -621,7 +648,10 @@
    "maxHeight": 440
   },
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
-  "alt": "The prevailing wage part of a case form: filing date, determination date, and the expiration worked out from it"
+  "alt": "The prevailing wage part of a case form: filing date, determination date, and the expiration worked out from it",
+  "trim": {
+   "bottom": 92
+  }
  },
  "guides/complete-perm-filing-guide/next-30-days": {
   "capture": {
@@ -670,7 +700,10 @@
    "maxHeight": 800
   },
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
-  "alt": "Settings, Google Calendar sync: connected, with a switch for each kind of deadline sent to the calendar"
+  "alt": "Settings, Google Calendar sync: connected, with a switch for each kind of deadline sent to the calendar",
+  "trim": {
+   "top": 48
+  }
  },
  "guides/tracking-perm-deadlines/cases-phone": {
   "capture": {
@@ -743,7 +776,10 @@
    "wait": 5000
   },
   "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The cases DOL moved on one day, counted by the status each moved from and to: certified to withdrawn, RFI issued back to analyst review, denied to pending appeal"
+  "alt": "The cases DOL moved on one day, counted by the status each moved from and to: certified to withdrawn, RFI issued back to analyst review, denied to pending appeal",
+  "trim": {
+   "bottom": 59
+  }
  },
  "guides/perm-denied-what-happens-next/dol-faq-deadline": {
   "pdf": {
