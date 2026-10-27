@@ -23,10 +23,10 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/hub-dark-phone.webp", width: 732, height: 1166 },
   },
   "dashboard": {
-    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1547 },
-    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1547 },
-    narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 732, height: 1590 },
-    narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 732, height: 1590 },
+    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1467 },
+    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1467 },
+    narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 732, height: 1410 },
+    narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 732, height: 1410 },
   },
   "cases": {
     light: { src: "/images/for-attorneys/cases-light.webp", width: 1800, height: 1217 },
