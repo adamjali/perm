@@ -111,7 +111,20 @@ export default function SecurityPage() {
           output={HEADERS}
           label="The security headers permtracker.app sends: a content security policy, strict transport security for two years with subdomains, no framing, no content sniffing, a referrer policy and a permissions policy with camera and location off."
           caption={`Asked ${HEADERS_ASKED}; the security headers from the reply.`}
-        />
+        />{" "}
+        {/* An outside grade, dated: Qualys's own test of the site's HTTPS. */}
+        <p className="mt-4 max-w-2xl text-base text-soft">
+          Qualys SSL Labs graded the site&apos;s HTTPS{" "}
+          <a
+            href="https://www.ssllabs.com/ssltest/analyze.html?d=permtracker.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link font-semibold"
+          >
+            A+
+          </a>{" "}
+          on all four of its addresses on October 27, 2026.
+        </p>
       </section>{" "}
 
       {/* THE POSTURE AS FOUR FACTS, each one a sentence the page already made.
