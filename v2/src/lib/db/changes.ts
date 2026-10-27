@@ -69,6 +69,7 @@
 import "server-only";
 
 import { MS_PER_DAY } from "@/lib/time";
+import { dolDayBounds, dolDayOf } from "@/lib/dolDay";
 
 import { rows } from "./client";
 // The program list and its labels are a PLAIN module: this one is
@@ -211,16 +212,14 @@ export interface ChangeDayFeed {
   bulkExcluded: number;
 }
 
-/** UTC midnight bounds for an ISO date, matching `DATE(x/1000,'unixepoch')`. */
-function dayBounds(date: string): { lo: number; hi: number } | null {
-  const lo = Date.parse(`${date}T00:00:00Z`);
-  if (!Number.isFinite(lo)) return null;
-  return { lo, hi: lo + MS_PER_DAY };
-}
-
-function isoDay(ms: number): string {
-  return new Date(ms).toISOString().slice(0, 10);
-}
+/**
+ * A day is DOL's day: 7 AM Eastern to 7 AM the next morning (src/lib/dolDay.ts).
+ * The 4 AM sweep's batch is the previous evening's work, so on a UTC or plain
+ * Eastern day Saturdays read 111 to 146 decisions DOL made on Friday. The
+ * daily_decisions series is folded by the same rule (`observed_day`).
+ */
+const dayBounds = dolDayBounds;
+const isoDay = dolDayOf;
 
 function emptyByProgram(): Record<ChangeProgram, number> {
   return { perm: 0, pwd: 0, lca: 0, seasonal: 0 };

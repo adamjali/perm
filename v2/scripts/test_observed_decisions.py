@@ -30,8 +30,8 @@ import importlib.util
 import json
 import pathlib
 import re
-import sqlite3
 import sys
+import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 V2 = HERE.parent
@@ -73,10 +73,10 @@ DOCS_DDL = """CREATE TABLE perm_docs (
 
 
 def ts(day: str, hour: int = 8) -> int:
-    """Epoch ms at `hour` UTC on an ISO day."""
+    """Epoch ms at `hour` Eastern on an ISO day: from 7 AM on, inside that DOL day."""
     d = datetime.date.fromisoformat(day)
     return int(datetime.datetime(d.year, d.month, d.day, hour,
-                                 tzinfo=datetime.timezone.utc).timestamp() * 1000)
+                                 tzinfo=csd.ET).timestamp() * 1000)
 
 
 def seeded_db(rows: list[tuple[int, str, str, int]]) -> SqliteTurso:
@@ -155,21 +155,23 @@ def main() -> int:
           str(set(csd.DECISION_BUCKETS.values())))
 
     # -----------------------------------------------------------------------
-    # 3. The day fold agrees with SQLite's own UTC bucketing.
+    # 3. The day fold is DOL's day, as the change feed's is.
     #
-    # `DATE(changed_at / 1000, 'unixepoch')` is what this replaced and what the
-    # feed's UTC midnight bounds still mean. A local-time fold would move every
-    # evening-ET event onto the previous day on one surface only.
+    # A DOL day runs 7 AM to 7 AM Eastern: the 4 AM sweep's batch is the
+    # previous evening's work. src/lib/dolDay.ts reads the same fixture, so
+    # the chart and the feed can't put one event on two days.
     # -----------------------------------------------------------------------
-    conn = sqlite3.connect(":memory:")
-    probe = [1787858206944, 1787947868892, 1788011326075, 1788439693479,
-             ts("2026-08-30", 23), ts("2026-08-30", 0)]
-    mismatched = [
-        t for t in probe
-        if conn.execute("SELECT DATE(?/1000,'unixepoch')", (t,)).fetchone()[0]
-        != csd.observed_day(t)]
-    check("observed_day() equals SQLite's DATE(x/1000,'unixepoch')",
-          not mismatched, f"{mismatched} disagree")
+    fx = json.loads((V2 / "scripts/fixtures/dol_day.json").read_text())
+    check("the DOL day starts at the hour the fixture and dolDay.ts say",
+          fx["startsHour"] == csd.DOL_DAY_STARTS_HOUR, str(fx["startsHour"]))
+    wrong = [(c["what"], csd.observed_day(c["ms"]), c["day"]) for c in fx["days"]
+             if csd.observed_day(c["ms"]) != c["day"]]
+    check(f"observed_day() gives DOL's day on all {len(fx['days'])} fixture instants",
+          len(fx["days"]) >= 10 and not wrong, str(wrong))
+    for b in fx["bounds"]:
+        check(f"{b['day']}: its first instant is in it and the instant before is not",
+              csd.observed_day(b["lo"]) == b["day"] and csd.observed_day(b["lo"] - 1) != b["day"]
+              and csd.observed_day(b["hi"] - 1) == b["day"] and csd.observed_day(b["hi"]) != b["day"])
 
     # -----------------------------------------------------------------------
     # 4. The fold, on production's actual shape.
@@ -178,20 +180,20 @@ def main() -> int:
     # -----------------------------------------------------------------------
     S = csd.SOURCE
     stamps = [
-        (ts("2026-08-28", 3), S, 58),
+        (ts("2026-08-28", 10), S, 58),
         (ts("2026-08-28", 22), S, 94_523),   # the backfill
-        (ts("2026-08-30", 3), S, 912),
-        (ts("2026-08-31", 3), S, 1_090),
-        (ts("2026-09-01", 3), S, 938),       # "today" in the cases below
+        (ts("2026-08-30", 10), S, 912),
+        (ts("2026-08-31", 10), S, 1_090),
+        (ts("2026-09-01", 10), S, 938),       # "today" in the cases below
     ]
     decisions = [
-        (ts("2026-08-28", 3), "CERTIFIED", 56),
+        (ts("2026-08-28", 10), "CERTIFIED", 56),
         (ts("2026-08-28", 22), "CERTIFIED", 40_000),
-        (ts("2026-08-30", 3), "CERTIFIED", 240),
-        (ts("2026-08-30", 3), "DENIED", 13),
-        (ts("2026-08-30", 3), "WITHDRAWN", 3),
-        (ts("2026-08-31", 3), "CERTIFIED", 769),
-        (ts("2026-09-01", 3), "CERTIFIED", 861),
+        (ts("2026-08-30", 10), "CERTIFIED", 240),
+        (ts("2026-08-30", 10), "DENIED", 13),
+        (ts("2026-08-30", 10), "WITHDRAWN", 3),
+        (ts("2026-08-31", 10), "CERTIFIED", 769),
+        (ts("2026-09-01", 10), "CERTIFIED", 861),
     ]
     days, withheld = csd.fold_observed_decisions(stamps, decisions, "2026-09-01")
 
@@ -228,9 +230,9 @@ def main() -> int:
     # disagree, the filter silently matches nothing.
     MIRROR = "retired mirror (third party; underlying: flag.dol.gov case status)"
     mixed, _ = csd.fold_observed_decisions(
-        [(ts("2026-08-27", 3), MIRROR, 48), (ts("2026-08-28", 3), csd.SOURCE, 6)],
-        [(ts("2026-08-27", 3), "CERTIFIED", 2),
-         (ts("2026-08-28", 3), "CERTIFIED", 6)], "2026-08-29")
+        [(ts("2026-08-27", 10), MIRROR, 48), (ts("2026-08-28", 10), csd.SOURCE, 6)],
+        [(ts("2026-08-27", 10), "CERTIFIED", 2),
+         (ts("2026-08-28", 10), "CERTIFIED", 6)], "2026-08-29")
     check("a day only the retired mirror wrote is not published at all",
           "2026-08-27" not in mixed and mixed.get("2026-08-28", {}).get("total") == 6,
           str(mixed))
@@ -258,16 +260,15 @@ def main() -> int:
     # -----------------------------------------------------------------------
     # 5. End to end, through the real SQL.
     # -----------------------------------------------------------------------
-    yday = (datetime.datetime.now(datetime.timezone.utc).date()
-            - datetime.timedelta(days=1)).isoformat()
-    two = (datetime.datetime.now(datetime.timezone.utc).date()
-           - datetime.timedelta(days=2)).isoformat()
+    dol_today = datetime.date.fromisoformat(csd.observed_day(int(time.time() * 1000)))
+    yday = (dol_today - datetime.timedelta(days=1)).isoformat()
+    two = (dol_today - datetime.timedelta(days=2)).isoformat()
     db = seeded_db([
-        (ts(two, 3), "ANALYST REVIEW", "CERTIFIED", 5),
-        (ts(two, 3), "ANALYST REVIEW", "DENIED", 2),
-        (ts(two, 3), "ANALYST REVIEW", "RFI ISSUED", 9),      # not a decision
-        (ts(two, 3), "CERTIFIED", "CERTIFIED - EXPIRED", 30),  # not a decision
-        (ts(yday, 3), "ANALYST REVIEW", "WITHDRAWN", 4),
+        (ts(two, 10), "ANALYST REVIEW", "CERTIFIED", 5),
+        (ts(two, 10), "ANALYST REVIEW", "DENIED", 2),
+        (ts(two, 10), "ANALYST REVIEW", "RFI ISSUED", 9),      # not a decision
+        (ts(two, 10), "CERTIFIED", "CERTIFIED - EXPIRED", 30),  # not a decision
+        (ts(yday, 10), "ANALYST REVIEW", "WITHDRAWN", 4),
     ])
     csd.write_observed_decisions(db)
     got = series(db)
@@ -304,7 +305,7 @@ def main() -> int:
     mute.script([EVENTS_DDL, DAILY_DDL, DOCS_DDL])
     mute.conn.executemany(
         "INSERT INTO perm_case_events VALUES (?,?,?,?,?,?)",
-        [(f"G-100-26300-{i:06d}", ts(yday, 3), "ANALYST REVIEW", "CERTIFIED",
+        [(f"G-100-26300-{i:06d}", ts(yday, 10), "ANALYST REVIEW", "CERTIFIED",
           1, csd.SOURCE) for i in range(3)])
     mute.conn.commit()
     swallowed = None

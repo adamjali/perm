@@ -12,6 +12,7 @@ import {
   type SpellingRow,
   type WeekCount,
 } from "@/lib/byTheNumbers";
+import { dolDayOf } from "@/lib/dolDay";
 import { easternDay } from "@/lib/seasonalTiming";
 
 import { rows } from "./client";
@@ -159,7 +160,9 @@ export const getRfiWeeks = cache(async (): Promise<RfiWeeks> => {
   );
   const byDay = new Map<string, number>();
   for (const x of r) {
-    const day = easternDay(new Date(Number(x.t)));
+    // DOL's day, as the change feed and the decisions series date events: the
+    // 4 AM sweep's catch is the previous evening's work (src/lib/dolDay.ts).
+    const day = dolDayOf(Number(x.t));
     byDay.set(day, (byDay.get(day) ?? 0) + 1);
   }
   const weeks = weeklyCounts([...byDay].map(([date, count]) => ({ date, count })), EVENT_LOG_FROM, through);

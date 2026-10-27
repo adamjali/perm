@@ -1419,16 +1419,25 @@ def write_decided_percentiles(db) -> None:
     log(f"wrote     decided_month_percentiles ({len(months)} months)")
 
 
-def observed_day(changed_at: int) -> str:
-    """The UTC calendar day a `perm_case_events.changed_at` falls in.
+# A DOL day runs from 7 AM Eastern to 7 AM the next morning (src/lib/dolDay.ts).
+DOL_DAY_STARTS_HOUR = 7
 
-    UTC because the reader buckets the same rows by UTC midnight
-    (src/lib/db/changes.ts `dayBounds`); a local-time fold here would move
-    evening rows onto the previous day and the two surfaces would disagree.
-    Integer division matches SQLite's `changed_at / 1000` on an INTEGER column.
+
+def observed_day(changed_at: int) -> str:
+    """The day DOL worked, for a `perm_case_events.changed_at`: its Eastern
+    date, or the day before when it was first seen before 7 AM Eastern.
+
+    The 4 AM sweep's batch is the previous evening's work (414 decisions on
+    Saturday mornings over three weeks, 12 on Sundays, 5 on Mondays, Oct 27
+    2026), so dated by the hour we saw them Saturdays read 111 to 146. The
+    change feed buckets its days by the same rule (`dolDayOf`, `dolDayBounds`
+    in src/lib/dolDay.ts), held to one answer by scripts/fixtures/dol_day.json.
     """
-    return datetime.datetime.fromtimestamp(
-        changed_at // 1000, datetime.timezone.utc).date().isoformat()
+    seen = datetime.datetime.fromtimestamp(changed_at // 1000, ET)
+    day = seen.date()
+    if seen.hour < DOL_DAY_STARTS_HOUR:
+        day -= datetime.timedelta(days=1)
+    return day.isoformat()
 
 
 def fold_observed_decisions(
@@ -1663,7 +1672,9 @@ def write_observed_decisions(db) -> None:
             "GROUP BY changed_at, to_status",
             [*finals, EXPIRY_FROM, EXPIRY_TO])]
 
-    today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    # The DOL day in progress is incomplete until 7 AM the next morning, when
+    # the overnight batch has landed in it.
+    today = observed_day(int(time.time() * 1000))
     days, withheld = fold_observed_decisions(stamp_totals, decisions, today)
 
     if not days:

@@ -1,0 +1,92 @@
+{
+ "startsHour": 7,
+ "days": [
+  {
+   "what": "Sat 4:10 AM: Friday evening's work",
+   "ms": 1792829400000,
+   "day": "2026-10-23"
+  },
+  {
+   "what": "Fri 3:40 PM sweep",
+   "ms": 1792784400000,
+   "day": "2026-10-23"
+  },
+  {
+   "what": "Fri 10:40 AM sweep",
+   "ms": 1792766400000,
+   "day": "2026-10-23"
+  },
+  {
+   "what": "6:59 AM is still the day before",
+   "ms": 1792753140000,
+   "day": "2026-10-22"
+  },
+  {
+   "what": "7:00 AM starts the day",
+   "ms": 1792753200000,
+   "day": "2026-10-23"
+  },
+  {
+   "what": "11:30 PM is the same day",
+   "ms": 1792812600000,
+   "day": "2026-10-23"
+  },
+  {
+   "what": "Mon 4:10 AM is Sunday",
+   "ms": 1793002200000,
+   "day": "2026-10-25"
+  },
+  {
+   "what": "a month boundary",
+   "ms": 1793524200000,
+   "day": "2026-10-31"
+  },
+  {
+   "what": "a year boundary",
+   "ms": 1798794600000,
+   "day": "2026-12-31"
+  },
+  {
+   "what": "the morning clocks go back (EST)",
+   "ms": 1793532600000,
+   "day": "2026-10-31"
+  },
+  {
+   "what": "the day after clocks go back",
+   "ms": 1793621100000,
+   "day": "2026-11-02"
+  },
+  {
+   "what": "the morning clocks go forward (EDT)",
+   "ms": 1805020200000,
+   "day": "2027-03-13"
+  },
+  {
+   "what": "the day clocks go forward, after 7",
+   "ms": 1805025600000,
+   "day": "2027-03-14"
+  }
+ ],
+ "bounds": [
+  {
+   "day": "2026-10-23",
+   "lo": 1792753200000,
+   "hi": 1792839600000
+  },
+  {
+   "day": "2026-10-31",
+   "lo": 1793444400000,
+   "hi": 1793534400000
+  },
+  {
+   "day": "2026-11-01",
+   "lo": 1793534400000,
+   "hi": 1793620800000
+  },
+  {
+   "day": "2027-03-13",
+   "lo": 1804939200000,
+   "hi": 1805022000000
+  }
+ ]
+}

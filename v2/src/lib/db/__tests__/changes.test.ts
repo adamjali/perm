@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { dolDayBounds } from "@/lib/dolDay";
+
 /**
  * The change feed: the two filters that keep it honest, and the query shape
  * that keeps it affordable.
@@ -47,7 +49,8 @@ function argsFor(match: string): unknown[] {
   return (call?.[1] ?? []) as unknown[];
 }
 
-const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
+/** The first instant of a DOL day (7 AM Eastern); later instants that day are inside it. */
+const ms = (iso: string) => dolDayBounds(iso)!.lo;
 
 /**
  * The real per-timestamp roll-up of `perm_case_events`, read from production
@@ -151,7 +154,9 @@ describe("the change feed's two filters", () => {
     mockDb();
     const day = await getChangeDay("2026-08-28");
 
-    expect(day?.total).toBe(58);
+    // DOL's day (7 AM to 7 AM Eastern): the 58-row stamp at 9:33 PM Aug 27 is
+    // Aug 27's, the 336 at 10:25 PM Aug 28 is Aug 28's.
+    expect(day?.total).toBe(336);
     expect(day?.bulkExcluded).toBe(2410);
     // The backfill stamp is named as a value to exclude, so the row query
     // cannot return it either.
@@ -169,8 +174,9 @@ describe("the change feed's two filters", () => {
   });
 
   it("reproduces every measured day total from the real roll-up", async () => {
-    // Measured against production on 2026-09-03 with the pre-rewrite query.
-    // The fold in TypeScript must agree with the SQL predicate it replaced.
+    // The production roll-up of 2026-09-03, folded by DOL's day (7 AM to 7 AM
+    // Eastern, src/lib/dolDay.ts) as scripts/ingest_case_status_direct.py's
+    // `observed_day` folds it; on UTC days 08-27 to 08-29 read 48, 58 and 432.
     mockDb();
     const calendar = await getChangeCalendar();
     const totals = Object.fromEntries(calendar.days.map((d) => [d.date, d.total]));
@@ -180,9 +186,9 @@ describe("the change feed's two filters", () => {
       "2026-09-01": 1039,
       "2026-08-31": 892,
       "2026-08-30": 278,
-      "2026-08-29": 432,
-      "2026-08-28": 58,
-      "2026-08-27": 48,
+      "2026-08-29": 96,
+      "2026-08-28": 336,
+      "2026-08-27": 106,
     });
   });
 
@@ -214,8 +220,8 @@ describe("the query shape that keeps the feed affordable", () => {
       expect(sql).not.toContain("unixepoch");
     }
     const bound = argsFor("LEFT JOIN");
-    expect(bound[0]).toBe(ms("2026-09-02"));
-    expect(bound[1]).toBe(ms("2026-09-03"));
+    expect(bound[0]).toBe(dolDayBounds("2026-09-02")!.lo);
+    expect(bound[1]).toBe(dolDayBounds("2026-09-02")!.hi);
   });
 
   it("issues no correlated subquery over the whole table", async () => {
@@ -250,7 +256,7 @@ describe("the query shape that keeps the feed affordable", () => {
     expect(roll).toContain("WHERE changed_at >= ? AND changed_at < ?");
     // After the expiry pairs, the two bounds.
     const bound = argsFor("SUM(CASE WHEN (from_status").filter((a) => typeof a === "number");
-    expect(bound).toEqual([ms("2026-08-27"), ms("2026-08-28")]);
+    expect(bound).toEqual([dolDayBounds("2026-08-27")!.lo, dolDayBounds("2026-08-27")!.hi]);
   });
 
   it("costs no query at all for a program with nothing that day", async () => {
