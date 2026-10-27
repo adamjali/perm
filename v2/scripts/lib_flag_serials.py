@@ -73,6 +73,28 @@ def code_to_date(code: str) -> datetime.date | None:
     return d if d.year == year else None
 
 
+def queue_date(case_number: str, submitted: str | None) -> str | None:
+    """The day DOL queues a PERM case by: its submittedDate's own date, else the number's.
+
+    DOL prints submittedDate with no zone, and its first ten characters are
+    the day the number carries too (439,118 of 443,997 cases, Oct 27 2026);
+    read as UTC and turned Eastern, 22,428 cases landed a day before their
+    number ("2026-08-19T01:53:42" on a number dated Aug 19), so the printed
+    day is taken as it stands.
+    It leads because it is the date DOL works by: 429 cases carry a number
+    from May or June 2026 and a submittedDate of October or November 2025
+    (re-entered by DOL), and DOL decided them in August to October 2026 with
+    the autumn 2025 filings, not with May's (measured Oct 27 2026). For new
+    cases the two agree; the number is the fallback when DOL gives no date.
+    """
+    if submitted and len(submitted) >= 10:
+        try:
+            return datetime.date.fromisoformat(submitted[:10]).isoformat()
+        except ValueError:
+            pass
+    return decode_filing_date(case_number)
+
+
 def decode_filing_date(case_number: str) -> str | None:
     """ISO date from the number's own YYDDD segment, or None off-shape.
 

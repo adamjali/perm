@@ -151,6 +151,20 @@ describe("discoverCase", () => {
     expect(answer.kind === "found" && answer.rec.employerName).toBe("Private household employer");
   });
 
+  it("dates a case by DOL's submitted day, the number's day only when DOL gives none", async () => {
+    oneMock.mockResolvedValue({ n: 3 });
+    // Re-entered by DOL: a May 2026 number, an autumn 2025 submitted day. DOL queues it by the second.
+    const reentered = { value: [{ ...DOL_HIT.value[0], caseNumber: "G-300-26138-923577", submittedDate: "2025-11-03T05:00:00" }] };
+    const a = await discoverCase("G-300-26138-923577", vi.fn().mockImplementation(() => ok(reentered)) as never);
+    expect(a?.filingDate).toBe("2025-11-03");
+    const insert = execMock.mock.calls.find(([sql, args]) =>
+      String(sql).includes("INSERT OR IGNORE INTO perm_case_status") && (args as unknown[])[0] === "G-300-26138-923577");
+    expect((insert![1] as unknown[])[1]).toBe("2025-11-03");
+    const garbled = { value: [{ ...DOL_HIT.value[0], submittedDate: "2026-02-30T00:00:00" }] };
+    const b = await discoverCase("G-100-26125-868956", vi.fn().mockImplementation(() => ok(garbled)) as never);
+    expect(b?.filingDate).toBe("2026-05-05");
+  });
+
   it("records a hit with is_final derived the ingest's way, and filing date from the number", async () => {
     oneMock.mockResolvedValue({ n: 3 }); // budget counter well under cap
     const f = vi.fn().mockImplementation(() => ok(DOL_HIT));

@@ -184,6 +184,8 @@ export interface AheadOptions {
   today?: string;
   /** Cases arriving per calendar day, from `measureFilingRate`. */
   filingRate?: number | null;
+  /** The line by filing day (`parseDayQueue`); the month is spread evenly without it. */
+  byDay?: DayCounts | null;
 }
 
 export interface AheadResult {
@@ -224,7 +226,7 @@ export function aheadOfDay(
   filingDate: string,
   opts: AheadOptions = {},
 ): AheadResult | null {
-  const counted = casesAheadOfDay(months, filingDate);
+  const counted = casesAheadOfDay(months, filingDate, opts.byDay);
   if (counted !== null) return { total: counted, pending: counted, projected: 0 };
 
   // Not in the census. Two opposite reasons, and only one is answerable.
@@ -247,9 +249,74 @@ export function aheadOfDay(
   return { total: pending + projected, pending, projected };
 }
 
+/**
+ * The cases in line by filing DAY, `YYYY-MM-DD` to count, from
+ * `perm_docs['perm_day_queue']` (written by the sweep beside the census).
+ */
+export type DayCounts = Readonly<Record<string, number>>;
+
+/** A day queue older than this is treated as absent, as the census is. */
+const DAY_QUEUE_MAX_AGE_MS = 8 * MS_PER_DAY;
+
+/**
+ * Parse `perm_docs['perm_day_queue']`. All or nothing: a doc with one bad row
+ * would still give plausible shares, so it gives none, and the count falls
+ * back to the month spread evenly.
+ */
+export function parseDayQueue(json: string | null, computedAt: number, now: number): DayCounts | null {
+  if (!json || now - computedAt > DAY_QUEUE_MAX_AGE_MS) return null;
+  let d: unknown;
+  try {
+    d = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  const byDay = (d as { byDay?: unknown } | null)?.byDay;
+  if (!Array.isArray(byDay) || byDay.length === 0) return null;
+  const out: Record<string, number> = {};
+  for (const r of byDay) {
+    if (!Array.isArray(r) || typeof r[0] !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r[0])) return null;
+    const n = r[1];
+    if (typeof n !== "number" || !Number.isFinite(n) || n < 0) return null;
+    out[r[0]] = n;
+  }
+  return out;
+}
+
+/**
+ * The share of a filing month's line filed on days BEFORE `filingDate`, from
+ * the day counts. Null when they hold nothing for that month (the caller then
+ * spreads the month evenly).
+ */
+export function shareBeforeDay(byDay: DayCounts | null | undefined, filingDate: string): number | null {
+  if (!byDay) return null;
+  const month = filingDate.slice(0, 7);
+  let all = 0;
+  let before = 0;
+  for (const [d, n] of Object.entries(byDay)) {
+    if (d.slice(0, 7) !== month) continue;
+    all += n;
+    if (d < filingDate) before += n;
+  }
+  return all > 0 ? before / all : null;
+}
+
+/**
+ * The cases in line ahead of a filing date: every earlier month's, plus the
+ * part of its own month filed on earlier days.
+ *
+ * BY DAY when the day counts hold the month. A month's filings aren't even
+ * over its days (weekends, holidays, the busy last days), and on the backtest
+ * counting by day put dates one day nearer the decision (typical miss 3 days
+ * to 2 over three start days and about 31,000 decided cases; `exactDay` in
+ * scripts/backtest_queue.py). The month's own count still comes from the
+ * census and the days only split it, so `lineAheadByMonth`'s rows add up to
+ * the same total whichever is used.
+ */
 export function casesAheadOfDay(
   months: readonly MonthQueue[],
   filingDate: string,
+  byDay?: DayCounts | null,
 ): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(filingDate);
   if (!m) return null;
@@ -260,6 +327,8 @@ export function casesAheadOfDay(
   if (!Number.isFinite(day) || day < 1) return null;
   const { ahead, sameMonth, subject } = deriveQueueAhead(months, filingMonth);
   if (!subject) return null;
+  const byDays = shareBeforeDay(byDay, filingDate);
+  if (byDays !== null) return ahead + Math.round(sameMonth * byDays);
   // Days in the filing month, from the calendar rather than a 30.44 constant:
   // this divides a real count, so February must be 28 or 29.
   const daysInMonth = new Date(Date.UTC(year, mo, 0)).getUTCDate();
@@ -355,8 +424,9 @@ export function lineAheadByMonth(
   months: readonly MonthQueue[],
   filingDate: string,
   maxRows = 8,
+  byDay?: DayCounts | null,
 ): LineAheadRow[] | null {
-  const total = casesAheadOfDay(months, filingDate);
+  const total = casesAheadOfDay(months, filingDate, byDay);
   if (total === null) return null;
   const filingMonth = filingDate.slice(0, 7);
   const earlier = months

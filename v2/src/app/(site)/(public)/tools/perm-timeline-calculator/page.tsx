@@ -17,6 +17,7 @@ import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { getStragglerRates } from "@/lib/db/stragglers";
 import { getRangeCoverage } from "@/lib/db/rangeCoverage";
+import { getPermDayQueue } from "@/lib/db/permDayQueue";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
@@ -78,7 +79,7 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const [data, daily, decisionPace, sweep, stragglers, rangeCoverage] = await Promise.all([
+  const [data, daily, decisionPace, sweep, stragglers, rangeCoverage, byDay] = await Promise.all([
     getEstimatorData(),
     getDailyDecisions(),
     // The CALENDAR rate the decision-pace model divides by, distinct from
@@ -92,6 +93,8 @@ export default async function PermTimelineCalculatorPage() {
     getStragglerRates().catch(() => null),
     // The nightly backtest's measured range coverage, quoted under the range.
     getRangeCoverage().catch(() => null),
+    // The line by filing day: a typed date counts its own month's earlier days.
+    getPermDayQueue(),
   ]);
   const pace = businessDayPace(daily, 28);
 
@@ -148,6 +151,7 @@ export default async function PermTimelineCalculatorPage() {
               : null
           }
           months={queue ? queue.months : []}
+          byDay={byDay}
           stragglers={stragglers}
           rangeCoverage={rangeCoverage}
           activeRange={queue ? queue.activeRange : null}

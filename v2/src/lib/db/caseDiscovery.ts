@@ -267,12 +267,17 @@ export async function discoverCaseOutcome(
   const rec = answer.rec;
 
   const isFinal = FINAL_STATUSES.has(rec.caseStatus.trim().toUpperCase());
-  // The number's own YYDDD segment, exact for 94.6% of the corpus and equal
-  // to submittedDate for 409,127 of 414,050 rows; DOL's date is the
-  // fallback, not the lead, because the decode is what every queue figure
-  // keys on.
+  // DOL's own submitted day leads, the number's YYDDD day is the fallback:
+  // `queue_date` in scripts/lib_flag_serials.py, which the sweep inserts and
+  // heals by, so a case found here sits in the same month there. DOL queues by
+  // the submitted day (a re-entered case keeps it while its number is months
+  // newer, and DOL decided 429 of them with the earlier month, Oct 27 2026).
+  const submittedDay = /^\d{4}-\d{2}-\d{2}/.exec(rec.submittedDate ?? "")?.[0] ?? null;
   const filingDate =
-    parseCaseNumber(caseNumber)?.filingDate ?? rec.submittedDate ?? null;
+    (submittedDay && !Number.isNaN(Date.parse(`${submittedDay}T00:00:00Z`)) &&
+    new Date(`${submittedDay}T00:00:00Z`).toISOString().slice(0, 10) === submittedDay
+      ? submittedDay
+      : null) ?? parseCaseNumber(caseNumber)?.filingDate ?? null;
   const lastCheckedAt = now.toISOString();
 
   // A withheld employer's case is answered and never recorded: a recorded row

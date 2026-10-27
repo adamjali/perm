@@ -53,6 +53,7 @@ import { Label } from "@/components/ui/label";
 import {
   deriveQueueAhead,
   findVolumeAnomalies,
+  type DayCounts,
   type MonthQueue,
   aheadOfDay,
   measureFilingRate,
@@ -132,6 +133,12 @@ export interface PermTimelineEstimatorProps {
    * it as guaranteed took a whole page down once already.
    */
   months?: readonly MonthQueue[];
+  /**
+   * The line by filing day (`getPermDayQueue`), so a date typed in counts its
+   * own month's earlier days rather than an even share of the month. Null or
+   * absent spreads the month evenly, as before.
+   */
+  byDay?: DayCounts | null;
   /**
    * How fast DOL is deciding the in-line cases its queue has passed
    * (perm_docs['straggler_rates']). With it, a filing month DOL has left
@@ -228,6 +235,7 @@ export function PermTimelineEstimator({
   decisionPace = null,
   sweepAgeDays = null,
   months = [],
+  byDay = null,
   stragglers = null,
   rangeCoverage = null,
   activeRange = null,
@@ -343,8 +351,9 @@ export function PermTimelineEstimator({
           frontierAdvance && frontierAdvance.slowest && frontierAdvance.fastest
             ? { slowest: frontierAdvance.slowest, fastest: frontierAdvance.fastest }
             : null,
-        // The picker chooses a MONTH, so the 15th is the honest midpoint and
-        // `casesAheadOfDay` prorates that month's own pending accordingly.
+        // The picker chooses a MONTH, so the 15th is the honest midpoint, and
+        // `casesAheadOfDay` counts that month's own line filed before the day
+        // (by filing day when `byDay` holds the month, an even share if not).
         // Absent months or pace, the model is omitted and the month-granular
         // ones answer exactly as they did before.
         // `aheadOfDay` rather than `casesAheadOfDay`: the second returns null
@@ -355,6 +364,7 @@ export function PermTimelineEstimator({
           ? (aheadOfDay(months, filingDate, {
               today,
               filingRate: filingRate ? filingRate.perDay : null,
+              byDay,
             })?.total ?? null)
           : null,
         decisionPace,
@@ -367,7 +377,7 @@ export function PermTimelineEstimator({
     // inside, and a memo that reads a value it does not depend on is the
     // shape that goes stale the first time the derivation changes.
     [filingDate, today, frontier, cohorts, frontierAdvance,
-     months, decisionPace, sweepAgeDays, filingRate, rangeCoverage],
+     months, byDay, decisionPace, sweepAgeDays, filingRate, rangeCoverage],
   );
 
   const position = POSITION_COPY[estimate.position];

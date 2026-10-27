@@ -15,8 +15,10 @@ first final event, as an Eastern date (the sweep's own observation, so a
 decision is dated to within the half day between sweeps).
 
 THE PREDICTION, AS THE SITE MAKES IT. Cases ahead = analyst-review cases in
-earlier filing months plus the same month prorated by filing day (the
-`casesAheadOfDay` arithmetic); date = T0 + ahead / pace, where pace is the
+earlier filing months plus the same month's cases filed on earlier days (the
+`casesAheadOfDay` arithmetic with `perm_day_queue`, since Oct 27 2026; the
+month spread evenly over its days is scored beside it as `evenSpread`, and
+was typically a day further off); date = T0 + ahead / pace, where pace is the
 calendar mean of DOL decisions over the observed days in the 28 before T0, from
 `daily_decisions` (sweep-observed). The site's `measurePace` also drops a
 shutdown-length collapse; none falls in a normal window. The previous rule
@@ -369,7 +371,12 @@ def initial_of(prefix: str | None) -> str:
 
 
 def predict(cases: list[dict], t0: date, pace: float, in_line_only: bool,
-            ahead_out: dict[str, float] | None = None) -> dict[str, date]:
+            ahead_out: dict[str, float] | None = None, exact_day: bool = False) -> dict[str, date]:
+    """Each in-line case's date: T0 + the cases ahead of it / pace.
+
+    `exact_day` counts the same month's cases filed on earlier DAYS, the way
+    the site reads `perm_docs['perm_day_queue']` (what the site prints); off,
+    the month is spread evenly over its days (its fallback, `evenSpread`)."""
     keep = (lambda x: x["st0"] == IN_LINE) if in_line_only else (lambda x: True)
     by_month: dict[str, list[dict]] = collections.defaultdict(list)
     for x in cases:
@@ -383,11 +390,17 @@ def predict(cases: list[dict], t0: date, pace: float, in_line_only: bool,
     out = {}
     for m in months:
         n_same = len(by_month[m])
+        before = collections.Counter(x["fd"] for x in by_month[m])
+        earlier: dict[str, int] = {}
+        run_day = 0
+        for fd in sorted(before):
+            earlier[fd] = run_day
+            run_day += before[fd]
         for x in by_month[m]:
             if x["st0"] != IN_LINE:
                 continue  # only in-line cases get a date on the site
             y, mo, d = int(x["fd"][:4]), int(x["fd"][5:7]), int(x["fd"][8:10])
-            within = round(n_same * (d - 1) / days_in_month(y, mo))
+            within = earlier[x["fd"]] if exact_day else round(n_same * (d - 1) / days_in_month(y, mo))
             if ahead_out is not None:
                 ahead_out[x["cn"]] = cum[m] + within
             out[x["cn"]] = t0 + timedelta(days=(cum[m] + within) / pace)
@@ -567,7 +580,7 @@ def origin_run(db: Database, rec: Record, t0: date, end: date, prior_model: list
         return None
     cases, decided, how = rec.at(t0)
     ahead: dict[str, float] = {}
-    current = predict(cases, t0, pace, True, ahead)
+    current = predict(cases, t0, pace, True, ahead, exact_day=True)
     chosen = near_set(current, end, (end - t0).days)
     spread = weekday_spread(db, t0, pace)
     fixed = {cn: band(t0, a, pace, *spread) for cn, a in ahead.items() if a > 0} if spread else {}
@@ -721,8 +734,9 @@ def main() -> int:
     cases, decided = rebuild(db, t0)
     window = (end - t0).days
     ahead: dict[str, float] = {}
-    current = predict(cases, t0, pace, True, ahead)
+    current = predict(cases, t0, pace, True, ahead, exact_day=True)
     everyone = predict(cases, t0, pace, False)
+    even = predict(cases, t0, pace, True)
     chosen = near_set(current, end, window)
     spread = weekday_spread(db, t0, pace)
     bands = ({cn: band(t0, a, pace, *spread) for cn, a in ahead.items() if a > 0}
@@ -735,8 +749,9 @@ def main() -> int:
         "inLineAtT0": sum(1 for x in cases if x["st0"] == IN_LINE),
         "current": score(current, decided, end, chosen),
         "allPending": score(everyone, decided, end, chosen),
+        "evenSpread": score(even, decided, end, chosen),
         "rangeCoverage": coverage(bands, decided, end, current),
-        "method": "analyst review ahead, prorated by filing day, over the calendar mean of the 28 days before T0",
+        "method": "analyst review ahead, the same month counted by filing day, over the calendar mean of the 28 days before T0",
     }
     frontier, avg_days = frontier_at(db, t0)
     if frontier:

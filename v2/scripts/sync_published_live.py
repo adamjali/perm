@@ -38,7 +38,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_db import Database, query_rows, record_run  # noqa: E402
-from lib_flag_serials import PERM_OFFICE_PREFIXES, decode_filing_date  # noqa: E402
+from lib_flag_serials import PERM_OFFICE_PREFIXES, queue_date  # noqa: E402
 import ingest_case_status_direct as core  # noqa: E402
 import ingest_pwd_status_direct as programs  # noqa: E402
 
@@ -89,7 +89,8 @@ def insert_perm(db, hits: list[dict], now_iso: str, stamp: int) -> int:
             "(case_number, filing_date, current_status, is_final, is_disclosed, employer_name, "
             " job_title, submitted_date, last_checked_at, verified, source, fetched_at) "
             "VALUES (?,?,?,?,1,?,?,?,?,1,?,?)",
-            [v["caseNumber"], decode_filing_date(v["caseNumber"]), status,
+            # DOL's submitted day, the number's day when DOL gives none (queue_date).
+            [v["caseNumber"], queue_date(v["caseNumber"], v.get("submittedDate")), status,
              1 if status.upper() in core.FINAL_STATUSES else 0,
              v.get("employerName"), v.get("jobTitle"), v.get("submittedDate"),
              now_iso, SYNC_SOURCE, stamp])

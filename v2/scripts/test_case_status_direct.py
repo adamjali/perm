@@ -360,7 +360,63 @@ def main() -> int:
     #     read against the YAML itself so the two cannot drift apart.
     names = [n for n, _ in csd.tail_steps(WalkDB(), discover=True, cap=7, deadline=1.0)]
     check("tail_steps puts the walk first when asked, ahead of the census",
-          names[:2] == ["discovery", "live_census"], str(names[:2]))
+          names[:3] == ["discovery", "filing_dates", "live_census"], str(names[:3]))
+    check("the line by filing day is written right after the census",
+          names[2:4] == ["live_census", "perm_day_queue"], str(names[2:4]))
+
+    # --- the filing date is DOL's submitted day -----------------------------
+    qd = csd.queue_date if hasattr(csd, "queue_date") else None
+    check("a case is dated by DOL's submitted day, as printed",
+          qd is not None and qd("G-300-26138-923577", "2025-11-03T05:00:00") == "2025-11-03"
+          and qd("G-300-26231-177999", "2026-08-19T01:53:42") == "2026-08-19")
+    check("with no usable submitted date, the number's own day",
+          qd is not None and qd("G-100-26240-000101", None) == "2026-08-28"
+          and qd("G-100-26240-000101", "not a date") == "2026-08-28"
+          and qd("G-100-26240-000101", "2026-02-30T00:00:00") == "2026-08-28")
+    import sqlite3
+
+    class LiteDB:
+        def __init__(self):
+            self.c = sqlite3.connect(":memory:")
+            self.c.execute("CREATE TABLE perm_case_status (case_number TEXT PRIMARY KEY, filing_date TEXT, submitted_date TEXT)")
+        def scalar(self, sql, args=None):
+            return self.c.execute(sql, args or []).fetchone()[0]
+        def execute(self, sql, args=None):
+            self.c.execute(sql, args or [])
+            return {}
+    lite = LiteDB()
+    lite.c.executemany("INSERT INTO perm_case_status VALUES (?,?,?)", [
+        ("G-300-25305-355744", "2025-10-31", "2025-11-01T16:58:41"),   # mirror-seeded, a day off
+        ("G-300-26138-923577", "2026-05-18", "2025-11-03T05:00:00"),   # re-entered by DOL
+        ("G-100-26240-000101", "2026-08-28", "2026-08-28T10:00:00"),   # already right
+        ("G-100-26240-000102", "2026-08-28", None),                    # DOL gave no date
+        ("G-100-26240-000103", "2026-08-28", "garbage"),
+        ("G-100-26240-000104", None, "2026-08-28T09:00:00"),
+    ])
+    moved = csd.heal_filing_dates(lite)
+    got = dict(lite.c.execute("SELECT case_number, filing_date FROM perm_case_status").fetchall())
+    check("the heal moves exactly the rows whose day differs from DOL's",
+          moved == 3 and got["G-300-25305-355744"] == "2025-11-01" and got["G-300-26138-923577"] == "2025-11-03"
+          and got["G-100-26240-000102"] == "2026-08-28" and got["G-100-26240-000103"] == "2026-08-28"
+          and got["G-100-26240-000104"] == "2026-08-28", f"moved={moved} {got}")
+    check("a second heal writes nothing", csd.heal_filing_dates(lite) == 0)
+    real_max = csd.FILING_DATE_HEAL_MAX
+    csd.FILING_DATE_HEAL_MAX = 0
+    lite.c.execute("UPDATE perm_case_status SET filing_date = '2020-01-01' WHERE case_number = 'G-100-26240-000101'")
+    try:
+        csd.heal_filing_dates(lite)
+        refused = False
+    except RuntimeError:
+        refused = True
+    finally:
+        csd.FILING_DATE_HEAL_MAX = real_max
+    check("too many dates moving at once is refused and nothing written",
+          refused and lite.scalar("SELECT filing_date FROM perm_case_status WHERE case_number = 'G-100-26240-000101'") == "2020-01-01")
+    dq = csd.perm_day_queue_doc([("2026-01-02", 3), ("2026-01-01", "2"), (None, 9), ("", 4), ("2026-01-03", 0)],
+                                "2026-10-27")
+    check("the day queue keeps filing days in order, drops blank days and empty counts",
+          dq["byDay"] == [["2026-01-01", 2], ["2026-01-02", 3]] and dq["inLine"] == 5
+          and dq["status"] == "ANALYST REVIEW", str(dq))
     check("a run that is not a real pass does not walk",
           "discovery" not in [n for n, _ in csd.tail_steps(WalkDB(), discover=False)])
     check("the nightly prune runs last, and only when asked (the full pass)",

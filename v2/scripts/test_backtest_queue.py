@@ -47,6 +47,21 @@ check(old["me"] == date(2026, 9, 22), "the old rule also counts the 310 on hold:
 check((cur["a0"] - T0).days == int(round(620 * 9 / 31) / 100),
       "a mid-month filing has its month's earlier days ahead of it, prorated")
 
+# By filing day (what the site prints since Oct 27 2026): the cases ahead in a
+# case's own month are the ones filed on EARLIER days, however few or many.
+uneven = (
+    [{"cn": f"e{i}", "fd": "2025-12-03", "m": "2025-12", "st0": "ANALYST REVIEW"} for i in range(100)]
+    + [{"cn": f"l{i}", "fd": "2025-12-30", "m": "2025-12", "st0": "ANALYST REVIEW"} for i in range(900)]
+    + [{"cn": "mid", "fd": "2025-12-20", "m": "2025-12", "st0": "ANALYST REVIEW"}]
+)
+ahead_ex: dict = {}
+predict(uneven, T0, 100.0, True, ahead_ex, exact_day=True)
+check(ahead_ex["mid"] == 100, f"by day, a Dec 20 filing has only the 100 filed Dec 3 ahead of it ({ahead_ex['mid']})")
+check(ahead_ex["e0"] == 0, "by day, the cases filed on the month's first filing day have none of it ahead")
+ahead_ev: dict = {}
+predict(uneven, T0, 100.0, True, ahead_ev)
+check(ahead_ev["mid"] == round(1001 * 19 / 31), "spread evenly, the same filing gets 19/31 of its month")
+
 # ---- score: both rules on ONE set of cases -------------------------------
 pred = {"x": date(2026, 9, 20), "y": date(2026, 9, 22), "z": date(2026, 10, 30)}
 decided = {"x": date(2026, 9, 18), "y": date(2026, 9, 25)}

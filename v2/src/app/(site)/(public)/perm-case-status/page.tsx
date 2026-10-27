@@ -29,6 +29,7 @@ import { normaliseLcaCaseNumber } from "@/lib/db/lcaCases";
 import { normaliseSeasonalCaseNumber } from "@/lib/db/seasonalCases";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
+import { getPermDayQueue } from "@/lib/db/permDayQueue";
 import { getDecisionPace } from "@/lib/db/decisionPace";
 import { getStragglerRates } from "@/lib/db/stragglers";
 import { getRangeCoverage } from "@/lib/db/rangeCoverage";
@@ -348,7 +349,7 @@ export default async function PermCaseStatusPage({
 async function Lookup({ caseNumber }: { caseNumber: string }) {
   const today = todayUtc();
 
-  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage, rfiClock] =
+  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage, rfiClock, byDay] =
     await Promise.all([
       lookupCase(caseNumber).catch(() => null),
       getLiveBacklog().catch((): CohortMonth[] => []),
@@ -365,6 +366,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       getRangeCoverage().catch(() => null),
       // The RFI clock, for a case at RFI ISSUED.
       getRfiClock().catch(() => null),
+      // The line by filing day, for the share of the case's own month ahead of it.
+      getPermDayQueue(),
     ]);
   // Only an RFI case is dated from its RFI day; one point read when it is.
   const rfiEntered =
@@ -380,6 +383,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
     filingDate: result?.live?.filingDate ?? null,
     sweepFinishedOn: sweep?.finishedOn ?? null,
     today,
+    byDay,
   });
 
   const publishedFront = estimator?.frontier?.analystQueueMonth ?? null;

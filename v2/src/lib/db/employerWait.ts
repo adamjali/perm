@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { buildCaseEstimate } from "@/lib/caseEstimate";
 import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
+import { getPermDayQueue } from "@/lib/db/permDayQueue";
 import { one, rows } from "@/lib/db/client";
 import { summariseWaits, type WaitSummary } from "@/lib/waitSummary";
 import { getDecisionPace } from "@/lib/db/decisionPace";
@@ -83,11 +84,12 @@ export interface FiledToday {
  */
 export const getFiledTodayEstimate = cache(async (): Promise<FiledToday | null> => {
   const today = new Date().toISOString().slice(0, 10);
-  const [backlog, estimator, decisionPace, sweep] = await Promise.all([
+  const [backlog, estimator, decisionPace, sweep, byDay] = await Promise.all([
     getLiveBacklog().catch(() => []),
     getEstimatorData().catch(() => null),
     getDecisionPace().catch(() => null),
     getSweepCoverage().catch(() => null),
+    getPermDayQueue(),
   ]);
   // Early in a new month, before the census holds it, casesAhead is null and
   // the estimate falls back to the month-level models, as the case page does.
@@ -96,6 +98,7 @@ export const getFiledTodayEstimate = cache(async (): Promise<FiledToday | null> 
     filingDate: today,
     sweepFinishedOn: sweep?.finishedOn ?? null,
     today,
+    byDay,
   });
   const est = buildCaseEstimate({
     filingDate: today,

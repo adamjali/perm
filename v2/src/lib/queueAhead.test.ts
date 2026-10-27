@@ -10,6 +10,8 @@ import {
   aheadOfDay,
   inLine,
   measureFilingRate,
+  parseDayQueue,
+  shareBeforeDay,
 } from "./queueAhead";
 
 /** A MonthQueue fixture: total received, and how many are still pending. */
@@ -297,6 +299,51 @@ describe("inLine: only the ordinary queue is ahead of you", () => {
     const r = aheadOfDay(STAGED, "2026-03-01", { today: "2026-01-31", filingRate: 300 })!;
     expect(r.pending).toBe(600 + 4_800 + 8_950);
     expect(r.projected).toBe(300 * 29);
+  });
+});
+
+describe("casesAheadOfDay by filing day", () => {
+  const months = [
+    { filingMonth: "2025-11", total: 100, pending: 4000, decided: 0, decidedPct: 0 },
+    { filingMonth: "2025-12", total: 100, pending: 6000, decided: 0, decidedPct: 0 },
+  ];
+  // December's line, filed unevenly: most of it in the month's last week.
+  const byDay = { "2025-12-01": 300, "2025-12-15": 300, "2025-12-22": 2400, "2025-12-31": 3000 };
+
+  it("counts the month's cases filed on earlier days, not an even share", () => {
+    // Before Dec 22: 600 of 6,000 by day, where the even spread says 21/31 of it.
+    expect(casesAheadOfDay(months, "2025-12-22", byDay)).toBe(4000 + 600);
+    expect(casesAheadOfDay(months, "2025-12-22")).toBe(4000 + Math.round(6000 * (21 / 31)));
+  });
+
+  it("keeps the census's month count, so the rows still add up", () => {
+    // The day counts sum to 6,000 here; scaled to a census of 3,000 the share holds.
+    const smaller = [months[0]!, { ...months[1]!, pending: 3000 }];
+    expect(casesAheadOfDay(smaller, "2025-12-22", byDay)).toBe(4000 + 300);
+    const rows = lineAheadByMonth(smaller, "2025-12-22", 8, byDay)!;
+    expect(rows.reduce((a, r) => a + r.n, 0)).toBe(4000 + 300);
+  });
+
+  it("still leaves out cases filed on your own day", () => {
+    expect(casesAheadOfDay(months, "2025-12-01", byDay)).toBe(4000);
+    expect(casesAheadOfDay(months, "2025-12-15", byDay)).toBe(4000 + 300);
+  });
+
+  it("spreads the month evenly when the day counts hold nothing for it", () => {
+    const other = { "2025-11-03": 50 };
+    expect(casesAheadOfDay(months, "2025-12-16", other)).toBe(4000 + Math.round(6000 * (15 / 31)));
+    expect(shareBeforeDay(null, "2025-12-16")).toBeNull();
+  });
+
+  it("reads the sweep's document all or nothing, and not when it's stale", () => {
+    const now = Date.parse("2026-10-27T12:00:00Z");
+    const good = JSON.stringify({ asOf: "2026-10-27", byDay: [["2025-12-01", 3], ["2025-12-02", 4]] });
+    expect(parseDayQueue(good, now - 3_600_000, now)).toEqual({ "2025-12-01": 3, "2025-12-02": 4 });
+    expect(parseDayQueue(good, now - 9 * 86_400_000, now)).toBeNull();
+    expect(parseDayQueue(JSON.stringify({ byDay: [["2025-12-01", 3], ["Dec 2", 4]] }), now, now)).toBeNull();
+    expect(parseDayQueue(JSON.stringify({ byDay: [["2025-12-01", -1]] }), now, now)).toBeNull();
+    expect(parseDayQueue("{", now, now)).toBeNull();
+    expect(parseDayQueue(null, now, now)).toBeNull();
   });
 });
 

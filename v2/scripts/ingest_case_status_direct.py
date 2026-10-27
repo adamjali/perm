@@ -48,7 +48,7 @@ from lib_flag_serials import (  # noqa: E402
     CASE_RE, PERM_OFFICE_PREFIXES, RARE_PREFIXES, WALK_PREFIXES,
     case_number, code_of,
     day_code, day_codes_between, decode_filing_date, fmt_serial, newer,
-    prefix_of, recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
+    prefix_of, queue_date, recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
 )
 # CASE_RE, decode_filing_date and recent_day_codes are re-exported: the PWD
 # prober and the tests import them from here.
@@ -254,7 +254,7 @@ def _insert_perm_hits(db, hits: list[dict], now_iso: str, stamp: int) -> int:
             " is_disclosed, employer_name, job_title, submitted_date, "
             " last_checked_at, verified, source, fetched_at) "
             "VALUES (?,?,?,?,0,?,?,?,?,1,?,?)",
-            [cn, decode_filing_date(cn), status_str, is_final,
+            [cn, queue_date(cn, v.get("submittedDate")), status_str, is_final,
              v.get("employerName"), v.get("jobTitle"),
              v.get("submittedDate"), now_iso, DISCOVERY_SOURCE, stamp])
         # OR IGNORE reports 0 affected rows for an already-known case (the
@@ -1269,6 +1269,73 @@ def write_stage_stats(db) -> None:
         f"{len(dur)} timed; median reportable for {ready or 'none yet'}")
 
 
+# More rows than this whose filing date would move in one night means DOL's
+# submittedDate changed shape, not that thousands of dates were wrong: the
+# first heal moved 4,879 (Oct 27 2026), and every night after moves a handful.
+FILING_DATE_HEAL_MAX = 10_000
+FILING_DATE_HEAL_WHERE = (
+    "submitted_date GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]*' "
+    "AND date(substr(submitted_date, 1, 10)) IS NOT NULL "
+    "AND filing_date IS NOT substr(submitted_date, 1, 10)")
+
+
+def heal_filing_dates(db) -> int:
+    """Set each PERM case's filing date to the day DOL queues it by (`queue_date`).
+
+    Rows seeded from a retired third-party mirror carry a filing date a day or
+    more off DOL's own (G-300-25305-355744: the number and DOL say Nov 1, the
+    row said Oct 31), and a re-entered case keeps its first submittedDate while
+    its number is months newer. Every queue figure (the census, the cases
+    ahead, the month pages) keys on filing_date, so it must be DOL's date. Runs
+    before the census each pass; writes nothing once healed.
+    """
+    n = int(db.scalar(f"SELECT COUNT(*) FROM perm_case_status WHERE {FILING_DATE_HEAL_WHERE}") or 0)
+    if n == 0:
+        return 0
+    if n > FILING_DATE_HEAL_MAX:
+        raise RuntimeError(f"{n:,} filing dates would move (limit {FILING_DATE_HEAL_MAX:,}); "
+                           "DOL's submittedDate may have changed shape. Nothing written.")
+    db.execute(f"UPDATE perm_case_status SET filing_date = substr(submitted_date, 1, 10) "
+               f"WHERE {FILING_DATE_HEAL_WHERE}")
+    log(f"healed    {n:,} filing dates to DOL's submitted date")
+    return n
+
+
+DAY_QUEUE_KEY = "perm_day_queue"
+
+
+def perm_day_queue_doc(rows, today: str) -> dict:
+    """perm_docs['perm_day_queue']: the cases in line (ANALYST REVIEW) by filing day.
+
+    The census counts the line by filing MONTH, so "cases filed before yours"
+    spread a month's cases evenly over its days. Filings aren't even (DOL's
+    weekends, a month's last days), and counting by day put a case's date one
+    day nearer on the backtest (typical miss 3 days to 2 on the Sep 28, Oct 5
+    and Oct 12 start days, 31,000 decided cases; scripts/backtest_queue.py
+    `exactDay`). The site reads this only for the share of a month filed before
+    a day; the month's count still comes from the census, so the two can't
+    disagree on the total.
+    """
+    by_day = sorted((str(d), int(n)) for d, n in rows if d and int(n or 0) > 0)
+    return {"asOf": today, "status": "ANALYST REVIEW", "source": SOURCE,
+            "byDay": [[d, n] for d, n in by_day], "inLine": sum(n for _, n in by_day)}
+
+
+def write_perm_day_queue(db) -> None:
+    rows = query_rows(db, """
+        SELECT filing_date, COUNT(*)
+          FROM perm_case_status
+         WHERE current_status = 'ANALYST REVIEW'
+           AND filing_date IS NOT NULL AND filing_date <> ''
+         GROUP BY filing_date""")
+    doc = perm_day_queue_doc(rows, et_today())
+    if not doc["byDay"]:
+        log(f"NOT writing {DAY_QUEUE_KEY}: no case in analyst review")
+        return
+    write_doc(db, DAY_QUEUE_KEY, json.dumps(doc, separators=(",", ":")))
+    log(f"wrote     {DAY_QUEUE_KEY} ({doc['inLine']:,} in line over {len(doc['byDay']):,} filing days)")
+
+
 def write_live_census(db) -> None:
     """Precompute the live census into perm_docs['live_census'].
 
@@ -1710,7 +1777,12 @@ def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
         steps.append(("discovery",
                       lambda: discover_and_record(db, cap=cap, deadline=deadline)))
     steps += [
+        # First: every figure after it keys on filing_date.
+        ("filing_dates", lambda: heal_filing_dates(db)),
         ("live_census", lambda: write_live_census(db)),
+        # Beside the census, from the same table a moment later: the line by
+        # filing day, read for the share of a month filed before a day.
+        ("perm_day_queue", lambda: write_perm_day_queue(db)),
         # After live_census, before the event-log readers below: it wants both
         # the current statuses and whatever transitions this run recorded.
         ("stage_stats", lambda: write_stage_stats(db)),

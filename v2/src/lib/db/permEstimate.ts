@@ -18,6 +18,8 @@ import { getEstimatorData } from "@/lib/db/estimate";
 import { getLiveBacklog } from "@/lib/db/publicData";
 import { ageByStatusFrom, exitMixFor, getStageStats, stageDurationFor } from "@/lib/db/stageStats";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { getPermDayQueue } from "@/lib/db/permDayQueue";
+import type { DayCounts } from "@/lib/queueAhead";
 
 export interface PermEstimateContext {
   backlog: Awaited<ReturnType<typeof getLiveBacklog>>;
@@ -28,11 +30,13 @@ export interface PermEstimateContext {
   stragglers: Awaited<ReturnType<typeof getStragglerRates>> | null;
   rangeCoverage: Awaited<ReturnType<typeof getRangeCoverage>> | null;
   rfiClock: Awaited<ReturnType<typeof getRfiClock>> | null;
+  /** The line by filing day; null spreads the filing month evenly. */
+  byDay: DayCounts | null;
 }
 
 /** Every input but the case itself. Each read but the backlog is allowed to be missing. */
 export async function loadPermEstimateContext(): Promise<PermEstimateContext> {
-  const [backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock] = await Promise.all([
+  const [backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock, byDay] = await Promise.all([
     getLiveBacklog(),
     getEstimatorData().catch(() => null),
     getDecisionPace().catch(() => null),
@@ -41,8 +45,9 @@ export async function loadPermEstimateContext(): Promise<PermEstimateContext> {
     getStragglerRates().catch(() => null),
     getRangeCoverage().catch(() => null),
     getRfiClock().catch(() => null),
+    getPermDayQueue(),
   ]);
-  return { backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock };
+  return { backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock, byDay };
 }
 
 export function estimatePermCase(
@@ -56,6 +61,7 @@ export function estimatePermCase(
     filingDate: c.filingDate,
     sweepFinishedOn: ctx.sweep?.finishedOn ?? null,
     today,
+    byDay: ctx.byDay,
   });
   const estimate = buildCaseEstimate({
     filingDate: c.filingDate,

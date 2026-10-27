@@ -11,7 +11,7 @@
  */
 
 import { estimateByPace, type MeasuredPace } from "@/lib/perm";
-import { casesAheadOfDay, deriveQueueAhead, inLine, lineAheadByMonth, type LineAheadRow, type MonthQueue } from "@/lib/queueAhead";
+import { casesAheadOfDay, deriveQueueAhead, inLine, lineAheadByMonth, type DayCounts, type LineAheadRow, type MonthQueue } from "@/lib/queueAhead";
 import { MS_PER_DAY } from "@/lib/time";
 
 export interface BacklogRow {
@@ -29,8 +29,10 @@ export function caseEstimateInputs(input: {
   /** The sweep's own finish date, `YYYY-MM-DD`, or null when unknown. */
   sweepFinishedOn: string | null;
   today: string;
+  /** The line by filing day (`getPermDayQueue`); the month is spread evenly without it. */
+  byDay?: DayCounts | null;
 }): { casesAhead: number | null; sweepAgeDays: number | null; lineAhead: LineAheadRow[] | null } {
-  const { backlog, filingDate, sweepFinishedOn, today } = input;
+  const { backlog, filingDate, sweepFinishedOn, today, byDay } = input;
   // A MISSING SWEEP RECORD IS NOT TREATED AS STALE: `getDecisionPace` refuses
   // a series whose newest day is more than three days old, and the same sweep
   // writes it, so a stopped sweep takes the pace with it.
@@ -40,8 +42,9 @@ export function caseEstimateInputs(input: {
           MS_PER_DAY,
       )
     : null;
-  // Prorated by the filing day, and counting only the cases in line
-  // (analyst review): see `inLine` in queueAhead.ts.
+  // The same month split by filing day where the sweep's day counts hold it,
+  // spread evenly otherwise, and only the cases in line (analyst review):
+  // see `casesAheadOfDay` and `inLine` in queueAhead.ts.
   const months: MonthQueue[] = backlog.map((m) => ({
     filingMonth: m.month,
     total: m.total,
@@ -50,9 +53,9 @@ export function caseEstimateInputs(input: {
     decidedPct: m.decidedPct,
     analystReview: m.analystReview,
   }));
-  const casesAhead = filingDate ? casesAheadOfDay(months, filingDate) : null;
+  const casesAhead = filingDate ? casesAheadOfDay(months, filingDate, byDay) : null;
   // The same count split by month, for the page's bars; its rows add up to it.
-  const lineAhead = filingDate ? lineAheadByMonth(months, filingDate) : null;
+  const lineAhead = filingDate ? lineAheadByMonth(months, filingDate, 8, byDay) : null;
   return { casesAhead, sweepAgeDays, lineAhead };
 }
 
