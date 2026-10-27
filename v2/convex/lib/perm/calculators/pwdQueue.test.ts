@@ -4,6 +4,7 @@ import {
   estimatePwdQueue,
   measurePwdClearance,
   measureWorkdayPace,
+  monthInDolTable,
   type PwdBacklogMonth,
   type PwdDayQueue,
   type WorkdayPace,
@@ -297,3 +298,13 @@ describe('measureWorkdayPace', () => {
     expect(measureWorkdayPace(run('2026-09-28', Array(28).fill(0)))).toBeNull();
   });
 });
+
+describe("monthInDolTable", () => {
+  it("knows a month up to DOL's as-of month, and not after it", () => {
+    expect(monthInDolTable("2026-09", "2026-09-30")).toBe(true);
+    expect(monthInDolTable("2026-06", "2026-09-30")).toBe(true);
+    expect(monthInDolTable("2026-10", "2026-09-30")).toBe(false);
+    expect(monthInDolTable("2026-10", null)).toBe(true);
+  });
+});
+

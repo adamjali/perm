@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { estimatePwdDay, estimatePwdQueue } from "@/lib/perm";
+import { estimatePwdDay, estimatePwdQueue, monthInDolTable } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/db/estimate";
 import { getPwdDayData } from "@/lib/db/pwdDayQueue";
@@ -313,7 +313,10 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           {estimate && month ? (
             <FigureRow className="mt-6">
               <Figure label={`Requests ahead of ${formatMonth(month)}`} value={formatInt(estimate.requestsAhead)} />
-              <Figure label="Received the same month" value={formatInt(estimate.requestsSameMonth)} />
+              {/* DOL's table runs to its as-of month: a later month has no row yet, and a 0 would read as nobody else filing then. */}
+              {monthInDolTable(month, est?.asOf ?? null) ? (
+                <Figure label="Received the same month" value={formatInt(estimate.requestsSameMonth)} />
+              ) : null}
             </FigureRow>
           ) : null}{" "}
           {dated ? (

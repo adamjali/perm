@@ -87,6 +87,7 @@ export {
 } from './decisionPace';
 export {
   estimatePwdQueue,
+  monthInDolTable,
   estimatePwdDay,
   measureWorkdayPace,
   PWD_MIN_WORKDAYS,

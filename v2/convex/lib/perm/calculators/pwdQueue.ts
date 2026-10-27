@@ -79,6 +79,15 @@ export interface PwdQueueEstimate {
  * ahead of yours" is a concrete, checkable fact and is the most useful thing
  * on the page when the drain rate is unknown.
  */
+/**
+ * Whether DOL's backlog table can say how many requests share a request's
+ * month. The table runs to DOL's as-of month, so a later month has no row:
+ * its count reads 0, which would say nobody else filed that month.
+ */
+export function monthInDolTable(requestMonth: string, asOf: string | null): boolean {
+  return !asOf || requestMonth <= asOf.slice(0, 7);
+}
+
 export function estimatePwdQueue(input: PwdQueueInput): PwdQueueEstimate {
   const requestMonth = input.requestMonth;
   monthStart(requestMonth, 'requestMonth'); // validate

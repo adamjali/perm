@@ -188,6 +188,7 @@ export {
   measurePace,
   estimateByPace,
   estimatePwdQueue,
+  monthInDolTable,
   estimatePwdDay,
   measureWorkdayPace,
   PWD_MIN_WORKDAYS,
