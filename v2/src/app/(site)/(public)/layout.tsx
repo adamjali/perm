@@ -25,6 +25,7 @@ import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { DataShell } from "@/components/tools/DataShell";
 import { AutoReveal } from "@/components/ui/auto-reveal";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { FlagNoticeBanner } from "@/components/notices/FlagNoticeBanner";
 import { getDateSources } from "@/lib/db/dateSources";
 
 export default async function PublicLayout({
@@ -48,6 +49,8 @@ export default async function PublicLayout({
         className="relative flex-1 pt-(--site-header-h)"
         tabIndex={-1}
       >
+        {/* DOL's own notice on FLAG, while one is up (a maintenance window). */}
+        <FlagNoticeBanner />
         {/* The data rail lives here rather than on each of the 28 data
             pages: a sidebar has to sit BESIDE the content, so something has
             to own both. On every other public page DataShell renders its

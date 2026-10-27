@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -15,6 +15,9 @@ ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import 
 rc=0
 case "$job" in
   i485) python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; } ;;
+  # DOL's own notice on FLAG (a maintenance window), read every 15 minutes so
+  # the site can say why statuses are late (Oct 27 2026). It writes its own run row.
+  flag-notice) timeout 2m python3 scripts/ingest_flag_notice.py || { rc=1; fail ingest_flag_notice.py "exited non-zero or ran past 2m"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

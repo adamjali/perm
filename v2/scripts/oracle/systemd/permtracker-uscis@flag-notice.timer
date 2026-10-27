@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule for permtracker-uscis@flag-notice
+# DOL's own notice on FLAG (a maintenance window or an outage), every 15
+# minutes, so the site shows it while it's up and drops it when it's gone
+# (Oct 27 2026). Not Persistent: a missed quarter hour is read by the next.
+[Timer]
+OnCalendar=*-*-* *:03/15:00
+Unit=permtracker-uscis@flag-notice.service
+
+[Install]
+WantedBy=timers.target
