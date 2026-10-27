@@ -7,8 +7,13 @@ import { CHECKED_ON, type Tracker } from "./trackers";
  * A "no" rests on what was checked, said in its note; nothing is guessed.
  *
  * The trackers people search for by name (Ahrefs and Search Console, Oct 27
- * 2026) and the ones a Reddit comparison thread names. eb3.work was checked
+ * 2026), the ones a Reddit comparison thread names, and H1BPerm, the newest
+ * (registered Oct 5 2026; owner's call to include it). eb3.work was checked
  * and left out: it's a paid job-placement agency, not a case tracker.
+ *
+ * h1bperm.com's robots.txt closes the site to AI crawlers, so its pages were
+ * read with an honestly named request under its rules for every other client,
+ * and in a person's own browser; its /api/ was never called by a script.
  */
 
 const PU = "https://permupdate.com";
@@ -17,6 +22,7 @@ const PT = "https://perm-timeline.com";
 const PK = "https://permtrack.app";
 const IL = "https://immilane.com";
 const PQ = "https://permqueue.com";
+const HP = "https://h1bperm.com";
 
 export const RIVALS: readonly Tracker[] = [
   {
@@ -179,6 +185,40 @@ export const RIVALS: readonly Tracker[] = [
     strengths: [
       "The site and its articles in English, Portuguese, Spanish and Mandarin",
       "A wait calculator for EB-3 Other Workers",
+    ],
+  },
+  {
+    slug: "h1bperm",
+    name: "H1BPerm",
+    url: HP,
+    operator: null,
+    price: "Free",
+    checkedOn: CHECKED_ON,
+    newestData: {
+      day: "2026-10-27",
+      note: "Updated the same day",
+      evidence: { url: HP, quote: "Updated Oct 27, 2026, 11:09 AM PT." },
+    },
+    cells: {
+      lookup: { mark: "yes", note: "PERM and wage request numbers, each with its own page", evidence: { url: `${HP}/privacy`, quote: "What you type into search (an employer name, a job title or a case number) is sent to our server to look it up." } },
+      pending: { mark: "yes", evidence: { url: `${HP}/methodology`, quote: "We check every open case in the public DOL FLAG case status search daily and record status changes." } },
+      source: { mark: "yes", evidence: { url: HP, quote: "Data: U.S. Department of Labor FLAG system (PWD, PERM)" } },
+      wage: { mark: "yes", note: "A live wage-request board and lookups", evidence: { url: `${HP}/pwd`, quote: "DOL is issuing prevailing wage determinations for requests filed Jul 21, 2026" } },
+      lca: { mark: "partial", note: "H-1B LCAs in its search and on employer pages, from DOL's files; no LCA status", evidence: { url: `${HP}/search`, quote: "PERM, prevailing wage (PWD) and H-1B LCA cases from the Department of Labor's public disclosure data" } },
+      seasonal: { mark: "no", note: "No H-2A or H-2B data on 12 pages checked", evidence: { url: `${HP}/search` } },
+      alerts: { mark: "no", note: "No sign-up of any kind", evidence: { url: `${HP}/privacy`, quote: "It has no accounts and no sign-up forms, and it does not ask for your name, email or case details." } },
+      employers: { mark: "partial", note: "500 employer pages, plus 832 law firms and 200 jobs, in six languages", evidence: { url: `${HP}/sitemap.xml` } },
+      bulletin: { mark: "yes", evidence: { url: HP, quote: "EB-2 Final Action (rest of world) is Jan 1, 2025." } },
+      attorney: { mark: "no", note: "No accounts; law-firm pages are statistics only", evidence: { url: `${HP}/privacy`, quote: "It has no accounts and no sign-up forms" } },
+      noAccount: { mark: "yes", evidence: { url: `${HP}/privacy`, quote: "It has no accounts and no sign-up forms" } },
+      free: { mark: "yes", evidence: { url: `${HP}/privacy`, quote: "is a free, independent information site" } },
+      noAds: { mark: "yes", evidence: { url: `${HP}/privacy`, quote: "We do not show ads at the moment." } },
+      openData: { mark: "no", note: "No download; its robots.txt closes /api/ to every client", evidence: { url: `${HP}/robots.txt`, quote: "Disallow: /api/" } },
+    },
+    strengths: [
+      "The exact filing day DOL is on, worked out from case statuses, for PERM and wage requests",
+      "Each wage request linked to its PERM case, with the median days between them",
+      "Every page in six languages",
     ],
   },
 ];

@@ -25,7 +25,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "PERM Trackers Compared: PERM Update, PERM Timeline and More";
 const DESCRIPTION =
-  "Six PERM case trackers checked side by side on their own pages: what each looks up, where its data comes from, how fresh it is and what it costs.";
+  "Seven PERM case trackers checked side by side on their own pages: what each looks up, where its data comes from, how fresh it is and what it costs.";
 
 export const metadata: Metadata = withSocialCard(
   {
@@ -72,8 +72,8 @@ export default function ComparePage() {
       <header className="max-w-3xl">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">PERM trackers compared</h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-soft">
-          The PERM trackers people search for by name, each checked on its own pages on {checked}: what it can
-          look up, where its data comes from, and what it costs.
+          The PERM trackers people search for by name, and the newest, each checked on its own pages on {checked}:
+          what it can look up, where its data comes from, and what it costs.
         </p>
       </header>{" "}
       <section aria-label="The comparison" className="mt-8">
