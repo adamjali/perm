@@ -1598,3 +1598,25 @@ Still to request, in order:
 
 After this list: `node scripts/gsc_queue.mjs --since c6ffffb4` for anything newer. Today's requests ran 1:48 to
 2:07 PM, so tomorrow's allowance frees in that window: the 10:41 AM round will likely meet Quota Exceeded first.
+
+### Round, Tuesday Oct 27 2026, late morning (about 11:27 to 11:29 AM EDT)
+
+Live: 6cba4fd3 (the 2 AM night deploy); e18aaf4e, the policy feed's new sources, was deploying. Google answered
+Quota Exceeded on the first request, as yesterday's round expected: yesterday's requests ran 1:48 to 2:07 PM.
+
+Requested: none. `/calculators` (last crawled Oct 25, 1:19 PM, before its 2:38 PM change) met Quota Exceeded.
+
+Still to request, in order:
+1. `/calculators`
+2. `/policy-changes`, once e18aaf4e is live (`ssh permtracker 'sudo permtracker-deploy status'`): new sections (comment
+   counts, "From the courts and BALCA", "In Congress") and the rule pipeline folded
+3. `/layoffs`, once the Archive states have loaded (the morning report names any still missing)
+4. Inspect, and request only if crawled before Oct 25, 2:38 PM: `/extension`, `/perm-processing-times`, `/tools`,
+   `/visa-bulletin`, `/tools/perm-timeline-calculator`, `/tools/priority-date-calculator`, `/tools/pwd-calculator`,
+   `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
+5. From `node scripts/gsc_queue.mjs --since c6ffffb4` (50 pages, most of them guides and posts whose header pictures
+   were re-shot, live at 2 AM Oct 27): served markup first, `/about`, `/blog`, `/changelog`, `/guides`; then the
+   articles, requesting only those last crawled before Oct 27, 2 AM. A picture-only change is the lowest priority.
+
+The allowance frees about 1:48 PM, so the 1:07 PM round will likely meet Quota Exceeded again; the 3:07 PM round
+should get the full allowance.
