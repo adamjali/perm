@@ -8,10 +8,15 @@ on Oct 27 2026 (cut to a few rules each), the Federal Register's answers for
 two RINs as it gave them that day, and the public inspection list of Oct 26
 with one filing added in the API's own shape (a proposal under 1205-AC29;
 nothing under that RIN was on public inspection that day).
+
+The Unified Agenda's fixtures are reginfo's XML reports page and the 2026
+edition's file (REGINFO_RIN_DATA_202510.xml, run Jul 3 2026), both read Oct 27
+2026 and cut byte for byte to 14 entries (CDATA kept, contact names dropped).
 """
 from __future__ import annotations
 
 import json
+import re
 import pathlib
 import sqlite3
 import sys
@@ -22,6 +27,7 @@ sys.path.insert(0, str(HERE))
 import ingest_rule_pipeline as rp  # noqa: E402
 
 FIX = HERE / "fixtures" / "rule_pipeline"
+AGENDA_XML = (FIX / "REGINFO_RIN_DATA_202510.xml").read_bytes()
 FAILS: list[str] = []
 
 
@@ -66,6 +72,10 @@ def fixture_get(overrides: dict | None = None):
             return (FIX / "EO_RULE_COMPLETED_30_DAYS.xml").read_bytes()
         if url == rp.PUBLIC_INSPECTION:
             return (FIX / "public_inspection.json").read_bytes()
+        if url == rp.AGENDA_REPORTS:
+            return (FIX / "agenda_reports.html").read_bytes()
+        if url == rp.AGENDA_FILE.format(pub="202510"):
+            return AGENDA_XML
         if url.endswith("/202/699/901.txt"):
             return (FIX / "pi_2026-99901.txt").read_bytes()
         if "raw_text" in url:
@@ -81,7 +91,327 @@ def fixture_get(overrides: dict | None = None):
     return get
 
 
+def raises(fn, kind) -> str | None:
+    """The message `fn()` raised as `kind`, or None when it didn't."""
+    try:
+        fn()
+    except kind as exc:
+        return str(exc)
+    return None
+
+
+def edition_xml(pub: str, run_date: str, edits: dict[str, tuple[str, str]] | None = None,
+                drop: tuple[str, ...] = ()) -> bytes:
+    """The fixture as another edition: its own RUN_DATE, entries dropped, and
+    `edits` replacing one entry's text (RIN -> (old, new))."""
+    blob = AGENDA_XML.replace(b'RUN_DATE="2026-07-03-04:00"', f'RUN_DATE="{run_date}-04:00"'.encode())
+    blob = blob.replace(b"<PUBLICATION_ID>202510<", f"<PUBLICATION_ID>{pub}<".encode())
+    for rin in drop:
+        blob = re.sub(rb"[ \t]*<RIN_INFO>\s*<RIN>" + rin.encode() + rb"</RIN>.*?</RIN_INFO>\s*", b"", blob, flags=re.S)
+    for rin, (old, new) in (edits or {}).items():
+        m = re.search(rb"<RIN_INFO>\s*<RIN>" + rin.encode() + rb"</RIN>.*?</RIN_INFO>", blob, re.S)
+        assert m and old.encode() in m.group(0), (rin, old)
+        blob = blob[:m.start()] + m.group(0).replace(old.encode(), new.encode()) + blob[m.end():]
+    return blob
+
+
+def agenda_checks() -> None:
+    rp.AGENDA_MIN_ENTRIES = 5  # the fixture is cut to 14 entries; the real floor is checked below
+    page = (FIX / "agenda_reports.html").read_bytes()
+    eds = rp.parse_reports(page)
+    check("the newest edition is the 2026 one, named as reginfo names it",
+          (eds[0].pub_id, eds[0].label) == ("202510", "2026") and eds[1].label == "Spring 2025",
+          str([(e.pub_id, e.label) for e in eds]))
+    check("a page that isn't the reports list is reginfo not answering",
+          raises(lambda: rp.parse_reports(b"<html><body>Down for maintenance</body></html>"),
+                 rp.AgendaUnreachable) is not None)
+    check("the reports list with no agenda link fails",
+          raises(lambda: rp.parse_reports(re.sub(rb"REGINFO_RIN_DATA_\d+", b"OTHER", page)),
+                 rp.AgendaFormatError) is not None)
+    check("the single 2012 edition sorts before 2013's", rp.pub_key("2012") < rp.pub_key("201304") < rp.pub_key("202510"))
+
+    ed = eds[0]
+    a = rp.parse_agenda(AGENDA_XML, ed)
+    check("the edition's date is its RUN_DATE", a.run_date == "2026-07-03" and a.entries == 14, f"{a.run_date} {a.entries}")
+    ac29 = a.listings["1205-AC29"]
+    check("1205-AC29 reads as the agenda printed it", {k: v for k, v in ac29.items() if k != "a_abstract"} == {
+        "title": "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program (NPRM)",
+        "agency": "DOL's Employment and Training Administration",
+        "a_pub_id": "202510", "a_edition": "2026", "a_published": "2026-07-03", "a_agency": "DOL/ETA",
+        "a_stage": "Proposed Rule Stage", "a_priority": "Other Significant",
+        "a_next_action": "NPRM", "a_next_date": "07/00/2026",
+        "a_url": "https://www.reginfo.gov/public/do/eAgendaViewRule?pubId=202510&RIN=1205-AC29",
+    }, json.dumps(ac29)[:400])
+    abstract = ac29["a_abstract"] or ""
+    check("its abstract is words, the HTML and entities gone",
+          abstract.startswith("The Immigration and Nationality Act (8 USC 1101, et seq") and "<" not in abstract
+          and "&" not in abstract and "Department of Labor’s" in abstract, abstract[:120])
+    cdata = a.listings["1615-AD00"]["a_abstract"] or ""
+    check("an abstract inside CDATA with its own DOCTYPE reads as words", bool(cdata) and "DOCTYPE" not in cdata
+          and "<" not in cdata, cdata[:120])
+    check("an ETA rule the agenda misspells is still followed by its abstract (1205-AC30)",
+          "1205-AC30" in a.followed and "Foreign Nations" in a.listings["1205-AC30"]["title"])
+    check("ETA's apprenticeship rule and a passport rule are not followed",
+          "1205-AC21" not in a.followed and "1400-AF97" not in a.followed)
+    check("another agency's abstract doesn't widen it (CBP's ESTA rule names aliens)", "1651-AB14" not in a.followed)
+    check("another department's rules are never read", "0503-AA90" not in a.listings)
+    check("active and long-term rules with a next action become rules; undetermined and completed don't",
+          {"1205-AC29", "1205-AC30", "1615-AD00", "1615-AC97", "1615-AC98", "1615-AC67", "1615-AD14", "1400-AG33"} <= a.creates
+          and "1615-AC49" not in a.creates and "1615-AC85" not in a.creates
+          and {"1615-AC49", "1615-AC85"} <= a.followed, str(sorted(a.creates)))
+    nxt = {r: (a.listings[r]["a_next_action"], a.listings[r]["a_next_date"]) for r in a.followed}
+    check("the next step is the first undone document on the timetable", nxt["1615-AC67"] == ("Interim Final Rule", "09/00/2026")
+          and nxt["1615-AD14"] == ("NPRM", "To Be Determined") and nxt["1400-AG33"] == ("Final Action", "08/00/2026")
+          and nxt["1615-AC49"] == ("Next Action Undetermined", "To Be Determined"), json.dumps(nxt))
+    check("a comment period closing, a withdrawal and a passed deadline are never the next step",
+          nxt["1615-AC98"] == (None, None) and nxt["1615-AC97"] == (None, None) and nxt["1615-AC85"] == (None, None))
+    tt = [("NPRM", "01/05/2026", "91 FR 1"), ("Interim Final Rule; Delay of Effective Date", "08/15/2026", "")]
+    check("a delay of an effective date is a document, so it can be next",
+          rp.next_action(tt, "2026-07-03") == ("Interim Final Rule; Delay of Effective Date", "08/15/2026"))
+    check("a full date before the edition with no citation is not next",
+          rp.next_action([("Final Rule", "06/15/2026", "")], "2026-07-03") == (None, None)
+          and rp.next_action([("Final Rule", "07/03/2026", "")], "2026-07-03") == ("Final Rule", "07/03/2026"))
+    check("the counts are by agency code", a.counts == {"1205": 2, "1615": 7, "1400": 1}, str(a.counts))
+
+    shared = json.loads((FIX / "agenda_sentences.json").read_text())["cases"][0]
+    check("the step's detail is the one the shared wording reads",
+          rp.agenda_detail(ac29) == shared["event"]["detail"], rp.agenda_detail(ac29))
+
+    # --- what the agenda refuses ---
+    doctype = AGENDA_XML.replace(b"<REGINFO_RIN_DATA", b'<!DOCTYPE x [<!ENTITY a "aa">]>\n<REGINFO_RIN_DATA', 1)
+    check("a DOCTYPE before the root fails", raises(lambda: rp.parse_agenda(doctype, ed), rp.AgendaFormatError) is not None)
+    check("a web page in place of the file is reginfo not answering",
+          raises(lambda: rp.parse_agenda(b"<!DOCTYPE html><html><body>Error</body></html>", ed), rp.AgendaUnreachable) is not None)
+    check("XML that isn't the agenda fails", raises(lambda: rp.parse_agenda(b"<?xml version='1.0'?><OIRA_DATA/>", ed),
+                                                   rp.AgendaFormatError) is not None)
+    no_dol = edition_xml("202510", "2026-07-03", drop=("1205-AC29", "1205-AC30", "1205-AC21"))
+    msg = raises(lambda: rp.parse_agenda(no_dol, ed), rp.AgendaFormatError) or ""
+    check("a file with no ETA rules fails and names the agency", "Employment and Training Administration" in msg, msg)
+    untitled = re.sub(rb"<RULE_TITLE>[^<]*</RULE_TITLE>", b"<RULE_TITLE></RULE_TITLE>", AGENDA_XML)
+    msg = raises(lambda: rp.parse_agenda(untitled, ed), rp.AgendaFormatError) or ""
+    check("entries with no title fail the file", "no RIN, title or stage" in msg, msg)
+    no_uscis = edition_xml("202510", "2026-07-03", drop=("1615-AD00", "1615-AC97", "1615-AC98", "1615-AC67", "1615-AD14",
+                                                        "1615-AC49", "1615-AC85"))
+    msg = raises(lambda: rp.parse_agenda(no_uscis, ed), rp.AgendaFormatError) or ""
+    check("a file with no USCIS rules fails and names USCIS", "USCIS" in msg, msg)
+    blank = re.sub(rb"<RULE_STAGE>[^<]*</RULE_STAGE>", b"<RULE_STAGE></RULE_STAGE>", AGENDA_XML)
+    msg = raises(lambda: rp.parse_agenda(blank, ed), rp.AgendaFormatError) or ""
+    check("entries with no stage fail the file", "no RIN, title or stage" in msg, msg)
+    rp.AGENDA_MIN_ENTRIES = 1000
+    msg = raises(lambda: rp.parse_agenda(AGENDA_XML, ed), rp.AgendaFormatError) or ""
+    check("a file of 14 entries is cut short at the real floor", "too few" in msg, msg)
+    rp.AGENDA_MIN_ENTRIES = 5
+    no_state = edition_xml("202510", "2026-07-03", edits={"1400-AG33": ("Visas: Visa Bond Program", "Bond Program")})
+    again = rp.parse_agenda(no_state, ed)
+    msg = raises(lambda: rp.check_agenda(again, {"pub_id": "202510", "counts": {"1400": 1, "1615": 7}}), rp.AgendaFormatError) or ""
+    check("a second read of an edition that lost an agency's rules fails and names it", "State Department" in msg, msg)
+    check("a new edition may list none of an agency's rules", rp.check_agenda(again, {"pub_id": "202504", "counts": {"1400": 9}}) is None)
+
+    # --- when the file is read ---
+    now = 1_793_100_000_000
+    day = 86_400_000
+    def reads(doc, force=False, overrides=None):
+        g = fixture_get(overrides)
+        got = rp.read_agenda(g, doc, now, force=force, sleep=lambda _s: None)
+        return got, sum("REGINFO_RIN_DATA_" in u for u in g.asked)
+    got, n = reads(None)
+    check("with nothing read before, the newest edition is read", got is not None and n == 1)
+    got, n = reads({"pub_id": "202510", "read_at": now - day})
+    check("an edition read yesterday is not read again", got is None and n == 0)
+    got, n = reads({"pub_id": "202510", "read_at": now - 8 * day})
+    check("an edition read 8 days ago is read again", got is not None and n == 1)
+    got, n = reads({"pub_id": "202504", "read_at": now - day})
+    check("a new edition is read the day it's linked", got is not None and n == 1)
+    got, n = reads({"pub_id": "202510", "read_at": now - day}, force=True)
+    check("--agenda reads it anyway", got is not None and n == 1)
+    check("the reports page down is reginfo not answering",
+          raises(lambda: reads(None, overrides={rp.AGENDA_REPORTS: RuntimeError("503")}), rp.AgendaUnreachable) is not None)
+    check("the file refused is reginfo not answering",
+          raises(lambda: reads(None, overrides={"REGINFO_RIN_DATA_202510": RuntimeError("403")}), rp.AgendaUnreachable) is not None)
+    check("a file past the size cap fails",
+          raises(lambda: reads(None, overrides={"REGINFO_RIN_DATA_202510": rp.TooLarge("big")}), rp.AgendaFormatError) is not None)
+    check("a defect in the reader is never taken for an outage",
+          raises(lambda: reads(None, overrides={rp.AGENDA_REPORTS: KeyError("bug")}), KeyError) is not None)
+
+    paused: list[float] = []
+    rp.read_agenda(fixture_get(), None, now, sleep=paused.append)
+    check("the agenda's file waits a pause after the reports page", paused == [rp.AGENDA_PAUSE_S], str(paused))
+    paused.clear()
+    g = fixture_get()
+    rp.collect(g, {}, "2026-10-27", agenda=a, sleep=paused.append)
+    asked = sum("documents.json" in u for u in g.asked)
+    check("every Register request after the first waits a pause", asked > 5 and len(paused) == asked - 1,
+          f"{asked} asked, {len(paused)} pauses")
+
+    # --- the size cap ---
+    class Answer:
+        def __init__(self, n):
+            self.n = n
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self, k=-1):
+            return b"x" * (self.n if k < 0 else min(k, self.n))
+    real_open, real_robots = rp.urllib.request.urlopen, rp.robots_allowed
+    try:
+        rp.robots_allowed = lambda _u: True
+        opened: list[int] = []
+        rp.urllib.request.urlopen = lambda _req, timeout=0: (opened.append(1), Answer(50))[1]
+        check("an answer under the cap is read whole", rp.http_get("https://example.gov/f", limit=100) == b"x" * 50)
+        opened.clear()
+        check("an answer past the cap is refused, never retried",
+              raises(lambda: rp.http_get("https://example.gov/f", limit=10), rp.TooLarge) is not None
+              and len(opened) == 1, str(opened))
+    finally:
+        rp.urllib.request.urlopen, rp.robots_allowed = real_open, real_robots
+
+    # --- the rows and steps ---
+    db = FakeDb()
+    old_ddl = "CREATE TABLE rule_pipeline (" + ", ".join(
+        f"{k} {v}" for k, v in rp.COLUMNS.items() if k not in rp.AGENDA_COLUMNS) + ")"
+    db.execute(old_ddl)
+    db.execute("INSERT INTO rule_pipeline (rin, agency, title, first_seen, updated_at) VALUES "
+               "('1615-AC85', 'USCIS', 'Petition for Immigrant Worker Reforms', 1, 1)")
+    for sql in rp.DDL:
+        db.execute(sql)
+    added = rp.add_missing_columns(db, "rule_pipeline", rp.COLUMNS)
+    check("a table from before the agenda gains its columns", sorted(added) == sorted(rp.AGENDA_COLUMNS), str(added))
+    g = fixture_get()
+    read = rp.collect(g, rp.stored_rows(db), "2026-10-27", agenda=a, sleep=lambda _s: None)
+    p = rp.plan(rp.stored_rows(db), read.facts, now)
+    rp.write(db, p, now)
+    rows = rp.stored_rows(db)
+    check("the agenda's active rules become rules; long-term undetermined and completed ones don't",
+          {"1615-AD14", "1400-AG33", "1205-AC30", "1615-AC97"} <= set(rows) and "1615-AC49" not in rows, str(sorted(rows)))
+    check("a rule followed already takes its listing whatever the stage",
+          rows["1615-AC85"]["a_stage"] == "Completed Actions" and rows["1615-AC85"]["a_next_action"] is None)
+    check("the Register is asked about the rules the agenda adds",
+          any("%221615-AD14%22" in u for u in g.asked) and any("%221400-AG33%22" in u for u in g.asked))
+    r29 = rows["1205-AC29"]
+    check("1205-AC29 keeps OIRA's review and gains its listing",
+          r29["p_completed"] == "2026-10-23" and r29["a_edition"] == "2026" and r29["a_next_date"] == "07/00/2026"
+          and r29["a_listed"] == "2026-07-03" and r29["title"].endswith("(NPRM)"), json.dumps(r29)[:300])
+    ag = {e["rin"]: e for e in p.events if e["kind"] == "agenda"}
+    check("each rule's first listing is one agenda step, dated by the edition",
+          len(ag) == len(set(read.facts) & set(a.listings)) and ag["1205-AC29"]["on_date"] == "2026-07-03"
+          and json.loads(ag["1205-AC29"]["detail"]) == {"action": "NPRM", "date": "07/00/2026", "edition": "2026",
+                                                         "stage": "Proposed Rule Stage"}, str(sorted(ag)))
+    db.writes = 0
+    p2 = rp.plan(rp.stored_rows(db), rp.collect(fixture_get(), rp.stored_rows(db), "2026-10-27", agenda=a,
+                                                sleep=lambda _s: None).facts, now + 1000)
+    check("a second read of the same edition writes nothing", rp.write(db, p2, now + 1000) == 0 and db.writes == 0)
+
+    # The next edition moves one rule's timetable, keeps another's, and lists
+    # a third with no next action at all.
+    nxt_xml = edition_xml("202604", "2026-12-10", edits={
+        "1205-AC29": ("<TTBL_DATE>07/00/2026</TTBL_DATE>", "<TTBL_DATE>01/00/2027</TTBL_DATE>"),
+        "1615-AC67": ("<TTBL_ACTION>Interim Final Rule</TTBL_ACTION>\n                <TTBL_DATE>09/00/2026</TTBL_DATE>",
+                      "<TTBL_ACTION>Interim Final Rule</TTBL_ACTION>\n                <TTBL_DATE>09/01/2026</TTBL_DATE>"),
+    })
+    spring = rp.parse_agenda(nxt_xml, rp.Edition("202604", "Spring 2026"))
+    p3 = rp.plan(rp.stored_rows(db), rp.collect(fixture_get(), rp.stored_rows(db), "2026-12-11", agenda=spring,
+                                                sleep=lambda _s: None).facts, now + 2000)
+    rp.write(db, p3, now + 2000)
+    rows = rp.stored_rows(db)
+    steps3 = sorted((e["rin"], e["on_date"]) for e in p3.events if e["kind"] == "agenda")
+    check("a new edition is a step only where the printed next step changed",
+          steps3 == [("1205-AC29", "2026-12-10"), ("1615-AC67", "2026-12-10")], str(steps3))
+    check("its listing replaces the last, a next action it no longer names included",
+          rows["1205-AC29"]["a_next_date"] == "01/00/2027" and rows["1205-AC29"]["a_edition"] == "Spring 2026"
+          and rows["1615-AC67"]["a_next_action"] is None and rows["1615-AC67"]["a_listed"] == "2026-12-10")
+    check("a rule listed the same keeps the edition it was last listed differently in",
+          rows["1615-AD14"]["a_edition"] == "Spring 2026" and rows["1615-AD14"]["a_listed"] == "2026-07-03")
+    p4 = rp.plan(rp.stored_rows(db), {"1205-AC29": [a.listings["1205-AC29"]]}, now + 3000)
+    check("an older edition never replaces a newer one", not p4.writes and not p4.events)
+
+    # The same edition reissued under the same date with a new date for one rule.
+    reissued = rp.parse_agenda(edition_xml("202604", "2026-12-10", edits={
+        "1205-AC29": ("<TTBL_DATE>07/00/2026</TTBL_DATE>", "<TTBL_DATE>02/00/2027</TTBL_DATE>")}),
+        rp.Edition("202604", "Spring 2026"))
+    p5 = rp.plan(rp.stored_rows(db), {"1205-AC29": [reissued.listings["1205-AC29"]]}, now + 4000)
+    rp.write(db, p5, now + 4000)
+    ev = rp.query_dicts(db, "SELECT detail FROM rule_pipeline_events WHERE rin = '1205-AC29' AND kind = 'agenda' "
+                            "AND on_date = '2026-12-10'")
+    check("a reissued edition rewrites its own step rather than adding one",
+          len(ev) == 1 and json.loads(ev[0]["detail"])["date"] == "02/00/2027", str(ev))
+
+    # A rule whose interim final rule came out years ago is asked about again
+    # while an agenda dated after it still lists the final rule.
+    old_ifr = {"rin": "1615-AC67", "final_published": "2022-03-29"}
+    g = fixture_get()
+    rp.collect(g, {"1615-AC67": old_ifr}, "2026-10-27", sleep=lambda _s: None)
+    check("a rule finished long ago isn't asked about", not any("%221615-AC67%22" in u for u in g.asked))
+    g = fixture_get()
+    rp.collect(g, {"1615-AC67": old_ifr}, "2026-10-27", agenda=a, sleep=lambda _s: None)
+    check("unless the agenda after it still lists its final step", any("%221615-AC67%22" in u for u in g.asked))
+    check("an agenda listing a long-term rule with no next step isn't still on its way",
+          not rp.agenda_active(a.listings["1615-AC49"]) and rp.agenda_active(a.listings["1615-AD14"])
+          and not rp.agenda_active(a.listings["1615-AC85"]))
+
+    # A rule only the agenda names is asked of the Register once a day.
+    quiet_rows = rp.stored_rows(db)
+    g = fixture_get()
+    rp.collect(g, quiet_rows, "2026-12-11", sleep=lambda _s: None, ask_quiet=False)
+    check("a rule only the agenda names isn't asked about on every run",
+          not any("%221615-AD14%22" in u for u in g.asked) and any("%221205-AC29%22" in u for u in g.asked)
+          and sum("documents.json" in u for u in g.asked) == 4,  # 1205-AC29, 1205-AC30, 1615-AD00, 1615-AD25
+          str([u.split("%22")[1] for u in g.asked if "documents.json" in u]))
+    g = fixture_get()
+    rp.collect(g, quiet_rows, "2026-12-11", sleep=lambda _s: None, follow=("1615-AD14",), ask_quiet=False)
+    check("unless it's followed by hand", any("%221615-AD14%22" in u for u in g.asked))
+
+    # --- a whole run, and its trouble ---
+    import contextlib
+    import io as _io
+
+    def whole_run(db, overrides=None, force=False):
+        out = _io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = rp.run(db, fixture_get(overrides), "2026-10-27", force_agenda=force, sleep=lambda _s: None)
+        last = rp.query_dicts(db, "SELECT status, note FROM ingest_runs ORDER BY id DESC LIMIT 1")[0]
+        fresh = {r["dataset"]: r for r in rp.query_dicts(db, "SELECT dataset, as_of, max_age_days FROM data_freshness")}
+        return code, last, fresh, out.getvalue()
+
+    run_db = FakeDb()
+    run_db.execute(old_ddl)  # the live table as it was before the agenda
+    code, last, fresh, out = whole_run(run_db)
+    check("a run adds the agenda's columns to the live table before writing",
+          "a_next_date" in rp.stored_rows(run_db).get("1205-AC29", {}))
+    check("a run reads the agenda, stamps it with the edition's date, and records it",
+          code == 0 and last["status"] == "ok" and fresh.get("rule-pipeline-agenda", {}).get("as_of") == "2026-07-03"
+          and str(fresh["rule-pipeline-agenda"]["max_age_days"]) == "310" and "2026 agenda read" in last["note"],
+          f"{code} {last} {fresh}")
+    def quiet_asked(db):
+        g = fixture_get()
+        with contextlib.redirect_stdout(_io.StringIO()):
+            rp.run(db, g, "2026-10-27", sleep=lambda _s: None)
+        return any("%221615-AD14%22" in u for u in g.asked)
+    check("a second run the same day leaves the agenda's quiet rules alone", not quiet_asked(run_db))
+    check("the next day asks about them again",
+          (run_db.execute("UPDATE perm_docs SET json = '{\"day\":\"2026-10-26\"}' WHERE key = ?", [rp.QUIET_DOC]) or True)
+          and quiet_asked(run_db))
+    doc = rp.read_doc(run_db, rp.AGENDA_DOC) or {}
+    check("the run keeps which edition it read", doc.get("pub_id") == "202510" and doc.get("counts", {}).get("1615") == 7,
+          json.dumps(doc))
+    code, last, fresh, out = whole_run(run_db, overrides={rp.AGENDA_REPORTS: RuntimeError("reginfo.gov did not answer")})
+    check("reginfo down is a warning: the run stays ok and says why",
+          code == 0 and last["status"] == "ok" and "::warning::Unified Agenda unread" in out
+          and "Unified Agenda unread" in last["note"], f"{code} {last} {out[-300:]}")
+    check("and nothing about the agenda is written", (rp.read_doc(run_db, rp.AGENDA_DOC) or {}).get("checked_at") == doc.get("checked_at"))
+    fresh_db = FakeDb()
+    code, last, fresh, out = whole_run(fresh_db, overrides={"REGINFO_RIN_DATA_202510": no_dol})
+    check("a file with an agency's rules missing exits 1, names it, and still writes OIRA's facts",
+          code == 1 and last["status"] == "partial" and "Employment and Training Administration" in last["note"]
+          and "::error::" in out and "1205-AC29" in rp.stored_rows(fresh_db) and "rule-pipeline-agenda" not in fresh,
+          f"{code} {last} {sorted(fresh)}")
+    check("a defect while reading the agenda crashes the run",
+          raises(lambda: whole_run(FakeDb(), overrides={rp.AGENDA_REPORTS: TypeError("bug")}), TypeError) is not None)
+
+
 def main() -> int:
+    rp.REGISTER_PAUSE_S = 0
+    rp.AGENDA_PAUSE_S = 0
     # --- which rules ---------------------------------------------------------
     check("every USCIS rule is followed", rp.relevant("1615-AD25", "Amending the Premium Processing Timeframe"))
     check("a PERM rule from ETA is followed", rp.relevant(
@@ -238,6 +568,8 @@ def main() -> int:
         check("an empty under-review list fails the run", False)
     except ValueError:
         check("an empty under-review list fails the run", True)
+
+    agenda_checks()
 
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0

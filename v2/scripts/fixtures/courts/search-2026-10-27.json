@@ -1,0 +1,291 @@
+{
+ "_note": "A trimmed copy of a real CourtListener search answer (read Oct 27 2026). Individual people's names in captions and passages are replaced with invented ones; organizations, agencies and officials sued in office are as CourtListener printed them. Only the fields the reader reads are kept.",
+ "_query": "QUERY, filed after 2026-07-01",
+ "count": 57,
+ "next": null,
+ "previous": null,
+ "results": [
+  {
+   "caseName": "Exampleton v. U.S. Department of State",
+   "dateFiled": "2026-10-26",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 11045835,
+   "docketNumber": "Civil Action No. 2026-0092",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "establishes an <mark>employment-based</mark>,\n\nsecond-preference immigrant visa category, commonly known as <mark>EB-2</mark>, for “members"
+    }
+   ]
+  },
+  {
+   "caseName": "State v. Fixtureby",
+   "dateFiled": "2026-10-23",
+   "court": "Superior Court of Delaware",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11045986,
+   "docketNumber": "1504011040A",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Samplegate, 2024 WL 4503985, *3 (Del.Super.), adopted, D.<mark>I. 140</mark> (October 31,\n2024), aff’d, 2025 WL 655084 (Del"
+    }
+   ]
+  },
+  {
+   "caseName": "John Doe v. Catholic Relief Services",
+   "dateFiled": "2026-10-16",
+   "court": "Court of Appeals for the Fourth Circuit",
+   "court_jurisdiction": "F",
+   "cluster_id": 11037825,
+   "docketNumber": "25-1569",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "compensation, terms, conditions, or privileges of <mark>employment” based</mark> on an employee’s\n\n         sexual orientation"
+    }
+   ]
+  },
+  {
+   "caseName": "Envoy Air, Inc. v. Ann Fixturova",
+   "dateFiled": "2026-10-16",
+   "court": "Supreme Court of Alabama",
+   "court_jurisdiction": "S",
+   "cluster_id": 11036869,
+   "docketNumber": "SC-2025-0022",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "injury, and 4)\n\nsubsequent termination of <mark>employment based</mark> solely upon the employee&#x27;s\n\non-the-job"
+    }
+   ]
+  },
+  {
+   "caseName": "Exemplari v. Bd. of Psychology",
+   "dateFiled": "2026-10-15",
+   "court": "California Court of Appeal",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11035281,
+   "docketNumber": "C104172M",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Exemplari\ncites to support her argument that the <mark>employment-based</mark> conditions are arbitrary—\nSampleau v. Superior"
+    }
+   ]
+  },
+  {
+   "caseName": "City of Houston v. Juan Fixtura Ejemplo",
+   "dateFiled": "2026-10-13",
+   "court": "Texas Court of Appeals, 1st District (Houston)",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11038088,
+   "docketNumber": "01-25-00033-CV",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "was operating it within the scope of his <mark>employment.\n\n      Based</mark> on these facts, Fixtura invoked the"
+    }
+   ]
+  },
+  {
+   "caseName": "McFixture v. Regents of the Univ. of California",
+   "dateFiled": "2026-10-13",
+   "court": "California Court of Appeal",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11032682,
+   "docketNumber": "B339467",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "However, disqualifying an individual from <mark>employment based</mark> on\nhis conviction history is not illegal,"
+    }
+   ]
+  },
+  {
+   "caseName": "Mockwell v. Mullin",
+   "dateFiled": "2026-10-13",
+   "court": "Court of Appeals for the First Circuit",
+   "court_jurisdiction": "F",
+   "cluster_id": 11032679,
+   "docketNumber": "25-2238",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "expedited removal and\n\nwrongfully cancelled her <mark>H-1B</mark> visa upon her attempt to reenter the\n\nUnited States"
+    }
+   ]
+  },
+  {
+   "caseName": "Longshot Holdings, Inc. v. Quaker Chemical Corporation",
+   "dateFiled": "2026-10-08",
+   "court": "Superior Court of Delaware",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11019245,
+   "docketNumber": "N22C-04-129 MAA CCLD",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "53\n   D.I. 137 (“RB”).\n54\n   D.I. 139.\n55\n   D.<mark>I. 140</mark>.\n56\n   See, e.g., Shallcross Mortg. Co. v. Placewood"
+    }
+   ]
+  },
+  {
+   "caseName": "Exemplari v. Board of Psychology",
+   "dateFiled": "2026-10-06",
+   "court": "California Court of Appeal",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11012905,
+   "docketNumber": "C104172",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Exemplari\ncites to support her argument that the <mark>employment-based</mark> conditions are arbitrary—\nSampleau v. Superior"
+    }
+   ]
+  },
+  {
+   "caseName": "Testova v. Rubio",
+   "dateFiled": "2026-10-05",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 11010507,
+   "docketNumber": "Civil Action No. 2025-1928",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "States. The INA authorizes\n\nthe issuance of <mark>employment-based</mark> visas to, among others, noncitizens who qualify"
+    }
+   ]
+  },
+  {
+   "caseName": "Placen v. Mayorkas",
+   "dateFiled": "2026-09-30",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10995892,
+   "docketNumber": "Civil Action No. 2024-3171",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "procedure for applying for an EB-5 visa.           <mark>Employment-Based</mark>\n\nImmigrants, 56 Fed. Reg. 60897, 60910–13"
+    }
+   ]
+  },
+  {
+   "caseName": "SAMPLOV, PAVEL v. BECHTEL NATIONAL INC.",
+   "dateFiled": "2026-09-29",
+   "court": "Tennessee Court of Workers' Compensation Claims",
+   "court_jurisdiction": "SS",
+   "cluster_id": 10993606,
+   "docketNumber": "2022-03-1217",
+   "citation": [
+    "2026 TN WC 130"
+   ],
+   "opinions": [
+    {
+     "snippet": "out of or in the course and\nscope of his <mark>employment. Based</mark> on the preponderance of the evidence, the"
+    }
+   ]
+  },
+  {
+   "caseName": "Mockbee v. Bondi",
+   "dateFiled": "2026-09-28",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10985211,
+   "docketNumber": "Civil Action No. 2025-2758",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "probationary period—the FBI terminated Mockbee’s\n\n<mark>employment based</mark> on what it claimed were conduct and performance"
+    }
+   ]
+  },
+  {
+   "caseName": "Testbelle v. District of Columbia",
+   "dateFiled": "2026-09-28",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10985005,
+   "docketNumber": "Civil Action No. 2025-2166",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "compensation, terms, conditions, or privileges of\n\n<mark>employment” based</mark> on “actual or perceived . . . disability.”"
+    }
+   ]
+  },
+  {
+   "caseName": "Arctic Swan Construction Inc.",
+   "dateFiled": "2026-09-22",
+   "court": "Armed Services Board of Contract Appeals",
+   "court_jurisdiction": "FS",
+   "cluster_id": 11035214,
+   "docketNumber": "64085",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "190,422. The absence of separate\nlines for <mark>labor, certification</mark>, connection, or disconnection did not prevent"
+    }
+   ]
+  },
+  {
+   "caseName": "A.S. v. Los Angeles Unified School Dist.",
+   "dateFiled": "2026-09-22",
+   "court": "California Court of Appeal",
+   "court_jurisdiction": "SA",
+   "cluster_id": 10979391,
+   "docketNumber": "B335692",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "checks for\nemployment purposes or to restrict <mark>employment based</mark> on criminal\nhistory from complying with those"
+    }
+   ]
+  },
+  {
+   "caseName": "I.G.I. v. Noem",
+   "dateFiled": "2026-09-22",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10979387,
+   "docketNumber": "Civil Action No. 2025-3898",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "1232(d)(4)(A), and preferential status for <mark>employment-based</mark> visas, see id. § 1153(b)(4). To\n\nmaintain"
+    }
+   ]
+  },
+  {
+   "caseName": "Fauxman v. Blanche",
+   "dateFiled": "2026-09-17",
+   "court": "Court of Appeals for the Second Circuit",
+   "court_jurisdiction": "F",
+   "cluster_id": 10975582,
+   "docketNumber": "25-304",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "submitted fraudulent applications in support of <mark>H-1B</mark> visa\napplications.” Certified Admin. Rec. (“CAR”)"
+    }
+   ]
+  },
+  {
+   "caseName": "Filler Quinto v. Mullin",
+   "dateFiled": "2026-09-14",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10973381,
+   "docketNumber": "Civil Action No. 2026-2364",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "approved for either of these waivers,\n\nthey can seek <mark>H-1B</mark> sponsorship and consequently remain in the United"
+    }
+   ]
+  }
+ ]
+}

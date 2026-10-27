@@ -25,10 +25,27 @@ notices ("Agency Information Collection Activities") unless the title names
 one of the forms the site is about, since a form revision is worth knowing
 and a generic burden estimate is not.
 
+PUBLIC INSPECTION (Oct 27 2026). The Office of the Federal Register files a
+document for public inspection the business day before it's published, and
+sometimes weeks before (a "special filing"). `--inspection` reads that list
+and keeps what the same rules keep, by title (the list has no abstract), so a
+filed rule, notice or presidential document reaches the page a day early. Each
+filed document is then followed: once its publication day passes, the
+Register's own record of it is read, and it becomes the published document,
+or, if the Register never published it, it's marked withdrawn. Nothing is
+cleared on the way (lib_policy_feed.py).
+
+PRESIDENTIAL DOCUMENTS (Oct 27 2026). Executive orders, proclamations and
+memoranda are filed by the Executive Office of the President, which the
+agency list had left out: the Sep 23 2026 H-1B proclamation and executive
+order never reached the page. They're kept now when the title names an
+immigration subject.
+
 HEALTH. The run stamps freshness only when the API answered and its newest
 document (any agency, unfiltered) is recent: a month of "0 matches" is a
 plausible outcome for a narrow topic and must not read as a dead feed, but a
-newest-document date that stops moving is one.
+newest-document date that stops moving is one. The public inspection list has
+its own row, dated by the list's own "regular filings updated" stamp.
 """
 from __future__ import annotations
 
@@ -39,12 +56,17 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_db import (  # noqa: E402
-    Database, add_missing_columns, et_today, query_rows, record_run, stamp_freshness,
+    Database, et_today, query_dicts, record_run, stamp_freshness,
+)
+from lib_policy_feed import (  # noqa: E402
+    EXTRA_COLUMNS, eastern_day, ensure_table, expire_policy_page, link_presidential,
+    mentions_immigration, record_quiet_run, topics_of, write_notices,
 )
 
 API = "https://www.federalregister.gov/api/v1/documents.json"
@@ -60,6 +82,12 @@ TOPICS: dict[str, str] = {
     "Adjustment of status": '"adjustment of status"',
     "Visa bulletin": '"visa bulletin"',
     "EB-5": "EB-5",
+    # Oct 27 2026: the site covers H-2A, H-2B and CW-1, and none of them was a
+    # term, so DOL's seasonal rules and wage notices never reached the page.
+    "H-2A": "H-2A",
+    "H-2B": "H-2B",
+    "CW-1": '"CW-1"',
+    "Premium processing": '"premium processing"',
 }
 
 # Forms whose paperwork notices are worth listing.
@@ -74,18 +102,20 @@ FIELDS = ["title", "type", "abstract", "document_number", "html_url",
           # where to file one, the citation, and the DATES paragraph verbatim
           # for the documents whose effective date is stated in words.
           "effective_on", "comments_close_on", "comment_url", "citation",
-          "action", "dates", "correction_of", "pdf_url"]
-
-# Columns added after the table already existed, so every write first adds
-# any the live table lacks. All nullable: the OFLC feed shares this table and
-# writes none of them.
-EXTRA_COLUMNS = {
-    "effective_on": "TEXT", "comments_close_on": "TEXT", "comment_url": "TEXT",
-    "citation": "TEXT", "action": "TEXT", "dates": "TEXT",
-    "correction_of": "TEXT", "pdf_url": "TEXT",
-}
+          "action", "dates", "correction_of", "pdf_url",
+          # A presidential document: "Proclamation", "Executive Order", and the day it was signed.
+          "subtype", "signing_date"]
 
 DATASET = "policy-notices"
+INSPECTION_DATASET = "policy-notices-pi"
+PUBLIC_INSPECTION = "https://www.federalregister.gov/api/v1/public-inspection-documents/current.json"
+DOCUMENT = "https://www.federalregister.gov/api/v1/documents/{number}.json"
+# Filings are made every business day; Friday's to Tuesday's after a Monday
+# holiday is four days, and a fifth covers the list's update landing late.
+INSPECTION_MAX_AGE_DAYS = 5
+# A filed document the Register hasn't published this many days after its
+# publication day was taken off public inspection.
+WITHDRAWN_AFTER_DAYS = 3
 # The Register publishes every business day; a newest document older than
 # this means the API, not the topics, has gone quiet.
 MAX_AGE_DAYS = 5
@@ -128,6 +158,16 @@ AGENCIES_OF_INTEREST = (
     "State Department",
     "Employment and Training Administration",
     "Labor Department",
+    # Executive orders, proclamations and memoranda (Oct 27 2026). Kept only
+    # when the title or abstract names an immigration subject (keep()).
+    "Executive Office of the President",
+)
+# Agencies whose documents matching a topic term are immigration documents.
+IMMIGRATION_AGENCIES = (
+    "U.S. Citizenship and Immigration Services",
+    "Homeland Security Department",
+    "State Department",
+    "Employment and Training Administration",
 )
 
 # Omnibus listings that match every term and say nothing specific.
@@ -149,6 +189,15 @@ def keep(doc: dict) -> bool:
     agencies = doc.get("agencies") or []
     if not any(a in AGENCIES_OF_INTEREST for a in agencies):
         return False
+    # The President and the Labor Department as a whole write on every subject:
+    # a holiday proclamation shares the President with the H-1B one, and an
+    # employee-benefits rule that says "prevailing wage" ("Transparency in
+    # Coverage", Oct 6 2026) shares DOL with a labor certification rule. Without
+    # an immigration agency beside them, the title or abstract must name an
+    # immigration subject.
+    if not any(a in IMMIGRATION_AGENCIES for a in agencies):
+        if not mentions_immigration(title, doc.get("abstract")):
+            return False
     if OMNIBUS.search(title):
         return False
     if PERSONNEL.search(title):
@@ -187,7 +236,9 @@ def shape(d: dict) -> dict:
         "dates": opt("dates"),
         "correction_of": parent.rstrip("/").rsplit("/", 1)[-1] if parent else None,
         "pdf_url": opt("pdf_url"),
-    }
+        "signing_date": opt("signing_date"),
+        "status": "published",
+    } | ({"action": opt("subtype")} if not opt("action") and opt("subtype") else {})
 
 
 def collect(days: int) -> tuple[list[dict], str | None]:
@@ -219,70 +270,172 @@ def collect(days: int) -> tuple[list[dict], str | None]:
     return kept, newest
 
 
-DDL = [
-    """CREATE TABLE IF NOT EXISTS policy_notices (
-        document_number TEXT PRIMARY KEY,
-        publication_date TEXT NOT NULL,
-        type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        abstract TEXT,
-        html_url TEXT NOT NULL,
-        agencies TEXT NOT NULL,
-        topics TEXT NOT NULL,
-        fetched_at INTEGER NOT NULL)""",
-    "CREATE INDEX IF NOT EXISTS policy_notices_date ON policy_notices (publication_date DESC)",
-]
-
-
 EXTRA_NAMES = list(EXTRA_COLUMNS)
 
 
-def signature(r: dict) -> tuple:
-    """What a row is compared on. A changed effective date or a new
-    correction is a change worth writing, not only a changed title."""
-    return (r["title"], r["abstract"], json.dumps(r["topics"])) + tuple(r.get(n) for n in EXTRA_NAMES)
-
-
 def write(db: Database, rows: list[dict]) -> int:
-    """Upsert, writing only rows that are new or changed."""
-    db.script(DDL)
-    added = add_missing_columns(db, "policy_notices", EXTRA_COLUMNS)
-    if added:
-        log(f"  added columns: {', '.join(added)}")
-    have = {r[0]: tuple(r[1:]) for r in query_rows(
-        db, "SELECT document_number, title, abstract, topics, " + ", ".join(EXTRA_NAMES) + " FROM policy_notices")}
-    now = int(time.time() * 1000)
-    written = 0
-    cols = ["document_number", "publication_date", "type", "title", "abstract", "html_url",
-            "agencies", "topics", "fetched_at"] + EXTRA_NAMES
-    for r in rows:
-        if have.get(r["document_number"]) == signature(r):
+    """Published Register documents, through the one writer every source uses."""
+    return write_notices(db, rows, source="federal-register").written
+
+
+def presidential(days: int) -> list[dict]:
+    """Presidential documents on an immigration subject that no topic term
+    matched (a proclamation suspending entry names no form). The term search
+    already catches the ones that name H-1B or a labor certification."""
+    since = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+    params = [("per_page", "200"), ("order", "newest"), ("conditions[publication_date][gte]", since),
+              ("conditions[type][]", "PRESDOCU")] + [("fields[]", f) for f in FIELDS]
+    res = fetch_json(API + "?" + urllib.parse.urlencode(params))
+    out = []
+    for d in res.get("results", []):
+        row = shape(d)
+        if row["document_number"] and keep(row):
+            row["topics"] = topics_of(row["title"], row["abstract"])
+            out.append(row)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Public inspection
+# ---------------------------------------------------------------------------
+
+def inspection_rows(listing: dict) -> list[dict]:
+    """Today's public inspection filings, kept by the same rules as a published
+    document, judged on the title alone (the list carries no abstract). An
+    agency that writes on more than immigration (DHS, State, DOL) must name an
+    immigration subject; USCIS's are all kept. A filing withdrawn after
+    placement has no filing time and is skipped. Pure, so a test can drive it."""
+    out = []
+    for r in listing.get("results") or []:
+        num = r.get("document_number")
+        if not num or not r.get("filed_at"):
             continue
-        db.execute(
-            f"INSERT OR REPLACE INTO policy_notices ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
-            [r["document_number"], r["publication_date"], r["type"], r["title"], r["abstract"],
-             r["html_url"], json.dumps(r["agencies"]), json.dumps(r["topics"]), now]
-            + [r.get(n) for n in EXTRA_NAMES])
-        written += 1
-    return written
+        agencies = [a.get("name") for a in (r.get("agencies") or []) if isinstance(a, dict) and a.get("name")]
+        agencies = agencies or [a for a in (r.get("agency_names") or []) if isinstance(a, str)]
+        title = " ".join((r.get("title") or "").split())
+        if not title:
+            continue
+        doc = {"title": title, "agencies": agencies, "abstract": ""}
+        if not keep(doc):
+            continue
+        uscis = "U.S. Citizenship and Immigration Services" in agencies
+        if not uscis and not mentions_immigration(title, r.get("toc_subject"), r.get("toc_doc")):
+            continue
+        scheduled = r.get("publication_date")
+        out.append({
+            "document_number": num,
+            "publication_date": scheduled if isinstance(scheduled, str) and scheduled else eastern_day(r.get("filed_at")),
+            "type": r.get("type") or "Notice",
+            "title": title,
+            "abstract": None,
+            "html_url": r.get("html_url") or f"https://www.federalregister.gov/public-inspection/{num}",
+            "agencies": agencies,
+            "topics": topics_of(title, r.get("toc_subject"), r.get("toc_doc")),
+            "pdf_url": r.get("pdf_url"),
+            "pi_filed": eastern_day(r.get("filed_at")),
+            "status": "public-inspection",
+        })
+    return out
+
+
+def read_inspection() -> tuple[list[dict], str | None, str | None]:
+    """(rows kept, the list's own regular-filings day, a warning or None).
+    A list that doesn't answer is a warning, never a crash: its freshness row
+    is the alarm, and the next run reads it again."""
+    try:
+        listing = fetch_json(PUBLIC_INSPECTION)
+    except Exception as exc:  # noqa: BLE001
+        return [], None, f"public inspection unread ({type(exc).__name__})"
+    if not isinstance(listing.get("results"), list):
+        return [], None, "public inspection answered without a results list"
+    stamp = eastern_day(listing.get("regular_filings_updated_at"))
+    return inspection_rows(listing), stamp, None
+
+
+def follow_filed(db: Database, today: str) -> tuple[int, int, list[str]]:
+    """Every document still on public inspection whose publication day has
+    come: read the Register's record of it. Published: the full document is
+    written. Not there WITHDRAWN_AFTER_DAYS after its day: marked withdrawn.
+    Returns (published, withdrawn, problems)."""
+    ensure_table(db)
+    filed = query_dicts(db, "SELECT document_number, publication_date, type, title, html_url, agencies FROM policy_notices "
+                            "WHERE status = 'public-inspection' AND publication_date <= ?", [today])
+    published: list[dict] = []
+    withdrawn: list[dict] = []
+    problems: list[str] = []
+    for f in filed:
+        num = f["document_number"]
+        url = DOCUMENT.format(number=urllib.parse.quote(num)) + "?" + urllib.parse.urlencode([("fields[]", x) for x in FIELDS])
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                d = json.load(r)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                age = (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(f["publication_date"])).days
+                if age >= WITHDRAWN_AFTER_DAYS:
+                    withdrawn.append({**f, "agencies": json.loads(f["agencies"] or "[]"), "topics": [],
+                                      "status": "withdrawn"})
+                continue
+            problems.append(f"{num}: HTTP {e.code}")
+            continue
+        except Exception as exc:  # noqa: BLE001
+            problems.append(f"{num}: {type(exc).__name__}")
+            continue
+        if d.get("document_number") == num and d.get("publication_date"):
+            row = shape(d)
+            row["topics"] = topics_of(row["title"], row["abstract"])
+            published.append(row)
+        time.sleep(0.3)
+    if published:
+        write_notices(db, published, source="federal-register")
+    if withdrawn:
+        write_notices(db, withdrawn, source="public-inspection")
+    return len(published), len(withdrawn), problems
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--days", type=int, default=180)
+    ap.add_argument("--inspection", action="store_true",
+                    help="also read today's public inspection list and follow every filed document")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+    started = time.time()
     log(f"Federal Register, last {args.days} days, {len(TOPICS)} topics")
     rows, newest = collect(args.days)
+    have = {r["document_number"] for r in rows}
+    pres = [r for r in presidential(args.days) if r["document_number"] not in have]
+    rows += pres
+    log(f"  {len(pres)} more presidential documents on an immigration subject")
     for r in rows[:8]:
         log(f"  {r['publication_date']}  {r['type']:14s} {', '.join(r['topics'])}: {r['title'][:80]}")
+    filed: list[dict] = []
+    filed_day = warning = None
+    if args.inspection:
+        filed, filed_day, warning = read_inspection()
+        if warning:
+            log(f"::warning::{warning}")
+        log(f"  {len(filed)} kept on today's public inspection list (regular filings of {filed_day})")
+        for r in filed[:8]:
+            log(f"    filed {r['pi_filed']}, publishes {r['publication_date']}: {r['type']}: {r['title'][:80]}")
     if args.dry_run:
         log("DRY RUN, nothing written")
         return 0
     db = Database()
+    ensure_table(db)
+    today = et_today()
     written = write(db, rows)
+    pi = write_notices(db, filed, source="public-inspection") if filed else None
+    published, withdrawn, problems = follow_filed(db, today) if args.inspection else (0, 0, [])
+    linked = link_presidential(db)
     held = int(db.scalar("SELECT count(*) FROM policy_notices") or 0)
-    log(f"  wrote {written} new or changed rows; {held} held")
+    changed = written + (pi.written if pi else 0) + published + withdrawn + linked
+    log(f"  wrote {written} published, {pi.written if pi else 0} filed for public inspection "
+        f"({len(pi.new) if pi else 0} new), {published} filed then published, {withdrawn} withdrawn, "
+        f"{linked} White House actions linked; {held} held")
+    for p in problems:
+        log(f"::warning::following a filed document: {p}")
     # Freshness is the Register's own clock, not ours: `as_of` is the newest
     # document it holds, so a feed that keeps running against a stalled API
     # goes stale on the health check instead of looking alive. Never past
@@ -290,10 +443,28 @@ def main() -> int:
     # the pages printed "data through" tomorrow's date (Oct 18 2026).
     if newest:
         stamp_freshness(db, DATASET, source="federalregister.gov API",
-                        cadence="Daily", note=f"{held} notices held; newest Register document {newest}",
-                        max_age_days=MAX_AGE_DAYS, as_of=min(newest, et_today()))
-    record_run(db, "ingest_policy_notices.py", status="ok", rows_written=written,
-               note=f"{len(rows)} in window, newest {newest}")
+                        cadence="Every 30 minutes", note=f"{held} notices held; newest Register document {newest}",
+                        max_age_days=MAX_AGE_DAYS, as_of=min(newest, today))
+    if args.inspection and filed_day:
+        stamp_freshness(db, INSPECTION_DATASET, source="federalregister.gov public inspection API",
+                        cadence="Every 30 minutes",
+                        note=f"{len(filed)} kept from the list of {filed_day}",
+                        max_age_days=INSPECTION_MAX_AGE_DAYS, as_of=min(filed_day, today))
+    refreshed = expire_policy_page(log) if changed else None
+    notes = [f"{len(rows)} in window, newest {newest}"]
+    if args.inspection:
+        notes.append(f"{len(filed)} on public inspection, {published} published, {withdrawn} withdrawn")
+    if warning:
+        notes.append(warning)
+    if problems:
+        notes.append(f"{len(problems)} filed documents unread")
+    if refreshed is False:
+        notes.append("the page refresh call failed")
+    note = "; ".join(notes)
+    if changed == 0 and not warning and not problems:
+        record_quiet_run(db, "ingest_policy_notices.py", written=0, note=note, started_at=started)
+    else:
+        record_run(db, "ingest_policy_notices.py", status="ok", rows_written=changed, note=note, started_at=started)
     return 0
 
 

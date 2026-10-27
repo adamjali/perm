@@ -1,0 +1,11 @@
+{
+  "_note": "Congress's printed bill numbers from the policy feed's document numbers. Read by scripts/test_newsworthy.py and src/components/policy/__tests__/DocRow.test.tsx so the two copies agree.",
+  "cases": {
+    "bill-119-hr-2315": "H.R. 2315",
+    "bill-119-s-2886": "S. 2886",
+    "bill-119-hjres-12": "H.J.Res. 12",
+    "bill-119-sjres-3": "S.J.Res. 3",
+    "bill-119-sres-1": null,
+    "2026-18631": null
+  }
+}

@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   assignBarLanes,
   assignLanes,
+  awaitsRegister,
+  BALCA_TYPE,
+  BILL_TYPE,
   buildFeed,
+  COURT_TYPE,
   buildStrip,
   commentWindow,
   daysBetween,
@@ -31,6 +35,11 @@ function n(over: Partial<PolicyNotice> & { documentNumber: string; publicationDa
     dates: null,
     correctionOf: null,
     pdfUrl: null,
+    source: null,
+    status: null,
+    piFiled: null,
+    signingDate: null,
+    supersededBy: null,
     ...over,
   };
 }
@@ -70,16 +79,50 @@ describe("foldCorrections", () => {
 });
 
 describe("buildFeed", () => {
-  it("lists OFLC announcements on this site's programs and COUNTS the rest", () => {
-    const feed = buildFeed([
-      n({ documentNumber: "oflc-1", publicationDate: "2026-08-14", type: "OFLC announcement", topics: ["perm", "disclosure-data"] }),
-      n({ documentNumber: "oflc-2", publicationDate: "2026-08-10", type: "OFLC announcement", topics: ["h-2b"] }),
-      n({ documentNumber: "oflc-3", publicationDate: "2026-08-09", type: "OFLC announcement", topics: [] }),
-      n({ documentNumber: "2026-1", publicationDate: "2026-08-01" }),
-    ]);
-    expect(feed.oflc.map((d) => d.documentNumber)).toEqual(["oflc-1"]);
-    expect(feed.oflcOther).toBe(2);
-    expect(feed.register.map((d) => d.documentNumber)).toEqual(["2026-1"]);
+  const feed = buildFeed([
+    n({ documentNumber: "oflc-1", publicationDate: "2026-08-14", type: "OFLC announcement", topics: ["perm"] }),
+    n({ documentNumber: "oflc-2", publicationDate: "2026-08-10", type: "OFLC announcement", topics: ["h-2b"] }),
+    n({ documentNumber: "uscis-1", publicationDate: "2026-08-12", type: "USCIS announcement", source: "uscis-news" }),
+    n({ documentNumber: "2026-1", publicationDate: "2026-08-01", status: "published" }),
+    n({ documentNumber: "2026-2", publicationDate: "2026-08-20", status: "public-inspection", piFiled: "2026-08-19" }),
+    n({ documentNumber: "2026-3", publicationDate: "2026-08-02", status: "withdrawn" }),
+    n({ documentNumber: "wh-a", publicationDate: "2026-08-18", type: "Presidential action", source: "white-house" }),
+    n({ documentNumber: "wh-b", publicationDate: "2026-07-01", type: "Presidential action", supersededBy: "2026-9" }),
+    n({ documentNumber: "2026-9", publicationDate: "2026-07-03", type: "Presidential Document", status: "published" }),
+  ]);
+
+  it("lists every agency announcement, H-2B included, newest first", () => {
+    expect(feed.announcements.map((d) => d.documentNumber)).toEqual(["oflc-1", "uscis-1", "oflc-2"]);
+  });
+
+  it("puts a filed document under coming next, never in the Register list", () => {
+    expect(feed.filed.map((d) => d.documentNumber)).toEqual(["2026-2"]);
+    expect(feed.register.map((d) => d.documentNumber)).not.toContain("2026-2");
+  });
+
+  it("lists a White House action until the Register publishes it, then only the Register's", () => {
+    expect(feed.signed.map((d) => d.documentNumber)).toEqual(["wh-a"]);
+    expect(feed.register.map((d) => d.documentNumber)).toEqual(["2026-3", "2026-1", "2026-9"]);
+  });
+
+  it("moves an unmatched White House action to the announcements once its wait is over", () => {
+    const rows = [
+      n({ documentNumber: "wh-new", publicationDate: "2026-09-10", type: "Presidential action", source: "white-house" }),
+      n({ documentNumber: "wh-old", publicationDate: "2026-08-01", type: "Presidential action", source: "white-house" }),
+    ];
+    // Sep 24 is exactly SIGNED_WAIT_DAYS after Sep 10: still waiting on that day, not after it.
+    const onTheDay = buildFeed(rows, "2026-09-24");
+    expect(onTheDay.signed.map((d) => d.documentNumber)).toEqual(["wh-new"]);
+    expect(onTheDay.announcements.map((d) => d.documentNumber)).toEqual(["wh-old"]);
+    const after = buildFeed(rows, "2026-09-25");
+    expect(after.signed).toEqual([]);
+    expect(after.announcements.map((d) => d.documentNumber)).toEqual(["wh-new", "wh-old"]);
+    expect(awaitsRegister(rows[0]!, "2026-09-24")).toBe(true);
+    expect(awaitsRegister(rows[0]!, "2026-09-25")).toBe(false);
+  });
+
+  it("keeps a withdrawn filing in the record but off the ledger's counts", () => {
+    expect(feedLedger(feed, TODAY)).toMatchObject({ rules: 1, presidential: 1, coming: 2, announcements: 3 });
   });
 });
 
@@ -115,8 +158,8 @@ describe("feedLedger", () => {
       n({ documentNumber: "o0", publicationDate: "2019-01-04", type: "OFLC announcement", topics: ["perm"] }),
     ]);
     expect(feedLedger(feed, TODAY)).toEqual({
-      rules: 1, proposed: 2, proposedOpen: 1, notices: 1, oflc: 2,
-      oflcSince: "2019-01-04", earliest: "2026-03-27", newest: "2026-09-11",
+      rules: 1, proposed: 2, proposedOpen: 1, notices: 1, presidential: 0, coming: 0, announcements: 2,
+      announcementsSince: "2019-01-04", bills: 0, decisions: 0, earliest: "2026-03-27", newest: "2026-09-11",
     });
   });
 });
@@ -144,7 +187,7 @@ describe("buildStrip", () => {
   });
 
   it("places every mark and every bar inside the padded box", () => {
-    for (const m of [...strip.register, ...strip.oflc]) {
+    for (const m of [...strip.register, ...strip.announcements]) {
       expect(m.x).toBeGreaterThanOrEqual(STRIP_PAD);
       expect(m.x).toBeLessThanOrEqual(STRIP_W - STRIP_PAD);
       if (m.bar) {
@@ -166,8 +209,8 @@ describe("buildStrip", () => {
   it("leaves documents older than the strip out of the drawing and counts them", () => {
     expect(strip.register.map((m) => m.documentNumber)).not.toContain("old");
     expect(strip.earlierRegister).toBe(1);
-    expect(strip.earlierOflc).toBe(1);
-    expect(strip.oflc.map((m) => m.documentNumber)).toEqual(["o1"]);
+    expect(strip.earlierAnnouncements).toBe(1);
+    expect(strip.announcements.map((m) => m.documentNumber)).toEqual(["o1"]);
   });
 });
 
@@ -192,5 +235,35 @@ describe("assignBarLanes", () => {
       { bar: { x0: 380, x1: 450 } },   // overlaps both -> lane 2
     ];
     expect(assignBarLanes(bars).map((b) => b.barLane)).toEqual([0, 1, 0, 0, 2]);
+  });
+});
+
+describe("bills in Congress", () => {
+  it("get their own list, newest latest action first, and stay out of the Register's", () => {
+    const old = n({ documentNumber: "bill-119-hr-2315", publicationDate: "2025-03-25", type: BILL_TYPE, dates: "2026-10-22", source: "congress" });
+    const fresh = n({ documentNumber: "bill-119-s-2886", publicationDate: "2026-09-01", type: BILL_TYPE, dates: "2026-09-02", source: "congress" });
+    const rule = n({ documentNumber: "2026-1", publicationDate: "2026-09-10" });
+    const feed = buildFeed([fresh, rule, old], TODAY);
+    // Introduced in 2025, moved this month: it leads.
+    expect(feed.bills.map((d) => d.documentNumber)).toEqual(["bill-119-hr-2315", "bill-119-s-2886"]);
+    expect(feed.register.map((d) => d.documentNumber)).toEqual(["2026-1"]);
+    expect(feed.announcements).toEqual([]);
+    expect(feedLedger(feed, TODAY).bills).toBe(2);
+    // A bill is never a mark on the Register's strip.
+    expect(buildStrip(feed, TODAY).register.map((m) => m.documentNumber)).toEqual(["2026-1"]);
+  });
+});
+
+describe("court and BALCA decisions", () => {
+  it("get their own list, newest first, and never reach the Register's list or the strip", () => {
+    const court = n({ documentNumber: "cl-1", publicationDate: "2026-09-10", type: COURT_TYPE, source: "courtlistener" });
+    const enBanc = n({ documentNumber: "balca-1", publicationDate: "2010-03-02", type: BALCA_TYPE, source: "balca" });
+    const rule = n({ documentNumber: "2026-1", publicationDate: "2026-09-10" });
+    const feed = buildFeed([enBanc, rule, court], TODAY);
+    expect(feed.decisions.map((d) => d.documentNumber)).toEqual(["cl-1", "balca-1"]);
+    expect(feed.register.map((d) => d.documentNumber)).toEqual(["2026-1"]);
+    expect(feed.announcements).toEqual([]);
+    expect(feedLedger(feed, TODAY).decisions).toBe(2);
+    expect(buildStrip(feed, TODAY).register.map((m) => m.documentNumber)).toEqual(["2026-1"]);
   });
 });

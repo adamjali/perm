@@ -61,7 +61,7 @@ describe("POST /api/revalidate-policy", () => {
     const readers = walk(appDir)
       .filter((f) => {
         const src = readFileSync(f, "utf8");
-        return /db\/rulePipeline/.test(src) && /export const revalidate\s*=/.test(src);
+        return /db\/(rulePipeline|policyNotices)/.test(src) && /export const revalidate\s*=/.test(src);
       })
       .map(routeOf);
     // Control: the known reader must be found, or the check passes over nothing.

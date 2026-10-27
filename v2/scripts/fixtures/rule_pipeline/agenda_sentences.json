@@ -1,0 +1,113 @@
+{
+ "_about": "An agenda step (kind 'agenda'), worded by convex/lib/ruleSteps.ts (stepSentence); a Python wording of the same step (scripts/lib_newsworthy.py) can read the same cases. The event's detail is what scripts/ingest_rule_pipeline.py writes (agenda_detail): the edition and its next step as printed. The sentence never claims a date: the agenda 'lists' the agency's own timetable.",
+ "cases": [
+  {
+   "rule": {
+    "rin": "1205-AC29",
+    "title": "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program (NPRM)"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"NPRM\",\"date\":\"07/00/2026\",\"edition\":\"2026\",\"stage\":\"Proposed Rule Stage\"}"
+   },
+   "sentence": "DOL's 2026 Unified Agenda lists the proposal \"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" for July 2026."
+  },
+  {
+   "rule": {
+    "rin": "1615-AC67",
+    "title": "Procedures for Credible Fear Screening and Consideration of Asylum"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"Interim Final Rule\",\"date\":\"09/00/2026\",\"edition\":\"2026\",\"stage\":\"Final Rule Stage\"}"
+   },
+   "sentence": "USCIS's 2026 Unified Agenda lists an interim final rule \"Procedures for Credible Fear Screening and Consideration of Asylum\" for September 2026."
+  },
+  {
+   "rule": {
+    "rin": "1615-AD14",
+    "title": "Removing H-4 Dependent Spouses From the Classes of Noncitizens Eligible for Employment Authorization"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"NPRM\",\"date\":\"To Be Determined\",\"edition\":\"2026\",\"stage\":\"Long-Term Actions\"}"
+   },
+   "sentence": "USCIS's 2026 Unified Agenda lists the proposal \"Removing H-4 Dependent Spouses From the Classes of Noncitizens Eligible for Employment Authorization\", with the date to be determined."
+  },
+  {
+   "rule": {
+    "rin": "1651-AB37",
+    "title": "Guam-Commonwealth of the Northern Mariana Islands (CNMI) Visa Waiver Program"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"Next Action Undetermined\",\"date\":\"To Be Determined\",\"edition\":\"2026\",\"stage\":\"Long-Term Actions\"}"
+   },
+   "sentence": "CBP's 2026 Unified Agenda lists \"Guam-Commonwealth of the Northern Mariana Islands (CNMI) Visa Waiver Program\" with its next action undetermined."
+  },
+  {
+   "rule": {
+    "rin": "1615-AD02",
+    "title": "Improving Continuity for Religious Organizations and their Employees"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":null,\"date\":null,\"edition\":\"2026\",\"stage\":\"Final Rule Stage\"}"
+   },
+   "sentence": "USCIS's 2026 Unified Agenda lists \"Improving Continuity for Religious Organizations and their Employees\" at the final rule stage, with no next action."
+  },
+  {
+   "rule": {
+    "rin": "1400-AG33",
+    "title": "Visas: Visa Bond Program"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"Final Action\",\"date\":\"08/00/2026\",\"edition\":\"2026\",\"stage\":\"Final Rule Stage\"}"
+   },
+   "sentence": "The State Department's 2026 Unified Agenda lists the final rule \"Visas: Visa Bond Program\" for August 2026."
+  },
+  {
+   "rule": {
+    "rin": "1653-AA97",
+    "title": "Practical Training"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"NPRM\",\"date\":\"02/15/2027\",\"edition\":\"Spring 2027\",\"stage\":\"Proposed Rule Stage\"}"
+   },
+   "sentence": "ICE's Spring 2027 Unified Agenda lists the proposal \"Practical Training\" for Feb 15, 2027."
+  },
+  {
+   "rule": {
+    "rin": "1400-AF23",
+    "title": "Exchange Visitor Rules: Records"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":\"Notice\",\"date\":\"10/00/2026\",\"edition\":\"2026\",\"stage\":\"Proposed Rule Stage\"}"
+   },
+   "sentence": "The State Department's 2026 Unified Agenda lists \"Exchange Visitor Rules: Records\" with its next action, \"Notice\", for October 2026."
+  },
+  {
+   "rule": {
+    "rin": "1615-AC85",
+    "title": "Petition for Immigrant Worker Reforms"
+   },
+   "event": {
+    "kind": "agenda",
+    "onDate": "2026-07-03",
+    "detail": "{\"action\":null,\"date\":null,\"edition\":\"2026\",\"stage\":\"Completed Actions\"}"
+   },
+   "sentence": "USCIS's 2026 Unified Agenda lists \"Petition for Immigrant Worker Reforms\" as completed, with no next action."
+  }
+ ]
+}

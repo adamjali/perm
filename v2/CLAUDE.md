@@ -10516,3 +10516,135 @@ prints one word and discards the Convex call's output. Python and TypeScript wor
 mock.mockReset())` returns the mock and vitest calls it as cleanup, so a rejecting mock fired after the test as an
 unhandled rejection that `vitest.setup.convex.ts` rethrows. The app's database client is HTTP-only (`file:` URLs
 refused), so a local QA render used a small Hrana-over-HTTP shim on a SQLite copy.
+
+## Oct 27 2026 (morning): every policy source, first
+
+Owner, Oct 27 2026, about 9:08 AM EDT: "we should always be first for everything and auto and such auto self
+updating healing robust fallbacks any and all edge cases no silent issues". He had asked first whether the rule
+watch was "all sources". It wasn't, and neither was the policy feed before it.
+
+**What was missing, measured that morning.**
+- **Presidential documents.** The Register feed's agency list left out the Executive Office of the President, so the
+  Sep 23 2026 H-1B proclamation and executive order never reached the page. The White House had posted them on
+  Fri Sep 18, five days before the Register.
+- **Public inspection, for anything but a tracked rule.** A notice, a temporary final rule (an H-2B cap increase) or
+  a presidential document is filed the business day before it publishes. Only rules followed by RIN were read there.
+- **The seasonal programs.** None of the feed's seven search terms was H-2A, H-2B or CW-1. OFLC's H-2A, H-2B and
+  CW-1 announcements were counted and not listed.
+- **The newsworthy check never saw a new document or announcement.** It read only rule steps, DOL's months, the
+  bulletin, employer moves and decision days.
+- **A failed read showed an empty feed** (`listPolicyNotices` caught everything into `[]`).
+- **Two writers used `INSERT OR REPLACE`.** That deletes the row first, so a source that knew fewer columns wiped
+  the others.
+
+**One writer** (`scripts/lib_policy_feed.py`, tested in `scripts/test_policy_feed.py`): every source writes
+`policy_notices` through `write_notices`.
+- A fact is never cleared: an empty incoming column keeps the stored one.
+- `first_seen_at` is set once. `fetched_at` moves only when a row changed.
+- A status only moves forward: public inspection, then withdrawn or published.
+- Topics are a union. A row is written only when it changed.
+- New columns: `first_seen_at`, `source`, `status`, `pi_filed`, `signing_date`, `superseded_by`.
+- `POLICY_DATASETS` lists every source's freshness row. The health check warns on one that never loaded
+  (`check_policy_sources`), and the test holds the page and `datasetCoverage.ts` to the list.
+- `record_quiet_run` writes an "ok, nothing new" run row at most every 3 hours. `expire_policy_page` POSTs
+  `/api/revalidate-policy` after a write.
+
+| source | reader | runs |
+|---|---|---|
+| Federal Register, published (11 terms: + H-2A, H-2B, CW-1, premium processing) and presidential documents | `ingest_policy_notices.py` | server every 30 min (`--days 3 --inspection`); GitHub daily, 180 days |
+| its public inspection list, every kept document, followed until published or withdrawn | the same, `--inspection` | server every 30 min |
+| White House presidential actions (RSS, full text) | `ingest_white_house.py` | server every 30 min |
+| OIRA, public inspection and the Register by RIN, plus the Unified Agenda | `ingest_rule_pipeline.py` | server every 30 min; GitHub daily and 9 AM / 5 PM weekdays |
+| USCIS newsroom and Policy Manual updates | `ingest_uscis_news.py` | server every 30 min |
+| State Department visa news | `ingest_state_news.py` | server every 30 min |
+| regulations.gov comment counts on open proposals | `ingest_regulations_gov.py` | server every 30 min with the key |
+| bills in Congress | `ingest_congress_bills.py` | server every 30 min with the key |
+| DOL's newsroom, OFLC announcements | `ingest_dol_news.py`, `ingest_oflc_news.py` | GitHub every weekday hour and daily (www.dol.gov refuses the server) |
+| federal court opinions (CourtListener's search API, keyless) | `ingest_court_opinions.py` | server, at most once every 3 hours; Sundays 3 AM a five-page walk |
+| BALCA's decisions (OALJ's caselists, found from its immigration library) | `ingest_balca.py` | GitHub daily (www.dol.gov refuses the server) |
+
+**Keep rules.**
+- DOL documents from outside ETA, and the President's, must name an immigration subject (`mentions_immigration`).
+  An employee-benefits rule that says "prevailing wage" ("Transparency in Coverage", Oct 6 2026) had been listed.
+- A White House action is kept when its title names immigration, or its text names a work-visa subject at least 3
+  times (`BODY_MIN`). The Labor Day proclamation names H-1B once, and sanctions orders carry an "entry of aliens"
+  sentence.
+- A public inspection filing is judged on its title, because the list has no abstract.
+- A bill is kept by its title alone. Congress's subjects arrive days or weeks after a bill is introduced.
+
+**Courts and BALCA** (`scripts/lib_case_captions.py`, types `Court opinion` and `BALCA decision`).
+- **A person named in a caption is shown by initials** ("E. v. U.S. Department of State"). Agencies, organizations
+  (a marker word such as LLC or University) and officials are kept as printed. A caption the rule can't settle is
+  held in `policy_held` and shown nowhere until it's ruled on (`--held`, `--release DOC --as person|organization`).
+  An abstract with an unknown capitalised word left after redaction is dropped and the row kept. A BALCA decision's
+  PDF is linked only when every name in its file name is DOL's or the employer's.
+- **Courts:** eleven phrases, newest first, 120 days back; federal courts only, no criminal case, no petition for
+  review of a removal order, and the phrase must sit in the passage that matched. CourtListener's search took 42 to
+  116 seconds an answer on Oct 27 2026, so the read timeout is 180 seconds and a timeout is a warning. Of 40 results
+  that day, 13 were kept.
+- **BALCA:** OALJ lists every en banc PERM decision (back to 2006), and prevailing wage, H-2A and H-2B appeals from
+  FY2025. It keeps no list of ordinary three-judge PERM decisions. www.oalj.dol.gov's robots.txt asks robots off, so
+  its pages are linked, never read. On the fixtures 7 of 191 captions were held.
+- **On the page** they're "From the courts and BALCA": the newest six as rows, the rest folded by year. The digest
+  lists at most three a week, chosen by when this site first held them (OALJ posts weeks late) and decided in the
+  last 120 days, so a first load can't fill an issue.
+
+**One document once.** A White House row links to the Register's presidential document by signing week and the same
+title, or the nearest title at 75% word overlap (`link_presidential`). The White House's title for the Sep 18
+executive order repeats "Integrity and"; the Register's doesn't. **An unmatched action waits 14 days**
+(`SIGNED_WAIT_DAYS` in `src/lib/policyFeed.ts`), then moves from "Coming next" to the agencies' list. Many memoranda
+are never printed, and without the wait one would read "not yet in the Federal Register" forever.
+
+**Following a filing.** Once its publication day comes, the reader checks the Register's record. Published, it's written
+in full and keeps its filing day. Not there 3 days after its day, it's marked withdrawn.
+
+**State Department visa news.** travel.state.gov answers 403. adoption.state.gov serves its newsroom as JSON at
+`/en/newsroom/_jcr_content/root/container-main/container-content/newsroom.results.json` (the newest 10, no paging).
+Some of its servers still run the old site and answer 404 there, so the reader retries. An item is kept on its Visas
+tag plus the page's text. Nothing is defeated.
+
+**api.data.gov (regulations.gov and congress.gov).** One key, `DATA_GOV_API_KEY` in the server's `uscis.env`, set
+Oct 27 2026 at 10:19 AM EDT. Adam signed up as the persona and the key arrived in the press mailbox's Notification
+folder; it was moved by a script that never printed it. The limit with the key is 1,000 an hour; DEMO_KEY allows 10.
+Without the key both readers run only at 7:07 AM and 5:07 PM Eastern, and `check_data_gov_key` warns.
+- **Comment counts** (`policy_comment_counts`, `src/lib/db/policyComments.ts`): `meta.totalElements` of the
+  document's comments, which is comments POSTED. An agency posts after screening, so the count trails what people
+  sent. The Federal Register's copy (`regulations_dot_gov_info.comments_count`) fills a rule only until
+  regulations.gov answers; on Oct 27 it read 26,704 against regulations.gov's 26,697. The count shows only while
+  comments are open.
+- **Bills** (type `Bill`, source `congress`, `bill-<congress>-<type>-<number>`). `publication_date` is the day a bill
+  was introduced; `dates` holds its latest action's day and `action` the text. The page lists them under "In
+  Congress", newest action first. The digest and the evening check date a bill by its latest action. The evening
+  check reports a bill when its row was rewritten in the window (`fetched_at`) and the action is dated in the last
+  week, so a backfill's old actions stay quiet. Congress's printed number ("H.R. 2315", missing from congress.gov's
+  titles) comes from `convex/lib/billNumber.ts` and `lib_newsworthy.bill_number`, held together by
+  `scripts/fixtures/bill_numbers.json`.
+
+**The page** (`/policy-changes`).
+- **The rule pipeline gives full cards only to rules under way** (`isActiveRule` in `convex/lib/ruleSteps.ts`): at
+  OIRA, on public inspection and unpublished, open for comment, a final rule not yet in effect, or a step OIRA or the
+  Register dated in the last 90 days. The agenda's listing doesn't count: an edition relists rules nothing happened
+  to. The rest fold under two counts ("No step in the last 90 days" and "Listed in the agenda, not yet at OIRA"), and
+  every row stays in the page. Measured on a copy of production: 23 cards (about 10,000 px) became 8 cards and two
+  folds (3,710 px).
+- **Sections:** "Coming next" (filed and signed, not yet published), the Register list with presidential documents
+  (orange), "From the agencies" (every announcement, each naming its agency), "From the courts and BALCA", and
+  "In Congress".
+- Announcement links in the yearly folds are 44px rows (they were 26px over 847 items).
+- The feed's read throws on failure. `buildFeed` returns `register`, `filed`, `signed`, `announcements`, `bills` and `decisions`.
+
+**The newsworthy check's sixth kind** (`_document_items`): a document first seen in the window and dated (filed, for
+a filing) in the last 7 days, never one the rule watch already reports. A new Unified Agenda edition is reported in one
+line. **The digest** lists published Register documents, unpublished White House actions, announcements
+and bills that moved, in plain words ("Final rule", "White House", "Bill in Congress").
+
+**The server job** is `permtracker-uscis policy-watch` (timer `permtracker-uscis@policy-watch.timer`, at :07 and
+:37 every hour). Each step has its own time limit and failure row. The rule watch's `rules_changed` is read from a
+GitHub-output file, and the job POSTs the refresh through nginx (127.0.0.1:8081, both web copies).
+
+**The coverage ceiling** in `dataset-coverage.test.ts` leaves out the policy datasets, which are held exactly to
+`POLICY_DATASETS` instead (as WARN states are held to their readers).
+
+**Two test traps.** The pipeline's glued-text test matched one closing and one opening tag, so "entry</a></p></li><li>"
+passed it while the rendered audit found 9 pairs; it matches any run of tags now. And the window on this Mac doesn't
+resize, so phone widths come from `scripts/phone_sweep.mjs` through `solo-headless.sh`.

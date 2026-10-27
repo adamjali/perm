@@ -1,0 +1,289 @@
+{
+ "_note": "A trimmed copy of a real CourtListener search answer (read Oct 27 2026). Individual people's names in captions and passages are replaced with invented ones; organizations, agencies and officials sued in office are as CourtListener printed them. Only the fields the reader reads are kept.",
+ "_query": "the earlier eight-phrase query, unbounded",
+ "count": 2245,
+ "next": null,
+ "previous": null,
+ "results": [
+  {
+   "caseName": "Exampleton v. U.S. Department of State",
+   "dateFiled": "2026-10-26",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 11045835,
+   "docketNumber": "Civil Action No. 2026-0092",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "a United States employer and an approved <mark>labor certification</mark>.\n\nSee id.; 8 C.F.R. § 204.5(k)(4)(i). But"
+    }
+   ]
+  },
+  {
+   "caseName": "State v. Fixtureby",
+   "dateFiled": "2026-10-23",
+   "court": "Superior Court of Delaware",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11045986,
+   "docketNumber": "1504011040A",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Samplegate, 2024 WL 4503985, *3 (Del.Super.), adopted, D.<mark>I. 140</mark> (October 31,\n2024), aff’d, 2025 WL 655084 (Del"
+    }
+   ]
+  },
+  {
+   "caseName": "Mockwell v. Mullin",
+   "dateFiled": "2026-10-13",
+   "court": "Court of Appeals for the First Circuit",
+   "court_jurisdiction": "F",
+   "cluster_id": 11032679,
+   "docketNumber": "25-2238",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "expedited removal and\n\nwrongfully cancelled her <mark>H-1B</mark> visa upon her attempt to reenter the\n\nUnited States"
+    }
+   ]
+  },
+  {
+   "caseName": "Longshot Holdings, Inc. v. Quaker Chemical Corporation",
+   "dateFiled": "2026-10-08",
+   "court": "Superior Court of Delaware",
+   "court_jurisdiction": "SA",
+   "cluster_id": 11019245,
+   "docketNumber": "N22C-04-129 MAA CCLD",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "53\n   D.I. 137 (“RB”).\n54\n   D.I. 139.\n55\n   D.<mark>I. 140</mark>.\n56\n   See, e.g., Shallcross Mortg. Co. v. Placewood"
+    }
+   ]
+  },
+  {
+   "caseName": "Testova v. Rubio",
+   "dateFiled": "2026-10-05",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 11010507,
+   "docketNumber": "Civil Action No. 2025-1928",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Citizenship\n\nand Immigration Services (USCIS) a Form <mark>I-140</mark> immigrant visa petition. ECF 1 ¶ 30; see 8 C.F.R"
+    }
+   ]
+  },
+  {
+   "caseName": "California Attorney General Opinion 26-202",
+   "dateFiled": "2026-09-29",
+   "court": "California Attorney General Reports",
+   "court_jurisdiction": "SAG",
+   "cluster_id": 10988854,
+   "docketNumber": "26-202",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "4th 1106, 1117.\n61\n  Compare General <mark>Prevailing Wage Determination</mark>—Tree Trimmer (High Voltage Line\nClearance)"
+    }
+   ]
+  },
+  {
+   "caseName": "Arctic Swan Construction Inc.",
+   "dateFiled": "2026-09-22",
+   "court": "Armed Services Board of Contract Appeals",
+   "court_jurisdiction": "FS",
+   "cluster_id": 11035214,
+   "docketNumber": "64085",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "190,422. The absence of separate\nlines for <mark>labor, certification</mark>, connection, or disconnection did not prevent"
+    }
+   ]
+  },
+  {
+   "caseName": "Fauxman v. Blanche",
+   "dateFiled": "2026-09-17",
+   "court": "Court of Appeals for the Second Circuit",
+   "court_jurisdiction": "F",
+   "cluster_id": 10975582,
+   "docketNumber": "25-304",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "submitted fraudulent applications in support of <mark>H-1B</mark> visa\napplications.” Certified Admin. Rec. (“CAR”)"
+    }
+   ]
+  },
+  {
+   "caseName": "Filler Quinto v. Mullin",
+   "dateFiled": "2026-09-14",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10973381,
+   "docketNumber": "Civil Action No. 2026-2364",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "approved for either of these waivers,\n\nthey can seek <mark>H-1B</mark> sponsorship and consequently remain in the United"
+    }
+   ]
+  },
+  {
+   "caseName": "Advocates for Human Rights v. Bondi",
+   "dateFiled": "2026-09-03",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10966153,
+   "docketNumber": "Civil Action No. 2026-0865",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "“‘particular’ practice of habitually approving and extending <mark>H-2A</mark> visas” in\n\nviolation of applicable regulations stated"
+    }
+   ]
+  },
+  {
+   "caseName": "State v. Dummington",
+   "dateFiled": "2026-08-28",
+   "court": "Superior Court of Delaware",
+   "court_jurisdiction": "SA",
+   "cluster_id": 10961689,
+   "docketNumber": "1212015998A&B",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Defendant’s Amended\nMotion for Postconviction Relief (D.<mark>I. 140</mark>), postconviction counsel asserted a second claim"
+    }
+   ]
+  },
+  {
+   "caseName": "Mateo Sample-Fixture v. Purpose Point Harvesting, LLC",
+   "dateFiled": "2026-08-28",
+   "court": "Court of Appeals for the Sixth Circuit",
+   "court_jurisdiction": "F",
+   "cluster_id": 10961572,
+   "docketNumber": "25-2080",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "                           I.\n\n       Under the <mark>H-2A</mark> visa program, employers may hire foreign nationals"
+    }
+   ]
+  },
+  {
+   "caseName": "Placeholdera v. Blinken",
+   "dateFiled": "2026-08-12",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10945932,
+   "docketNumber": "Civil Action No. 2024-2255",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "Nora Placeholdera, an Iranian national, filed an <mark>H-1B</mark> nonimmigrant visa\n\napplication after she was hired"
+    }
+   ]
+  },
+  {
+   "caseName": "Testerson v. Rubio",
+   "dateFiled": "2026-08-10",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10943950,
+   "docketNumber": "Civil Action No. 2025-2389",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "United States on a\n\nnonimmigrant visa called an <mark>H-1B</mark> visa. See 8 U.S.C. § 1101(a)(15)(H)(i)(b). A specialty"
+    }
+   ]
+  },
+  {
+   "caseName": "Demovian v. Rubio",
+   "dateFiled": "2026-08-07",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10942440,
+   "docketNumber": "Civil Action No. 2025-1981",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "2024,\n\nshe began the process of applying for an <mark>H-1B</mark> nonimmigrant visa that would allow her to travel"
+    }
+   ]
+  },
+  {
+   "caseName": "United States v. Fakeconn",
+   "dateFiled": "2026-08-03",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10938919,
+   "docketNumber": "Criminal No. 2024-0350",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "expiration of her visa, Ms. Fakeworth applied for an <mark>H-1B</mark> work visa, id., which is\n\navailable for certain"
+    }
+   ]
+  },
+  {
+   "caseName": "Intel Corp v. Nvidia Corp",
+   "dateFiled": "2026-07-28",
+   "court": "Court of Chancery of Delaware",
+   "court_jurisdiction": "SA",
+   "cluster_id": 10935967,
+   "docketNumber": "4373-LM",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "73\n   D.I. 547, Aff. of Ray Sampleton, ¶ 14; D.<mark>I. 140</mark>, Exs. 1–2; D.I. 289, Ex. E; D.I. 300,\nEx. 10; D"
+    }
+   ]
+  },
+  {
+   "caseName": "United States v. Fakeconn",
+   "dateFiled": "2026-07-24",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10935087,
+   "docketNumber": "Criminal No. 2024-0350",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "President Trump did not suspend the issuance of <mark>H-1B</mark> visas, see Presidential\n\nProclamation § 5(j)(ii)"
+    }
+   ]
+  },
+  {
+   "caseName": "Mockley Standa v. Noem",
+   "dateFiled": "2026-07-23",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10934363,
+   "docketNumber": "Civil Action No. 2025-4055",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "challenges\n\nthe denial of her visa. She had filed an <mark>I-140</mark> petition seeking classification as an alien of\n"
+    }
+   ]
+  },
+  {
+   "caseName": "Coalition for Independent Technology Research v. Rubio",
+   "dateFiled": "2026-07-14",
+   "court": "District Court, District of Columbia",
+   "court_jurisdiction": "FD",
+   "cluster_id": 10927690,
+   "docketNumber": "Civil Action No. 2026-0815",
+   "citation": [],
+   "opinions": [
+    {
+     "snippet": "invoked the May policy to\n\nestablish new criteria for <mark>H-1B</mark> visas typically used by tech companies. See ECF"
+    }
+   ]
+  }
+ ]
+}

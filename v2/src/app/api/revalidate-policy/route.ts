@@ -1,11 +1,14 @@
 /**
- * Expire the pages that show the rule pipeline, the run a rule moves.
+ * Expire the pages that show the policy feed and the rule pipeline, the run
+ * any policy source writes something.
  *
- * The rule watch reads OIRA's review lists and the Federal Register's public
- * inspection list at 3 AM and at 9 AM and 5 PM Eastern on weekdays, and the
- * policy page sits on a six-hour window, so a rule OIRA cleared that morning
- * would otherwise show as under review until the afternoon. The ingest reports
- * `rules_changed` and the workflow POSTs here.
+ * The sources are read every 30 minutes on the server (OIRA, the Federal
+ * Register and its public inspection list, the White House, USCIS) and every
+ * weekday hour on GitHub (DOL, OFLC), and the policy page sits on a six-hour
+ * window, so a filing or a proclamation would otherwise wait up to six hours
+ * to show. Each script POSTs here when it wrote something
+ * (`scripts/lib_policy_feed.py`, `expire_policy_page`); the rule watch reports
+ * `rules_changed` and its runner POSTs.
  *
  * Takes no input, like `revalidate-bulletin`: a caller either knows the secret
  * and expires this fixed set, or does nothing.

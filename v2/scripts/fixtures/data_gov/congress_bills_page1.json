@@ -1,0 +1,329 @@
+{
+ "_fixture": "Real bill records from congress.gov v3 GET /bill/119 (sort updateDate), read Oct 27 2026: thirty-four of the 750 read, regrouped into two pages; the pagination is edited to point page one at page two.",
+ "bills": [
+  {
+   "congress": 119,
+   "introducedDate": "2025-02-14",
+   "latestAction": {
+    "actionDate": "2026-10-22",
+    "text": "Placed on the Union Calendar, Calendar No. 749."
+   },
+   "number": "1382",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To amend the Federal Water Pollution Control Act with respect to San Francisco Bay restoration, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/1382?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-22",
+   "latestAction": {
+    "actionDate": "2026-10-22",
+    "text": "Referred to the House Committee on Financial Services."
+   },
+   "number": "10901",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To require the Secretary of Housing and Urban Development to establish a formula grant program to provide grants to States to be used to streamline assistance offered by such States to builders of affordable housing, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10901?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-04-29",
+   "latestAction": {
+    "actionDate": "2026-09-14",
+    "text": "Placed on Senate Legislative Calendar under General Orders. Calendar No. 554."
+   },
+   "number": "1513",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Lower Elwha Klallam Tribe Project Lands Restoration Act",
+   "type": "S",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/s/1513?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-03-26",
+   "latestAction": {
+    "actionDate": "2026-10-20",
+    "text": "Became Public Law No: 119-128."
+   },
+   "number": "2388",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Lower Elwha Klallam Tribe Project Lands Restoration Act",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/2388?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-07-17",
+   "latestAction": {
+    "actionDate": "2025-07-17",
+    "text": "Placed on Senate Legislative Calendar under General Orders. Calendar No. 122."
+   },
+   "number": "2354",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Commerce, Justice, Science, and Related Agencies Appropriations Act, 2026",
+   "type": "S",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/s/2354?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the House Committee on Energy and Commerce."
+   },
+   "number": "10913",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To amend the Federal Food, Drug, and Cosmetic Act to make adulterated food containing certain preservatives, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10913?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the House Committee on Agriculture."
+   },
+   "number": "10914",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To amend the Food, Agriculture, Conservation, and Trade Act of 1990 to improve assistance for socially disadvantaged farmers and ranchers and veteran farmers and ranchers, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10914?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the Committee on Science, Space, and Technology, and in addition to the Committee on Oversight and Government Reform, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "10915",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To require the Director of the National Institute of Standards and Technology to develop new standards, methodologies, and recommendations with respect to the cybersecurity of cloud-based infrastructure, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10915?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the Committee on Natural Resources, and in addition to the Committee on Agriculture, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "10916",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To require the Secretary of Agriculture and the Secretary of the Interior to jointly develop a strategy to increase the use of aquatic restoration and conservation activities in wildfire risk mitigation and post-fire recovery efforts, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10916?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the Committee on Agriculture, and in addition to the Committees on Natural Resources, Energy and Commerce, and Education and Workforce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "10917",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To direct the Secretary of Agriculture to select and implement landscape-scale forest restoration projects, to assist communities in increasing their resilience to wildfire, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10917?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the Committee on the Judiciary, and in addition to the Committees on Homeland Security, and Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "10909",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To amend the Death in Custody Reporting Act of 2013 to require submission of reports to the Director of the Bureau of Justice Statistics, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10909?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-26",
+   "latestAction": {
+    "actionDate": "2026-10-26",
+    "text": "Referred to the House Committee on Agriculture."
+   },
+   "number": "10911",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To amend the Animal Health Protection Act to establish a U.S. Swine health improvement plan as a voluntary program to be administered by the Secretary of Agriculture in cooperation with the States and the swine industry to prevent the introduction into the United States of, and to monitor for, diseases that threaten swine health, and for other purposes.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10911?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-03-25",
+   "latestAction": {
+    "actionDate": "2025-03-25",
+    "text": "Referred to the House Committee on the Judiciary."
+   },
+   "number": "2315",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Fairness for High-Skilled Americans Act of 2025",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/2315?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-22",
+   "latestAction": {
+    "actionDate": "2026-10-22",
+    "text": "Referred to the House Committee on the Judiciary."
+   },
+   "number": "10896",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "To terminate the diversity immigrant visa program.",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10896?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-01-07",
+   "latestAction": {
+    "actionDate": "2025-01-07",
+    "text": "Referred to the House Committee on the Judiciary."
+   },
+   "number": "218",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "State Immigration Enforcement Act",
+   "type": "HR",
+   "updateDate": "2026-10-26",
+   "updateDateIncludingText": "2026-10-26",
+   "url": "https://api.congress.gov/v3/bill/119/hr/218?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-06-08",
+   "latestAction": {
+    "actionDate": "2026-06-08",
+    "text": "Referred to the House Committee on Science, Space, and Technology."
+   },
+   "number": "9177",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Improving Mentorship in STEM Higher Education Act",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/9177?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-01-09",
+   "latestAction": {
+    "actionDate": "2025-01-09",
+    "text": "Referred to the Committee on the Judiciary, and in addition to the Committees on Ways and Means, and Education and Workforce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "251",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Legal Workforce Act",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/251?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-10-22",
+   "latestAction": {
+    "actionDate": "2026-10-22",
+    "text": "Referred to the House Committee on Energy and Commerce."
+   },
+   "number": "10879",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Workers\u2019 Right to Compete Act",
+   "type": "HR",
+   "updateDate": "2026-10-24",
+   "updateDateIncludingText": "2026-10-24",
+   "url": "https://api.congress.gov/v3/bill/119/hr/10879?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-04-16",
+   "latestAction": {
+    "actionDate": "2026-04-16",
+    "text": "Referred to the House Committee on Energy and Commerce."
+   },
+   "number": "1187",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Supporting the designation of the week of August 24 through August 28, 2026, as the fourth annual \"National Community Health Worker Awareness Week\".",
+   "type": "HRES",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hres/1187?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-11-20",
+   "latestAction": {
+    "actionDate": "2026-07-21",
+    "text": "Ordered to be Reported (Amended) by the Yeas and Nays: 18 - 15."
+   },
+   "number": "6213",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Heat Workforce Standards Act of 2025",
+   "type": "HR",
+   "updateDate": "2026-10-27",
+   "updateDateIncludingText": "2026-10-27",
+   "url": "https://api.congress.gov/v3/bill/119/hr/6213?format=json"
+  }
+ ],
+ "pagination": {
+  "count": 34,
+  "next": "https://api.congress.gov/v3/bill/119?offset=250&limit=250&format=json"
+ }
+}

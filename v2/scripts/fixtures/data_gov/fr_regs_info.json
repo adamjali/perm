@@ -1,0 +1,54 @@
+{
+ "count": 3,
+ "results": [
+  {
+   "document_number": "2026-20941",
+   "comments_close_on": "2026-11-13",
+   "regulations_dot_gov_info": {
+    "supporting_documents": [],
+    "comments_count": 337,
+    "agency_id": "USCIS",
+    "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=USCIS-2026-0529",
+    "supporting_documents_count": 0,
+    "docket_id": "USCIS-2026-0529",
+    "document_id": "USCIS-2026-0529-0001",
+    "regulation_id_number": "1615-AD26",
+    "title": "Removing Deference to Prior USCIS Determinations of Eligibility",
+    "checked_regulationsdotgov_at": "2026-10-27T13:55:04Z"
+   }
+  },
+  {
+   "document_number": "2026-20660",
+   "comments_close_on": "2026-11-09",
+   "regulations_dot_gov_info": {
+    "supporting_documents": [],
+    "comments_count": 3848,
+    "agency_id": "ICEB",
+    "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=ICEB-2026-0100",
+    "supporting_documents_count": 0,
+    "docket_id": "ICEB-2026-0100",
+    "document_id": "ICEB-2026-0100-0001",
+    "regulation_id_number": "1653-AB01",
+    "title": "Optional Practical Training Fees",
+    "checked_regulationsdotgov_at": "2026-10-27T13:55:04Z"
+   }
+  },
+  {
+   "document_number": "2026-18631",
+   "comments_close_on": "2026-11-10",
+   "regulations_dot_gov_info": {
+    "supporting_documents": [],
+    "comments_count": 26704,
+    "agency_id": "USCIS",
+    "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=USCIS-2026-0364",
+    "supporting_documents_count": 0,
+    "docket_id": "USCIS-2026-0364",
+    "document_id": "USCIS-2026-0364-0001",
+    "regulation_id_number": "1615-AD22",
+    "title": "Eliminating the Discretionary 60-day Grace Period",
+    "checked_regulationsdotgov_at": "2026-10-27T13:55:04Z"
+   }
+  }
+ ],
+ "_fixture": "federalregister.gov GET /api/v1/documents/2026-18631,2026-20941,2026-20660.json?fields[]=document_number&fields[]=regulations_dot_gov_info, read Oct 27 2026, as answered."
+}

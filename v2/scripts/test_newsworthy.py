@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import pathlib
 import re
 import sys
@@ -121,7 +122,6 @@ def main() -> int:
     check("too short a history says nothing", nw.typical_weekday(weekdays("2026-10-27", 5, 700), "2026-10-27") is None)
 
     # --- the same words as the site ------------------------------------------
-    import json  # noqa: PLC0415
     fx = json.loads((HERE / "fixtures" / "rule_step_sentences.json").read_text())
     for c in fx["cases"]:
         r = c.get("rule") or fx["rule"]
@@ -137,6 +137,84 @@ def main() -> int:
           [i["when"] for i in allin] == sorted([i["when"] for i in allin], reverse=True)
           and all(re.search(r"\d{4}", nw.line(i)) and "Source: " in nw.line(i) for i in allin))
     check("nothing moved is an empty list", nw.newsworthy(nw.Inputs(), morning, now) == [])
+
+    # --- documents and announcements (Oct 27 2026) ---------------------------
+    seen = ms(2026, 10, 27, 9, 30)
+    docs = [
+        {"document_number": "2026-22001", "publication_date": "2026-10-28", "type": "Rule",
+         "title": "Temporary Increase in H-2B Nonimmigrant Visas", "agencies": '["Homeland Security Department"]',
+         "source": "public-inspection", "status": "public-inspection", "pi_filed": "2026-10-27", "first_seen_at": seen},
+        {"document_number": "wh-2026-10-x", "publication_date": "2026-10-27", "type": "Presidential action",
+         "title": "Restriction on Entry of Certain Nonimmigrant Workers", "agencies": [], "source": "white-house",
+         "action": "Proclamation", "first_seen_at": seen},
+        {"document_number": "uscis-old", "publication_date": "2026-03-01", "type": "USCIS announcement",
+         "title": "An old release a first run loaded", "source": "uscis-news", "first_seen_at": seen},
+        {"document_number": "2026-99901", "publication_date": "2026-10-27", "type": "Proposed Rule",
+         "title": "A rule the rule watch follows", "source": "federal-register", "first_seen_at": seen},
+        {"document_number": "oflc-early", "publication_date": "2026-10-27", "type": "OFLC announcement",
+         "title": "Seen before the window", "source": "oflc", "first_seen_at": morning - 1},
+    ]
+    got = nw.newsworthy(nw.Inputs(documents=docs, rule_documents={"2026-99901"}), morning, now)
+    words = [i["what"] for i in got]
+    check("a filing for public inspection is news, with both its days",
+          any("DHS filed a rule for public inspection on Oct 27, 2026, to be published Oct 28, 2026" in w for w in words), str(words))
+    check("a White House action is news", any(w.startswith("The White House posted a proclamation on Oct 27, 2026") for w in words), str(words))
+    check("an old document a first run loaded isn't", not any("old release" in w for w in words))
+    check("a rule the rule watch already reports isn't repeated", not any("rule watch follows" in w for w in words))
+    check("a document seen before the window isn't", not any("before the window" in w for w in words))
+    check("each names its source", all(nw.line(i).endswith(("public inspection list.", "whitehouse.gov.")) for i in got),
+          str([nw.line(i) for i in got]))
+
+    # --- State Department news and bills in Congress ---------------------------
+    st = {"document_number": "state-x", "publication_date": "2026-10-27", "type": "State Department visa news",
+          "title": "Visa Bond Pilot Program Expanded", "source": "state-news", "first_seen_at": seen}
+    old_bill = {"document_number": "bill-119-hr-2315", "publication_date": "2025-03-25", "type": "Bill",
+                "title": "Fairness for High-Skilled Americans Act of 2025", "source": "congress",
+                "action": "Passed House.", "dates": "2026-10-27", "first_seen_at": morning - 86_400_000 * 30,
+                "fetched_at": seen}
+    quiet_bill = dict(old_bill, document_number="bill-119-s-1233", fetched_at=morning - 1)
+    backfilled = dict(old_bill, document_number="bill-119-s-2759", dates="2025-09-10", first_seen_at=seen)
+    got = nw.newsworthy(nw.Inputs(documents=[st, old_bill, quiet_bill, backfilled]), morning, now)
+    words = [nw.line(i) for i in got]
+    check("State Department news is worded as the State Department's",
+          "The State Department posted visa news on Oct 27, 2026: \"Visa Bond Pilot Program Expanded\". "
+          "Source: the State Department's newsroom." in words, str(words))
+    check("a bill introduced long ago is news the day it moves",
+          'H.R. 2315, "Fairness for High-Skilled Americans Act of 2025", moved on Oct 27, 2026: Passed House. '
+          "Source: congress.gov." in words, str(words))
+    check("a bill nothing happened to in the window isn't", not any("S. 1233" in w for w in words), str(words))
+    check("a backfill's old action isn't", not any("S. 2759" in w for w in words), str(words))
+    court = {"document_number": "cl-1", "publication_date": "2026-10-26", "type": "Court opinion",
+             "title": "E. v. U.S. Department of State", "agencies": '["District Court, District of Columbia"]',
+             "source": "courtlistener", "first_seen_at": seen}
+    balca = {"document_number": "balca-x", "publication_date": "2026-10-23", "type": "BALCA decision",
+             "title": "Acme Farms LLC, 2026-TLC-00012", "agencies": '["Board of Alien Labor Certification Appeals"]',
+             "source": "balca", "first_seen_at": seen}
+    words = [nw.line(i) for i in nw.newsworthy(nw.Inputs(documents=[court, balca]), morning, now)]
+    check("a court opinion names the court",
+          'A federal court (District Court, District of Columbia) decided "E. v. U.S. Department of State" on Oct 26, 2026. '
+          "Source: CourtListener." in words, str(words))
+    check("a BALCA decision names BALCA",
+          'BALCA decided "Acme Farms LLC, 2026-TLC-00012" on Oct 23, 2026. Source: OALJ\'s caselists.' in words, str(words))
+    shared = json.loads((HERE / "fixtures" / "bill_numbers.json").read_text())["cases"]
+    check("bill numbers match the site's", all(nw.bill_number(k) == v for k, v in shared.items()),
+          str({k: nw.bill_number(k) for k in shared}))
+
+    # --- a new Unified Agenda edition: one line, not one per rule -------------
+    ag_seen = ms(2026, 10, 27, 9, 30)
+    agenda = [{"rin": f"1615-AD{i:02d}", "kind": "agenda", "on_date": "2026-10-24", "seen_at": ag_seen,
+               "title": f"Rule {i}", "agency": "USCIS",
+               "detail": '{"action": "NPRM", "date": "12/00/2026", "edition": "Fall 2026", "stage": "Proposed Rule Stage"}'}
+              for i in range(12)]
+    old_ed = [{**agenda[0], "rin": "1205-AC29", "on_date": "2026-07-03"}]
+    got = nw.newsworthy(nw.Inputs(rule_events=agenda + old_ed), morning, now)
+    lines = [i["what"] for i in got]
+    check("a new agenda edition is one line", len(lines) == 1, str(lines))
+    check("it counts the edition's rules and names three",
+          bool(lines) and lines[0].startswith("The Fall 2026 Unified Agenda, dated Oct 24, 2026, sets a timetable for 12 rules")
+          and lines[0].count('"') == 6 and "and 9 more" in lines[0], str(lines))
+    check("an older edition seen today isn't news", not any("1205-AC29" in w or "Jul 3" in w for w in lines), str(lines))
+    check("its source is the agenda", bool(got) and got[0]["source"] == "reginfo.gov's Unified Agenda", str(got))
 
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0

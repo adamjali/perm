@@ -15,6 +15,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { buildFeed, buildStrip, commentWindow, feedLedger } from "@/lib/policyFeed";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { withSocialCard } from "@/lib/socialCard";
+import { getCommentCounts } from "@/lib/db/policyComments";
 import { listPolicyNotices } from "@/lib/db/policyNotices";
 import { getRulePipeline } from "@/lib/db/rulePipeline";
 import { easternDay } from "@/lib/time";
@@ -24,13 +25,18 @@ import { easternDay } from "@/lib/time";
  *
  * The rules on their way come first: OIRA's review, public inspection and
  * publication, each step dated (`lib/db/rulePipeline`, drawn by RulePipeline).
+ * Then what's coming next: documents filed for public inspection (published
+ * the next business day, sometimes later) and presidential actions the White
+ * House has posted and the Register hasn't published yet.
  *
- * Then two feeds under one page. Federal Register documents (rules, proposed
- * rules, notices) from USCIS, DHS, State and DOL that matched one of seven
- * terms, with the Register's own dates: when a rule takes effect, when
- * comments close and where to file one, the citation, the DATES paragraph
- * verbatim, and the first page as printed. And OFLC's own announcements on
- * these programs, which is where a DOL change appears before the Register.
+ * Then the Federal Register's documents (rules, proposed rules, notices and
+ * presidential documents) from USCIS, DHS, State, DOL and the President,
+ * with the Register's own dates: when a rule takes effect, when comments
+ * close and where to file one, the citation, the DATES paragraph verbatim,
+ * and the first page as printed. And the agencies' own announcements (USCIS's
+ * newsroom and Policy Manual, DOL's newsroom, OFLC), which is where a change
+ * often appears before the Register. Every source is read every 30 minutes
+ * or every weekday hour (`scripts/lib_policy_feed.py`).
  *
  * What a reader meets is a twelve-month strip and collapsed rows; what a
  * crawler reads is every title, abstract and date, because a <details> keeps
@@ -40,7 +46,7 @@ import { easternDay } from "@/lib/time";
 
 const TITLE = "Immigration Policy Changes on the Record";
 const DESCRIPTION =
-  "Every Federal Register rule, proposed rule and notice on PERM, wages, H-1B, the I-140 and the I-485, with the dates that matter, linked.";
+  "Rules, notices, presidential actions and agency announcements on PERM, H-1B, H-2A, H-2B and green cards, read every 30 minutes from the source.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -49,8 +55,9 @@ export const metadata: Metadata = withSocialCard({
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/policy-changes" },
 }, "policy-changes");
 
-// The feeds refresh daily with the processing-times job; six hours keeps a
-// "days left" figure honest without regenerating a page nothing moved on.
+// Every source asks for a rebuild the moment it writes something
+// (/api/revalidate-policy); six hours keeps a "days left" figure honest on a
+// day nothing moved.
 export const revalidate = 21600;
 
 const LINK =
@@ -58,8 +65,12 @@ const LINK =
 
 export default async function PolicyChangesPage() {
   const today = easternDay();
-  const [rows, pipeline] = await Promise.all([listPolicyNotices(), getRulePipeline(today)]);
-  const feed = buildFeed(rows);
+  const [rows, pipeline, comments] = await Promise.all([
+    listPolicyNotices(),
+    getRulePipeline(today),
+    getCommentCounts(),
+  ]);
+  const feed = buildFeed(rows, today);
   const ledger = feedLedger(feed, today);
   const strip = buildStrip(feed, today);
   const newestOf = (type: string) => feed.register.find((d) => d.type === type)?.publicationDate ?? null;
@@ -77,13 +88,19 @@ export default async function PolicyChangesPage() {
     newestOf("Proposed Rule"),
   );
   push(ledger.notices, "notices", "#register", newestOf("Notice"));
-  push(ledger.oflc, "OFLC announcements on these programs", "#oflc", feed.oflc[0]?.publicationDate ?? null);
-  const earlier = strip.earlierRegister + strip.earlierOflc;
-  const empty = feed.register.length === 0 && feed.oflc.length === 0;
+  push(ledger.presidential, "presidential documents", "#register", newestOf("Presidential Document"));
+  push(ledger.coming, "filed or signed, not yet published", "#coming",
+    [...feed.filed.map((d) => d.piFiled ?? d.publicationDate), ...feed.signed.map((d) => d.publicationDate)].sort().pop() ?? null);
+  push(ledger.announcements, "agency announcements", "#agencies", feed.announcements[0]?.publicationDate ?? null);
+  push(ledger.decisions, "court and BALCA decisions", "#decisions", feed.decisions[0]?.publicationDate ?? null);
+  push(ledger.bills, "bills in Congress", "#congress", feed.bills[0] ? (feed.bills[0].dates ?? feed.bills[0].publicationDate) : null);
+  const earlier = strip.earlierRegister + strip.earlierAnnouncements;
+  const coming = [...feed.filed, ...feed.signed];
+  const empty = feed.register.length === 0 && feed.announcements.length === 0 && coming.length === 0;
   // Everything the lists below hold, as strings the search can match. The
   // OFLC years folded under their summaries are included on purpose: those
   // are the titles a reader can't otherwise find without opening every year.
-  const searchable: PolicyItem[] = [...feed.register, ...feed.oflc]
+  const searchable: PolicyItem[] = [...coming, ...feed.register, ...feed.announcements, ...feed.bills, ...feed.decisions]
     .map((n) => ({
       id: n.documentNumber,
       date: n.publicationDate,
@@ -105,8 +122,11 @@ export default async function PolicyChangesPage() {
         Policy changes, on the record
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
-        Every rule, proposed rule and notice on PERM, prevailing wages, H-1B and
-        green cards, as the Federal Register and OFLC published them.
+        Every rule, notice, presidential action, bill and court decision on
+        PERM, prevailing wages, H-1B, H-2A, H-2B and green cards, from the
+        White House, the Federal Register, Congress, the courts, USCIS, DOL,
+        OFLC and the State Department, read from each source as often as it
+        allows.
       </p>{" "}
 
       {empty ? (
@@ -119,7 +139,28 @@ export default async function PolicyChangesPage() {
         <>
           <RecordStrip record={record} label="Policies recorded" />{" "}
 
-          <RulePipeline rules={pipeline.rules} today={today} />{" "}
+          <RulePipeline rules={pipeline.rules} today={today} comments={comments} />{" "}
+
+          <section className="mt-12" id="coming">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Coming next</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
+              Filed for public inspection, which the Register does the business day
+              before it publishes, and actions the White House has signed that the
+              Register hasn&apos;t published yet.
+            </p>{" "}
+            {coming.length > 0 ? (
+              <div className="mt-6 border-2 border-border bg-card shadow-hard-sm">
+                {coming.map((d) => (
+                  <DocRow key={d.documentNumber} doc={d} today={today} />
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 bg-tint p-4 text-base border-2 border-border">
+                Nothing from these agencies is on public inspection or waiting to be
+                published right now.
+              </p>
+            )}
+          </section>{" "}
 
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">The last twelve months</h2>{" "}
@@ -141,34 +182,55 @@ export default async function PolicyChangesPage() {
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {feed.register.length} {feed.register.length === 1 ? "document" : "documents"}
-              {ledger.earliest ? ` since ${monthYear(ledger.earliest)}` : ""}. Open one to see the abstract, the
-              effective date and a link to the published document.
+              {ledger.earliest ? ` since ${monthYear(ledger.earliest)}` : ""}, presidential ones included. Open one to
+              see the abstract, the effective date and a link to the published document.
             </p>{" "}
             <div className="mt-6 border-2 border-border bg-card shadow-hard-sm">
               {feed.register.map((d) => (
-                <DocRow key={d.documentNumber} doc={d} today={today} />
+                <DocRow key={d.documentNumber} doc={d} today={today} comments={comments.get(d.documentNumber)} />
               ))}
             </div>
           </section>{" "}
 
-          <section className="mt-12" id="oflc">
-            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">From OFLC</h2>{" "}
+          <section className="mt-12" id="agencies">
+            <span id="oflc" aria-hidden="true" />
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">From the agencies</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
-              {feed.oflc.length} announcements on PERM, prevailing wages, H-1B and the
-              disclosure files{ledger.oflcSince ? `, back to ${ledger.oflcSince.slice(0, 4)}` : ""}.
-              {feed.oflcOther > 0 ? (
-                <>
-                  {" "}
-                  {feed.oflcOther} more on H-2A, H-2B and CW-1 are held and not listed; they are on{" "}
-                  <a href="https://www.dol.gov/agencies/eta/foreign-labor/news" className={LINK} rel="noopener" target="_blank">
-                    DOL&apos;s page
-                  </a>
-                  .
-                </>
-              ) : null}
+              {feed.announcements.length} announcements from USCIS&apos;s newsroom and
+              Policy Manual, DOL&apos;s newsroom, OFLC, the State Department&apos;s visa news,
+              and White House actions the Federal Register hasn&apos;t printed
+              {ledger.announcementsSince ? `, back to ${ledger.announcementsSince.slice(0, 4)}` : ""}. A change
+              often appears here before it reaches the Federal Register.
             </p>{" "}
-            <OflcArchive items={feed.oflc} today={today} />
-          </section>
+            <OflcArchive items={feed.announcements} today={today} />
+          </section>{" "}
+
+          {feed.decisions.length > 0 ? (
+            <section className="mt-12" id="decisions">
+              <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">From the courts and BALCA</h2>{" "}
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
+                {feed.decisions.length} federal court opinions and decisions of DOL&apos;s Board of Alien Labor
+                Certification Appeals on these programs, newest first. A person named in a case is shown by initials.
+              </p>{" "}
+              <OflcArchive items={feed.decisions} today={today} lead={6} />
+            </section>
+          ) : null}{" "}
+
+          {feed.bills.length > 0 ? (
+            <section className="mt-12" id="congress">
+              <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">In Congress</h2>{" "}
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
+                {feed.bills.length} {feed.bills.length === 1 ? "bill" : "bills"} whose titles name a work visa
+                or an employment-based green card, newest action first. Each one&apos;s latest action
+                says where it stands.
+              </p>{" "}
+              <div className="mt-6 border-2 border-border bg-card shadow-hard-sm">
+                {feed.bills.map((d) => (
+                  <DocRow key={d.documentNumber} doc={d} today={today} />
+                ))}
+              </div>
+            </section>
+          ) : null}
           </PolicySearch>{" "}
 
           <section className="mt-12">
@@ -179,19 +241,37 @@ export default async function PolicyChangesPage() {
             </p>{" "}
             <FinePrint summary="The selection rules in full" className="mt-3 max-w-3xl">
               <p>
-                An immigration agency (USCIS, DHS, the State Department, or DOL&apos;s
-                Employment and Training Administration) and one of seven terms:
-                labor certification, prevailing wage, H-1B, I-140, adjustment of
-                status, visa bulletin, EB-5. Dropped by rule: the Unified Agenda
-                omnibus notices, paperwork notices that name no form this site is
-                about, and agency housekeeping such as board appointments and
-                meeting notices. A correction is folded into the document it
-                corrects and linked from it.
+                Federal Register documents from USCIS, DHS, the State Department,
+                DOL or the President that match one of eleven terms: labor
+                certification, prevailing wage, H-1B, H-2A, H-2B, CW-1, I-140,
+                adjustment of status, visa bulletin, EB-5, premium processing.
+                Documents from DOL outside its Employment and Training
+                Administration, and the President&apos;s, must also name an
+                immigration subject. Dropped by rule: the Unified Agenda omnibus
+                notices, paperwork notices that name no form this site is about,
+                and agency housekeeping such as board appointments and meeting
+                notices. A correction is folded into the document it corrects.
               </p>{" "}
               <p className="mt-3">
-                OFLC&apos;s announcements are tagged by program as they are read
-                from DOL&apos;s page; the ones on PERM, prevailing wages, H-1B and
-                the disclosure files are listed here and the rest are counted.
+                Public inspection filings are kept by the same rules, judged on the
+                title, and followed until the Register publishes them. White House
+                actions are kept when the title names an immigration subject or the
+                text names a work visa at least three times, and are replaced by the
+                Register&apos;s document once it&apos;s published. USCIS and DOL
+                announcements are kept when they touch work-based immigration; every
+                OFLC announcement is listed. Bills and joint resolutions in the
+                current Congress are kept when the title names a work visa or an
+                employment-based green card. Federal court opinions come from
+                CourtListener when the passage that matched names labor
+                certification, H-1B, H-2A, H-2B, I-140, ETA 9089, an
+                employment-based category or the visa bulletin, from federal courts
+                only; criminal cases and petitions for review of removal orders are
+                left out. BALCA&apos;s decisions are OALJ&apos;s own lists: every en
+                banc PERM decision, and prevailing wage, H-2A and H-2B appeals
+                decided since October 2024. A person named in a case is shown by
+                initials. The comment count beside an open
+                proposed rule is regulations.gov&apos;s count of comments posted,
+                which trails what people have sent while the agency screens them.
                 The wording everywhere is the agency&apos;s own.{" "}
                 <Link href="/changelog" className={LINK}>
                   What changed on this site
@@ -203,7 +283,24 @@ export default async function PolicyChangesPage() {
         </>
       )}{" "}
 
-      <DataProvenance datasets={["rule-pipeline", "policy-notices", "policy-notices-oflc"]} />
+      <DataProvenance
+        datasets={[
+          "rule-pipeline",
+          "rule-pipeline-agenda",
+          "policy-notices",
+          "policy-notices-pi",
+          "policy-notices-wh",
+          "policy-notices-uscis",
+          "policy-notices-uscis-pm",
+          "policy-notices-state",
+          "policy-notices-dol",
+          "policy-notices-oflc",
+          "policy-notices-congress",
+          "policy-comments",
+          "policy-notices-courts",
+          "policy-notices-balca",
+        ]}
+      />
 
       <ToolPageFooter
         currentHref="/policy-changes"

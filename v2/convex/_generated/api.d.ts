@@ -77,6 +77,7 @@ import type * as lib_audience from "../lib/audience.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_authMailGate from "../lib/authMailGate.js";
+import type * as lib_billNumber from "../lib/billNumber.js";
 import type * as lib_calendarEventExtractor from "../lib/calendarEventExtractor.js";
 import type * as lib_calendarHelpers from "../lib/calendarHelpers.js";
 import type * as lib_calendarSyncHelpers from "../lib/calendarSyncHelpers.js";
@@ -324,6 +325,7 @@ declare const fullApi: ApiFromModules<{
   "lib/audit": typeof lib_audit;
   "lib/auth": typeof lib_auth;
   "lib/authMailGate": typeof lib_authMailGate;
+  "lib/billNumber": typeof lib_billNumber;
   "lib/calendarEventExtractor": typeof lib_calendarEventExtractor;
   "lib/calendarHelpers": typeof lib_calendarHelpers;
   "lib/calendarSyncHelpers": typeof lib_calendarSyncHelpers;

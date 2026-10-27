@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule for permtracker-uscis@policy-watch
+# Every policy source the server can read, every 30 minutes, day and night:
+# OIRA, the Federal Register and its public inspection list, the White House,
+# USCIS's newsroom and Policy Manual (Oct 27 2026). Not Persistent: a missed
+# half hour is read by the next one.
+[Timer]
+OnCalendar=*-*-* *:07/30:00
+Unit=permtracker-uscis@policy-watch.service
+
+[Install]
+WantedBy=timers.target

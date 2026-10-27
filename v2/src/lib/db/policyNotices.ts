@@ -3,11 +3,28 @@ import "server-only";
 import { rows } from "./client";
 
 /**
- * Federal Register documents that touch the PERM, H-1B and green-card
- * process, as `ingest_policy_notices.py` selected them. Nothing here is
- * written by the site: the title, type, agencies and abstract are the
- * Register's own, and the topics are the search terms a document matched.
+ * The policy feed, every source in one table (`scripts/lib_policy_feed.py`):
+ * Federal Register documents (published, filed for public inspection, or
+ * withdrawn before publication), the White House's presidential actions,
+ * and announcements from OFLC, USCIS (its newsroom and Policy Manual) and
+ * DOL's newsroom. Nothing here is written by the site: titles, types,
+ * agencies and abstracts are the agencies' own, and the topics are the words
+ * a document matched.
  */
+
+/** Where a row came from, as the writer stores it. */
+export type PolicySource =
+  | "federal-register"
+  | "public-inspection"
+  | "white-house"
+  | "oflc"
+  | "uscis-news"
+  | "uscis-policy-manual"
+  | "dol-news"
+  | "state-news"
+  | "congress"
+  | "courtlistener"
+  | "balca";
 
 export interface PolicyNotice {
   documentNumber: string;
@@ -31,6 +48,15 @@ export interface PolicyNotice {
   /** The document this one corrects, by number. The page folds it into that entry. */
   correctionOf: string | null;
   pdfUrl: string | null;
+  source: PolicySource | null;
+  /** A Register document's stage. Null for a source with no stages. */
+  status: "public-inspection" | "published" | "withdrawn" | null;
+  /** The Eastern day the Register filed it for public inspection. */
+  piFiled: string | null;
+  /** A presidential document's signing day. */
+  signingDate: string | null;
+  /** A White House action's Register document, once published. */
+  supersededBy: string | null;
 }
 
 interface DbRow {
@@ -50,7 +76,18 @@ interface DbRow {
   dates: string | null;
   correction_of: string | null;
   pdf_url: string | null;
+  source: string | null;
+  status: string | null;
+  pi_filed: string | null;
+  signing_date: string | null;
+  superseded_by: string | null;
 }
+
+const SOURCES: readonly PolicySource[] = [
+  "federal-register", "public-inspection", "white-house", "oflc", "uscis-news", "uscis-policy-manual", "dol-news",
+  "state-news", "congress", "courtlistener", "balca",
+];
+const STATUSES = ["public-inspection", "published", "withdrawn"] as const;
 
 function parseList(json: string): string[] {
   try {
@@ -62,21 +99,23 @@ function parseList(json: string): string[] {
 }
 
 /**
- * Newest first, over the indexed date column; `LIMIT`-capped.
+ * Newest first, over the indexed date column; `LIMIT`-capped. A failed read
+ * throws, so the page keeps its last good render: an empty feed would read as
+ * "no policy changes", which is never true.
  *
- * The default reads the whole table (a few hundred rows) because the page
- * partitions it in memory: OFLC announcements on this site's programs are
- * listed and the H-2A/H-2B ones are counted, and a SQL-side split would put
- * the topic vocabulary in two places. A few hundred rows a few times a day
- * costs nothing.
+ * The default reads the whole table (under a thousand rows) because the page
+ * partitions it in memory by source and stage (`lib/policyFeed`), and a
+ * SQL-side split would put those rules in two places. A few hundred rows a
+ * few times a day costs nothing.
  */
-export async function listPolicyNotices(limit = 1000): Promise<PolicyNotice[]> {
+export async function listPolicyNotices(limit = 3000): Promise<PolicyNotice[]> {
   const r = await rows<DbRow>(
     "SELECT document_number, publication_date, type, title, abstract, html_url, agencies, topics, " +
-      "effective_on, comments_close_on, comment_url, citation, action, dates, correction_of, pdf_url " +
+      "effective_on, comments_close_on, comment_url, citation, action, dates, correction_of, pdf_url, " +
+      "source, status, pi_filed, signing_date, superseded_by " +
       "FROM policy_notices ORDER BY publication_date DESC, document_number DESC LIMIT ?",
-    [Math.min(Math.max(1, limit), 2000)],
-  ).catch(() => [] as DbRow[]);
+    [Math.min(Math.max(1, limit), 3000)],
+  );
   return r.map((x) => ({
     documentNumber: x.document_number,
     publicationDate: x.publication_date,
@@ -94,5 +133,10 @@ export async function listPolicyNotices(limit = 1000): Promise<PolicyNotice[]> {
     dates: x.dates ?? null,
     correctionOf: x.correction_of ?? null,
     pdfUrl: x.pdf_url ?? null,
+    source: (SOURCES as readonly string[]).includes(x.source ?? "") ? (x.source as PolicySource) : null,
+    status: (STATUSES as readonly string[]).includes(x.status ?? "") ? (x.status as PolicyNotice["status"]) : null,
+    piFiled: x.pi_filed ?? null,
+    signingDate: x.signing_date ?? null,
+    supersededBy: x.superseded_by ?? null,
   }));
 }

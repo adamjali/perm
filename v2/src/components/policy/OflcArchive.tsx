@@ -2,13 +2,14 @@ import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import type { PolicyNotice } from "@/lib/db/policyNotices";
 
-import { DocRow } from "./DocRow";
+import { DocRow, typeLabel } from "./DocRow";
 import { dayLabel } from "./format";
 
 /**
- * OFLC's announcements on this site's programs: the newest as full rows, the
- * rest folded by year as one line each. Every title stays in the DOM for
- * search; a reader meets eight rows and a list of years.
+ * A long list (the agencies' own announcements, or the courts' and BALCA's
+ * decisions): the newest as full rows, the rest folded by year as one line
+ * each, each naming whose it is. Every title stays in the DOM for search; a reader meets
+ * eight rows and a list of years.
  */
 export function OflcArchive({ items, today, lead = 8 }: { items: readonly PolicyNotice[]; today: string; lead?: number }) {
   const recent = items.slice(0, lead);
@@ -47,13 +48,15 @@ export function OflcArchive({ items, today, lead = 8 }: { items: readonly Policy
               </summary>{" "}
               <ul className="border-t-2 border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed sm:px-6">
                 {list.map((n) => (
-                  <li key={n.documentNumber} id={`doc-${n.documentNumber}`} className="flex flex-wrap gap-x-3 py-1.5">
-                    <span className="shrink-0 font-mono text-sm text-muted-foreground">{dayLabel(n.publicationDate)}</span>{" "}
+                  <li key={n.documentNumber} id={`doc-${n.documentNumber}`} className="flex flex-wrap items-center gap-x-3">
+                    <span className="shrink-0 font-mono text-sm text-muted-foreground">
+                      {dayLabel(n.publicationDate)}, {typeLabel(n.type)}
+                    </span>{" "}
                     <a
                       href={n.url}
                       rel="noopener"
                       target="_blank"
-                      className="link"
+                      className="link inline-flex min-h-11 items-center py-1"
                     >
                       {n.title}
                     </a>{" "}

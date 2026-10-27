@@ -93,21 +93,81 @@ def main() -> int:
             return {}
     base = ["document_number", "publication_date", "type", "title", "abstract", "html_url", "agencies", "topics", "fetched_at"]
     db = FakeDb(base)
-    added = pn.add_missing_columns(db, "policy_notices", pn.EXTRA_COLUMNS)
+    from lib_db import add_missing_columns
+    added = add_missing_columns(db, "policy_notices", pn.EXTRA_COLUMNS)
     check("every extra column is added to a nine-column table", added == pn.EXTRA_NAMES)
-    check("nothing is added the second time", pn.add_missing_columns(db, "policy_notices", pn.EXTRA_COLUMNS) == [])
+    check("nothing is added the second time", add_missing_columns(db, "policy_notices", pn.EXTRA_COLUMNS) == [])
+    # write() goes through the shared writer (lib_policy_feed), on real SQLite.
+    sys.path.insert(0, str(HERE))
+    from lib_sqlite_shim import SqliteTurso
+    sq = SqliteTurso()
     stored = {"document_number": "2026-16231", "publication_date": "2026-08-10", "type": "Rule", "title": "T",
               "abstract": "A", "html_url": "u", "agencies": [], "topics": ["H-1B"], "effective_on": "2026-09-09",
-              "comments_close_on": None, "comment_url": None, "citation": None, "action": None, "dates": None,
-              "correction_of": None, "pdf_url": None}
-    def cell(v):
-        return {"type": "null", "value": None} if v is None else {"type": "text", "value": v}
-    db.rows = [[cell("2026-16231"), cell("T"), cell("A"), cell(json.dumps(["H-1B"]))] + [cell(stored[n]) for n in pn.EXTRA_NAMES]]
-    check("write() skips a row whose signature, dates included, is unchanged", pn.write(db, [dict(stored)]) == 0)
-    moved = dict(stored, effective_on="2026-10-01")
-    check("write() writes a row whose effective date moved", pn.write(db, [moved]) == 1)
-    ins = [q for q in db.sql if q.startswith("INSERT")]
-    check("the insert names every column, extras included", ins and all(n in ins[-1] for n in pn.EXTRA_NAMES))
+              "status": "published"}
+    check("write() writes a new row", pn.write(sq, [dict(stored)]) == 1)
+    check("write() skips a row whose signature, dates included, is unchanged", pn.write(sq, [dict(stored)]) == 0)
+    check("write() writes a row whose effective date moved", pn.write(sq, [dict(stored, effective_on="2026-10-01")]) == 1)
+
+    # The President and the Labor Department as a whole need an immigration subject.
+    check("the H-1B proclamation is kept",
+          pn.keep(doc("Restriction on Entry of Certain Nonimmigrant Workers", ["Executive Office of the President"])))
+    check("a holiday proclamation is dropped",
+          not pn.keep(doc("Labor Day, 2026", ["Executive Office of the President"])))
+    check("an employee-benefits rule that says 'prevailing wage' is dropped",
+          not pn.keep(doc("Transparency in Coverage", ["Employee Benefits Security Administration", "Labor Department"])))
+    check("a Wage and Hour H-1B rule is kept",
+          pn.keep(doc("H-1B Enforcement; Civil Money Penalty Adjustments", ["Wage and Hour Division", "Labor Department"])))
+
+    # Public inspection: kept by title, a withdrawn placement skipped.
+    listing = {"results": [
+        {"document_number": "2026-22001", "type": "Rule", "title": "Temporary Increase in H-2B Nonimmigrant Visas",
+         "agencies": [{"name": "Homeland Security Department"}], "filed_at": "2026-10-27T08:45:00.000-04:00",
+         "publication_date": "2026-10-28", "html_url": "https://www.federalregister.gov/public-inspection/2026-22001",
+         "pdf_url": "https://public-inspection.federalregister.gov/2026-22001.pdf"},
+        {"document_number": "2026-22002", "type": "Notice", "title": "Culturally Significant Objects Being Imported for Exhibition",
+         "agencies": [{"name": "State Department"}], "filed_at": "2026-10-27T08:45:00.000-04:00", "publication_date": "2026-10-28"},
+        {"document_number": "2026-22003", "type": "Notice", "title": "Some USCIS Notice",
+         "agencies": [{"name": "U.S. Citizenship and Immigration Services"}], "filed_at": None, "publication_date": "2026-10-28"},
+        {"document_number": "2026-22004", "type": "Presidential Document", "title": "Suspension of Entry of Certain Aliens",
+         "agencies": [{"name": "Executive Office of the President"}], "filed_at": "2026-10-27T16:15:00.000-04:00",
+         "publication_date": "2026-10-30"},
+    ]}
+    got = {r["document_number"]: r for r in pn.inspection_rows(listing)}
+    check("an H-2B rule on public inspection is kept, dated by its filing",
+          "2026-22001" in got and got["2026-22001"]["pi_filed"] == "2026-10-27" and got["2026-22001"]["publication_date"] == "2026-10-28")
+    check("State's museum notice on public inspection is dropped", "2026-22002" not in got)
+    check("a placement withdrawn (no filing time) is skipped", "2026-22003" not in got)
+    check("a proclamation on entry of aliens is kept", "2026-22004" in got and got["2026-22004"]["status"] == "public-inspection")
+    check("its topics come from the title", got["2026-22001"]["topics"] == ["H-2B"])
+
+    # Following a filed document: published, or withdrawn after three days.
+    import io
+    import urllib.error
+    pn.write_notices(sq, [dict(got["2026-22001"], publication_date="2026-10-28"),
+                          dict(got["2026-22004"], publication_date="2026-10-20")], source="public-inspection")
+    published_doc = {"document_number": "2026-22001", "type": "Rule", "title": "Temporary Increase in H-2B Nonimmigrant Visas",
+                     "abstract": "DHS and DOL increase the cap.", "html_url": "https://www.federalregister.gov/d/2026-22001",
+                     "publication_date": "2026-10-28", "agencies": [{"name": "Homeland Security Department"}],
+                     "citation": "91 FR 99999"}
+
+    def fake_open(req, timeout=60):
+        url = req.full_url
+        if "/2026-22001.json" in url:
+            return io.BytesIO(json.dumps(published_doc).encode())
+        raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+    real = pn.urllib.request.urlopen
+    pn.urllib.request.urlopen = fake_open
+    pn.time.sleep = lambda *_: None
+    try:
+        pub, wd, problems = pn.follow_filed(sq, "2026-10-28")
+    finally:
+        pn.urllib.request.urlopen = real
+    rows = {r[0]: r for r in sq.conn.execute("SELECT document_number, status, pi_filed, citation, abstract FROM policy_notices")}
+    check("a filed document the Register published becomes the published one", pub == 1 and rows["2026-22001"][1] == "published")
+    check("it keeps the day it was filed", rows["2026-22001"][2] == "2026-10-27")
+    check("it carries the Register's citation and abstract", rows["2026-22001"][3] == "91 FR 99999" and rows["2026-22001"][4])
+    check("a filed document the Register never published, days later, is withdrawn", wd == 1 and rows["2026-22004"][1] == "withdrawn")
+    check("nothing went wrong reading them", problems == [])
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 

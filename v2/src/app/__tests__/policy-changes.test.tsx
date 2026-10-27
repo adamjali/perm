@@ -7,6 +7,7 @@ import type { PolicyNotice } from "@/lib/db/policyNotices";
 
 vi.mock("@/lib/db/policyNotices", () => ({ listPolicyNotices: vi.fn() }));
 vi.mock("@/lib/db/rulePipeline", () => ({ getRulePipeline: vi.fn() }));
+vi.mock("@/lib/db/policyComments", () => ({ getCommentCounts: vi.fn(async () => new Map()) }));
 // Reads Turso for the freshness line; not what this file is about.
 vi.mock("@/components/data/DataProvenance", () => ({
   DataProvenance: () => <div data-testid="provenance" />,
@@ -35,6 +36,11 @@ function n(over: Partial<PolicyNotice> & { documentNumber: string; publicationDa
     dates: null,
     correctionOf: null,
     pdfUrl: null,
+    source: null,
+    status: null,
+    piFiled: null,
+    signingDate: null,
+    supersededBy: null,
     ...over,
   };
 }
@@ -117,15 +123,15 @@ describe("/policy-changes", () => {
     expect(html).toContain("Correction of Sep 10, 2026");
   });
 
-  it("lists OFLC announcements on this site's programs and only COUNTS the H-2 ones", async () => {
+  it("lists every agency announcement, H-2A, H-2B and CW-1 included", async () => {
     const html = await render();
     expect(html).toContain("OFLC Releases Public Disclosure Data for Q3");
-    expect(html).not.toContain("H-2B Foreign Labor Recruiter List");
-    expect(html).toContain("1 more on H-2A, H-2B and CW-1");
-    // Eight rows lead (the 2026 one and seven from 2019); the other three
+    expect(html).toContain("OFLC Releases the H-2B Foreign Labor Recruiter List");
+    expect(html).not.toContain("more on H-2A, H-2B and CW-1");
+    // Eight rows lead (the two 2026 ones and six from 2019); the other four
     // 2019 announcements are still in the DOM, folded under their year.
     expect((html.match(/Older OFLC announcement \d/g) ?? []).length).toBe(10);
-    expect(html).toMatch(/<summary[^>]*>[\s\S]*?2019[\s\S]*?3 announcements/);
+    expect(html).toMatch(/<summary[^>]*>[\s\S]*?2019[\s\S]*?4 announcements/);
   });
 
   it("draws the strip with one mark per document in the window and a today line", async () => {
@@ -187,6 +193,33 @@ describe("/policy-changes", () => {
     expect(html).toContain("https://www.reginfo.gov/public/do/eAgendaViewRule?RIN=1205-AC29");
     // The rule cleared most recently comes first.
     expect(html.indexOf("RIN 1205-AC29")).toBeLessThan(html.indexOf("RIN 1615-AD25"));
+  });
+
+  it("shows what's coming next: a filing with both its days, a signed action not yet published", async () => {
+    vi.mocked(listPolicyNotices).mockResolvedValue([
+      ...FIXTURE,
+      n({ documentNumber: "2027-00101", publicationDate: "2027-01-18", type: "Rule", status: "public-inspection",
+          piFiled: "2027-01-15", title: "Temporary Increase in H-2B Nonimmigrant Visas", abstract: null }),
+      n({ documentNumber: "wh-2027-01-x", publicationDate: "2027-01-14", type: "Presidential action", source: "white-house",
+          signingDate: "2027-01-14", title: "Restriction on Entry of Certain Nonimmigrant Workers",
+          url: "https://www.whitehouse.gov/presidential-actions/2027/01/x/", agencies: ["Executive Office of the President"] }),
+    ]);
+    const html = await render();
+    expect(html).toMatch(/<h2[^>]*>Coming next<\/h2>/);
+    expect(html).toContain("Filed Jan 15, 2027, publishes Jan 18, 2027");
+    expect(html).toContain("Signed Jan 14, 2027, not yet in the Federal Register");
+    expect(html).toContain("Read the filed copy on the Federal Register");
+    expect(html).toContain("Read it on whitehouse.gov");
+  });
+
+  it("says so when nothing is filed or waiting", async () => {
+    const html = await render();
+    expect(html).toContain("Nothing from these agencies is on public inspection or waiting to be");
+  });
+
+  it("fails the render when the feed can't be read, so the last good page stays up", async () => {
+    vi.mocked(listPolicyNotices).mockRejectedValue(new Error("database unreachable"));
+    await expect(render()).rejects.toThrow("database unreachable");
   });
 
   it("says plainly when no rule is in the pipeline", async () => {

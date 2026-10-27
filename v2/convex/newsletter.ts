@@ -34,6 +34,7 @@ import { internalAction, internalMutation, internalQuery, type QueryCtx } from "
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 import { actionUrl } from "./lib/links";
+import { billNumber } from "./lib/billNumber";
 import { oneClickUnsubscribeUrl } from "./lib/prefsLink";
 import { createLogger } from "./lib/logging";
 import {
@@ -220,20 +221,64 @@ async function readBulletin(): Promise<Pick<DigestData, "bulletinMonth" | "bulle
   return { bulletinMonth, bulletinMoves: total > 0 ? { advanced, held, retrogressed, total } : null };
 }
 
-/** Federal Register documents from the last seven days, newest first. */
-async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
+/** Each source's kind of document, in the words the digest prints. */
+const NOTICE_KIND: Record<string, string> = {
+  Rule: "Final rule",
+  "Proposed Rule": "Proposed rule",
+  Notice: "Notice",
+  "Presidential Document": "Presidential document",
+  "Presidential action": "White House",
+  "OFLC announcement": "OFLC",
+  "USCIS announcement": "USCIS",
+  "Policy Manual update": "USCIS Policy Manual",
+  "DOL news release": "DOL",
+  "State Department visa news": "State Department",
+  Bill: "Bill in Congress",
+  "Court opinion": "Court opinion",
+  "BALCA decision": "BALCA",
+};
+
+/**
+ * The week's documents and announcements, newest first: Register documents
+ * that were published (not ones still on public inspection, or withdrawn),
+ * White House actions the Register hasn't published yet (once it has, the
+ * Register's document is the one listed), and the agencies' announcements.
+ */
+export async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
+  // A bill is dated by its latest action (`dates`), so one introduced months
+  // ago that moved this week is this week's news.
+  const day = "(CASE WHEN type = 'Bill' AND dates GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' " +
+    "THEN dates ELSE publication_date END)";
   const list = await rows(
-    "SELECT title, html_url AS url, publication_date, type FROM policy_notices WHERE publication_date >= ? ORDER BY publication_date DESC, document_number DESC LIMIT 8",
+    `SELECT title, html_url AS url, ${day} AS publication_date, type, document_number FROM policy_notices ` +
+      `WHERE ${day} >= ? AND (status IS NULL OR status = 'published') AND superseded_by IS NULL ` +
+      `AND type NOT IN ('Court opinion', 'BALCA decision') ` +
+      `ORDER BY ${day} DESC, document_number DESC LIMIT 8`,
     [sinceIso],
   );
-  return list
+  // A court's or BALCA's decision is listed by when this site first held it:
+  // OALJ posts decisions weeks or months after their date. At most three, and
+  // only ones decided in the last 120 days, so a first load of OALJ's back
+  // lists can't fill an issue. Midnight Eastern daylight time is close enough
+  // for a weekly window.
+  const sinceMs = Date.parse(`${sinceIso}T04:00:00Z`);
+  const decided = await rows(
+    "SELECT title, html_url AS url, publication_date, type, document_number FROM policy_notices " +
+      "WHERE type IN ('Court opinion', 'BALCA decision') AND first_seen_at >= ? " +
+      "AND publication_date >= date(?, '-120 days') ORDER BY publication_date DESC, document_number DESC LIMIT 3",
+    [sinceMs, sinceIso],
+  );
+  return [...list, ...decided]
     .filter((n) => typeof n.title === "string" && typeof n.url === "string" && typeof n.publication_date === "string")
-    .map((n) => ({
-      title: String(n.title),
-      url: String(n.url),
-      publicationDate: String(n.publication_date).slice(0, 10),
-      type: typeof n.type === "string" ? n.type : "Notice",
-    }));
+    .map((n) => {
+      const number = n.type === "Bill" && typeof n.document_number === "string" ? billNumber(n.document_number) : null;
+      return {
+        title: number ? `${number}, ${String(n.title)}` : String(n.title),
+        url: String(n.url),
+        publicationDate: String(n.publication_date).slice(0, 10),
+        type: typeof n.type === "string" ? (NOTICE_KIND[n.type] ?? n.type) : "Notice",
+      };
+    });
 }
 
 /**

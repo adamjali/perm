@@ -91,7 +91,15 @@ describe("dataset coverage", () => {
     // loop the scrape can't read), so those are held to the readers instead.
     const ids = Object.keys(DATASET_COVERAGE);
     const warnStates = ids.filter((d) => /^warn-notices-[a-z]{2}$/.test(d));
-    expect(ids.length - warnStates.length).toBeLessThanOrEqual(55);
+    // The policy feed's sources (Oct 27 2026) are held to the readers' own
+    // registry, POLICY_DATASETS in scripts/lib_policy_feed.py, exactly.
+    const policyRegistry = readFileSync(join(ROOT, "scripts", "lib_policy_feed.py"), "utf8")
+      .match(/POLICY_DATASETS = \(([\s\S]*?)\n\)/)?.[1] ?? "";
+    const policyIds = [...policyRegistry.matchAll(/^\s*"([a-z0-9-]+)",/gm)].map((m) => m[1]!);
+    expect(policyIds.length).toBeGreaterThanOrEqual(10);
+    const policy = ids.filter((d) => /^(policy-|rule-pipeline)/.test(d));
+    expect([...policy].sort()).toEqual([...policyIds].sort());
+    expect(ids.length - warnStates.length - policy.length).toBeLessThanOrEqual(55);
     const read = new Set<string>();
     for (const f of ["ingest_warn.py", "warn_states.py"]) {
       const src = readFileSync(join(ROOT, "scripts", f), "utf8");

@@ -209,7 +209,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/policy-changes",
     label: "Policy changes on the record",
     blurb:
-      "Every Federal Register rule, proposed rule and notice from USCIS, DHS, State and DOL's ETA that matches PERM, prevailing wage, H-1B, I-140, adjustment of status, the visa bulletin or EB-5, with the Register's own abstract and a link to the document. No summaries, no predictions.",
+      "Rules in the pipeline (OIRA review, public inspection, the Federal Register, and the Unified Agenda), documents filed for public inspection the day before they publish, the White House's presidential actions the day they're posted, every Federal Register rule, notice and presidential document on PERM, prevailing wages, H-1B, H-2A, H-2B, CW-1, I-140, adjustment of status, the visa bulletin and EB-5, and the announcements of USCIS (newsroom and Policy Manual), DOL and OFLC, each read from its source every 30 minutes or every weekday hour. The agencies' own words and dates, linked. No summaries, no predictions.",
   },
   {
     path: "/perm-employers/compare",

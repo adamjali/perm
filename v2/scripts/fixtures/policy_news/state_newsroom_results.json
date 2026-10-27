@@ -1,0 +1,447 @@
+{
+ "id": "newsroom-search-92024d1fd7",
+ "facets": [
+  {
+   "name": "tsg_aem:newsroom",
+   "title": "Newsroom",
+   "buckets": [
+    {
+     "value": "tsg_aem:newsroom/international-travel",
+     "title": "International Travel",
+     "count": 1,
+     "active": false,
+     "childBuckets": []
+    },
+    {
+     "value": "tsg_aem:newsroom/visas",
+     "title": "Visas",
+     "count": 155,
+     "active": false,
+     "childBuckets": []
+    },
+    {
+     "value": "tsg_aem:newsroom/adoption",
+     "title": "Adoption",
+     "count": 907,
+     "active": false,
+     "childBuckets": []
+    },
+    {
+     "value": "tsg_aem:newsroom/passports",
+     "title": "Passports",
+     "count": 6,
+     "active": false,
+     "childBuckets": []
+    }
+   ]
+  }
+ ],
+ "pagination": [
+  {
+   "label": "First",
+   "offset": 0,
+   "active": false,
+   "disabled": true,
+   "arrowControl": true,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "Previous",
+   "offset": 0,
+   "active": false,
+   "disabled": true,
+   "arrowControl": true,
+   "prev": true,
+   "next": false
+  },
+  {
+   "label": "1",
+   "offset": 0,
+   "active": true,
+   "disabled": true,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "2",
+   "offset": 10,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "3",
+   "offset": 20,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "4",
+   "offset": 30,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "5",
+   "offset": 40,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "6",
+   "offset": 50,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "7",
+   "offset": 60,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "8",
+   "offset": 70,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "9",
+   "offset": 80,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "10",
+   "offset": 90,
+   "active": false,
+   "disabled": false,
+   "arrowControl": false,
+   "prev": false,
+   "next": false
+  },
+  {
+   "label": "Next",
+   "offset": 10,
+   "active": false,
+   "disabled": false,
+   "arrowControl": true,
+   "prev": false,
+   "next": true
+  },
+  {
+   "label": "Last",
+   "offset": 1060,
+   "active": false,
+   "disabled": false,
+   "arrowControl": true,
+   "prev": false,
+   "next": false
+  }
+ ],
+ "suggestions": [],
+ "timeTaken": 68,
+ "resultsRange": "1-10",
+ "activeFacetsParameter": "",
+ "featuredResults": [],
+ "searchTerm": "",
+ "resultTotal": "1069",
+ "resultsEndpoint": "/en/newsroom/_jcr_content/root/container-main/container-content/newsroom.results.json",
+ "suggestionsEndpoint": "",
+ "results": [
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1792468800000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "October 20, 2026",
+    "cq:lastModifiedEpoch": 1792522243391,
+    "cq:lastModified": "October 20, 2026",
+    "newsroomPublish": "October 20, 2026",
+    "newsroomPublishEpoch": 1792468800000,
+    "metaDescription": "Building Arizona Families Accreditation Expiration"
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/adoptions/2026/building-arizona-families-accreditation-expiration",
+   "title": "Building Arizona Families Accreditation Expiration",
+   "url": "/en/newsroom/adoptions/2026/building-arizona-families-accreditation-expiration.html",
+   "tags": [
+    {
+     "title": "Adoption",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/adoption"
+    }
+   ],
+   "image": {},
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1791871200000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "October 13, 2026",
+    "cq:lastModifiedEpoch": 1792096616366,
+    "cq:lastModified": "October 15, 2026",
+    "newsroomPublish": "October 13, 2026",
+    "newsroomPublishEpoch": 1791871200000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/adoptions/2026/open-door-adoption-agency-inc----notice-of-renewal-of-accreditat",
+   "title": "Open Door Adoption Agency Inc. - Notice of Renewal of Accreditation",
+   "url": "/en/newsroom/adoptions/2026/open-door-adoption-agency-inc----notice-of-renewal-of-accreditat.html",
+   "tags": [
+    {
+     "title": "Adoption",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/adoption"
+    }
+   ],
+   "image": {
+    "alt": "",
+    "src": ""
+   },
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1790913600000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "October 02, 2026",
+    "cq:lastModifiedEpoch": 1792512344739,
+    "cq:lastModified": "October 20, 2026",
+    "newsroomPublish": "October 02, 2026",
+    "newsroomPublishEpoch": 1790913600000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/visas/2026/countries-subject-to-visa-bonds",
+   "title": "Countries Subject to Visa Bonds",
+   "url": "/en/newsroom/visas/2026/countries-subject-to-visa-bonds.html",
+   "tags": [
+    {
+     "title": "Visas",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/visas"
+    }
+   ],
+   "image": {
+    "alt": "",
+    "src": ""
+   },
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1789711200000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "September 18, 2026",
+    "cq:lastModifiedEpoch": 1792095620931,
+    "cq:lastModified": "October 15, 2026",
+    "newsroomPublish": "September 18, 2026",
+    "newsroomPublishEpoch": 1789711200000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/visas/2026/announcement-of-expanded-screening-and-vetting-for-visa-applicants",
+   "title": "Announcement of Expanded Screening and Vetting for Visa Applicants",
+   "url": "/en/newsroom/visas/2026/announcement-of-expanded-screening-and-vetting-for-visa-applicants.html",
+   "tags": [
+    {
+     "title": "Visas",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/visas"
+    }
+   ],
+   "image": {
+    "alt": "",
+    "src": ""
+   },
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1788501600000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "September 04, 2026",
+    "cq:lastModifiedEpoch": 1792514742931,
+    "cq:lastModified": "October 20, 2026",
+    "newsroomPublish": "September 04, 2026",
+    "newsroomPublishEpoch": 1788501600000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/passports/2026/executive-order-14418--continuing-to-protect-the-meaning-and-val",
+   "title": "Executive Order 14418: Continuing to Protect the Meaning and Value of American Citizenship",
+   "url": "/en/newsroom/passports/2026/executive-order-14418--continuing-to-protect-the-meaning-and-val.html",
+   "tags": [
+    {
+     "title": "Passports",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/passports"
+    }
+   ],
+   "image": {
+    "alt": "",
+    "src": ""
+   },
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1788156000000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "August 31, 2026",
+    "cq:lastModifiedEpoch": 1788278804624,
+    "cq:lastModified": "September 01, 2026",
+    "newsroomPublish": "August 31, 2026",
+    "newsroomPublishEpoch": 1788156000000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/visas/2025/diversity-visa-issuance-updated-guidance",
+   "title": "Diversity Visa Issuance Updated Guidance",
+   "url": "/en/newsroom/visas/2025/diversity-visa-issuance-updated-guidance.html",
+   "tags": [
+    {
+     "title": "Visas",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/visas"
+    }
+   ],
+   "image": {
+    "alt": "",
+    "src": ""
+   },
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1787896800000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "August 28, 2026",
+    "cq:lastModifiedEpoch": 1788278135403,
+    "cq:lastModified": "September 01, 2026",
+    "newsroomPublish": "August 28, 2026",
+    "newsroomPublishEpoch": 1787896800000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/visas/2026/immigrant-visa-processing-updates-for-nationalities-at-high-risk-of-public-benefits-usage",
+   "title": "Immigrant Visa Processing Updates for Nationalities at High Risk of U.S. Public Benefits Reliance",
+   "url": "/en/newsroom/visas/2026/immigrant-visa-processing-updates-for-nationalities-at-high-risk-of-public-benefits-usage.html",
+   "tags": [
+    {
+     "title": "Visas",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/visas"
+    }
+   ],
+   "image": {
+    "alt": "",
+    "src": ""
+   },
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1787544000000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "August 24, 2026",
+    "cq:lastModifiedEpoch": 1788277788915,
+    "cq:lastModified": "September 01, 2026",
+    "newsroomPublish": "August 24, 2026",
+    "newsroomPublishEpoch": 1787544000000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/adoptions/2026/baptist-children-s-homes-of-north-carolina--inc--accreditation-e",
+   "title": "Baptist Children's Homes of North Carolina, Inc. Accreditation Expiration",
+   "url": "/en/newsroom/adoptions/2026/baptist-children-s-homes-of-north-carolina--inc--accreditation-e.html",
+   "tags": [
+    {
+     "title": "Adoption",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/adoption"
+    }
+   ],
+   "image": {},
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1787025600000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "August 18, 2026",
+    "cq:lastModifiedEpoch": 1788208046018,
+    "cq:lastModified": "August 31, 2026",
+    "newsroomPublish": "August 18, 2026",
+    "newsroomPublishEpoch": 1787025600000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/visas/2026/nonimmigrant-visa-expedited-appointment-pilot-program",
+   "title": "Nonimmigrant Visa Expedited Appointment Pilot Program",
+   "url": "/en/newsroom/visas/2026/nonimmigrant-visa-expedited-appointment-pilot-program.html",
+   "tags": [
+    {
+     "title": "Visas",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/visas"
+    }
+   ],
+   "image": {},
+   "imageUrl": ""
+  },
+  {
+   "breadcrumb": [],
+   "properties": {
+    "pageUpdateDateStampEpoch": 1785902400000,
+    "jcr:description": "",
+    "pageUpdateDateStamp": "August 05, 2026",
+    "cq:lastModifiedEpoch": 1788273193201,
+    "cq:lastModified": "September 01, 2026",
+    "newsroomPublish": "August 05, 2026",
+    "newsroomPublishEpoch": 1785902400000,
+    "metaDescription": null
+   },
+   "path": "/content/tsg_aem/us/en/home/newsroom/visas/2026/public-charge-bonds-for-immigrant-visa-applicants",
+   "title": "Public Charge Bonds for Immigrant Visa Applicants",
+   "url": "/en/newsroom/visas/2026/public-charge-bonds-for-immigrant-visa-applicants.html",
+   "tags": [
+    {
+     "title": "Visas",
+     "category": "newsroom",
+     "value": "tsg_aem:newsroom/visas"
+    }
+   ],
+   "image": {},
+   "imageUrl": ""
+  }
+ ],
+ ":type": "tsg_aem/components/content/search/v1/newsroom-search"
+}

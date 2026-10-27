@@ -1,0 +1,127 @@
+{
+ "data": [
+  {
+   "id": "USCIS-2026-0364-26583",
+   "type": "comments",
+   "attributes": {
+    "agencyId": "USCIS",
+    "objectId": "09000064b969d82d",
+    "documentType": "Public Submission",
+    "withdrawn": false,
+    "highlightedContent": "",
+    "postedDate": "2026-10-26T04:00:00Z",
+    "lastModifiedDate": "2026-10-26T08:52:32Z",
+    "title": "Comment Submitted by Anonymous"
+   }
+  },
+  {
+   "id": "USCIS-2026-0364-26584",
+   "type": "comments",
+   "attributes": {
+    "agencyId": "USCIS",
+    "objectId": "09000064b969d85b",
+    "documentType": "Public Submission",
+    "withdrawn": false,
+    "highlightedContent": "",
+    "postedDate": "2026-10-26T04:00:00Z",
+    "lastModifiedDate": "2026-10-26T08:52:32Z",
+    "title": "Comment Submitted by Anonymous"
+   }
+  },
+  {
+   "id": "USCIS-2026-0364-26585",
+   "type": "comments",
+   "attributes": {
+    "agencyId": "USCIS",
+    "objectId": "09000064b969d861",
+    "documentType": "Public Submission",
+    "withdrawn": false,
+    "highlightedContent": "",
+    "postedDate": "2026-10-26T04:00:00Z",
+    "lastModifiedDate": "2026-10-26T08:52:33Z",
+    "title": "Comment Submitted by Anonymous"
+   }
+  },
+  {
+   "id": "USCIS-2026-0364-26591",
+   "type": "comments",
+   "attributes": {
+    "agencyId": "USCIS",
+    "objectId": "09000064b969f092",
+    "documentType": "Public Submission",
+    "withdrawn": false,
+    "highlightedContent": "",
+    "postedDate": "2026-10-26T04:00:00Z",
+    "lastModifiedDate": "2026-10-26T08:52:34Z",
+    "title": "Comment Submitted by Anonymous"
+   }
+  },
+  {
+   "id": "USCIS-2026-0364-26592",
+   "type": "comments",
+   "attributes": {
+    "agencyId": "USCIS",
+    "objectId": "09000064b969f1ec",
+    "documentType": "Public Submission",
+    "withdrawn": false,
+    "highlightedContent": "",
+    "postedDate": "2026-10-26T04:00:00Z",
+    "lastModifiedDate": "2026-10-26T08:52:34Z",
+    "title": "Comment Submitted by Anonymous"
+   }
+  }
+ ],
+ "meta": {
+  "aggregations": {
+   "agencyId": [
+    {
+     "docCount": 26697,
+     "value": "USCIS"
+    }
+   ],
+   "postedDate": [
+    {
+     "label": "Last 3 Days",
+     "fromDate": "2026-10-25 00:00:00",
+     "toDate": "2026-10-27 23:59:59",
+     "docCount": 117
+    },
+    {
+     "label": "Last 7 Days",
+     "fromDate": "2026-10-21 00:00:00",
+     "toDate": "2026-10-27 23:59:59",
+     "docCount": 223
+    },
+    {
+     "label": "Last 15 Days",
+     "fromDate": "2026-10-13 00:00:00",
+     "toDate": "2026-10-27 23:59:59",
+     "docCount": 1475
+    },
+    {
+     "label": "Last 30 Days",
+     "fromDate": "2026-09-28 00:00:00",
+     "toDate": "2026-10-27 23:59:59",
+     "docCount": 3099
+    },
+    {
+     "label": "Last 90 Days",
+     "fromDate": "2026-07-30 00:00:00",
+     "toDate": "2026-10-27 23:59:59",
+     "docCount": 26697
+    }
+   ]
+  },
+  "filters": {},
+  "hasNextPage": true,
+  "hasPreviousPage": false,
+  "numberOfElements": 5,
+  "pageNumber": 1,
+  "pageSize": 5,
+  "totalElements": 26697,
+  "totalPages": 40,
+  "firstPage": true,
+  "lastPage": false
+ },
+ "_fixture": "regulations.gov v4 GET /comments?filter[commentOnId]=09000064b951de81&page[size]=5&sort=-postedDate, read Oct 27 2026, as answered (all five comments are anonymous)."
+}

@@ -1,0 +1,232 @@
+{
+ "_fixture": "Real bill records from congress.gov v3 GET /bill/119 (sort updateDate), read Oct 27 2026: thirty-four of the 750 read, regrouped into two pages; the pagination is edited to point page one at page two.",
+ "bills": [
+  {
+   "congress": 119,
+   "introducedDate": "2025-09-18",
+   "latestAction": {
+    "actionDate": "2025-09-18",
+    "text": "Read twice and referred to the Committee on the Judiciary."
+   },
+   "number": "2886",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "America\u2019s CHILDREN Act of 2025",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/2886?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-09-10",
+   "latestAction": {
+    "actionDate": "2025-09-10",
+    "text": "Read twice and referred to the Committee on the Judiciary. (text: CR S6539)"
+   },
+   "number": "2759",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Healthcare Workforce Resilience Act",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/2759?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-04-01",
+   "latestAction": {
+    "actionDate": "2025-04-01",
+    "text": "Read twice and referred to the Committee on the Judiciary. (text: CR S2095-2096)"
+   },
+   "number": "1233",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Keep STEM Talent Act of 2025",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/1233?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-02-12",
+   "latestAction": {
+    "actionDate": "2026-02-12",
+    "text": "Read twice and referred to the Committee on the Judiciary."
+   },
+   "number": "3857",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "One Nation, One Visa Policy Act",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/3857?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-03-14",
+   "latestAction": {
+    "actionDate": "2025-03-14",
+    "text": "Read twice and referred to the Committee on the Judiciary."
+   },
+   "number": "1086",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Stop CCP VISAs Act of 2025",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/1086?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-06-03",
+   "latestAction": {
+    "actionDate": "2025-06-03",
+    "text": "Read twice and referred to the Committee on the Judiciary."
+   },
+   "number": "1937",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Visa Overstay Penalties Act of 2025",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/1937?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-11-06",
+   "latestAction": {
+    "actionDate": "2025-11-06",
+    "text": "Read twice and referred to the Committee on the Judiciary."
+   },
+   "number": "3144",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Veterans Visa and Protection Act of 2025",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/3144?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-01-27",
+   "latestAction": {
+    "actionDate": "2026-01-27",
+    "text": "Read twice and referred to the Committee on the Judiciary."
+   },
+   "number": "3702",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Dignity for Detained Immigrants Act",
+   "type": "S",
+   "updateDate": "2026-08-10",
+   "updateDateIncludingText": "2026-08-10",
+   "url": "https://api.congress.gov/v3/bill/119/s/3702?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-01-06",
+   "latestAction": {
+    "actionDate": "2025-01-06",
+    "text": "Referred to the Committee on Rules, and in addition to the Committee on the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "15",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Rescinding the subpoenas issued by the January 6th Select Committee on September 23, 2021, October 6, 2021, and February 9, 2022, and withdrawing the recommendations finding Stephen K. Bannon, Mark Randall Meadows, Daniel Scavino, Jr., and Peter K. Navarro in contempt of Congress.",
+   "type": "HRES",
+   "updateDate": "2026-09-28",
+   "updateDateIncludingText": "2026-09-28",
+   "url": "https://api.congress.gov/v3/bill/119/hres/15?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-01-06",
+   "latestAction": {
+    "actionDate": "2025-01-06",
+    "text": "Referred to the House Committee on Foreign Affairs."
+   },
+   "number": "16",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Recognizing Russian actions in Ukraine as a genocide.",
+   "type": "HRES",
+   "updateDate": "2026-09-28",
+   "updateDateIncludingText": "2026-09-28",
+   "url": "https://api.congress.gov/v3/bill/119/hres/16?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-01-07",
+   "latestAction": {
+    "actionDate": "2025-01-07",
+    "text": "Referred to the House Committee on Foreign Affairs."
+   },
+   "number": "17",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Condemning Turkey for its illegal occupation of Cyprus and encouraging President Trump to make the resolution of the Cyprus problem a top foreign policy priority.",
+   "type": "HRES",
+   "updateDate": "2026-09-28",
+   "updateDateIncludingText": "2026-09-28",
+   "url": "https://api.congress.gov/v3/bill/119/hres/17?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2026-07-23",
+   "latestAction": {
+    "actionDate": "2026-07-23",
+    "text": "Referred to the Committee on Financial Services, and in addition to the Committees on Ways and Means, and Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned."
+   },
+   "number": "9934",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Housing BOOM Act",
+   "type": "HR",
+   "updateDate": "2026-09-28",
+   "updateDateIncludingText": "2026-09-28",
+   "url": "https://api.congress.gov/v3/bill/119/hr/9934?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-12-11",
+   "latestAction": {
+    "actionDate": "2025-12-11",
+    "text": "Read twice and referred to the Committee on Finance."
+   },
+   "number": "3464",
+   "originChamber": "Senate",
+   "originChamberCode": "S",
+   "title": "Housing BOOM Act",
+   "type": "S",
+   "updateDate": "2026-09-28",
+   "updateDateIncludingText": "2026-09-28",
+   "url": "https://api.congress.gov/v3/bill/119/s/3464?format=json"
+  },
+  {
+   "congress": 119,
+   "introducedDate": "2025-01-07",
+   "latestAction": {
+    "actionDate": "2025-01-07",
+    "text": "Referred to the House Committee on Foreign Affairs."
+   },
+   "number": "18",
+   "originChamber": "House",
+   "originChamberCode": "H",
+   "title": "Expressing the sense of the House of Representatives that the Parthenon Marbles should be returned to Greece.",
+   "type": "HRES",
+   "updateDate": "2026-09-28",
+   "updateDateIncludingText": "2026-09-28",
+   "url": "https://api.congress.gov/v3/bill/119/hres/18?format=json"
+  }
+ ],
+ "pagination": {
+  "count": 34
+ }
+}

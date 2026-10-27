@@ -1,0 +1,101 @@
+{
+ "data": [
+  {
+   "type": "documents",
+   "id": "USCIS-2026-0364-0001",
+   "attributes": {
+    "agencyId": "USCIS",
+    "objectId": "09000064b951de81",
+    "frDocNum": "2026-18631",
+    "documentType": "Proposed Rule",
+    "withdrawn": false,
+    "highlightedContent": "",
+    "commentEndDate": "2026-11-11T04:59:59Z",
+    "commentStartDate": "2026-09-11T04:00:00Z",
+    "lastModifiedDate": "2026-10-27T09:00:31Z",
+    "openForComment": true,
+    "withinCommentPeriod": true,
+    "postedDate": "2026-09-11T04:00:00Z",
+    "title": "Eliminating the Discretionary 60-Day Grace Period",
+    "docketId": "USCIS-2026-0364",
+    "subtype": null,
+    "allowLateComments": false
+   }
+  }
+ ],
+ "meta": {
+  "aggregations": {
+   "subtype": [],
+   "documentType": [
+    {
+     "docCount": 1,
+     "label": "Proposed Rule"
+    }
+   ],
+   "withinCommentPeriod": [
+    {
+     "docCount": 1,
+     "label": "true"
+    },
+    {
+     "docCount": 0,
+     "label": "false"
+    }
+   ],
+   "agencyId": [
+    {
+     "docCount": 1,
+     "value": "USCIS"
+    }
+   ],
+   "commentEndDate": [
+    {
+     "label": "Next 30 Days",
+     "fromDate": "2026-10-27 00:00:00",
+     "toDate": "2026-11-25 23:59:58",
+     "docCount": 1
+    },
+    {
+     "label": "Next 90 Days",
+     "fromDate": "2026-10-27 00:00:00",
+     "toDate": "2027-01-24 23:59:58",
+     "docCount": 1
+    }
+   ],
+   "openForComment": [
+    {
+     "docCount": 0,
+     "label": "true"
+    },
+    {
+     "docCount": 1,
+     "label": "false"
+    }
+   ],
+   "postedDate": [
+    {
+     "label": "Last 90 Days",
+     "fromDate": "2026-07-30 00:00:00",
+     "toDate": "2026-10-27 23:59:59",
+     "docCount": 1
+    }
+   ]
+  },
+  "filters": {
+   "frDocumentNumber": {
+    "label": "2026-18631",
+    "value": "2026-18631"
+   }
+  },
+  "hasNextPage": false,
+  "hasPreviousPage": false,
+  "numberOfElements": 1,
+  "pageNumber": 1,
+  "pageSize": 25,
+  "totalElements": 1,
+  "totalPages": 1,
+  "firstPage": true,
+  "lastPage": true
+ },
+ "_fixture": "regulations.gov v4 GET /documents?filter[frDocNum]=2026-18631, read Oct 27 2026, as answered."
+}

@@ -1,12 +1,14 @@
 /**
  * The policy page's shaping, pure so the browser and the tests can share it.
  *
- * The table holds two feeds under one shape: Federal Register documents
- * (rules, proposed rules, notices) and OFLC's own announcements. Everything
- * here is arithmetic over those rows and a `today`: which announcements are
- * on this site's programs, which correction belongs to which document,
- * whether a comment window is still open, and where each document sits on a
- * twelve-month strip. Nothing reads the clock; the page passes the date.
+ * One table, several sources (`lib/db/policyNotices`). Here they're sorted
+ * into what the page shows: the Register's published documents (presidential
+ * ones included), what's coming next (filed for public inspection, or signed
+ * at the White House and not yet published), and the agencies' own
+ * announcements (USCIS, its Policy Manual, DOL and OFLC). Everything is
+ * arithmetic over those rows and a `today`: which correction belongs to which
+ * document, whether a comment window is still open, and where each document
+ * sits on a twelve-month strip. Nothing reads the clock; the page passes the date.
  */
 
 import type { PolicyNotice } from "@/lib/db/policyNotices";
@@ -14,13 +16,21 @@ import { MS_PER_DAY } from "@/lib/time";
 import { MONTH_ABBR } from "@convex/lib/months";
 
 export const OFLC_TYPE = "OFLC announcement";
+export const WH_TYPE = "Presidential action";
+export const USCIS_TYPE = "USCIS announcement";
+export const PM_TYPE = "Policy Manual update";
+export const DOL_TYPE = "DOL news release";
+export const STATE_TYPE = "State Department visa news";
+export const PRESIDENTIAL_TYPE = "Presidential Document";
+/** A bill or joint resolution in Congress (`scripts/ingest_congress_bills.py`). */
+export const BILL_TYPE = "Bill";
+export const COURT_TYPE = "Court opinion";
+export const BALCA_TYPE = "BALCA decision";
+/** Decisions on these programs, a court's or BALCA's: not Register documents. */
+export const DECISION_TYPES: readonly string[] = [COURT_TYPE, BALCA_TYPE];
 
-/**
- * OFLC tags its announcements by program (`ingest_oflc_news.py`). These are
- * the programs this site is about; an announcement carrying none of them is
- * H-2A, H-2B or CW-1 housekeeping and is counted rather than listed.
- */
-export const OFLC_SITE_TOPICS = ["perm", "prevailing-wage", "h-1b", "disclosure-data", "flag"] as const;
+/** Posts an agency made on its own site, which aren't Register documents. */
+export const ANNOUNCEMENT_TYPES: readonly string[] = [OFLC_TYPE, USCIS_TYPE, PM_TYPE, DOL_TYPE, STATE_TYPE];
 
 export interface FeedDoc extends PolicyNotice {
   /** Corrections the Register published to this document, newest first. */
@@ -28,12 +38,25 @@ export interface FeedDoc extends PolicyNotice {
 }
 
 export interface PolicyFeed {
-  /** Federal Register documents, newest first, corrections folded in. */
+  /** Register documents, published or withdrawn, newest first, corrections folded in. */
   register: FeedDoc[];
-  /** OFLC announcements on this site's programs, newest first. */
-  oflc: PolicyNotice[];
-  /** OFLC announcements held but not listed (other programs). */
-  oflcOther: number;
+  /** On the Register's public inspection list now, newest filing first. */
+  filed: PolicyNotice[];
+  /** Presidential actions the White House posted that the Register hasn't published yet. */
+  signed: PolicyNotice[];
+  /**
+   * Announcements from USCIS, its Policy Manual, DOL and OFLC, newest first,
+   * and White House actions the Register hasn't printed within SIGNED_WAIT_DAYS.
+   */
+  announcements: PolicyNotice[];
+  /**
+   * Bills in Congress, newest latest action first. A bill's `dates` holds its
+   * latest action's day and `action` its text; `publicationDate` is the day
+   * it was introduced.
+   */
+  bills: PolicyNotice[];
+  /** Federal court opinions and BALCA decisions, newest decision first. */
+  decisions: PolicyNotice[];
 }
 
 function isCorrection(n: PolicyNotice): boolean {
@@ -67,15 +90,43 @@ export function foldCorrections(rows: readonly PolicyNotice[]): FeedDoc[] {
   return out.sort(byDateDesc);
 }
 
-export function isOnSitePrograms(n: PolicyNotice): boolean {
-  return n.topics.some((t) => (OFLC_SITE_TOPICS as readonly string[]).includes(t));
+/**
+ * How long a White House action waits for its Register document before it's
+ * no longer "coming next". The Register prints a proclamation or an executive
+ * order a few business days after signing (the H-1B proclamation: signed Sep
+ * 19 2026, published Sep 23); many memoranda are never printed at all. Past
+ * this, an unmatched action is listed among the announcements instead.
+ */
+export const SIGNED_WAIT_DAYS = 14;
+
+/** A White House action still waiting for the Register, as of `today`. */
+export function awaitsRegister(n: PolicyNotice, today: string | undefined): boolean {
+  if (n.type !== WH_TYPE || n.supersededBy) return false;
+  return today === undefined || daysBetween(n.signingDate ?? n.publicationDate, today) <= SIGNED_WAIT_DAYS;
 }
 
-export function buildFeed(rows: readonly PolicyNotice[]): PolicyFeed {
-  const register = foldCorrections(rows.filter((n) => n.type !== OFLC_TYPE));
-  const oflcAll = rows.filter((n) => n.type === OFLC_TYPE);
-  const oflc = oflcAll.filter(isOnSitePrograms).sort(byDateDesc);
-  return { register, oflc, oflcOther: oflcAll.length - oflc.length };
+/** A bill's latest action day, else the day it was introduced. */
+export function billActionDay(n: PolicyNotice): string {
+  return n.dates && /^\d{4}-\d{2}-\d{2}$/.test(n.dates) ? n.dates : n.publicationDate;
+}
+
+export function buildFeed(all: readonly PolicyNotice[], today?: string): PolicyFeed {
+  const bills = all
+    .filter((n) => n.type === BILL_TYPE)
+    .sort((a, b) => billActionDay(b).localeCompare(billActionDay(a)) || byDateDesc(a, b));
+  const decisions = all.filter((n) => DECISION_TYPES.includes(n.type)).sort(byDateDesc);
+  const rows = all.filter((n) => n.type !== BILL_TYPE && !DECISION_TYPES.includes(n.type));
+  const isAnnouncement = (n: PolicyNotice) =>
+    ANNOUNCEMENT_TYPES.includes(n.type) || (n.type === WH_TYPE && !n.supersededBy && !awaitsRegister(n, today));
+  const filed = rows
+    .filter((n) => n.status === "public-inspection" && !isAnnouncement(n) && n.type !== WH_TYPE)
+    .sort((a, b) => (b.piFiled ?? "").localeCompare(a.piFiled ?? "") || byDateDesc(a, b));
+  const signed = rows.filter((n) => awaitsRegister(n, today)).sort(byDateDesc);
+  const register = foldCorrections(
+    rows.filter((n) => !isAnnouncement(n) && n.type !== WH_TYPE && n.status !== "public-inspection"),
+  );
+  const announcements = rows.filter(isAnnouncement).sort(byDateDesc);
+  return { register, filed, signed, announcements, bills, decisions };
 }
 
 /** Whole days from `from` to `to`, ISO dates, UTC arithmetic so no zone can shift a boundary. */
@@ -114,23 +165,33 @@ export interface FeedLedger {
   proposed: number;
   proposedOpen: number;
   notices: number;
-  oflc: number;
-  oflcSince: string | null;
+  presidential: number;
+  /** Filed for public inspection or signed, not yet in the Register. */
+  coming: number;
+  announcements: number;
+  announcementsSince: string | null;
+  bills: number;
+  decisions: number;
   earliest: string | null;
   newest: string | null;
 }
 
 export function feedLedger(feed: PolicyFeed, today: string): FeedLedger {
-  const reg = feed.register;
+  const reg = feed.register.filter((d) => d.status !== "withdrawn");
   const proposed = reg.filter((d) => d.type === "Proposed Rule");
-  const dates = [...reg, ...feed.oflc].map((d) => d.publicationDate).sort();
+  const dates = [...reg, ...feed.announcements].map((d) => d.publicationDate).sort();
+  const a = feed.announcements;
   return {
     rules: reg.filter((d) => d.type === "Rule").length,
     proposed: proposed.length,
     proposedOpen: proposed.filter((d) => commentWindow(d, today)?.state === "open").length,
     notices: reg.filter((d) => d.type === "Notice").length,
-    oflc: feed.oflc.length,
-    oflcSince: feed.oflc.length ? feed.oflc[feed.oflc.length - 1]!.publicationDate : null,
+    presidential: reg.filter((d) => d.type === PRESIDENTIAL_TYPE).length,
+    coming: feed.filed.length + feed.signed.length,
+    announcements: a.length,
+    announcementsSince: a.length ? a[a.length - 1]!.publicationDate : null,
+    bills: feed.bills.length,
+    decisions: feed.decisions.length,
     earliest: reg.length ? reg[reg.length - 1]!.publicationDate : null,
     newest: dates.length ? dates[dates.length - 1]! : null,
   };
@@ -163,11 +224,12 @@ export interface Strip {
   end: string;
   months: StripMonth[];
   register: StripMark[];
-  oflc: StripMark[];
+  /** The agencies' own announcements, the short ticks. */
+  announcements: StripMark[];
   todayX: number;
   /** Documents older than the strip, stated in words under it. */
   earlierRegister: number;
-  earlierOflc: number;
+  earlierAnnouncements: number;
 }
 
 function iso(y: number, m0: number, d: number): string {
@@ -212,11 +274,11 @@ export function buildStrip(feed: PolicyFeed, today: string, monthsBack = 12): St
     start,
     end,
     months,
-    register: feed.register.filter(inStrip).map(mark),
-    oflc: feed.oflc.filter(inStrip).map(mark),
+    register: feed.register.filter((n) => n.status !== "withdrawn" && inStrip(n)).map(mark),
+    announcements: feed.announcements.filter(inStrip).map(mark),
     todayX: xOf(today),
     earlierRegister: feed.register.filter((n) => n.publicationDate < start).length,
-    earlierOflc: feed.oflc.filter((n) => n.publicationDate < start).length,
+    earlierAnnouncements: feed.announcements.filter((n) => n.publicationDate < start).length,
   };
 }
 

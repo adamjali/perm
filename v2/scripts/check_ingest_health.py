@@ -728,6 +728,48 @@ def check_warn_states(db) -> int:
     return 0
 
 
+def check_policy_sources(db) -> int:
+    """Name every policy source that has never loaded, the way check_warn_states
+    names states: a source that never writes has no freshness row, so it would
+    never age into a failure (a new reader whose host refuses its runner, say).
+    A warning every morning until it loads; then its own budget takes over."""
+    from lib_policy_feed import POLICY_DATASETS  # noqa: PLC0415
+    try:
+        have = {str(r[0]) for r in query_rows(db, "SELECT dataset FROM data_freshness", [])}
+    except RuntimeError as exc:
+        print(f"policy sources    : unreadable ({str(exc)[:100]})")
+        return 0
+    never = [d for d in POLICY_DATASETS if d not in have]
+    if not never:
+        print(f"policy sources    : all {len(POLICY_DATASETS)} have loaded at least once  ok")
+        return 0
+    print(f"policy sources    : {len(never)} of {len(POLICY_DATASETS)} never loaded  NEVER LOADED")
+    print(f"::warning::Policy sources that have never loaded: {', '.join(never)}. Each warns until it loads; "
+          f"read the newest run of its script (scripts/lib_policy_feed.py lists which)")
+    return 0
+
+
+def check_data_gov_key(db) -> int:
+    """Warn while the api.data.gov readers run on DEMO_KEY: 50 requests a day
+    for the server's address, so they read twice a day, not every half hour.
+    Never a failure: DEMO_KEY works, only less often. Read from each script's
+    newest run note (lib_data_gov's `key_note`), so it works wherever the
+    health check runs."""
+    for script in ("ingest_regulations_gov.py", "ingest_congress_bills.py"):
+        try:
+            got = query_rows(db, "SELECT note FROM ingest_runs WHERE script = ? ORDER BY finished_at DESC LIMIT 1", [script])
+        except RuntimeError as exc:
+            print(f"data.gov key      : {script} unreadable ({str(exc)[:100]})")
+            continue
+        if got and "on DEMO_KEY" in (got[0][0] or ""):
+            print(f"data.gov key      : {script} runs on DEMO_KEY  WAITING FOR KEY")
+            print(f"::warning::{script} runs on DEMO_KEY: DATA_GOV_API_KEY isn't in the server's uscis.env, "
+                  "so it reads twice a day instead of every half hour")
+        elif got:
+            print(f"data.gov key      : {script} runs on the site's key  ok")
+    return 0
+
+
 def check_lookup_demand(db) -> int:
     try:
         rows = query_rows(db, "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
@@ -904,6 +946,8 @@ def main() -> int:
     check_cap_streak(db)        # a warning only; see CAP_STREAK_RUNS
     check_unclassified_statuses(db)   # a warning only; see its docstring
     check_warn_states(db)             # a warning only; see its docstring
+    check_policy_sources(db)          # a warning only; see its docstring
+    check_data_gov_key(db)            # a warning only; see its docstring
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)

@@ -83,9 +83,31 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   debarments:
     "Employers and agents DOL has barred, for the period DOL states. Includes bars that have not started yet.",
   "policy-notices":
-    "Federal Register rules, proposed rules and notices that touch these programs, with the Register's own dates. Not guidance or internal memos.",
+    "Federal Register rules, proposed rules, notices and presidential documents that touch these programs, with the Register's own dates. Not guidance or internal memos.",
   "policy-notices-oflc":
-    "Announcements OFLC posts on its own page, which is where program changes appear before the Federal Register.",
+    "Every announcement OFLC posts on its own page, H-2A, H-2B and CW-1 included, which is where program changes appear before the Federal Register.",
+  "policy-notices-dol":
+    "DOL's news releases on foreign labor and work visas (H-1B, PERM, H-2A, H-2B, Project Firewall), from its newsroom. The rest of DOL's news is left out.",
+  "policy-notices-pi":
+    "Today's Federal Register public inspection list, kept by the policy feed's rules on the title: documents the Register files the business day before it publishes them, followed until published or withdrawn. No abstract until publication.",
+  "policy-notices-wh":
+    "The White House's presidential actions on an immigration subject, the day they're posted, from its own feed. Replaced by the Federal Register's document once published; nothing on other subjects.",
+  "policy-notices-uscis":
+    "USCIS's news releases and alerts on work-based immigration, from its newsroom feed. Fraud cases, naturalization and humanitarian-only items are left out.",
+  "policy-comments":
+    "How many comments regulations.gov has posted on each proposed rule still open for comment. Posted, not received: an agency posts a comment after screening it, so the count trails what was sent.",
+  "policy-notices-congress":
+    "Bills and joint resolutions in the current Congress whose titles name a work-visa or employment-based green card subject, with each bill's latest action. Resolutions and bills on other subjects are left out.",
+  "policy-notices-courts":
+    "Federal court opinions that turn on PERM labor certification, H-1B, H-2A, H-2B, I-140 or employment-based green cards, from CourtListener's archive, with a person named in a caption shown by initials. State courts, criminal cases and petitions for review of removal orders are left out.",
+  "policy-notices-balca":
+    "BALCA's decisions as OALJ lists them: every en banc PERM decision, and prevailing wage, H-2A and H-2B appeals decided since October 2024, with a sole proprietor shown by initials. OALJ keeps no list of ordinary PERM panel decisions, and its lists run weeks to months behind.",
+  "policy-notices-state":
+    "The State Department's visa news on work and immigrant visas, from its own newsroom. Visitor-only, diversity-lottery, passport and adoption items are left out.",
+  "policy-notices-uscis-pm":
+    "Every Policy Manual alert and technical update on the work-based parts of the manual since 2013, with the sections each one changed.",
+  "rule-pipeline-agenda":
+    "Each agency's Unified Agenda listing for USCIS rules and immigration rules from DOL, State and DHS: the stage, the agency's own timetable for its next step as printed, and the abstract, from reginfo.gov's file for the newest edition. The timetable is the agency's plan, not a date this site predicts.",
   "rule-pipeline":
     "Rules from USCIS, and immigration rules from DOL, State and DHS, from White House review (OIRA's own lists) through public inspection to the Federal Register. A rule OIRA doesn't review appears once it's on public inspection.",
   "warn-notices":
@@ -241,7 +263,18 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   debarments: "DOL debarment lists",
   "policy-notices": "Federal Register notices",
   "policy-notices-oflc": "OFLC announcements",
+  "policy-notices-dol": "DOL news releases",
+  "policy-notices-pi": "Federal Register public inspection",
+  "policy-notices-wh": "White House presidential actions",
+  "policy-notices-uscis": "USCIS news and alerts",
+  "policy-notices-uscis-pm": "USCIS Policy Manual updates",
+  "policy-notices-state": "State Department visa news",
+  "policy-comments": "Comment counts from regulations.gov",
+  "policy-notices-congress": "Bills in Congress",
+  "policy-notices-courts": "Federal court opinions",
+  "policy-notices-balca": "BALCA decisions",
   "rule-pipeline": "Rules in review and on public inspection",
+  "rule-pipeline-agenda": "The Unified Agenda",
   "warn-notices": "WARN notices",
   "warn-notices-ca": "California WARN notices",
   "warn-notices-ny": "New York WARN notices",

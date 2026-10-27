@@ -1392,3 +1392,24 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026: the rule watch".
   (`newsworthy.yml`, timer `dispatch-newsworthy-evening`) it emails the owner, only when something moved.
 - **A hook that returns a mock gets it called as the hook's cleanup** (bit again: `beforeEach(() => rows.mockReset())`
   ran a rejecting mock after every test). Braces.
+
+## Oct 27 2026 (morning): every policy source, in eight lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every policy source, first".
+
+- **One writer for the policy feed** (`scripts/lib_policy_feed.py`): a fact is never cleared, `first_seen_at` is set
+  once, a status only moves forward, a row is written only when it changed. `POLICY_DATASETS` lists every source.
+- **New sources:** presidential documents and the White House's own feed (days before the Register), the public
+  inspection list for every kept document, USCIS's newsroom and Policy Manual, DOL's newsroom, State's visa news
+  (adoption.state.gov's newsroom JSON), the Unified Agenda, bills in Congress, federal court opinions
+  (CourtListener) and BALCA's decisions (OALJ's caselists).
+- **api.data.gov's key** (`DATA_GOV_API_KEY`, server `uscis.env` only, set Oct 27, 10:19 AM EDT, moved from the press
+  mailbox by a script that never printed it) serves regulations.gov's comment counts and congress.gov's bills.
+- **A person named in a court or BALCA caption is shown by initials**; a caption the rule can't settle is held until
+  ruled on (`--held`, `--release`).
+- **The rule pipeline gives full cards only to rules under way** (`isActiveRule`); the rest fold under two counts.
+- **A White House action the Register hasn't printed in 14 days** moves to the agencies' list (`SIGNED_WAIT_DAYS`).
+- **The evening check and the digest** report bills by their latest action, and decisions by when the site first held
+  them (three a week at most).
+- **Server job:** `permtracker-uscis policy-watch`, every 30 minutes; DOL's newsroom, OFLC and BALCA run on GitHub,
+  because www.dol.gov refuses the server.

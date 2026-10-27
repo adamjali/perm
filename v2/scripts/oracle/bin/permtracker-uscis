@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -73,6 +73,56 @@ case "$job" in
   # DOL's H-2B assignment-group lists, read only when new or changed, and
   # each group's timing rebuilt from the night's statuses (Oct 8 2026).
   h2b-groups) nice -n 10 python3 scripts/ingest_h2b_groups.py || { rc=1; fail ingest_h2b_groups.py "ingest exited non-zero"; } ;;
+  # Every policy source read every 30 minutes, day and night (Oct 27 2026), so
+  # a rule, a filing or an announcement reaches the policy page and the
+  # evening check within half an hour: OIRA's review lists, the Federal
+  # Register's public inspection list and newest documents, the White House's
+  # presidential actions, and USCIS's newsroom and Policy Manual. Each step
+  # has its own time limit and records its own failure, so one source's bad
+  # half hour never costs the others; a source that refuses is a warning in its
+  # own run row, and its freshness row is the alarm. A step that wrote
+  # something asks the site to rebuild the policy page (through nginx, which
+  # sends the call to both web copies). DOL's newsroom and OFLC are read from
+  # GitHub's runners (www.dol.gov refuses this server).
+  policy-watch)
+    export REVALIDATE_BASE=http://127.0.0.1:8081
+    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+    export REVALIDATE_SECRET
+    step(){ limit="$1"; s="$2"; shift 2
+      timeout "$limit" nice -n 5 python3 "scripts/$s" "$@" || { rc=1; fail "$s" "exited non-zero or ran past $limit"; }; }
+    # The rule watch says whether a rule moved through GitHub's output file, which
+    # this server reads the same way the workflow does.
+    out="$(mktemp)"
+    export GITHUB_OUTPUT="$out"
+    step 6m ingest_rule_pipeline.py
+    unset GITHUB_OUTPUT
+    if grep -q '^rules_changed=true' "$out"; then
+      curl -fsS -o /dev/null -X POST -H "Host: permtracker.app" -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+        "$REVALIDATE_BASE/api/revalidate-policy" || echo "::warning::revalidate-policy call failed after the rule watch"
+    fi
+    rm -f "$out"
+    step 10m ingest_policy_notices.py --days 3 --inspection
+    step 4m ingest_white_house.py
+    step 6m ingest_uscis_news.py
+    step 8m ingest_state_news.py
+    # api.data.gov (regulations.gov comment counts, congress.gov bills): every
+    # run with the site's key (DATA_GOV_API_KEY, uscis.env, since Oct 27 2026);
+    # without it, DEMO_KEY's 50 requests a day allow only the 7:07 AM and
+    # 5:07 PM Eastern runs.
+    h=$(TZ=America/New_York date +%-H); m=$(TZ=America/New_York date +%-M)
+    if [ -n "${DATA_GOV_API_KEY:-}" ] || { { [ "$h" = 7 ] || [ "$h" = 17 ]; } && [ "$m" -lt 30 ]; }; then
+      step 4m ingest_regulations_gov.py
+      step 4m ingest_congress_bills.py
+    fi
+    # Federal court opinions from CourtListener's API (Oct 27 2026). The reader
+    # asks at most once every 3 hours (it reads its own last run), and a search
+    # can take minutes, so it has its own limit. COURTLISTENER_TOKEN in
+    # uscis.env, when set, is sent as CourtListener asks.
+    step 12m ingest_court_opinions.py
+    # Sundays at 3 AM Eastern, a five-page walk for opinions posted late.
+    if [ "$(TZ=America/New_York date +%u)" = 7 ] && [ "$h" = 3 ] && [ "$m" -lt 30 ]; then
+      step 20m ingest_court_opinions.py --pages 5
+    fi ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

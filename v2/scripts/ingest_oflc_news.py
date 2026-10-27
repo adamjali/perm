@@ -42,7 +42,8 @@ import time
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_db import Database, query_rows, record_run, stamp_freshness  # noqa: E402
+from lib_db import Database, et_today, record_run, stamp_freshness  # noqa: E402
+from lib_policy_feed import expire_policy_page, record_quiet_run, write_notices  # noqa: E402
 
 URL = "https://www.dol.gov/agencies/eta/foreign-labor/news"
 DATASET = "policy-notices-oflc"
@@ -186,44 +187,12 @@ def fetch_page(retries: int = 3) -> str:
     raise RuntimeError(f"could not fetch {URL}: {last}")
 
 
-DDL = [
-    """CREATE TABLE IF NOT EXISTS policy_notices (
-        document_number TEXT PRIMARY KEY,
-        publication_date TEXT NOT NULL,
-        type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        abstract TEXT,
-        html_url TEXT NOT NULL,
-        agencies TEXT NOT NULL,
-        topics TEXT NOT NULL,
-        fetched_at INTEGER NOT NULL)""",
-    "CREATE INDEX IF NOT EXISTS policy_notices_date ON policy_notices (publication_date DESC)",
-]
-
-
 def write(db: Database, rows: list[dict]) -> int:
-    """Upsert only the rows that are new or changed; the Federal Register feed's rows are untouched."""
-    db.script(DDL)
-    have = {r[0]: tuple(r[1:]) for r in query_rows(
-        db, "SELECT document_number, title, abstract, topics FROM policy_notices WHERE type = ?", [TYPE])}
-    now = int(time.time() * 1000)
-    written = 0
-    for row in rows:
-        key = (row["title"], row["abstract"], json.dumps(row["topics"]))
-        if have.get(row["document_number"]) == key:
-            continue
-        db.execute(
-            # Named columns: the Federal Register feed shares this table and
-            # adds columns, and a positional insert would fail on the count.
-            "INSERT OR REPLACE INTO policy_notices (document_number, publication_date, type, title, "
-            "abstract, html_url, agencies, topics, fetched_at) VALUES (?,?,?,?,?,?,?,?,?)",
-            [
-                row["document_number"], row["publication_date"], row["type"], row["title"], row["abstract"],
-                row["html_url"], json.dumps(row["agencies"]), json.dumps(row["topics"]), now,
-            ],
-        )
-        written += 1
-    return written
+    """Through the one writer every policy source uses (lib_policy_feed): it
+    keeps each announcement's first sighting and never wipes a column. The old
+    `INSERT OR REPLACE` here deleted the row first, so it would have erased the
+    columns the other sources write."""
+    return write_notices(db, rows, source="oflc").written
 
 
 def main() -> int:
@@ -236,7 +205,14 @@ def main() -> int:
     if a.from_file:
         raw = open(a.from_file, encoding="utf-8", errors="replace").read()
     else:
-        raw = fetch_page()
+        try:
+            raw = fetch_page()
+        except Exception as e:  # noqa: BLE001 - DOL refusing or down is a warning; the freshness row is the alarm
+            note = f"www.dol.gov unread ({str(e)[:160]})"
+            log(f"::warning::{note}")
+            if not a.dry_run:
+                record_run(Database(), "ingest_oflc_news.py", status="ok", rows_written=0, note=note, started_at=started)
+            return 0
     text = html_to_text(raw) if "<" in raw[:2000] else raw
     rows = parse_announcements(text)
     log(f"parsed {len(rows)} announcements" + (f"; newest {rows[0]['publication_date']}" if rows else ""))
@@ -253,10 +229,16 @@ def main() -> int:
     written = write(db, rows)
     newest = max(r["publication_date"] for r in rows)
     stamp_freshness(
-        db, DATASET, as_of=newest, source=URL, cadence="Daily",
+        db, DATASET, as_of=min(newest, et_today()), source="OFLC announcements page", cadence="Hourly on weekdays, and daily",
         note=f"{len(rows)} OFLC announcements, {written} written", max_age_days=MAX_AGE_DAYS,
     )
-    record_run(db, "ingest_oflc_news.py", status="ok", rows_written=written, note=f"{len(rows)} parsed", started_at=started)
+    # It runs every weekday hour since Oct 27 2026, so a run with nothing new
+    # writes its row at most every three hours.
+    if written:
+        record_run(db, "ingest_oflc_news.py", status="ok", rows_written=written, note=f"{len(rows)} parsed", started_at=started)
+        expire_policy_page(log)
+    else:
+        record_quiet_run(db, "ingest_oflc_news.py", written=0, note=f"{len(rows)} parsed", started_at=started)
     log(f"wrote {written} of {len(rows)}")
     return 0
 

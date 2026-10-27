@@ -15,6 +15,12 @@ feed it. Five kinds of move, each from a record this site already keeps:
      cases or more.
   5. Our sweep recorded a day of PERM decisions at DECISION_DAY_MULTIPLE
      times a typical weekday or more (`daily_decisions`, sweep-observed).
+  6. A document or announcement this site saw for the first time: a Register
+     document (published, or filed for public inspection the day before), a
+     presidential action the White House posted, or an announcement from OFLC,
+     USCIS (its newsroom and Policy Manual) or DOL's newsroom
+     (`policy_notices`, by `first_seen_at`). A rule the rule watch already
+     reports is left to it.
 
 Each item says what moved, when, and the source, in plain words. The morning
 report lists the last 24 hours; the evening check emails the owner what moved
@@ -60,6 +66,10 @@ class Inputs:
     bulletins: list[dict] = field(default_factory=list)  # bulletin_month, first_seen_at
     employer_stages: dict | None = None
     decision_days: list[dict] = field(default_factory=list)  # date, total; any order
+    # document_number, publication_date, type, title, agencies (list), source, status, pi_filed, action,
+    # comments_close_on, effective_on, first_seen_at
+    documents: list[dict] = field(default_factory=list)
+    rule_documents: set[str] = field(default_factory=set)  # Register numbers the rule watch follows
 
 
 def day_label(iso: str | None) -> str:
@@ -124,12 +134,38 @@ def _rule_items(inputs: Inputs, since_ms: int, now_ms: int) -> list[dict]:
     floor = (dt.datetime.fromtimestamp(now_ms / 1000, tz=ET).date()
              - dt.timedelta(days=RULE_STEP_RECENT_DAYS)).isoformat()
     out = []
+    # A new Unified Agenda edition lists 30 or more of these rules at once. One
+    # line per edition says it; a line per rule would bury everything else.
+    editions: dict[str, list[dict]] = {}
     for e in inputs.rule_events:
         if int(e.get("seen_at") or 0) < since_ms or (e.get("on_date") or "") < floor:
             continue
+        if e["kind"] == "agenda":
+            editions.setdefault(e["on_date"], []).append(e)
+            continue
         out.append({"kind": "rule", "when": e["on_date"], "what": rule_sentence(e),
                     "source": rule_source(e["kind"])})
+    for on, events in editions.items():
+        out.append({"kind": "rule", "when": on, "what": agenda_sentence(events),
+                    "source": "reginfo.gov's Unified Agenda"})
     return out
+
+
+def agenda_sentence(events: list[dict]) -> str:
+    """One edition's listings in one sentence: how many rules, and the first few by title."""
+    edition = None
+    for e in events:
+        try:
+            edition = edition or json.loads(e.get("detail") or "{}").get("edition")
+        except (ValueError, AttributeError):
+            pass
+    rins = sorted({e["rin"] for e in events})
+    named = [f'"{rule_title(e.get("title"), e["rin"])}"' for e in sorted(events, key=lambda e: e["rin"])[:3]]
+    more = len(rins) - len(named)
+    titles = ", ".join(named) + (f" and {more} more" if more > 0 else "")
+    which = f"The {edition} Unified Agenda" if edition else "A new Unified Agenda"
+    count = f"{len(rins)} rule{'s' if len(rins) != 1 else ''}"
+    return f"{which}, dated {day_label(events[0]['on_date'])}, sets a timetable for {count} on these programs: {titles}."
 
 
 def _queue_months(snap: dict) -> dict[str, str]:
@@ -231,12 +267,133 @@ def _decision_items(inputs: Inputs, since_ms: int) -> list[dict]:
     return out
 
 
+DOC_SOURCES = {
+    "public-inspection": "the Federal Register's public inspection list",
+    "federal-register": "the Federal Register",
+    "white-house": "whitehouse.gov",
+    "oflc": "OFLC's announcements page",
+    "uscis-news": "USCIS's newsroom",
+    "uscis-policy-manual": "USCIS's Policy Manual updates page",
+    "dol-news": "DOL's newsroom",
+    "state-news": "the State Department's newsroom",
+    "congress": "congress.gov",
+    "courtlistener": "CourtListener",
+    "balca": "OALJ's caselists",
+}
+
+# Congress's printed bill numbers (convex/lib/billNumber.ts, held to the same
+# cases by scripts/fixtures/bill_numbers.json).
+BILL_PRINTED = {"hr": "H.R.", "s": "S.", "hjres": "H.J.Res.", "sjres": "S.J.Res."}
+
+
+def bill_number(document_number: str) -> str | None:
+    """"H.R. 2315" from "bill-119-hr-2315", or None. Pure."""
+    m = re.fullmatch(r"bill-\d+-([a-z]+)-(\d+)", document_number or "")
+    if not m or m.group(1) not in BILL_PRINTED:
+        return None
+    return f"{BILL_PRINTED[m.group(1)]} {m.group(2)}"
+
+
+def _agency(d: dict) -> str:
+    names = d.get("agencies") or []
+    if isinstance(names, str):
+        try:
+            names = json.loads(names)
+        except ValueError:
+            names = []
+    short = {"U.S. Citizenship and Immigration Services": "USCIS", "Homeland Security Department": "DHS",
+             "State Department": "the State Department", "Labor Department": "DOL",
+             "Employment and Training Administration": "DOL", "Executive Office of the President": "the President"}
+    seen = []
+    for n in names:
+        s = short.get(n, n)
+        if s not in seen:
+            seen.append(s)
+    return " and ".join(seen[:2]) or "an agency"
+
+
+def document_sentence(d: dict) -> str:
+    """One document in words, by where it came from. Pure."""
+    t = f'"{(d.get("title") or "").strip().rstrip(".")}"'
+    src, status = d.get("source"), d.get("status")
+    kind = (d.get("action") or "").strip().rstrip(".")
+    if status == "public-inspection" or src == "public-inspection":
+        what = {"Rule": "a rule", "Proposed Rule": "a proposed rule", "Notice": "a notice",
+                "Presidential Document": "a presidential document"}.get(d.get("type"), "a document")
+        return (f"{_agency(d)} filed {what} for public inspection on {day_label(d.get('pi_filed'))}, "
+                f"to be published {day_label(d.get('publication_date'))}: {t}.")
+    if src == "white-house":
+        return f"The White House posted {('a ' + kind.lower()) if kind else 'a presidential action'} on {day_label(d.get('publication_date'))}: {t}."
+    if src == "oflc":
+        return f"OFLC posted an announcement on {day_label(d.get('publication_date'))}: {t}."
+    if src == "uscis-news":
+        return f"USCIS posted {('a ' + kind.lower()) if kind else 'an announcement'} on {day_label(d.get('publication_date'))}: {t}."
+    if src == "uscis-policy-manual":
+        return f"USCIS updated its Policy Manual on {day_label(d.get('publication_date'))}: {t}."
+    if src == "dol-news":
+        return f"DOL posted a news release on {day_label(d.get('publication_date'))}: {t}."
+    if src == "state-news":
+        return f"The State Department posted visa news on {day_label(d.get('publication_date'))}: {t}."
+    if src == "courtlistener":
+        return f"A federal court ({_agency(d)}) decided {t} on {day_label(d.get('publication_date'))}."
+    if src == "balca":
+        return f"BALCA decided {t} on {day_label(d.get('publication_date'))}."
+    if src == "congress":
+        number = bill_number(d.get("document_number") or "") or "A bill"
+        action = (d.get("action") or "").strip().rstrip(".")
+        when = day_label(d.get("dates") or d.get("publication_date"))
+        if not action:
+            return f"{number}, {t}, was introduced on {when}."
+        return f"{number}, {t}, moved on {when}: {action}."
+    typ = d.get("type") or "document"
+    what = "the President's " + (kind.lower() or "document") if typ == "Presidential Document" else (
+        {"Rule": "a final rule", "Proposed Rule": "a proposed rule", "Notice": "a notice"}.get(typ, "a document")
+        + f" from {_agency(d)}")
+    tail = ""
+    if d.get("comments_close_on"):
+        tail = f"; comments close {day_label(d['comments_close_on'])}"
+    elif d.get("effective_on"):
+        tail = f"; it takes effect {day_label(d['effective_on'])}"
+    return f"The Federal Register published {what} on {day_label(d.get('publication_date'))}: {t}{tail}."
+
+
+def _document_items(inputs: Inputs, since_ms: int, now_ms: int) -> list[dict]:
+    """Documents first seen in the window. Only recent ones: a source's first
+    run, or a new search term, loads months of old documents at once, and those
+    are history, not news. A filed document's publication day is ahead of it,
+    so a filing counts by the day it was filed."""
+    floor = (dt.datetime.fromtimestamp(now_ms / 1000, tz=ET).date()
+             - dt.timedelta(days=RULE_STEP_RECENT_DAYS)).isoformat()
+    out = []
+    for d in inputs.documents:
+        if d.get("source") == "congress":
+            # A bill is news when its latest action is: written in the window
+            # (the writer rewrites a bill only when the action changed) and
+            # dated in the last week. A backfill's old actions are history.
+            if int(d.get("fetched_at") or 0) < since_ms:
+                continue
+            when = d.get("dates") or d.get("publication_date")
+            if (when or "") < floor:
+                continue
+            out.append({"kind": "document", "when": when, "what": document_sentence(d),
+                        "source": DOC_SOURCES["congress"]})
+            continue
+        if int(d.get("first_seen_at") or 0) < since_ms:
+            continue
+        when = d.get("pi_filed") if d.get("status") == "public-inspection" else d.get("publication_date")
+        if (when or "") < floor or d.get("document_number") in inputs.rule_documents:
+            continue
+        out.append({"kind": "document", "when": when, "what": document_sentence(d),
+                    "source": DOC_SOURCES.get(d.get("source") or "", "the Federal Register")})
+    return out
+
+
 def newsworthy(inputs: Inputs, since_ms: int, now_ms: int) -> list[dict]:
     """Every move since `since_ms`, newest first, rules first within a day."""
     items = (_rule_items(inputs, since_ms, now_ms) + _dol_items(inputs, since_ms)
              + _bulletin_items(inputs, since_ms) + _employer_items(inputs, since_ms)
-             + _decision_items(inputs, since_ms))
-    order = {"rule": 0, "dol": 1, "bulletin": 2, "employer": 3, "decisions": 4}
+             + _decision_items(inputs, since_ms) + _document_items(inputs, since_ms, now_ms))
+    order = {"rule": 0, "document": 1, "dol": 2, "bulletin": 3, "employer": 4, "decisions": 5}
     items.sort(key=lambda i: (i["when"] or "", -order[i["kind"]]), reverse=True)
     return items
 
@@ -279,4 +436,19 @@ def read_inputs(db, since_ms: int) -> Inputs:
     inputs.employer_stages = json.loads(doc[0]["json"]) if doc else None
     inputs.decision_days = [{"date": r["date"], "total": int(r["total"] or 0)} for r in safe(
         "SELECT date, total FROM daily_decisions WHERE source = 'sweep-observed' ORDER BY date DESC LIMIT 45", [])]
+    # A table without the Oct 27 2026 columns hasn't had the shared writer run
+    # on it yet; that reads as no documents, like a missing table.
+    try:
+        inputs.documents = query_dicts(
+            db, "SELECT document_number, publication_date, type, title, agencies, source, status, pi_filed, action, "
+                "comments_close_on, effective_on, first_seen_at, fetched_at, dates FROM policy_notices "
+                "WHERE (first_seen_at >= ? OR (source = 'congress' AND fetched_at >= ?)) AND superseded_by IS NULL "
+                "ORDER BY first_seen_at", [since_ms, since_ms])
+    except Exception as exc:  # noqa: BLE001
+        if "no such" not in str(exc).lower():
+            raise
+    inputs.rule_documents = {r["n"] for r in safe(
+        "SELECT pi_document AS n FROM rule_pipeline WHERE pi_document IS NOT NULL UNION "
+        "SELECT proposed_document FROM rule_pipeline WHERE proposed_document IS NOT NULL UNION "
+        "SELECT final_document FROM rule_pipeline WHERE final_document IS NOT NULL", []) if r.get("n")}
     return inputs

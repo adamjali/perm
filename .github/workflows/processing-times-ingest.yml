@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       quick:
-        description: "Only DOL's processing times and the visa bulletin (the weekday hourly pass)"
+        description: "Only DOL's processing times, the visa bulletin, OFLC and DOL's newsroom (the weekday hourly pass)"
         required: false
         default: "false"
 
@@ -76,21 +76,54 @@ jobs:
           python3 -m pip install --quiet --user openpyxl pdfplumber \
             || python3 -m pip install --quiet --break-system-packages openpyxl pdfplumber
 
+      # The Federal Register's last 180 days, its public inspection list, and every
+      # filed document followed to publication. The server reads the last three
+      # days and the list every 30 minutes (permtracker-uscis@policy-watch); this
+      # daily pass is the long look back.
       - name: Federal Register notices
         if: always() && inputs.quick != 'true'
         working-directory: v2
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
-          python3 scripts/ingest_policy_notices.py \
+          python3 scripts/ingest_policy_notices.py --inspection \
             || python3 scripts/record_ingest_failure.py --script ingest_policy_notices.py --note "policy feed failed" || true
 
-      # OFLC's announcements page, into the policy feed. A parse of zero rows
-      # refuses to write rather than emptying the feed's OFLC half.
+      # OFLC's announcements page and DOL's newsroom, into the policy feed, every
+      # weekday hour as well as daily (Oct 27 2026): www.dol.gov answers this
+      # runner and refuses the server. A parse of zero rows refuses to write;
+      # DOL refusing or down is a warning, and each source's freshness row is
+      # the alarm. A write asks the site to rebuild the policy page.
       - name: OFLC announcements
-        if: always() && inputs.quick != 'true'
+        if: always()
         working-directory: v2
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
           python3 scripts/ingest_oflc_news.py \
             || python3 scripts/record_ingest_failure.py --script ingest_oflc_news.py --note "OFLC announcements failed"
+
+      - name: DOL news releases
+        if: always()
+        working-directory: v2
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          python3 scripts/ingest_dol_news.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_dol_news.py --note "DOL news releases failed"
+
+      # BALCA's decisions from OALJ's caselists on www.dol.gov (found from its
+      # immigration library), daily: OALJ adds decisions in batches. www.dol.gov
+      # answers this runner and refuses the server.
+      - name: BALCA decisions
+        if: always() && inputs.quick != 'true'
+        working-directory: v2
+        timeout-minutes: 10
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          python3 scripts/ingest_balca.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_balca.py --note "BALCA caselists failed"
 
       # Forty-seven states and DC (scripts/ingest_warn.py and scripts/warn_states.py).
       # A state whose site is down that day is named in the run's note and its
