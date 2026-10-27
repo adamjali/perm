@@ -1413,3 +1413,23 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
   them (three a week at most).
 - **Server job:** `permtracker-uscis policy-watch`, every 30 minutes; DOL's newsroom, OFLC and BALCA run on GitHub,
   because www.dol.gov refuses the server.
+
+## Oct 27 2026 (afternoon): the homepage answers first, and /compare
+
+- **The homepage opens with the answer** (owner's call): the filing month DOL is deciding as the H1, four dated figures,
+  a chart of PERM cases by filing month (decided and still waiting, DOL's month marked, each bar to its month page;
+  `homeMonths` in `src/lib/homeMonths.ts` from the census), then the case box. The queue tape band is gone; the pulse stays.
+- **The header says "For professionals" and offers Sign in only**: sign-ups from the header were people waiting on their
+  own case. Every alert form and the case page say no account is needed.
+- **`/compare` is the one page that names other trackers** (owner's call, Oct 27): PERM Update, PERM Timeline, PermTrack,
+  ImmiLane and PermQueue, the ones people search for by name. Every mark on a rival rests on its own page, read that day,
+  quoted (`src/lib/compare/rivals.ts`, matched word for word against the saved captures in
+  `~/.claude/explanations/20261027_perm_vs_landscape/raw/`). Re-check it before changing a mark: a rival's site changes.
+  Every other surface still says "a third party".
+- **The Organization's structured data points at its trust pages** (`publishingPrinciples` methodology,
+  `correctionsPolicy` the corrections log, `ownershipFundingInfo` About, `actionableFeedbackPolicy` Contact), and the
+  Security page carries Qualys SSL Labs' A+, dated. Mozilla Observatory grades the headers B (75): the script policy allows
+  inline scripts, and removing that needs a per-request nonce, which would make every page dynamic. Left on purpose.
+- **Washington's WARN reader walks back to 2019 on its first load and weekly**: it had stopped at 400 days, so nothing
+  before July 2025 was ever loaded.
+
