@@ -302,7 +302,7 @@ describe("CaseStatusResult, pending case", () => {
   it("offers alerts while the case can still change", () => {
     const { container } = renderPending();
     expect(container.textContent).toMatch(/Email me when DOL changes this PERM case/);
-    expect(container.textContent).toMatch(/You confirm by email first\. One click turns it off\./);
+    expect(container.textContent).toMatch(/No account needed\. You confirm by email first, and one click turns it off\./);
   });
 
   it("renders no alert form at all when the endpoint is not configured", () => {

@@ -60,7 +60,7 @@ export function CaseStatusHead({
         {withBox ? (
           <p className="mt-3 max-w-2xl text-lg leading-relaxed text-soft">
             Its status in plain English, where it sits in DOL&apos;s queue, an estimated decision date, and an email
-            when it changes. Wage request, LCA, H-2A, H-2B and CW-1 numbers work too.
+            when it changes. Wage request, LCA, H-2A, H-2B and CW-1 numbers work too. Free, and no account needed.
           </p>
         ) : null}
       </header>{" "}

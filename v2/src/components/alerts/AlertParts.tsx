@@ -56,7 +56,7 @@ export function EmailField({
 export function AlertNote({ limit, id, className }: { limit?: string; id?: string; className?: string }) {
   return (
     <p id={id} className={cn("text-sm leading-relaxed text-muted-foreground", className)}>
-      You confirm by email first. One click turns it off.{limit ? ` ${limit}` : ""}
+      No account needed. You confirm by email first, and one click turns it off.{limit ? ` ${limit}` : ""}
     </p>
   );
 }
