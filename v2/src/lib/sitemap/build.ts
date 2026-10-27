@@ -299,6 +299,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/about`, lastModified: at("/about"), images: [`${base}/og/about.jpg`] },
     { url: `${base}/press`, lastModified: at("/press"), images: [`${base}/og/press.jpg`] },
     { url: `${base}/reviews`, lastModified: at("/reviews"), images: [`${base}/og/reviews.jpg`] },
+    { url: `${base}/compare`, lastModified: at("/compare"), images: [`${base}/og/compare.jpg`] },
     { url: `${base}/visa-bulletin`, lastModified: at("/visa-bulletin"), images: [`${base}/og/visa-bulletin.jpg`] },
     // One page per archived bulletin. An older month's table is that month's
     // bulletin and nothing else, so its lastmod is the bulletin's own month;

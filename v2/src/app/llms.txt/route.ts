@@ -568,6 +568,7 @@ export async function GET() {
     `- [About](${BASE_URL}/about): Who runs PERM Tracker (an immigration attorney), since when, and what it is not`,
     `- [Press](${BASE_URL}/press): What DOL's records on this site can tell a reporter, how to credit PERM Tracker, and the press contact`,
     `- [Reviews](${BASE_URL}/reviews): Every review left by someone outside the team, newest first, with the average rating`,
+    `- [PERM trackers compared](${BASE_URL}/compare): Six PERM case trackers checked side by side on their own pages (Oct 27 2026): what it looks up, where its data comes from, how fresh it is and what it costs, each mark quoted and linked`,
     `- [For professionals](${BASE_URL}/for-attorneys): The case-management side for attorneys, paralegals and HR teams - every deadline computed per case, reminders, calendar sync`,
     `- [FAQ](${BASE_URL}/faq): Questions about PERM and about this site`,
     `- [Email preferences](${BASE_URL}/email-preferences): See and stop everything the site emails an address`,

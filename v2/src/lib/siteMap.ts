@@ -228,6 +228,7 @@ const OTHER_PAGES: readonly SitePage[] = [
   { href: "/visa-bulletin/categories", name: "By category" },
   { href: "/press", name: "Press" },
   { href: "/reviews", name: "Reviews" },
+  { href: "/compare", name: "PERM trackers compared" },
   { href: "/open-data", name: "Open data" },
   { href: "/perm-by-the-numbers", name: "PERM by the numbers" },
   { href: "/badges", name: "Badges" },
@@ -330,7 +331,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
   },
   {
     title: "PERM Tracker",
-    pages: named("/about", "/reviews", "/for-attorneys", "/press", "/open-data", "/badges", "/developers", "/extension", "/email-preferences", "/contact"),
+    pages: named("/about", "/reviews", "/compare", "/for-attorneys", "/press", "/open-data", "/badges", "/developers", "/extension", "/email-preferences", "/contact"),
   },
 ];
 

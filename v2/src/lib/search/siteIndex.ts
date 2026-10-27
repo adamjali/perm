@@ -91,6 +91,7 @@ const OTHER_GO_TO = [
   "/email-preferences",
   "/press",
   "/reviews",
+  "/compare",
   "/contact",
   "/perm-employers/browse",
   "/perm-attorneys/browse",
