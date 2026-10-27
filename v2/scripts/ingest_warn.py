@@ -89,6 +89,12 @@ WA_URL = "https://fortress.wa.gov/esd/file/WARN/Public/SearchWARN.aspx"
 WA_PAGE = "https://esd.wa.gov/employer-requirements/layoffs-and-employee-notifications/worker-adjustment-and-retraining-notification-warn-layoff-and-closure-database"
 WA_DAYS = 400   # walk back this far on every run; the grid is newest-first
 WA_MAX_PAGES = 80
+# A full walk back to warn_states.SINCE, on Washington's first load and once a
+# week. Until Oct 27 2026 every run stopped at 400 days, so nothing older than
+# July 2025 was ever loaded (Microsoft's 2023 to 2025 notices among them).
+# About 180 notices a year at 15 a page is about 100 pages back to 2019; the
+# cap leaves room and the date floor ends the walk first.
+WA_HISTORY_PAGES = 400
 DATASET = "warn-notices"
 MAX_AGE_DAYS = 21
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"
@@ -407,6 +413,16 @@ def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list
     return rows   # each page assigned its own ids in parse_washington_page
 
 
+def load_washington(f: str | None = None, today: dt.date | None = None) -> list[dict]:
+    """A saved page, or the grid: back to SINCE on a full-history day, else the last WA_DAYS."""
+    if f:
+        return parse_washington_page(open(f, encoding="utf8").read())
+    if warn_states.full_history("WA", today):
+        days = ((today or dt.date.today()) - dt.date.fromisoformat(warn_states.SINCE)).days
+        return fetch_washington(days=days, max_pages=WA_HISTORY_PAGES)
+    return fetch_washington()
+
+
 # A tiny employer that merely shares a famous name is not the company in the notice:
 # Washington's "Amazon" notice matched a one-filing "AMAZON" while Amazon.com Services
 # LLC holds 2,271 (Oct 6 2026). When the exact match has fewer than SMALL_EXACT
@@ -710,7 +726,7 @@ STATES: dict[str, dict] = {
     # date, so a notice-date stamp would never read fresh.
     "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "snapshot": True, "stamp": "posted_date",
            "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
-    "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
+    "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: load_washington(f)},
     # Every other state that publishes its notices for a script to read.
     **warn_states.STATES,
 }

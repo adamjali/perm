@@ -268,6 +268,28 @@ def main() -> int:
               "before the map exists, PERM sponsors still match", f)
     finally:
         iw.query_rows = real_q
+    # Washington reads back to SINCE on its first load and on its walk day,
+    # and its last WA_DAYS otherwise (until Oct 27 2026 it never read history).
+    import datetime as dt
+    import warn_states as ws
+    calls: list[tuple[int, int]] = []
+    real_fetch, real_held = iw.fetch_washington, ws.HELD["lookup"]
+    try:
+        iw.fetch_washington = lambda days=iw.WA_DAYS, max_pages=iw.WA_MAX_PAGES: calls.append((days, max_pages)) or []
+        day = dt.date(2026, 10, 27)
+        walk = day + dt.timedelta(days=(ws.walk_day("WA") - day.weekday()) % 7 or 7)
+        other = walk + dt.timedelta(days=1)
+        ws.HELD["lookup"] = None
+        iw.load_washington(None, other)
+        back = (other - dt.date.fromisoformat(ws.SINCE)).days
+        check(calls[-1] == (back, iw.WA_HISTORY_PAGES), f"nothing held: Washington reads back to {ws.SINCE}", f)
+        ws.HELD["lookup"] = lambda st: {"x": {}} if st == "WA" else {}
+        iw.load_washington(None, other)
+        check(calls[-1] == (iw.WA_DAYS, iw.WA_MAX_PAGES), "rows held, not its walk day: the newest WA_DAYS only", f)
+        iw.load_washington(None, walk)
+        check(calls[-1][0] == (walk - dt.date.fromisoformat(ws.SINCE)).days, "its walk day: the whole history again", f)
+    finally:
+        iw.fetch_washington, ws.HELD["lookup"] = real_fetch, real_held
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 
