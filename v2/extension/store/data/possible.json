@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-21T22:45:55.275Z",
+  "fetchedAt": "2026-10-27T03:10:53.256Z",
   "answer": {
     "data": {
       "query": "Amazon",
@@ -14,9 +14,9 @@
           "certified": 2186,
           "denied": 8,
           "certifiedShare": 0.996,
-          "pending": 525,
-          "newestFiling": "2026-10-20",
-          "filingsLast12Months": 1277
+          "pending": 481,
+          "newestFiling": "2026-10-26",
+          "filingsLast12Months": 1280
         },
         "h1bLcas": 94258,
         "wageRequests": null

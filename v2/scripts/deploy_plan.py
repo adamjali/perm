@@ -45,6 +45,7 @@ PATHS = [
     "!**/*.md",
     "!v2/scripts/**",
     "!v2/workers/**",
+    "!v2/extension/store/**",
     "!v2/**/__tests__/**",
     "!v2/**/*.test.ts",
     "!v2/**/*.test.tsx",
