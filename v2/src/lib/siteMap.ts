@@ -207,7 +207,7 @@ export const LEARN_PAGES: readonly SitePage[] = [
 export const HEADER_PAGES = {
   caseStatus: { href: "/perm-case-status", name: "Case status" },
   processingTimes: { href: "/perm-processing-times", name: "Processing times" },
-  forAttorneys: { href: "/for-attorneys", name: "For attorneys" },
+  forAttorneys: { href: "/for-attorneys", name: "For professionals" },
 } as const satisfies Record<string, SitePage>;
 
 /** The foot of the Data menu: the hubs and the open files. */
@@ -223,7 +223,7 @@ const OTHER_PAGES: readonly SitePage[] = [
   { href: "/", name: "Home" },
   { href: OVERVIEW.href, name: OVERVIEW.name },
   { href: CALCULATORS.href, name: CALCULATORS.name },
-  { href: "/for-attorneys", name: "For attorneys" },
+  { href: "/for-attorneys", name: "For professionals" },
   { href: "/visa-bulletin/family", name: "Family cutoffs" },
   { href: "/visa-bulletin/categories", name: "By category" },
   { href: "/press", name: "Press" },

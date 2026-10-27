@@ -21,7 +21,7 @@ const START_LINKS = [
   { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now", Icon: ClockIcon },
   { href: "/tools", label: "Live PERM data", note: "The queue and the wage backlog, from DOL's figures", Icon: ChartBarIcon },
   { href: "/calculators", label: "Calculators", note: "Deadlines and decision estimates", Icon: CalculatorIcon },
-  { href: "/for-attorneys", label: "For attorneys", note: "Free case and deadline tracking", Icon: BriefcaseIcon },
+  { href: "/for-attorneys", label: "For professionals", note: "Free case and deadline tracking", Icon: BriefcaseIcon },
 ] as const;
 
 /** A question group's anchor, from its heading. */

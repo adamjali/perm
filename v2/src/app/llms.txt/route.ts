@@ -500,7 +500,9 @@ export async function GET() {
     DISAMBIGUATION,
     "",
     ...(newest ? [`Last updated: ${longDate(newest)}.`, ""] : []),
-    "Every figure on this site is measured from a named federal source and carries the window it was measured over. Nothing is modelled. Where the data cannot support a number, the site says so rather than estimating one: there is no per-case denial-risk score, and processing-time estimates are withheld for filing cohorts too young to measure.",
+    "Where the figures come from: the Department of Labor's own records (its FLAG case-status service, read every night; its quarterly OFLC disclosure files; its published processing times), the State Department's visa bulletins, and USCIS's published reports. Each figure carries the date or window it covers, and how each is counted is on the methodology page. Where the data can't support a number, the site says so rather than guessing one: there is no per-case denial-risk score.",
+    "",
+    `How figures are made: ${BASE_URL}/methodology. Corrections, each dated: ${BASE_URL}/changelog/corrections. Who runs it: ${BASE_URL}/about.`,
     "",
   ];
 
@@ -566,7 +568,7 @@ export async function GET() {
     `- [About](${BASE_URL}/about): Who runs PERM Tracker (an immigration attorney), since when, and what it is not`,
     `- [Press](${BASE_URL}/press): What DOL's records on this site can tell a reporter, how to credit PERM Tracker, and the press contact`,
     `- [Reviews](${BASE_URL}/reviews): Every review left by someone outside the team, newest first, with the average rating`,
-    `- [For attorneys](${BASE_URL}/for-attorneys): The case-management side - every deadline computed per case, reminders, calendar sync`,
+    `- [For professionals](${BASE_URL}/for-attorneys): The case-management side for attorneys, paralegals and HR teams - every deadline computed per case, reminders, calendar sync`,
     `- [FAQ](${BASE_URL}/faq): Questions about PERM and about this site`,
     `- [Email preferences](${BASE_URL}/email-preferences): See and stop everything the site emails an address`,
     `- [Sign Up](${BASE_URL}/signup): Create a free account`,

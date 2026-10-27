@@ -162,6 +162,13 @@ export function getOrganizationSchema(baseUrl: string) {
     // Organization; the person is her own node below, with her own profile,
     // so a personal profile is never asserted as the brand's.
     sameAs: [...ORGANIZATION_SAME_AS],
+    // How the figures are made, how mistakes are fixed and who owns the site:
+    // schema.org's trust properties on Organization (The Trust Project's),
+    // each pointing at a page that already says it.
+    publishingPrinciples: `${baseUrl}/methodology`,
+    correctionsPolicy: `${baseUrl}/changelog/corrections`,
+    ownershipFundingInfo: `${baseUrl}/about`,
+    actionableFeedbackPolicy: `${baseUrl}/contact`,
     // Registration month of the domain (RDAP). Google's site-names doc counts
     // "web references" and the home page's own text among the sources it
     // corroborates a name against; a founding date and named founders are the

@@ -222,7 +222,7 @@ export default async function AboutPage() {
               Check a case <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
             </Link>{" "}
             <Link href="/for-attorneys" className={buttonVariants({ variant: "outline", size: "lg" })}>
-              For attorneys
+              For professionals
             </Link>
           </div>
         </div>{" "}

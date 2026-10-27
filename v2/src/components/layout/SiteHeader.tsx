@@ -4,11 +4,13 @@
  * The public site's header: one 64px bar, the page's own colour, on every
  * public page (Oct 14 2026).
  *
- *   PERM Tracker | Case status · Processing times · Data · Learn · For attorneys | search | Sign in | Sign up
+ *   PERM Tracker | Case status · Processing times · Data · Learn · For professionals | search | Sign in
  *
- * Sign up came back on Oct 22 2026: the Oct 14 header had dropped it, and people stopped reaching /signup from
- * the pages with no sign-up button of their own (the tools, the case lookup, processing times; measured in
- * PostHog, about 6.7 people a day before and 2.4 after).
+ * No Sign up in the header (owner, Oct 27 2026). It came back on Oct 22 because visits to /signup fell when the
+ * Oct 14 header dropped it, but the accounts it brought were people waiting on their own case or who never
+ * picked a role, who need no account: of the sign-ups Oct 1 to 27, practice roles were 1 to 2 a week with the
+ * button and without it. "For professionals" names attorneys, paralegals, HR and employers in one word, and
+ * that page carries its own sign-up.
  *
  * The first two are what most people come for. Data opens one panel with the
  * six groups of data pages side by side, so nothing is hunted for group by
@@ -279,15 +281,6 @@ export default function SiteHeader() {
               <LinkPending kind="button" />
             </IntentLink>
           ) : null}{" "}
-          {pathname !== "/signup" ? (
-            <IntentLink
-              href="/signup"
-              className="relative hidden h-10 items-center whitespace-nowrap border border-primary bg-primary px-3 text-base font-semibold text-black transition-colors hover:bg-primary/90 lg:flex min-[1400px]:px-4"
-            >
-              Sign up
-              <LinkPending kind="button" />
-            </IntentLink>
-          ) : null}{" "}
           <button
             type="button"
             aria-expanded={menu === "mobile"}
@@ -395,7 +388,6 @@ export default function SiteHeader() {
               onPick={close}
             />
             {pathname !== "/login" ? <PhoneLink href="/login" label="Sign in" pathname={pathname} onPick={close} /> : null}
-            {pathname !== "/signup" ? <PhoneLink href="/signup" label="Sign up" pathname={pathname} onPick={close} /> : null}
           </nav>
         </div>
       ) : null}

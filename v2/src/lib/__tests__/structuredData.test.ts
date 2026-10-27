@@ -93,6 +93,13 @@ describe("getWebSiteSchema", () => {
 describe("getOrganizationSchema", () => {
   const schema = getOrganizationSchema(BASE);
 
+  it("points its trust properties at pages that exist", () => {
+    expect(schema.publishingPrinciples).toBe(`${BASE}/methodology`);
+    expect(schema.correctionsPolicy).toBe(`${BASE}/changelog/corrections`);
+    expect(schema.ownershipFundingInfo).toBe(`${BASE}/about`);
+    expect(schema.actionableFeedbackPolicy).toBe(`${BASE}/contact`);
+  });
+
   it("has correct @type and required fields", () => {
     expect(schema["@type"]).toBe("Organization");
     expect(schema.name).toBe("PERM Tracker");

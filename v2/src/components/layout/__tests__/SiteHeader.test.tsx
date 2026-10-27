@@ -18,10 +18,12 @@ describe("SiteHeader", () => {
     pathname.value = "/";
     render(<SiteHeader />);
     const main = screen.getByRole("navigation", { name: "Main" });
-    for (const name of ["Case status", "Processing times", "Data", "Learn", "For attorneys"]) {
+    for (const name of ["Case status", "Processing times", "Data", "Learn", "For professionals"]) {
       expect(within(main).getByText(name)).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+    // No sign-up in the header (owner, Oct 27 2026): /for-attorneys carries it.
+    expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
   });
 
   it("keeps every Data and Learn link in the page while the menus are closed, out of the tab order", () => {
@@ -79,7 +81,7 @@ describe("SiteHeader", () => {
     const button = screen.getByRole("button", { name: /Menu/ });
     fireEvent.click(button);
     const sheet = screen.getByRole("navigation", { name: "Menu" });
-    const here = within(sheet).getByRole("link", { name: "For attorneys" });
+    const here = within(sheet).getByRole("link", { name: "For professionals" });
     expect(here).toHaveAttribute("aria-current", "page");
     fireEvent.click(here);
     expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();

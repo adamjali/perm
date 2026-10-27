@@ -18,7 +18,7 @@ import { SpotPicture } from "@/components/ui/spot-picture";
 
 const DOORS = [
   { href: "/", label: "Home", Icon: HouseIcon },
-  { href: "/for-attorneys", label: "For attorneys", Icon: BriefcaseIcon },
+  { href: "/for-attorneys", label: "For professionals", Icon: BriefcaseIcon },
   { href: "/case-search", label: "Search every filing", Icon: MagnifyingGlassIcon },
   { href: "/perm-processing-times", label: "Processing times", Icon: ClockIcon },
   { href: "/perm-employers", label: "Find an employer", Icon: BuildingsIcon },
