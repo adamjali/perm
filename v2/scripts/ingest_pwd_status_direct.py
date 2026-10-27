@@ -23,6 +23,7 @@ ingest_case_status_direct.py, which hands P-, I- and H- hits to
 
     python3 scripts/ingest_pwd_status_direct.py --pending [--program pwd|lca|seasonal|all]   # daily
     python3 scripts/ingest_pwd_status_direct.py --full [--program ...]     # weekly, a rolling window
+    python3 scripts/ingest_pwd_status_direct.py --active                   # weekday afternoons, what DOL is working
     python3 scripts/ingest_pwd_status_direct.py --discover                 # recent days, by day window
     python3 scripts/ingest_pwd_status_direct.py --backfill --from 2026-01-01 --to 2026-08-31
 
@@ -518,10 +519,45 @@ def probe_days(db: Database, windows: dict[str, list[tuple[int, int]]], cap: int
 # Sweeps
 # ---------------------------------------------------------------------------
 
+# The daytime pass (--active): PERM wage requests DOL is working, so a
+# determination issued during the day shows that day, not at the 5:40 AM pass
+# the next morning (8,016 of 8,024 determinations in the two weeks to Oct 27
+# 2026 first reached us between 5 and 6 AM). DOL works in filing order, so
+# "working" is every request still in process filed up to a week past the
+# newest filing day it decided in the last week: about 6,500 requests, 130
+# lookups, on Oct 27 (July 2026's filings).
+ACTIVE_LOOKBACK_DAYS = 7
+ACTIVE_AHEAD_DAYS = 7
+ACTIVE_CAP = 15_000
+
+
+def active_through(db: Database, today: datetime.date) -> str | None:
+    """The last filing day the daytime pass covers, or None when DOL decided nothing lately."""
+    lo, hi = DAY_QUEUE_RANGE
+    since = datetime.datetime.combine(today - datetime.timedelta(days=ACTIVE_LOOKBACK_DAYS),
+                                      datetime.time(), tzinfo=ET)
+    edge = db.scalar(
+        "SELECT MAX(s.filing_date) FROM pwd_case_events e JOIN pwd_case_status s "
+        "ON s.case_number = e.case_number WHERE e.changed_at >= ? AND e.case_number >= ? "
+        "AND e.case_number < ? AND e.to_final = 1 AND e.from_status = 'IN PROCESS' "
+        # A withdrawal is the employer's act and lands on any month (33 filed in
+        # October 2026 were withdrawn the week DOL was deciding July's).
+        "AND e.to_status <> 'WITHDRAWN' "
+        f"AND {PERM_WAGE.replace('visa_type', 's.visa_type')}",
+        [int(since.timestamp() * 1000), lo, hi])
+    if not edge:
+        return None
+    return (datetime.date.fromisoformat(str(edge)[:10])
+            + datetime.timedelta(days=ACTIVE_AHEAD_DAYS)).isoformat()
+
+
 def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
-          window_days: int | None = None) -> dict:
+          window_days: int | None = None, active_through_day: str | None = None) -> dict:
     """Re-ask DOL about a set of cases and record what moved.
 
+    active_through_day  PERM wage requests in process filed on or before this
+                  day (the daytime pass, `active_through`); recorded as mode
+                  "active", which no page reads as a check of every case
     pending_only  every non-final row (the daily pass; index case_status_final)
     window_days   every row filed within the last N days (the weekly pass;
                   index <table>_filed). Every row would outlast the job's
@@ -532,7 +568,15 @@ def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
     cfg = PROGRAMS[program]
     table, events = cfg["table"], cfg["events"]
     args: list = []
-    if pending_only:
+    if active_through_day:
+        lo, hi = DAY_QUEUE_RANGE
+        where = (f"WHERE case_number >= ? AND case_number < ? AND current_status = 'IN PROCESS' "
+                 f"AND filing_date <= ? AND {PERM_WAGE}")
+        args = [lo, hi, active_through_day]
+        order = "filing_date, case_number"
+        limit = limit or ACTIVE_CAP
+        log(f"{program}: PERM wage requests DOL is working, filed through {active_through_day}")
+    elif pending_only:
         where = "WHERE is_final = 0 OR is_final = '0'"
         order = "case_number"
     elif window_days:
@@ -643,10 +687,12 @@ def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
     # `complete` is decided here rather than by the caller because only this
     # function knows whether a batch was lost. `limit` is the caller's, and a
     # limited run is a slice of the population by construction.
-    complete = not limit and not truncated and failed_batches == 0
+    # The daytime pass reached its whole band when the band fit under its cap.
+    reached_all = not limit or (bool(active_through_day) and len(todo) < limit)
+    complete = reached_all and not truncated and failed_batches == 0
     record_sweep(
         db, script="ingest_pwd_status_direct.py", program=program,
-        mode="pending" if pending_only else "full",
+        mode="active" if active_through_day else ("pending" if pending_only else "full"),
         started_at=started, asked=asked, answered=checked, missing=missing,
         changed=moved, requests=requests, failed_batches=failed_batches,
         complete=complete, status_counts=status_counts,
@@ -885,6 +931,8 @@ def main() -> int:
     ap.add_argument("--cap", type=int, help="Override the run's request cap.")
     ap.add_argument("--pending", action="store_true", help="Re-check every non-final case.")
     ap.add_argument("--full", action="store_true", help="Re-check every case filed inside its program's window.")
+    ap.add_argument("--active", action="store_true",
+                    help="The daytime pass: re-check the PERM wage requests DOL is working.")
     ap.add_argument("--program", choices=[*PROGRAMS, "all"], default="all")
     ap.add_argument("--limit", type=int)
     # Two read-only probes for the workflow that chains backfill legs: where
@@ -1032,6 +1080,25 @@ def main() -> int:
                         + (f"; failed: {', '.join(k for k, _ in failed)}"
                            if failed else ""))
         return _tail_exit(failed, recorded)
+
+    if args.active:
+        through = active_through(db, datetime.datetime.now(ET).date())
+        if through is None:
+            log("active: DOL decided no PERM wage request in the last week; nothing to check")
+            recorded = record_run(db, "ingest_pwd_status_direct.py --active", status="ok", rows_written=0,
+                                  note="no wage request decided in the last week")
+            return _tail_exit([], recorded)
+        res = sweep(db, "pwd", pending_only=True, limit=args.limit, active_through_day=through)
+        # The day queue and the summary move with what this pass found; no
+        # freshness stamp, because this is not a check of every case.
+        failed = finish_docs()
+        status = pass_status({"pwd": res}, len(failed))
+        recorded = record_run(db, "ingest_pwd_status_direct.py --active", status=status,
+                              rows_written=res["moved"],
+                              note=f"{res['checked']:,} checked through {through}, {res['moved']:,} moved, "
+                                   f"{time.time()-started:.0f}s"
+                                   + (f"; failed: {', '.join(k for k, _ in failed)}" if failed else ""))
+        return _tail_exit(failed, recorded, swept_nothing=bool(res["todo"] and not res["checked"]))
 
     if args.pending or args.full:
         results = {}

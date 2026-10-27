@@ -72,6 +72,61 @@ def sweep_heals_stale_flags() -> None:
           any("current_status" in q for q in sqls), False)
 
 
+def active_pass_band() -> None:
+    """The daytime pass asks only about the requests DOL is working: in process,
+    PERM wage requests, filed up to a week past the newest filing day DOL
+    decided in the last week; and it records itself as its own mode."""
+    import ingest_pwd_status_direct as m
+    from lib_sqlite_shim import SqliteTurso
+
+    db = SqliteTurso()
+    db.script([
+        "CREATE TABLE pwd_case_status (case_number TEXT PRIMARY KEY, filing_date TEXT, current_status TEXT, "
+        "is_final INTEGER, employer_name TEXT, job_title TEXT, visa_type TEXT)",
+        "CREATE TABLE pwd_case_events (case_number TEXT, changed_at INTEGER, from_status TEXT, to_status TEXT, "
+        "to_final INTEGER, source TEXT)",
+    ])
+    today = datetime.date(2026, 10, 27)
+    day_ms = lambda d: int(datetime.datetime.combine(d, datetime.time(5, 40), tzinfo=m.ET).timestamp() * 1000)
+    db.conn.executemany("INSERT INTO pwd_case_status VALUES (?,?,?,?,?,?,?)", [
+        ("P-100-26190-000001", "2026-07-17", "DETERMINATION ISSUED", 1, "A", "t", "PERM"),  # decided lately
+        ("P-100-26200-000002", "2026-07-19", "IN PROCESS", 0, "B", "t", "PERM"),             # in the band
+        ("P-100-26205-000003", "2026-07-24", "IN PROCESS", 0, "C", "t", None),               # a week past: in
+        ("P-100-26210-000004", "2026-07-29", "IN PROCESS", 0, "D", "t", "PERM"),             # past the band
+        ("P-100-26200-000005", "2026-07-19", "IN PROCESS", 0, "E", "t", "H-1B"),             # not a PERM wage
+        ("P-200-26200-000006", "2026-07-19", "IN PROCESS", 0, "F", "t", None),               # another office
+        ("P-100-26150-000007", "2026-05-30", "CENTER DIRECTOR REVIEW", 0, "G", "t", "PERM"), # not in process
+    ])
+    db.conn.executemany("INSERT INTO pwd_case_status VALUES (?,?,?,?,?,?,?)", [
+        ("P-100-26290-000008", "2026-10-17", "WITHDRAWN", 1, "H", "t", "PERM"),  # the employer's act
+    ])
+    db.conn.executemany("INSERT INTO pwd_case_events VALUES (?,?,?,?,?,?)", [
+        ("P-100-26190-000001", day_ms(datetime.date(2026, 10, 26)), "IN PROCESS", "DETERMINATION ISSUED", 1, "x"),
+        ("P-100-26290-000008", day_ms(datetime.date(2026, 10, 26)), "IN PROCESS", "WITHDRAWN", 1, "x"),
+    ])
+    db.conn.commit()
+    through = m.active_through(db, today)
+    check("the band ends a week past the newest filing day DOL decided", through, "2026-07-24")
+    asked: list[str] = []
+    recorded: dict = {}
+    saved = (m.lookup_with_retry, m.record_sweep, m.time.sleep, m.decided_in_file)
+    try:
+        m.lookup_with_retry = lambda nums: asked.extend(nums) or [{"caseNumber": c, "caseStatus": "IN PROCESS"} for c in nums]
+        m.record_sweep = lambda *a, **k: recorded.update(k)
+        m.time.sleep = lambda s: None
+        m.decided_in_file = lambda db, program: set()
+        m.sweep(db, "pwd", pending_only=True, limit=None, active_through_day=through)
+    finally:
+        m.lookup_with_retry, m.record_sweep, m.time.sleep, m.decided_in_file = saved
+    check("it asks only the in-process PERM wage requests in the band", sorted(asked),
+          ["P-100-26200-000002", "P-100-26205-000003"])
+    check("it records itself as the active mode, never a check of every case",
+          (recorded.get("mode"), recorded.get("complete")), ("active", True))
+    db.conn.execute("UPDATE pwd_case_events SET changed_at = ?", [day_ms(datetime.date(2026, 10, 10))])
+    db.conn.commit()
+    check("no decision in the last week means nothing to check", m.active_through(db, today), None)
+
+
 def run_status_and_exit() -> None:
     """A pass with cases to check that checked none is failed and red; one DOL
     stopped answering is partial; two failed docs or a lost run row are red,
@@ -95,6 +150,7 @@ def run_status_and_exit() -> None:
 def main() -> int:
     print("pwd status ingest")
     run_status_and_exit()
+    active_pass_band()
     # The day code is YYDDD from a real date, year boundary included.
     check("day code for 2026-08-28 is 26240", day_code(datetime.date(2026, 8, 28)), "26240")
     check("day code for 2026-01-01 is 26001", day_code(datetime.date(2026, 1, 1)), "26001")

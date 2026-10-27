@@ -28,7 +28,7 @@ on:
         required: true
         default: pending
         type: choice
-        options: [pending, full, discover, backfill]
+        options: [pending, full, active, discover, backfill]
       from:
         description: "backfill only: first filing day, YYYY-MM-DD"
         required: false
@@ -94,6 +94,10 @@ jobs:
               timeout 90m python3 scripts/ingest_pwd_status_direct.py --discover ;;
             pending|full)
               timeout 170m python3 scripts/ingest_pwd_status_direct.py --"$MODE" ;;
+            active)
+              # Weekday afternoons: only the wage requests DOL is working
+              # (about 130 lookups), so today's determinations show today.
+              timeout 30m python3 scripts/ingest_pwd_status_direct.py --active ;;
             *)
               echo "::error::unknown mode '$MODE'"; exit 1 ;;
           esac

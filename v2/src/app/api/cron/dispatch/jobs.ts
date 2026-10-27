@@ -66,6 +66,12 @@ export const CRON_JOBS: Record<string, CronJob> = {
     schedule: "40 10 * * 0",
     description: "the rolling-window PWD and LCA re-check, Sundays",
   },
+  "pwd-active": {
+    workflow: "pwd-status-direct.yml",
+    inputs: { mode: "active" },
+    schedule: "10 19 * * 1-5",
+    description: "the PERM wage requests DOL is working, a weekday-afternoon pass, so today's determinations show today",
+  },
   "processing-times-hourly": {
     workflow: "processing-times-ingest.yml",
     inputs: { quick: "true" },
