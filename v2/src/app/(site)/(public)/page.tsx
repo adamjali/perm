@@ -51,6 +51,9 @@ import { getRecordCounts } from "@/lib/db/recordCounts";
 import { getSiteReviews } from "@/lib/reviews/read";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { getBacklogMatrix } from "@/lib/db/backlog";
+import { homeMonths } from "@/lib/homeMonths";
+import { easternDay } from "@convex/lib/time";
 import { PermPulse } from "@/components/pulse/PermPulse";
 import { SITE_URL } from "@/lib/constants/site";
 
@@ -118,7 +121,7 @@ export default async function HomePage() {
   // The pulse reads our own sweep's record, a third clock: it moves when the
   // sweep finishes, and /api/revalidate-sweep expires this page then. Either
   // read failing drops the band, never the page.
-  const [snapshot, disclosure, record, observed, coverage, siteReviews] = await Promise.all([
+  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
@@ -126,11 +129,15 @@ export default async function HomePage() {
     getSweepCoverage().catch(() => null),
     // The site's approved reviews; never throws (falls back to the last recorded rating).
     getSiteReviews(),
+    // The census doc the queue pages read: every filing month, decided and
+    // waiting. A failed read draws the hero without its chart.
+    getBacklogMatrix().catch(() => []),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
     : undefined;
   const lastDay = pulseHeadline(observed);
+  const months = homeMonths(backlog, analyst?.priorityDate ?? null, easternDay().slice(0, 7));
   const pwdPending = snapshot?.pwdPermBacklog?.length
     ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
     : null;
@@ -164,6 +171,7 @@ export default async function HomePage() {
           their films. */}
       <HeroSection
         waitRows={disclosure?.frontierHistory ?? []}
+        months={months}
         board={{
           frontierMonth: analyst?.priorityDate ?? null,
           lastDay: lastDay ? { date: lastDay.day.date, total: lastDay.day.total } : null,
@@ -172,10 +180,7 @@ export default async function HomePage() {
           pwdPending,
         }}
       />
-      <LiveDataBand
-        frontierMonth={analyst?.priorityDate ?? null}
-        asOf={snapshot?.permAsOf ?? null}
-      >
+      <LiveDataBand>
         <PermPulse variant="charts" days={observed} checkedAt={coverage?.checkedAt ?? null} />
       </LiveDataBand>
       <RoadSection pwdPending={pwdPending} frontierMonth={analyst?.priorityDate ?? null} />

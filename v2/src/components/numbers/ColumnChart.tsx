@@ -95,17 +95,31 @@ export function ColumnChart({
           {columns.map((c) => {
             const h = c.value > 0 ? Math.max(2, (c.value / max) * 100) : 0;
             if (c.parts?.length) {
-              return (
+              // A stacked column's label sits at the top of its whole slot, in
+              // the padding above the tallest bar, so it can't run into a
+              // taller neighbour the way a label on the bar's own top did.
+              const bar = (
                 <div
-                  key={c.key}
                   data-tip={c.tip}
                   data-href={c.href}
-                  className={cn("flex flex-1 flex-col-reverse", c.now && "outline outline-2 outline-offset-1 outline-foreground")}
+                  className={cn("flex w-full flex-col-reverse", c.now && "outline outline-2 outline-offset-1 outline-foreground")}
                   style={{ height: `${h}%` }}
                 >
                   {c.parts.map((p, i) => (
                     <div key={i} className={p.fill} style={{ height: `${c.value ? (p.value / c.value) * 100 : 0}%` }} />
                   ))}
+                </div>
+              );
+              if (!c.top) return <div key={c.key} className="flex h-full flex-1 items-end">{bar}</div>;
+              return (
+                <div key={c.key} className="relative flex h-full flex-1 items-end">
+                  <span
+                    className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm font-semibold tabular-nums text-foreground"
+                    aria-hidden="true"
+                  >
+                    {c.top}{" "}
+                  </span>{" "}
+                  {bar}
                 </div>
               );
             }

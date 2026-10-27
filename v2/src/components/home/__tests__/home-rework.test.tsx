@@ -14,7 +14,7 @@ vi.mock("next/image", () => ({
 }));
 
 const { HeroSection } = await import("../HeroSection");
-const { boardRowsFor } = await import("../HeroSection");
+const { heroFigures, monthColumns } = await import("../HeroSection");
 const { RoadSection } = await import("../RoadSection");
 const { ExplainerFilm } = await import("../ExplainerFilm");
 const { FILM_ATTORNEYS, FILM_WAITING } = await import("@/lib/constants/films");
@@ -27,38 +27,60 @@ function textOf(html: string): string {
   return el.textContent ?? "";
 }
 
-describe("the figures at DOL beside the lookup", () => {
+describe("the answer and the figures at the top of the homepage", () => {
   const board = { frontierMonth: "2025-12-01", lastDay: { date: "2026-10-05", total: 552 }, pending: 91933, checkedAt: null };
-  const html = renderToStaticMarkup(<HeroSection board={board} />);
+  const months = [
+    { month: "2025-11", decided: 900, waiting: 100, total: 1000, isFront: false, isPartial: false },
+    { month: "2025-12", decided: 300, waiting: 700, total: 1000, isFront: true, isPartial: false },
+    { month: "2026-01", decided: 0, waiting: 0, total: 0, isFront: false, isPartial: true },
+  ];
+  const html = renderToStaticMarkup(<HeroSection board={board} months={months} />);
 
-  it("puts each value in the page text exactly once", () => {
+  it("answers with DOL's month in the H1, and says each figure once", () => {
+    const h1 = html.slice(html.indexOf("<h1"), html.indexOf("</h1>"));
+    expect(textOf(h1)).toMatch(/DOL is deciding PERM cases filed in\s*December 2025/);
     const text = textOf(html);
-    expect(text.match(/Dec 2025/g)).toHaveLength(1);
     expect(text.match(/91,933/g)).toHaveLength(1);
+    expect(text.match(/552/g)).toHaveLength(1);
   });
 
-  it("drops a row whose figure is missing, and never invents one", () => {
-    expect(boardRowsFor(undefined)).toEqual([]);
-    const rows = boardRowsFor({ frontierMonth: null, lastDay: null, pending: 91933, checkedAt: null, pwdPending: null });
-    expect(rows).toEqual([{ label: "PERMs pending", value: "91,933" }]);
+  it("drops a figure whose value is missing, and never invents one", () => {
+    expect(heroFigures(undefined, null)).toEqual([]);
+    const rows = heroFigures({ frontierMonth: null, lastDay: null, pending: 91933, checkedAt: null, pwdPending: null }, null);
+    expect(rows).toEqual([{ label: "PERM cases waiting", value: "91,933" }]);
   });
 
   it("names the day by its date, never a weekday that reads as a month", () => {
-    const rows = boardRowsFor({
-      frontierMonth: "2025-12-01",
-      lastDay: { date: "2026-09-30", total: 901 },
-      pending: 91933,
-      checkedAt: null,
-      pwdPending: 47941,
-    });
+    const rows = heroFigures(
+      { frontierMonth: "2025-12-01", lastDay: { date: "2026-09-30", total: 901 }, pending: 91933, checkedAt: null, pwdPending: 47941 },
+      13,
+    );
     expect(rows.map((r) => `${r.label}=${r.value}`)).toEqual([
-      "Now deciding cases filed in=Dec 2025",
-      "Cases decided on Sep 30=901",
-      "PERMs pending=91,933",
-      "Wage requests pending=47,941",
+      "A PERM case takes=13 months",
+      "PERM cases waiting=91,933",
+      "Decided on Sep 30=901",
+      "Wage requests waiting=47,941",
     ]);
   });
+
+  it("draws one column a month, marks DOL's month, and links only months with cases", () => {
+    const cols = monthColumns(months);
+    expect(cols.map((c) => c.key)).toEqual(["2025-11", "2025-12", "2026-01"]);
+    expect(cols.filter((c) => c.now).map((c) => c.key)).toEqual(["2025-12"]);
+    expect(cols[1]!.top).toBe("DOL is here");
+    expect(cols[1]!.href).toBe("/perm-queue/2025-12");
+    expect(cols[2]!.href).toBeUndefined();
+    expect(cols[1]!.tip).toContain("30% decided");
+    expect(cols[2]!.tip).toContain("No cases on DOL's record");
+  });
+
+  it("draws no chart without months, and keeps the case box", () => {
+    const bare = renderToStaticMarkup(<HeroSection board={board} />);
+    expect(bare).not.toContain("still waiting");
+    expect(bare).toContain("Check a case");
+  });
 });
+
 
 describe("RoadSection", () => {
   const html = renderToStaticMarkup(<RoadSection pwdPending={47941} frontierMonth="2025-12-01" />);

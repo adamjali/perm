@@ -2,9 +2,6 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 
-import { QueueTape } from "@/components/tools/QueueTape";
-import { TapeReveal } from "@/components/tools/TapeReveal";
-import { formatAsOf } from "@/lib/dolFormat";
 
 /**
  * The homepage's evidence band.
@@ -41,9 +38,7 @@ export interface DataPageFigures {
 }
 
 export interface LiveDataBandProps {
-  frontierMonth: string | null;
-  asOf: string | null;
-  /** The day-by-day charts, drawn under the tape (the homepage passes PermPulse). */
+  /** The day-by-day charts (the homepage passes PermPulse). */
   children?: React.ReactNode;
 }
 
@@ -146,37 +141,23 @@ function FirmsFigure() {
   );
 }
 
-export function LiveDataBand({
-  frontierMonth,
-  asOf,
-  children,
-}: LiveDataBandProps) {
-  if (!frontierMonth) return null;
+export function LiveDataBand({ children }: LiveDataBandProps) {
+  // The hero draws where DOL's line stands (Oct 27 2026); this band is the
+  // pace: what DOL decided each day, and its typical week.
+  if (!children) return null;
 
   return (
     <section aria-labelledby="pace-title" className="bg-tint">
       <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 sm:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-          <div>
-            <h2 id="pace-title" className="font-heading text-2xl font-bold sm:text-3xl">
-              How fast DOL works through the line
-            </h2>{" "}
-            {asOf ? (
-              <p className="mt-2 text-base text-soft">From DOL&apos;s own processing times, as of {formatAsOf(asOf)}</p>
-            ) : null}
-          </div>{" "}
+          <h2 id="pace-title" className="font-heading text-2xl font-bold sm:text-3xl">
+            How fast DOL is deciding cases
+          </h2>{" "}
           <Link href="/tools" className="link inline-flex min-h-11 items-center">
             Every dataset
           </Link>
-        </div>
-
-        {/* The homepage's one moment of motion: the processed months fill in
-            once, left to right, when the tape first scrolls into view. */}
-        <TapeReveal>
-          <QueueTape frontierMonth={frontierMonth} className="mt-8" monthsBehind={6} monthsAhead={8} reveal />
-        </TapeReveal>{" "}
-        {children ? <div className="mt-8">{children}</div> : null}
-
+        </div>{" "}
+        <div className="mt-6">{children}</div>
       </div>
     </section>
   );
