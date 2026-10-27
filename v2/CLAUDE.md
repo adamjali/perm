@@ -10454,3 +10454,65 @@ Chrome for iPhone's Translate or form script, which PostHog had dropped since Oc
 `SentryClientInit.tsx` now drops it by the same rule (`sentryEventFromInjectedPageScript`: Chrome for iPhone, and every
 frame a page document rather than a script, Sentry's `app:///` names included). An error with one frame in a `/_next/`
 script still reports.
+
+## Oct 27 2026: the rule watch
+
+Owner's yes, Oct 27 2026, about 8:02 AM EDT ("yes we should"), after DOL's PERM proposal (RIN 1205-AC29) cleared
+White House review on Oct 23 with nothing on the site saying so.
+
+**Three records, one key.** A significant rule goes to OIRA, then on public inspection, then into the Register, and
+the RIN (Regulation Identifier Number) names it in all three. `scripts/ingest_rule_pipeline.py` reads:
+
+| source | what it gives | notes |
+|---|---|---|
+| `reginfo.gov/public/do/XMLViewFileAction?f=EO_RULES_UNDER_REVIEW.xml` | received date, OIRA's stage | `RUNDATE` on the root is the freshness stamp |
+| `...?f=EO_RULE_COMPLETED_30_DAYS.xml` | completed date, the decision as OIRA prints it, major | forgets a review after 30 days |
+| `federalregister.gov/api/v1/public-inspection-documents/current.json` | filing time, scheduled publication | carries no RIN: the RIN comes from each candidate's raw text (`RIN 1205-AC29` line); `regulation_id_numbers` is refused as a field there |
+| `federalregister.gov/api/v1/documents.json?conditions[term]="<RIN>"` | proposal, comment deadline, final rule, effective date | the search matches the Unified Agenda too, so only documents whose own `regulation_id_numbers` carry the RIN count |
+
+- **Which rules**: every USCIS rule (1615), and 1205 (ETA), 1235 (WHD), 1400 (State) and any DHS code (16xx) only
+  when the title names an immigration program (`IMMIGRATION_TITLE`). ETA's apprenticeship rule and State's arms
+  rules are dropped by it; the public inspection list also passes the policy feed's own `keep()`.
+- **Two reviews, two column sets** (`p_*` for the proposal or a notice, `f_*` for a final or interim final rule):
+  OIRA reviews a rule twice and the second must not erase the first.
+- **Never cleared, written only on a change**: `merge` keeps every fact a feed has forgotten, the first title read
+  stays (OIRA appends "(NPRM)"; the page drops it), and a run that changed nothing writes nothing. Steps
+  (`rule_pipeline_events`, keyed rin, kind, date) are written only when a dated fact is new or moves.
+- **Proposal and final**: the proposal is the first proposed rule under the RIN, the comment deadline the latest any
+  of them sets (an extension is filed as a proposed rule), the final rule the newest (1615-AC70 has two).
+- **OIRA unreadable fails the run; a later source is a warning** read again next time. `--follow RIN` adds a rule by
+  hand that's past OIRA.
+- **Schedule**: a step of `processing-times-ingest.yml`: every daily pass, and on the hourly weekday pass only when
+  the Eastern hour is 9 or 17. `rules_changed` POSTs `/api/revalidate-policy` (a 404 before the route ships is a
+  warning, not a red run).
+
+**The page.** `getRulePipeline` (`src/lib/db/rulePipeline.ts`) throws on a failed read (no such table is the one
+honest empty) and leaves off a rule finished more than 90 days ago. `buildTrack` in `convex/lib/ruleSteps.ts` gives
+six steps, each done, upcoming, unrecorded (a later step has a date: before this record began), next or ahead; a
+withdrawn review stops the track; a rule first met as final reads "Published as a final rule" and "Takes effect".
+On a phone the track is a checklist; from 768px one row of six segments. The card title is a `<p>`, not a heading:
+once published the same title is a heading in the Register list, and the outline would hold it twice.
+
+**The digest** (`readRuleMoves` in `convex/newsletter.ts`): steps dated inside the week, worded by `stepSentence`,
+linked to OIRA's page or the Register's copy; `issueHasNews` counts them, the subject counts rules, not steps.
+
+**The newsworthy check** (`scripts/lib_newsworthy.py`, tested in `scripts/test_newsworthy.py`):
+
+| move | rule |
+|---|---|
+| a rule step | seen in the window AND dated in the last 7 days (the first run records months-old steps) |
+| DOL's processing times | analyst review, audit, reconsideration or the PERM wage-request months differ from the reading before |
+| the bulletin | `bulletin_first_seen` in the window |
+| an employer | a hold move or decision batch of 50+ cases (`NEWS_EMPLOYER_MIN`) |
+| a decision day | a weekday at 2x (`DECISION_DAY_MULTIPLE`) the median of the 20 weekdays before; never a weekend |
+
+The morning report's first section covers 24 hours; `newsworthy.yml` (timer `dispatch-newsworthy-evening`, 00:30 UTC)
+covers since 7 AM Eastern and calls `newsworthy:send` only when something moved, through `sendOwnerMail`. The log
+prints one word and discards the Convex call's output. Python and TypeScript word a step the same:
+`scripts/fixtures/rule_step_sentences.json` is read by both tests.
+
+**Traps hit building it.** A probe loop that asserts before writing left the previous probe's mutation in the file
+(the readings guard), caught only because a later check failed: wrap each probe in try/finally. `beforeEach(() =>
+mock.mockReset())` returns the mock and vitest calls it as cleanup, so a rejecting mock fired after the test as an
+unhandled rejection that `vitest.setup.convex.ts` rethrows. The app's database client is HTTP-only (`file:` URLs
+refused), so a local QA render used a small Hrana-over-HTTP shim on a SQLite copy.

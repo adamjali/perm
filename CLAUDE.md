@@ -1372,3 +1372,23 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
   only the Chrome Web Store and Product Hunt images. `extension/src` still ships it, because `/extension` imports it.
 - **A short looping clip beats a still where something happens** (owner, Oct 26): the getting-started guide's
   `VideoFigure` pattern on the site, an animated GIF off it. Rule in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md), "Pictures".
+
+## Oct 27 2026: the rule watch, in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026: the rule watch".
+
+- **Rules on their way are followed from three public records**: OIRA's two review lists on reginfo.gov, the Federal
+  Register's public inspection list, and the Register's own record of each RIN (`scripts/ingest_rule_pipeline.py`,
+  tables `rule_pipeline` and `rule_pipeline_events`). Every USCIS rule, and DOL, State and DHS rules whose title names
+  an immigration program. A fact is never cleared, and a second run writes nothing.
+- **It runs in the processing-times job**: the 3 AM daily pass, and the weekday hourly pass at 9 AM and 5 PM Eastern
+  only. A rule that moved expires `/policy-changes` (`/api/revalidate-policy`).
+- **`/policy-changes` opens with "Rules in the pipeline"**: a card per rule with six dated steps (`convex/lib/ruleSteps.ts`,
+  `src/components/policy/RulePipeline.tsx`); OIRA's decision is quoted as it prints it. RIN 1205-AC29, DOL's PERM
+  proposal, cleared OIRA on Oct 23 2026, "Consistent with Change".
+- **The weekly digest has "Rules that moved this week"**, and a week with one is news on its own.
+- **A newsworthy check** (`scripts/lib_newsworthy.py`): a rule step, a DOL processing-times month, a new bulletin, a big
+  employer-wide move, a decision day at twice a typical weekday. First in the morning report; at 8:30 PM EDT
+  (`newsworthy.yml`, timer `dispatch-newsworthy-evening`) it emails the owner, only when something moved.
+- **A hook that returns a mock gets it called as the hook's cleanup** (bit again: `beforeEach(() => rows.mockReset())`
+  ran a rejecting mock after every test). Braces.
