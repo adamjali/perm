@@ -1,0 +1,75 @@
+{
+ "_about": "One rule step, worded the same by scripts/lib_newsworthy.py (rule_sentence) and convex/lib/ruleSteps.ts (stepSentence); both tests read this file.",
+ "rule": {
+  "rin": "1205-AC29",
+  "title": "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program (NPRM)",
+  "agency": "DOL's Employment and Training Administration",
+  "commentsClose": "2026-12-28",
+  "effectiveOn": "2027-10-01"
+ },
+ "cases": [
+  {
+   "event": {
+    "kind": "oira-received",
+    "onDate": "2026-09-14",
+    "detail": "Proposed Rule"
+   },
+   "sentence": "DOL's Employment and Training Administration sent \"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" to OIRA for review on Sep 14, 2026 (proposed rule)."
+  },
+  {
+   "event": {
+    "kind": "oira-completed",
+    "onDate": "2026-10-23",
+    "detail": "Consistent with Change"
+   },
+   "sentence": "OIRA finished its review of \"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" on Oct 23, 2026. Its decision: \"Consistent with Change\"."
+  },
+  {
+   "event": {
+    "kind": "oira-completed",
+    "onDate": "2026-10-24",
+    "detail": "Withdrawn"
+   },
+   "sentence": "\"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" was withdrawn from OIRA review on Oct 24, 2026."
+  },
+  {
+   "event": {
+    "kind": "public-inspection",
+    "onDate": "2026-10-28",
+    "detail": "Proposed Rule"
+   },
+   "sentence": "\"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" went on public inspection on Oct 28, 2026, ahead of publication in the Federal Register."
+  },
+  {
+   "event": {
+    "kind": "proposed-published",
+    "onDate": "2026-10-29",
+    "detail": "2026-99901"
+   },
+   "sentence": "\"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" was published as a proposed rule on Oct 29, 2026; comments close Dec 28, 2026."
+  },
+  {
+   "event": {
+    "kind": "final-published",
+    "onDate": "2027-08-02",
+    "detail": "2027-12345"
+   },
+   "sentence": "\"Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program\" was published as a final rule on Aug 2, 2027; it takes effect Oct 1, 2027."
+  },
+  {
+   "rule": {
+    "rin": "1615-AD25",
+    "title": null,
+    "agency": null,
+    "commentsClose": null,
+    "effectiveOn": null
+   },
+   "event": {
+    "kind": "oira-received",
+    "onDate": "2026-10-13",
+    "detail": null
+   },
+   "sentence": "The agency sent \"RIN 1615-AD25\" to OIRA for review on Oct 13, 2026."
+  }
+ ]
+}

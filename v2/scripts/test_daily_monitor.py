@@ -142,6 +142,18 @@ def audit_findings_are_sorted() -> None:
     check('"full": run_audit(prod=False)' in src and '"prod": run_audit(prod=True)' in src,
           "the report runs both audits")
 
+def newsworthy_is_first_and_says_each_move() -> None:
+    quiet = dm.newsworthy_verdict([])
+    check(quiet["status"] == "ok" and quiet["summary"] == "nothing newsworthy moved in 24 h", "newsworthy: a quiet day says so")
+    line = 'OIRA finished its review of "A rule" on Oct 23, 2026. Its decision: "Consistent with Change". Source: OIRA.'
+    busy = dm.newsworthy_verdict([line])
+    check(busy["status"] == "ok" and busy["summary"] == "1 move worth telling in 24 h" and busy["lines"] == [line],
+          "newsworthy: each move is a line under the count", str(busy))
+    import inspect  # noqa: PLC0415
+    src = inspect.getsource(dm.build)
+    check(src.index('guarded("newsworthy"') < src.index('guarded("health"'), "newsworthy: it is the report's first section")
+
+
 def main() -> int:
     # The ranking is shared with convex/lib/dailyReportCompose.ts.
     ts = (HERE.parent / "convex" / "lib" / "dailyReportCompose.ts").read_text()
@@ -626,6 +638,7 @@ def main() -> int:
     data_section_reads_the_scorecard_alarms()
     long_lines_end_at_a_sentence()
     security_section_says_what_is_open()
+    newsworthy_is_first_and_says_each_move()
     page_checks_never_read_a_missing_check_as_a_pass()
     audit_findings_are_sorted()
     busy_replies_are_tried_again()

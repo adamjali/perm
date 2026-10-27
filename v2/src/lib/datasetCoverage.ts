@@ -86,6 +86,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Federal Register rules, proposed rules and notices that touch these programs, with the Register's own dates. Not guidance or internal memos.",
   "policy-notices-oflc":
     "Announcements OFLC posts on its own page, which is where program changes appear before the Federal Register.",
+  "rule-pipeline":
+    "Rules from USCIS, and immigration rules from DOL, State and DHS, from White House review (OIRA's own lists) through public inspection to the Federal Register. A rule OIRA doesn't review appears once it's on public inspection.",
   "warn-notices":
     "State WARN layoff notices from 47 states and DC, each from the record its state publishes. Arkansas, New Hampshire and Wyoming publish no list.",
   "warn-notices-ca":
@@ -239,6 +241,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   debarments: "DOL debarment lists",
   "policy-notices": "Federal Register notices",
   "policy-notices-oflc": "OFLC announcements",
+  "rule-pipeline": "Rules in review and on public inspection",
   "warn-notices": "WARN notices",
   "warn-notices-ca": "California WARN notices",
   "warn-notices-ny": "New York WARN notices",

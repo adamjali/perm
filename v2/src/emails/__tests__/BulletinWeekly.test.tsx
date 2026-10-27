@@ -120,3 +120,27 @@ describe("the USCIS quarterly section (2026-09-22)", () => {
     expect(html).not.toContain("/uscis-processing-times");
   });
 });
+
+describe("rules that moved this week (2026-10-27)", () => {
+  it("prints each step and links where it's on record, before the notices", async () => {
+    const html = await render(
+      BulletinWeekly({
+        ...base,
+        ruleMoves: [
+          {
+            rin: "1205-AC29",
+            date: "2026-10-23",
+            sentence: 'OIRA finished its review of "A PERM rule" on Oct 23, 2026. Its decision: "Consistent with Change".',
+            url: "https://www.reginfo.gov/public/do/eAgendaViewRule?RIN=1205-AC29",
+          },
+        ],
+      }),
+    );
+    expect(html).toContain("Rules that moved this week");
+    expect(html).toContain("Consistent with Change");
+    expect(html).toContain("https://www.reginfo.gov/public/do/eAgendaViewRule?RIN=1205-AC29");
+    expect(html.indexOf("Rules that moved this week")).toBeLessThan(html.indexOf("On the record this week"));
+    const quiet = await render(BulletinWeekly({ ...base, ruleMoves: [] }));
+    expect(quiet).not.toContain("Rules that moved this week");
+  });
+});

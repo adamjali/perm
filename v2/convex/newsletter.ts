@@ -8,8 +8,9 @@
  * subscribers under a global daily cap and reschedules itself for the rest.
  *
  * Every figure comes from the public-data database through the public mirror: DOL's processing
- * times, the live remainder's pending count, the two newest bulletins, and
- * the Federal Register documents of the last seven days. The composition is
+ * times, the live remainder's pending count, the two newest bulletins, the
+ * Federal Register documents of the last seven days, and the steps rules in
+ * the pipeline took that week (`readRuleMoves`). The composition is
  * pure (`lib/newsletterCompose.ts`) and the HTML is rendered from the same
  * object, so the two parts cannot disagree.
  *
@@ -46,7 +47,10 @@ import {
   pickUscisMedians,
   pickEmployerMoves,
   type DigestEmployerMove,
+  type DigestRuleMove,
+  RULE_MOVES_MAX,
 } from "./lib/newsletterCompose";
+import { reginfoUrl, RULE_STEP_KINDS, stepSentence, stepsBetween, type RuleStepEvent, type RuleStepKind } from "./lib/ruleSteps";
 import { RETRY_DELAY_MS, runSendLoop } from "./lib/newsletterSend";
 import { parseCutoff } from "./lib/perm/calculators/priorityDate";
 import { one, rows } from "./lib/publicMirror";
@@ -230,6 +234,55 @@ async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
       publicationDate: String(n.publication_date).slice(0, 10),
       type: typeof n.type === "string" ? n.type : "Notice",
     }));
+}
+
+/**
+ * Steps rules in the pipeline took from `sinceIso` through `weekOf`, worded.
+ * A table the rule watch hasn't created yet is no moves; any other failure
+ * fails the build, like every other read here.
+ */
+export async function readRuleMoves(sinceIso: string, weekOf: string): Promise<DigestRuleMove[]> {
+  let list: Record<string, unknown>[];
+  try {
+    list = await rows(
+      "SELECT e.rin, e.kind, e.on_date, e.detail, r.title, r.agency, r.comments_close, r.effective_on, " +
+        "r.pi_url, r.proposed_url, r.final_url FROM rule_pipeline_events e JOIN rule_pipeline r ON r.rin = e.rin " +
+        "WHERE e.on_date >= ? AND e.on_date <= ? ORDER BY e.on_date DESC LIMIT 40",
+      [sinceIso, weekOf],
+    );
+  } catch (err) {
+    if (/no such table/i.test(String(err))) return [];
+    throw err;
+  }
+  const str = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
+  const byKey = new Map<string, Record<string, unknown>>();
+  const events: RuleStepEvent[] = [];
+  for (const row of list) {
+    const kind = str(row.kind);
+    const rin = str(row.rin);
+    const onDate = str(row.on_date);
+    if (!kind || !rin || !onDate || !(RULE_STEP_KINDS as readonly string[]).includes(kind)) continue;
+    events.push({ rin, kind: kind as RuleStepKind, onDate, detail: str(row.detail) });
+    byKey.set(`${rin}|${kind}|${onDate}`, row);
+  }
+  return stepsBetween(events, sinceIso, weekOf)
+    .slice(0, RULE_MOVES_MAX)
+    .map((e) => {
+      const row = byKey.get(`${e.rin}|${e.kind}|${e.onDate}`) ?? {};
+      const rule = {
+        rin: e.rin,
+        title: str(row.title),
+        agency: str(row.agency),
+        commentsClose: str(row.comments_close),
+        effectiveOn: str(row.effective_on),
+      };
+      const url =
+        e.kind === "public-inspection" ? str(row.pi_url)
+          : e.kind === "proposed-published" ? str(row.proposed_url)
+            : e.kind === "final-published" ? str(row.final_url)
+              : null;
+      return { rin: e.rin, date: e.onDate, sentence: stepSentence(e, rule), url: url ?? reginfoUrl(e.rin) };
+    });
 }
 
 async function renderHtml(data: DigestData): Promise<string> {
@@ -446,13 +499,14 @@ export const buildIssue = internalAction({
     const weekOf = args.weekOf ?? new Date().toISOString().slice(0, 10);
     const since = new Date(Date.now() - 7 * MS_PER_DAY).toISOString().slice(0, 10);
     try {
-      const [queue, pending, bulletin, notices, uscis, employerMoves] = await Promise.all([
+      const [queue, pending, bulletin, notices, uscis, employerMoves, ruleMoves] = await Promise.all([
         readQueue(),
         readPending(),
         readBulletin(),
         readNotices(since),
         readUscisQuarter(),
         readEmployerMoves(weekOf),
+        readRuleMoves(since, weekOf),
       ]);
       // The bulletin lands once a month and the issue goes out every week, so
       // without this the second and third issues restate the same moves as
@@ -472,6 +526,7 @@ export const buildIssue = internalAction({
         uscisRepeat: uscis.uscisQuarter !== null && previousQuarter === uscis.uscisQuarter,
         notices,
         employerMoves,
+        ruleMoves,
       };
       const subject = composeSubject(data);
       const text = composeText(data);

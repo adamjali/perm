@@ -9,18 +9,23 @@ import { PolicySearch, type PolicyItem } from "@/components/policy/PolicySearch"
 import { monthYear } from "@/components/policy/format";
 import { OflcArchive } from "@/components/policy/OflcArchive";
 import { PolicyStrip, StripLegend } from "@/components/policy/PolicyStrip";
+import { RulePipeline } from "@/components/policy/RulePipeline";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { buildFeed, buildStrip, commentWindow, feedLedger } from "@/lib/policyFeed";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { withSocialCard } from "@/lib/socialCard";
 import { listPolicyNotices } from "@/lib/db/policyNotices";
+import { getRulePipeline } from "@/lib/db/rulePipeline";
 import { easternDay } from "@/lib/time";
 
 /**
  * Policy changes, from the record itself.
  *
- * Two feeds under one page. Federal Register documents (rules, proposed
+ * The rules on their way come first: OIRA's review, public inspection and
+ * publication, each step dated (`lib/db/rulePipeline`, drawn by RulePipeline).
+ *
+ * Then two feeds under one page. Federal Register documents (rules, proposed
  * rules, notices) from USCIS, DHS, State and DOL that matched one of seven
  * terms, with the Register's own dates: when a rule takes effect, when
  * comments close and where to file one, the citation, the DATES paragraph
@@ -53,7 +58,7 @@ const LINK =
 
 export default async function PolicyChangesPage() {
   const today = easternDay();
-  const rows = await listPolicyNotices();
+  const [rows, pipeline] = await Promise.all([listPolicyNotices(), getRulePipeline(today)]);
   const feed = buildFeed(rows);
   const ledger = feedLedger(feed, today);
   const strip = buildStrip(feed, today);
@@ -113,6 +118,8 @@ export default async function PolicyChangesPage() {
       ) : (
         <>
           <RecordStrip record={record} label="Policies recorded" />{" "}
+
+          <RulePipeline rules={pipeline.rules} today={today} />{" "}
 
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">The last twelve months</h2>{" "}
@@ -196,7 +203,7 @@ export default async function PolicyChangesPage() {
         </>
       )}{" "}
 
-      <DataProvenance datasets={["policy-notices", "policy-notices-oflc"]} />
+      <DataProvenance datasets={["rule-pipeline", "policy-notices", "policy-notices-oflc"]} />
 
       <ToolPageFooter
         currentHref="/policy-changes"

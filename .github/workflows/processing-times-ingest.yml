@@ -141,6 +141,48 @@ jobs:
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             || { echo "::error::revalidation call failed (revalidate-bulletin)"; echo "revalidate-bulletin" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
+      # Rules on their way (scripts/ingest_rule_pipeline.py): OIRA's two review
+      # lists, the Federal Register's public inspection list, and the Register's
+      # record of each rule followed. The daily pass reads them, and the weekday
+      # hourly pass reads them at 9 AM and 5 PM Eastern only (the hour is read in
+      # Eastern time, so the clock change doesn't move them), so a rule OIRA
+      # cleared or the Register filed that day reaches the policy page and the
+      # evening check. Without OIRA's lists the step fails; a later source that
+      # doesn't answer is a warning and is read again next time.
+      - name: Rules in the pipeline
+        id: rules
+        if: always()
+        working-directory: v2
+        env:
+          QUICK: ${{ inputs.quick }}
+        run: |
+          hour="$(TZ=America/New_York date +%H)"
+          if [ "$QUICK" = "true" ] && [ "$hour" != "09" ] && [ "$hour" != "17" ]; then
+            echo "the hourly pass reads the rule pipeline at 9 AM and 5 PM Eastern; not this hour"; exit 0
+          fi
+          python3 scripts/ingest_rule_pipeline.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_rule_pipeline.py --note "rule pipeline read failed"
+
+      # The policy page sits on a six-hour window; a rule that moved expires it now.
+      - name: Expire the policy page
+        if: always() && steps.rules.outputs.rules_changed == 'true'
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          # A 404 is the route not yet live (a push builds by day and ships at
+          # night), and the page's own six-hour window still refreshes it: a
+          # warning. Any other failure turns the run red.
+          code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST https://permtracker.app/api/revalidate-policy \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo 000)"
+          if [ "$code" = "404" ]; then
+            echo "::warning::revalidate-policy answered 404; the route isn't live yet, so the page refreshes on its own window"
+          elif [ "$code" != "200" ]; then
+            echo "::error::revalidation call failed (revalidate-policy, HTTP $code)"; echo "revalidate-policy" >> "$RUNNER_TEMP/pt-failed-steps"
+          fi
+
       # The yearly spillover figures (annual limits, Table V) from the same
       # State host. A PDF is fetched only in the week a new fiscal year appears.
       - name: Visa annual limits (direct)

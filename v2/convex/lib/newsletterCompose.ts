@@ -89,7 +89,8 @@ export interface PreviousDolFigures {
  * Whether an issue says anything the previous one didn't. An issue with
  * nothing new isn't sent: DOL's month and average are where the last issue
  * left them, the bulletin and USCIS's quarter were already reported, and the
- * week brought no Federal Register document and no employer-wide move. A
+ * week brought no Federal Register document, no employer-wide move and no
+ * step by a rule in the pipeline. A
  * figure that couldn't be read this week is never news. The first issue
  * always goes.
  */
@@ -101,6 +102,7 @@ export function issueHasNews(d: DigestData, previous: PreviousDolFigures | null)
   if (uscisIsNews(d)) return true;
   if (d.notices.length > 0) return true;
   if ((d.employerMoves?.length ?? 0) > 0) return true;
+  if ((d.ruleMoves?.length ?? 0) > 0) return true;
   return false;
 }
 
@@ -145,6 +147,12 @@ export interface DigestData {
    * before the field existed.
    */
   employerMoves?: DigestEmployerMove[];
+  /**
+   * Steps rules took this week: OIRA's review received or finished, a filing
+   * on public inspection, a proposal or final rule published. Newest first, at
+   * most RULE_MOVES_MAX. Absent on issues built before the field existed.
+   */
+  ruleMoves?: DigestRuleMove[];
   /** Absolute URL of the preference center for this address (per recipient). */
   prefsUrl?: string;
   /**
@@ -165,6 +173,20 @@ export interface DigestEmployerMove {
 }
 
 export const EMPLOYER_MOVES_MAX = 6;
+
+/**
+ * A step a rule took this week, worded by `ruleSteps.stepSentence` when the
+ * issue was built, so the HTML and the text say the same.
+ */
+export interface DigestRuleMove {
+  rin: string;
+  date: string;
+  sentence: string;
+  /** Where the step is on record: OIRA's page for a review, the Register for the rest. */
+  url: string;
+}
+
+export const RULE_MOVES_MAX = 6;
 
 /**
  * The digest's employer block from the census's move list: last seven days
@@ -242,6 +264,8 @@ export function composeSubject(d: DigestData): string {
     );
   }
   if (uscisIsNews(d)) parts.push(`USCIS ${d.uscisQuarter} medians`);
+  const ruleCount = new Set((d.ruleMoves ?? []).map((m) => m.rin)).size;
+  if (ruleCount > 0) parts.push(`${ruleCount} ${ruleCount === 1 ? "rule" : "rules"} moved`);
   if (d.notices.length > 0) parts.push(`${d.notices.length} new ${d.notices.length === 1 ? "notice" : "notices"}`);
   const suffix = ` · week of ${dateLabel(d.weekOf).replace(/,\s*\d{4}$/, "")}`;
   const fallback = "The week in PERM and the visa bulletin";
@@ -303,6 +327,15 @@ export function composeText(d: DigestData): string {
     }
     lines.push("DOL gives no reason for a hold or a batch, and neither do we. Follow an employer from its page to hear when it moves.");
     lines.push(`${SITE_URL}/perm-employers/under-review`);
+    lines.push("");
+  }
+  if ((d.ruleMoves?.length ?? 0) > 0) {
+    lines.push("RULES THAT MOVED THIS WEEK");
+    for (const m of d.ruleMoves ?? []) {
+      lines.push(m.sentence);
+      lines.push(m.url);
+    }
+    lines.push(`Every rule on its way, step by step: ${SITE_URL}/policy-changes#pipeline`);
     lines.push("");
   }
   if (d.notices.length > 0) {

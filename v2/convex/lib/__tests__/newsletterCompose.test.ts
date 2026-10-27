@@ -288,3 +288,38 @@ describe("a week with nothing new isn't sent (2026-10-12)", () => {
     ).toBe(true);
   });
 });
+
+describe("rules that moved this week (2026-10-27)", () => {
+  const move = {
+    rin: "1205-AC29",
+    date: "2026-10-23",
+    sentence:
+      'OIRA finished its review of "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program" on Oct 23, 2026. Its decision: "Consistent with Change".',
+    url: "https://www.reginfo.gov/public/do/eAgendaViewRule?RIN=1205-AC29",
+  };
+  const quiet: DigestData = { ...full, bulletinRepeat: true, notices: [], employerMoves: [], ruleMoves: [] };
+  const same = { frontierMonth: full.frontierMonth, averageDays: full.averageDays };
+
+  it("is news on its own", () => {
+    expect(issueHasNews(quiet, same)).toBe(false);
+    expect(issueHasNews({ ...quiet, ruleMoves: [move] }, same)).toBe(true);
+  });
+
+  it("counts rules, not steps, in the subject, ahead of the notice count", () => {
+    const two = [move, { ...move, date: "2026-09-14", sentence: "earlier step" }];
+    expect(composeSubject({ ...full, bulletinMonth: null, bulletinMoves: null, ruleMoves: two })).toMatch(
+      /^DOL at Nov 2025, 1 rule moved, 1 new notice · week of/,
+    );
+  });
+
+  it("prints each step with where it's on record, before the notices", () => {
+    const text = composeText({ ...full, ruleMoves: [move] });
+    expect(text).toContain(`RULES THAT MOVED THIS WEEK\n${move.sentence}\n${move.url}\n`);
+    expect(text.indexOf("RULES THAT MOVED")).toBeLessThan(text.indexOf("ON THE RECORD THIS WEEK"));
+    expect(text).toContain("https://permtracker.app/policy-changes#pipeline");
+  });
+
+  it("leaves the block out on a week no rule moved", () => {
+    expect(composeText({ ...full, ruleMoves: [] })).not.toContain("RULES THAT MOVED");
+  });
+});

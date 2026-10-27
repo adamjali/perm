@@ -1,0 +1,185 @@
+{
+ "count": 4,
+ "special_filings_updated_at": "2026-10-26T16:15:00.000-04:00",
+ "regular_filings_updated_at": "2026-10-26T08:45:00.000-04:00",
+ "results": [
+  {
+   "agencies": [
+    {
+     "raw_name": "Rural Housing Service",
+     "name": "Rural Housing Service",
+     "id": 458,
+     "url": "https://www.federalregister.gov/agencies/rural-housing-service",
+     "json_url": "https://www.federalregister.gov/api/v1/agencies/458",
+     "parent_id": 12,
+     "slug": "rural-housing-service"
+    }
+   ],
+   "agency_letters": [],
+   "agency_names": [
+    "Rural Housing Service"
+   ],
+   "docket_numbers": [],
+   "document_number": "2026-21760",
+   "editorial_note": "An agency letter requesting withdrawal of this document was received after placement on public inspection. The document will remain on public inspection through close of business October 26, 2026.  You may request a copy of the agency's withdrawal letter, and/or the withdrawn document, by sending an email to fr.inspection@nara.gov.",
+   "excerpts": null,
+   "filed_at": null,
+   "filing_type": "special",
+   "html_url": "https://www.federalregister.gov/public-inspection/2026-21760/single-family-housing-guaranteed-loan-program-income-producing-accessory-dwelling-unit-provisions",
+   "json_url": "https://www.federalregister.gov/api/v1/public_inspection_documents/2026-21760",
+   "last_public_inspection_issue": "2026-10-26",
+   "num_pages": 1,
+   "page_views": null,
+   "pdf_file_name": "2026-21760_PI.pdf",
+   "pdf_file_size": 45275,
+   "pdf_updated_at": "2026-10-23T12:00:10.000-04:00",
+   "pdf_url": "https://public-inspection.federalregister.gov/2026-21760.pdf",
+   "publication_date": null,
+   "raw_text_url": "https://www.federalregister.gov/public-inspection/raw_text/202/621/760.txt",
+   "subject_1": "Single Family Housing Guaranteed Loan Program:",
+   "subject_2": "Income Producing Accessory Dwelling Unit Provisions",
+   "subject_3": null,
+   "title": "Single Family Housing Guaranteed Loan Program: Income Producing Accessory Dwelling Unit Provisions ",
+   "toc_doc": "Income Producing Accessory Dwelling Unit Provisions",
+   "toc_subject": "Single Family Housing Guaranteed Loan Program:",
+   "type": "Rule"
+  },
+  {
+   "agencies": [
+    {
+     "raw_name": "STATE DEPARTMENT",
+     "name": "State Department",
+     "id": 476,
+     "url": "https://www.federalregister.gov/agencies/state-department",
+     "json_url": "https://www.federalregister.gov/api/v1/agencies/476",
+     "parent_id": null,
+     "slug": "state-department"
+    }
+   ],
+   "agency_letters": [],
+   "agency_names": [
+    "State Department"
+   ],
+   "docket_numbers": [],
+   "document_number": "2026-21839",
+   "editorial_note": null,
+   "excerpts": null,
+   "filed_at": "2026-10-26T08:45:00.000-04:00",
+   "filing_type": "regular",
+   "html_url": "https://www.federalregister.gov/public-inspection/2026-21839/culturally-significant-objects-imported-for-exhibition-stunning-patterns-woven-textiles-from",
+   "json_url": "https://www.federalregister.gov/api/v1/public_inspection_documents/2026-21839",
+   "last_public_inspection_issue": "2026-10-26",
+   "num_pages": 2,
+   "page_views": {
+    "count": 9,
+    "last_updated": "2026-10-27 04:15:04 -0400"
+   },
+   "pdf_file_name": "2026-21839_PI.pdf",
+   "pdf_file_size": 90263,
+   "pdf_updated_at": "2026-10-26T08:45:12.000-04:00",
+   "pdf_url": "https://public-inspection.federalregister.gov/2026-21839.pdf",
+   "publication_date": "2026-10-27",
+   "raw_text_url": "https://www.federalregister.gov/public-inspection/raw_text/202/621/839.txt",
+   "subject_1": "Culturally Significant Objects Imported for Exhibition:",
+   "subject_2": "Stunning Patterns: Woven Textiles from Madagascar\u2019s Merina Kingdom",
+   "subject_3": null,
+   "title": "Culturally Significant Objects Imported for Exhibition: Stunning Patterns: Woven Textiles from Madagascar\u2019s Merina Kingdom ",
+   "toc_doc": "Stunning Patterns: Woven Textiles from Madagascar\u2019s Merina Kingdom",
+   "toc_subject": "Culturally Significant Objects Imported for Exhibition:",
+   "type": "Notice"
+  },
+  {
+   "agencies": [
+    {
+     "raw_name": "HOMELAND SECURITY DEPARTMENT",
+     "name": "Homeland Security Department",
+     "id": 227,
+     "url": "https://www.federalregister.gov/agencies/homeland-security-department",
+     "json_url": "https://www.federalregister.gov/api/v1/agencies/227",
+     "parent_id": null,
+     "slug": "homeland-security-department"
+    }
+   ],
+   "agency_letters": [],
+   "agency_names": [
+    "Homeland Security Department"
+   ],
+   "docket_numbers": [],
+   "document_number": "2026-21880",
+   "editorial_note": null,
+   "excerpts": null,
+   "filed_at": "2026-10-26T08:45:00.000-04:00",
+   "filing_type": "regular",
+   "html_url": "https://www.federalregister.gov/public-inspection/2026-21880/suspension-of-the-commonwealth-of-the-northern-mariana-islands-economic-vitality-and-security-travel",
+   "json_url": "https://www.federalregister.gov/api/v1/public_inspection_documents/2026-21880",
+   "last_public_inspection_issue": "2026-10-26",
+   "num_pages": 10,
+   "page_views": {
+    "count": 55,
+    "last_updated": "2026-10-27 04:15:04 -0400"
+   },
+   "pdf_file_name": "2026-21880_PI.pdf",
+   "pdf_file_size": 111644,
+   "pdf_updated_at": "2026-10-26T08:45:16.000-04:00",
+   "pdf_url": "https://public-inspection.federalregister.gov/2026-21880.pdf",
+   "publication_date": "2026-10-27",
+   "raw_text_url": "https://www.federalregister.gov/public-inspection/raw_text/202/621/880.txt",
+   "subject_1": "Suspension of the Commonwealth of the Northern Mariana Islands Economic Vitality and Security Travel Authorization Program",
+   "subject_2": null,
+   "subject_3": null,
+   "title": "Suspension of the Commonwealth of the Northern Mariana Islands Economic Vitality and Security Travel Authorization Program  ",
+   "toc_doc": "Suspension of the Commonwealth of the Northern Mariana Islands Economic Vitality and Security Travel Authorization Program",
+   "toc_subject": "",
+   "type": "Notice"
+  },
+  {
+   "agencies": [
+    {
+     "raw_name": "EMPLOYMENT AND TRAINING ADMINISTRATION",
+     "name": "Employment and Training Administration",
+     "id": 149,
+     "parent_id": 271,
+     "slug": "employment-and-training-administration"
+    },
+    {
+     "raw_name": "DEPARTMENT OF LABOR",
+     "name": "Labor Department",
+     "id": 271,
+     "slug": "labor-department"
+    }
+   ],
+   "agency_letters": [],
+   "agency_names": [
+    "Employment and Training Administration",
+    "Labor Department"
+   ],
+   "docket_numbers": [],
+   "document_number": "2026-99901",
+   "editorial_note": null,
+   "excerpts": null,
+   "filed_at": "2026-10-28T08:45:00.000-04:00",
+   "filing_type": "regular",
+   "html_url": "https://www.federalregister.gov/public-inspection/2026-99901/modernizing-the-labor-market-test",
+   "json_url": "https://www.federalregister.gov/api/v1/public_inspection_documents/2026-21880",
+   "last_public_inspection_issue": "2026-10-26",
+   "num_pages": 10,
+   "page_views": {
+    "count": 55,
+    "last_updated": "2026-10-27 04:15:04 -0400"
+   },
+   "pdf_file_name": "2026-21880_PI.pdf",
+   "pdf_file_size": 111644,
+   "pdf_updated_at": "2026-10-26T08:45:16.000-04:00",
+   "pdf_url": "https://public-inspection.federalregister.gov/2026-99901.pdf",
+   "publication_date": "2026-10-29",
+   "raw_text_url": "https://www.federalregister.gov/public-inspection/raw_text/202/699/901.txt",
+   "subject_1": "Suspension of the Commonwealth of the Northern Mariana Islands Economic Vitality and Security Travel Authorization Program",
+   "subject_2": null,
+   "subject_3": null,
+   "title": "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program",
+   "toc_doc": "Suspension of the Commonwealth of the Northern Mariana Islands Economic Vitality and Security Travel Authorization Program",
+   "toc_subject": "",
+   "type": "Proposed Rule"
+  }
+ ]
+}

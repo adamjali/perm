@@ -762,6 +762,25 @@ def data_section(now_ms: int) -> dict:
     return section("data", "The data", status, lines[0], lines[1:])
 
 
+def newsworthy_verdict(lines: list[str]) -> dict:
+    """The day's moves, from lib_newsworthy: never a fault, so always ok. It's
+    first in the report so it reads before the machinery."""
+    title = "Newsworthy (24 h)"
+    if not lines:
+        return section("newsworthy", title, "ok", "nothing newsworthy moved in 24 h")
+    n = len(lines)
+    return section("newsworthy", title, "ok", f"{n} {'move' if n == 1 else 'moves'} worth telling in 24 h", lines)
+
+
+def newsworthy_section(now_ms: int) -> dict:
+    from lib_db import Database  # noqa: PLC0415 - only needed here
+    import lib_newsworthy as nw  # noqa: PLC0415
+
+    since = now_ms - 86_400_000
+    items = nw.newsworthy(nw.read_inputs(Database(), since), since, now_ms)
+    return newsworthy_verdict([nw.line(i) for i in items])
+
+
 # ── the API and the assistants ─────────────────────────────────────────────
 
 
@@ -1553,6 +1572,7 @@ def build(now: dt.datetime) -> dict:
     now_ms = int(now.timestamp() * 1000)
     since = now - dt.timedelta(hours=24)
     sections = [
+        guarded("newsworthy", "Newsworthy (24 h)", newsworthy_section, now_ms),
         guarded("health", "Ingests and data freshness", health_section),
         guarded("github", "GitHub Actions (24 h)", github_section, since),
         guarded("security", "Security alerts and updates", security_section,

@@ -89,6 +89,14 @@ export const CRON_JOBS: Record<string, CronJob> = {
     schedule: "30 11 * * *",
     description: "the morning operator report: health, bills, runs, traffic, emailed to the admin",
   },
+  // The evening newsworthy check (scripts/newsworthy.py): emails the owner
+  // only when something moved since the morning report. 00:30 UTC is 8:30 PM
+  // EDT and 7:30 PM EST.
+  "newsworthy-evening": {
+    workflow: "newsworthy.yml",
+    schedule: "30 0 * * *",
+    description: "what moved since the morning report, emailed to the owner only when something did, nightly",
+  },
   "convex-backup": {
     workflow: "convex-backup.yml",
     schedule: "50 7 * * *",
@@ -118,6 +126,7 @@ export const WORKFLOW_NAMES: Record<string, string> = {
   "daily-monitor.yml": "Daily monitor",
   "convex-backup.yml": "Convex backup (sealed, to R2)",
   "oracle-deploy.yml": "Oracle build and deploy",
+  "newsworthy.yml": "Newsworthy check",
 };
 
 /**

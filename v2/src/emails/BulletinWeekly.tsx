@@ -204,6 +204,26 @@ export function BulletinWeekly(d: DigestData) {
           </Text>
         </Section>
       ) : null}
+      {(d.ruleMoves?.length ?? 0) > 0 ? (
+        <Section>
+          <Text className="em-text-secondary" style={styles.eyebrow}>
+            Rules that moved this week
+          </Text>
+          {(d.ruleMoves ?? []).map((m) => (
+            <Text key={`${m.rin}-${m.date}-${m.sentence}`} className="em-text-body" style={styles.p}>
+              {`${m.sentence} `}
+              <Link href={m.url} style={styles.link}>
+                On the record
+              </Link>
+            </Text>
+          ))}
+          <Text className="em-text-secondary" style={styles.small}>
+            <Link href={`${site}/policy-changes#pipeline`} style={styles.link}>
+              Every rule on its way, step by step
+            </Link>
+          </Text>
+        </Section>
+      ) : null}
       {d.notices.length > 0 ? (
         <Section>
           <Text className="em-text-secondary" style={styles.eyebrow}>

@@ -6,12 +6,15 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PolicyNotice } from "@/lib/db/policyNotices";
 
 vi.mock("@/lib/db/policyNotices", () => ({ listPolicyNotices: vi.fn() }));
+vi.mock("@/lib/db/rulePipeline", () => ({ getRulePipeline: vi.fn() }));
 // Reads Turso for the freshness line; not what this file is about.
 vi.mock("@/components/data/DataProvenance", () => ({
   DataProvenance: () => <div data-testid="provenance" />,
 }));
 
 import { listPolicyNotices } from "@/lib/db/policyNotices";
+import { getRulePipeline } from "@/lib/db/rulePipeline";
+import type { RuleRecord } from "@convex/lib/ruleSteps";
 import { POLICY_SHOTS } from "@/lib/policyShots";
 import { webpSize } from "../../../test-utils/image-size";
 import PolicyChangesPage from "../(site)/(public)/policy-changes/page";
@@ -49,6 +52,23 @@ const FIXTURE: PolicyNotice[] = [
   ),
 ];
 
+/** RIN 1205-AC29 as OIRA printed it on Oct 27 2026, and a USCIS rule still under review. */
+const RULE_BASE: RuleRecord = {
+  rin: "", agency: null, title: null, pStage: null, pReceived: null, pCompleted: null, pDecision: null,
+  fStage: null, fReceived: null, fCompleted: null, fDecision: null, major: null, piDocument: null, piType: null,
+  piFiled: null, piScheduled: null, piUrl: null, proposedDocument: null, proposedPublished: null, proposedUrl: null,
+  proposedCitation: null, commentsClose: null, finalDocument: null, finalPublished: null, finalUrl: null,
+  finalCitation: null, effectiveOn: null,
+};
+const RULES: RuleRecord[] = [
+  {
+    ...RULE_BASE, rin: "1205-AC29", agency: "DOL's Employment and Training Administration",
+    title: "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program (NPRM)",
+    pStage: "Proposed Rule", pReceived: "2026-09-14", pCompleted: "2026-10-23", pDecision: "Consistent with Change", major: "Yes",
+  },
+  { ...RULE_BASE, rin: "1615-AD25", agency: "USCIS", title: "Amending the Premium Processing Timeframe", pStage: "Proposed Rule", pReceived: "2026-10-13" },
+];
+
 async function render(): Promise<string> {
   return renderToStaticMarkup(await PolicyChangesPage());
 }
@@ -56,6 +76,7 @@ async function render(): Promise<string> {
 describe("/policy-changes", () => {
   beforeEach(() => {
     vi.mocked(listPolicyNotices).mockResolvedValue(FIXTURE);
+    vi.mocked(getRulePipeline).mockResolvedValue({ rules: RULES, events: [] });
     // The page reads the clock for "days left" and "in effect since". Pinned
     // past every fixture date so the assertions below hold on any day the
     // suite runs, and restored per file so the clock never reaches a neighbour.
@@ -152,6 +173,31 @@ describe("/policy-changes", () => {
     // covered by the rendered audit against the dev server.
     const glued = html.match(/[A-Za-z0-9]<\/[a-z0-9]+><[a-z][^>]*>[A-Za-z0-9]/g) ?? [];
     expect(glued, glued.slice(0, 5).join(" | ")).toEqual([]);
+  });
+
+  it("draws each rule in the pipeline with its steps dated and OIRA's decision verbatim", async () => {
+    const html = await render();
+    expect(html).toMatch(/<h2[^>]*>Rules in the pipeline<\/h2>/);
+    // The title is plain text, never a heading: published, it's also a heading in the Register list.
+    expect(html).toMatch(/<p[^>]*>Modernizing the Labor Market Test and Improving Protections for U\.S\. Workers in the PERM Immigrant Visa Program<\/p>/);
+    expect(html).not.toMatch(/<h[1-6][^>]*>Modernizing the Labor Market Test/);
+    expect(html).toContain("OIRA finished its review on Oct 23, 2026: &quot;Consistent with Change&quot;. Not yet in the Federal Register.");
+    expect(html).toContain("Sep 14, 2026");
+    expect(html).toContain("Major rule");
+    expect(html).toContain("https://www.reginfo.gov/public/do/eAgendaViewRule?RIN=1205-AC29");
+    // The rule cleared most recently comes first.
+    expect(html.indexOf("RIN 1205-AC29")).toBeLessThan(html.indexOf("RIN 1615-AD25"));
+  });
+
+  it("says plainly when no rule is in the pipeline", async () => {
+    vi.mocked(getRulePipeline).mockResolvedValue({ rules: [], events: [] });
+    const html = await render();
+    expect(html).toContain("is at OIRA or on public inspection today");
+  });
+
+  it("fails the render when the pipeline can't be read, so the last good page stays up", async () => {
+    vi.mocked(getRulePipeline).mockRejectedValue(new Error("database unreachable"));
+    await expect(render()).rejects.toThrow("database unreachable");
   });
 
   it("renders the empty state, with the Register's own search, when nothing is held", async () => {

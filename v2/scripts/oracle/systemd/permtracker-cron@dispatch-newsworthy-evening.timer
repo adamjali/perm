@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule for permtracker-cron@dispatch-newsworthy-evening
+# The evening newsworthy check: what moved since the morning report, emailed to
+# the owner only when something did. 00:30 UTC is 8:30 PM EDT, 7:30 PM EST.
+[Timer]
+OnCalendar=*-*-* 00:30:00 UTC
+Persistent=true
+Unit=permtracker-cron@dispatch-newsworthy-evening.service
+[Install]
+WantedBy=timers.target
