@@ -11,7 +11,6 @@ import RecentActivityWidget from "@/components/dashboard/RecentActivityWidget";
 import { DashboardHeading } from "@/components/dashboard/DashboardShell";
 import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanner";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
-import { QueuePulseWidget } from "@/components/dashboard/QueuePulseWidget";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 import { CarriedCaseCard } from "@/components/dashboard/CarriedCaseCard";
 
@@ -73,10 +72,7 @@ export function DashboardPageClient() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-3">
-        <DashboardHeading firstName={firstName} isNewAccount={isNewAccount} />
-        <QueuePulseWidget />
-      </div>
+      <DashboardHeading firstName={firstName} isNewAccount={isNewAccount} />
       <CarriedCaseCard />
       <CaseCapNotice />
       <AutoClosureAlertBanner />

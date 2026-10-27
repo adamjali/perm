@@ -2,7 +2,6 @@
 
 import AddCaseButton from "@/components/dashboard/AddCaseButton";
 import { DeadlineHeroLoadingSkeleton } from "@/components/dashboard/DeadlineHeroWidget";
-import { QueuePulseSkeleton } from "@/components/dashboard/QueuePulseWidget";
 import { SummaryTilesSkeleton } from "@/components/dashboard/SummaryTilesGrid";
 import { RecentActivityLoadingSkeleton } from "@/components/dashboard/RecentActivityWidget";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,10 +51,7 @@ export function DashboardHeading({
 export function DashboardSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="space-y-3">
-        <DashboardHeading firstName={undefined} />
-        <QueuePulseSkeleton />
-      </div>
+      <DashboardHeading firstName={undefined} />
       <DeadlineHeroLoadingSkeleton />
       <SummaryTilesSkeleton />
       <RecentActivityLoadingSkeleton />
