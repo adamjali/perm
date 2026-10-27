@@ -118,6 +118,7 @@ export function SettingsPageClient() {
               // Fall back to user.image from auth (Google profile photo)
               profilePhotoUrl: profilePhotoUrl ?? userImage,
               timezone: profile?.timezone,
+              jobTitle: profile?.jobTitle,
             }}
             userEmail={userEmail}
           />

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { BellIcon } from "@phosphor-icons/react";
 import { api } from "@convex/_generated/api";
@@ -17,17 +15,21 @@ import { toast } from "@/lib/toast";
  * watching at once; an unverified one gets the usual confirmation email
  * (convex/caseAlerts.ts `watchMyCase`). Either way the wizard ends here,
  * because the caseload steps after it are for people who file cases.
+ *
+ * Nothing here sends the person out of the app (owner, Oct 26 2026): watching
+ * and skipping both close the wizard where they are, the dashboard's banner
+ * (AudienceBanner) points them to the case lookup, and the employer search
+ * opens in a new tab so the wizard stays put.
  */
 export function OwnCaseStep() {
   const [caseNumber, setCaseNumber] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const router = useRouter();
   const watch = useMutation(api.caseAlerts.watchMyCase);
   const finish = useMutation(api.onboarding.updateOnboardingStep);
 
-  /** The wizard is over for this account; a failure here mustn't block the page. */
-  const leave = async (href: string) => {
+  /** The wizard is over for this account, and closes where it is; a failure here mustn't trap the person. */
+  const done = async () => {
     try {
       await finish({ step: "done" });
     } catch (error) {
@@ -37,7 +39,6 @@ export function OwnCaseStep() {
         silent: true,
       });
     }
-    router.push(href);
   };
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
@@ -56,7 +57,7 @@ export function OwnCaseStep() {
         return;
       }
       toast.success(res.confirmationSent ? "Check your inbox to confirm the alert." : res.message);
-      await leave(`/perm-case-status?case=${encodeURIComponent(res.caseNumber ?? value)}`);
+      await done();
     } catch (error) {
       handleOperationError(error, { userMessage: "That didn't go through. Try again in a moment." });
     } finally {
@@ -98,15 +99,18 @@ export function OwnCaseStep() {
         </Button>
       </form>{" "}
       <div className="mt-6 flex w-full max-w-md flex-col items-center gap-1 text-center text-sm">
-        <Link
+        <a
           href="/case-search"
+          target="_blank"
+          rel="noopener noreferrer"
           className="link inline-flex min-h-[44px] items-center"
         >
           Don&apos;t have the number? Find the case by employer name
-        </Link>{" "}
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>{" "}
         <button
           type="button"
-          onClick={() => void leave("/perm-case-status")}
+          onClick={() => void done()}
           className="inline-flex min-h-[44px] items-center text-muted-foreground underline underline-offset-2 hover:text-foreground"
         >
           Skip for now

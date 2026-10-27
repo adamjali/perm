@@ -5,7 +5,8 @@ import { getFunctionName } from "convex/server";
 /**
  * Onboarding for the person the case is about: picking that role leads to one
  * case-number box, the alert is set on the account's own address, and the
- * wizard ends at their case page instead of a caseload setup.
+ * wizard ends where it is, in the app (Oct 26 2026: it had sent them to the
+ * public case page, out of the app, whether they watched or skipped).
  */
 
 const calls = vi.hoisted(() => ({
@@ -60,14 +61,22 @@ describe("RoleStep", () => {
 });
 
 describe("OwnCaseStep", () => {
-  it("watches the number typed, ends the wizard and opens the case", async () => {
+  it("watches the number typed and ends the wizard in the app", async () => {
     calls.watch.mockResolvedValue({ ok: true, message: "Watching it.", caseNumber: "G-100-26010-550166" });
     render(<OwnCaseStep />);
     fireEvent.change(screen.getByLabelText("Your case number"), { target: { value: " g-100-26010-550166 " } });
     fireEvent.click(screen.getByRole("button", { name: /Watch my case/ }));
-    await waitFor(() => expect(calls.push).toHaveBeenCalledWith("/perm-case-status?case=G-100-26010-550166"));
+    await waitFor(() => expect(calls.finish).toHaveBeenCalledWith({ step: "done" }));
     expect(calls.watch).toHaveBeenCalledWith({ caseNumber: "g-100-26010-550166" });
-    expect(calls.finish).toHaveBeenCalledWith({ step: "done" });
+    expect(calls.push).not.toHaveBeenCalled();
+  });
+
+  it("skips without leaving the app", async () => {
+    render(<OwnCaseStep />);
+    fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+    await waitFor(() => expect(calls.finish).toHaveBeenCalledWith({ step: "done" }));
+    expect(calls.watch).not.toHaveBeenCalled();
+    expect(calls.push).not.toHaveBeenCalled();
   });
 
   it("says why when the number is refused, and stays put", async () => {
@@ -88,6 +97,9 @@ describe("OwnCaseStep", () => {
 
   it("offers the employer search to someone without the number", () => {
     render(<OwnCaseStep />);
-    expect(screen.getByRole("link", { name: /Find the case by employer name/ })).toHaveAttribute("href", "/case-search");
+    const link = screen.getByRole("link", { name: /Find the case by employer name/ });
+    expect(link).toHaveAttribute("href", "/case-search");
+    // A new tab, so the wizard is still there when they come back.
+    expect(link).toHaveAttribute("target", "_blank");
   });
 });

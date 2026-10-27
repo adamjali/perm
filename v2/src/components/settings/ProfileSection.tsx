@@ -40,6 +40,8 @@ import { UserIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
+import { ONBOARDING_ROLES } from "@/lib/onboarding/constants";
+import type { UserRole } from "@/lib/onboarding/types";
 
 // ============================================================================
 // TYPES
@@ -50,9 +52,15 @@ export interface ProfileSectionProps {
     fullName?: string;
     profilePhotoUrl?: string;
     timezone?: string;
+    /** The role picked at setup (userProfiles.jobTitle), changeable here. */
+    jobTitle?: string;
   };
   userEmail: string;
 }
+
+/** The setup step's roles, so a role can be changed after setup (Oct 26 2026: it couldn't be). */
+const ROLE_OPTIONS: SelectOption[] = ONBOARDING_ROLES.map(({ role }) => ({ value: role, label: role }));
+const isRole = (v: string): v is UserRole => ONBOARDING_ROLES.some((r) => r.role === v);
 
 // ============================================================================
 // TIMEZONE OPTIONS
@@ -116,6 +124,7 @@ export default function ProfileSection({
   const [timezone, setTimezone] = useState(
     profile.timezone ?? getBrowserTimezone()
   );
+  const [role, setRole] = useState(profile.jobTitle ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
@@ -123,17 +132,20 @@ export default function ProfileSection({
   useEffect(() => {
     setFullName(profile.fullName ?? "");
     setTimezone(profile.timezone ?? getBrowserTimezone());
-  }, [profile.fullName, profile.timezone]);
+    setRole(profile.jobTitle ?? "");
+  }, [profile.fullName, profile.timezone, profile.jobTitle]);
 
   // Mutation for saving profile
   const updateProfile = useMutation(api.users.updateUserProfile);
+  const saveRole = useMutation(api.onboarding.saveOnboardingRole);
 
   // Track dirty state (only save changed fields)
   const isDirty = useMemo(() => {
     const nameChanged = fullName !== (profile.fullName ?? "");
     const timezoneChanged = timezone !== (profile.timezone ?? getBrowserTimezone());
-    return nameChanged || timezoneChanged;
-  }, [fullName, timezone, profile.fullName, profile.timezone]);
+    const roleChanged = role !== (profile.jobTitle ?? "") && isRole(role);
+    return nameChanged || timezoneChanged || roleChanged;
+  }, [fullName, timezone, role, profile.fullName, profile.timezone, profile.jobTitle]);
 
   // Register dirty state with settings context for navigation warnings
   useSettingsSectionDirtyState("profile", isDirty);
@@ -154,7 +166,8 @@ export default function ProfileSection({
         updates.timezone = timezone;
       }
 
-      await updateProfile(updates);
+      if (Object.keys(updates).length > 0) await updateProfile(updates);
+      if (role !== (profile.jobTitle ?? "") && isRole(role)) await saveRole({ role });
       analytics.capture("profile_updated");
       toast.success("Profile updated");
       // Show success animation briefly
@@ -226,6 +239,23 @@ export default function ProfileSection({
         <FormField label="Email" name="email" hint="Email can’t be changed">
           <Input id="email" type="email" value={userEmail} disabled />
           {isGoogleSignIn && <p className="mt-2 text-sm text-muted-foreground">Signed in with Google</p>}
+        </FormField>
+
+        <FormField
+          label="What describes you"
+          name="role"
+          hint="Sets what the app shows you. Picked at setup; change it any time."
+        >
+          <SelectInput
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            options={
+              // A title saved before the list existed stays shown until another is picked.
+              role && !isRole(role) ? [{ value: role, label: role }, ...ROLE_OPTIONS] : ROLE_OPTIONS
+            }
+            placeholder="Choose one"
+          />
         </FormField>
 
         <FormField

@@ -23,10 +23,15 @@ import ProfileSection from "../ProfileSection";
 
 // Mock Convex hooks
 const mockUpdateProfile = vi.fn();
+const mockSaveRole = vi.fn();
 
-vi.mock("convex/react", () => ({
-  useMutation: () => mockUpdateProfile,
-}));
+vi.mock("convex/react", async () => {
+  const { getFunctionName } = await import("convex/server");
+  return {
+    useMutation: (ref: Parameters<typeof getFunctionName>[0]) =>
+      getFunctionName(ref) === "onboarding:saveOnboardingRole" ? mockSaveRole : mockUpdateProfile,
+  };
+});
 
 // Mock auth-aware toast wrapper (not sonner directly)
 const mockToastSuccess = vi.fn();
@@ -76,6 +81,7 @@ describe("ProfileSection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateProfile.mockResolvedValue(undefined);
+    mockSaveRole.mockResolvedValue(undefined);
     // Mock Intl.DateTimeFormat for timezone detection
     globalThis.Intl = {
       ...originalIntl,
@@ -225,7 +231,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox") as HTMLSelectElement;
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i }) as HTMLSelectElement;
       expect(timezoneSelect.value).toBe("America/New_York");
     });
 
@@ -248,7 +254,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox");
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i });
       await user.selectOptions(timezoneSelect, "America/Los_Angeles");
 
       expect(timezoneSelect).toHaveValue("America/Los_Angeles");
@@ -336,7 +342,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox");
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i });
       await user.selectOptions(timezoneSelect, "America/Chicago");
 
       await waitFor(() => {
@@ -374,7 +380,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox");
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i });
       await user.selectOptions(timezoneSelect, "America/Chicago");
 
       const saveButton = screen.getByRole("button", { name: /Save changes/i });
@@ -395,7 +401,7 @@ describe("ProfileSection", () => {
       await user.clear(nameInput);
       await user.type(nameInput, "New Name");
 
-      const timezoneSelect = screen.getByRole("combobox");
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i });
       await user.selectOptions(timezoneSelect, "America/Chicago");
 
       const saveButton = screen.getByRole("button", { name: /Save changes/i });
@@ -496,6 +502,54 @@ describe("ProfileSection", () => {
   });
 
   // ============================================================================
+  // ROLE (Oct 26 2026: the setup step's choice couldn't be changed after setup)
+  // ============================================================================
+
+  describe("Role", () => {
+    const role = () => screen.getByRole("combobox", { name: /what describes you/i }) as HTMLSelectElement;
+
+    it("shows the role picked at setup", () => {
+      renderWithProviders(
+        <ProfileSection profile={{ ...defaultProfile, jobTitle: "Waiting on my own case" }} userEmail={defaultEmail} />
+      );
+      expect(role().value).toBe("Waiting on my own case");
+    });
+
+    it("saves a changed role through the setup step's own mutation, and nothing else", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(
+        <ProfileSection profile={{ ...defaultProfile, jobTitle: "Waiting on my own case" }} userEmail={defaultEmail} />
+      );
+      await user.selectOptions(role(), "Immigration Attorney");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await waitFor(() => expect(mockSaveRole).toHaveBeenCalledWith({ role: "Immigration Attorney" }));
+      expect(mockUpdateProfile).not.toHaveBeenCalled();
+    });
+
+    it("lets an account with no role choose one", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ProfileSection profile={defaultProfile} userEmail={defaultEmail} />);
+      expect(role().value).toBe("");
+      await user.selectOptions(role(), "Paralegal");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await waitFor(() => expect(mockSaveRole).toHaveBeenCalledWith({ role: "Paralegal" }));
+    });
+
+    it("keeps a title saved before the list existed, and never sends it back", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(
+        <ProfileSection profile={{ ...defaultProfile, jobTitle: "Global Mobility Lead" }} userEmail={defaultEmail} />
+      );
+      expect(role().value).toBe("Global Mobility Lead");
+      await user.clear(screen.getByLabelText(/full name/i));
+      await user.type(screen.getByLabelText(/full name/i), "Jo Doe");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
+      expect(mockSaveRole).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
   // TIMEZONE OPTIONS TESTS
   // ============================================================================
 
@@ -505,7 +559,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox");
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i });
       const options = timezoneSelect.querySelectorAll("option");
 
       // Should have 6 timezones
@@ -554,7 +608,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox");
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i });
       expect(timezoneSelect).toHaveAttribute("id", "timezone");
     });
 
@@ -591,7 +645,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={emptyProfile} userEmail={defaultEmail} />
       );
 
-      const timezoneSelect = screen.getByRole("combobox") as HTMLSelectElement;
+      const timezoneSelect = screen.getByRole("combobox", { name: /timezone/i }) as HTMLSelectElement;
       expect(timezoneSelect.value).toBe("America/New_York"); // Default from mock
     });
 
