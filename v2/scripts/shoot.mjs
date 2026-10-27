@@ -70,7 +70,10 @@ try {
         await target.evaluate((el) => {
           for (const node of document.querySelectorAll("body *")) {
             if (node === el || el.contains(node) || node.contains(el)) continue;
-            if (getComputedStyle(node).position === "fixed") node.style.setProperty("display", "none", "important");
+            // Sticky too: a tall element is captured in pieces, and a bar that sticks to the
+            // top of the screen (a page's "On this page" bar) lands over one of them.
+            const pos = getComputedStyle(node).position;
+            if (pos === "fixed" || pos === "sticky") node.style.setProperty("display", "none", "important");
           }
         });
       }

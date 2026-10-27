@@ -1343,5 +1343,18 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 - **Sentry drops server errors a stranger's POST to a page sets off** (`serverEventFromStrayPost`): the site has no
   Server Actions, so only scanners and broken clients post to pages. Errors on `/api`, `/v1` and `/mcp` still report.
 - **`lca_cases_soc_state_st_dec`**: with a job and a state both named, SQLite took the state index and read all
-  693,407 certified California LCAs to find 830 (two 40-second failures, Sentry 59). Created on production by a
-  one-time timer at 1:20 AM EDT Oct 27; the loader's `index_ddl` carries it for lca_cases only.
+  693,407 certified California LCAs to find 830 (two 40-second failures, Sentry 59). Created on production Oct 26
+  (320 s, written with the read-write token); the same search now reads 830 rows in 0.01 s. The loader's `index_ddl`
+  carries it for lca_cases only.
+- **The tour never skips a page in silence**: a page whose target isn't there after 10 seconds (an empty case list,
+  an empty calendar) gets its step in the middle of the screen. It had moved on after 4 seconds with nothing shown,
+  which read as the tour running by itself. The empty states carry the tour's targets too.
+- **"Waiting on my own case" no longer leaves the app**: watching a case or skipping finishes setup where it is.
+  The role chosen at setup can be changed in Settings > Profile (it couldn't be changed anywhere).
+- **The dashboard lost its two lines under the heading** (the deadlines explainer and DOL's queue month).
+- **Header pictures made from a form, the app or a page capture are shown whole** on a plain ground in the article
+  header and the cards (`whole-heroes.json`, written by `make_article_heroes.py`; `isWholeHero`), where a cover crop
+  cut them. Photos still fill their frame. `drop_orphan_end` drops a capture's trailing section rule or lone heading.
+  Twelve inline figures carry a measured `"trim"` in `article-figures.json`; re-measure it on a new capture.
+- **The 33 article page shots showed the site before the Oct 14 redesign**: re-shot from the dev server on production
+  data (`shoot.mjs` hides Next's dev badge on localhost).

@@ -42,6 +42,7 @@ The gap between the 25th and the median is the whole character of this dataset. 
   alt="Wage percentile ranges for the twelve busiest PERM occupations"
   caption="The twelve busiest occupations, ordered by filing volume rather than pay. That ordering is deliberate: sorted by wage the rows would climb smoothly and hide the split."
   step={1}
+  aspectRatio={1600 / 2349}
 />
 
 Software Developers sit at a $139,027 median across 73,058 certified cases. Meat, Poultry, and Fish Cutters and Trimmers sit at $26,000 across 9,214. Those aren't edge cases. They're the first and the third busiest occupations in the file.
@@ -61,6 +62,7 @@ Below 30 matching cases no figure is shown at all, because a median that size mo
   alt="The salary explorer with occupation, state, year and outcome filters"
   caption="The default view is rendered on the server, so the common question is answered with no JavaScript at all. The filters go to an API from there."
   step={2}
+  aspectRatio={1600 / 1025}
 />
 
 The explorer also stacks every state on one axis, which is a different question from the one the filters answer. The filters show one selection at a time. The axis shows all of them against each other.
@@ -71,9 +73,10 @@ The explorer also stacks every state on one axis, which is a different question 
 
 <ScreenshotFigure
   src="/images/content/shots/by-state.webp"
-  alt="A map of PERM filings by state with a sortable table underneath"
+  alt="A map of PERM filings by state, with filters for what colours it, the fewest cases shown and the region"
   caption="Approval rate never appears without the decided count behind it. A rate is only worth what its denominator is."
   step={3}
+  aspectRatio={1600 / 1025}
 />
 
 The table underneath sorts on every column, filters by region, and downloads as a CSV. It carries filings, certified, denied, withdrawn, decided, approval rate, median days and median wage for all 55 states and territories.

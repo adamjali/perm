@@ -37,7 +37,8 @@
   "wait": "main",
   "width": 1280,
   "height": 820,
-  "settle": 1500
+  "settle": 1500,
+  "clip": "main section:has-text(\"The wall, by filing month\")"
  },
  {
   "name": "processing-times",
@@ -77,7 +78,8 @@
   "wait": "main",
   "width": 1280,
   "height": 820,
-  "settle": 1500
+  "settle": 1500,
+  "clip": "#by-job"
  },
  {
   "name": "by-state",
@@ -141,7 +143,8 @@
   "wait": "main",
   "width": 1280,
   "height": 820,
-  "settle": 1500
+  "settle": 1500,
+  "clip": "main figure"
  },
  {
   "name": "tools-overview",
@@ -154,14 +157,14 @@
  {
   "name": "pwd-result-decided",
   "url": "https://permtracker.app/perm-case-status?case=P-100-26092-751498",
-  "clip": "main section",
+  "clip": "main section:has-text(\"DOL's determination\")",
   "wait": "main",
   "width": 1280
  },
  {
   "name": "lca-result",
   "url": "https://permtracker.app/perm-case-status?case=I-200-26239-199948",
-  "clip": "main section",
+  "clip": "main section:has-text(\"The record\")",
   "wait": "main",
   "width": 1280
  },
@@ -180,12 +183,76 @@
   "height": 820,
   "settle": 1500
  },
-  {"name": "uscis-case-status-entry", "url": "https://permtracker.app/uscis-case-status", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
-  {"name": "uscis-case-status-result", "url": "https://permtracker.app/uscis-case-status", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
-  {"name": "uscis-processing-times-table", "url": "https://permtracker.app/uscis-processing-times", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
-  {"name": "uscis-processing-times-i765-i131", "url": "https://permtracker.app/uscis-processing-times", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
-  {"name": "i485-by-field-office-table", "url": "https://permtracker.app/i485-by-field-office", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
-  {"name": "i140-awaiting-visa-eb2-india", "url": "https://permtracker.app/i140-awaiting-visa", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
-  {"name": "h2a-timing", "url": "https://permtracker.app/perm-case-status?case=H-300-26279-282122", "clip": "section[aria-labelledby=\"seasonal-timing\"]", "wait": "main", "width": 1280, "height": 900, "settle": 1500},
-  {"name": "h2b-timing", "url": "https://permtracker.app/perm-case-status?case=H-400-26280-285720", "clip": "section[aria-labelledby=\"seasonal-timing\"]", "wait": "main", "width": 1280, "height": 900, "settle": 1500}
+ {
+  "name": "uscis-case-status-entry",
+  "url": "https://permtracker.app/uscis-case-status",
+  "clip": "main form",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "uscis-case-status-result",
+  "url": "https://permtracker.app/uscis-case-status?receipt=EAC2190123456",
+  "clip": "section[aria-labelledby=\"decoded-heading\"]",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "uscis-processing-times-table",
+  "url": "https://permtracker.app/uscis-processing-times",
+  "clip": "#median-or-80",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "uscis-processing-times-i765-i131",
+  "url": "https://permtracker.app/uscis-processing-times",
+  "clip": "#green-card-forms",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "i485-by-field-office-table",
+  "url": "https://permtracker.app/i485-by-field-office",
+  "clip": "#busiest",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "i140-awaiting-visa-eb2-india",
+  "url": "https://permtracker.app/i140-awaiting-visa",
+  "clip": "#by-country",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "h2a-timing",
+  "url": "https://permtracker.app/perm-case-status?case=H-300-26274-272824",
+  "clip": "#seasonal-timing",
+  "wait": "main",
+  "width": 1280,
+  "height": 900,
+  "settle": 1500
+ },
+ {
+  "name": "h2b-timing",
+  "url": "https://permtracker.app/perm-case-status?case=H-400-26297-321197",
+  "clip": "#seasonal-timing",
+  "wait": "main",
+  "width": 1280,
+  "height": 900,
+  "settle": 1500
+ }
 ]
