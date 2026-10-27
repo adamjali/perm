@@ -14,12 +14,14 @@ phone-sweep checks; tests that can fail; no copying their words or design, only 
 - [x] 1.2 Cases ahead counted by exact filing day for PERM (like pwd_day_queue), not the month spread evenly.
       Backtest: typical miss 3 days to 2 on three start days (31,000 decided). January 2026, the month DOL is
       working, is the big one: a Jan 20 filer had 2,097 too many ahead (about 3.6 days).
-- [ ] 1.3 PERM filing month from DOL's submitted date, not the case-number decode (~380 cases misplaced); guarded backfill.
-- [ ] 1.4 The overnight batch dated to the day DOL worked (Saturdays read 111 to 146 now).
-- [ ] 1.5 A daytime wage-request pass over the active months, so today's determinations show today.
+- [x] 1.3 PERM filing month from DOL's submitted date, not the case-number decode (~380 cases misplaced); guarded backfill.
+- [x] 1.4 The overnight batch dated to the day DOL worked (Saturdays read 111 to 146 now).
+- [x] 1.5 A daytime wage-request pass over the active months, so today's determinations show today.
 - [x] 1.6 DOL's FLAG maintenance notice: read flag.dol.gov's own banner, show it dated on the board, case pages and
       data pages, name the pause in our health checks.
-- [ ] 1.7 /compare: H1BPerm's H-2B wage requests (P-400) are "partly"; employer pages reached by links beyond the 500.
+- [x] 1.7 /compare: H1BPerm's H-2B wage requests (P-400) are "partly"; employer pages reached by links beyond the 500.
+- [x] Also Oct 27 evening: Sentry 59 (an LCA search for "Am" ran 40 s): `lca_cases_recv` index on production and a
+      broad name read newest-first (0.5 s).
 
 ## Phase 2: the board, everything in one place (2 to 3 days)
 Adam, 5:26 PM EDT: "keep individual and add the everything pages ... what if only interested in that ... but
