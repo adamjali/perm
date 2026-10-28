@@ -199,8 +199,9 @@ export function DataRail() {
                 />
                 {/* The rail-marker box Overview's house sits in, so the group
                     names line up with "Overview" above them. */}
+                {/* Blue marks the group (information; lime stays the page you're on). */}
                 <span aria-hidden="true" className="rail-marker">
-                  <GroupIcon className="size-3.5" weight="bold" />
+                  <GroupIcon className="size-3.5 text-data-info-ink" weight="bold" />
                 </span>{" "}
                 <span className="flex-1">{g}</span>{" "}
                 {/* How many pages are inside, before it opens. */}
@@ -385,7 +386,7 @@ export function DataRail() {
                         setOpen(g);
                         setRailOpen(true);
                       }}
-                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-rail-hover hover:text-foreground")}
+                      className={cn("rail-square", here ? "bg-primary text-black" : "text-data-info-ink hover:bg-rail-hover")}
                     >
                       <GroupIcon className="size-4" weight="bold" aria-hidden="true" />
                     </button>

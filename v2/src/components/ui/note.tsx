@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
  *
  * - `AlertMark`: a rounded triangle outlined in PT green with a black "!",
  *   for a note that changes how the figures read.
- * - `NoteBanner`: a framed text banner with a lime edge, the mark optional.
+ * - `NoteBanner`: a framed text banner with a blue edge (blue marks information; lime
+ *   stays the main action's), the mark optional.
  * - `CaveatBox`: the soft yellow box (what a page can't tell you, a
  *   provisional figure), with the mark.
  *
@@ -38,7 +39,7 @@ export function NoteBanner({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 border-2 border-l-[6px] border-border border-l-primary bg-card px-4 py-3 text-base leading-relaxed text-foreground shadow-hard-sm",
+        "flex items-start gap-3 border-2 border-l-[6px] border-border border-l-data-info bg-card px-4 py-3 text-base leading-relaxed text-foreground shadow-hard-sm",
         className,
       )}
     >

@@ -53,7 +53,7 @@ export interface Column {
 
 export function ColumnChart({
   columns,
-  tone = "yellow",
+  tone = "blue",
   label,
   first,
   last,
