@@ -382,15 +382,20 @@ describe("sitemap.ts", () => {
     const UNLISTED: Record<string, string> = {
       // Thousands of small noindex lists of one filing day's cases; robots.txt
       // keeps crawlers off them and the month pages carry the search value.
-      "perm-queue/[month]": "filing-day pages",
+      "perm-queue/[month]/[day]": "filing-day pages",
     };
+    // Every public page whose route has a dynamic segment, as its pattern ("perm-employers/[slug]",
+    // "[lang]/perm-case-status"). Patterns, not the folder above a [param]: a [lang] segment at the root has the
+    // whole site above it, which every URL would "match" (Oct 28 2026).
     const families: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {
         const full = join(dir, name);
-        if (!statSync(full).isDirectory()) continue;
-        if (/^\[.+\]$/.test(name)) families.push(relative(root, dir).replace(/\\/g, "/"));
-        walk(full);
+        if (statSync(full).isDirectory()) walk(full);
+        else if (name === "page.tsx") {
+          const pattern = relative(root, dir).replace(/\\/g, "/").split("/").filter((seg) => !/^\(.+\)$/.test(seg)).join("/");
+          if (pattern.includes("[")) families.push(pattern);
+        }
       }
     };
     walk(root);
@@ -398,14 +403,13 @@ describe("sitemap.ts", () => {
     // Every exclusion names a family that exists, so a stale one fails here.
     expect(Object.keys(UNLISTED).filter((f) => !families.includes(f))).toEqual([]);
     const paths = (await sitemap()).map((e) => new URL(e.url).pathname.split("/").filter(Boolean));
-    // A URL is in a family when it has more segments than the family's path and each one matches,
-    // a [param] segment matching any value.
-    const under = (prefix: string, path: string[]) => {
-      const want = prefix.split("/");
-      return path.length > want.length && want.every((w, i) => /^\[.+\]$/.test(w) || w === path[i]);
+    // A URL is in a family when it has the pattern's length and each segment matches, a [param] matching any value.
+    const under = (pattern: string, path: string[]) => {
+      const want = pattern.split("/");
+      return path.length === want.length && want.every((w, i) => /^\[.+\]$/.test(w) || w === path[i]);
     };
     const missing = [...new Set(families)].filter(
-      (prefix) => !(prefix in UNLISTED) && !paths.some((path) => under(prefix, path)),
+      (pattern) => !(pattern in UNLISTED) && !paths.some((path) => under(pattern, path)),
     );
     expect(missing).toEqual([]);
   });

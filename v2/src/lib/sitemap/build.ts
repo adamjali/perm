@@ -36,6 +36,8 @@ import type { BulletinMonth } from "@/lib/perm";
 import { SITE_URL } from "@/lib/constants/site";
 import { bulletinMonthDate, employerOwnDate, pageDate, type DateSources } from "@/lib/pageDates";
 import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
+import { LOCALES } from "@/lib/i18n/locales";
+import { pageAlternates, type TranslatedPath } from "@/lib/i18n/lang";
 
 /**
  * The sitemap, split into an index and per-kind children.
@@ -69,11 +71,19 @@ import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
  *     Console. These are hand-rolled Route Handlers instead.
  */
 
+
+/** A translated page's hreflang map with absolute addresses, as a sitemap needs them. */
+function absoluteAlternates(base: string, path: TranslatedPath): Record<string, string> {
+  return Object.fromEntries(Object.entries(pageAlternates(path)).map(([k, v]) => [k, `${base}${v}`]));
+}
+
 export interface Entry {
   url: string;
   lastModified: string;
   /** Absolute image URLs for the image sitemap extension. The page's social card, so image search knows the picture exists. */
   images?: string[];
+  /** A translated page's hreflang set (absolute), written as xhtml:link alternates. */
+  alternates?: { languages: Record<string, string> };
 }
 
 /** Children stay well under any limit in play: 5,000 URLs is ~550 KB. */
@@ -380,7 +390,14 @@ export async function pagesEntries(): Promise<Entry[]> {
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
     // own directive and open ~412,000 URLs of crawl space.
-    { url: `${base}/perm-case-status`, lastModified: at("/perm-case-status"), images: [`${base}/og/perm-case-status.jpg`] },
+    { url: `${base}/perm-case-status`, lastModified: at("/perm-case-status"), images: [`${base}/og/perm-case-status.jpg`], alternates: { languages: absoluteAlternates(base, "/perm-case-status") } },
+    // The same page in each translation: one template, so the English page's date, and every version names all six
+    // (hreflang in the sitemap as well as each page's head).
+    ...LOCALES.map((l) => ({
+      url: `${base}/${l.code}/perm-case-status`,
+      lastModified: at("/perm-case-status"),
+      alternates: { languages: absoluteAlternates(base, "/perm-case-status") },
+    })),
     { url: `${base}/uscis-case-status`, lastModified: at("/uscis-case-status"), images: [`${base}/og/uscis-case-status.jpg`] },
     { url: `${base}/perm-denial-risk`, lastModified: at("/perm-denial-risk"), images: [`${base}/og/perm-denial-risk.jpg`] },
     { url: `${base}/perm-rfi-audit`, lastModified: at("/perm-rfi-audit"), images: [`${base}/og/perm-rfi-audit.jpg`] },
@@ -682,12 +699,15 @@ const esc = (s: string) =>
 export function urlsetXml(entries: Entry[]): string {
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
     entries
       .map(
         (e) =>
           `<url><loc>${esc(e.url)}</loc><lastmod>${e.lastModified}</lastmod>${(e.images ?? [])
             .map((i) => `<image:image><image:loc>${esc(i)}</image:loc></image:image>`)
+            .join("")}${Object.entries(e.alternates?.languages ?? {})
+            // Google's sitemap form of hreflang: every version lists every version, itself included.
+            .map(([lang, href]) => `<xhtml:link rel="alternate" hreflang="${esc(lang)}" href="${esc(href)}"/>`)
             .join("")}</url>`,
       )
       .join("\n") +

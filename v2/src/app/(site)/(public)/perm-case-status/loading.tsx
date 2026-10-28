@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { CASE_STATUS_FRAME, CaseStatusHead, LookupSkeleton } from "./CaseStatusShell";
-import { LoadingHead } from "./LoadingHead";
+import { CASE_STATUS_FRAME, LookupSkeleton } from "./CaseStatusShell";
+import { LoadingHead, LoadingHeadBlank } from "./LoadingHead";
 
 /**
  * The one public segment that keeps a loading boundary, and the boundary is
@@ -24,7 +24,7 @@ export default function CaseStatusLoading() {
   return (
     <div className={CASE_STATUS_FRAME}>
       <div className="pt-10 sm:pt-12" />
-      <Suspense fallback={<CaseStatusHead typed="" loading />}>
+      <Suspense fallback={<LoadingHeadBlank />}>
         <LoadingHead />
       </Suspense>
       <div className="mt-8">

@@ -21,15 +21,18 @@ import { describe, expect, it } from "vitest";
 const ROOT = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 
-const DOL_PAGE = "(site)/(public)/perm-case-status/page.tsx";
+// The page's body lives in CaseStatusPage.tsx, shared by the English route and its five translations.
+const DOL_PAGE = "(site)/(public)/perm-case-status/CaseStatusPage.tsx";
+const DOL_ROUTES = ["(site)/(public)/perm-case-status/page.tsx", "(site)/(public)/[lang]/perm-case-status/page.tsx"];
 const USCIS_PAGE = "(site)/(public)/uscis-case-status/page.tsx";
 const PRIVACY = "(site)/(public)/privacy/page.tsx";
 const DOL_FORM = "../components/tools/CaseLookupForm.tsx";
+const DOL_FORM_WORDS = "../components/tools/CaseLookupForm.messages.ts";
 const STORAGE = "../lib/db/uscisCaseStatus.ts";
 
 /** The page function's body only, so a mention elsewhere cannot satisfy an ordering assertion. */
 function pageBody(src: string): string {
-  const start = src.indexOf("export default async function");
+  const start = src.indexOf("export async function CaseStatusPage");
   expect(start).toBeGreaterThan(0);
   return src.slice(start);
 }
@@ -60,7 +63,11 @@ describe("the DOL page routes a USCIS receipt away", () => {
   it("the DOL form says the same before submit", () => {
     const form = read(DOL_FORM);
     expect(form).toMatch(/looksLikeReceipt\(value\)/);
-    expect(form).toMatch(/USCIS receipt number/);
+    expect(read(DOL_FORM_WORDS)).toMatch(/USCIS receipt number/);
+  });
+
+  it("both routes render the shared page, so a translation routes a receipt away too", () => {
+    for (const route of DOL_ROUTES) expect(read(route)).toMatch(/<CaseStatusPage lang=/);
   });
 });
 

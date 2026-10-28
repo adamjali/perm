@@ -65,11 +65,23 @@ describe("page social cards", () => {
       return src.includes("withSocialCard(") && new RegExp(`\\}\\s*,\\s*"${slug}"\\s*\\)`).test(src);
     });
 
+  /**
+   * A page and the modules it imports from its own folder, read as one: /perm-case-status keeps its metadata in
+   * CaseStatusPage.tsx beside it, shared with its five translations under [lang] (Oct 28 2026).
+   */
+  const withSiblings = (page: string): string => {
+    const src = readFileSync(page, "utf8");
+    const siblings = [...src.matchAll(/from\s+"\.\/([\w.-]+)"/g)]
+      .map((m) => path.join(path.dirname(page), `${m[1]}.tsx`))
+      .filter((f) => existsSync(f));
+    return [src, ...siblings.map((f) => readFileSync(f, "utf8"))].join("\n");
+  };
+
   it.each(slugs)("the %s page wires its card through withSocialCard", (slug) => {
     const direct = path.join(publicRoot, slug === "home" ? "page.tsx" : `${slug}/page.tsx`);
     const candidates = existsSync(direct) ? [direct] : pagesNaming(slug);
     expect(candidates.length, `pages naming card "${slug}"`).toBe(1);
-    const src = readFileSync(candidates[0]!, "utf8");
+    const src = withSiblings(candidates[0]!);
     expect(src).toContain(`withSocialCard(`);
     expect(src).toContain(`"${slug}"`);
   });
