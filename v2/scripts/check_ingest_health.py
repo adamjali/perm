@@ -640,7 +640,12 @@ def check_watched(db) -> int:
 # not a failure: the frontier check still fails if the lag itself gets long.
 CAP_STREAK_RUNS = 3
 CAP_STREAK_JOBS = (("walk", "ingest_case_status_direct.py --discover"),
-                   ("gap sweep", "sweep_serial_gaps.py"))
+                   ("gap sweep", "sweep_serial_gaps.py"),
+                   # Since Oct 28 2026 the full pass's own DOL loop stops on a
+                   # time budget too (SWEEP_BUDGET_MIN), so a slow night still
+                   # writes its summaries; three such nights running means it
+                   # needs more time or a faster way round.
+                   ("full pass", "ingest_case_status_direct.py --full"))
 
 
 def check_cap_streak(db) -> int:

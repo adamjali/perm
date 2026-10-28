@@ -133,6 +133,10 @@ def main() -> int:
           csd.sweep_is_complete(None, 1000, False, 0) is False)
     check("a run stopped by three far-end failures is not complete",
           csd.sweep_is_complete(None, 0, True, 3) is False)
+    check("a loop that stopped on its time budget is not a complete sweep",
+          csd.sweep_is_complete(None, 0, False, 0, budget_stopped=True) is False)
+    check("a budget stop with every case it asked answered is still an ok run",
+          csd.sweep_run_status(todo=444_000, checked=400_000, truncated=False, tail_failed=0) == "ok")
     check("ONE batch that exhausted its retries is a 50-case hole, not complete",
           csd.sweep_is_complete(None, 0, False, 1) is False)
 

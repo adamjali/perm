@@ -7,7 +7,7 @@
 
 WHY A SEPARATE ENTRY POINT. The ingest scripts now record their own outcome,
 including a `partial` when some tail step failed. What they cannot record is a
-death that leaves no Python running: `timeout 105m` firing (exit 124), the
+death that leaves no Python running: `timeout 140m` firing (exit 124), the
 runner being reclaimed, a `SystemExit` from a shape assertion, or the job being
 cancelled. Those are precisely the failures that today go entirely unnoticed -
 GitHub sends nothing for a cancellation, and the Actions log ages out.

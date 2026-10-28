@@ -327,7 +327,7 @@ def main() -> int:
 
     # 6c. THE TIME BUDGET STOPS THE WALK THE WAY THE CAP DOES. The
     #     walk rides both passes now, and the budget, not the request cap, is
-    #     what keeps a slow DOL from pushing the step into `timeout 105m`. A
+    #     what keeps a slow DOL from pushing the step into `timeout 140m`. A
     #     fake clock ticks once per read; with the deadline at 4, four
     #     requests go out, then the walk stops, records ok, names the budget,
     #     and leaves the frontier on the last confirmed hit.
@@ -443,6 +443,29 @@ def main() -> int:
               step - max(b["full"], b["pending"]) >= 10, f"step {step}m, budgets {b}")
         check("a dispatched --discover run stops before its step timeout",
               0 < disc - b["discover"] <= 10, f"step {disc}m, budget {b['discover']}m")
+        sb = csd.SWEEP_BUDGET_MIN
+        check("each pass's DOL loop stops before its walk's budget, so the walk keeps some time",
+              all(sb[m] < b[m] for m in ("full", "pending")), f"loop {sb}, walk {b}")
+        check("each pass's loop leaves the summaries 20+ minutes inside the step timeout",
+              all(step - sb[m] >= 20 for m in ("full", "pending")), f"step {step}m, loop {sb}")
+
+    # 6e. A FULL PASS STARTS AT A DIFFERENT SLICE EACH DAY, so one that runs out
+    #     of time never leaves the same cases unchecked twice running.
+    import datetime as _dt
+    cases = [f"G-100-26001-{n:06d}" for n in range(1, 1001)]
+    d0 = _dt.date(2026, 10, 28)
+    orders = [csd.rotated(cases, d0 + _dt.timedelta(days=k)) for k in range(csd.FULL_PASS_SLICES)]
+    check("a rotated pass still asks every case exactly once",
+          all(sorted(o) == cases and len(set(o)) == len(cases) for o in orders), "a case dropped or repeated")
+    starts = [o[0] for o in orders]
+    check("each day of the week starts the pass at a different case",
+          len(set(starts)) == csd.FULL_PASS_SLICES, str(starts))
+    check("a slice starts on a whole batch, so DOL's requests stay full",
+          all(cases.index(st) % csd.BATCH == 0 for st in starts), str([cases.index(st) for st in starts]))
+    check("the order inside the pass is kept, wrapping once",
+          all(o == cases[cases.index(o[0]):] + cases[:cases.index(o[0])] for o in orders), "order broken")
+    check("an empty list and one slice are left alone",
+          csd.rotated([], d0) == [] and csd.rotated(cases, d0, slices=1) == cases, "changed")
 
     # 7. DOL going away mid-walk is a failure, never an ok.
     def dying(nums):

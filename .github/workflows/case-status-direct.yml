@@ -51,12 +51,15 @@ jobs:
   sweep:
     runs-on: ubuntu-24.04
     # Above the sum of every step's own bound on the longest day (a Monday full
-    # pass): the main step's 105m; the builders inside it (employer map 30m,
-    # sponsor index 20m, LCA cities 20m, wage sources 15m, the live rebuild
-    # 45m); the gap sweep's 25m; the published sync's 15m; the straggler
-    # rates' 5m; the nightly backtests' 20m + 10m and the Monday ones' 10m +
-    # 5m. About 325m. The step-level `timeout` commands are what catch a hang
-    # (see below); this is the backstop under GitHub's 360.
+    # pass): the main step's 140m; the builders inside it (the live rebuild
+    # 15m, employer map 30m, sponsor index 10m, LCA cities 10m, wage sources
+    # 10m); the gap sweep's 25m; the published sync's 10m; the straggler rates'
+    # 5m; the census replay's 10m; the nightly backtests' 20m + 10m and the
+    # Monday ones' 10m + 5m. About 310m. Each bound is several times the
+    # step's measured time (Oct 27 2026: the builders took 0.5 to 5 minutes,
+    # the gap sweep 1, the backtests under 1). The step-level `timeout`
+    # commands are what catch a hang (see below); this is the backstop under
+    # GitHub's 360.
     timeout-minutes: 350
     env:
       DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
@@ -91,12 +94,15 @@ jobs:
             timeout 100m python3 scripts/ingest_case_status_direct.py --discover \
               --discover-cap "${CAP_IN:-2000}" ${FRONTIER_IN:+--frontier "$FRONTIER_IN"}
           else
-            timeout 105m python3 scripts/ingest_case_status_direct.py --"$MODE"
+            # The pass's DOL loop stops on its own budget (SWEEP_BUDGET_MIN: 110
+            # minutes full, 80 pending) and the walk on its own (120, 100), so
+            # the summaries after them always finish inside these 140.
+            timeout 140m python3 scripts/ingest_case_status_direct.py --"$MODE"
           fi
           # The searchable live remainder rebuilds right after, so the case
           # search and the employer pages see today's discoveries. A failure
           # here doesn't stop the steps after it; it turns the run red at the end.
-          timeout 45m python3 scripts/build_entity_detail.py --live-recent-only || echo "build_entity_detail.py" >> "$RUNNER_TEMP/pt-failed-steps"
+          timeout 15m python3 scripts/build_entity_detail.py --live-recent-only || echo "build_entity_detail.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # Which employer page every spelling in every program belongs to
           # (employer_page_map), and a page for every employer with no PERM
           # record (employer_other_index). It runs after the live-only rebuild
@@ -106,12 +112,12 @@ jobs:
           # Each PERM sponsor's record, ranked part by part against the others
           # (the employer page's profile and the sponsor finder). Reads the map
           # above, so it runs after it.
-          timeout 20m python3 scripts/build_sponsor_index.py || echo "build_sponsor_index.py" >> "$RUNNER_TEMP/pt-failed-steps"
+          timeout 10m python3 scripts/build_sponsor_index.py || echo "build_sponsor_index.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # H-1B LCAs by worksite city, for the city pages (and a page for each
           # city with 20+ LCAs and no PERM page). Links employers through the map.
-          timeout 20m python3 scripts/build_lca_cities.py || echo "build_lca_cities.py" >> "$RUNNER_TEMP/pt-failed-steps"
+          timeout 10m python3 scripts/build_lca_cities.py || echo "build_lca_cities.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # Where H-1B prevailing wages come from (the /lca-wage-sources page).
-          timeout 15m python3 scripts/build_wage_sources.py || echo "build_wage_sources.py" >> "$RUNNER_TEMP/pt-failed-steps"
+          timeout 10m python3 scripts/build_wage_sources.py || echo "build_wage_sources.py" >> "$RUNNER_TEMP/pt-failed-steps"
 
       # The walk only moves forward, so this is its second look: it re-asks DOL
       # about the holes in the trailing 90 day codes and writes only what DOL
@@ -135,7 +141,7 @@ jobs:
         if: env.MODE == 'full'
         working-directory: v2
         run: |
-          timeout 15m python3 scripts/sync_published_live.py --cap 400 \
+          timeout 10m python3 scripts/sync_published_live.py --cap 400 \
             || python3 scripts/record_ingest_failure.py \
                  --script "sync_published_live.py" \
                  --note "published sync: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

@@ -171,11 +171,23 @@ DISCOVERY_STEP = BATCH // len(WALK_PREFIXES)   # serials per request, at the 50 
 DISCOVERY_REQUEST_CAP = 2000
 # Minutes after the PROCESS started (not after the walk did), so the walk
 # spends only what the pass has left, and every budget leaves room under its
-# workflow step's `timeout` (105m for the passes, 100m for a dispatched
+# workflow step's `timeout` (140m for the passes, 100m for a dispatched
 # --discover) for the work that follows. A run that stops on its own clock
 # records itself; one killed by `timeout` leaves only a red run.
 # test_case_status_direct.py reads the step timeouts out of the workflow.
-DISCOVERY_BUDGET_MIN = {"full": 90, "pending": 75, "discover": 95}
+DISCOVERY_BUDGET_MIN = {"full": 120, "pending": 100, "discover": 95}
+# Minutes after the process started that a pass's own DOL loop may run. Past
+# it the loop stops where it is, and the walk and the summaries after it still
+# run inside the step's 140-minute `timeout`. On Oct 28 2026 a slow runner took
+# the full pass's lookups to 91 minutes (68 the day before) and its summaries
+# from under a minute to past 13; the old 105-minute step killed them half
+# written. A loop that stops on this budget records `ok`, names the budget and
+# how many cases are left (BUDGET_NOTE), and the cases it didn't reach wait
+# for the next pass; `rotated` moves which ones those are each day.
+SWEEP_BUDGET_MIN = {"full": 110, "pending": 80}
+# The full pass starts at one of this many slices, a different one each day, so
+# a pass that runs out of time never leaves the same cases unchecked twice.
+FULL_PASS_SLICES = 7
 # The note a walk writes when the budget, not the cap, stopped it. Pinned
 # byte-identical by test_ingest_health.py, whose streak check reads it.
 BUDGET_NOTE = "stopped on its time budget"
@@ -1747,6 +1759,15 @@ def _int_or_none(v) -> int | None:
     return None if v is None else int(v)
 
 
+def rotated(todo: list[str], day: datetime.date, slices: int = FULL_PASS_SLICES) -> list[str]:
+    """Every case once, starting at the day's slice (a whole batch, so DOL's
+    requests stay full) and wrapping round. The order within the list is kept."""
+    if not todo or slices <= 1:
+        return list(todo)
+    start = (len(todo) * (day.toordinal() % slices) // slices) // BATCH * BATCH
+    return todo[start:] + todo[:start]
+
+
 def sweep_run_status(*, todo: int, checked: int, truncated: bool, tail_failed: int) -> str:
     """The run row's status. Cases to check and none answered is a failure
     (DOL refused from the first batch, or its answers changed shape); a sweep
@@ -1757,7 +1778,8 @@ def sweep_run_status(*, todo: int, checked: int, truncated: bool, tail_failed: i
     return "partial" if truncated or tail_failed else "ok"
 
 
-def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bool:
+def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int,
+                      budget_stopped: bool = False) -> bool:
     """Did this run cover its whole population? `write_review_stages` dates a
     published census on this claim, so it is a named, tested function.
 
@@ -1768,8 +1790,10 @@ def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bo
       truncated        three consecutive far-end failures stopped the loop
       failed_batches   a batch exhausted its retries and was skipped: a hole of
                        up to 50 cases, with no exception and no missing output
+      budget_stopped   the loop reached SWEEP_BUDGET_MIN before the last batch
     """
-    return not limit and not offset and not truncated and failed_batches == 0
+    return (not limit and not offset and not truncated and failed_batches == 0
+            and not budget_stopped)
 
 
 def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
@@ -1903,6 +1927,10 @@ def main() -> int:
            f"LIMIT {args.limit or 10**9} OFFSET {args.offset}")
     rows = {r[0]: r[1:] for r in query_rows(db, sql)}
     todo = sorted(rows)
+    if args.full and not args.limit and not args.offset:
+        todo = rotated(todo, datetime.date.fromisoformat(et_today()))
+    pass_mode = "full" if args.full else "pending" if args.pending else None
+    loop_deadline = t0 + SWEEP_BUDGET_MIN[pass_mode] * 60 if pass_mode else None
     log(f"{len(todo):,} cases to check, {BATCH} per request "
         f"= {(len(todo)+BATCH-1)//BATCH:,} requests\n")
 
@@ -1914,7 +1942,7 @@ def main() -> int:
     #                  up to 50 cases, so the run hasn't covered its population
     #   truncated      the loop stopped early (three consecutive far-end failures)
     asked = requests = failed_batches = 0
-    truncated = False
+    truncated = budget_stopped = False
     status_counts: dict[str, int] = {}
     fails = 0
     started = time.time()
@@ -1923,6 +1951,11 @@ def main() -> int:
     updates: list[list] = []
 
     for i in range(0, len(todo), BATCH):
+        if loop_deadline is not None and time.monotonic() >= loop_deadline:
+            budget_stopped = True
+            log(f"  {BUDGET_NOTE} ({SWEEP_BUDGET_MIN[pass_mode]} minutes) after {i:,} of "
+                f"{len(todo):,}; the rest wait for the next pass")
+            break
         chunk = todo[i:i + BATCH]
         requests += 1
         try:
@@ -2013,7 +2046,7 @@ def main() -> int:
         # (`sweep_is_complete`). A partial run still gets a row, since the audit
         # trail wants partial runs most of all; it just can't date a census.
         complete = sweep_is_complete(args.limit, args.offset,
-                                     truncated, failed_batches)
+                                     truncated, failed_batches, budget_stopped)
         record_sweep(
             db, script="ingest_case_status_direct.py", program="perm",
             mode="full" if args.full else "pending",
@@ -2047,6 +2080,9 @@ def main() -> int:
             note += f"; DOL stopped answering after {checked:,} of {asked:,} asked"
         elif failed_batches:
             note += f"; {failed_batches} batches skipped after retries"
+        if budget_stopped:
+            note += (f"; {BUDGET_NOTE} after asking {asked:,} of {len(todo):,}, "
+                     "the rest wait for the next pass")
         if failed:
             note += (f"; {len(failed)}/{len(steps)} tail steps failed: "
                      + ", ".join(k for k, _ in failed))

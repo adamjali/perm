@@ -502,6 +502,13 @@ def main() -> int:
           "::warning" not in out and "1 of its last 3" in out, out)
     rc, out = streak({walk: [capped, capped]})
     check("streak: fewer than three runs is not judged", "::warning" not in out, out)
+    full = "ingest_case_status_direct.py --full"
+    slow = f"full: 444,110 cases; {health.BUDGET_NOTE} after asking 400,000 of 444,110, the rest wait for the next pass"
+    rc, out = streak({full: [slow] * 3})
+    check("streak: a full pass out of time three nights running warns",
+          rc == 0 and "::warning::the full pass" in out, out)
+    rc, out = streak({full: [slow, "full: 444,110 cases", slow]})
+    check("streak: one full pass that got round clears it", "::warning::the full pass" not in out, out)
     rc, out = streak({"sweep_serial_gaps.py":
                       [f"probed 2997, found 2147; {health.SWEEP_CAP_NOTE} (600) and resumes"] * 3})
     check("streak: a capped gap sweep warns too", "::warning::the gap sweep" in out, out)
