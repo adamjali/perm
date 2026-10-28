@@ -15,6 +15,8 @@ import { currentMonthUtc } from "@/lib/dolFormat";
 import { getDecisionPace } from "@/lib/db/decisionPace";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getEstimatorData } from "@/lib/db/estimate";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { dolNow, queueSentence } from "@/lib/dolNow";
 import { getStragglerRates } from "@/lib/db/stragglers";
 import { getRangeCoverage } from "@/lib/db/rangeCoverage";
 import { getPermDayQueue } from "@/lib/db/permDayQueue";
@@ -96,6 +98,9 @@ export default async function PermTimelineCalculatorPage() {
     // The line by filing day: a typed date counts its own month's earlier days.
     getPermDayQueue(),
   ]);
+  // DOL's published month and average, dated: the page's first sentence (one
+  // indexed row, the newest snapshot).
+  const times = await getProcessingTimes().catch(() => null);
   const pace = businessDayPace(daily, 28);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -126,8 +131,7 @@ export default async function PermTimelineCalculatorPage() {
           PERM processing time calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Estimate when the Department of Labor will decide your case, from
-          DOL&apos;s own queue figures and its published record of decided cases.
+          {queueSentence(dolNow(times))} Enter your filing date below for an estimate of your own case.
         </p>
       </header>
 

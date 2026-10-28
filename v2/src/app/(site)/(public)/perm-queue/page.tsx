@@ -24,7 +24,7 @@ import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
 import { censusFrom, getBacklogCensus, getCensusDays, getCensusOn, getStatusByDay } from "@/lib/db/backlog";
 import { LineChart } from "@/components/numbers/LineChart";
 import { ANALYST_REVIEW } from "@/lib/searchStages";
-import { statusShift } from "@/lib/backlogMonths";
+import { queueLead, statusShift } from "@/lib/backlogMonths";
 import { SinceDay } from "@/components/queue/SinceDay";
 import { easternDay } from "@convex/lib/time";
 import { getEstimatorData } from "@/lib/db/estimate";
@@ -186,6 +186,10 @@ export default async function PermQueuePage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Where the PERM queue stands
         </h1>{" "}
+        {/* The answer first: the sentence a search result or an AI answer quotes. */}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          {queueLead(census.pending, dolMonth, dolAsOf)}
+        </p>{" "}
         {/* The page opens on its figures (owner, Oct 27 2026: "visual heavy,
             not text blobs"); how the count is read is folded under them. */}
         <FinePrint summary="How this count is read" className="mt-3">

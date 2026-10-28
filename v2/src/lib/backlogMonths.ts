@@ -5,6 +5,9 @@
  * from a server-only module (a type-only import 404'd a whole route once).
  */
 
+import { formatMonth } from "@/lib/dolFormat";
+import { formatInt } from "@/lib/format";
+
 /**
  * The first day the queue can be shown on: scripts/build_census_days.py's START,
  * held equal to it by src/lib/__tests__/backlogMonths.test.ts. Aug 28 and 29
@@ -140,4 +143,18 @@ export function statusShift(now: readonly BacklogStatusCount[], before: readonly
     else pending += s.change;
   }
   return { statuses, pending, decided, total: pending + decided };
+}
+
+/**
+ * The queue page's first sentence: how many PERM cases are still undecided, then
+ * the filing month DOL's analyst review is working, with the day DOL published
+ * it. The answer to "where is the PERM queue", read from the census and DOL's own
+ * table, never typed. A date DOL didn't give is left off, never guessed.
+ */
+export function queueLead(pending: number, dolMonth: string | null, dolAsOf: string | null): string {
+  const count = `${formatInt(pending)} PERM ${pending === 1 ? "case is" : "cases are"} still waiting for DOL's decision.`;
+  const month = dolMonth ? formatMonth(dolMonth) : null;
+  if (!month) return count;
+  const where = `its analyst review is working cases filed in ${month}.`;
+  return dolAsOf ? `${count} As of ${dolAsOf}, ${where}` : `${count} ${where.charAt(0).toUpperCase()}${where.slice(1)}`;
 }

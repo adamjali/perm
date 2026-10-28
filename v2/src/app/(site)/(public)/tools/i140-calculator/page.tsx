@@ -11,6 +11,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { getUscisFormMedian } from "@/lib/db/uscisQuarterly";
 import { quarterLabel } from "@/lib/uscisQuarterlyShape";
+import { i140Lead } from "@/lib/processing-times/i140ProcessingTimes";
 import { withSocialCard } from "@/lib/socialCard";
 import { buttonVariants } from "@/components/ui/button";
 /**
@@ -92,9 +93,10 @@ export default async function I140CalculatorPage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           I-140 queue calculator
         </h1>{" "}
+        {/* The answer to "I-140 processing time" first, from USCIS's own figures. */}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          How many petitions are waiting in your category, and how that compares
-          to the processing time USCIS publishes.
+          {i140Lead(i140Median ? { months: i140Median.medianMonths, quarter: quarterLabel(i140Median.fy, i140Median.quarter) } : null)}{" "}
+          Below: how many petitions wait in your category.
         </p>
       </header>
 

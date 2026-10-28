@@ -51,6 +51,7 @@ import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/db/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/db/processingTimes";
+import { dolNow, queueSentence } from "@/lib/dolNow";
 import { StageMedians } from "@/components/community/TimelineBoard";
 import { api } from "@convex/_generated/api";
 import { getEstimatorData } from "@/lib/db/estimate";
@@ -313,9 +314,10 @@ export default async function PermProcessingTimesPage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           PERM processing times
         </h1>{" "}
+        {/* The answer first, as DOL published it and dated: the sentence a search
+            result or an AI answer quotes for "PERM processing time". */}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Where DOL&apos;s queues stand, from its own published figures, checked
-          daily.
+          {queueSentence(dolNow(snapshot))}
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           {flagFreshness ? <FreshnessDots items={[flagFreshness]} /> : null}{" "}

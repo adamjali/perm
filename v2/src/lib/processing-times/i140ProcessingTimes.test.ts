@@ -5,6 +5,7 @@ import {
   formatMonths,
   getI140ProcessingTime,
   getPremiumBusinessDays,
+  i140Lead,
   type I140Category,
 } from "./i140ProcessingTimes";
 
@@ -122,5 +123,21 @@ describe("the as-of date", () => {
    */
   it("has an as-of date in the documented format", () => {
     expect(PROCESSING_TIMES_AS_OF).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("i140Lead", () => {
+  it("answers with USCIS's own median first, then its 80% figures for the two PERM lines, dated", () => {
+    const lead = i140Lead({ months: 5.2, quarter: "FY2026 Q3 (Apr to Jun 2026)" });
+    expect(lead.startsWith("USCIS took a median of 5.2 months to decide an I-140 in FY2026 Q3 (Apr to Jun 2026)")).toBe(true);
+    // The 80% figures come from the table, never typed here: read them back from it.
+    const eb2 = getI140ProcessingTime("EB-2")!;
+    expect(lead).toContain(`advanced-degree EB-2 petitions within ${formatMonths(eb2.lowMonths)}`);
+    expect(lead).toContain(PROCESSING_TIMES_AS_OF.slice(0, 4));
+  });
+
+  it("still answers from the processing-times page when the quarterly median is missing", () => {
+    expect(i140Lead(null).startsWith("USCIS's processing-times page")).toBe(true);
+    expect(i140Lead(null)).toContain("80% of advanced-degree EB-2 petitions");
   });
 });

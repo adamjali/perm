@@ -22,6 +22,8 @@
  * any I-140 subtype.
  */
 
+import { longDate } from "@convex/lib/months";
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -151,6 +153,25 @@ export function getPremiumBusinessDays(category: I140Category): number | null {
 }
 
 const fmtMonths = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+/**
+ * The I-140 page's first sentence, the answer to "I-140 processing time": USCIS's
+ * own quarterly median first, then its processing-times page's 80% figures for
+ * the two lines a PERM leads to (EB-2 advanced degree, EB-3 skilled worker), with
+ * the day those were read. Every figure comes from USCIS; none is typed here.
+ */
+export function i140Lead(median: { months: number; quarter: string } | null): string {
+  const of = (cat: Exclude<I140Category, "">, code: string) => SUBTYPES[cat].find((s) => s.code === code)?.months80;
+  const eb2 = of("EB-2", "E21");
+  const eb3 = of("EB-3", "E31");
+  const read = longDate(PROCESSING_TIMES_AS_OF);
+  const page =
+    eb2 !== undefined && eb3 !== undefined
+      ? `USCIS's processing-times page${read ? `, read ${read},` : ""} says it decides 80% of advanced-degree EB-2 petitions within ${formatMonths(eb2)} and skilled-worker EB-3 within ${formatMonths(eb3)}.`
+      : "";
+  if (!median) return page;
+  return `USCIS took a median of ${formatMonths(median.months)} to decide an I-140 in ${median.quarter}, by its own quarterly count.${page ? ` ${page}` : ""}`;
+}
 
 /** `"3 months"`, or `"32.5 months"`. */
 export function formatMonths(n: number): string {

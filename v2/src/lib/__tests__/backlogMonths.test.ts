@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { CENSUS_DAYS_FROM, statusShift } from "../backlogMonths";
+import { CENSUS_DAYS_FROM, queueLead, statusShift } from "../backlogMonths";
 
 describe("CENSUS_DAYS_FROM", () => {
   it("is the replay script's first day", () => {
@@ -44,5 +44,23 @@ describe("statusShift", () => {
     // A case reopened by an appeal: the status is pending today and wasn't held yesterday.
     const shift = statusShift([s("RECONSIDERATION APPEALS", 1)], [s("DENIED", 1, true)]);
     expect([shift.pending, shift.decided, shift.total]).toEqual([1, -1, 0]);
+  });
+});
+
+describe("queueLead", () => {
+  it("answers how many are waiting, then where DOL is, dated", () => {
+    expect(queueLead(97123, "2025-12", "October 22, 2026")).toBe(
+      "97,123 PERM cases are still waiting for DOL's decision. As of October 22, 2026, its analyst review is working cases filed in December 2025.",
+    );
+  });
+
+  it("says only the count when DOL's month isn't published", () => {
+    expect(queueLead(5, null, null)).toBe("5 PERM cases are still waiting for DOL's decision.");
+  });
+
+  it("leaves the date off rather than inventing one", () => {
+    expect(queueLead(1, "2025-12", null)).toBe(
+      "1 PERM case is still waiting for DOL's decision. Its analyst review is working cases filed in December 2025.",
+    );
   });
 });

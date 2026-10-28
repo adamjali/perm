@@ -238,7 +238,15 @@ export default async function VisaBulletinPage() {
       <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         The {monthLabel(next)} visa bulletin, from the last {series.length}
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
+      {/* The answer to a search for "visa bulletin" first: the bulletin that's out, with its cutoffs a click away. */}
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed">
+        The newest bulletin is {monthLabel(last.bulletinMonth)}&apos;s:{" "}
+        <Link href="/visa-bulletin/categories" className="link">
+          every cutoff it prints, by category and country
+        </Link>
+        .
+      </p>{" "}
+      <p className="mt-3 max-w-3xl text-lg leading-relaxed text-soft">
         What every earlier {monthName(targetMonth)} bulletin did for each employment category and country, from{" "}
         {series.length} bulletins ({monthLabel(series[0]!.bulletinMonth)} to {monthLabel(last.bulletinMonth)}), beside
         USCIS&apos;s count of applications ahead of each cutoff. Measured, not predicted.

@@ -5,7 +5,7 @@ import { PageBasics } from "@/components/data/PageBasics";
 import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
 import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
-import { dolPwdNow } from "@/lib/dolNow";
+import { dolPwdNow, pwdSentence } from "@/lib/dolNow";
 import { formatInt } from "@/lib/format";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -64,7 +64,7 @@ export default async function PwdCasesPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <IndexHeader
         title="Find a prevailing wage request"
-        lede="The employer files it months before the PERM, and you rarely see its number. Search the employer to find it."
+        lede={`${pwdSentence(now)} The employer files the request months before the PERM, and you rarely see its number: search the employer to find it.`}
         figures={[
           {
             label: "Waiting at DOL now",
