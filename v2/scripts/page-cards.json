@@ -1052,6 +1052,19 @@
   ]
  },
  {
+  "slug": "editorial-standards",
+  "path": "/editorial-standards",
+  "title": "How we write and check",
+  "label": "Every figure from a government record, dated, and corrected in the open.",
+  "shot": "editorial-standards.png",
+  "crop": [
+   0,
+   0,
+   1824,
+   1276
+  ]
+ },
+ {
   "slug": "perm-attorneys",
   "path": "/perm-attorneys",
   "title": "Law firms",

@@ -94,7 +94,8 @@ describe("getOrganizationSchema", () => {
   const schema = getOrganizationSchema(BASE);
 
   it("points its trust properties at pages that exist", () => {
-    expect(schema.publishingPrinciples).toBe(`${BASE}/methodology`);
+    expect(schema.publishingPrinciples).toBe(`${BASE}/editorial-standards`);
+    expect(schema.verificationFactCheckingPolicy).toBe(`${BASE}/methodology`);
     expect(schema.correctionsPolicy).toBe(`${BASE}/changelog/corrections`);
     expect(schema.ownershipFundingInfo).toBe(`${BASE}/about`);
     expect(schema.actionableFeedbackPolicy).toBe(`${BASE}/contact`);

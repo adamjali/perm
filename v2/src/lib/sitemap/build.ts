@@ -296,6 +296,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/perm-deadline-calculator`, lastModified: at("/tools/perm-deadline-calculator"), images: [`${base}/og/perm-deadline-calculator.jpg`] },
     { url: `${base}/calculators`, lastModified: at("/calculators"), images: [`${base}/og/calculators.jpg`] },
     { url: `${base}/methodology`, lastModified: at("/methodology"), images: [`${base}/og/methodology.jpg`] },
+    { url: `${base}/editorial-standards`, lastModified: at("/editorial-standards"), images: [`${base}/og/editorial-standards.jpg`] },
     { url: `${base}/about`, lastModified: at("/about"), images: [`${base}/og/about.jpg`] },
     { url: `${base}/press`, lastModified: at("/press"), images: [`${base}/og/press.jpg`] },
     { url: `${base}/reviews`, lastModified: at("/reviews"), images: [`${base}/og/reviews.jpg`] },

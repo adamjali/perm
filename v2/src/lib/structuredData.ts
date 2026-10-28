@@ -165,7 +165,8 @@ export function getOrganizationSchema(baseUrl: string) {
     // How the figures are made, how mistakes are fixed and who owns the site:
     // schema.org's trust properties on Organization (The Trust Project's),
     // each pointing at a page that already says it.
-    publishingPrinciples: `${baseUrl}/methodology`,
+    publishingPrinciples: `${baseUrl}/editorial-standards`,
+    verificationFactCheckingPolicy: `${baseUrl}/methodology`,
     correctionsPolicy: `${baseUrl}/changelog/corrections`,
     ownershipFundingInfo: `${baseUrl}/about`,
     actionableFeedbackPolicy: `${baseUrl}/contact`,

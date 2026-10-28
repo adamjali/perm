@@ -73,6 +73,7 @@ export const PAGE_CARD_ALT = {
   "case-search": "Search every DOL case an employer filed. PERM, prevailing wage and H-1B LCA, open and decided, in one search.",
   "changelog": "What changed. Every release, dated, with the data and features it added.",
   "contact": "Get in touch. Questions, bugs and ideas land in one inbox: support@permtracker.app or the form on the contact page.",
+  "editorial-standards": "How we write and check every page. Every figure from a government record, dated, and corrected in the open.",
   "faq": "Frequently asked questions. What applicants and attorneys ask about PERM Tracker and the PERM process.",
   "for-attorneys": "Every PERM deadline, worked out. The app's deadline hub for sample cases: an RFI response this week, an I-140 filing and a filing window this month, and more later. Free.",
   "guides": "PERM guides. How-tos, references and checklists for the PERM process and for PERM Tracker itself.",

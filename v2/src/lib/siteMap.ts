@@ -228,6 +228,7 @@ export const LEARN_PAGES: readonly SitePage[] = [
   { href: "/glossary", name: "Glossary" },
   { href: "/policy-changes", name: "Policy changes" },
   { href: "/methodology", name: "Methodology" },
+  { href: "/editorial-standards", name: "Editorial standards" },
   { href: "/estimate-scorecard", name: "Estimate scorecard" },
   { href: "/about", name: "About" },
   { href: "/changelog", name: "Changelog" },
@@ -359,7 +360,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
   },
   {
     title: "Learn",
-    pages: named("/guides", "/blog", "/faq", "/perm-case-statuses", "/glossary", "/methodology", "/changelog"),
+    pages: named("/guides", "/blog", "/faq", "/perm-case-statuses", "/glossary", "/methodology", "/editorial-standards", "/changelog"),
   },
   {
     title: "PERM Tracker",

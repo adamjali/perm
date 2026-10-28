@@ -5,6 +5,7 @@
  * contents list beside it on a wide screen.
  */
 
+import Link from "next/link";
 import TableOfContents from "./TableOfContents";
 import ShareButtons from "./ShareButtons";
 
@@ -22,8 +23,24 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
         <div className="min-w-0 flex-1">
           <div className="article-content prose-article max-w-none">{children}</div>
 
+          {/* Who stands behind it, and where a mistake goes: on every article. */}
+          <p className="mt-10 border-t border-border pt-6 text-base leading-relaxed text-soft">
+            <Link href="/editorial-standards" className="link">
+              How we write and check our guides
+            </Link>
+            . Spotted an error?{" "}
+            <Link href="/contact" className="link">
+              Tell us
+            </Link>
+            ; every fix is dated in the{" "}
+            <Link href="/changelog/corrections" className="link">
+              corrections log
+            </Link>
+            .
+          </p>{" "}
+
           {/* Share buttons */}
-          <div className="mt-10 border-t border-border pt-6">
+          <div className="mt-6">
             <ShareButtons title={title} url={url} />
           </div>
         </div>
