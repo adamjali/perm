@@ -227,3 +227,17 @@ with and without `--prod`.
 **The morning report now runs `pnpm audit`** (production and full), so an advisory Dependabot can't see still
 reaches the owner. **Superseded Dependabot PRs:** #64, #62, #56, #55, each closed with a pointer to the merge.
 
+## October 28 2026: deepmerge, accepted with a review date
+
+`pnpm audit` lists one advisory, GHSA-gcqx-w48m-w2h4 (low): deepmerge's `mergeObject()` can set the prototype
+of the object it returns when a source carries a `__proto__` key and the target isn't an object. Every version
+through 4.3.1 is affected and none is fixed ("patched versions: <0.0.0"). It reaches us one way:
+`@react-email/render` (2.0.6 and 2.1.1, the newest) > `html-to-text` 9.0.5 (the newest) > `deepmerge`, which
+merges html-to-text's default options with the renderer's own. No object a visitor sends is ever merged.
+
+Weighed and not taken: an override to another package (`@fastify/deepmerge` and `deepmerge-ts` have different
+call shapes, so html-to-text would break), and a local patch skipping `__proto__` (it would work, but
+`pnpm audit` matches versions, so it would still list the advisory, and a patch is one more thing to carry).
+Accepted in `scripts/daily_monitor.py`'s `ACCEPTED_ADVISORIES` until 2027-01-28, when the morning report asks
+again: by then deepmerge, html-to-text or the renderer may have moved.
+

@@ -301,7 +301,12 @@ SEVERE = {"critical", "high", "error"}
 AUDIT_SEVERE = {"critical", "high"}
 # An advisory left in place on purpose, by GHSA id: (why, look again by YYYY-MM-DD). Empty is the aim; an entry
 # past its date warns until someone looks.
-ACCEPTED_ADVISORIES: dict[str, tuple[str, str]] = {}
+ACCEPTED_ADVISORIES: dict[str, tuple[str, str]] = {
+    # deepmerge 4.3.1 (low): no fixed version exists. It reaches us only as html-to-text inside the email
+    # renderer, merging the renderer's own option objects, never anything a visitor sends.
+    # .planning/VERSION-DECISIONS.md, Oct 28 2026.
+    "GHSA-gcqx-w48m-w2h4": ("deepmerge: no fix published; merges only our own email options", "2027-01-28"),
+}
 
 
 def audit_findings(raw: str) -> dict[str, dict] | str:
