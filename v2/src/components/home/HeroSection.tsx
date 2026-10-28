@@ -6,7 +6,7 @@ import { FolderSimpleIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr
 import { ColumnChart, type Column } from "@/components/numbers/ColumnChart";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { CasePromises } from "@/components/tools/CasePromises";
-import { currentWait, type WaitMonthRow } from "@/lib/waitTrend";
+import { aboutMonths } from "@/lib/board";
 import { checkedLabel } from "@/lib/time";
 import { formatMonth, formatMonthDay } from "@/lib/dolFormat";
 import { formatInt } from "@/lib/format";
@@ -51,10 +51,20 @@ export interface HeroBoard {
 export interface HeroSectionProps {
   /** The figures under the answer. A missing figure drops its row. */
   board?: HeroBoard;
-  /** DOL's determination months, for the typical wait. Empty is fine. */
-  waitRows?: readonly WaitMonthRow[];
+  /**
+   * How long the PERM cases DOL decided on its last working day had waited, from the middle of their filing
+   * days (/today's own reading, `rulerOf(...).waitedDays`). Null drops the figure. It was the quarterly file's
+   * newest month until Oct 28 2026: "13 months", four months behind DOL's own pace.
+   */
+  wait?: HeroWait | null;
   /** The chart's months, from `homeMonths`. Empty draws no chart. */
   months?: readonly HomeMonth[];
+}
+
+/** The live wait: days, and the DOL working day it was read on. */
+export interface HeroWait {
+  days: number;
+  on: string;
 }
 
 /** One figure under the answer: what it counts, and the value as it reads. */
@@ -73,9 +83,12 @@ const DECIDED_FILL = "bg-data-good-ink";
 const WAITING_SWATCH = "bg-chart-yellow";
 const WAITING_FILL = `${WAITING_SWATCH} border-t-2 border-data-warn-ink`;
 
-export function heroFigures(board: HeroBoard | undefined, wait: number | null): HeroFigure[] {
+/** "about 9½ months" as a figure's value: "9½ months". */
+const waitValue = (days: number) => aboutMonths(days).replace(/^about /, "");
+
+export function heroFigures(board: HeroBoard | undefined, wait: HeroWait | null): HeroFigure[] {
   const rows: HeroFigure[] = [];
-  if (wait) rows.push({ label: "A PERM case takes", value: `${wait} months` });
+  if (wait && wait.days > 0) rows.push({ label: `Cases decided ${boardDay(wait.on)} waited`, value: waitValue(wait.days) });
   if (board?.pending != null) rows.push({ label: "PERM cases waiting", value: formatInt(board.pending) });
   if (board?.lastDay) rows.push({ label: `Decided on ${boardDay(board.lastDay.date)}`, value: formatInt(board.lastDay.total) });
   if (board?.pwdPending) rows.push({ label: "Wage requests waiting", value: formatInt(board.pwdPending) });
@@ -110,8 +123,7 @@ export function monthColumns(months: readonly HomeMonth[]): Column[] {
   });
 }
 
-export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionProps) {
-  const wait = currentWait(waitRows);
+export function HeroSection({ wait = null, board, months = [] }: HeroSectionProps) {
   const figures = heroFigures(board, wait);
   const front = board?.frontierMonth ? formatMonth(board.frontierMonth.slice(0, 7)) : null;
   const columns = monthColumns(months);
@@ -133,8 +145,8 @@ export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionPr
                 {front}
               </span>
             </>
-          ) : wait ? (
-            <>A PERM case takes {wait} months</>
+          ) : wait && wait.days > 0 ? (
+            <>A PERM case takes {aboutMonths(wait.days)}</>
           ) : (
             <>The whole PERM process, tracked</>
           )}

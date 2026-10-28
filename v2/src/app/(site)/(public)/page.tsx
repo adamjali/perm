@@ -52,6 +52,9 @@ import { getSiteReviews } from "@/lib/reviews/read";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getBacklogMatrix } from "@/lib/db/backlog";
+import { getPermBoard } from "@/lib/db/board";
+import { rulerOf } from "@/lib/board";
+import type { HeroWait } from "@/components/home/HeroSection";
 import { homeMonths } from "@/lib/homeMonths";
 import { easternDay } from "@convex/lib/time";
 import { PermPulse } from "@/components/pulse/PermPulse";
@@ -113,6 +116,12 @@ export const metadata: Metadata = withSocialCard({
   },
 }, "home");
 
+/** The hero's wait: /today's PERM reading, the middle filing day of what DOL decided on its last working day. */
+function liveWait(board: Awaited<ReturnType<typeof getPermBoard>>): HeroWait | null {
+  const ruler = board?.span ? rulerOf(board.span, board.day) : null;
+  return ruler && board ? { days: ruler.waitedDays, on: board.day } : null;
+}
+
 export default async function HomePage() {
   // Two independent federal sources with two different as-of stamps, and they
   // must not be conflated: the processing-times snapshot is DOL's weekly queue
@@ -121,7 +130,7 @@ export default async function HomePage() {
   // The pulse reads our own sweep's record, a third clock: it moves when the
   // sweep finishes, and /api/revalidate-sweep expires this page then. Either
   // read failing drops the band, never the page.
-  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog] = await Promise.all([
+  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog, permBoard] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
@@ -132,6 +141,8 @@ export default async function HomePage() {
     // The census doc the queue pages read: every filing month, decided and
     // waiting. A failed read draws the hero without its chart.
     getBacklogMatrix().catch(() => []),
+    // /today's board, saved by each sweep: the wait of the cases DOL decided on its last working day.
+    getPermBoard().catch(() => null),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
@@ -170,7 +181,7 @@ export default async function HomePage() {
           stage's real paperwork, the search shelf, then the two halves with
           their films. */}
       <HeroSection
-        waitRows={disclosure?.frontierHistory ?? []}
+        wait={liveWait(permBoard)}
         months={months}
         board={{
           frontierMonth: analyst?.priorityDate ?? null,
