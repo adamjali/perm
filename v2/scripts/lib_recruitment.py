@@ -139,3 +139,66 @@ def case_papers(row: dict) -> dict[str, str]:
         if k and k not in out:
             out[k] = raw
     return out
+
+
+# ---------------------------------------------------------------------------
+# The quiet period: 30 days after the last recruitment step, before the PERM may be filed
+# (20 C.F.R. § 656.17(e)). Held equal to FILING_WINDOW_WAIT_DAYS in convex/lib/perm/constants.ts,
+# and the rule below to getLastRecruitmentDate, by test_recruitment_dates.py and the shared
+# fixture scripts/fixtures/last_recruitment.json.
+# ---------------------------------------------------------------------------
+
+QUIET_PERIOD_DAYS = 30
+
+
+def _iso(v) -> str | None:
+    s = str(v or "")[:10]
+    try:
+        dt.date.fromisoformat(s)
+    except ValueError:
+        return None
+    return s
+
+
+def _method_latest(m: dict) -> str | None:
+    """A method's latest date: its end (or its start when the end won't read), sub-entries, its one date."""
+    got = [_iso(m.get("endDate")) or _iso(m.get("startDate"))]
+    got += [_iso(e.get("date")) for e in m.get("subEntries") or []]
+    got.append(_iso(m.get("date")))
+    got = [d for d in got if d]
+    return max(got) if got else None
+
+
+def last_recruitment_date(d: dict, professional: bool = False) -> str | None:
+    """The last recruitment step before the quiet period: the latest of the second Sunday ad,
+    the job order's end and the notice's end, and for a professional job the additional steps,
+    the latest-dated one excepted (one may finish inside the quiet period, 656.17(e)(1)(ii))."""
+    dates = [_iso(d.get(k)) for k in ("sundayAdSecondDate", "jobOrderEndDate", "noticeOfFilingEndDate")]
+    if professional:
+        dates.append(_iso(d.get("additionalRecruitmentEndDate")))
+        methods = sorted((x for x in (_method_latest(m) for m in d.get("additionalRecruitmentMethods") or []) if x), reverse=True)
+        dates += methods[1:]
+    dates = [x for x in dates if x]
+    return max(dates) if dates else None
+
+
+def case_recruitment_dates(row: dict) -> tuple[dict, bool]:
+    """A decided case's recruitment as the rule above reads it, from DOL's columns: the second
+    ad (or the only one), the job order's end, and each additional step. DOL publishes no
+    notice dates. A case with additional steps is a professional one."""
+    steps = steps_of(row.get("recr_steps"))
+    methods = [{"startDate": span[0], "endDate": span[1] if len(span) > 1 else None} for span in steps.values() if span]
+    return (
+        {
+            "sundayAdSecondDate": row.get("ad2") or row.get("ad1"),
+            "jobOrderEndDate": row.get("job_order_end"),
+            "additionalRecruitmentMethods": methods,
+        },
+        bool(methods),
+    )
+
+
+def quiet_period_end(row: dict) -> str | None:
+    """The first day a case could have been filed: the last recruitment step plus the quiet period."""
+    last = last_recruitment_date(*case_recruitment_dates(row))
+    return (dt.date.fromisoformat(last) + dt.timedelta(days=QUIET_PERIOD_DAYS)).isoformat() if last else None
