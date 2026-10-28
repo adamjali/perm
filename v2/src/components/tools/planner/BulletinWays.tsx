@@ -83,7 +83,7 @@ export function BulletinNote({
           : lineState === "failed"
             ? "The count didn't load. Try again in a minute."
             : lineState === "not-yet"
-              ? "Counted once your priority date has passed."
+              ? "People are still filing ahead of your date, so they can't be counted yet. This way works once it has passed."
               : "USCIS's counts for this line don't support a count.",
     },
   ];

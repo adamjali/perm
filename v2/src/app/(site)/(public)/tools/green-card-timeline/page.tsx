@@ -87,8 +87,8 @@ export default async function GreenCardTimelinePage() {
       <header>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Your green card timeline</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Your case&apos;s dates in. Every step to the green card out as a range, from today&apos;s DOL and USCIS figures,
-          with every cost on the day it falls due. Change any figure to see what it does.
+          Enter your case&apos;s dates. Every step to the green card comes out dated, with its cost, from today&apos;s DOL
+          and USCIS figures.
         </p>
       </header>
       <section data-embed="green-card-timeline" className="mt-10">

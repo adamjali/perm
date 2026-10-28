@@ -9,6 +9,7 @@ import { INITIAL_RE } from "@/lib/employerInitial";
 import { DAY_PAGE_SIZE, dayView, type DayCase } from "@/lib/filingDay";
 import { formatInt } from "@/lib/format";
 import { CASE_STATUS_FILL, caseStatusTint, prettyStatus } from "@/lib/statusTone";
+import { choiceVariants } from "@/components/ui/choice";
 import { cn } from "@/lib/utils";
 
 /**
@@ -46,15 +47,10 @@ export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayC
 
   return (
     <div ref={top} className="scroll-mt-24">
-      <div role="group" aria-label="Which filings" className="inline-flex border-2 border-foreground">
+      <div role="group" aria-label="Which filings" className="flex flex-wrap gap-2">
         {KINDS.map((k) => (
           <Fragment key={k.key}>
-            <button
-              type="button"
-              aria-pressed={kind === k.key}
-              onClick={() => reset(k.key)}
-              className={cn("min-h-11 px-4 text-sm font-semibold", kind === k.key ? "bg-foreground text-background" : "bg-background")}
-            >
+            <button type="button" aria-pressed={kind === k.key} onClick={() => reset(k.key)} className={choiceVariants({ on: kind === k.key })}>
               {k.label} <span className="font-mono tabular-nums">{formatInt(k.key === "perm" ? perm.length : pwd.length)}</span>
             </button>{" "}
           </Fragment>
@@ -92,10 +88,7 @@ export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayC
                   aria-pressed={letter === l.letter}
                   aria-label={`${l.letter === "#" ? "A digit or symbol" : l.letter}, ${l.n} ${l.n === 1 ? "case" : "cases"}`}
                   onClick={() => pick({ letter: letter === l.letter ? null : l.letter })}
-                  className={cn(
-                    "min-h-11 min-w-11 border-2 px-2 font-mono text-sm font-semibold",
-                    letter === l.letter ? "border-foreground bg-foreground text-background" : "border-input bg-background",
-                  )}
+                  className={cn(choiceVariants({ on: letter === l.letter }), "min-w-11 px-2 font-mono")}
                 >
                   {l.letter}
                 </button>{" "}

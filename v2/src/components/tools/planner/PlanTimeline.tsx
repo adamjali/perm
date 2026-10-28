@@ -40,7 +40,12 @@ const tileOf = (s: PlanStep) =>
     : s.key === "visa"
       ? "bg-chart-blue text-black border-2 border-data-info-ink"
       : "bg-chart-yellow text-black border-2 border-data-warn";
-const inkOf = (s: PlanStep) => (s.state === "done" ? "text-data-good-ink" : s.key === "visa" ? "text-data-info-ink" : "text-data-warn-ink");
+/**
+ * A step's length in words: ink, with the bar and the number carrying the colour, so a plan of
+ * steps still to come doesn't read as a page of warnings. "Done" keeps its green: there the
+ * colour is the news.
+ */
+const inkOf = (s: PlanStep) => (s.state === "done" ? "text-data-good-ink" : "text-foreground");
 
 /** Room past the last date for a step with no end, drawn hatched to the edge. */
 const OPEN_END_DAYS = 120;

@@ -6,6 +6,7 @@ import { ColumnChart } from "@/components/numbers/ColumnChart";
 import type { ActivityDay } from "@/lib/activityStats";
 import { formatInt } from "@/lib/format";
 import { DECISION_SPANS, decisionBuckets, type DecisionBucket, type DecisionSpan } from "@/lib/pulseStats";
+import { choiceVariants } from "@/components/ui/choice";
 import { cn } from "@/lib/utils";
 import { longDate, monthDay } from "@convex/lib/months";
 
@@ -48,18 +49,10 @@ export function DecisionsOverTime({
   return (
     <div className={cn(grow && "flex flex-1 flex-col")}>
       {spans.length > 1 ? (
-        <div role="group" aria-label="How far back" className="mb-4 inline-flex self-start border-2 border-foreground">
+        <div role="group" aria-label="How far back" className="mb-4 flex flex-wrap gap-2 self-start">
           {spans.map((s) => (
             <Fragment key={s}>
-              <button
-                type="button"
-                aria-pressed={s === span}
-                onClick={() => setSpan(s)}
-                className={cn(
-                  "min-h-11 px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                  s === span ? "bg-foreground text-background" : "bg-background",
-                )}
-              >
+              <button type="button" aria-pressed={s === span} onClick={() => setSpan(s)} className={choiceVariants({ on: s === span })}>
                 {SPAN_LABEL[s]}
               </button>{" "}
             </Fragment>
