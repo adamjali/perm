@@ -375,7 +375,7 @@ export const sweep = internalAction({
               `  Watch it: ${c.watchUrl}`,
               "",
             ]),
-            "DOL's record doesn't name the worker or say which wage request a PERM uses, so we can't tell whether this is yours. What matches is the employer, the job title and a filing date after your wage. Your employer or attorney can confirm the case number.",
+            "While a PERM is pending, DOL's record doesn't name the worker or say which wage request it uses (DOL names the wage request only once it decides the case), so we can't tell whether this is yours. What matches is the employer, the job title and a filing date after your wage. Your employer or attorney can confirm the case number.",
             "",
             `Stop these alerts: ${unsubscribeUrl}`,
             "",

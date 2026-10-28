@@ -1,9 +1,10 @@
 /**
  * The wage request to PERM match: after DOL issues a PERM job's prevailing
  * wage, the PERM application that follows it comes from the same employer for
- * the same job, filed after the wage was issued. DOL's record names neither
- * the worker nor which wage request a PERM uses, so a match is a possibility,
- * and every email that reports one says so.
+ * the same job, filed after the wage was issued. DOL's live record of a
+ * pending PERM names neither the worker nor which wage request it uses (DOL's
+ * published file names the wage request only once the case is decided), so a
+ * match is a possibility, and every email that reports one says so.
  *
  * Measured on Oct 16 2026 over 10,547 PERM-job wage requests DOL issued from
  * Aug 26 to Sep 25 2026: 566 had exactly one PERM from the same employer with

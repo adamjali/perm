@@ -3,8 +3,9 @@
  * job's prevailing wage request someone watches, DOL's record shows a PERM
  * application from the same employer for the same job title, filed since.
  *
- * DOL's record names neither the worker nor which wage request a PERM uses, so
- * this is worded as a possibility from the subject line down, and it says
+ * DOL's live record of a pending PERM names neither the worker nor which wage
+ * request it uses (the wage request appears only in DOL's file of decided
+ * cases), so this is worded as a possibility from the subject line down, and it says
  * what was compared. Never "your PERM was filed". The match rules are in
  * convex/lib/pipelineMatch.ts; the sender is convex/pipelineMatches.ts.
  *
@@ -98,7 +99,7 @@ export function PossiblePermMatch({
       ))}
 
       <Text className="em-text-body" style={styles.body}>
-        {`DOL's record doesn't name the worker or say which wage request a PERM uses, so we can't tell whether ${
+        {`While a PERM is pending, DOL's record doesn't name the worker or say which wage request it uses (DOL names the wage request only once it decides the case), so we can't tell whether ${
           one ? "this one is" : "one of these is"
         } yours. What matches is the employer, the job title (${jobTitle}) and a filing date after your wage. Your employer or attorney can confirm the case number.`}
       </Text>
