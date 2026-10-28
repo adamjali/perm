@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 import { formatInt } from "@/lib/format";
 import { entityHref } from "@/lib/entityPayload";
+import { planHref } from "@/components/tools/planner/planUrl";
 
 /**
  * Everything this project can honestly say about one case, arranged.
@@ -571,12 +572,8 @@ function monthsBetween(from: string, to: string): number {
 }
 
 /** The planner, filled in from the case: certified on its decision day when DOL has decided, else filed on its filing day. */
-function planHref(filingDate: string | null, decisionDate: string | null): string {
-  if (!filingDate) return "/tools/green-card-timeline";
-  const q = decisionDate
-    ? new URLSearchParams({ where: "perm-certified", date: decisionDate, pd: filingDate })
-    : new URLSearchParams({ where: "perm-filed", date: filingDate });
-  return `/tools/green-card-timeline?${q}`;
+function planHrefFor(filingDate: string | null, decisionDate: string | null): string {
+  return filingDate ? planHref({ permFiled: filingDate, permCertified: decisionDate }) : "/tools/green-card-timeline";
 }
 
 /** A decided case's next step: what comes after PERM, or what a denial means. */
@@ -593,7 +590,7 @@ function DecidedNext({
 }) {
   const denied = status?.trim().toUpperCase().startsWith("DENIED") ?? false;
   const next = approved
-    ? { href: planHref(filingDate, decisionDate), label: "Plan the rest of the green card", note: "The I-140, the bulletin and the I-485, dated from this case." }
+    ? { href: planHrefFor(filingDate, decisionDate), label: "Plan the rest of the green card", note: "The I-140, the bulletin and the I-485, dated from this case." }
     : denied
       ? { href: "/guides/perm-denied-what-happens-next", label: "What happens after a denial", note: "Reconsideration, appeal and refiling, and their deadlines." }
       : null;

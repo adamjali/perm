@@ -122,17 +122,45 @@ test("the layoff page names how many states it reads", async ({ page }) => {
   await expect(page.getByText(/\d+\s+states and DC/i).first()).toBeVisible();
 });
 
-test("the green card timeline plans a certified case and keeps the case in the address", async ({ page }) => {
-  // A certified PERM: the plan starts at the I-140 and counts the PERM as behind the reader.
-  await page.goto("/tools/green-card-timeline?where=perm-certified&date=2026-09-01&pd=2025-10-20");
-  await expect(page.getByText("Before this plan starts")).toBeVisible();
-  await expect(page.getByRole("link", { name: /I-140/ }).first()).toBeVisible();
+test("the green card timeline plans a certified case, takes the reader's own figures and keeps the case in the address", async ({ page }) => {
+  // A link the case page made before Oct 28 2026: the certification day as `date`, the priority date as `pd`.
+  await page.goto("/tools/green-card-timeline?where=perm-certified&date=2025-12-01&pd=2025-03-20");
+  const dates = page.getByRole("list", { name: "Your dates" });
+  await expect(dates.getByText("Dec 1, 2025")).toBeVisible();
+  await expect(dates.getByText("Your date").first()).toBeVisible();
+  await expect(page.getByRole("region", { name: "Your plan at a glance" }).getByText("Cost", { exact: true })).toBeVisible();
+  const chart = page.getByRole("region", { name: "How long each step takes" });
+  await expect(chart.getByRole("link", { name: "I-140", exact: true })).toBeVisible();
+  await expect(chart.getByRole("link", { name: "Wage request", exact: true })).toHaveCount(0);
+
   // A changed input goes into the address, so a reload or a shared link opens the same plan.
-  await page.getByLabel("Country of birth").selectOption("india");
-  await expect(page).toHaveURL(/country=india/);
+  await page.getByLabel("Category").selectOption("EB3");
+  await expect(page).toHaveURL(/cat=EB3/);
   await page.reload();
-  await expect(page.getByLabel("Country of birth")).toHaveValue("india");
-  await expect(page.getByText(/^Government fees, the whole way$/)).toBeVisible();
+  await expect(page.getByLabel("Category")).toHaveValue("EB3");
+
+  // A step's own length moves the plan, and today's figures come back in one press.
+  await page.getByText("Change the figures").click();
+  const i140 = page.locator("#figures li").filter({ has: page.getByText("I-140", { exact: true }) }).first();
+  await i140.getByLabel("Typical, months").fill("12");
+  await expect(page.getByText("1 changed")).toBeVisible();
+  await page.getByRole("button", { name: /Back to today's figures/ }).click();
+  await expect(page.getByText("1 changed")).toHaveCount(0);
+
+  // The bulletin wait two ways: when the line isn't current, the people ahead can date the plan instead.
+  const choose = page.getByRole("button", { name: "Choose how it's worked out" });
+  if (await choose.count()) {
+    await choose.click();
+    const supply = page.getByLabel(/People ahead of you/);
+    await expect(supply).toBeEnabled({ timeout: 20000 });
+    await supply.check();
+    await expect(supply).toBeChecked();
+  }
+
+  // A cost the reader adds lands on the employer's side when the law puts it there.
+  await page.getByText("Your family, and your own costs").click();
+  await page.getByLabel("Attorney for the PERM").fill("5000");
+  await expect(page.locator("dt", { hasText: "Employer pays" }).locator("xpath=..").getByText("$5,000")).toBeVisible();
 });
 
 test("a filing month opens to a day, and the day's list filters by status", async ({ page }) => {

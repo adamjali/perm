@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
-import { GreenCardPlanner } from "@/components/tools/GreenCardPlanner";
+import { GreenCardPlanner } from "@/components/tools/planner/GreenCardPlanner";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { getBulletinCheck } from "@/lib/db/bulletinCheck";
@@ -25,7 +25,7 @@ export const revalidate = 21600;
 
 const TITLE = "Green Card Timeline and Planner";
 const DESCRIPTION =
-  "Enter where your case is and its dates. See every step to an employment-based green card dated from today's DOL and USCIS figures, with the fees.";
+  "Enter your case's dates. See every step to an employment-based green card as a date range from today's DOL and USCIS figures, with every cost.";
 
 export const metadata: Metadata = withSocialCard(
   {
@@ -40,15 +40,19 @@ export const metadata: Metadata = withSocialCard(
 const FAQS = [
   {
     q: "Where do the step lengths come from?",
-    a: "The wage request and the PERM use how long DOL's middle decision on its last working day waited, filed to decided. The I-140 and the I-485 use USCIS's newest quarterly medians. Recruitment is the shortest the rules allow: a 30-day job order, then 30 days before filing. The bulletin wait moves your line's final action cutoff forward at the pace it has kept. You can change any of them under \"Change the assumptions\".",
+    a: "The wage request and the PERM use the filing days DOL decided on its last working day: the latest-filed tenth is the quick end, the middle is typical, the earliest-filed tenth the slow end. A wage request or PERM you've already filed is dated from the cases still ahead of it at DOL's measured pace, as its own case page dates it. Recruitment uses how long employers took in DOL's own record, first recruitment step to filing, never under the 60 days the rules require. The I-140, the I-485, the work permit and the travel document use USCIS's quarterly medians over the last year. Every length is yours to change in its step.",
+  },
+  {
+    q: "How is the wait for the visa bulletin worked out?",
+    a: "Two ways, and you pick which one dates the plan. The first moves your line's final action cutoff forward at the pace it has kept, widened by how far off that pace has been on past bulletins. The second counts the people ahead of your priority date from USCIS's own figures and divides by the green cards your line is issued a year. Both stay on the page, and you can set the pace or the yearly number yourself.",
   },
   {
     q: "Why is there no date for my green card?",
-    a: "When your line is unavailable in the newest bulletin, or its cutoff hasn't moved enough to measure a pace, nothing honest can date the wait. The planner says so instead of guessing, and every step before the bulletin is still dated.",
+    a: "When your line is unavailable in the newest bulletin, or its cutoff hasn't moved enough to measure a pace and no count of people ahead exists, nothing honest can date the wait. The planner says so instead of guessing, and every step before the bulletin is still dated.",
   },
   {
     q: "Which parts can an employer control?",
-    a: "Recruitment and the day the PERM is filed. Both are fixed arithmetic on the wage determination, and missing them restarts the case. Every other step is a queue at DOL, USCIS or the State Department.",
+    a: "Recruitment, the day the PERM is filed and the day the I-140 goes in. The I-140 must be filed within 180 days of certification, and missing that restarts the case. Every other step is a queue at DOL, USCIS or the State Department.",
   },
   {
     q: "Can I file the I-485 with the I-140?",
@@ -59,13 +63,13 @@ const FAQS = [
     a: "It shortens one step. Premium processing applies to the I-140 only, so it does nothing for the wage request, recruitment, the PERM decision or the wait for a visa number.",
   },
   {
-    q: "Does the total include the attorney?",
-    a: "No. It's the government's fees from USCIS's fee schedule. DOL charges nothing for the wage request or the PERM, and the employer must pay the PERM's own costs, including the attorney and the ads (20 CFR 656.12(b)).",
+    q: "What does it include in the cost, and who pays?",
+    a: "USCIS's fees from its fee schedule for every form, on the day each is due, and any costs you add: the attorneys, the recruitment and the medical exam. DOL charges nothing for the wage request or the PERM. The employer must pay the PERM's own costs, the attorney and the recruitment included (20 CFR 656.12(b)); who pays the rest is for you and the employer to agree.",
   },
 ];
 
 export default async function GreenCardTimelinePage() {
-  const [{ figures, standing }, check] = await Promise.all([getPlanReading(), getBulletinCheck().catch(() => null)]);
+  const [reading, check] = await Promise.all([getPlanReading(), getBulletinCheck().catch(() => null)]);
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -79,20 +83,20 @@ export default async function GreenCardTimelinePage() {
       <header>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Your green card timeline</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Where your case is and its dates in. Every step to the green card out, dated from today&apos;s DOL and USCIS
-          figures, with the government&apos;s fees for the whole way.
+          Your case&apos;s dates in. Every step to the green card out as a range, from today&apos;s DOL and USCIS figures,
+          with every cost on the day it falls due. Change any figure to see what it does.
         </p>
       </header>
       <section data-embed="green-card-timeline" className="mt-10">
         <SearchParamsBoundary>
-          <GreenCardPlanner figures={figures} standing={standing} check={check} today={easternDay()} />
+          <GreenCardPlanner reading={reading} check={check} today={easternDay()} />
         </SearchParamsBoundary>
       </section>
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-bold">FAQs</h2>{" "}
         <FaqList items={FAQS} />
       </section>
-      <DataProvenance datasets={["pwd-status", "perm-case-status", "uscis-form-quarters", "visa-bulletin"]} />
+      <DataProvenance datasets={["pwd-status", "perm-case-status", "perm-cases", "uscis-form-quarters", "visa-bulletin", "i485-inventory"]} />
       <ToolPageFooter
         currentHref="/tools/green-card-timeline"
         reading={[
