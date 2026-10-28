@@ -11,6 +11,7 @@ import { checkedLabel } from "@/lib/time";
 import { formatMonth, formatMonthDay } from "@/lib/dolFormat";
 import { formatInt } from "@/lib/format";
 import type { HomeMonth } from "@/lib/homeMonths";
+import { cn } from "@/lib/utils";
 import { monthTick } from "@convex/lib/months";
 
 /**
@@ -65,6 +66,13 @@ export interface HeroFigure {
 /** "2026-10-05" -> "Oct 5": a date, never a weekday ("Decided Mon" read as "decided month"). */
 const boardDay = (iso: string) => formatMonthDay(iso) ?? iso;
 
+// The site's status colours (Oct 27 2026): decided green, still waiting yellow.
+// A soft yellow sits near 1.3:1 on paper, so the waiting part carries an ink cap
+// (WCAG 1.4.11's 3:1), as every ColumnChart column does.
+const DECIDED_FILL = "bg-data-good-ink";
+const WAITING_SWATCH = "bg-chart-yellow";
+const WAITING_FILL = `${WAITING_SWATCH} border-t-2 border-data-warn-ink`;
+
 export function heroFigures(board: HeroBoard | undefined, wait: number | null): HeroFigure[] {
   const rows: HeroFigure[] = [];
   if (wait) rows.push({ label: "A PERM case takes", value: `${wait} months` });
@@ -95,8 +103,8 @@ export function monthColumns(months: readonly HomeMonth[]): Column[] {
       top: m.isFront ? "DOL is here" : undefined,
       href: m.total > 0 ? `/perm-queue/${m.month}` : undefined,
       parts: [
-        { value: m.decided, fill: "bg-data-good-ink" },
-        { value: m.waiting, fill: "bg-data-info-ink" },
+        { value: m.decided, fill: DECIDED_FILL },
+        { value: m.waiting, fill: WAITING_FILL },
       ],
     };
   });
@@ -161,11 +169,11 @@ export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionPr
             />{" "}
             <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-soft">
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-data-good-ink" />
+                <span aria-hidden="true" className={cn("size-3", DECIDED_FILL)} />
                 Decided
               </span>{" "}
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-data-info-ink" />
+                <span aria-hidden="true" className={cn("size-3 border-2 border-data-warn-ink", WAITING_SWATCH)} />
                 Still waiting
               </span>{" "}
               <span className="hidden sm:inline">Each bar is one filing month. Tap one to see its cases.</span>{" "}
