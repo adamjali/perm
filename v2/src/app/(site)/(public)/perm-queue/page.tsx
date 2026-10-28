@@ -8,7 +8,7 @@ import Link from "next/link";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
-import { BacklogWall } from "@/components/queue/BacklogWall";
+import { QueueDayPicker } from "@/components/queue/QueueDayPicker";
 import { CaveatBox, NoteBanner } from "@/components/ui/note";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
@@ -21,7 +21,7 @@ import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { findFront } from "@/lib/liveQueue";
 import { findVolumeAnomalies } from "@/lib/queueAhead";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
-import { getBacklogCensus } from "@/lib/db/backlog";
+import { getBacklogCensus, getCensusDays } from "@/lib/db/backlog";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { getAlphabet } from "@/lib/db/alphabet";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -83,12 +83,17 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 export default async function PermQueuePage() {
-  const [census, estimator, alphabet] = await Promise.all([
+  const [census, estimator, alphabet, pastDays] = await Promise.all([
     getBacklogCensus(),
     getEstimatorData(),
     // Its own document and its own writer, so a missing one is a missing
     // panel rather than a missing page.
     getAlphabet().catch(() => null),
+    // The days the wall can be shown on. Without them the wall shows today alone.
+    getCensusDays().catch((e: unknown) => {
+      console.warn("[perm-queue] past days unreadable", e);
+      return [] as string[];
+    }),
   ]);
 
   const { stages } = groupByStage(census.statuses);
@@ -317,13 +322,16 @@ export default async function PermQueuePage() {
         </p>{" "}
 
         <div data-embed="perm-queue" className="mt-6">
-          <BacklogWall
-            months={census.months}
-            frontierMonth={dolMonth}
-            frontierAsOf={dolAsOf}
-            frontMonth={front?.month ?? null}
-            anomalies={anomalies}
-            noteAnchors={{ [OCTOBER_2025.month]: OCTOBER_2025.anchorId }}
+          <QueueDayPicker
+            days={pastDays}
+            today={{
+              months: census.months,
+              frontierMonth: dolMonth,
+              frontierAsOf: dolAsOf,
+              frontMonth: front?.month ?? null,
+              anomalies,
+              noteAnchors: { [OCTOBER_2025.month]: OCTOBER_2025.anchorId },
+            }}
           />
         </div>
       </section>{" "}

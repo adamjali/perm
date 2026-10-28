@@ -40,91 +40,11 @@ import {
   monthRowsFrom,
 } from "./liveCensus";
 
-/** One status bucket inside a filing month, or across the whole mirror. */
-export interface BacklogStatusCount {
-  /** Normalised to upper case, as DOL prints it. */
-  status: string;
-  count: number;
-  isFinal: boolean;
-}
+import { foldBacklogRows, type BacklogMonth, type BacklogRow, type BacklogStatusCount } from "@/lib/backlogMonths";
 
-/** Everything the queue surfaces need about one filing month. */
-export interface BacklogMonth {
-  /** Filing month, "YYYY-MM". */
-  month: string;
-  total: number;
-  pending: number;
-  decided: number;
-  /** decided / total as 0-100, null when the month holds nothing. */
-  decidedPct: number | null;
-  /** Every status present in the month, largest first, pending and final. */
-  statuses: BacklogStatusCount[];
-}
+export { foldBacklogRows, type BacklogMonth, type BacklogStatusCount };
 
-interface RawRow {
-  month: unknown;
-  status: unknown;
-  is_final: unknown;
-  n: unknown;
-}
-
-/**
- * Fold raw `(month, status, is_final, n)` rows into months.
- *
- * Exported for the unit test, which is the only way to prove the case-merge
- * actually merges: the live table is canonical upper case today, so a test
- * against real data can never exercise it.
- */
-export function foldBacklogRows(raw: readonly RawRow[]): BacklogMonth[] {
-  const byMonth = new Map<string, Map<string, BacklogStatusCount>>();
-
-  for (const r of raw) {
-    const month = String(r.month ?? "");
-    if (!month) continue;
-    const status = String(r.status ?? "").toUpperCase().trim();
-    if (!status) continue;
-    const count = Number(r.n) || 0;
-    const isFinal = Number(r.is_final) === 1;
-
-    let bucket = byMonth.get(month);
-    if (!bucket) {
-      bucket = new Map();
-      byMonth.set(month, bucket);
-    }
-    const existing = bucket.get(status);
-    if (existing) {
-      existing.count += count;
-      // A row is final only if every row folded into it is. Disagreement here
-      // would be a real integrity fault upstream, and resolving it towards
-      // "still pending" is the direction that cannot understate the backlog.
-      existing.isFinal = existing.isFinal && isFinal;
-    } else {
-      bucket.set(status, { status, count, isFinal });
-    }
-  }
-
-  return [...byMonth.entries()]
-    .map(([month, bucket]) => summariseMonth(month, [...bucket.values()]))
-    .sort((a, b) => a.month.localeCompare(b.month));
-}
-
-function summariseMonth(month: string, statuses: BacklogStatusCount[]): BacklogMonth {
-  let pending = 0;
-  let decided = 0;
-  for (const s of statuses) {
-    if (s.isFinal) decided += s.count;
-    else pending += s.count;
-  }
-  const total = pending + decided;
-  return {
-    month,
-    total,
-    pending,
-    decided,
-    decidedPct: total > 0 ? (decided / total) * 100 : null,
-    statuses: statuses.sort((a, b) => b.count - a.count),
-  };
-}
+type RawRow = BacklogRow;
 
 const MATRIX_SQL = `SELECT substr(filing_date, 1, 7) AS month,
                            current_status              AS status,
@@ -175,6 +95,32 @@ export async function getMonthBacklog(month: string): Promise<BacklogMonth | nul
     [month],
   );
   return foldBacklogRows(raw)[0] ?? null;
+}
+
+/**
+ * The days the queue can be shown on, oldest first: every day
+ * `perm_census_days` holds (scripts/build_census_days.py, after the full
+ * sweep). Empty before the table exists; any other failure throws.
+ */
+export async function getCensusDays(): Promise<string[]> {
+  try {
+    return (await rows<{ day: string }>("SELECT DISTINCT day FROM perm_census_days ORDER BY day")).map((r) => String(r.day));
+  } catch (e) {
+    if (/no such table/i.test(String(e))) return [];
+    throw e;
+  }
+}
+
+/** The queue at the end of one past DOL day, folded as today's is. Empty before the table exists; a failed read throws. */
+export async function getCensusOn(day: string): Promise<BacklogMonth[]> {
+  try {
+    return foldBacklogRows(
+      await rows<RawRow>("SELECT month, status, is_final, n FROM perm_census_days WHERE day = ?", [day]),
+    );
+  } catch (e) {
+    if (/no such table/i.test(String(e))) return [];
+    throw e;
+  }
 }
 
 /** The whole live population, in one shape. */

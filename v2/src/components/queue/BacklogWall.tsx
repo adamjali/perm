@@ -6,7 +6,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { VolumeAnomaly } from "@/lib/queueAhead";
 import { cn } from "@/lib/utils";
-import type { BacklogMonth } from "@/lib/db/backlog";
+import type { BacklogMonth } from "@/lib/backlogMonths";
 import { formatInt } from "@/lib/format";
 
 import { StageBar } from "./StageBar";
@@ -45,6 +45,12 @@ import { groupByStage } from "./stages";
 export interface BacklogWallProps {
   /** Oldest first. */
   months: readonly BacklogMonth[];
+  /**
+   * Another day's pending cases by filing month, drawn as an outline on each
+   * row (the day picker: a past day's bars filled, today's lengths outlined).
+   * The scale covers both, so the two lengths compare.
+   */
+  outline?: { label: string; pending: ReadonlyMap<string, number> };
   /** The month DOL publishes as its analyst-review position, or null. */
   frontierMonth: string | null;
   /** DOL's as-of date for that position, already formatted for reading. */
@@ -74,6 +80,7 @@ export interface BacklogWallProps {
 
 export function BacklogWall({
   months,
+  outline,
   frontierMonth,
   frontierAsOf,
   frontMonth,
@@ -89,12 +96,17 @@ export function BacklogWall({
   // whole scale by contributing a maximum nobody sees.
   const wall = frontMonth ? months.filter((m) => m.month >= frontMonth) : [...months];
   const passed = frontMonth ? months.filter((m) => m.month < frontMonth) : [];
-  const scale = Math.max(1, ...wall.map((m) => m.pending));
+  const scale = Math.max(1, ...wall.map((m) => Math.max(m.pending, outline?.pending.get(m.month) ?? 0)));
   const passedPending = passed.reduce((n, m) => n + m.pending, 0);
 
   return (
     <div>
       <Header />
+      {outline ? (
+        <p className="mt-2 flex items-center gap-2 text-sm text-soft">
+          <span aria-hidden="true" className="inline-block h-3 w-8 border-2 border-dashed border-foreground" /> {outline.label}
+        </p>
+      ) : null}
 
       {passed.length > 0 ? (
         <details className="mt-4 bg-sage">
@@ -112,6 +124,7 @@ export function BacklogWall({
                 <MonthRow
                   month={m}
                   scale={scale}
+                  outline={outline ? { n: outline.pending.get(m.month) ?? 0, label: outline.label } : undefined}
                   isFront={false}
                   anomaly={anomalyByMonth.get(m.month)}
                   noteId={noteAnchors?.[m.month]}
@@ -140,6 +153,7 @@ export function BacklogWall({
               <MonthRow
                 month={m}
                 scale={scale}
+                outline={outline ? { n: outline.pending.get(m.month) ?? 0, label: outline.label } : undefined}
                 isFront={m.month === frontMonth}
                 anomaly={anomalyByMonth.get(m.month)}
                 noteId={noteAnchors?.[m.month]}
@@ -190,12 +204,15 @@ function Header() {
 function MonthRow({
   month,
   scale,
+  outline,
   isFront,
   anomaly,
   noteId,
 }: {
   month: BacklogMonth;
   scale: number;
+  /** The other day's pending count for this month, outlined behind the bar, and that day's name. */
+  outline?: { n: number; label: string };
   isFront: boolean;
   anomaly?: VolumeAnomaly;
   noteId?: string;
@@ -217,7 +234,7 @@ function MonthRow({
       // put 39 targets on a 24px pitch, which is the floor of WCAG 2.5.8 and
       // well under this project's own. The bar stays 20px; the ROW grew.
       className="grid min-h-11 grid-cols-[5rem_1fr_3.5rem_3rem] items-center gap-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
-      aria-label={`${label}: ${formatInt(month.pending)} of ${formatInt(month.total)} still waiting, ${pct.toFixed(0)} percent decided`}
+      aria-label={`${label}: ${formatInt(month.pending)} of ${formatInt(month.total)} still waiting, ${pct.toFixed(0)} percent decided${outline ? `; ${formatInt(outline.n)} ${outline.label.toLowerCase()}` : ""}`}
     >
       <span className="flex min-h-11 items-center gap-1 truncate">
         {anomaly ? (
@@ -233,7 +250,18 @@ function MonthRow({
           {short}
         </Link>
       </span>{" "}
-      <StageBar stages={stages} scale={scale} tipHeading={`${label}, ${pct.toFixed(0)}% decided`} />{" "}
+      {outline === undefined ? (
+        <StageBar stages={stages} scale={scale} tipHeading={`${label}, ${pct.toFixed(0)}% decided`} />
+      ) : (
+        <span className="relative block">
+          <StageBar stages={stages} scale={scale} tipHeading={`${label}, ${pct.toFixed(0)}% decided`} />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 border-2 border-dashed border-foreground"
+            style={{ width: `${Math.min(100, (outline.n / scale) * 100)}%` }}
+          />
+        </span>
+      )}{" "}
       <span
         className={cn(
           "text-right text-sm tabular-nums",

@@ -19,7 +19,7 @@ import {
 
 import { getDisclosureSummary, type Cohort, type FrontierPoint } from "./publicData";
 import { getLiveCensus, receivedByMonthFrom } from "./liveCensus";
-import { getProcessingTimes, getProcessingTimesHistory } from "./processingTimes";
+import { analystPositionOf, getProcessingTimes, getProcessingTimesHistory } from "./processingTimes";
 
 /**
  * How many recent observations set the headline pace.
@@ -97,20 +97,17 @@ export async function getEstimatorData(): Promise<EstimatorData> {
 
   let frontier: EstimatorData["frontier"] = null;
   if (snapshot) {
-    const analyst = snapshot.permQueues.find((q) =>
-      q.queue.toLowerCase().includes("analyst"),
-    );
+    const position = analystPositionOf(snapshot);
     const avgRow = snapshot.permAverageDays.find((a) =>
       a.determination.toLowerCase().includes("analyst"),
     );
-    // A queue row with no readable priority date is DOL printing "--". That is
-    // a real state, not a parse failure, and it means there is no frontier to
-    // position a case against.
-    if (analyst && analyst.priorityDate) {
+    // No position is DOL printing "--". That is a real state, not a parse
+    // failure, and it means there is no frontier to position a case against.
+    if (position) {
       frontier = {
-        analystQueueMonth: analyst.priorityDate.slice(0, 7),
+        analystQueueMonth: position.month,
         officialAvgDays: avgRow && avgRow.calendarDays !== null ? avgRow.calendarDays : null,
-        asOf: snapshot.permAsOf,
+        asOf: position.asOf,
       };
     }
   }

@@ -73,6 +73,24 @@ export async function getProcessingTimes(): Promise<ProcessingTimesSnapshot | nu
   return r ? hydrate(r) : null;
 }
 
+/** The snapshot DOL had published by a day (its own as-of date on or before it), or null before the first. */
+export async function getProcessingTimesOn(day: string): Promise<ProcessingTimesSnapshot | null> {
+  const r = await one<{ json: string; fetched_at: number }>(
+    "SELECT json, fetched_at FROM processing_times WHERE perm_as_of <= ? ORDER BY perm_as_of DESC LIMIT 1",
+    [day],
+  );
+  return r ? hydrate(r) : null;
+}
+
+/**
+ * DOL's analyst-review position in a snapshot: the filing month and DOL's as-of
+ * date, or null when DOL printed "--" (a real state: no position to draw).
+ */
+export function analystPositionOf(snapshot: ProcessingTimesSnapshot): { month: string; asOf: string } | null {
+  const analyst = snapshot.permQueues.find((q) => q.queue.toLowerCase().includes("analyst"));
+  return analyst?.priorityDate ? { month: analyst.priorityDate.slice(0, 7), asOf: snapshot.permAsOf } : null;
+}
+
 /**
  * The stored series, newest first.
  *

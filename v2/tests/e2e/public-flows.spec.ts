@@ -150,3 +150,14 @@ test("a filing month opens to a day, and the day's list filters by status", asyn
   // Every case is a lookup of its own.
   await expect(page.locator('a[href^="/perm-case-status?case=G-"]').first()).toBeVisible();
 });
+
+test("the queue wall goes back to a past day and returns to today", async ({ page }) => {
+  await page.goto("/perm-queue");
+  const slider = page.getByRole("slider", { name: "Day" });
+  await expect(slider).toHaveAttribute("aria-valuetext", "Today");
+  await page.getByRole("button", { name: "A day earlier" }).click();
+  await expect(page.getByText(/cases still pending at the end of .*, against [\d,]+ today\./)).toBeVisible();
+  await expect(page.getByText("Today", { exact: true }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Back to today" }).click();
+  await expect(slider).toHaveAttribute("aria-valuetext", "Today");
+});
