@@ -17,6 +17,9 @@ import VideoPlayer from "@/components/content/VideoPlayer";
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
+import { EbLinesNow } from "@/components/content/EbLinesNow";
+import { EbApprovalsNow } from "@/components/content/EbApprovalsNow";
+import { EbSplitNow } from "@/components/content/EbSplitNow";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
 import { RecruitmentNow } from "@/components/content/RecruitmentNow";
@@ -201,6 +204,10 @@ export const mdxComponents: MDXComponents = {
   // the run OIRA or the Register does (async server components; /api/revalidate-policy expires them).
   RuleStatus,
   RuleCompare,
+  // EB-2 and EB-3 for one country, and how many PERM jobs meet the EB-2 bar, live (async server components).
+  EbLinesNow,
+  EbApprovalsNow,
+  EbSplitNow,
 
   // Headings
   //

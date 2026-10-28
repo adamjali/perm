@@ -272,6 +272,32 @@ export function classApprovals(cells: readonly ClassCountryCell[], country: stri
   return CLASS_LABELS.filter((c) => by.has(c.code)).map((c) => ({ code: c.code, label: c.label, approved: by.get(c.code)! }));
 }
 
+/** The one EB-2 or EB-3 class filed without a PERM: the national interest waiver. */
+const FILED_WITHOUT_PERM = "NIW";
+
+function permClasses(preference: "EB2" | "EB3"): string[] {
+  return CLASS_LABELS.filter((c) => c.preference === preference && c.code !== FILED_WITHOUT_PERM).map((c) => `approved_${c.code}`);
+}
+
+/**
+ * One country's I-140s filed on a PERM and since approved, by line and by the
+ * fiscal year USCIS received them: EB-2's advanced-degree class against EB-3's
+ * three classes. The national interest waiver is left out, because it needs no PERM.
+ */
+export function permLineYears(cells: readonly ClassCountryCell[], country: string): Array<{ fy: number; eb2: number; eb3: number }> {
+  const eb2 = new Set(permClasses("EB2"));
+  const eb3 = new Set(permClasses("EB3"));
+  const by = new Map<number, { fy: number; eb2: number; eb3: number }>();
+  for (const c of cells) {
+    if (c.country !== country) continue;
+    const line = eb2.has(c.measure) ? "eb2" : eb3.has(c.measure) ? "eb3" : null;
+    if (!line) continue;
+    const year = by.get(c.fy) ?? by.set(c.fy, { fy: c.fy, eb2: 0, eb3: 0 }).get(c.fy)!;
+    year[line] += c.count;
+  }
+  return [...by.values()].sort((a, b) => a.fy - b.fy);
+}
+
 /** Country sheets in the page's order: the total first, then the top five as USCIS ranks them. */
 export function countryOrder(countries: readonly string[]): string[] {
   const preferred = ["All Countries", "India", "China", "Philippines", "Brazil", "Vietnam"];

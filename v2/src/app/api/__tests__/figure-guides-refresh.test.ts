@@ -18,6 +18,8 @@ const FIGURE_ROUTES: Record<string, Array<"sweep" | "dol" | "bulletin">> = {
   BulletinFigure: ["bulletin"],
   // the wage-request count is written by the wage-request pass, which calls the sweep route; DOL's month by processing times
   PwdQueueFigure: ["sweep", "dol"],
+  // EB-2 and EB-3 side by side, from the newest bulletin (src/components/content)
+  EbLinesNow: ["bulletin"],
 };
 
 async function lists() {

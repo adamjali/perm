@@ -8,6 +8,7 @@ import {
   groupByState,
   monthLabel,
   monthsLabel,
+  permLineYears,
   pivotAwaiting,
   quarterLabel,
   quartersOfWork,
@@ -168,6 +169,26 @@ describe("I-140 by class and country", () => {
       { code: "NIW", label: "National interest waiver", approved: 10 },
     ]);
     expect(classApprovals(cells, "India", 2024)).toEqual([]);
+  });
+
+  it("counts each line's I-140s filed on a PERM, leaving out the national interest waiver", () => {
+    const cell = (country: string, fy: number, measure: string, count: number) => ({ country, preference: "X", measure, fy, count });
+    const cells = [
+      cell("India", 2021, "approved_E21", 36),
+      cell("India", 2021, "approved_NIW", 500),
+      cell("India", 2021, "approved_E31", 10),
+      cell("India", 2021, "approved_E32", 30),
+      cell("India", 2021, "approved_EW3", 2),
+      cell("India", 2021, "approved_E11", 900),
+      cell("India", 2021, "approved", 1478),
+      cell("India", 2020, "approved_E21", 33),
+      cell("China", 2021, "approved_E21", 7),
+    ];
+    expect(permLineYears(cells, "India")).toEqual([
+      { fy: 2020, eb2: 33, eb3: 0 },
+      { fy: 2021, eb2: 36, eb3: 42 },
+    ]);
+    expect(permLineYears(cells, "Brazil")).toEqual([]);
   });
 
   it("orders country sheets total-first then USCIS's top five, unknowns after", () => {

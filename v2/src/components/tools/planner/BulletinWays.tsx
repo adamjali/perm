@@ -107,16 +107,16 @@ export function BulletinNote({
               onClick={() => controls.setMethod(o.method)}
               className={cn(
                 "flex flex-col items-start border-2 p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed sm:p-5",
-                chosen ? "border-data-info-ink bg-soft-info" : "border-border bg-background hover:border-foreground",
+                chosen ? "border-foreground bg-soft-good shadow-hard-sm" : "border-border bg-background hover:border-foreground",
               )}
             >
               <span className="flex w-full flex-wrap items-center gap-2 text-sm font-semibold">
                 <span
                   aria-hidden="true"
-                  className={cn("size-3.5 shrink-0 rounded-full border-2", chosen ? "border-data-info-ink bg-data-info-ink" : "border-input bg-background")}
+                  className={cn("size-3.5 shrink-0 rounded-full border-2", chosen ? "border-foreground bg-primary" : "border-input bg-background")}
                 />{" "}
                 <span>{o.title}</span>{" "}
-                {chosen ? <span className="ml-auto bg-data-info-ink px-2 py-0.5 text-xs font-semibold text-background">In your plan</span> : null}
+                {chosen ? <span className="ml-auto border-2 border-foreground bg-primary px-2 py-0.5 text-sm font-semibold text-black">In your plan</span> : null}
               </span>{" "}
               {o.reach ? (
                 <>

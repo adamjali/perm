@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { EbSplit as Split } from "@/lib/db/ebSplit";
 import { formatInt, formatShareOf } from "@/lib/format";
+import { EB_LINE_COLOURS } from "./ebLineColours";
 import { monthYear } from "@convex/lib/months";
 
 /**
@@ -9,36 +10,47 @@ import { monthYear } from "@convex/lib/months";
  * from their wage requests. The employer picks the category at the I-140, so this is what the
  * jobs could file, never what they did.
  */
-export function EbSplit({ split, className }: { split: Split | null; className?: string }) {
+export function EbSplit({
+  split,
+  className,
+  titled = true,
+}: {
+  split: Split | null;
+  className?: string;
+  /** Off inside an article, whose own heading names the section. */
+  titled?: boolean;
+}) {
   if (!split) return null;
   const known = split.eb2 + split.eb3;
   if (known === 0) return null;
   const eb2 = (split.eb2 / known) * 100;
   return (
-    <section aria-labelledby="eb-split-h" className={className}>
-      <h2 id="eb-split-h" className="font-heading text-2xl font-bold sm:text-3xl">
-        EB-2 or EB-3: what the jobs require
-      </h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
+    <section aria-labelledby={titled ? "eb-split-h" : undefined} aria-label={titled ? undefined : "EB-2 or EB-3: what the jobs require"} className={className}>
+      {titled ? (
+        <h2 id="eb-split-h" className="font-heading text-2xl font-bold sm:text-3xl">
+          EB-2 or EB-3: what the jobs require
+        </h2>
+      ) : null}{" "}
+      <p className={titled ? "mt-2 max-w-3xl text-base leading-relaxed text-soft" : "max-w-3xl text-base leading-relaxed text-soft"}>
         The employer picks the line at the <span className="whitespace-nowrap">I-140</span>, after the PERM. The job decides which it can pick: a master&rsquo;s or
         higher, or a bachelor&rsquo;s and five years, meets the EB-2 bar.
       </p>{" "}
       <div className="mt-6 max-w-3xl">
         <div aria-hidden="true" className="flex h-12 w-full border-2 border-border">
-          <span className="h-full bg-chart-blue" style={{ width: `${eb2}%` }} />
-          <span className="h-full bg-chart-yellow" style={{ width: `${100 - eb2}%` }} />
+          <span className={`h-full ${EB_LINE_COLOURS.EB2.fill}`} style={{ width: `${eb2}%` }} />
+          <span className={`h-full ${EB_LINE_COLOURS.EB3.fill}`} style={{ width: `${100 - eb2}%` }} />
         </div>{" "}
         <dl className="mt-3 grid grid-cols-2 gap-4 [&>*]:min-w-0">
           <div>
             <dt className="flex items-center gap-1.5 text-sm text-soft">
-              <span aria-hidden="true" className="size-3 border-2 border-data-info-ink bg-chart-blue" /> Meets the EB-2 bar
+              <span aria-hidden="true" className={`size-3 border-2 ${EB_LINE_COLOURS.EB2.edge} ${EB_LINE_COLOURS.EB2.fill}`} /> Meets the EB-2 bar
             </dt>{" "}
             <dd className="font-heading text-3xl font-bold tabular-nums">{formatShareOf(split.eb2, known)}</dd>{" "}
             <dd className="text-sm text-soft">{formatInt(split.eb2)} jobs</dd>
           </div>{" "}
           <div>
             <dt className="flex items-center gap-1.5 text-sm text-soft">
-              <span aria-hidden="true" className="size-3 border-2 border-data-warn bg-chart-yellow" /> EB-3 only
+              <span aria-hidden="true" className={`size-3 border-2 ${EB_LINE_COLOURS.EB3.edge} ${EB_LINE_COLOURS.EB3.fill}`} /> EB-3 only
             </dt>{" "}
             <dd className="font-heading text-3xl font-bold tabular-nums">{formatShareOf(split.eb3, known)}</dd>{" "}
             <dd className="text-sm text-soft">{formatInt(split.eb3)} jobs</dd>
