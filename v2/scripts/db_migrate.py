@@ -41,6 +41,9 @@ COLUMNS = [
     # Form 9089 Section H (scripts/lib_recruitment.py), new-form cases only.
     "recr_supervised", "job_order_start", "job_order_end", "sunday_edition", "ad_type",
     "paper1", "ad1", "paper2", "ad2", "recr_steps", "notice",
+    # Form 9089 Section E, Item 1 and Section A, Items 14 and 15 (new form only, Oct 28 2026): the job's
+    # wage request, the employer's headcount and the year it began.
+    "pwd_number", "emp_payroll", "emp_year",
 ]
 # The first CORE columns are the ones every load has carried since the table
 # was made. The two after them (the employer's NAICS code and the worksite city)
@@ -49,8 +52,10 @@ COLUMNS = [
 # every index.
 CORE = 15
 EXTRA = COLUMNS[CORE:]
-# 35 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
-# 17,500 - comfortably under, and large enough that the round trip dominates.
+# An EXTRA column added to a live table is TEXT unless named here.
+EXTRA_TYPES = {"emp_payroll": "INTEGER", "emp_year": "INTEGER"}
+# 38 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
+# 19,000 - comfortably under, and large enough that the round trip dominates.
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
 
@@ -92,7 +97,10 @@ SCHEMA = [
          paper2        TEXT,
          ad2           TEXT,
          recr_steps    TEXT,
-         notice        TEXT
+         notice        TEXT,
+         pwd_number    TEXT,
+         emp_payroll   INTEGER,
+         emp_year      INTEGER
        )""",
 ]
 
@@ -198,6 +206,7 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
                 r.get("recrSupervised"), r.get("jobOrderStart"), r.get("jobOrderEnd"),
                 r.get("sundayEdition"), r.get("adType"), r.get("paper1"), r.get("ad1"),
                 r.get("paper2"), r.get("ad2"), r.get("recrSteps"), r.get("notice"),
+                r.get("pwdNumber"), r.get("empPayroll"), r.get("empYear"),
             )
 
 
@@ -292,7 +301,7 @@ def main() -> int:
     if incremental:
         # CREATE TABLE runs only on a full load; an incremental load writes into
         # the live table, which would reject a column it has never had.
-        added = add_missing_columns(db, "perm_cases", {c: "TEXT" for c in EXTRA})
+        added = add_missing_columns(db, "perm_cases", {c: EXTRA_TYPES.get(c, "TEXT") for c in EXTRA})
         if added:
             log(f"  added column(s) {added} to the live table")
         log("  incremental: reading existing fingerprints")
@@ -396,8 +405,8 @@ def main() -> int:
 
 
 # Rows per narrow UPDATE. A row costs two parameters per EXTRA column plus one
-# in the IN list (41 with twenty columns), so 200 rows is 8,200 parameters,
-# under SQLite's 32,766.
+# in the IN list (47 with twenty-three columns), so 200 rows is 9,400
+# parameters, under SQLite's 32,766.
 NARROW_ROWS = 200
 
 FINGERPRINT_KEY = "perm_cases_fingerprint"

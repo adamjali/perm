@@ -108,6 +108,12 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     # for the FY2024 old-form file.
     "naics": ["EMP_NAICS", "NAICS_US_CODE", "NAICS_CODE"],
     "worksite_city": ["PRIMARY_WORKSITE_CITY", "WORKSITE_CITY", "JOB_INFO_WORK_CITY"],
+    # The new form's link to the job's wage request and two facts about the
+    # employer (PERM_Record_Layout_FY2026_Q3.pdf: Section E Item 1, Section A
+    # Items 14 and 15). The old form carries none of them.
+    "pwd_number": ["JOB_OPP_PWD_NUMBER"],
+    "emp_payroll": ["EMP_NUM_PAYROLL"],
+    "emp_year": ["EMP_YEAR_COMMENCED"],
     # The worker's side of the OLD form (to mid-2023, and the FY2024 old-form
     # file). The new form publishes none of it. Names read off DOL's FY10,
     # FY16 and FY2020 record layouts; FY2008 to FY2014 spell citizenship
@@ -367,6 +373,31 @@ PERM_TRACKED = (
     "job_title", "soc_code", "soc_title", "wage", "worksite_state", "attorney_name",
     "naics", "worksite_city", "paper1", "job_order_start",
 )
+
+
+# A wage request's case number as FLAG prints it ("P-100-24339-516453").
+PWD_NUMBER_RE = re.compile(r"^P-\d{3}-\d{5}-\d{6}$")
+# The bounds a headcount and a founding year must fall in to be read at all: a
+# typo such as 0 employees or the year 20 is left blank rather than averaged.
+PAYROLL_MAX = 5_000_000
+YEAR_MIN = 1600
+
+
+def pwd_number(raw) -> str | None:
+    """The wage request's number, upper case without spaces, or None when it isn't one."""
+    v = re.sub(r"\s+", "", str(raw or "")).upper()
+    return v if PWD_NUMBER_RE.match(v) else None
+
+
+def whole_in(raw, lo: int, hi: int | None) -> int | None:
+    """A whole number from a cell, inside [lo, hi], or None (a blank, a word, or a figure out of range)."""
+    try:
+        n = float(str(raw).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+    if n != int(n) or n < lo or (hi is not None and n > hi):
+        return None
+    return int(n)
 
 
 class CaseWriter:
@@ -859,6 +890,9 @@ def parse_file(
                         "wage": wage,
                         "naics": normalize_naics(rec.get("naics")),
                         "worksiteCity": " ".join((rec.get("worksite_city") or "").split())[:60] or None,
+                        "pwdNumber": pwd_number(rec.get("pwd_number")),
+                        "empPayroll": whole_in(rec.get("emp_payroll"), 1, PAYROLL_MAX),
+                        "empYear": whole_in(rec.get("emp_year"), YEAR_MIN, int(decided[:4]) if decided else None),
                         **worker_fields(rec),
                         **recruitment_fields(rec, to_iso),
                     }

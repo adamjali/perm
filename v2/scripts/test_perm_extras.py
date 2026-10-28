@@ -194,6 +194,33 @@ def recruitment_check(db, incoming: list[dict]) -> None:
           db.sql.count("UPDATE") == 1 and db.sql.count("INSERT") == 0)
 
 
+def employer_check(db, incoming: list[dict]) -> None:
+    """The job's wage request and two employer facts (Oct 28 2026): read off the file's own cells,
+    then loaded by a narrow UPDATE when they're all that changed."""
+    from ingest_perm_disclosure import PAYROLL_MAX, pwd_number, whole_in
+
+    check("a wage request's number, cleaned", pwd_number(" p-100-24339-516453 ") == "P-100-24339-516453")
+    check("anything else is no number", [pwd_number(v) for v in ("N/A", "", None, "P-100-2433-516453", "G-100-24339-516453")]
+          == [None] * 5)
+    check("a headcount as a whole number", whole_in("1,250", 1, PAYROLL_MAX) == 1250 and whole_in(1250.0, 1, PAYROLL_MAX) == 1250)
+    check("zero, a fraction, a word or too many employees is blank",
+          [whole_in(v, 1, PAYROLL_MAX) for v in ("0", "12.5", "many", PAYROLL_MAX + 1)] == [None] * 4)
+    check("a founding year up to the decision's year", whole_in("1998", 1600, 2025) == 1998
+          and whole_in("2031", 1600, 2025) is None and whole_in("20", 1600, 2025) is None)
+
+    db.sql = []
+    extra = {"pwdNumber": "P-100-24339-516453", "empPayroll": 1250, "empYear": 1998}
+    load(db, [dict(c, **extra) if c["caseNumber"] == incoming[0]["caseNumber"] else c for c in incoming])
+    got = db.conn.execute("SELECT pwd_number, emp_payroll, emp_year FROM perm_cases WHERE case_number = ?",
+                          [incoming[0]["caseNumber"]]).fetchone()
+    check(f"they land in perm_cases (got {got})", tuple(got) == ("P-100-24339-516453", 1250, 1998))
+    check(f"by one narrow UPDATE, no row rewritten (saw {db.sql})",
+          db.sql.count("UPDATE") == 1 and db.sql.count("INSERT") == 0)
+    types = {r[1]: r[2] for r in db.conn.execute("PRAGMA table_info(perm_cases)")}
+    check(f"headcount and year are whole numbers in the table ({types.get('emp_payroll')}, {types.get('emp_year')})",
+          types.get("emp_payroll") == "INTEGER" and types.get("emp_year") == "INTEGER")
+
+
 def main() -> int:
     db = Recording()
     same, changed = case(1), case(2)
@@ -235,6 +262,7 @@ def main() -> int:
 
     facets_check()
     recruitment_check(db, incoming)
+    employer_check(db, incoming)
 
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0
