@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { Fragment, type ReactNode } from "react";
 
 import type { PlanStep } from "@/lib/perm";
@@ -30,6 +31,15 @@ const fillOf = (s: PlanStep) =>
       : s.key === "visa"
         ? "bg-chart-blue border-2 border-data-info-ink"
         : "bg-chart-yellow border-2 border-data-warn";
+
+/** The step's own colour for its number and its length, the same family as its bar. */
+const tileOf = (s: PlanStep) =>
+  s.state === "done"
+    ? "bg-data-good-ink text-background border-2 border-data-good-ink"
+    : s.key === "visa"
+      ? "bg-chart-blue text-black border-2 border-data-info-ink"
+      : "bg-chart-yellow text-black border-2 border-data-warn";
+const inkOf = (s: PlanStep) => (s.state === "done" ? "text-data-good-ink" : s.key === "visa" ? "text-data-info-ink" : "text-data-warn-ink");
 
 /** Room past the last date for a step with no end, drawn hatched to the edge. */
 const OPEN_END_DAYS = 120;
@@ -84,7 +94,7 @@ export function PlanTimeline({ steps, sideSteps, today }: { steps: PlanStep[]; s
       <h2 id="plan-steps" className="font-heading text-2xl font-bold">
         How long each step takes
       </h2>{" "}
-      <div aria-hidden="true" className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-[17rem_minmax(0,1fr)] [&>*]:min-w-0">
+      <div aria-hidden="true" className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-[19rem_minmax(0,1fr)] [&>*]:min-w-0">
         <span className="hidden md:block" />{" "}
         <div className="relative h-6 text-sm tabular-nums text-soft">
           {ticks.map((t, i) =>
@@ -105,9 +115,9 @@ export function PlanTimeline({ steps, sideSteps, today }: { steps: PlanStep[]; s
         </div>
       </div>{" "}
       <ol className="border-t-2 border-border">
-        {steps.map((s) => (
-          <li key={s.key} className="grid grid-cols-1 items-center gap-x-4 gap-y-1 border-b border-border py-3 md:grid-cols-[17rem_minmax(0,1fr)] [&>*]:min-w-0">
-            <StepLabel s={s} today={today} sides={s.key === "i485" ? sideSteps : []} />{" "}
+        {steps.map((s, i) => (
+          <li key={s.key} className="grid grid-cols-1 items-center gap-x-4 gap-y-1 border-b border-border py-3 md:grid-cols-[19rem_minmax(0,1fr)] [&>*]:min-w-0">
+            <StepLabel s={s} n={i + 1} today={today} sides={s.key === "i485" ? sideSteps : []} />{" "}
             <div className="space-y-1">
               <Bar s={s} />
               {s.key === "i485" ? sideSteps.map((side) => <Bar key={side.key} s={side} thin />) : null}
@@ -115,48 +125,105 @@ export function PlanTimeline({ steps, sideSteps, today }: { steps: PlanStep[]; s
           </li>
         ))}
       </ol>{" "}
-      <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-soft">
-        <Key className="bg-data-good-ink">Done</Key> <Key className="border-2 border-data-warn bg-chart-yellow">Typical</Key>{" "}
-        <Key className="border-2 border-data-warn bg-chart-yellow opacity-40">Quick to slow</Key>{" "}
-        <Key className="border-2 border-data-info-ink bg-chart-blue">Waiting for the bulletin</Key>{" "}
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden="true" className="h-4 w-1 bg-foreground" /> Your date
-        </span>
-      </p>
+      <Legend steps={all} />
     </section>
   );
 }
 
 const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
+/** The key: only what the chart above actually draws. */
+function Legend({ steps }: { steps: PlanStep[] }) {
+  const dated = steps.filter((s) => s.end);
+  const items: { key: string; show: boolean; node: ReactNode }[] = [
+    { key: "done", show: dated.some((s) => s.state === "done"), node: <Key className="bg-data-good-ink">Done</Key> },
+    {
+      key: "ahead",
+      show: dated.some((s) => s.state !== "done" && s.key !== "visa"),
+      node: <Key className="border-2 border-data-warn bg-chart-yellow">Still to come</Key>,
+    },
+    {
+      key: "visa",
+      show: dated.some((s) => s.state !== "done" && s.key === "visa"),
+      node: <Key className="border-2 border-data-info-ink bg-chart-blue">Waiting for your date to be current</Key>,
+    },
+    {
+      key: "range",
+      show: dated.some((s) => s.start.low !== s.start.high || s.end!.low !== s.end!.high),
+      node: <Key className="border-2 border-data-warn bg-chart-yellow opacity-40">Faint: as quick or as slow as it can run</Key>,
+    },
+    { key: "open", show: steps.some((s) => !s.end), node: <Key className="border-2 border-input bg-hatch">No date yet</Key> },
+    {
+      key: "pin",
+      show: steps.some((s) => s.known.start || s.known.end),
+      node: (
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-4 w-1 bg-foreground" /> Your date
+        </span>
+      ),
+    },
+  ];
+  return (
+    <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-soft">
+      {items
+        .filter((i) => i.show)
+        .map((i) => (
+          <Fragment key={i.key}>
+            {i.node}{" "}
+          </Fragment>
+        ))}
+    </p>
+  );
+}
+
+/** The bold line under a step's name: how long it takes, or for the bulletin, when your date is current. */
+function headline(s: PlanStep, today: string): string | null {
+  if (!s.end) return null;
+  if (s.key === "visa") return s.start.mid === s.end.mid ? "No wait" : `Current around ${dayLabel(s.end.mid, today)}`;
+  const length = lengthLabel(s.start, s.end);
+  return s.known.start && s.known.end ? `Took ${length}` : capitalize(length);
+}
+
+/** The quiet line under it: when the step runs. */
+function when(s: PlanStep, today: string): string {
+  if (!s.end) return `From ${dayLabel(s.start.mid, today, s.known.start)}, no date yet`;
+  if (s.key === "visa") {
+    return s.start.mid === s.end.mid ? "Your date is already current" : `${capitalize(lengthLabel(s.start, s.end))} after the I-140 is approved`;
+  }
+  if (s.state === "done") {
+    return s.known.end
+      ? `Done ${dayLabel(s.end.mid, today, true)}`
+      : `Done, about ${dayLabel(s.start.mid, today, s.known.start)} to ${dayLabel(s.end.mid, today)}`;
+  }
+  return `${dayLabel(s.start.mid, today, s.known.start)} to ${dayLabel(s.end.mid, today)}`;
+}
+
 function Pin({ left }: { left: number }) {
   return <span className="absolute inset-y-0 w-1 -translate-x-1/2 bg-foreground" style={{ left: `${left}%` }} />;
 }
 
-function StepLabel({ s, today, sides }: { s: PlanStep; today: string; sides: PlanStep[] }) {
+function StepLabel({ s, n, today, sides }: { s: PlanStep; n: number; today: string; sides: PlanStep[] }) {
   return (
-    <div className="leading-snug">
-      <Link href={STEP_HREF[s.key]} className="link inline-flex min-h-11 items-center font-semibold">
-        {s.name}
-      </Link>{" "}
-      {s.end ? (
-        <p className="text-lg font-bold tabular-nums">
-          {s.known.end ? "Took " : ""}
-          {s.known.end ? lengthLabel(s.start, s.end) : capitalize(lengthLabel(s.start, s.end))}
-        </p>
-      ) : null}{" "}
-      <p className="text-sm tabular-nums text-soft">
-        {s.end
-          ? s.known.end
-            ? `Done ${dayLabel(s.end.mid, today, true)}`
-            : `${dayLabel(s.start.mid, today, s.known.start)} to ${dayLabel(s.end.mid, today)}`
-          : `From ${dayLabel(s.start.mid, today, s.known.start)}, no date yet`}
-      </p>{" "}
-      {sides.map((side) => (
-        <p key={side.key} className="text-sm tabular-nums text-soft">
-          {side.name}: {side.end ? dayLabel(side.end.mid, today) : "no measured wait"}{" "}
-        </p>
-      ))}
+    <div className="flex gap-3">
+      <span aria-hidden="true" className={cn("mt-2 grid size-8 shrink-0 place-items-center font-heading text-base font-bold", tileOf(s))}>
+        {n}
+      </span>{" "}
+      <div className="min-w-0 leading-snug">
+        <Link
+          href={STEP_HREF[s.key]}
+          className="group inline-flex min-h-11 items-center gap-1.5 font-heading text-xl font-bold text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          {s.name}{" "}
+          <ArrowRightIcon aria-hidden="true" weight="bold" className="size-4 text-soft transition-transform motion-safe:group-hover:translate-x-0.5" />
+        </Link>{" "}
+        {headline(s, today) ? <p className={cn("text-lg font-bold tabular-nums", inkOf(s))}>{headline(s, today)}</p> : null}{" "}
+        <p className="text-sm tabular-nums text-soft">{when(s, today)}</p>{" "}
+        {sides.map((side) => (
+          <p key={side.key} className="text-sm tabular-nums text-soft">
+            {side.name}: {side.end ? dayLabel(side.end.mid, today) : "no measured wait"}{" "}
+          </p>
+        ))}
+      </div>
     </div>
   );
 }

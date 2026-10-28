@@ -108,7 +108,7 @@ export const PLAN_STAGES: readonly StageInfo[] = [
   },
   {
     key: 'visa',
-    name: 'Waiting for the visa bulletin',
+    name: 'Visa bulletin',
     owner: 'state',
     detail:
       "The State Department's monthly final action cutoff has to pass your priority date. The I-485 goes in then, or with the I-140 when the date is already current.",
@@ -275,6 +275,9 @@ export interface BulletinReading {
   gapDays: number | null;
   /** The day the cutoff should reach the priority date, by the chosen way. */
   reach: DayRange | null;
+  /** The same day each way, so the page can set them side by side. */
+  reachByPace: DayRange | null;
+  reachBySupply: DayRange | null;
 }
 
 export interface Plan {
@@ -415,6 +418,26 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   at[startAt] = fixed(known[startAt] ?? input.startOn);
   const basis: Partial<Record<PlanStage, string>> = {};
 
+  // Each step's length as the plan uses it: recruitment never under the rules' minimum, the
+  // I-140's preparation never past the certification's last day.
+  const rec = orderedSpan(figures.spans.recruitment);
+  const recruitmentSpan: Span = { low: Math.max(rec.low, RECRUITMENT_MIN_DAYS), mid: Math.max(rec.mid, RECRUITMENT_MIN_DAYS), high: Math.max(rec.high, RECRUITMENT_MIN_DAYS) };
+  const prep = orderedSpan(figures.spans.i140Prep);
+  const prepSpan: Span = { low: Math.min(prep.low, I140_FILE_BY_DAYS), mid: Math.min(prep.mid, I140_FILE_BY_DAYS), high: Math.min(prep.high, I140_FILE_BY_DAYS) };
+  const spanOf: Partial<Record<PlanStage, Span | null>> = { pwd: figures.spans.pwd, recruitment: recruitmentSpan, perm: figures.spans.perm, i140Prep: prepSpan };
+
+  // The steps before the first date the reader gave have happened: each is dated back from it
+  // with today's lengths, an estimate the page marks as one, so the plan always runs end to end.
+  for (let i = startIdx - 1; i >= 0; i--) {
+    const stage = PLAN_STAGES.find((s) => s.from === MILESTONE_ORDER[i] && s.to === MILESTONE_ORDER[i + 1]);
+    const span = stage ? spanOf[stage.key] : null;
+    const next = at[MILESTONE_ORDER[i + 1]!];
+    if (!stage || !span || !next) break;
+    const o = orderedSpan(span);
+    at[MILESTONE_ORDER[i]!] = { low: plusDays(next.low, -o.high), mid: plusDays(next.mid, -o.mid), high: plusDays(next.high, -o.low) };
+    basis[stage.key] = "Before your first date: dated back from it with today's lengths";
+  }
+
   // The steps up to the I-140's decision chain one after another.
   const chain = (stage: PlanStage, span: Span | null, why: string) => {
     const s = stageInfo(stage);
@@ -434,12 +457,7 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   } else {
     chain('pwd', figures.spans.pwd, "DOL's wait now, from the filing days it decided last");
   }
-  const recruitment = figures.spans.recruitment;
-  chain(
-    'recruitment',
-    { low: Math.max(recruitment.low, RECRUITMENT_MIN_DAYS), mid: Math.max(recruitment.mid, RECRUITMENT_MIN_DAYS), high: Math.max(recruitment.high, RECRUITMENT_MIN_DAYS) },
-    'The time employers took, first recruitment step to filing',
-  );
+  chain('recruitment', recruitmentSpan, 'The time employers took, first recruitment step to filing');
 
   // The PERM: a case already filed is dated from the cases still ahead of it, when known.
   const pd = at.permFiled;
@@ -451,8 +469,7 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     chain('perm', figures.spans.perm, "DOL's wait now, from the filing days it decided last");
   }
 
-  const prep = orderedSpan(figures.spans.i140Prep);
-  chain('i140Prep', { low: Math.min(prep.low, I140_FILE_BY_DAYS), mid: Math.min(prep.mid, I140_FILE_BY_DAYS), high: Math.min(prep.high, I140_FILE_BY_DAYS) }, 'Your attorney\'s timing, inside the 180 days');
+  chain('i140Prep', prepSpan, "Your attorney's timing, inside the 180 days");
 
   // The I-140: premium processing is fixed in business days.
   const i140Info = stageInfo('i140');
@@ -480,13 +497,12 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   const method: BulletinMethod = figures.bulletinMethod ?? 'pace';
   const byPace = cell && pdMid && !current ? paceMonths(cell, pdMid, figures.missMonthsAt) : null;
   const bySupply = pdMid && !current ? supplyMonths(figures.supply) : null;
-  const months = method === 'supply' ? (bySupply ?? null) : (byPace?.months ?? null);
   const bulletinFrom = figures.bulletinMonth ? `${figures.bulletinMonth}-01` : today;
-  const reach: DayRange | null = current
-    ? fixed(bulletinFrom)
-    : months
-      ? { low: plusDays(bulletinFrom, monthsToDays(months.low)), mid: plusDays(bulletinFrom, monthsToDays(months.mid)), high: plusDays(bulletinFrom, monthsToDays(months.high)) }
-      : null;
+  const reachIn = (m: Span | null): DayRange | null =>
+    m ? { low: plusDays(bulletinFrom, monthsToDays(m.low)), mid: plusDays(bulletinFrom, monthsToDays(m.mid)), high: plusDays(bulletinFrom, monthsToDays(m.high)) } : null;
+  const reachByPace = current ? null : reachIn(byPace?.months ?? null);
+  const reachBySupply = current ? null : reachIn(bySupply);
+  const reach: DayRange | null = current ? fixed(bulletinFrom) : method === 'supply' ? reachBySupply : reachByPace;
 
   // The I-485 goes in once the cutoff passes the priority date and the I-140 is in:
   // with the I-140 when the date is already current (concurrent filing).
@@ -508,12 +524,18 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   basis.i485 = knownSet.has('greenCard') ? 'Your date' : "USCIS's employment-based medians, the last four quarters";
   holdUnderKnown(at, known);
 
-  // The steps the plan covers: from the first known (or planned) milestone on.
+  // Every step, end to end: the ones before the first date the reader gave are done.
   const state = (start: DayRange, end: DayRange | null): StepState =>
     end && end.mid <= today ? 'done' : start.mid <= today ? 'now' : 'ahead';
   const steps: PlanStep[] = [];
   for (const s of PLAN_STAGES) {
-    if (MILESTONE_ORDER.indexOf(s.to) <= startIdx) continue;
+    if (MILESTONE_ORDER.indexOf(s.to) <= startIdx) {
+      const [start, end] = [at[s.from], at[s.to]];
+      if (start && end) {
+        steps.push({ ...s, start, end, known: { start: knownSet.has(s.from), end: knownSet.has(s.to) }, state: 'done', basis: basis[s.key] ?? '' });
+      }
+      continue;
+    }
     // The visa wait runs from the I-140's decision to the I-485; a current date has none,
     // so it sits on the day the I-485 goes in.
     const start =
@@ -590,7 +612,7 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     priorityDate: pd,
     greenCard: at.greenCard,
     current,
-    bulletin: { method, byPace: byPace?.months ?? null, bySupply, gapDays: byPace?.gapDays ?? (current ? 0 : null), reach },
+    bulletin: { method, byPace: byPace?.months ?? null, bySupply, gapDays: byPace?.gapDays ?? (current ? 0 : null), reach, reachByPace, reachBySupply },
     fees,
     costs,
     totals: { all: sum(), employer: sum('employer'), agreed: sum('agreed') },

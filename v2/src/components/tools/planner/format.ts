@@ -13,12 +13,12 @@ export function monthShort(iso: string): string {
   return m ? `${MONTH_ABBR[Number(m[2]) - 1]} ${m[1]}` : iso;
 }
 
-/** Past this many days ahead, a date reads to its month: the range is wider than a day says. */
+/** Past this many days from today, either way, an estimated date reads to its month: the range is wider than a day says. */
 export const MONTH_PRECISION_AFTER_DAYS = 120;
 
 /** A day as precise as it deserves: to the day when known or near, to the month when far off. */
 export function dayLabel(iso: string, today: string, known = false): string {
-  return known || daysBetween(today, iso) <= MONTH_PRECISION_AFTER_DAYS ? shortDate(iso) ?? iso : monthShort(iso);
+  return known || Math.abs(daysBetween(today, iso)) <= MONTH_PRECISION_AFTER_DAYS ? (shortDate(iso) ?? iso) : monthShort(iso);
 }
 
 /** "Nov 2028 to Jul 2029", or one day when the range is one day. */

@@ -201,7 +201,17 @@ export function GreenCardPlanner({ reading, check, today }: { reading: PlanReadi
           <DateRail plan={plan} today={today} noDateWhy={noDateWhy} />{" "}
           {answer?.permNote && known.permFiled ? <p className="mt-6 max-w-3xl text-base leading-relaxed">{answer.permNote}</p> : null}{" "}
           <PlanTimeline steps={plan.steps} sideSteps={plan.sideSteps} today={today} />{" "}
-          <BulletinNote plan={plan} cell={cell} lineName={lineName} bulletinMonth={reading.figures.bulletinMonth} onChange={openFigures} />{" "}
+          <BulletinNote
+            plan={plan}
+            cell={cell}
+            lineName={lineName}
+            bulletinMonth={reading.figures.bulletinMonth}
+            line={answer?.line ?? null}
+            lineState={lineState}
+            controls={{ method: o.method, setMethod: (method) => setO((prev) => ({ ...prev, method })) }}
+            onMore={openFigures}
+            today={today}
+          />{" "}
           <PlanCosts plan={plan} fees={fees} setFees={setFees} own={own} setOwn={setOwn} today={today} />{" "}
           {/* The next step for the reader's own line: the wait the plan is least sure of, by email as it moves. */}
           <div className="mt-14 max-w-2xl">
@@ -229,14 +239,9 @@ export function GreenCardPlanner({ reading, check, today }: { reading: PlanReadi
               <BulletinChoice
                 plan={plan}
                 cell={cell}
-                lineName={lineName}
-                bulletinMonth={reading.figures.bulletinMonth}
                 check={check}
                 line={answer?.line ?? null}
-                lineState={lineState}
                 controls={{
-                  method: o.method,
-                  setMethod: (method) => setO((prev) => ({ ...prev, method })),
                   paceDaysPerMonth: o.paceDaysPerMonth,
                   setPace: (paceDaysPerMonth) => setO((prev) => ({ ...prev, paceDaysPerMonth })),
                   perYear: o.perYear,

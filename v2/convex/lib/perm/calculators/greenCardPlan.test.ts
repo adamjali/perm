@@ -76,12 +76,18 @@ describe('buildPlan', () => {
   });
 
   describe('the dates the reader knows', () => {
-    it('starts at the earliest known date and leaves out the steps before it', () => {
+    it('runs end to end from any date: the steps before the first one are dated back from it, as done', () => {
       const plan = buildPlan({ ...base, known: { permFiled: '2025-10-20', permCertified: '2026-09-01' } }, FIGURES);
-      expect(plan.steps[0]!.key).toBe('perm');
+      expect(plan.steps.map((s) => s.key)).toEqual(PLAN_STAGES.map((s) => s.key));
       expect(plan.priorityDate).toEqual({ low: '2025-10-20', mid: '2025-10-20', high: '2025-10-20' });
       expect(step(plan, 'perm').known).toEqual({ start: true, end: true });
       expect(step(plan, 'perm').state).toBe('done');
+      // Recruitment took 73 to 176 days (typically 120) before the priority date; the wage request 90 to 110 before that.
+      expect(step(plan, 'recruitment')).toMatchObject({ state: 'done', known: { start: false, end: true }, end: plan.priorityDate });
+      expect(plan.milestones.pwdIssued).toEqual({ low: '2025-04-27', mid: '2025-06-22', high: '2025-08-08' });
+      expect(plan.milestones.pwdFiled).toEqual({ low: '2025-01-07', mid: '2025-03-17', high: '2025-05-10' });
+      expect(step(plan, 'pwd').state).toBe('done');
+      expect(step(plan, 'pwd').basis).toMatch(/dated back/);
     });
 
     it('pins a later known date and moves every step after it from there', () => {
@@ -183,8 +189,10 @@ describe('buildPlan', () => {
       expect(plan.bulletin.method).toBe('supply');
       expect(plan.bulletin.bySupply).toEqual({ low: 6, mid: 9, high: 12 });
       expect(plan.bulletin.reach!.mid).toBe('2027-08-02'); // Nov 1 2026 + 9 months of 30.44 days (274)
-      // Both ways are always worked out, so the page can show the other.
+      // Both ways are always worked out, with their dates, so the page can set them side by side.
       expect(plan.bulletin.byPace!.mid).toBe(17.2);
+      expect(plan.bulletin.reachBySupply).toEqual(plan.bulletin.reach);
+      expect(plan.bulletin.reachByPace!.mid > plan.bulletin.reachBySupply!.mid).toBe(true);
     });
 
     it('uses the reader\'s cutoff pace in place of the measured one', () => {

@@ -76,7 +76,7 @@ describe("GreenCardPlanner", () => {
     const glance = screen.getByRole("region", { name: "Your plan at a glance" });
     expect(within(glance).getByText("Green card")).toBeInTheDocument();
     expect(within(glance).getByText("$3,645")).toBeInTheDocument();
-    for (const step of ["Wage request", "Recruitment", "PERM", "Preparing the I-140", "I-140", "Waiting for the visa bulletin", "I-485 and the green card"]) {
+    for (const step of ["Wage request", "Recruitment", "PERM", "Preparing the I-140", "I-140", "Visa bulletin", "I-485 and the green card"]) {
       expect(row(step)).toBeInTheDocument();
     }
     // Today, then 97 days for the wage request and 120 for recruitment: Jun 2027.
@@ -92,7 +92,9 @@ describe("GreenCardPlanner", () => {
     expect(within(tile("PERM certified")).getByText("Sep 1, 2026")).toBeInTheDocument();
     expect(within(tile("PERM certified")).getByText("Your date")).toBeInTheDocument();
     expect(within(tile("Priority date")).getByText("Oct 20, 2025")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /^Wage request/ })).not.toBeInTheDocument();
+    // The whole journey: the steps before the first date are there, done, dated back from it.
+    expect(within(row("Wage request")).getByText(/^Done, about /)).toBeInTheDocument();
+    expect(within(row("PERM")).getByText("Done Sep 1, 2026")).toBeInTheDocument();
   });
 
   it("writes a changed input back to the address without scrolling", () => {
@@ -163,17 +165,22 @@ describe("GreenCardPlanner, a filed PERM", () => {
     expect(within(tile("PERM certified")).getByText("Nov 27, 2026")).toBeInTheDocument();
   });
 
-  it("gives the bulletin wait both ways, and dates the plan by the people ahead when the reader picks it", async () => {
+  it("dates when the priority date becomes current both ways, and switches the plan in one press", async () => {
     renderPlanner();
-    const supply = await screen.findByLabelText(/People ahead of you/, {}, ASKED);
-    // 315 days behind the cutoff at 15 days a month: 21 months by the pace; 30,000 people at 40,000 a year: 9 months.
-    expect(screen.getByText(/least certain step: about 21 months at the cutoff's pace, or about 9 months by the people ahead of you/)).toBeInTheDocument();
+    const supply = await screen.findByRole("button", { name: /By the people ahead of you/ }, ASKED);
+    const pace = screen.getByRole("button", { name: /At the cutoff's pace/ });
+    expect(pace).toHaveAttribute("aria-pressed", "true");
+    // Nov 1 2026 + 21 months by the pace (315 days behind the cutoff at 15 a month); + 9 by the people ahead (30,000 at 40,000 a year).
+    expect(within(pace).getByText("Aug 2028")).toBeInTheDocument();
+    expect(within(supply).getByText("Aug 2027")).toBeInTheDocument();
+    expect(within(row("Visa bulletin")).getByText(/^Current around /)).toBeInTheDocument();
     const before = within(tile("I-485 filed")).getAllByText(/20\d\d/)[0]!.textContent;
     fireEvent.click(supply);
-    expect(supply).toBeChecked();
+    expect(supply).toHaveAttribute("aria-pressed", "true");
     expect(within(tile("I-485 filed")).getAllByText(/20\d\d/)[0]!.textContent).not.toBe(before);
     fireEvent.change(screen.getByLabelText("Green cards to the line a year"), { target: { value: "20000" } });
-    expect(screen.getByText("about 18 months")).toBeInTheDocument();
+    // 30,000 at 20,000 a year: 18 months.
+    expect(within(supply).getByText("May 2028")).toBeInTheDocument();
   });
 });
 
