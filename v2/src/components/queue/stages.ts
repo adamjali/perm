@@ -135,20 +135,19 @@ export const STAGE_META: Record<QueueStage, StageMeta> = {
   // under appeal soft orange. The counts and labels stay ink.
   analyst: {
     label: "Analyst review",
-    gloss: "the ordinary queue, worked in filing order",
+    gloss: "worked in filing order",
     fill: "bg-chart-green",
     ink: "text-foreground",
   },
   held: {
     label: "Out of filing order",
-    gloss:
-      "a hold, an information request, a NORD, supervised recruitment or an audit takes a case off the ordinary queue",
+    gloss: "on hold, at RFI, NORD, audit or supervised recruitment",
     fill: "bg-chart-blue",
     ink: "text-data-warn-ink",
   },
   appeal: {
     label: "Under appeal or review",
-    gloss: "cases that went to appeal after an adverse determination",
+    gloss: "appealed after an adverse decision",
     fill: "bg-chart-orange",
     ink: "text-data-bad-ink",
   },

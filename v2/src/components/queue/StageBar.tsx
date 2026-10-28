@@ -153,7 +153,9 @@ export function StageLegend({
   className?: string;
 }) {
   return (
-    <ul className={`grid grid-cols-1 gap-3 sm:grid-cols-3 ${className ?? ""}`}>
+    // Three columns at every width: stacked, the three counts ran a phone's
+    // screen and a half before the picture below them (Oct 28 2026).
+    <ul className={`grid grid-cols-3 gap-3 [&>*]:min-w-0 ${className ?? ""}`}>
       {STAGE_ORDER.map((stage) => {
         const group = stages.find((s) => s.stage === stage);
         const meta = STAGE_META[stage];
@@ -173,7 +175,7 @@ export function StageLegend({
                   {meta.label}
                 </span>
               </span>{" "}
-              <span className="mt-1 block font-heading text-2xl font-bold tabular-nums">
+              <span className="mt-1 block font-heading text-xl font-bold tabular-nums sm:text-2xl">
                 {formatInt(group?.count ?? 0)}
               </span>{" "}
               <span className="mt-1 block text-sm leading-snug text-muted-foreground">

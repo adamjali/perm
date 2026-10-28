@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Figure } from "@/components/data/FigureRow";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { withSocialCard } from "@/lib/socialCard";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { getDatasetSchema } from "@/lib/structuredData";
@@ -215,114 +215,107 @@ export default async function PermQueuePage() {
         </CaveatBox>
       ) : null}
 
-      <section className="mt-10 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
+      {/* The queue in three figures, in the site's figure row: DOL's month in lime,
+          the colour that marks DOL's line on the wall below. How each is measured
+          is folded under them (owner, Oct 28 2026: pictures, not text boxes). */}
+      <section aria-label="The PERM queue in three figures" className="mt-8">
+        <FigureRow>
           <Figure
-            label="Last seen undecided"
+            label="Still waiting"
             value={formatInt(census.pending)}
-            note={`cases across ${census.months.length} filing months, out of ${formatInt(census.total)} scanned`}
+            note={`PERM cases, across ${census.months.length} filing months`}
           />
           <Figure
+            tone="lime"
             label="DOL is working"
             value={dolMonth ? (formatMonth(dolMonth) ?? dolMonth) : "Not published"}
-            note={
-              dolAsOf
-                ? `DOL's own analyst review position, as of ${dolAsOf}`
-                : "DOL printed no readable priority date for analyst review"
-            }
+            note={dolAsOf ? `DOL's own position, as of ${dolAsOf}` : "DOL printed no readable month"}
           />
           <Figure
-            label="Frontier advance"
-            value={advance ? `${advance.rate.toFixed(1)}x` : "Not measurable"}
-            note={
-              advance
-                ? `filing months cleared per calendar month, over the ${advance.pointsUsed} determination months to ${formatMonth(advance.toMonth) ?? advance.toMonth}`
-                : "too few determination months to resolve a rate"
-            }
+            label="Months cleared a month"
+            value={advance ? `${advance.rate.toFixed(1)}` : "Not measurable"}
+            note={advance ? `filing months DOL cleared per month, to ${formatMonth(advance.toMonth) ?? advance.toMonth}` : "too few months to measure"}
           />
-        </div>{" "}
-
-        <div className="mt-8 max-w-3xl space-y-3 border-t-2 border-border pt-6 text-base leading-relaxed text-soft">
-          {front ? (
-            <p>
-              The oldest filing month that isn&rsquo;t substantially decided is{" "}
-              <b className="font-bold">{formatMonth(front.month)}</b>, which is{" "}
-              {front.decidedPct !== null ? `${front.decidedPct.toFixed(0)}% decided ` : ""}
-              and still holds {formatInt(front.pendingHere)} undecided cases.{" "}
-              {newest ? (
-                <>
-                  It sits {front.monthsBack}{" "}
-                  {front.monthsBack === 1 ? "month" : "months"} behind{" "}
-                  {formatMonth(newest)}, the newest month with filings.
-                </>
-              ) : null}
-            </p>
-          ) : null}
-
-          <FinePrint summary="How this position was measured, and how fast it moves">
-          {agrees ? (
-            <p>
-              That&rsquo;s the month DOL publishes as its analyst-review
-              position, reached from the opposite direction: DOL states where
-              it is; this scan finds the oldest month that hasn&rsquo;t cleared.
-              Two measurements, one answer.
-            </p>
-          ) : dolMonth !== null && front !== null ? (
-            <p>
-              DOL publishes {formatMonth(dolMonth)} as its analyst-review
-              position; this scan measures {formatMonth(front.month)}. Both are
-              shown unadjusted; neither has been moved towards the other.
-            </p>
-          ) : null}
-
-          {advance ? (
-            <p>
-              Anything above 1.0 means DOL is clearing filing dates faster
-              than new ones arrive.
-              {advance.slowest !== null && advance.fastest !== null ? (
-                <>
-                  {" "}
-                  Across the whole series that rate has run between{" "}
-                  {`${advance.slowest.toFixed(2)}x`} and{" "}
-                  {`${advance.fastest.toFixed(2)}x`}, which is why it
-                  isn&rsquo;t a rate to plan around.
-                </>
-              ) : null}
-            </p>
-          ) : null}{" "}
-
-          {/* How the rate is measured, not what it means: the sentence above
-              is the part that changes how the figure reads. */}
-          {advance ? (
-            <FinePrint summary="How the advance is measured">
+        </FigureRow>{" "}
+        <FinePrint summary="How these are measured" className="mt-3">
+          <div className="space-y-3 text-base leading-relaxed text-soft">
+            {front ? (
               <p>
-                Over the {advance.pointsUsed} determination months to{" "}
-                {formatMonth(advance.toMonth) ?? advance.toMonth}, the median
-                filing date on DOL&rsquo;s determinations moved forward{" "}
-                {advance.rate.toFixed(1)} months for every calendar month that
-                passed.
+                The oldest filing month that isn&rsquo;t substantially decided is{" "}
+                <b className="font-bold">{formatMonth(front.month)}</b>, which is{" "}
+                {front.decidedPct !== null ? `${front.decidedPct.toFixed(0)}% decided ` : ""}
+                and still holds {formatInt(front.pendingHere)} undecided cases.{" "}
+                {newest ? (
+                  <>
+                    It sits {front.monthsBack}{" "}
+                    {front.monthsBack === 1 ? "month" : "months"} behind{" "}
+                    {formatMonth(newest)}, the newest month with filings.
+                  </>
+                ) : null}
               </p>
-            </FinePrint>
-          ) : null}
+            ) : null}
 
-          {lastClearance ? (
-            <p>
-              DOL issued {formatInt(lastClearance.decisions)} determinations in{" "}
-              {formatMonth(lastClearance.decisionMonth)}, the last full month in
-              its disclosure window, against {formatInt(census.pending)} still
-              undecided. Those two figures don&rsquo;t get divided into a wait:
-              new applications keep arriving and DOL reprioritises. The{" "}
-              <Link
-                href="/tools/perm-timeline-calculator"
-                className="link"
-              >
-                timeline calculator
-              </Link>{" "}
-              works from the percentile spread of decided cases instead.
-            </p>
-          ) : null}
-          </FinePrint>
-        </div>
+            {agrees ? (
+              <p>
+                That&rsquo;s the month DOL publishes as its analyst-review
+                position, reached from the opposite direction: DOL states where
+                it is; this scan finds the oldest month that hasn&rsquo;t cleared.
+                Two measurements, one answer.
+              </p>
+            ) : dolMonth !== null && front !== null ? (
+              <p>
+                DOL publishes {formatMonth(dolMonth)} as its analyst-review
+                position; this scan measures {formatMonth(front.month)}. Both are
+                shown unadjusted; neither has been moved towards the other.
+              </p>
+            ) : null}
+
+            {advance ? (
+              <p>
+                Anything above 1.0 means DOL is clearing filing dates faster
+                than new ones arrive.
+                {advance.slowest !== null && advance.fastest !== null ? (
+                  <>
+                    {" "}
+                    Across the whole series that rate has run between{" "}
+                    {`${advance.slowest.toFixed(2)}x`} and{" "}
+                    {`${advance.fastest.toFixed(2)}x`}, which is why it
+                    isn&rsquo;t a rate to plan around.
+                  </>
+                ) : null}
+              </p>
+            ) : null}{" "}
+
+            {/* How the rate is measured, not what it means: the sentence above
+                is the part that changes how the figure reads. */}
+            {advance ? (
+                <p>
+                  Over the {advance.pointsUsed} determination months to{" "}
+                  {formatMonth(advance.toMonth) ?? advance.toMonth}, the median
+                  filing date on DOL&rsquo;s determinations moved forward{" "}
+                  {advance.rate.toFixed(1)} months for every calendar month that
+                  passed.
+                </p>
+            ) : null}
+
+            {lastClearance ? (
+              <p>
+                DOL issued {formatInt(lastClearance.decisions)} determinations in{" "}
+                {formatMonth(lastClearance.decisionMonth)}, the last full month in
+                its disclosure window, against {formatInt(census.pending)} still
+                undecided. Those two figures don&rsquo;t get divided into a wait:
+                new applications keep arriving and DOL reprioritises. The{" "}
+                <Link
+                  href="/tools/perm-timeline-calculator"
+                  className="link"
+                >
+                  timeline calculator
+                </Link>{" "}
+                works from the percentile spread of decided cases instead.
+              </p>
+            ) : null}
+          </div>
+        </FinePrint>
       </section>{" "}
 
       <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
@@ -348,16 +341,12 @@ export default async function PermQueuePage() {
         </FinePrint>
       </section>{" "}
 
-      {ebSplit ? <EbSplit split={ebSplit} className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" /> : null}{" "}
-
       <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           The wall, by filing month
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
-          Bar length is cases still waiting, on one scale across every month.
-          Colours split each month across the three queues. Any month opens its
-          own page.
+          Each bar is one filing month&rsquo;s cases still waiting, in the colours above. Tap a month for its own page.
         </p>{" "}
 
         {since && sinceDay ? <SinceDay className="mt-5" shift={since} since={sinceDay} hrefFor={(status) => statusCasesHref(status)} /> : null}{" "}
@@ -390,6 +379,8 @@ export default async function PermQueuePage() {
           </div>
         ) : null}
       </section>{" "}
+
+      {ebSplit ? <EbSplit split={ebSplit} className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" /> : null}{" "}
 
       {alphabet ? (
         <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">

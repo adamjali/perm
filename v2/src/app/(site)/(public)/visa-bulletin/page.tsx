@@ -70,16 +70,17 @@ export const metadata: Metadata = withSocialCard(
 // staleness far below either, and the bulletin ingest revalidates on demand.
 export const revalidate = 86400;
 
-const CATEGORIES: readonly { key: string; label: string; i485: string }[] = [
-  { key: "EB1", label: "EB-1 priority workers", i485: "EB1" },
-  { key: "EB2", label: "EB-2 advanced degree and NIW", i485: "EB2" },
-  { key: "EB3", label: "EB-3 skilled and professional", i485: "EB3" },
-  { key: "EW3", label: "EB-3 other workers", i485: "EW3" },
-  { key: "EB4", label: "EB-4 special immigrants", i485: "EB4" },
-  { key: "EB5", label: "EB-5 unreserved", i485: "EB5U" },
-  { key: "EB5R", label: "EB-5 rural set-aside", i485: "EB5R" },
-  { key: "EB5HU", label: "EB-5 high-unemployment set-aside", i485: "EB5HU" },
-  { key: "EB5I", label: "EB-5 infrastructure set-aside", i485: "EB5I" },
+/** `code` is how the label starts: all a phone's narrow first column shows. */
+const CATEGORIES: readonly { key: string; label: string; code: string; i485: string }[] = [
+  { key: "EB1", label: "EB-1 priority workers", code: "EB-1", i485: "EB1" },
+  { key: "EB2", label: "EB-2 advanced degree and NIW", code: "EB-2", i485: "EB2" },
+  { key: "EB3", label: "EB-3 skilled and professional", code: "EB-3", i485: "EB3" },
+  { key: "EW3", label: "EB-3 other workers", code: "EB-3 other", i485: "EW3" },
+  { key: "EB4", label: "EB-4 special immigrants", code: "EB-4", i485: "EB4" },
+  { key: "EB5", label: "EB-5 unreserved", code: "EB-5", i485: "EB5U" },
+  { key: "EB5R", label: "EB-5 rural set-aside", code: "EB-5 rural", i485: "EB5R" },
+  { key: "EB5HU", label: "EB-5 high-unemployment set-aside", code: "EB-5 high-unemployment", i485: "EB5HU" },
+  { key: "EB5I", label: "EB-5 infrastructure set-aside", code: "EB-5 infrastructure", i485: "EB5I" },
 ];
 
 const COUNTRY_LABEL: Record<CountryKey, string> = {
@@ -130,6 +131,15 @@ function moveTone(m: SameMonthMove | null | undefined): string {
     default:
       return "";
   }
+}
+
+/**
+ * Whether a cell prints the cutoff under the move: only when the line has a date
+ * the move doesn't already name. "current" over "Current", and "opened at Jun 1,
+ * 2022" over the same date, said it twice in every cell.
+ */
+function datedMove(m: SameMonthMove): boolean {
+  return m.to?.kind === "date" && m.kind !== "opened" && m.kind !== "retrogressed-from-current";
 }
 
 function moveLabel(m: SameMonthMove): string {
@@ -238,98 +248,19 @@ export default async function VisaBulletinPage() {
       <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         The {monthLabel(next)} visa bulletin, from the last {series.length}
       </h1>{" "}
-      {/* The answer to a search for "visa bulletin" first: the bulletin that's out, with its cutoffs a click away. */}
+      {/* The answer to a search for "visa bulletin" first: the bulletin that's out, with its cutoffs a
+          click away, then the picture of what it moved (owner, Oct 28 2026: pictures, not text). */}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed">
         The newest bulletin is {monthLabel(last.bulletinMonth)}&apos;s:{" "}
         <Link href="/visa-bulletin/categories" className="link">
-          every cutoff it prints, by category and country
+          every cutoff it prints
         </Link>
-        .
-      </p>{" "}
-      <p className="mt-3 max-w-3xl text-lg leading-relaxed text-soft">
-        What every earlier {monthName(targetMonth)} bulletin did for each employment category and country, from{" "}
-        {series.length} bulletins ({monthLabel(series[0]!.bulletinMonth)} to {monthLabel(last.bulletinMonth)}), beside
-        USCIS&apos;s count of applications ahead of each cutoff. Measured, not predicted.
+        .{" "}
+        <span className="text-soft">
+          Below, what it moved, then what every earlier {monthName(targetMonth)} bulletin did across {series.length}{" "}
+          bulletins since {monthLabel(series[0]!.bulletinMonth)}. Measured, not predicted.
+        </span>
       </p>
-
-      {isFiscalStart ? (
-        <div className="mt-8 bg-tint p-5 border-2 shadow-hard border-border">
-          <p className="font-heading text-base font-bold">October is the fiscal-year start</p>{" "}
-          <p className="mt-2 text-base leading-relaxed text-soft">
-            October 1 opens a new year of employment numbers, plus family numbers unused last year, so October
-            often reopens categories shut in August and September. The carry-over isn&apos;t published on the day,
-            so this page prints no figure for it.
-          </p>
-        </div>
-      ) : null}
-
-      <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">When it comes out</h2>{" "}
-      <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
-        The State Department announces no date. The only evidence of the day is when the Internet Archive first
-        captured each bulletin: it was out by then. Expect {monthLabel(next)} in{" "}
-        {monthName(targetMonth === 1 ? 12 : targetMonth - 1)}; the day is the Department&apos;s.
-      </p>{" "}
-      {release ? (
-        <BulletinRelease
-          rows={releaseByDay(BULLETIN_FIRST_CAPTURES)}
-          summary={release}
-          next={next}
-          measured={BULLETIN_CAPTURES_MEASURED}
-        />
-      ) : null}
-
-      {spill ? (
-        <>
-          <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">The spillover, as the Department set it</h2>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
-            For fiscal year {spill.fiscalYear}, the State Department set the employment-based limit at{" "}
-            {formatInt(spill.employmentTotal)} worldwide: the statutory {formatInt(spill.employmentBase)} plus{" "}
-            {formatInt(spill.spillover)} family-sponsored numbers that went unused in fiscal year {spill.fiscalYear - 1}.
-            {spill.estimated ? " The Department marks that sheet estimated, pending its official determination." : ""}
-            {spill.perCountry !== null ? ` No single country can take more than ${formatInt(spill.perCountry)} of the employment total.` : ""}
-          </p>{" "}
-          <ScrollBox label="The spillover by category" className="mt-4 max-w-3xl">
-            <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b-2 border-border">
-                  <th scope="col" className="py-2 pr-3 font-bold">Category, fiscal year {spill.fiscalYear}{" "}</th>
-                  <th scope="col" className="py-2 pr-3 text-right font-bold">Worldwide{" "}</th>
-                  <th scope="col" className="py-2 text-right font-bold">Any one country{" "}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {spill.rows.map((r) => (
-                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t-2 border-border font-bold" : "border-b border-border/40"}>
-                    <td className="py-2 pr-3">{r.label}{" "}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.worldwide)}{" "}</td>
-                    <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : formatInt(r.foreignState)}{" "}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollBox>{" "}
-          {usage ? (
-            <MoreText gist={"Last year's use, counted from Table V of the Visa Office report."} className="mt-4">
-              <p className="max-w-3xl text-base leading-relaxed text-soft">
-                The year before is counted, not estimated. In fiscal year {usage.fiscalYear}, {formatInt(usage.familyUsed)} family-sponsored
-                and {formatInt(usage.employmentUsed)} employment-based numbers were used, by Table V of the Department&apos;s Report of the
-                Visa Office {usage.fiscalYear}; the {formatInt(usage.familyUnused)} family numbers left unused against the{" "}
-                {formatInt(usage.familyBase)} floor are what fell to the employment side for fiscal year {usage.fiscalYear + 1}.
-              </p>
-            </MoreText>
-          ) : null}{" "}
-          <MoreText gist={"Both from the State Department's own PDFs; no forecast."} className="mt-3">
-            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              Both figures are read from the Department&apos;s own PDFs, the{" "}
-              <a href={spill.source} rel="noopener noreferrer" className="link">
-                annual numerical limits
-              </a>{" "}
-              and the annual report, and nothing here is a forecast. The spillover for the fiscal year about to open is not published on
-              bulletin day; this page prints it when the Department posts its sheet, usually in the first weeks of the fiscal year.
-            </p>
-          </MoreText>
-        </>
-      ) : null}
 
       {latestMoves.some((s) => s.rows.some((r) => r.move)) ? (
         <>
@@ -351,7 +282,7 @@ export default async function VisaBulletinPage() {
             </li>
           </ul>
           <ScrollBox label={`What the ${monthLabel(last.bulletinMonth)} bulletin did`} className="mt-3 overscroll-x-none">
-            <table className="w-full min-w-[640px] border-t-2 border-[var(--object-border)] text-sm">
+            <table className="w-full border-t-2 border-[var(--object-border)] text-sm sm:min-w-[640px]">
               <thead className="dark border-b border-black bg-[#141414] text-foreground">
                 <tr>
                   <th className="p-3 text-left text-sm">Category{" "}</th>
@@ -363,11 +294,15 @@ export default async function VisaBulletinPage() {
               <tbody>
                 {latestMoves.map((s) => (
                   <tr key={s.key} className="border-t-2 border-border">
-                    <td className="p-3 font-semibold">{s.label}{" "}</td>
+                    <td className="p-3 font-semibold max-sm:w-28">
+                      {/* The rest of the name is in the page whatever the width; a phone draws only the code. */}
+                      {s.code}
+                      <span className="max-sm:hidden">{s.label.slice(s.code.length)}</span>{" "}
+                    </td>
                     {s.rows.map((r) => (
                       <td key={r.country} className={`p-3 ${moveTone(r.move)}`}>
-                        {r.move ? <span className="font-mono">{moveLabel(r.move)}</span> : <span className="text-muted-foreground">not listed</span>}{" "}
-                        {r.move?.to ? <span className="block text-sm text-muted-foreground">now {cutoffLabel(r.move.to)}</span> : null}
+                        {r.move ? <span className="whitespace-nowrap font-mono">{moveLabel(r.move)}</span> : <span className="text-muted-foreground">not listed</span>}{" "}
+                        {r.move && datedMove(r.move) ? <span className="block whitespace-nowrap text-sm text-muted-foreground">{cutoffLabel(r.move.to)}</span> : null}
                       {" "}</td>
                     ))}
                   </tr>
@@ -469,6 +404,85 @@ export default async function VisaBulletinPage() {
           <Link href="/tools/i485-queue-position" className="link">I-485 queue position tool</Link>.
         </p>
       </MoreText>
+
+      {isFiscalStart ? (
+        <div className="mt-8 bg-tint p-5 border-2 shadow-hard border-border">
+          <p className="font-heading text-base font-bold">October is the fiscal-year start</p>{" "}
+          <p className="mt-2 text-base leading-relaxed text-soft">
+            October 1 opens a new year of employment numbers, plus family numbers unused last year, so October
+            often reopens categories shut in August and September. The carry-over isn&apos;t published on the day,
+            so this page prints no figure for it.
+          </p>
+        </div>
+      ) : null}
+
+      <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">When it comes out</h2>{" "}
+      <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
+        Expect {monthLabel(next)} in {monthName(targetMonth === 1 ? 12 : targetMonth - 1)}. The Department announces no
+        date, so each bulletin&apos;s first capture by the Internet Archive marks the day it was out by.
+      </p>{" "}
+      {release ? (
+        <BulletinRelease
+          rows={releaseByDay(BULLETIN_FIRST_CAPTURES)}
+          summary={release}
+          next={next}
+          measured={BULLETIN_CAPTURES_MEASURED}
+        />
+      ) : null}
+
+      {spill ? (
+        <>
+          <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">The spillover, as the Department set it</h2>{" "}
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
+            For fiscal year {spill.fiscalYear}, the State Department set the employment-based limit at{" "}
+            {formatInt(spill.employmentTotal)} worldwide: the statutory {formatInt(spill.employmentBase)} plus{" "}
+            {formatInt(spill.spillover)} family-sponsored numbers that went unused in fiscal year {spill.fiscalYear - 1}.
+            {spill.estimated ? " The Department marks that sheet estimated, pending its official determination." : ""}
+            {spill.perCountry !== null ? ` No single country can take more than ${formatInt(spill.perCountry)} of the employment total.` : ""}
+          </p>{" "}
+          <ScrollBox label="The spillover by category" className="mt-4 max-w-3xl">
+            <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b-2 border-border">
+                  <th scope="col" className="py-2 pr-3 font-bold">Category, fiscal year {spill.fiscalYear}{" "}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-bold">Worldwide{" "}</th>
+                  <th scope="col" className="py-2 text-right font-bold">Any one country{" "}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {spill.rows.map((r) => (
+                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t-2 border-border font-bold" : "border-b border-border/40"}>
+                    <td className="py-2 pr-3">{r.label}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.worldwide)}{" "}</td>
+                    <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : formatInt(r.foreignState)}{" "}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollBox>{" "}
+          {usage ? (
+            <MoreText gist={"Last year's use, counted from Table V of the Visa Office report."} className="mt-4">
+              <p className="max-w-3xl text-base leading-relaxed text-soft">
+                The year before is counted, not estimated. In fiscal year {usage.fiscalYear}, {formatInt(usage.familyUsed)} family-sponsored
+                and {formatInt(usage.employmentUsed)} employment-based numbers were used, by Table V of the Department&apos;s Report of the
+                Visa Office {usage.fiscalYear}; the {formatInt(usage.familyUnused)} family numbers left unused against the{" "}
+                {formatInt(usage.familyBase)} floor are what fell to the employment side for fiscal year {usage.fiscalYear + 1}.
+              </p>
+            </MoreText>
+          ) : null}{" "}
+          <MoreText gist={"Both from the State Department's own PDFs; no forecast."} className="mt-3">
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              Both figures are read from the Department&apos;s own PDFs, the{" "}
+              <a href={spill.source} rel="noopener noreferrer" className="link">
+                annual numerical limits
+              </a>{" "}
+              and the annual report, and nothing here is a forecast. The spillover for the fiscal year about to open is not published on
+              bulletin day; this page prints it when the Department posts its sheet, usually in the first weeks of the fiscal year.
+            </p>
+          </MoreText>
+        </>
+      ) : null}
+
 
       <BulletinMonthStrip months={series.map((b) => b.bulletinMonth)} newest={last.bulletinMonth} />
 
