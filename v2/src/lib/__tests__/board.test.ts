@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { BulletinMonth } from "@/lib/perm";
 
-import { backlogStatus, bulletinMoves, bulletinStatus, decidedSpan, LEVEL_SHARE, lineFlow, paceStatus, SPAN_MIN_DECISIONS, statusMoves } from "../board";
+import { aboutMonths, backlogStatus, bulletinMoves, bulletinStatus, decidedSpan, LEVEL_SHARE, lineFlow, paceStatus, SPAN_MIN_DECISIONS, statusMoves } from "../board";
 
 const days = (spec: [string, number][]) => spec.flatMap(([d, n]) => Array.from({ length: n }, () => d));
 
@@ -107,3 +107,19 @@ describe("step statuses", () => {
     expect(bulletinStatus("unknown")).toBeNull();
   });
 });
+
+describe("aboutMonths: a span in words", () => {
+  it("says days under a month, then months to the nearest half", () => {
+    expect(aboutMonths(9)).toBe("about 9 days");
+    expect(aboutMonths(31)).toBe("about 1 month");
+    expect(aboutMonths(290)).toBe("about 9½ months");
+  });
+
+  it("says years once a span passes two, to the nearest half", () => {
+    expect(aboutMonths(700)).toBe("about 23 months");
+    expect(aboutMonths(12_340)).toBe("about 34 years");
+    expect(aboutMonths(1_100)).toBe("about 3 years");
+    expect(aboutMonths(1_280)).toBe("about 3½ years");
+  });
+});
+

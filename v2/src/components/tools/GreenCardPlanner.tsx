@@ -326,14 +326,21 @@ function Milestones({
   );
 }
 
+/** The most year labels the chart's axis carries. */
+const YEAR_LABELS_MAX = 7;
+const YEAR_STEPS = [1, 2, 5, 10, 20] as const;
+
 function PlanChart({ steps, today, standing }: { steps: PlanStep[]; today: string; standing: Partial<Record<PlanStage, string>> }) {
   const known = steps.flatMap((s) => (s.end ? [s.start, s.end] : [s.start])).concat(today);
   const lo = Math.min(...known.map(at));
   const hiKnown = Math.max(...known.map(at));
   const hi = steps.some((s) => !s.end) ? hiKnown + OPEN_END_DAYS * MS_PER_DAY : hiKnown;
   const pct = (iso: string) => ((at(iso) - lo) / Math.max(hi - lo, MS_PER_DAY)) * 100;
-  const years: string[] = [];
-  for (let y = new Date(lo).getUTCFullYear() + 1; Date.UTC(y, 0, 1) < hi; y++) years.push(String(y));
+  const every: number[] = [];
+  for (let y = new Date(lo).getUTCFullYear() + 1; Date.UTC(y, 0, 1) < hi; y++) every.push(y);
+  // A long wait (EB-2 India runs decades) labels every 2nd, 5th, 10th or 20th year, so labels never overlap.
+  const step = YEAR_STEPS.find((n) => Math.ceil(every.length / n) <= YEAR_LABELS_MAX) ?? YEAR_STEPS[YEAR_STEPS.length - 1]!;
+  const years = every.filter((y) => y % step === 0).map(String);
   const todayAt = pct(today);
   const Ticks = () => (
     <>

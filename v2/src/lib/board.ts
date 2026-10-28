@@ -1,6 +1,7 @@
 import { classifyMove, cutoffLabel, moveLabel, type MoveKind } from "@/lib/bulletinNext";
 import { parseCutoff, type BulletinMonth, type CountryKey } from "@/lib/perm";
 import { shiftMonth } from "@convex/lib/months";
+import { DAYS_PER_MONTH } from "@convex/lib/time";
 
 /**
  * The board's arithmetic, kept out of the database layer so it can be tested:
@@ -169,10 +170,17 @@ export function rulerOf(span: DecidedSpan, decidedOn: string): Ruler | null {
   return { start, middle: pct(mid), from: pct(from), to: pct(to), waitedDays: Math.round(end - mid), ticks };
 }
 
-/** "about 3 months", "about 9½ months": days as months to the nearest half. */
+/** Past this many months a span reads in years ("about 34 years", never "about 405 months"). */
+const YEARS_FROM_MONTHS = 24;
+
+/** "about 3 months", "about 9½ months", "about 34 years": a span to the nearest half month, or half year past two. */
 export function aboutMonths(days: number): string {
-  const halves = Math.round(days / 15.2);
+  const halves = Math.round(days / (DAYS_PER_MONTH / 2));
   if (halves < 2) return `about ${Math.max(1, Math.round(days))} days`;
+  if (halves >= YEARS_FROM_MONTHS * 2) {
+    const halfYears = Math.round(days / (DAYS_PER_MONTH * 6));
+    return `about ${Math.floor(halfYears / 2)}${halfYears % 2 ? "½" : ""} years`;
+  }
   const whole = Math.floor(halves / 2);
   return `about ${whole}${halves % 2 ? "½" : ""} month${halves === 2 ? "" : "s"}`;
 }

@@ -120,4 +120,21 @@ describe("GreenCardPlanner, the priority date tile", () => {
     // Assert
     expect(within(tile("Priority date")).getByText("Filed")).toBeInTheDocument();
   });
+
+  it("labels a decades-long wait every few years, never every year on top of each other", () => {
+    // Arrange: a line that moved 30 days in a year against a cutoff a decade back.
+    nav.params = new URLSearchParams("where=perm-filed&date=2026-03-16&country=china");
+    const slow: PlanFigures = {
+      ...FIGURES,
+      pace: { ...FIGURES.pace, "EB2|china": { latest: { kind: "date", iso: "2021-10-01" }, movedDays: 30, spanMonths: 12, retrogressions: [] } },
+    };
+    // Act
+    const { container } = render(<GreenCardPlanner figures={slow} standing={{}} check={null} today="2026-10-28" />);
+    // Assert
+    const labels = [...container.querySelectorAll('section[aria-label="Every step, dated"] > div span.absolute')].map((e) => e.textContent);
+    expect(labels.length).toBeGreaterThan(1);
+    expect(labels.length).toBeLessThanOrEqual(7);
+    expect(tile("Green card")).toHaveTextContent(/In about \d+(½)? years/);
+  });
 });
+
