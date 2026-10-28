@@ -854,6 +854,79 @@ def api_section() -> dict:
 # ── traffic ───────────────────────────────────────────────────────────────
 
 
+# The assistants that send people here, by the domain a visit arrives from.
+# ChatGPT also marks its links `utm_source=chatgpt.com`, which survives when the
+# browser drops the referrer.
+AI_ASSISTANTS = {
+    "chatgpt.com": "ChatGPT",
+    "chat.openai.com": "ChatGPT",
+    "perplexity.ai": "Perplexity",
+    "gemini.google.com": "Gemini",
+    "copilot.microsoft.com": "Copilot",
+    "claude.ai": "Claude",
+    "chat.deepseek.com": "DeepSeek",
+    "grok.com": "Grok",
+    "meta.ai": "Meta AI",
+    "you.com": "You.com",
+}
+
+
+def assistant_of(referring_domain: str | None, url: str | None) -> str | None:
+    """Pure: the assistant a visit came from, by its referring domain or its utm_source; None for anything else."""
+    host = (referring_domain or "").lower()
+    host = host[4:] if host.startswith("www.") else host
+    if host in AI_ASSISTANTS:
+        return AI_ASSISTANTS[host]
+    if url:
+        src = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("utm_source", [""])[0].lower()
+        src = src[4:] if src.startswith("www.") else src
+        if src in AI_ASSISTANTS:
+            return AI_ASSISTANTS[src]
+    return None
+
+
+def ai_referral_lines(rows, yday: str) -> tuple[str, list[str]]:
+    """Pure: rows of (day, referring domain, url, landing path, visitors) -> the summary and lines.
+    Counts visits AI assistants sent, so the work on being quoted by them can be measured."""
+    ai = [(d, assistant_of(rd, url), path, int(n)) for d, rd, url, path, n in rows]
+    ai = [r for r in ai if r[1]]
+    if not ai:
+        return "No visits from AI assistants in 8 days", []
+    week = sum(r[3] for r in ai)
+    y = [r for r in ai if r[0] == yday]
+    by_ai: dict[str, int] = {}
+    by_page: dict[str, int] = {}
+    for _d, who, path, n in y:
+        by_ai[who] = by_ai.get(who, 0) + n
+        by_page[path] = by_page.get(path, 0) + n
+    total = sum(by_ai.values())
+    parts = ", ".join(f"{k} {v:,}" for k, v in sorted(by_ai.items(), key=lambda kv: (-kv[1], kv[0])))
+    summary = (f"{total:,} visits from AI assistants yesterday ({parts}); {week:,} in 8 days" if total
+               else f"No visits from AI assistants yesterday; {week:,} in 8 days")
+    lines = []
+    if by_page:
+        top = sorted(by_page.items(), key=lambda kv: (-kv[1], kv[0]))[:6]
+        lines.append("Landing pages yesterday: " + ", ".join(f"{p} {n:,}" for p, n in top))
+    return summary, lines
+
+
+def ai_referrals(key: str) -> tuple[str, list[str]]:
+    """Visitors whose first pageview came from an assistant, by day, assistant and landing page (PostHog)."""
+    q = ("SELECT toDate(toTimeZone(timestamp, 'America/New_York')) AS d, properties.$referring_domain AS rd, "
+         "if(position(properties.$current_url, 'utm_source=') > 0, properties.$current_url, '') AS url, "
+         "properties.$pathname AS p, count(DISTINCT person_id) AS n FROM events "
+         "WHERE event = '$pageview' AND timestamp > now() - INTERVAL 8 DAY "
+         "AND (properties.$referring_domain IN (" + ", ".join(f"'{d}'" for d in AI_ASSISTANTS) + ", "
+         + ", ".join(f"'www.{d}'" for d in AI_ASSISTANTS) + ") OR position(properties.$current_url, 'utm_source=') > 0) "
+         "GROUP BY d, rd, url, p")
+    d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
+                  {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                  json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())
+    rows = [(str(r[0])[:10], r[1], r[2] or None, r[3] or "/", r[4]) for r in d.get("results", [])]
+    yday = (dt.datetime.now(ET).date() - dt.timedelta(days=1)).isoformat()
+    return ai_referral_lines(rows, yday)
+
+
 def traffic_section() -> dict:
     key = os.environ.get("POSTHOG_PERSONAL_API_KEY")
     if not key:
@@ -885,6 +958,13 @@ def traffic_section() -> dict:
     if note:
         lines.append("Unusual: " + note)
         status = "warn"
+    # Its own query: a failure here says so in a line and leaves the counts above standing.
+    try:
+        ai_summary, ai_lines = ai_referrals(key)
+        lines.append(ai_summary)
+        lines.extend(ai_lines)
+    except Exception as e:  # noqa: BLE001
+        lines.append(f"Visits from AI assistants could not be read ({type(e).__name__})")
     return section("traffic", "Traffic", status,
                    f"{views:,} pageviews, about {people:,} people ({visitors:,} visitors) yesterday", lines)
 

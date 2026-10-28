@@ -642,6 +642,7 @@ def main() -> int:
     page_checks_never_read_a_missing_check_as_a_pass()
     audit_findings_are_sorted()
     busy_replies_are_tried_again()
+    ai_assistant_visits_are_counted()
 
     # The API and the assistants: keyed calls by account, keyless ones by bucket.
     rows = [("2026-10-07", "acct_a", "k1", 30), ("2026-10-07", "acct_b", "k2", 5), ("2026-10-07", "anonymous", "mcp", 12),
@@ -834,6 +835,28 @@ def busy_replies_are_tried_again() -> None:
               f"a section that still fails names the status code ({sec['summary']})")
     finally:
         dm.urllib.request.urlopen, dm.time.sleep = real_open, real_sleep
+
+
+def ai_assistant_visits_are_counted() -> None:
+    """Visits ChatGPT, Perplexity and the other assistants send, from the referrer or the utm_source they add."""
+    check(dm.assistant_of("chatgpt.com", None) == "ChatGPT" and dm.assistant_of("www.perplexity.ai", None) == "Perplexity",
+          "an assistant's own domain names it")
+    check(dm.assistant_of("$direct", "https://permtracker.app/perm-queue?utm_source=chatgpt.com") == "ChatGPT",
+          "ChatGPT's utm_source names it when the referrer is gone")
+    check(dm.assistant_of("google.com", "https://permtracker.app/?utm_source=newsletter") is None
+          and dm.assistant_of("notchatgpt.com", None) is None, "a search engine, another utm or a lookalike domain is not an assistant")
+    rows = [
+        ("2026-10-27", "chatgpt.com", None, "/perm-queue", 3),
+        ("2026-10-27", "$direct", "https://permtracker.app/?utm_source=chatgpt.com", "/", 2),
+        ("2026-10-27", "perplexity.ai", None, "/perm-queue", 1),
+        ("2026-10-26", "gemini.google.com", None, "/visa-bulletin", 4),
+        ("2026-10-27", "google.com", None, "/", 50),
+    ]
+    summary, lines = dm.ai_referral_lines(rows, "2026-10-27")
+    check(summary == "6 visits from AI assistants yesterday (ChatGPT 5, Perplexity 1); 10 in 8 days",
+          f"yesterday's assistant visits by assistant, and the week ({summary})")
+    check(any(ln.startswith("Landing pages yesterday: /perm-queue 4, / 2") for ln in lines), f"the pages they land on ({lines})")
+    check(dm.ai_referral_lines([], "2026-10-27")[0] == "No visits from AI assistants in 8 days", "none says so")
 
 
 if __name__ == "__main__":
