@@ -186,6 +186,10 @@ PW_HEADER = [
     "EMPLOYER_LEGAL_BUSINESS_NAME", "EMPLOYER_POC_EMAIL", "JOB_TITLE",
     "PRIMARY_WORKSITE_STATE", "PWD_SOC_CODE", "PWD_SOC_TITLE",
     "PWD_WAGE_RATE", "PWD_UNIT_OF_PAY", "PRIMARY_WORKSITE_CITY", "NAICS_CODE",
+    # The level, the expiry and Section F's requirements, verbatim from the
+    # FY2026 Q3 file's own header (dumped Oct 28 2026).
+    "PWD_OES_WAGE_LEVEL", "PWD_WAGE_EXPIRATION_DATE", "REQUIRED_EDUCATION_LEVEL",
+    "REQUIRED_EXPERIENCE_MONTHS", "ALT_EDUCATION_LEVEL", "ALT_EXPERIENCE_MONTHS",
 ]
 # Column J (index 9) on sheet row 3 is the empty-cell probe.
 PROBE_COL = PW_HEADER.index("JOB_TITLE")
@@ -195,31 +199,41 @@ PW_ROWS = [
     PW_HEADER,
     ["P-100-25300-123456", "Determination Issued", D(2025, 10, 27), D(2026, 3, 2), None, None,
      "PERM", "Acme Robotics, Inc.", "poc@example.com", "Software Engineer", "CA",
-     "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511],
+     "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511,
+     "Level II", D(2027, 6, 30), "Master's", 24, "Bachelor's", 60],
     # THE PROBE: job title blank, so its cell is absent from the XML.
     ["P-100-25301-000002", "Determination Issued", "2025-11-03", "2026-04-15", None, None,
      "H-1B", "Globex Corporation", "poc@example.com", None, "California",
-     "13-2011", "Accountants and Auditors", "$38.50", "Hour", "  Los   Angeles ", "541211.0"],
+     "13-2011", "Accountants and Auditors", "$38.50", "Hour", "  Los   Angeles ", "541211.0",
+     "N/A", "2027-06-30", "Bachelor's", "", "", ""],
     # Withdrawn before determination: the date is in WITHDRAWAL_DATE only.
     ["P-100-25302-000003", "Withdrawn", D(2025, 12, 1), None, None, D(2026, 1, 20),
      "PERM", "  Initech   LLC ", "", "Analyst", "New York",
-     "13-1111", "Management Analysts", "", "", "", ""],
+     "13-1111", "Management Analysts", "", "", "", "",
+     "", "", "", "", "", ""],
     # A duplicate case number: first occurrence wins, this one is counted.
     ["P-100-25300-123456", "Redetermination Affirmed", D(2025, 10, 27), D(2026, 6, 1), D(2026, 6, 1), None,
      "PERM", "Acme Robotics, Inc.", "poc@example.com", "Software Engineer", "CA",
-     "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511],
+     "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511,
+     "Level II", D(2027, 6, 30), "Master's", 24, "Bachelor's", 60],
     # No case number: skipped and counted.
     ["", "Determination Issued", D(2025, 10, 1), D(2026, 1, 1), None, None,
-     "PERM", "Nobody Corp", "", "Clerk", "TX", "43-9061", "Office Clerks", 40000, "Year", "Austin", 1],
+     "PERM", "Nobody Corp", "", "Clerk", "TX", "43-9061", "Office Clerks", 40000, "Year", "Austin", 1,
+     "I", "", "None", "", "", ""],
     # A redetermination later than the determination; a foreign worksite;
     # an unparseable wage; an unmapped unit.
     ["P-100-25303-000006", "Redetermination Modified", D(2025, 12, 15), D(2026, 2, 1), D(2026, 5, 5), None,
      "H-2B", "Wayne Enterprises", "", "Welder", "Ontario",
-     "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight", "Toronto", "junk"],
+     "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight", "Toronto", "junk",
+     "Level IV", "2026-11-30", "None", "0", "None", "0"],
 ]
 
 # Seasonal-only columns (H-2A, H-2B, CW-1): a PW or LCA row carries every one as None.
 NO_SEASONAL = {"workers_certified": None, "begin_date": None, "end_date": None, "worksite_county": None}
+
+# Wage-request-only columns: an LCA's or a seasonal row carries every one as None.
+NO_PW_DETAIL = {"determined_on": None, "pw_expires": None, "req_education": None,
+                "req_experience_months": None, "alt_education": None, "alt_experience_months": None}
 
 # LCA-only columns: a wage request's row carries every one as None.
 NO_LCA_DETAIL = {
@@ -240,7 +254,9 @@ PW_EXPECTED = [
      "wage": 145600.0, "wage_unit": "YEAR", "worksite_state": "CA", "visa_class": "PERM",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": "San Jose", "naics": "541511", **NO_LCA_DETAIL},
+     "worksite_city": "San Jose", "naics": "541511", **NO_LCA_DETAIL,
+     "wage_level": "II", "determined_on": "2026-03-02", "pw_expires": "2027-06-30", "req_education": "Master's",
+     "req_experience_months": 24, "alt_education": "Bachelor's", "alt_experience_months": 60},
     {"case_number": "P-100-25301-000002", "case_status": "DETERMINATION ISSUED",
      "received_date": "2025-11-03", "decision_date": "2026-04-15",
      "employer_name": "Globex Corporation", "employer_slug": "globex-corporation",
@@ -248,7 +264,9 @@ PW_EXPECTED = [
      "wage": 38.5, "wage_unit": "HOUR", "worksite_state": "CA", "visa_class": "H-1B",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": "Los Angeles", "naics": "541211", **NO_LCA_DETAIL},
+     "worksite_city": "Los Angeles", "naics": "541211", **NO_LCA_DETAIL,
+     "determined_on": "2026-04-15", "pw_expires": "2027-06-30", "req_education": "Bachelor's",
+     "req_experience_months": None, "alt_education": None, "alt_experience_months": None},
     {"case_number": "P-100-25302-000003", "case_status": "WITHDRAWN",
      "received_date": "2025-12-01", "decision_date": "2026-01-20",
      "employer_name": "Initech LLC", "employer_slug": "initech-llc",
@@ -256,7 +274,7 @@ PW_EXPECTED = [
      "wage": None, "wage_unit": None, "worksite_state": "NY", "visa_class": "PERM",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": None, "naics": None, **NO_LCA_DETAIL},
+     "worksite_city": None, "naics": None, **NO_LCA_DETAIL, **NO_PW_DETAIL},
     {"case_number": "P-100-25303-000006", "case_status": "REDETERMINATION MODIFIED",
      "received_date": "2025-12-15", "decision_date": "2026-05-05",
      "employer_name": "Wayne Enterprises", "employer_slug": "wayne-enterprises",
@@ -265,7 +283,11 @@ PW_EXPECTED = [
      "wage": None, "wage_unit": "FORTNIGHT", "worksite_state": None, "visa_class": "H-2B",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": "Toronto", "naics": None, **NO_LCA_DETAIL},
+     "worksite_city": "Toronto", "naics": None, **NO_LCA_DETAIL,
+     # The first determination stays apart from the later redetermination the
+     # decision date folds in.
+     "wage_level": "IV", "determined_on": "2026-02-01", "pw_expires": "2026-11-30", "req_education": "None",
+     "req_experience_months": 0, "alt_education": "None", "alt_experience_months": 0},
 ]
 
 LCA_FILE = "LCA_Disclosure_Data_FY2026_Q3.xlsx"
@@ -317,7 +339,7 @@ LCA_EXPECTED = [
      "wage_level": "II", "h1b_dependent": 0, "willful_violator": 0,
      "pw_wage": 128000.0, "pw_unit": "YEAR", "pw_oes_year": "7/1/2025 - 6/30/2026", "pw_other_source": None,
      "pw_other_year": None, "pw_survey_publisher": None, "pw_survey_name": None, "pw_case": "P-100-25300-123456",
-     **NO_SEASONAL},
+     **NO_SEASONAL, **NO_PW_DETAIL},
     {"case_number": "I-203-26011-222222", "case_status": "CERTIFIED - WITHDRAWN",
      "received_date": "2026-01-11", "decision_date": "2026-02-20",
      "employer_name": "Pied Piper LLC", "employer_slug": "pied-piper-llc",
@@ -332,7 +354,7 @@ LCA_EXPECTED = [
      "wage_level": None, "h1b_dependent": 1, "willful_violator": None,
      "pw_wage": 45.1, "pw_unit": "HOUR", "pw_oes_year": None, "pw_other_source": "Survey", "pw_other_year": "2025",
      "pw_survey_publisher": "Economic Research Institute", "pw_survey_name": "ERI Salary Assessor", "pw_case": None,
-     **NO_SEASONAL},
+     **NO_SEASONAL, **NO_PW_DETAIL},
 ]
 
 # The performance page as it was on 2026-09-02, hrefs verbatim: the misspelled
@@ -747,11 +769,22 @@ def check_seasonal(tmp: str, write) -> None:
               discover_links(html, PROGRAMS[prog]["file_pattern"], HOST), {})
 
 
+def check_backfill_pw_detail() -> None:
+    """The wage-request detail backfill writes exactly what the wage-request map fills."""
+    pw = PROGRAMS["pw"]
+    filled = set(pw["columns"]) | {pw["first_decision_column"]}
+    group = set(fd.BACKFILL_GROUPS["pw-detail"])
+    check("pw-detail backfills the level and every wage-request detail column",
+          group, {"wage_level", *fd.PW_DETAIL_COLUMNS})
+    check("every column pw-detail writes is one the wage-request file fills", sorted(group - filled), [])
+
+
 def main() -> int:
     print("flag disclosure parser contract")
     check_units()
     check_lca_detail_parsers()
     check_backfill_place()
+    check_backfill_pw_detail()
     check_discovery()
     check_freshness_is_keyed_on_the_file()
     with tempfile.TemporaryDirectory() as tmp:

@@ -148,7 +148,19 @@ PROGRAMS: dict[str, dict] = {
             # Firm representing the Employer submitting the Labor Condition
             # Application", the ETA-9141 one the same for a wage request.
             "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
+            # Read from the file's own header (dumped Oct 28 2026): the level DOL
+            # set, the day the wage expires as DOL prints it, and the job's
+            # requirements (Section F), which say whether a PERM can go EB-2.
+            "wage_level": ["PWD_OES_WAGE_LEVEL"],
+            "pw_expires": ["PWD_WAGE_EXPIRATION_DATE"],
+            "req_education": ["REQUIRED_EDUCATION_LEVEL"],
+            "req_experience_months": ["REQUIRED_EXPERIENCE_MONTHS"],
+            "alt_education": ["ALT_EDUCATION_LEVEL"],
+            "alt_experience_months": ["ALT_EXPERIENCE_MONTHS"],
         },
+        # DETERMINATION_DATE is the decision, which the later events below fold
+        # into; the first determination is kept on its own as `determined_on`.
+        "first_decision_column": "determined_on",
         "event_dates": [
             ["REDETERMINATION_DATE"],
             ["CENTER_DIRECTOR_REVIEW_DATE"],
@@ -320,6 +332,12 @@ LCA_COUNT_COLUMNS = (
     "new_concurrent_employment", "change_employer", "amended_petition",
 )
 
+# The wage request's own detail (PW only), and the level, in file order.
+PW_DETAIL_COLUMNS = (
+    "determined_on", "pw_expires", "req_education", "req_experience_months",
+    "alt_education", "alt_experience_months",
+)
+
 # The LCA's prevailing wage and its source (Section F), in file order.
 LCA_PW_COLUMNS = (
     "pw_wage", "pw_unit", "pw_oes_year", "pw_other_source", "pw_other_year",
@@ -346,9 +364,13 @@ COLUMNS = (
     # The seasonal programs only (H-2A, H-2B, CW-1); NULL elsewhere. `workers`
     # above holds their requested count.
     "workers_certified", "begin_date", "end_date", "worksite_county",
+    # The wage request only (Oct 28 2026): the first determination, the day the
+    # wage expires, and the job's education and experience requirements.
+    *PW_DETAIL_COLUMNS,
 )
 INTEGER_COLUMNS = frozenset({"fiscal_year", "workers", *LCA_COUNT_COLUMNS, "h1b_dependent",
-                             "willful_violator", "workers_certified"})
+                             "willful_violator", "workers_certified", "req_experience_months",
+                             "alt_experience_months"})
 
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
@@ -420,7 +442,13 @@ def table_ddl(table: str) -> list[str]:
              workers_certified          INTEGER,
              begin_date                 TEXT,
              end_date                   TEXT,
-             worksite_county            TEXT)""",
+             worksite_county            TEXT,
+             determined_on              TEXT,
+             pw_expires                 TEXT,
+             req_education              TEXT,
+             req_experience_months      INTEGER,
+             alt_education              TEXT,
+             alt_experience_months      INTEGER)""",
     ]
 
 
@@ -751,7 +779,7 @@ def resolve_columns(header_cells: dict[int, str], cfg: dict, filename: str) -> t
 
 
 def normalise_row(rec: dict[str, str], events: list[str | None], source_file: str, fy: int,
-                  visa_default: str | None = None) -> dict | None:
+                  visa_default: str | None = None, first_decision_column: str | None = None) -> dict | None:
     """One DOL row -> one table row, or None when there is no case number."""
     case_no = (rec.get("case") or "").strip()
     if not case_no:
@@ -810,6 +838,13 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "begin_date": to_iso((rec.get("begin_date") or "").strip()),
         "end_date": to_iso((rec.get("end_date") or "").strip()),
         "worksite_county": clean_text(rec.get("county"), 60),
+        # The wage request only (the other maps name none of these).
+        "determined_on": dates[0] if first_decision_column == "determined_on" else None,
+        "pw_expires": to_iso((rec.get("pw_expires") or "").strip()),
+        "req_education": clean_text(rec.get("req_education"), 60),
+        "req_experience_months": parse_count(rec.get("req_experience_months")),
+        "alt_education": clean_text(rec.get("alt_education"), 60),
+        "alt_experience_months": parse_count(rec.get("alt_experience_months")),
     }
 
 
@@ -900,7 +935,7 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
         for i, slot in events.items():
             if i in cells:
                 slots[slot] = cells[i]
-        row = normalise_row(rec, slots, filename, fy, cfg.get("visa_default"))
+        row = normalise_row(rec, slots, filename, fy, cfg.get("visa_default"), cfg.get("first_decision_column"))
         if row is None:
             stats.blank_case += 1
             continue
@@ -1000,6 +1035,8 @@ BACKFILL_GROUPS: dict[str, tuple[str, ...]] = {
     # the prevailing wage with its source (added Oct 4 2026; one pass fills both).
     "lca-detail": ("workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator",
                    *LCA_PW_COLUMNS),
+    # The wage request only: its level and detail (added Oct 28 2026).
+    "pw-detail": ("wage_level", *PW_DETAIL_COLUMNS),
 }
 
 
@@ -1174,6 +1211,11 @@ def main() -> int:
                          "of employer and the rest), the wage level and the H-1B-dependent "
                          "and willful-violator flags onto rows that already exist. One "
                          "write per row; none of the ten columns is indexed.")
+    ap.add_argument("--backfill-pw-detail", action="store_true",
+                    help="Wage requests only: write ONLY the level DOL set, the first "
+                         "determination, the day the wage expires and the job's education "
+                         "and experience requirements onto rows that already exist. One "
+                         "write per row; none of the columns is indexed.")
     ap.add_argument("--accept-drift", action="store_true",
                     help="Load despite the fingerprint differing from the previous load "
                          "(a lost column, a blank-share jump, a moved median). For a "
@@ -1344,6 +1386,28 @@ def main() -> int:
             log(f"  {table}: {filled:,} of {n:,} rows from {name} now carry worker counts")
             record_run(db, script, status="ok", rows_written=n,
                        note=f"LCA detail backfill from {name}: {filled:,}/{n:,} with counts",
+                       started_at=started)
+            return 0
+
+        if args.backfill_pw_detail:
+            if args.program != "pw" or args.backfill_attorney or args.backfill_place or args.force:
+                raise SystemExit("FATAL: --backfill-pw-detail runs alone, on --program pw")
+            log(f"Backfilling the wage level, validity and requirements onto {table} from {name}")
+            existing = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+            if existing == 0:
+                raise SystemExit(
+                    f"FATAL: {table} holds no rows, so there is nothing to "
+                    "backfill onto. Run the ordinary load first.")
+            ensure_columns(db, table)
+            n = backfill_columns(db, table, iter_cases(path, cfg, stats),
+                                 BACKFILL_GROUPS["pw-detail"], pause=write_pause())
+            stats.report()
+            filled = int(db.scalar(
+                f"SELECT count(*) FROM {table} WHERE source_file = ? AND req_education IS NOT NULL",
+                [name]) or 0)
+            log(f"  {table}: {filled:,} of {n:,} rows from {name} now carry the job's requirements")
+            record_run(db, script, status="ok", rows_written=n,
+                       note=f"wage-request detail backfill from {name}: {filled:,}/{n:,} with requirements",
                        started_at=started)
             return 0
 

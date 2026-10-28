@@ -84,6 +84,11 @@ on:
         required: false
         type: boolean
         default: false
+      backfill_pw_detail:
+        description: "Wage requests only: write ONLY the level, first determination, expiry and the job's requirements onto existing rows (one file per run; pair with fy or name)."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -138,6 +143,7 @@ jobs:
           BACKFILL_ATTORNEY: ${{ inputs.backfill_attorney }}
           BACKFILL_PLACE: ${{ inputs.backfill_place }}
           BACKFILL_LCA_DETAIL: ${{ inputs.backfill_lca_detail }}
+          BACKFILL_PW_DETAIL: ${{ inputs.backfill_pw_detail }}
           NAME: ${{ inputs.name }}
           LIST_ONLY: ${{ inputs.list_only }}
           DRY_RUN: ${{ inputs.dry_run }}
@@ -179,6 +185,13 @@ jobs:
               exit 1
             fi
             EXTRA="--backfill-lca-detail"
+          fi
+          if [ "$BACKFILL_PW_DETAIL" = "true" ]; then
+            if [ "$PROGRAM" != "pw" ] || [ "$FORCE" = "true" ] || [ "$BACKFILL_ATTORNEY" = "true" ] || [ "$BACKFILL_PLACE" = "true" ] || [ "$BACKFILL_LCA_DETAIL" = "true" ]; then
+              echo "::error::backfill_pw_detail runs alone, on program pw"
+              exit 1
+            fi
+            EXTRA="--backfill-pw-detail"
           fi
           if [ -n "$FY" ]; then
             case "$FY" in
