@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Fragment } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
@@ -17,6 +18,10 @@ import { MONTH_ABBR } from "@convex/lib/months";
  * is a longer sentence per dataset, so it sits in one fold under the lines.
  * It stays in the page either way, for search engines and for anyone who
  * opens it.
+ *
+ * Every data page also says how its figures are counted and how to report a
+ * mistake, the same line an article ends with (Oct 28 2026, E-E-A-T:
+ * scripts/audit_trust.py finds this block by `data-provenance`).
  */
 export async function DataProvenance({ datasets, className }: { datasets: string[]; className?: string }) {
   const all: Record<string, DatasetFreshness> = await getFreshness().catch(() => ({}));
@@ -33,7 +38,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
   return (
     // A source can be a bare web address with no spaces; on a phone it must wrap
     // anywhere or it pushes the whole page sideways (a State URL did, Oct 5 2026).
-    <div className={cn(className ?? "mt-6 border-t-2 border-border pt-3", "[overflow-wrap:anywhere]")}>
+    <div data-provenance className={cn(className ?? "mt-6 border-t-2 border-border pt-3", "[overflow-wrap:anywhere]")}>
       {rows.map((r) => (
         // Keyed Fragment with a leading space: array items render with nothing
         // between them, so two lines would otherwise read as one run of text.
@@ -47,6 +52,20 @@ export async function DataProvenance({ datasets, className }: { datasets: string
           )}
         </Fragment>
       ))}{" "}
+      <p className="text-sm text-muted-foreground">
+        <Link href="/methodology" className="link">
+          How these figures are counted
+        </Link>
+        . Spotted an error?{" "}
+        <Link href="/contact" className="link">
+          Tell us
+        </Link>
+        ; every fix is dated in the{" "}
+        <Link href="/changelog/corrections" className="link">
+          corrections log
+        </Link>
+        .
+      </p>{" "}
       {covered.length > 0 ? (
         <FinePrint summary={covered.length === 1 ? "What this data includes" : "What each source includes"} className="mt-1">
           {covered.map((c) => (

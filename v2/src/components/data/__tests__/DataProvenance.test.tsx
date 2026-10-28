@@ -46,6 +46,13 @@ describe("DataProvenance", () => {
     expect(screen.queryByText(/has not refreshed/)).not.toBeInTheDocument();
   });
 
+  it("says how the figures are counted and how to report a mistake", async () => {
+    await renderProvenance({ "perm-month-stats": row() });
+    expect(screen.getByRole("link", { name: "How these figures are counted" })).toHaveAttribute("href", "/methodology");
+    expect(screen.getByRole("link", { name: "Tell us" })).toHaveAttribute("href", "/contact");
+    expect(screen.getByRole("link", { name: "corrections log" })).toHaveAttribute("href", "/changelog/corrections");
+  });
+
   it("says plainly that a stale dataset has stopped, and how old it is", async () => {
     await renderProvenance({
       "perm-month-stats": row({ stale: true, ageDays: 41, maxAgeDays: 7 }),

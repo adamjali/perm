@@ -30,6 +30,9 @@ const PUBLIC = resolve(__dirname, "..", "(site)", "(public)");
 /** Whether a public path has a page file (static or under a [param] folder). */
 function pageExists(href: string): boolean {
   if (href === "/") return existsSync(join(PUBLIC, "page.tsx"));
+  // An article is its section's [slug] page, backed by its own file.
+  const article = /^\/(guides|blog|changelog)\/([a-z0-9-]+)$/.exec(href);
+  if (article) return existsSync(resolve(__dirname, "..", "..", "..", "content", article[1]!, `${article[2]}.mdx`));
   return existsSync(join(PUBLIC, ...href.split("/").filter(Boolean), "page.tsx"));
 }
 

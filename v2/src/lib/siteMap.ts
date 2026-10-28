@@ -269,6 +269,8 @@ const OTHER_PAGES: readonly SitePage[] = [
   { href: "/extension", name: "Browser extension" },
   { href: "/email-preferences", name: "Email preferences" },
   { href: "/contact", name: "Contact" },
+  // The corrections log, an article, linked from the footer beside the editorial standards.
+  { href: "/changelog/corrections", name: "Corrections" },
   { href: "/privacy", name: "Privacy policy" },
   { href: "/terms", name: "Terms of service" },
   { href: "/api-terms", name: "API terms" },
@@ -360,7 +362,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
   },
   {
     title: "Learn",
-    pages: named("/guides", "/blog", "/faq", "/perm-case-statuses", "/glossary", "/methodology", "/editorial-standards", "/changelog"),
+    pages: named("/guides", "/blog", "/faq", "/perm-case-statuses", "/glossary", "/methodology", "/editorial-standards", "/changelog/corrections", "/changelog"),
   },
   {
     title: "PERM Tracker",

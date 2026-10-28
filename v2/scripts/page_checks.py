@@ -58,6 +58,8 @@ def checks(base: str) -> list[dict]:
         {"key": "headings", "title": "Headings", "cmd": [py, "scripts/audit_headings.py", "--base", base], "limit": 600},
         {"key": "pages", "title": "Titles, descriptions, canonicals, dates", "cmd": [py, "scripts/audit_all_pages.py", "--base", base], "limit": 900},
         {"key": "links", "title": "Internal links", "cmd": [py, "scripts/audit_internal_links.py", "--base", base, "--pages", "40"], "limit": 900},
+        # Who made each page, when it changed, its sources and how to report a mistake (E-E-A-T).
+        {"key": "trust", "title": "Authorship, dates, sources and corrections", "cmd": [py, "scripts/audit_trust.py", "--base", base], "limit": 900},
         # Not a page check, but it needs the public database's credentials, which this job has: figures
         # typed into the copy with no date beside them go stale when DOL's next file loads.
         {"key": "figures", "title": "Figures typed into the copy", "cmd": [py, "scripts/audit_staleness.py"], "limit": 300},
