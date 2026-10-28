@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import {
   Balance,
@@ -14,6 +15,7 @@ import {
 } from "@/components/board/BoardParts";
 import { StagePicker, type StageCard } from "@/components/board/StagePicker";
 import { PermPulse } from "@/components/pulse/PermPulse";
+import { buttonVariants } from "@/components/ui/button";
 import {
   aboutMonths,
   backlogStatus,
@@ -38,6 +40,7 @@ import { getUscisFormHistory, getUscisFormMedian } from "@/lib/db/uscisQuarterly
 import { parseCutoff, type BulletinMonth, type CountryKey } from "@/lib/perm";
 import { GROUPS, SECTIONS } from "@/lib/siteMap";
 import { withSocialCard } from "@/lib/socialCard";
+import { cn } from "@/lib/utils";
 import { checkedLabel } from "@/lib/time";
 import { monthDay, monthYear, shiftMonth, shortDate } from "@convex/lib/months";
 
@@ -339,7 +342,10 @@ export default async function TodayPage() {
         <p className="mt-2 text-base text-soft">Who files it, where, and how long it takes right now.</p>{" "}
         <div className="mt-6">
           <StagePicker stages={stages} />
-        </div>
+        </div>{" "}
+        <Link href="/tools/green-card-timeline" className={cn(buttonVariants({ size: "lg" }), "mt-6")}>
+          Date every step for your case <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
+        </Link>
       </section>{" "}
       {pwd || perm ? (
         <section aria-labelledby="lines" className="mt-16">

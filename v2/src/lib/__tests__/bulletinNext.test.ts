@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { BulletinMonth } from "@/lib/perm";
+import { monthsToReach, paceByLine, type BulletinMonth } from "@/lib/perm";
 import {
-  monthsToReach,
   sameMonthMoves,
   summariseMoves,
   scenarioMonths,
@@ -78,6 +77,21 @@ describe("monthsToReach", () => {
 
   it("says zero when the date is already behind the cutoff", () => {
     expect(monthsToReach({ latest: { kind: "date", iso: "2013-02-01" }, movedDays: 365, spanMonths: 12, retrogressions: [] }, "2012-01-01")).toMatchObject({ months: 0 });
+  });
+});
+
+describe("paceByLine", () => {
+  it("keys each cell's four pace fields and skips the cells keyOf rejects", () => {
+    // Arrange
+    const cells = [
+      { category: "EB2", country: "india", latest: { kind: "unavailable" as const }, movedDays: null, spanMonths: null, retrogressions: ["2025-10"], states: [1, 2, 3] },
+      { category: "EB1", country: "india", latest: { kind: "current" as const }, movedDays: null, spanMonths: null, retrogressions: [], states: [] },
+    ];
+    // Act
+    const pace = paceByLine(cells, (c) => (c.category === "EB2" ? `${c.category}|${c.country}` : null));
+    // Assert
+    expect(Object.keys(pace)).toEqual(["EB2|india"]);
+    expect(pace["EB2|india"]).toEqual({ latest: { kind: "unavailable" }, movedDays: null, spanMonths: null, retrogressions: ["2025-10"] });
   });
 });
 

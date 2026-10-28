@@ -10,7 +10,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { getBulletinBoard } from "@/lib/db/bulletin";
 import { getBulletinCheck } from "@/lib/db/bulletinCheck";
 import { getLineSnapshot } from "@/lib/db/greenCardLine";
-import type { PaceBasis } from "@/lib/bulletinNext";
+import { paceByLine } from "@/lib/perm";
 
 /**
  * The whole employment-based line in front of one priority date: approved
@@ -80,16 +80,7 @@ export default async function GreenCardLinePage() {
     getBulletinBoard().catch(() => null),
     getBulletinCheck().catch(() => null),
   ]);
-  const pace: Record<string, PaceBasis> = {};
-  for (const c of board?.finalAction ?? []) {
-    if (!PACE_CATEGORIES.has(c.category)) continue;
-    pace[`${c.category}|${c.country}`] = {
-      latest: c.latest,
-      movedDays: c.movedDays,
-      spanMonths: c.spanMonths,
-      retrogressions: c.retrogressions,
-    };
-  }
+  const pace = paceByLine(board?.finalAction ?? [], (c) => (PACE_CATEGORIES.has(c.category) ? `${c.category}|${c.country}` : null));
 
   const faqSchema = {
     "@context": "https://schema.org",

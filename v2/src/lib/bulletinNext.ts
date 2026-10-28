@@ -158,31 +158,6 @@ export function summariseMoves(moves: readonly SameMonthMove[]): MoveSummary {
   };
 }
 
-export interface PaceBasis {
-  latest: Cutoff;
-  movedDays: number | null;
-  spanMonths: number | null;
-  retrogressions: readonly string[];
-}
-
-/**
- * Months until a cutoff moving at the measured pace reaches `priorityDate`.
- * Withheld (null) when the category is current or shut, or when it did not
- * advance over the window: a pace of zero is not a wait of infinity, it is a
- * queue that is not moving, and the page says that in words instead.
- */
-export function monthsToReach(
-  cell: PaceBasis,
-  priorityDate: string,
-): { months: number; gapDays: number; basis: { movedDays: number; spanMonths: number; retrogressions: number } } | null {
-  if (cell.latest.kind !== "date") return null;
-  if (cell.movedDays === null || cell.spanMonths === null || cell.movedDays <= 0 || cell.spanMonths <= 0) return null;
-  const gapDays = Math.round((Date.parse(priorityDate) - Date.parse(cell.latest.iso)) / MS_PER_DAY);
-  const perMonth = cell.movedDays / cell.spanMonths;
-  const months = gapDays <= 0 ? 0 : Math.round((gapDays / perMonth) * 10) / 10;
-  return { months, gapDays: Math.max(gapDays, 0), basis: { movedDays: cell.movedDays, spanMonths: cell.spanMonths, retrogressions: cell.retrogressions.length } };
-}
-
 /**
  * A supply scenario: how long a queue of `ahead` applications takes to clear
  * at `perYear` visa numbers a year. Arithmetic on a number the reader chose,

@@ -109,16 +109,26 @@ export {
   type I140QueueEstimate,
 } from './i140Queue';
 export {
-  buildGreenCardTimeline,
-  keyDatesFromPwd,
-  type StageCertainty,
-  type TimelineStage,
-  type GreenCardTimelineInput,
-  type GreenCardTimeline,
-} from './greenCardTimeline';
+  buildPlan,
+  NEEDS_PRIORITY_DATE,
+  PLAN_STAGES,
+  RECRUITMENT_MIN_DAYS,
+  WHERE,
+  type Plan,
+  type PlanFigures,
+  type PlanInput,
+  type PlanStage,
+  type PlanStep,
+  type StageInfo,
+  type StageOwner,
+  type Where,
+} from './greenCardPlan';
 export {
   estimatePriorityDate,
   parseCutoff,
+  monthsToReach,
+  paceByLine,
+  type PaceBasis,
   type CountryKey,
   type ChartKind,
   type BulletinMonth,

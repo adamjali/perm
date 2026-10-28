@@ -51,6 +51,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/lca-cases": "lca h-1b labor condition i-200",
   "/seasonal-cases": "h-2a h-2b h2a h2b cw-1 cw1 seasonal farm agricultural temporary h-300 h-400 p-400 p-500 jo-a-300 c-500 job order northern mariana",
   "/opt-employers": "opt stem opt cpt f-1 student students practical training sevis ice",
+  "/tools/green-card-timeline": "green card planner plan timeline every step dates how long when will i get my green card cost fees total perm i-140 i-485 premium processing",
   "/tools/green-card-line": "green card line place in line queue ahead of me how many years wait backlog priority date eb-2 eb-3 india china",
   "/sponsor-finder": "sponsor sponsors green card employer employers find search filter job occupation state industry wage salary timing transfer cap-exempt",
   "/today": "today now everything board dashboard overview summary all steps wage request pwd perm i-140 i140 visa bulletin cutoff where line stands growing shrinking moved forward back retrogression status",

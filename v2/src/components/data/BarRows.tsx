@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  * figure, in the served HTML, which is what an answer engine reads and what a
  * phone paints first. A length says "which one is biggest" faster than a
  * column of numbers the eye has to compare, and the number is still there for
- * anyone who wants it. Same idiom as `I140SubtypePanel`.
+ * anyone who wants it.
  *
  * A NULL IS NOT A SMALL NUMBER. USCIS withholds a cell of 1 to 9 as "D"; the
  * row keeps its place, draws no bar and says "withheld", because a bar of

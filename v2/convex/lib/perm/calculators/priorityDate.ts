@@ -219,3 +219,46 @@ export function estimatePriorityDate(input: PriorityDateInput): PriorityDateEsti
     caveats,
   };
 }
+
+// ============================================================================
+// A LINE'S PACE
+// ============================================================================
+
+export interface PaceBasis {
+  latest: Cutoff;
+  movedDays: number | null;
+  spanMonths: number | null;
+  retrogressions: readonly string[];
+}
+
+/**
+ * Months until a cutoff moving at the measured pace reaches `priorityDate`.
+ * Withheld (null) when the category is current or shut, or when it did not
+ * advance over the window: a pace of zero is not a wait of infinity, it is a
+ * queue that is not moving, and the page says that in words instead.
+ */
+export function monthsToReach(
+  cell: PaceBasis,
+  priorityDate: string,
+): { months: number; gapDays: number; basis: { movedDays: number; spanMonths: number; retrogressions: number } } | null {
+  if (cell.latest.kind !== "date") return null;
+  if (cell.movedDays === null || cell.spanMonths === null || cell.movedDays <= 0 || cell.spanMonths <= 0) return null;
+  const gapDays = Math.round((Date.parse(priorityDate) - Date.parse(cell.latest.iso)) / MS_PER_DAY);
+  const perMonth = cell.movedDays / cell.spanMonths;
+  const months = gapDays <= 0 ? 0 : Math.round((gapDays / perMonth) * 10) / 10;
+  return { months, gapDays: Math.max(gapDays, 0), basis: { movedDays: cell.movedDays, spanMonths: cell.spanMonths, retrogressions: cell.retrogressions.length } };
+}
+
+/**
+ * Each line's pace from the bulletin board's cells, keyed by `keyOf` (null skips a
+ * cell). Copies only the four fields the pace needs, so a page hands its client
+ * component a small map rather than every cell's month-by-month history.
+ */
+export function paceByLine<C extends PaceBasis>(cells: readonly C[], keyOf: (cell: C) => string | null): Record<string, PaceBasis> {
+  const out: Record<string, PaceBasis> = {};
+  for (const c of cells) {
+    const key = keyOf(c);
+    if (key) out[key] = { latest: c.latest, movedDays: c.movedDays, spanMonths: c.spanMonths, retrogressions: c.retrogressions };
+  }
+  return out;
+}

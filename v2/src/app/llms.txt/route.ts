@@ -184,8 +184,8 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
   {
     path: "/tools/green-card-timeline",
-    label: "Green card timeline",
-    blurb: "The employment-based stages end to end, with what governs each one.",
+    label: "Green card timeline and planner",
+    blurb: "Every step to an employment-based green card dated from the reader's own dates and today's DOL and USCIS figures, with the government fees.",
   },
   {
     path: "/tools/salary-explorer",

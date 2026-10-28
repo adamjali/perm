@@ -1487,3 +1487,20 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
 - **Hosting, domains and mail, priced from each provider's own page**: `~/.claude/reference/web-infra-and-seo.md`,
   "Hosting, domains and mail". Oracle's trial ends Oct 28-29; the tenancy checked that night holds only Always Free
   resources.
+
+## Oct 28 2026 (night): one green card timeline, dated from the reader's own case
+
+- **`/tools/green-card-timeline` is the planner** (owner, Oct 27: "you put in dates and change stuff as you like but
+  it maps out full process and full price"): where the case is and its dates in, every step dated out, with the
+  government fees. The URL, its embed and its links stay; the old stage view, its two panels and the unused
+  `keyDatesFromPwd` are gone. One engine: `buildPlan` in `convex/lib/perm/calculators/greenCardPlan.ts` (via
+  `@/lib/perm`), with `PLAN_STAGES` (name, who sets the pace, one sentence) and `WHERE` (starting points, including
+  a certified PERM). Recruitment is `JOB_ORDER_MIN_DAYS + FILING_WINDOW_WAIT_DAYS`; premium is
+  `PREMIUM_I140_BUSINESS_DAYS` (8 CFR 106.4(f)).
+- **Its lengths come from one reader**, `getPlanReading()` (`src/lib/db/planFigures.ts`): DOL's middle decision on
+  its last working day (the /today rulers), USCIS's newest medians, each line's cutoff pace. Every one is editable
+  under "Change the assumptions". The inputs live in the address (`where`, `date`, `pd`, `cat`, `country`,
+  `premium`), so the case page links a certified case straight to its own plan.
+- **The bulletin pace has one home**: `monthsToReach`, `paceByLine` and `PaceBasis` live in
+  `convex/lib/perm/calculators/priorityDate.ts`; the three pages that built the same pace map by hand call
+  `paceByLine`.

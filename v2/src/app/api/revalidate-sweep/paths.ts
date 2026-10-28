@@ -26,6 +26,7 @@ export const SWEEP_PAGES = [
   "/perm-by-the-numbers",
   // Where every step stands: the day's decisions, each status's moves, the census.
   "/today",
+  "/tools/green-card-timeline",
   // Opens with today's holds, from the same document as the page above.
   "/press",
   "/tools/perm-timeline-calculator",

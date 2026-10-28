@@ -8,7 +8,6 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
 import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
-import { monthsToReach, type PaceBasis } from "@/lib/bulletinNext";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
   FAMILY_SIZE,
@@ -22,7 +21,7 @@ import {
   type LineSnapshot,
 } from "@/lib/greenCardLine";
 import { plausibleRange } from "@/lib/greenCardLineCompare";
-import type { CountryKey } from "@/lib/perm";
+import { monthsToReach, type CountryKey, type PaceBasis } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH_2DP } from "@/lib/time";
 

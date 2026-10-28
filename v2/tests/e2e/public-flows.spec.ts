@@ -121,3 +121,16 @@ test("the layoff page names how many states it reads", async ({ page }) => {
   await expect(page.locator("h1")).toBeVisible();
   await expect(page.getByText(/\d+\s+states and DC/i).first()).toBeVisible();
 });
+
+test("the green card timeline plans a certified case and keeps the case in the address", async ({ page }) => {
+  // A certified PERM: the plan starts at the I-140 and counts the PERM as behind the reader.
+  await page.goto("/tools/green-card-timeline?where=perm-certified&date=2026-09-01&pd=2025-10-20");
+  await expect(page.getByText("Before this plan starts")).toBeVisible();
+  await expect(page.getByRole("link", { name: /I-140/ }).first()).toBeVisible();
+  // A changed input goes into the address, so a reload or a shared link opens the same plan.
+  await page.getByLabel("Country of birth").selectOption("india");
+  await expect(page).toHaveURL(/country=india/);
+  await page.reload();
+  await expect(page.getByLabel("Country of birth")).toHaveValue("india");
+  await expect(page.getByText(/^Government fees, the whole way$/)).toBeVisible();
+});

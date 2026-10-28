@@ -487,7 +487,7 @@ function Answer({
       picture={tape}
       actions={
         isFinal ? (
-          <DecidedNext status={status} approved={approved} />
+          <DecidedNext status={status} approved={approved} filingDate={filingDate} decisionDate={decided?.decisionDate ?? null} />
         ) : (
           <AnswerNext
             caseNumber={caseNumber}
@@ -570,11 +570,30 @@ function monthsBetween(from: string, to: string): number {
   return ((ty ?? 0) - (fy ?? 0)) * 12 + ((tm ?? 1) - (fm ?? 1));
 }
 
+/** The planner, filled in from the case: certified on its decision day when DOL has decided, else filed on its filing day. */
+function planHref(filingDate: string | null, decisionDate: string | null): string {
+  if (!filingDate) return "/tools/green-card-timeline";
+  const q = decisionDate
+    ? new URLSearchParams({ where: "perm-certified", date: decisionDate, pd: filingDate })
+    : new URLSearchParams({ where: "perm-filed", date: filingDate });
+  return `/tools/green-card-timeline?${q}`;
+}
+
 /** A decided case's next step: what comes after PERM, or what a denial means. */
-function DecidedNext({ status, approved }: { status: string | null; approved: boolean }) {
+function DecidedNext({
+  status,
+  approved,
+  filingDate,
+  decisionDate,
+}: {
+  status: string | null;
+  approved: boolean;
+  filingDate: string | null;
+  decisionDate: string | null;
+}) {
   const denied = status?.trim().toUpperCase().startsWith("DENIED") ?? false;
   const next = approved
-    ? { href: "/tools/green-card-timeline", label: "What comes after a certified PERM", note: "The I-140 and the green card, step by step." }
+    ? { href: planHref(filingDate, decisionDate), label: "Plan the rest of the green card", note: "The I-140, the bulletin and the I-485, dated from this case." }
     : denied
       ? { href: "/guides/perm-denied-what-happens-next", label: "What happens after a denial", note: "Reconsideration, appeal and refiling, and their deadlines." }
       : null;

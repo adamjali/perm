@@ -166,8 +166,8 @@ export const GROUPS: DataGroup[] = [
 
 /** Every calculator, in the order the index lists them. */
 export const CALCULATOR_PAGES: readonly SitePage[] = [
+  { href: "/tools/green-card-timeline", name: "Green card timeline and planner" },
   { href: "/tools/perm-timeline-calculator", name: "Processing time calculator" },
-  { href: "/tools/green-card-timeline", name: "Green card timeline calculator" },
   { href: "/tools/pwd-calculator", name: "Wage request wait" },
   { href: "/tools/i140-calculator", name: "I-140 wait" },
   { href: "/tools/i485-queue-position", name: "I-485 queue position" },

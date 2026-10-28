@@ -167,15 +167,19 @@
  {
   "slug": "green-card-timeline",
   "path": "/tools/green-card-timeline",
-  "title": "Green card timeline",
-  "label": "Every stage from the wage request to the green card, with each agency's measured pace.",
+  "title": "Your green card timeline",
+  "label": "Every step to an employment-based green card, dated from your own dates and today's DOL and USCIS figures, with the fees.",
   "shot": "green-card-timeline.png",
   "crop": [
    0,
    0,
-   1504,
-   932
-  ]
+   2336,
+   1958
+  ],
+  "fromEl": "main section[data-embed] ol",
+  "viewport": 1440,
+  "maxWidth": 1200,
+  "css": "main section[data-embed] fieldset{visibility:hidden!important;box-shadow:none!important}"
  },
  {
   "slug": "h1b-six-year-limit",

@@ -57,6 +57,12 @@ export const PWD_RECRUITMENT_BUFFER_DAYS = 30;
 export const JOB_ORDER_MIN_DAYS = 30;
 
 /**
+ * Business days USCIS takes to act on an EB-2 or EB-3 I-140 under premium processing.
+ * Per 8 CFR 106.4(f)(1) and USCIS's Form I-907 page (45 for EB-1C and national interest waivers).
+ */
+export const PREMIUM_I140_BUSINESS_DAYS = 15;
+
+/**
  * Minimum duration for Notice of Filing posting.
  * Per 20 CFR § 656.10(d)(1)(ii) - Notice must be posted for at least 10 business days.
  */

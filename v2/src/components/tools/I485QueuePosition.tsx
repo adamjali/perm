@@ -40,7 +40,8 @@ import { pairKey,
 } from "@/lib/i485/position";
 import { formatAsOf, formatAsOfShort, formatMonth } from "@/lib/dolFormat";
 import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
-import { monthsToReach, scenarioMonths, type PaceBasis } from "@/lib/bulletinNext";
+import { scenarioMonths } from "@/lib/bulletinNext";
+import { monthsToReach, type PaceBasis } from "@/lib/perm";
 import { ChartTips } from "@/components/data/ChartTips";
 import { Label } from "@/components/ui/label";
 import { CaveatBox } from "@/components/ui/note";

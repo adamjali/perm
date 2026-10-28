@@ -75,17 +75,25 @@ Overnight plan, Tue Oct 27 2026, 11:05 PM EDT (owner asleep, wants it right by m
 cards (API, the deadline, timeline, EB-2 vs EB-3 and green card line calculators, wage levels, employer compare, the
 A-to-Z grids) and check all 91 at full size; phone and glued-text checks on /today, /about, /compare, /methodology,
 /perm-queue; `pnpm check`; push before 1:30 AM for the 2 AM night run only if every check passes; read the live pages
-and served cards after; a morning report with screenshots. Later: blue as a light second accent, the rest of Phase 2,
-the planner (Phase 3, building on "Pick a step"), Sabrina's weekend roll-forward answer.
+and served cards after; a morning report with screenshots. Revised 11:25 PM EDT (owner: "do all and live, all"; go live again after the window if it runs long). In order,
+each live once checked: (1) the planner, every step dated from your inputs plus the full government cost; (2) blue as
+a light second accent; (3) /today: an I-485 category and country switch, decisions over 30/90/180 days, closed
+statuses; (4) the rail regrouped by step, one list for rail, /today and /tools; (5) a month's drill-down; (6) time
+travel; (7) live refresh, cost measured first; (8) the API and deadline card fixes. Not tonight: Phase 4 (DOL
+workbooks load on GitHub's runners), Phase 5 (weeks), Sabrina's weekend answer, deepmerge (no fix published).
 
 ## Phase 3: one planner, every step to the green card (2 to 3 days)
-- [ ] 3.1 Where you are now (about to file the wage request, wage request filed, PERM filed, I-140 filed or approved),
+- [x] 3.1 Where you are now (about to file the wage request, wage request filed, PERM filed, I-140 filed or approved),
       filing date, category, country of birth, premium processing. Each step's date range from our measured methods:
       wage request (pwd day), recruitment, PERM (decision pace), I-140 (USCIS medians, premium 15 business days), the
       visa bulletin wait (our pace method, its backtest accuracy printed), I-485 (USCIS medians).
-- [ ] 3.2 Every assumption shown and editable (visas a year, people per petition, I-140 approval, dropout, premium).
-- [ ] 3.3 Your position at each stage: cases ahead, people ahead in your line, where DOL and the bulletin are.
-- [ ] 3.4 The planner is the one place the case page, the queue pages and the tools link to.
+- [x] 3.2 Every assumption shown and editable (visas a year, people per petition, I-140 approval, dropout, premium).
+- [~] 3.3 Your position at each stage: cases ahead, people ahead in your line, where DOL and the bulletin are.
+- [x] 3.4 The planner is the one place the case page, the queue pages and the tools link to.
+
+Built Wed Oct 28 2026, 12:00 AM EDT: the planner is `/tools/green-card-timeline` (one engine, `buildPlan`). 3.3
+is in part: each step's "Now" line says where DOL, USCIS and the bulletin stand; cases ahead and people ahead in
+the line aren't on it yet (the green card line tool has them).
 
 ## Phase 4: the record, deeper (3 to 4 days)
 - [ ] 4.1 Load JOB_OPP_PWD_NUMBER from DOL's PERM files; link each PERM to its wage request (exact), employer and
