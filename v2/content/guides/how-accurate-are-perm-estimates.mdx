@@ -59,6 +59,8 @@ Historically the effect was 27 days end to end: A about 11 days earlier than the
 
 ## What each estimator uses
 
+Any estimator can know DOL's queue position and how fast the queue has moved. None can know about an audit, an RFI or a hold before DOL issues it.
+
 <ComparisonTable
   headers={["Input", "Can any tool know it?", "What we do with it"]}
   rows={[
@@ -73,6 +75,8 @@ Historically the effect was 27 days end to end: A about 11 days earlier than the
 The two rows marked "No" are the ones that produce the big misses, and they are the same for every tool. An audit adds months and is invisible until it is issued. No estimator, including this one, can see it coming.
 
 ## How to read ours
+
+Start from the most likely date, read the cases-ahead line, and check where DOL's queue is right now.
 
 <StepByStep>
 <Step number={1} title="Start from the most likely date">
@@ -108,6 +112,8 @@ The estimate is anchored to DOL's published position. The [processing times page
 
 ## When we refuse to give a date
 
+We print no date once DOL has passed your filing month, for a filing month too new to have a measured history, or for the stages an audit adds.
+
 <Callout type="important" title="If DOL has already passed your filing month">
 Every filing-anchored model's date has elapsed, and printing a new one would be invention. The page says the queue passed your month, by how much, and that a case still pending at that point is usually in an audit, a request for information, or a hold. The per-case lookup is the next step, because it shows the status DOL actually holds.
 </Callout>
@@ -115,6 +121,8 @@ Every filing-anchored model's date has elapsed, and printing a new one would be 
 We also print no estimate for a filing month too new to have a measured history, and no estimate at all for the stages an audit adds. A blank is a true answer; a confident wrong date is not.
 
 ## What this cannot tell you
+
+This guide can't tell you your decision date, whether your case will be audited, anything about a case DOL hasn't received, or how another tool got its number.
 
 - Your decision date. Near the front of the queue our dates have typically landed within a few days; further out there's more room to miss, and the scorecard shows how much.
 - Whether your case will be audited. Nothing can, until DOL issues it.

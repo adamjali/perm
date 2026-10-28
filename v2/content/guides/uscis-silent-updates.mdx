@@ -22,6 +22,8 @@ A silent update is a change in your own USCIS account's case data, a new date or
 
 ## Where a case's status shows up
 
+A case's status shows up in three places: Case Status Online, your USCIS online account, and USCIS's Case Status API for approved apps. Silent updates show up in your online account.
+
 <ComparisonTable
   headers={["Where", "Who can see it", "What it shows", "Silent updates?"]}
   rows={[
@@ -47,6 +49,8 @@ No code is a decision. The decision is the status USCIS shows and the notice it 
 
 ## Why no tracker can show them from a receipt number
 
+A receipt number reaches only the public data, and the codes behind silent updates live in your USCIS account, behind a login that's yours alone.
+
 - **A receipt number reaches only the public data.** A tracker that has your number can read what Case Status Online shows, or what USCIS's API returns. Neither carries your account's codes.
 - **The API's one signal is the modified date**, and USCIS doesn't send it at all for receipts that start with IOE (cases filed online): the date is "Not supported where receiptNumber prefix = IOE."
 - **The codes live behind your login, and your login is yours alone.** USCIS's [account terms](https://myaccount.uscis.gov/legal-terms) bar account holders from sharing their password "with anyone else, or any entity or company, for their own use," from letting another person or company "log into, access, or use" their account, and from "Utilizing unauthorized third-party software within the USCIS online electronic immigration system."
@@ -54,6 +58,8 @@ No code is a decision. The decision is the status USCIS shows and the notice it 
 So an app that promises silent-update codes from your receipt number alone is promising something USCIS doesn't give it. An app that asks for your USCIS login is asking you to break your account's terms.
 
 ## When you see one
+
+Go by the status and the notices USCIS mails, which are the record, and by USCIS's posted processing time.
 
 <StepByStep>
 <Step number={1} title="Read the status and the notices">
