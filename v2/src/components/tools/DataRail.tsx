@@ -6,16 +6,19 @@ import { useLinkStatus } from "next/link";
 import { IntentLink } from "@/components/ui/intent-link";
 import { usePathname } from "next/navigation";
 import {
+  AirplaneTiltIcon,
   BellRingingIcon,
   BuildingsIcon,
-  CalculatorIcon,
   CalendarDotsIcon,
+  ChartPieSliceIcon,
   CaretRightIcon,
   CircleNotchIcon,
   CurrencyDollarIcon,
-  HourglassMediumIcon,
+  FileTextIcon,
   HouseIcon,
   MagnifyingGlassIcon,
+  MegaphoneIcon,
+  ScalesIcon,
   SealCheckIcon,
   SidebarSimpleIcon,
   type Icon,
@@ -24,23 +27,10 @@ import {
 import { cn } from "@/lib/utils";
 import { LinkPending } from "@/components/ui/pending-link";
 
-import {
-  CALCULATOR_PAGES,
-  GROUPS as DATA_GROUPS,
-  OVERVIEW,
-  SECTIONS,
-  isDataPath,
-  sectionForPath,
-  type DataGroup as SiteDataGroup,
-} from "@/lib/siteMap";
+import { GROUPS, OVERVIEW, SECTIONS, isDataPath, sectionForPath, type DataGroup } from "@/lib/siteMap";
 
-/** The rail's groups: the Data menu's six, then the calculators. */
-type DataGroup = SiteDataGroup | "Calculators";
-const GROUPS: readonly DataGroup[] = [...DATA_GROUPS, "Calculators"];
-
-/** The pages under a group, in the menu's order. */
+/** The pages under a group, in the menu's order: the step's data, then its calculators beside it. */
 function groupPages(g: DataGroup): { key: string; label: string; href: string }[] {
-  if (g === "Calculators") return CALCULATOR_PAGES.map((p) => ({ key: p.href, label: p.name, href: p.href }));
   return SECTIONS.filter((s) => s.group === g).map((s) => ({ key: s.key, label: s.label, href: s.href }));
 }
 
@@ -73,25 +63,23 @@ const RAIL_W_COLLAPSED = "3rem";
  * group without an icon fails the typecheck.
  */
 export const GROUP_ICONS: Record<DataGroup, Icon> = {
-  Cases: MagnifyingGlassIcon,
-  "Wait times": HourglassMediumIcon,
-  "Employers and firms": BuildingsIcon,
-  Wages: CurrencyDollarIcon,
+  "Your case": MagnifyingGlassIcon,
+  "Wage request": ScalesIcon,
+  Recruitment: MegaphoneIcon,
+  PERM: SealCheckIcon,
+  "I-140": FileTextIcon,
   "Green card line": CalendarDotsIcon,
-  "Approvals and denials": SealCheckIcon,
-  Calculators: CalculatorIcon,
+  "Employers and firms": BuildingsIcon,
+  Breakdowns: ChartPieSliceIcon,
+  Wages: CurrencyDollarIcon,
+  "Other visas": AirplaneTiltIcon,
 };
 
 export function DataRail() {
   const pathname = usePathname();
   const found = sectionForPath(pathname);
-  const path = pathname.replace(/\/+$/, "") || "/";
-  // A calculator page is its own entry in the Calculators group.
-  const active = found
-    ? found.group === "Calculators"
-      ? { key: path, group: "Calculators" as DataGroup }
-      : { key: found.key as string, group: found.group as DataGroup }
-    : null;
+  // The calculators index belongs to no step, so nothing in the rail is current there.
+  const active = found && found.group !== "Calculators" ? { key: found.key as string, group: found.group } : null;
   const onOverview = pathname.replace(/\/+$/, "") === OVERVIEW.href;
 
   // Below `lg` the rail is a side panel that slides in from the same edge.
@@ -135,7 +123,7 @@ export function DataRail() {
   // another group leaves the rail insisting you are still in Queue.
   useEffect(() => {
     const next = sectionForPath(pathname);
-    if (next) setOpen(next.group);
+    if (next && next.group !== "Calculators") setOpen(next.group);
   }, [pathname]);
 
   // Arriving somewhere closes the drawer.

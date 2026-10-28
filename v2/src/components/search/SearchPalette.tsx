@@ -87,7 +87,7 @@ const ROW = "flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.
 const ACTION_ROW = "cursor-pointer border-l-2 border-primary-text bg-tint px-3 py-3 text-base font-semibold data-[selected=true]:bg-accent";
 const GROUP_HEADING = "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground";
 /** The page groups, in the order the Data menu has them. */
-const PAGE_GROUPS = ["Go to", ...GROUPS, "Calculators", "Learn"] as const;
+const PAGE_GROUPS = ["Go to", ...GROUPS, "Learn"] as const;
 
 /** Rows per kind in the palette. The route says whether more match. */
 const PALETTE_PER_KIND = 5;

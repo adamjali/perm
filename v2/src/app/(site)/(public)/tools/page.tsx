@@ -150,7 +150,7 @@ export default async function ToolsPage() {
           <h2 className="font-heading text-2xl font-bold">All {CALCULATOR_PAGES.length} calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base">
             Decision times, the wage, I-140 and I-485 queues, priority dates,
-            the green card drawn to scale, and every statutory deadline.
+            the whole green card dated from your own case, and every statutory deadline.
           </p>
         </div>{" "}
         <Link href="/calculators" className={buttonVariants({ variant: "outline", size: "lg" })}>

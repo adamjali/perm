@@ -20,7 +20,9 @@ describe("breadcrumbTrail", () => {
     ["/perm-processing-times", ["Home", "Data", "PERM processing times"]],
     ["/uscis-processing-times", ["Home", "Data", "USCIS processing times"]],
     ["/tools/perm-timeline-calculator", ["Home", "Data", "Processing time calculator"]],
-    ["/tools/rfi-deadline", ["Home", "Data", "Calculators", "RFI deadline"]],
+    ["/tools/rfi-deadline", ["Home", "Data", "RFI deadline"]],
+    // A calculator nothing files under a step still has the calculators index above it.
+    ["/tools/not-a-real-calculator", ["Home", "Data", "Calculators"]],
     ["/tools/priority-date-calculator", ["Home", "Data", "Priority date calculator"]],
     // An article's own page renders the bar with its title (SiteBreadcrumbs pageName).
     ["/guides/what-emma-told-you", ["Home", "Guides"]],

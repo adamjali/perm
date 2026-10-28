@@ -134,7 +134,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): RoadStop[] {
         h: 306,
       },
       contain: true,
-      fact: "Every stage, drawn to scale",
+      fact: "Every step, dated from your case",
       href: "/tools/green-card-timeline",
       doc: "USCIS's specimen green card",
       cta: "Whole timeline",

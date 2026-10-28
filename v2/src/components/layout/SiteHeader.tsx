@@ -295,7 +295,7 @@ export default function SiteHeader() {
       </div>
 
       <Panel id="data-menu" open={menu === "data"} className="hidden lg:block">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-6 gap-x-6 px-6 py-6 xl:gap-x-10">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-5 gap-x-6 gap-y-8 px-6 py-6 xl:gap-x-10">
           {GROUPS.map((group) => (
             <div key={group}>
               <p className="pl-3 font-heading text-base font-bold text-foreground">{group}</p>{" "}

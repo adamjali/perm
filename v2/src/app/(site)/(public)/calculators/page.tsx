@@ -10,13 +10,14 @@ import type { Metadata } from "next";
 import { FinePrint } from "@/components/data/FinePrint";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
-import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, CalendarDotIcon as CalendarClock, ChartBarIcon, CurrencyDollarIcon, FileTextIcon, PathIcon as Route, ScalesIcon as Scale, CompassIcon, UsersIcon, UsersThreeIcon } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, ChartBarIcon, CurrencyDollarIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { PageBasics } from "@/components/data/PageBasics";
 import { CalculatorTour } from "@/components/tools/CalculatorTour";
 import { SITE_URL } from "@/lib/constants/site";
+import { CALCULATOR_PAGES, pageName } from "@/lib/siteMap";
 
 const TITLE = "Free PERM Timeline and Deadline Calculators";
 const DESCRIPTION =
@@ -51,150 +52,12 @@ export const dynamic = "force-static";
  * apart because "what will happen to me" and "what does this job pay" want
  * different things from the same visit.
  */
-const TOOLS = [
-  {
-    href: "/tools/perm-timeline-calculator",
-    icon: CalendarClock,
-    name: "PERM processing time calculator",
-    kind: "Estimate",
-    blurb:
-      "When DOL is likely to decide a case filed in a given month.",
-  },
-  {
-    href: "/tools/perm-deadline-calculator",
-    icon: CalendarCheckIcon,
-    name: "PERM deadline calculator",
-    kind: "Exact",
-    blurb:
-      "The recruitment window, the quiet period and the ETA-9089 filing window, under 20 CFR 656.",
-  },
-  {
-    href: "/tools/pwd-calculator",
-    icon: Scale,
-    name: "Prevailing wage queue calculator",
-    kind: "Count",
-    blurb:
-      "How many wage requests sit ahead of yours.",
-  },
-  {
-    href: "/tools/i140-calculator",
-    icon: FileTextIcon,
-    kind: "Count",
-    name: "I-140 queue calculator",
-    blurb:
-      "How many petitions wait in your category, against how fast USCIS clears them.",
-  },
-  {
-    href: "/tools/i485-queue-position",
-    icon: UsersIcon,
-    kind: "Range",
-    name: "I-485 queue position",
-    blurb:
-      "How many employment-based adjustment applications USCIS had pending ahead of a priority date. USCIS withholds its smallest counts, so the answer is a floor and a ceiling.",
-  },
-  {
-    href: "/tools/green-card-line",
-    icon: UsersThreeIcon,
-    kind: "Range",
-    name: "Green card line",
-    blurb:
-      "Everyone ahead of your priority date, not just the people who've filed: approved petitions waiting, petitions pending and cases already current, by line and country.",
-  },
-  {
-    href: "/tools/eb2-vs-eb3",
-    icon: Scale,
-    kind: "Compare",
-    name: "EB-2 vs EB-3",
-    blurb:
-      "The two lines side by side for your country and priority date, and whether one really has fewer people ahead.",
-  },
-  {
-    href: "/tools/which-green-card",
-    icon: CompassIcon,
-    kind: "Match",
-    name: "Which green card fits",
-    blurb: "Which employment categories your job and background point to, and what each one needs.",
-  },
-  {
-    href: "/tools/priority-date-calculator",
-    icon: CalendarRange,
-    kind: "History",
-    name: "Priority date calculator",
-    blurb:
-      "Where a priority date sits against the visa bulletin, and which way the cutoff has moved, including backwards.",
-  },
-  {
-    href: "/tools/green-card-timeline",
-    icon: Route,
-    kind: "Overview",
-    name: "Green card timeline",
-    blurb:
-      "Every stage drawn to scale, marked by which are fixed by regulation, which are queues, and which have no published figure.",
-  },
-  {
-    href: "/tools/rfi-deadline",
-    icon: CalendarCheckIcon,
-    kind: "Exact",
-    name: "RFI and audit deadline",
-    blurb:
-      "Thirty calendar days from the date on DOL's letter, under 20 CFR 656.20, with the weekday and the days left.",
-  },
-  {
-    href: "/tools/pwd-validity",
-    icon: CalendarRange,
-    kind: "Exact",
-    name: "Wage determination validity",
-    blurb:
-      "When a prevailing wage determination expires: 90 days, or June 30 when the wage year turns over, and which rule applied.",
-  },
-  {
-    href: "/tools/h1b-six-year-limit",
-    icon: CalendarClock,
-    kind: "Exact",
-    name: "H-1B six-year limit",
-    blurb:
-      "The day H-1B status runs out, and the last day to file a PERM so one-year extensions stay open under the 365-day rule.",
-  },
-  {
-    href: "/tools/h1b-lottery-odds-calculator",
-    icon: ChartBarIcon,
-    kind: "Estimate",
-    name: "H-1B lottery odds",
-    blurb:
-      "The OEWS level an offer meets in each work area, from DOL's wage search, and DHS's estimated chance at that level in the weighted draw.",
-  },
-  {
-    href: "/tools/priority-date-retention",
-    icon: FileTextIcon,
-    kind: "Exact",
-    name: "Priority date retention",
-    blurb:
-      "When an employer's withdrawal stops revoking the I-140, when a pending I-485 becomes portable, and whether the priority date is kept.",
-  },
-  {
-    href: "/tools/wage-levels",
-    icon: CurrencyDollarIcon,
-    kind: "Live",
-    name: "Prevailing wage levels",
-    blurb:
-      "DOL's four wage levels for an occupation in an area, read live from the OFLC wage search, with the series year.",
-  },
-  {
-    href: "/tools/green-card-fees",
-    icon: CurrencyDollarIcon,
-    kind: "Schedule",
-    name: "Green card government fees",
-    blurb:
-      "USCIS fees for the whole employment-based case from Form G-1055, with its edition date and what the total leaves out.",
-  },
-];
-
+/** The explorers: they take nothing about the reader's case. Named by the site map, like every page. */
 const EXPLORERS = [
   {
     href: "/tools/salary-explorer",
     icon: CurrencyDollarIcon,
     kind: "Distribution",
-    name: "Salary explorer",
     blurb:
       "What certified PERM jobs actually pay, as a percentile ladder rather than one average.",
   },
@@ -202,7 +65,6 @@ const EXPLORERS = [
     href: "/lca-wages",
     icon: CurrencyDollarIcon,
     kind: "Distribution",
-    name: "H-1B salary explorer",
     blurb:
       "The wage attested on certified H-1B LCAs, by occupation and worksite state, annualised from the unit each filing quoted.",
   },
@@ -210,7 +72,6 @@ const EXPLORERS = [
     href: "/tools/compare-my-offer",
     icon: CurrencyDollarIcon,
     kind: "Percentile",
-    name: "Compare my offer",
     blurb:
       "Where your offer sits among certified H-1B LCAs and PERM offers for the same job and state. The number stays in your browser.",
   },
@@ -218,19 +79,21 @@ const EXPLORERS = [
     href: "/tools/i140-trends",
     icon: ChartBarIcon,
     kind: "Series",
-    name: "I-140 trends",
     blurb:
       "Petitions received, approved, denied and left pending by category, quarter by quarter.",
   },
-] as const;
+].map((e) => ({ ...e, name: pageName(e.href) ?? e.href }));
+const EXPLORER_HREFS = new Set(EXPLORERS.map((e) => e.href));
+/** The calculators about the reader's own case: every calculator in the site map but the explorers. */
+const CASE_TOOLS = CALCULATOR_PAGES.filter((p) => !EXPLORER_HREFS.has(p.href));
 
 export default function CalculatorsPage() {
   const itemList = {
     "@context": "https://schema.org",
     "@type": "ItemList" as const,
     name: "PERM calculators and tools",
-    numberOfItems: TOOLS.length + EXPLORERS.length,
-    itemListElement: [...TOOLS, ...EXPLORERS].map((t, i) => ({
+    numberOfItems: CASE_TOOLS.length + EXPLORERS.length,
+    itemListElement: [...CASE_TOOLS, ...EXPLORERS].map((t, i) => ({
       "@type": "ListItem" as const,
       position: i + 1,
       item: {
@@ -251,7 +114,7 @@ export default function CalculatorsPage() {
           PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          {TOOLS.length} calculators about your case, {EXPLORERS.length}{" "}
+          {CASE_TOOLS.length} calculators about your case, {EXPLORERS.length}{" "}
           explorers about the field you filed into. Free, on the
           government&apos;s own data.
         </p>
@@ -291,7 +154,7 @@ export default function CalculatorsPage() {
                 { s: "I-140 approved, years from current", q: "How many people are ahead of me in the whole line?", href: "/tools/green-card-line", tool: "Green card line" },
                 { s: "Deciding between EB-2 and EB-3", q: "Which line has fewer people ahead of my date?", href: "/tools/eb2-vs-eb3", tool: "EB-2 vs EB-3" },
                 { s: "Before the PERM", q: "Which employment green card could my job lead to?", href: "/tools/which-green-card", tool: "Which green card fits" },
-                { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
+                { s: "Just starting, or planning ahead", q: "When will I get my green card, and what will it cost?", href: "/tools/green-card-timeline", tool: "Green card timeline and planner" },
                 { s: "Writing the job offer, before any of the above", q: "What does this role pay here?", href: "/tools/salary-explorer", tool: "Salary explorer" },
                 { s: "Weighing EB-2 against EB-3", q: "Which category is USCIS clearing?", href: "/tools/i140-trends", tool: "I-140 trends" },
               ].map((r) => (

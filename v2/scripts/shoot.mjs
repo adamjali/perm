@@ -52,7 +52,7 @@ try {
       if (s.wait) await page.waitForSelector(s.wait, { timeout: 30_000 });
       // A shot of the dev server would carry Next's own badge in its corner.
       if (new URL(s.url).hostname === "localhost") {
-        await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+        await page.addStyleTag({ content: "nextjs-portal, section[aria-label=\"DOL notice on FLAG\"] { display: none !important; }" });
       }
       // Entrance animations are whileInView; give them a beat to settle so a
       // shot never catches a half-faded element.

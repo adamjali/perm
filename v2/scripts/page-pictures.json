@@ -1,4 +1,14 @@
 {
+  "calculators/plan": {
+    "capture": {
+      "url": "/tools/green-card-timeline?where=perm-filed&date=2026-01-15",
+      "clip": "fromm:Your green card timeline",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The green card timeline for a sample PERM filed January 15, 2026, EB-2 rest of world: the PERM decided around November 1, 2026, the I-140 around February 28, 2027, the bulletin wait to July 2027 and the green card around January 2028, each step a bar on one time line with where DOL and USCIS stand today.",
+    "captured": "2026-10-28"
+  },
   "calculators/pwd": {
     "capture": {
       "url": "/tools/pwd-calculator",
@@ -92,7 +102,8 @@
       "maxHeight": 1150,
       "wait": 4000
     },
-    "alt": "The PERM cases page: 373,939 decided cases in DOL's published files, October 2023 to June 2026, and 160,716 newer from DOL's live service, with the cases DOL decides each month since 2015."
+    "alt": "The PERM cases page: 373,939 decided cases in DOL's published files, October 2023 to June 2026, and 160,716 newer from DOL's live service, with the cases DOL decides each month since 2015.",
+    "captured": "2026-10-21"
   },
   "data/wait": {
     "capture": {
@@ -101,7 +112,28 @@
       "maxHeight": 1150,
       "wait": 4000
     },
-    "alt": "The PERM processing times page: DOL is reviewing applications filed in January 2026, 336 days on average to a determination, the audit review queue at December 2025 and wage requests at June 2026, as DOL published them on October 5, 2026."
+    "alt": "The PERM processing times page: DOL is reviewing applications filed in January 2026, 336 days on average to a determination, the audit review queue at December 2025 and wage requests at June 2026, as DOL published them on October 5, 2026.",
+    "captured": "2026-10-21"
+  },
+  "data/pwd": {
+    "capture": {
+      "url": "/pwd-cases",
+      "clip": "fromm:Find a prevailing wage request",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The wage requests page: 48,159 waiting at DOL now, 634,638 decided with the wage set and published through June 30, 2026, and DOL deciding requests filed in June 2026 as of September 30, 2026, with where DOL is in the line by filing month.",
+    "captured": "2026-10-28"
+  },
+  "data/recruitment": {
+    "capture": {
+      "url": "/perm-recruitment",
+      "clip": "fromm:Where PERM employers recruit",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The PERM recruitment page, from 276,788 decided cases through June 30, 2026: a median 120 days from the first step to filing, 97% Sunday newspapers, 65% a job search website, 98% the notice posted at the workplace, and how long before filing each step ran.",
+    "captured": "2026-10-28"
   },
   "data/employers": {
     "capture": {
@@ -110,7 +142,18 @@
       "maxHeight": 1150,
       "wait": 4000
     },
-    "alt": "Google LLC's employer page: 1,617 PERM filings, 1,608 certified, a 99.8% approval rate, a median wage of $119,350, a median 347 days, and 15 cases waiting at DOL now."
+    "alt": "Google LLC's employer page: 1,617 PERM filings, 1,608 certified, a 99.8% approval rate, a median wage of $119,350, a median 347 days, and 15 cases waiting at DOL now.",
+    "captured": "2026-10-21"
+  },
+  "data/places": {
+    "capture": {
+      "url": "/perm-by-state",
+      "clip": "fromm:PERM filings, state by state",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The PERM filings by state page: a map of the United States shaded by filings at each worksite state, from 51 to 67,742, with 361,922 filings across 55 states and territories in the current disclosure window, 332,545 of them certified.",
+    "captured": "2026-10-28"
   },
   "data/wages": {
     "capture": {
@@ -119,7 +162,8 @@
       "maxHeight": 1150,
       "wait": 5000
     },
-    "alt": "The PERM salary explorer: 343,211 cases with a usable wage, a median of $103,272, the 5th percentile at $24,960 and the 95th at $199,597, and where the wages land in $10,000 bands."
+    "alt": "The PERM salary explorer: 343,211 cases with a usable wage, a median of $103,272, the 5th percentile at $24,960 and the 95th at $199,597, and where the wages land in $10,000 bands.",
+    "captured": "2026-10-21"
   },
   "data/line": {
     "capture": {
@@ -128,15 +172,27 @@
       "maxHeight": 1150,
       "wait": 4000
     },
-    "alt": "The visa bulletin page for November 2026: of 96 past bulletins first seen before their month, half were out by the 13th of the month before and nine in ten by the 22nd, drawn by day."
+    "alt": "The visa bulletin page for November 2026: of 96 past bulletins first seen before their month, half were out by the 13th of the month before and nine in ten by the 22nd, drawn by day.",
+    "captured": "2026-10-21"
   },
-  "data/denials": {
+  "data/i140": {
     "capture": {
-      "url": "/perm-denial-risk",
-      "clip": "fromm:What gets denied",
+      "url": "/uscis-processing-times",
+      "clip": "fromm:USCIS processing times",
       "maxHeight": 1150,
       "wait": 4000
     },
-    "alt": "The denial rates page: a PERM case is denied 3.2% of the time, and 54.29% of the time when the position isn't full time, with where the denials sit by wage band and declared factor."
+    "alt": "The USCIS processing times page for April to June 2026: 3.9 months to decide an I-140, 6 for an employment-based I-485, 6.4 for a work permit and 5.8 for advance parole, with 12,807,907 applications pending at USCIS.",
+    "captured": "2026-10-28"
+  },
+  "data/visas": {
+    "capture": {
+      "url": "/lca-cases",
+      "clip": "fromm:Find an H-1B LCA",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The H-1B LCAs page: 5,975 waiting at DOL now, 3,754,961 decided with the wage offered and published through June 30, 2026, and LCAs by the month they were filed.",
+    "captured": "2026-10-28"
   }
 }

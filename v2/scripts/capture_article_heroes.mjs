@@ -36,7 +36,8 @@ fs.mkdirSync(out, { recursive: true });
 
 const HIDE = `
   nav[aria-label="Breadcrumb"], div:has(> nav.print\\:hidden) > nav.print\\:hidden,
-  nextjs-portal, [data-nextjs-toast], button[aria-label="Back to top"], .fixed { display: none !important; }
+  nextjs-portal, [data-nextjs-toast], button[aria-label="Back to top"], .fixed,
+  section[aria-label="DOL notice on FLAG"] { display: none !important; }
   /* A data page's "In this section" column goes, and its page takes the width. */
   div:has(> nav.print\\:hidden) { display: block !important; }
   /* The data rail (DataRail.tsx): its column, the phone panel and the panel's handle. */

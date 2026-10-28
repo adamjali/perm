@@ -110,3 +110,14 @@ describe("GreenCardPlanner, starting from a certified PERM", () => {
     expect(within(tile("Priority date")).getByText("Oct 20, 2025")).toBeInTheDocument();
   });
 });
+
+describe("GreenCardPlanner, the priority date tile", () => {
+  it("calls a priority date already passed filed, never done", () => {
+    // Arrange
+    nav.params = new URLSearchParams("where=perm-filed&date=2026-01-15");
+    // Act
+    renderPlanner();
+    // Assert
+    expect(within(tile("Priority date")).getByText("Filed")).toBeInTheDocument();
+  });
+});

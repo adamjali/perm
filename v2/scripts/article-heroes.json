@@ -199,10 +199,10 @@
  },
  "guides/three-180-day-clocks": {
   "capture": {
-   "url": "/tools/green-card-timeline"
+   "url": "/tools/green-card-timeline?where=perm-certified&date=2026-06-01&pd=2025-09-15"
   },
-  "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The green card timeline: every stage of an employment-based case drawn to scale, from DOL's and USCIS's figures"
+  "credit": "Screenshot of permtracker.app, October 28, 2026",
+  "alt": "The green card timeline for a certified PERM: the priority date, the I-140, the visa bulletin wait and the green card, each dated on one time line"
  },
  "guides/perm-recruitment-checklist": {
   "pdf": {

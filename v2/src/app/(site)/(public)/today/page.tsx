@@ -416,7 +416,7 @@ export default async function TodayPage() {
       ) : null}{" "}
       <section aria-labelledby="pages" className="mt-16 border-t-2 border-border pt-10">
         <h2 id="pages" className="font-heading text-2xl font-bold">
-          Every page, by topic
+          Every page, step by step
         </h2>{" "}
         <ul className="mt-6 grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-4 [&>*]:min-w-0">
           {GROUPS.map((g) => (

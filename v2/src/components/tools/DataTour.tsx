@@ -7,45 +7,64 @@ import { StageBand } from "@/components/scroll/StageBand";
 import { DATA_SHOTS, type DataShot } from "@/components/tools/dataShots";
 import { GROUPS, SECTIONS, type DataGroup } from "@/lib/siteMap";
 import { cn } from "@/lib/utils";
+import { longDate } from "@convex/lib/months";
 
 /**
- * The data overview's six groups as bands, one after another: each lists the group's pages straight from the site
+ * The data overview's groups as bands, one after another: each lists the group's pages straight from the site
  * map (the same list the Data menu and the data rail draw, so the three can't drift) beside a dated capture of the
  * group's main page.
  */
 
-const CAPTURED = "October 21, 2026";
-
 const BANDS: Record<DataGroup, { lead: string; shot: DataShot; url: string }> = {
-  Cases: {
-    lead: "Every case DOL has published and every case still waiting, for PERM, wage requests, H-1B LCAs and the seasonal visas.",
+  "Your case": {
+    lead: "Look a case up by its number, or find it by the employer's name, for PERM, wage requests, H-1B LCAs and the seasonal visas, and plan every step to the green card.",
     shot: "cases",
     url: "permtracker.app/perm-cases",
   },
-  "Wait times": {
-    lead: "Where DOL's queue stands, how fast it moves, and how long each agency takes, from their own published figures.",
+  "Wage request": {
+    lead: "Every wage request DOL holds, the month it's deciding now, and DOL's four wage levels for a job and a place.",
+    shot: "pwd",
+    url: "permtracker.app/pwd-cases",
+  },
+  Recruitment: {
+    lead: "Where employers advertise and how long before filing they start, from DOL's own record of each case, and every deadline for your dates.",
+    shot: "recruitment",
+    url: "permtracker.app/perm-recruitment",
+  },
+  PERM: {
+    lead: "Where DOL's queue stands, how fast it moves, what gets denied or audited, and the record by state, city, industry and citizenship.",
     shot: "wait",
     url: "permtracker.app/perm-processing-times",
+  },
+  "I-140": {
+    lead: "How long USCIS takes, how many petitions are approved and waiting on a visa number, and how often USCIS asks for more evidence.",
+    shot: "i140",
+    url: "permtracker.app/uscis-processing-times",
+  },
+  "Green card line": {
+    lead: "The visa bulletin since 2005, who is ahead of a priority date, the I-485 by office, and the visas the State Department issues.",
+    shot: "line",
+    url: "permtracker.app/visa-bulletin",
   },
   "Employers and firms": {
     lead: "Every sponsor and law firm in DOL's files, with its record, its cases waiting now, and any layoff notice or debarment.",
     shot: "employers",
     url: "permtracker.app/perm-employers/google-llc",
   },
+  Breakdowns: {
+    lead: "The PERM record by worksite state, city, industry and the worker's citizenship.",
+    shot: "places",
+    url: "permtracker.app/perm-by-state",
+  },
   Wages: {
-    lead: "What certified jobs pay, DOL's four wage levels, and where an offer sits among them.",
+    lead: "What certified jobs pay, and where an offer sits among them.",
     shot: "wages",
     url: "permtracker.app/tools/salary-explorer",
   },
-  "Green card line": {
-    lead: "The visa bulletin since 2005, who is ahead of a priority date, and the visas the State Department issues.",
-    shot: "line",
-    url: "permtracker.app/visa-bulletin",
-  },
-  "Approvals and denials": {
-    lead: "What gets denied, audited or sent an RFI, and how the record looks by state, city, industry and citizenship.",
-    shot: "denials",
-    url: "permtracker.app/perm-denial-risk",
+  "Other visas": {
+    lead: "H-1B LCAs and the lottery, and the seasonal H-2A, H-2B and CW-1 programs, from the same DOL counter.",
+    shot: "visas",
+    url: "permtracker.app/lca-cases",
   },
 };
 
@@ -90,7 +109,7 @@ export function DataTour() {
             ink={ink}
             title={g}
             lead={band.lead}
-            picture={<AppWindow url={band.url} shots={shot.shots} alt={shot.alt} caption={`Captured ${CAPTURED}.`} onBand={ink} />}
+            picture={<AppWindow url={band.url} shots={shot.shots} alt={shot.alt} caption={shot.captured ? `Captured ${longDate(shot.captured)}.` : null} onBand={ink} />}
           >
             <PageLinks group={g} ink={ink} />
           </StageBand>

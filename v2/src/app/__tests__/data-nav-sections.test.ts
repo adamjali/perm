@@ -39,16 +39,24 @@ describe("sectionForPath", () => {
     for (const s of SECTIONS) expect(sectionForPath(s.href)?.key, s.href).toBe(s.key);
   });
 
-  it("prefers the longest match: a calculator with its own entry is in its group, not Calculators", () => {
+  it("files every calculator under the step it serves, by the longest match", () => {
     expect(sectionForPath("/tools/priority-date-calculator")?.key).toBe("priority-dates");
-    expect(sectionForPath("/tools/perm-timeline-calculator")?.group).toBe("Wait times");
+    expect(sectionForPath("/tools/perm-timeline-calculator")?.group).toBe("PERM");
+    expect(sectionForPath("/tools/rfi-deadline")?.group).toBe("PERM");
+    expect(sectionPages("/tools/rfi-deadline")?.title).toBe("PERM");
     // /tools itself is the Data hub, above every group.
     expect(sectionForPath(OVERVIEW.href)).toBeNull();
   });
 
-  it("files a calculator without an entry under Calculators", () => {
-    expect(sectionForPath("/tools/rfi-deadline")?.key).toBe(CALCULATORS.key);
-    expect(sectionPages("/tools/rfi-deadline")?.pages).toBe(CALCULATOR_PAGES);
+  it("lists every calculator once, in its step's group, and nothing else as one", () => {
+    const tools = SECTIONS.filter((s) => s.tool);
+    expect(CALCULATOR_PAGES.map((p) => p.href)).toEqual(tools.map((s) => s.href));
+    for (const s of tools) expect(GROUPS, s.href).toContain(s.group);
+  });
+
+  it("files a calculator with no entry under the calculators index", () => {
+    expect(sectionForPath("/tools/not-a-real-calculator")?.key).toBe(CALCULATORS.key);
+    expect(sectionPages("/tools/not-a-real-calculator")?.pages).toBe(CALCULATOR_PAGES);
   });
 
   it("puts a detail page under its parent section", () => {
@@ -77,8 +85,9 @@ describe("sectionForPath", () => {
 });
 
 describe("the map itself", () => {
-  it("gives every section one of the six groups, and no group is empty", () => {
-    expect(GROUPS).toHaveLength(6);
+  it("gives every section one of the groups, the steps in the order a case takes them, and no group is empty", () => {
+    const steps = ["Wage request", "Recruitment", "PERM", "I-140", "Green card line"] as const;
+    expect(steps.map((g) => GROUPS.indexOf(g))).toEqual([...steps.map((g) => GROUPS.indexOf(g))].sort((a, b) => a - b));
     for (const s of SECTIONS) expect(GROUPS, s.key).toContain(s.group);
     for (const g of GROUPS) expect(SECTIONS.filter((s) => s.group === g).length, g).toBeGreaterThan(0);
   });

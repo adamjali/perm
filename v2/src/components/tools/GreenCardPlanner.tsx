@@ -292,13 +292,23 @@ function Milestones({
         {tiles.map((t) => {
           const last = t.key === "i485";
           return (
-            <li key={t.key} className={cn("p-4 sm:p-5", last ? "bg-foreground text-background dark:bg-card dark:text-foreground" : "bg-tint")}>
+            <li key={t.key} className={cn("p-4 sm:p-5", last ? "bg-foreground text-background" : "bg-tint")}>
               <p className={cn("text-sm", last ? "opacity-80" : "text-soft")}>{t.label}</p>{" "}
               <p className="mt-1 font-heading text-2xl font-bold leading-tight tabular-nums sm:text-3xl">
                 {t.day ? (last ? monthYear(t.day.slice(0, 7)) : shortDate(t.day)) : t.before ? "Done" : "No date yet"}
               </p>{" "}
               <p className={cn("mt-1 text-sm", last ? "opacity-80" : "text-soft")}>
-                {t.before ? "Before this plan starts" : !t.day ? "Waits on the bulletin" : t.day > today ? `In ${aboutMonths(daysBetween(today, t.day))}` : t.day === today ? "Today" : STATE_WORD[t.state]}
+                {t.before
+                  ? "Before this plan starts"
+                  : !t.day
+                    ? "Waits on the bulletin"
+                    : t.day > today
+                      ? `In ${aboutMonths(daysBetween(today, t.day))}`
+                      : t.day === today
+                        ? "Today"
+                        : t.key === "recruitment"
+                          ? "Filed"
+                          : STATE_WORD[t.state]}
               </p>{" "}
             </li>
           );

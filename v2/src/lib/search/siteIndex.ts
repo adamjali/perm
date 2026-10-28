@@ -6,7 +6,6 @@
  */
 
 import {
-  CALCULATOR_PAGES,
   HEADER_PAGES,
   LEARN_PAGES,
   PAGE_NAMES,
@@ -123,8 +122,7 @@ export function staticIndex(): SiteIndexEntry[] {
       ...(MAIN_JOBS.includes(p.href) ? { main: true } : {}),
     });
   for (const p of Object.values(HEADER_PAGES)) add(p, "Go to");
-  for (const s of SECTIONS) add(s, s.group, "data statistics");
-  for (const p of CALCULATOR_PAGES) add(p, "Calculators", "calculator estimate");
+  for (const s of SECTIONS) add(s, s.group, s.tool ? "calculator estimate" : "data statistics");
   for (const p of LEARN_PAGES) add(p, "Learn");
   for (const href of OTHER_GO_TO) {
     const name = PAGE_NAMES.get(href);

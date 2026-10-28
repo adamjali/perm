@@ -54,8 +54,8 @@ describe("the data rail", () => {
   it("opens the rail at the group chosen in the strip, with focus on its heading", () => {
     render(<DataRail />);
     fireEvent.click(screen.getByRole("button", { name: "Collapse data sections" }));
-    fireEvent.click(screen.getByRole("button", { name: "Wait times" }));
-    const head = document.getElementById("rail-head-wait-times") as HTMLElement;
+    fireEvent.click(screen.getByRole("button", { name: "PERM" }));
+    const head = document.getElementById("rail-head-perm") as HTMLElement;
     expect(head).not.toBeNull();
     expect(head.getAttribute("aria-expanded")).toBe("true");
     expect(document.activeElement).toBe(head);
