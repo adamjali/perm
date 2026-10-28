@@ -1504,3 +1504,34 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
 - **The bulletin pace has one home**: `monthsToReach`, `paceByLine` and `PaceBasis` live in
   `convex/lib/perm/calculators/priorityDate.ts`; the three pages that built the same pace map by hand call
   `paceByLine`.
+- **/today picks your line and reaches back 180 days**: `BulletinStation` (category and country, with the dates-for-filing
+  chart beside final action), `DecisionsOverTime` (30, 90 or 180 days by `decisionBuckets`), and closed statuses as
+  their own tiles. /perm-by-the-numbers draws the same 30-day chart, each day a link.
+- **The data menu is grouped by step** (Your case, Wage request, Recruitment, PERM, I-140, Green card line, then
+  Employers and firms, Breakdowns, Wages, Other visas): `SECTIONS` in `src/lib/siteMap.ts` holds data pages and
+  calculators together (`tool: true`, a `does` line), and `CALCULATOR_PAGES`, /calculators, /tools, the rail, the
+  palette and breadcrumbs all read it. `page_shots.py` keeps a picture it didn't re-capture and dates each one
+  (`captured`); every capture script hides DOL's FLAG notice bar.
+- **A filing month opens day by day**: the month page's calendar (`MonthDays`, from `getMonthDays`: filed and still
+  waiting per day, one covering read of `case_status_final`) links each day to `/perm-queue/<month>/<day>`
+  (`FiledOnDay`: every PERM case and wage request filed that day with its status today, filtered by status and the
+  employer's first letter, 50 a page). The day pages are noindex, out of the sitemap (the sitemap test names the
+  family in `UNLISTED` and now walks nested `[param]` families) and out of robots (`/perm-queue/*/`).
+- **The queue wall goes back to any day since Aug 30 2026** (`QueueDayPicker` on /perm-queue): a slider and two steps,
+  the past day's bars filled with today's lengths outlined (`BacklogWall`'s `outline`), DOL's line where DOL had it
+  by then (`getProcessingTimesOn`, `analystPositionOf`, which `getEstimatorData` uses too). The days come from
+  `perm_census_days`, written by `scripts/build_census_days.py` after the full sweep: a past day's status is the
+  from_status of the case's first change after it, else its status now, each change on DOL's day. The page stays
+  static; `/api/queue-day` serves a day (404 outside `CENSUS_DAYS_FROM` to yesterday without a read, cached a day).
+  Backfilled on the server Oct 28, 2:35 AM EDT: 59 days, 16,353 rows, the newest day equal to the live table.
+- **An open page redraws itself when a sweep lands**: `RefreshWhenStale` asks `/api/sweep-stamp` every 5 minutes
+  while visible (`POLL_MS`; Cloudflare keeps the answer a minute) and calls `router.refresh()` when the sweep's finish
+  time moves. Measure the origin's load from nginx's log after a day of it.
+- **Big reads through the tunnel go in bounded slug slices** (`SLUG_WINDOWS`, `slug_window` in `scripts/lib_db.py`,
+  each letter split at "m"): the LCA city rebuild hit Cloudflare's 100-second cut on Oct 27 (HTTP 524, the 10:40 AM
+  pending sweep), and the employer map's slices, open at the top, each scanned to the index's end (pending sweeps
+  had grown from about 25 minutes to 72). Measured after: the city read's slowest slice 12 s, down from 66.
+- **deepmerge's low advisory is accepted until Jan 28 2027** (`ACCEPTED_ADVISORIES`; no fixed version, and it merges
+  only the email renderer's own options). Reasons in `.planning/VERSION-DECISIONS.md`.
+- **Blue as a light second accent is built on `preview/blue-accent`, not shipped** (owner, Oct 27: show screenshots
+  first): note edges, single-colour charts' bars and the rail's group icons in blue; lime stays the action colour.
