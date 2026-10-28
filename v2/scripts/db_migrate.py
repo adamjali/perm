@@ -141,6 +141,10 @@ INDEXES = [
     # reads the index alone rather than scanning the table. `perm_cases` is
     # rebuilt quarterly, so the write cost of another index is close to nothing.
     "CREATE INDEX idx_pc_fy_wage       ON perm_cases(fiscal_year, wage)",
+    # A wage request's PERM, found by the wage request's number: the wage-request
+    # page's "a decided PERM names this wage request" and the nightly wage-to-PERM
+    # statistics (build_pwd_links.py) both look a PERM up this way (Oct 28 2026).
+    "CREATE INDEX idx_pc_pwd_number    ON perm_cases(pwd_number)",
 ]
 
 
