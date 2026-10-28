@@ -283,9 +283,18 @@ export interface PlanInput {
   own?: OwnCosts;
   /** Today, ISO. */
   today: string;
+  /**
+   * Where the case stands: every milestone up to this one has happened, so none of them is
+   * dated after today, whether the reader gave its date or not. A certified PERM with no date
+   * typed is done, never drawn as still waiting.
+   */
+  reached?: Milestone;
 }
 
 export type StepState = 'done' | 'now' | 'ahead';
+
+/** A step's basis when the reader says it happened and gave no date (counted as today at the latest). */
+export const DONE_UNDATED = 'Done, date not given: counted as today at the latest';
 
 export interface PlanStep extends Omit<StageInfo, 'key'> {
   key: PlanStage | SideStage;
@@ -517,18 +526,35 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   }
 
   // The steps up to the I-140's decision chain one after another.
+  // A milestone the reader says has happened but gave no date for. The one the case stands at is
+  // counted as reached today, so every step after it starts now (dated from an estimate in the
+  // past, a certified case would show its I-140 long done). One before it is on or before today.
+  const reachedIdx = input.reached ? MILESTONE_ORDER.indexOf(input.reached) : -1;
+  const settle = (m: Milestone): boolean => {
+    const r = at[m];
+    const idx = MILESTONE_ORDER.indexOf(m);
+    if (known[m] || !r || idx > reachedIdx) return false;
+    if (idx === reachedIdx) at[m] = fixed(today);
+    else {
+      const notAfterToday = (d: string) => (d > today ? today : d);
+      at[m] = { low: notAfterToday(r.low), mid: notAfterToday(r.mid), high: notAfterToday(r.high) };
+    }
+    return true;
+  };
   const chain = (stage: PlanStage, span: Span | null, why: string) => {
     const s = stageInfo(stage);
     if (MILESTONE_ORDER.indexOf(s.to) <= startIdx) return;
     const from = at[s.from];
     if (known[s.to]) at[s.to] = fixed(known[s.to]!);
     else if (from && span) at[s.to] = shift(from, orderedSpan(span));
-    basis[stage] = knownSet.has(s.to) ? 'Your date' : why;
+    basis[stage] = knownSet.has(s.to) ? 'Your date' : settle(s.to) ? DONE_UNDATED : why;
   };
 
   // A filed wage request still waiting is dated by the requests ahead of it, when known.
   const pwdQueue =
-    figures.pwdByQueue && known.pwdFiled && known.pwdFiled <= today && !known.pwdIssued ? figures.pwdByQueue : null;
+    figures.pwdByQueue && known.pwdFiled && known.pwdFiled <= today && !known.pwdIssued && reachedIdx < MILESTONE_ORDER.indexOf('pwdIssued')
+      ? figures.pwdByQueue
+      : null;
   if (pwdQueue) {
     at.pwdIssued = { low: pwdQueue.low, mid: pwdQueue.mid, high: pwdQueue.high };
     basis.pwd = queueBasis(pwdQueue, 'wage requests');
@@ -539,7 +565,10 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
 
   // The PERM: a case already filed is dated from the cases still ahead of it, when known.
   const pd = at.permFiled;
-  const byQueue = figures.permByQueue && known.permFiled && known.permFiled <= today && !known.permCertified ? figures.permByQueue : null;
+  const byQueue =
+    figures.permByQueue && known.permFiled && known.permFiled <= today && !known.permCertified && reachedIdx < MILESTONE_ORDER.indexOf('permCertified')
+      ? figures.permByQueue
+      : null;
   if (byQueue) {
     at.permCertified = { low: byQueue.low, mid: byQueue.mid, high: byQueue.high };
     basis.perm = queueBasis(byQueue, 'cases');
@@ -563,7 +592,13 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     } else if (at.i140Filed && figures.spans.i140[input.category]) {
       at.i140Approved = shift(at.i140Filed, orderedSpan(figures.spans.i140[input.category]!));
     }
-    basis.i140 = known.i140Approved ? 'Your date' : input.premium ? `Premium processing, ${PREMIUM_I140_BUSINESS_DAYS} business days` : "USCIS's medians and its 80% figure";
+    basis.i140 = known.i140Approved
+      ? 'Your date'
+      : settle('i140Approved')
+        ? DONE_UNDATED
+        : input.premium
+          ? `Premium processing, ${PREMIUM_I140_BUSINESS_DAYS} business days`
+          : "USCIS's medians and its 80% figure";
   }
   holdUnderKnown(at, known);
 
@@ -594,7 +629,9 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   else if (reach && startIdx >= MILESTONE_ORDER.indexOf('i140Approved') && at.i140Approved) at.i485Filed = laterRange(reach, at.i140Approved);
   basis.visa = knownSet.has('i485Filed')
     ? 'Your date'
-    : current
+    : settle('i485Filed')
+      ? DONE_UNDATED
+      : current
       ? 'Current in the newest bulletin: no wait'
       : method === 'supply'
         ? 'People ahead of you, at the green cards issued in your line a year'

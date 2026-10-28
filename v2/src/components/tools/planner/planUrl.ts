@@ -56,6 +56,11 @@ const isoOrNull = (v: string | null) => (v && ISO_DATE_REGEX.test(v) ? v : null)
 const whereOf = (key: string | null) => WHERE.find((w) => w.key === key) ?? WHERE[0];
 const indexOf = (m: Milestone) => MILESTONE_ORDER.indexOf(m);
 
+/** The milestone a case at `where` has reached, dated or not: the plan holds it to today or earlier. */
+export function reachedMilestone(where: WhereKey): Milestone | undefined {
+  return whereOf(where).milestone ?? undefined;
+}
+
 /** The milestones a case at `where` can have dates for: every one up to where it stands. */
 export function milestonesUpTo(where: WhereKey): Milestone[] {
   const m = whereOf(where).milestone;

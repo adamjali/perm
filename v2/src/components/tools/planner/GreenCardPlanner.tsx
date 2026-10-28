@@ -25,7 +25,7 @@ import { DateRail } from "./DateRail";
 import { LENGTH_UNIT, type LengthKey } from "./format";
 import { DEFAULT_FEES, PlanCosts, type FeeChoices } from "./PlanCosts";
 import { PlanTimeline } from "./PlanTimeline";
-import { readPlanUrl } from "./planUrl";
+import { reachedMilestone, readPlanUrl } from "./planUrl";
 
 /** How long the planner waits after the last keystroke before asking the queues. */
 const ASK_AFTER_MS = 400;
@@ -87,6 +87,7 @@ export function GreenCardPlanner({ reading, check, today }: { reading: PlanReadi
     },
     own,
     today,
+    reached: reachedMilestone(state.where),
   };
   // Pure and quick (a few hundred date sums), so it runs every render rather than through a memo.
   const plan = buildPlan(input, figures);

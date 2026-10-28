@@ -53,6 +53,41 @@ const base: PlanInput = {
 const step = (plan: ReturnType<typeof buildPlan>, key: string) => plan.steps.find((s) => s.key === key)!;
 
 describe('buildPlan', () => {
+  describe('a step the reader says has happened, without its date', () => {
+    // Filed Mar 14 2026; at today's 290 days the PERM would be decided around Dec 29 2026.
+    const certifiedNoDate: PlanInput = { ...base, known: { permFiled: '2026-03-14' }, reached: 'permCertified' };
+
+    it('ends the PERM on or before today, never in the future', () => {
+      const perm = step(buildPlan(certifiedNoDate, FIGURES), 'perm');
+      expect(perm.end!.high <= base.today).toBe(true);
+      expect(perm.state).toBe('done');
+      expect(perm.basis).toMatch(/date not given/i);
+    });
+
+    it('counts the steps after it from that, so the I-140 is prepared from today at the latest', () => {
+      const plan = buildPlan(certifiedNoDate, FIGURES);
+      expect(step(plan, 'i140Prep').start).toEqual(step(plan, 'perm').end);
+      expect(step(plan, 'i140Prep').end).toEqual({ low: '2026-11-27', mid: '2026-11-27', high: '2026-11-27' }); // today + 30
+    });
+
+    it("never dates a step past where the case stands as already done", () => {
+      // Filed in 2025 and certified long ago by today's lengths: the I-140 still hasn't gone in.
+      const plan = buildPlan({ ...certifiedNoDate, known: { permFiled: '2025-03-14' } }, FIGURES);
+      expect(step(plan, 'perm').state).toBe('done');
+      for (const key of ['i140Prep', 'i140'] as const) {
+        expect(step(plan, key).state).not.toBe('done');
+        expect(step(plan, key).end!.low >= base.today).toBe(true);
+      }
+    });
+
+    it("changes nothing when the reader gave the date, or the stage hasn't been reached", () => {
+      const dated = buildPlan({ ...certifiedNoDate, known: { permFiled: '2025-03-14', permCertified: '2026-01-10' } }, FIGURES);
+      expect(step(dated, 'perm').end).toEqual({ low: '2026-01-10', mid: '2026-01-10', high: '2026-01-10' });
+      const filedOnly = buildPlan({ ...certifiedNoDate, reached: 'permFiled' }, FIGURES);
+      expect(step(filedOnly, 'perm').end!.mid > base.today).toBe(true);
+    });
+  });
+
   describe('the chain of steps', () => {
     it('chains every step from a wage request to be filed, each a range', () => {
       const plan = buildPlan(base, FIGURES);
