@@ -22,6 +22,8 @@
  */
 import { federalHolidayName, isFederalHoliday } from "@/lib/perm";
 import { MS_PER_DAY } from "@/lib/time";
+
+import { daysBefore, weeklyCounts } from "./byTheNumbers";
 import {
   type ActivityDay,
   type WeekdayProfile,
@@ -84,6 +86,43 @@ export function pulseHeadline(days: readonly ActivityDay[], weeks = 4): PulseHea
 /** The last `n` days on record, oldest first. */
 export function lastDays(days: readonly ActivityDay[], n = 30): ActivityDay[] {
   return byDate(days).slice(-n);
+}
+
+/** The spans a decisions chart offers: a month day by day, then a quarter and a half year by week. */
+export const DECISION_SPANS = [30, 90, 180] as const;
+export type DecisionSpan = (typeof DECISION_SPANS)[number];
+/** Spans up to this many days are drawn a day a column; longer ones a week a column. */
+const DAILY_SPAN_MAX = 30;
+
+export interface DecisionBucket {
+  /** The day, or the week's Monday. */
+  start: string;
+  by: "day" | "week";
+  certified: number;
+  denied: number;
+  withdrawn: number;
+  total: number;
+  /** A week still filling: drawn as "so far", never as a drop. */
+  partial: boolean;
+}
+
+/** Decisions over the last `span` days, a column a day or a week, oldest first. */
+export function decisionBuckets(days: readonly ActivityDay[], span: DecisionSpan): DecisionBucket[] {
+  const sorted = byDate(days);
+  const through = sorted[sorted.length - 1]?.date;
+  if (!through) return [];
+  if (span <= DAILY_SPAN_MAX) {
+    return sorted.slice(-span).map((d) => ({ start: d.date, by: "day", certified: d.certified, denied: d.denied, withdrawn: d.withdrawn, total: d.total, partial: false }));
+  }
+  const from = daysBefore(through, span - 1);
+  const weekly = (k: "certified" | "denied" | "withdrawn") => weeklyCounts(sorted.map((d) => ({ date: d.date, count: d[k] })), from, through);
+  const [certified, denied, withdrawn] = [weekly("certified"), weekly("denied"), weekly("withdrawn")];
+  return certified.map((w, i) => {
+    const c = w.count;
+    const de = denied[i]!.count;
+    const wd = withdrawn[i]!.count;
+    return { start: w.week, by: "week", certified: c, denied: de, withdrawn: wd, total: c + de + wd, partial: w.partial };
+  });
 }
 
 /**

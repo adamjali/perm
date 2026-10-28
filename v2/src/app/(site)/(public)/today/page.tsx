@@ -6,15 +6,15 @@ import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import {
   Balance,
   BulletinGrid,
-  CutoffLine,
   DecidedBar,
   Station,
   StatusTiles,
   Track,
   WaitBar,
 } from "@/components/board/BoardParts";
+import { BulletinStation, type BulletinLine } from "@/components/board/BulletinStation";
 import { StagePicker, type StageCard } from "@/components/board/StagePicker";
-import { PermPulse } from "@/components/pulse/PermPulse";
+import { DecisionsOverTime } from "@/components/pulse/DecisionsOverTime";
 import { buttonVariants } from "@/components/ui/button";
 import {
   aboutMonths,
@@ -31,6 +31,7 @@ import {
   type StatusMove,
 } from "@/lib/board";
 import { cutoffLabel } from "@/lib/bulletinNext";
+import { DECISION_SPANS } from "@/lib/pulseStats";
 import { getPermBoard, getPwdBoard } from "@/lib/db/board";
 import { getLiveCensus } from "@/lib/db/liveCensus";
 import { getVisaBulletins } from "@/lib/db/publicData";
@@ -75,6 +76,8 @@ const WAITING = [
   "PENDING AUDIT RESPONSE",
 ];
 const DECIDED = ["CERTIFIED", "DENIED", "WITHDRAWN"];
+/** Days of decisions read for the 30, 90 and 180-day views, with a week's margin for the first whole week. */
+const DECISION_DAYS = Math.max(...DECISION_SPANS) + 7;
 // The archive keys categories as the bulletin codes them (EB2, EW3), not "EB-2".
 const BULLETIN_CATEGORIES = ["EB1", "EB2", "EB3", "EW3"];
 const BULLETIN_COUNTRIES: CountryKey[] = ["worldwide", "china", "india", "mexico", "philippines"];
@@ -84,7 +87,7 @@ export default async function TodayPage() {
     getPermBoard().catch(() => null),
     getPwdBoard().catch(() => null),
     getLiveCensus().catch(() => null),
-    getObservedDays().catch(() => []),
+    getObservedDays(DECISION_DAYS).catch(() => []),
     getSweepCoverage().catch(() => null),
     getUscisFormHistory("I-140"),
     getVisaBulletins().catch(() => []),
@@ -107,6 +110,12 @@ export default async function TodayPage() {
   })).filter((r) => (r.now ?? 0) > 0 || r.day || r.week);
   // A decided status counts what came into it: a certification lapsing isn't a decision undone.
   const decidedParts = DECIDED.map((s) => ({ status: s, n: moveOf(perm?.movesDay, s)?.in ?? 0 }));
+  const decidedRows = DECIDED.map((s) => ({
+    status: s,
+    now: census ? nowByStatus.get(s) ?? 0 : null,
+    day: moveOf(perm?.movesDay, s),
+    week: moveOf(perm?.movesWeek, s),
+  }));
 
   // The I-140's quarterly medians, newest last.
   const i140Points = i140
@@ -145,8 +154,25 @@ export default async function TodayPage() {
   const pwdStatus = pwd ? backlogStatus(pwd.flow) : null;
   const permStatus = perm ? backlogStatus(perm.flow) : null;
   const i140Status = i140Now && i140Prev ? paceStatus(i140Prev.value, i140Now.value) : null;
-  const eb2Status = eb2 ? bulletinStatus(eb2.kind) : null;
-  const eb2Shift = eb2 && latest ? bulletinShift(eb2.kind, eb2.movedDays, monthYear(latest.bulletinMonth)?.split(" ")[0] ?? "the newest bulletin") : null;
+  // Every line of the newest bulletin, for the station's category and country switch.
+  const bulletinMonthName = latest ? (monthYear(latest.bulletinMonth)?.split(" ")[0] ?? "the newest bulletin") : "";
+  const bulletinLines: BulletinLine[] = latest
+    ? moves.flatMap((row) =>
+        row.cells.map((cell) => {
+          const cut = parseCutoff(latest.finalAction[row.category]?.[cell.country]);
+          const filing = parseCutoff(latest.datesForFiling[row.category]?.[cell.country]);
+          return {
+            category: row.category,
+            country: cell.country,
+            finalAction: cell.latest,
+            cutoffIso: cut?.kind === "date" ? cut.iso : null,
+            datesForFiling: filing ? cutoffLabel(filing) : null,
+            status: bulletinStatus(cell.kind),
+            shift: bulletinShift(cell.kind, cell.movedDays, bulletinMonthName),
+          };
+        }),
+      )
+    : [];
 
   // USCIS's two lines as the same picture, from its quarterly received and completed counts
   // (Adam, Oct 27 2026: "why just those 2?"). USCIS publishes them once a quarter, so the
@@ -314,25 +340,11 @@ export default async function TodayPage() {
             href="/uscis-processing-times"
             linkLabel="USCIS processing times"
           />{" "}
-          <Station
-            step={4}
-            name="Visa bulletin"
-            lead="EB-2, rest of world: current if filed before"
-            big={eb2?.latest ?? (latest ? cutoffLabel(eb2Cut) : "Not read yet")}
-            picture={
-              eb2Cut?.kind === "date" && latest ? (
-                <CutoffLine
-                  cutoff={eb2Cut.iso}
-                  bulletinMonth={latest.bulletinMonth}
-                  label={`In the ${bulletinLabel} bulletin, EB-2 rest-of-world priority dates before ${shortDate(eb2Cut.iso)} are current`}
-                />
-              ) : null
-            }
-            shift={eb2Shift}
-            status={eb2Status}
-            href="/visa-bulletin"
-            linkLabel="The visa bulletin"
-          />
+          {latest && bulletinLabel && bulletinLines.length ? (
+            <BulletinStation step={4} lines={bulletinLines} bulletinMonth={latest.bulletinMonth} monthLabel={bulletinLabel} />
+          ) : (
+            <Station step={4} name="Visa bulletin" lead="The newest bulletin" big="Not read yet" picture={null} href="/visa-bulletin" linkLabel="The visa bulletin" />
+          )}
         </Track>
       </div>{" "}
       <section aria-labelledby="steps" className="mt-16">
@@ -383,8 +395,13 @@ export default async function TodayPage() {
         <div className="mt-4">
           <StatusTiles rows={waitingRows} dayLabel={dayLabel} />
         </div>{" "}
-        <div className="mt-12">
-          <PermPulse variant="charts" days={observed} checkedAt={coverage?.checkedAt ?? null} />
+        <h3 className="mt-10 font-heading text-lg font-bold">Decided, in our record</h3>{" "}
+        <div className="mt-4">
+          <StatusTiles rows={decidedRows} dayLabel={dayLabel} closed />
+        </div>{" "}
+        <h3 className="mt-12 font-heading text-lg font-bold">Decisions over time</h3>{" "}
+        <div className="mt-4">
+          <DecisionsOverTime days={observed} />
         </div>
       </section>{" "}
       {moves.length && bulletinLabel ? (

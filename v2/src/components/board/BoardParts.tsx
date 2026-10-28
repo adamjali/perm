@@ -72,6 +72,7 @@ export function Station({
   status,
   href,
   linkLabel,
+  controls,
 }: {
   step: number;
   name: string;
@@ -86,6 +87,8 @@ export function Station({
   status?: StepStatus | null;
   href: string;
   linkLabel: string;
+  /** Anything the reader changes in this step, under its picture. */
+  controls?: ReactNode;
 }) {
   return (
     <li className="object flex flex-col p-5">
@@ -99,6 +102,7 @@ export function Station({
       <p className="mt-3 text-sm text-soft">{lead}</p>{" "}
       <p className="font-heading text-[1.75rem] font-bold leading-tight tabular-nums">{big}</p>{" "}
       <div className="mt-5 h-24">{picture}</div>{" "}
+      {controls}{" "}
       {/* The state and the link sit at the card's foot, so the four steps' lines align. */}
       <div className="mt-auto pt-3">
         {status || shift ? <StepState status={status ?? null} shift={shift ?? null} /> : null}{" "}
@@ -361,13 +365,24 @@ const STATUS_WORDS: Record<string, string> = {
   "BALCA APPEALS": "Board of appeals",
   "NORD ISSUED": "NORD issued",
   "PENDING AUDIT RESPONSE": "Audit response due",
+  CERTIFIED: "Certified",
+  DENIED: "Denied",
+  WITHDRAWN: "Withdrawn by the employer",
 };
 
-/** A status's change: fewer waiting reads green, more reads amber. */
-function Change({ value, label }: { value: number; label: string }) {
+/** A closed status's tile, in the site's status colours. */
+const CLOSED_TILE: Record<string, string> = {
+  CERTIFIED: "bg-soft-good",
+  DENIED: "bg-soft-bad",
+  WITHDRAWN: "bg-soft-purple",
+};
+
+/** A status's change: fewer waiting reads green, more reads amber; a closed status's new decisions are neither. */
+function Change({ value, label, neutral = false }: { value: number; label: string; neutral?: boolean }) {
   const Icon = value > 0 ? ArrowUpIcon : value < 0 ? ArrowDownIcon : null;
+  const tone = neutral ? "" : value < 0 ? "text-data-good-ink" : value > 0 ? "text-data-warn-ink" : "";
   return (
-    <span className={cn("inline-flex items-center gap-1 text-sm", value < 0 ? "text-data-good-ink" : value > 0 ? "text-data-warn-ink" : "")}>
+    <span className={cn("inline-flex items-center gap-1 text-sm", tone)}>
       <span className="text-soft">{label}</span>{" "}
       {Icon ? <Icon aria-hidden="true" weight="bold" className="size-4" /> : null}
       <span className="font-mono font-semibold tabular-nums">{value === 0 ? "same" : n(Math.abs(value))}</span>{" "}
@@ -376,27 +391,34 @@ function Change({ value, label }: { value: number; label: string }) {
   );
 }
 
-/** Every status cases wait in, as a tile: how many now, and how that changed. The ordinary line leads, larger. */
+/**
+ * Every status as a tile: how many now, and how that changed. Waiting statuses lead with the ordinary
+ * line, larger, and count their net change; `closed` statuses count the decisions that came in, in
+ * their own colours, since a certification lapsing isn't a decision undone.
+ */
 export function StatusTiles({
   rows,
   dayLabel,
+  closed = false,
 }: {
   rows: { status: string; now: number | null; day: StatusMove | null; week: StatusMove | null }[];
   dayLabel: string;
+  closed?: boolean;
 }) {
+  const changeOf = (m: StatusMove | null) => (closed ? (m?.in ?? 0) : (m?.net ?? 0));
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 [&>*]:min-w-0">
       {rows.map((r, i) => (
         <Fragment key={r.status}>
           {" "}
-          <li className={cn("flex flex-col bg-tint p-4", i === 0 && "col-span-2")}>
+          <li className={cn("flex flex-col p-4", closed ? (CLOSED_TILE[r.status] ?? "bg-tint") : "bg-tint", !closed && i === 0 && "col-span-2")}>
           <p className="text-sm font-semibold">{STATUS_WORDS[r.status] ?? r.status}</p>{" "}
           <p className={cn("mt-1 font-heading font-bold tabular-nums", i === 0 ? "text-5xl" : "text-3xl")}>
             {r.now === null ? "—" : n(r.now)}
           </p>{" "}
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5">
-            <Change value={r.day?.net ?? 0} label={dayLabel} />{" "}
-            <Change value={r.week?.net ?? 0} label="7 days" />
+            <Change value={changeOf(r.day)} label={dayLabel} neutral={closed} />{" "}
+            <Change value={changeOf(r.week)} label="7 days" neutral={closed} />
           </p>
           </li>
         </Fragment>

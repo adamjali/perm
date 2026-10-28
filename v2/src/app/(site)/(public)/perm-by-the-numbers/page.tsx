@@ -27,6 +27,7 @@ import {
 import { getEmployerStages } from "@/lib/db/employerStages";
 import { getProcessingTimesArchive } from "@/lib/db/openData";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { DecisionsOverTime } from "@/components/pulse/DecisionsOverTime";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getPwdSummary } from "@/lib/db/pwdCases";
 import { getRfiClock } from "@/lib/db/rfiClock";
@@ -35,7 +36,7 @@ import { HOLD_STATUS, heldRanking, holdSinceShort } from "@/lib/employerStages";
 import { entityHref } from "@/lib/entityPayload";
 import { formatInt, formatShareOf } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { lastDays, pulseHeadline, pulseSummary } from "@/lib/pulseStats";
+import { pulseHeadline, pulseSummary } from "@/lib/pulseStats";
 import { withSocialCard } from "@/lib/socialCard";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { checkedLabel } from "@/lib/time";
@@ -172,7 +173,6 @@ export default async function PermByTheNumbersPage() {
 
   // The newest working day DOL decided, and the thirty days before it.
   const pulse = pulseHeadline(observed);
-  const days = lastDays(observed, 30);
   const summary = pulseSummary(observed);
   const sorter = buildSorterRun({ statuses: census.statuses, decided: pulse?.day.total ?? null, decidedOn: pulse?.day.date ?? null });
 
@@ -319,41 +319,7 @@ export default async function PermByTheNumbersPage() {
                   ))}
               </dl>
             ) : null}{" "}
-            <ColumnChart
-              label={`PERM decisions per day, the last ${days.length} days`}
-              unit="Decided"
-              first={monthDay(days[0]!.date) ?? ""}
-              last={monthDay(days[days.length - 1]!.date) ?? ""}
-              height="min-h-44"
-              grow
-              columns={days.map((d) => ({
-                key: d.date,
-                value: d.total,
-                label: longDate(d.date) ?? d.date,
-                now: d.date === pulse.day.date,
-                href: `/perm-decision-activity?day=${d.date}#day`,
-                tip: `${weekdayOf(d.date).slice(0, 3)}, ${monthDay(d.date)}\n${formatInt(d.total)} decided\n${formatInt(d.certified)} certified\n${formatInt(d.denied)} denied\n${formatInt(d.withdrawn)} withdrawn`,
-                parts: [
-                  { value: d.certified, fill: "bg-data-good-ink" },
-                  { value: d.denied, fill: "bg-data-bad-ink" },
-                  { value: d.withdrawn, fill: "bg-chart-purple" },
-                ],
-              }))}
-            />{" "}
-            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-soft">
-              <li className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-data-good-ink" />
-                Certified
-              </li>{" "}
-              <li className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-data-bad-ink" />
-                Denied
-              </li>{" "}
-              <li className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-chart-purple" />
-                Withdrawn by the employer
-              </li>
-            </ul>
+            <DecisionsOverTime days={observed} spans={[30]} grow linkDays />
           </Tile>
         ) : null}{" "}
 

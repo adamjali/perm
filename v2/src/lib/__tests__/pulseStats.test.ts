@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ActivityDay } from "../activityStats";
-import { certifiedShare, lastDays, pulseHeadline, pulseSummary, recentWeekdays } from "../pulseStats";
+import { certifiedShare, decisionBuckets, lastDays, pulseHeadline, pulseSummary, recentWeekdays } from "../pulseStats";
 
 const d = (date: string, total: number, certified = total): ActivityDay => ({
   date,
@@ -153,5 +153,32 @@ describe("pulseSummary", () => {
 
   it("returns null with nothing on record", () => {
     expect(pulseSummary([])).toBeNull();
+  });
+});
+
+describe("decisionBuckets", () => {
+  // Every day from Mon Jul 27 to Wed Oct 28 2026, 100 decisions each: 70 certified, 20 denied, 10 withdrawn.
+  const daily: ActivityDay[] = [];
+  for (let t = Date.UTC(2026, 6, 27); t <= Date.UTC(2026, 9, 28); t += 86_400_000) {
+    daily.push({ date: new Date(t).toISOString().slice(0, 10), total: 100, certified: 70, denied: 20, withdrawn: 10 });
+  }
+
+  it("draws the last 30 days a column a day", () => {
+    const b = decisionBuckets(daily, 30);
+    expect(b).toHaveLength(30);
+    expect(b.every((x) => x.by === "day")).toBe(true);
+    expect(b[b.length - 1]!.start).toBe("2026-10-28");
+  });
+
+  it("draws 90 days a column a week, whole weeks only, the current week marked as still filling", () => {
+    const b = decisionBuckets(daily, 90);
+    expect(b.every((x) => x.by === "week")).toBe(true);
+    expect(b[0]!.start >= "2026-07-31").toBe(true); // the first Monday inside the span
+    expect(b[1]!).toMatchObject({ certified: 490, denied: 140, withdrawn: 70, total: 700, partial: false });
+    expect(b[b.length - 1]!).toMatchObject({ start: "2026-10-26", total: 300, partial: true });
+  });
+
+  it("has nothing to draw with no days", () => {
+    expect(decisionBuckets([], 180)).toEqual([]);
   });
 });
