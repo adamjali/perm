@@ -2,7 +2,11 @@ import { Fragment, type CSSProperties } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
-import { MONTH_NAMES, monthTick, shiftMonth } from "@convex/lib/months";
+import type { Lang } from "@/lib/i18n/lang";
+import { monthLabel, monthTickLabel } from "@/lib/i18n/format";
+import { shiftMonth } from "@convex/lib/months";
+
+import { QUEUE_TAPE, type QueueTapeText } from "./QueueTape.messages";
 
 /**
  * The queue, drawn as a measuring tape.
@@ -38,22 +42,14 @@ export interface QueueTapeProps {
    */
   aheadLabel?: string;
   className?: string;
-}
-
-function longLabel(month: string): string {
-  const [y, m] = month.split("-").map(Number);
-  return `${MONTH_NAMES[(m ?? 1) - 1]} ${y ?? 0}`;
+  /** The tape's words and month labels; English by default. */
+  lang?: Lang;
 }
 
 /** What a month on the tape means, for its hover detail. */
-function tipFor(month: string, offset: number, isYou: boolean): string {
-  const state =
-    offset < 0
-      ? "DOL has worked through these filings"
-      : offset === 0
-        ? "DOL is deciding these filings now"
-        : `${offset} ${offset === 1 ? "month" : "months"} behind where DOL is`;
-  return `${longLabel(month)}\n${state}${isYou ? "\nYour filing month" : ""}`;
+function tipFor(month: string, offset: number, isYou: boolean, lang: Lang, t: QueueTapeText): string {
+  const state = offset < 0 ? t.worked : offset === 0 ? t.deciding : t.behind(offset);
+  return `${monthLabel(month, lang) ?? month}\n${state}${isYou ? `\n${t.yourMonth}` : ""}`;
 }
 
 export function QueueTape({
@@ -64,7 +60,9 @@ export function QueueTape({
   reveal = false,
   aheadLabel,
   className,
+  lang = "en",
 }: QueueTapeProps) {
+  const t: QueueTapeText = QUEUE_TAPE[lang];
   const months: string[] = [];
   for (let i = -monthsBehind; i <= monthsAhead; i += 1) {
     months.push(shiftMonth(frontierMonth, i));
@@ -87,7 +85,7 @@ export function QueueTape({
 
   return (
     <figure className={cn("m-0", className)}>
-      <ChartTips label="DOL's PERM queue by filing month" scroll={cn("-mx-1 px-1", flagsCollide ? "pt-14" : "pt-7")}>
+      <ChartTips label={t.chartLabel} scroll={cn("-mx-1 px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <div
           className="relative grid min-w-[560px] border-2 border-[var(--object-border)] bg-card shadow-hard-sm"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
@@ -112,7 +110,7 @@ export function QueueTape({
               <Fragment key={m}>{" "}
               <div
                 data-href={`/perm-queue/${m}`}
-                data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou)}
+                data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou, lang, t)}
                 className={cn(
                   "relative flex h-16 items-end justify-center border-r border-foreground/10 pb-1 last:border-r-0",
                   // Still waiting reads soft yellow, not blank (round 3, Oct 15 2026).
@@ -145,7 +143,7 @@ export function QueueTape({
                       !isFrontier && !isYou && "sr-only",
                   )}
                 >
-                  {(monthTick(m) ?? m)}
+                  {(monthTickLabel(m, lang) ?? m)}
                 </span>
                 {/* Real space: the flag span is adjacent to the label span
                     and would glue for every DOM extractor. */}
@@ -158,7 +156,7 @@ export function QueueTape({
                     )}
                     style={{ "--i": frontierAt } as CSSProperties}
                   >
-                    DOL is here
+                    {t.dolHere}
                   </span>
                 ) : null}
                 {isYou && !isFrontier ? (
@@ -168,7 +166,7 @@ export function QueueTape({
                       flagsCollide ? "-top-14" : "-top-7",
                     )}
                   >
-                    You
+                    {t.you}
                   </span>
                 ) : null}
                 {isYou && !isFrontier && flagsCollide ? (
@@ -188,11 +186,11 @@ export function QueueTape({
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-3 border border-foreground/40 bg-primary" />
-          Processed
+          {t.processed}
         </span>{" "}
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-3 border border-foreground/40 bg-soft-wait" />
-          Still pending
+          {t.pending}
         </span>
       </figcaption>
     </figure>

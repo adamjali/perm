@@ -424,6 +424,7 @@ async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) 
       sameDay={sameDay}
       timeline={timeline}
       today={today}
+      lang={lang}
     />
   );
 }

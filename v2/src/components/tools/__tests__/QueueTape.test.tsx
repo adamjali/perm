@@ -49,3 +49,17 @@ describe("QueueTape flag placement", () => {
     expect(container.querySelector(".pt-14")).toBeNull();
   });
 });
+
+describe("QueueTape in a translated page", () => {
+  it("draws its flags, ticks and key in the page's language", () => {
+    const { container } = render(<QueueTape frontierMonth="2025-10" selectedMonth="2026-06" lang="ko" />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("노동부 위치");
+    expect(text).toContain("내 케이스");
+    expect(text).toContain("처리됨");
+    expect(text).toContain("25년 10월");
+    expect(text).not.toMatch(/DOL is here|Still pending/);
+    const tip = container.querySelector('[data-href="/perm-queue/2026-06"]')?.getAttribute("data-tip");
+    expect(tip).toBe("2026년 6월\n노동부의 위치보다 8개월 뒤\n내 접수 월");
+  });
+});

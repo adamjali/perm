@@ -104,3 +104,61 @@ describe("what happens next", () => {
   });
 });
 
+
+describe("the panel in another language (Oct 28 2026)", () => {
+  it("words the refusal in Spanish and keeps it one case's wait", () => {
+    render(
+      <CaseEstimate
+        filingDate="2025-01-15"
+        status={null}
+        isFinal={false}
+        estimator={ESTIMATOR}
+        today={TODAY}
+        lang="es"
+      />,
+    );
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/No se puede poner una fecha honesta a este caso/);
+    expect(body).toMatch(/Este caso lleva pendiente 603 días desde que se presentó/);
+    expect(body).not.toMatch(/promedio medido/);
+    expect(body).not.toMatch(/No date can honestly/);
+  });
+
+  it("glosses ANALYST REVIEW in Chinese and keeps DOL's word", () => {
+    render(
+      <CaseEstimate
+        filingDate="2025-01-15"
+        status={null}
+        isFinal={false}
+        estimator={ESTIMATOR}
+        today={TODAY}
+        stageExit={{ to: "ANALYST REVIEW", share: 327 / 359, observed: 359 }}
+        lang="zh"
+      />,
+    );
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/我们观察到离开这个阶段的 359 个案件中，91%转到了 ANALYST REVIEW（审查员审核）/);
+    expect(body).toMatch(/也就是回到正常队列/);
+    expect(body).toMatch(/这需要多长时间，我们目前还无法测量。/);
+  });
+
+  it("dates a case in Korean and labels the English-only pages it links", () => {
+    render(
+      <CaseEstimate
+        filingDate="2026-02-15"
+        status="ANALYST REVIEW"
+        isFinal={false}
+        estimator={{ ...(ESTIMATOR as object), frontierAdvance: { rate: 1.8, slowest: 1.05, fastest: 2.0 } } as never}
+        today={TODAY}
+        lang="ko"
+      />,
+    );
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/이 케이스가 결정될 수 있는 시기/);
+    expect(body).toMatch(/\d{4}년 \d{1,2}월 \d{1,2}일경/);
+    expect(body).toMatch(/추정일 뿐 약속이 아닙니다/);
+    expect(body).toMatch(/처리 기간 계산기\(영어 페이지\)/);
+    expect(body).toMatch(/방법론 페이지\(영어 페이지\)/);
+    expect(body).not.toMatch(/An estimate, not a promise/);
+  });
+});

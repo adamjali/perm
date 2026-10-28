@@ -47,7 +47,7 @@ export type RfiEstimate =
       /** Days the case has been at RFI. */
       daysInRfi: number;
     }
-  | { kind: 'refused'; reason: 'start-unknown' | 'past-window'; detail: string };
+  | { kind: 'refused'; reason: 'start-unknown' | 'past-window'; detail: string; /** past-window: days the case has been at RFI. */ daysInRfi?: number };
 
 const dayNum = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
 const isoOf = (n: number) => new Date(n * 86_400_000).toISOString().slice(0, 10);
@@ -76,6 +76,7 @@ export function estimateRfiCase(input: {
     return {
       kind: 'refused',
       reason: 'past-window',
+      daysInRfi: today - start,
       detail: `This RFI has run ${today - start} days, past the usual 30 and the days DOL usually takes after them. A case still at RFI by now usually has an extension or a second request, and neither can be dated.`,
     };
   }

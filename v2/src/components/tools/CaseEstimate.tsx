@@ -9,6 +9,10 @@ import {
   type CaseEstimateInput,
 } from "@/lib/caseEstimate";
 import { formatAsOf } from "@/lib/dolFormat";
+import { dayLabel, intLabel, percentLabel } from "@/lib/i18n/format";
+import type { Lang } from "@/lib/i18n/lang";
+
+import { ESTIMATE_PANEL } from "./CaseEstimate.messages";
 
 /**
  * The estimate block on the case-status page: when could THIS case be
@@ -25,11 +29,14 @@ import { formatAsOf } from "@/lib/dolFormat";
  * of a date.
  */
 
-const fmtDate = (iso: string) => formatAsOf(iso) ?? iso;
+/** A day in the page's language; English keeps DOL's own stamp format. */
+const fmtDate = (iso: string, lang: Lang) => (lang === "en" ? formatAsOf(iso) : dayLabel(iso, lang)) ?? iso;
+/** A count in the page's language; English as it always printed. */
+const count = (n: number, lang: Lang) => (lang === "en" ? n.toLocaleString("en-US") : intLabel(n, lang));
 
 export function CaseEstimate(props: CaseEstimateInput) {
   const est = buildCaseEstimate(props);
-  return est ? <CaseEstimatePanel est={est} /> : null;
+  return est ? <CaseEstimatePanel est={est} lang={props.lang} /> : null;
 }
 
 /** The anchor the case page's answer card links to. */
@@ -43,6 +50,7 @@ export const ESTIMATE_ANCHOR = "estimate";
 export function CaseEstimatePanel({
   est,
   dateShownAbove = false,
+  lang = "en",
 }: {
   est: Estimate;
   /**
@@ -50,33 +58,25 @@ export function CaseEstimatePanel({
    * panel leads with the window instead of printing the same day twice.
    */
   dateShownAbove?: boolean;
+  /** The page's language. The estimate's own sentences come built in it (`buildCaseEstimate({ lang })`). */
+  lang?: Lang;
 }) {
+  const t = ESTIMATE_PANEL[lang];
   if (est.kind === "no-date") {
+    const days = (
+      <b className="font-semibold text-foreground">
+        {t.days(count(est.age.days, lang))}
+      </b>
+    );
     return (
-      <PageSection id={ESTIMATE_ANCHOR} title="No date can honestly be put on this case" lede={est.note}>
+      <PageSection id={ESTIMATE_ANCHOR} title={t.noDateTitle} lede={est.note}>
         {/* ONE SENTENCE PER MEANING. This block said "Cases at this stage
             have been pending a measured average of N days" for BOTH shapes,
             and in the overdue case N is this case's own wait, not an average
             of anything. Both numbers sit in the same range, so it read as
             true. */}
         <p className="text-sm text-muted-foreground">
-          {est.age.of === "stage" ? (
-            <>
-              Cases at this stage have been pending a measured average of{" "}
-              <b className="font-semibold text-foreground">
-                {est.age.days.toLocaleString("en-US")} days
-              </b>{" "}
-              since filing.
-            </>
-          ) : (
-            <>
-              This case has been pending{" "}
-              <b className="font-semibold text-foreground">
-                {est.age.days.toLocaleString("en-US")} days
-              </b>{" "}
-              since it was filed.
-            </>
-          )}
+          {est.age.of === "stage" ? t.stageAge(days) : t.caseAge(days)}
         </p>{" "}
         {/* THE MOST USEFUL TRUE THING WE HAVE FOR A CASE WITH NO DATE. An RFI
             is not an endpoint: of the exits we have watched, about nine in ten
@@ -93,36 +93,17 @@ export function CaseEstimatePanel({
             for 30 days, 276 had left on day 30, so its median reads 30. */}
         {est.stageDuration ? (
           <p className="mt-3 text-base leading-relaxed text-soft">
-            Cases that reach this stage leave it after{" "}
-            <b className="font-semibold text-foreground">
-              about {est.stageDuration.p50.toLocaleString("en-US")} days
-            </b>
-            {" "}(the median).{" "}
+            {t.leave(
+              <b className="font-semibold text-foreground">
+                {t.aboutDays(count(est.stageDuration.p50, lang))}
+              </b>,
+            )}{" "}
             <span className="text-muted-foreground">
-              Measured over {est.stageDuration.eligible.toLocaleString("en-US")} cases followed from arrival: time
-              at this stage, not time to a decision.
+              {t.leaveMeasured(count(est.stageDuration.eligible, lang))}
             </span>
           </p>
         ) : null}{" "}
-        {est.nextStep ? (
-          <p className="mt-4 border-l-4 border-primary bg-muted px-4 py-3 text-base leading-relaxed text-soft">
-            What usually happens next:{" "}
-            <b className="font-semibold text-foreground">
-              {Math.round(est.nextStep.share * 100)}%
-            </b>{" "}
-            of the {est.nextStep.observed.toLocaleString("en-US")} cases we have
-            watched leave this stage went to{" "}
-            <b className="font-semibold text-foreground">
-              {est.nextStep.to.toLowerCase()}
-            </b>
-            {est.nextStep.to.toUpperCase() === "ANALYST REVIEW"
-              ? " - back into the ordinary queue, where DOL's published position applies again."
-              : "."}{" "}
-            <span className="text-muted-foreground">
-              How long that takes is not something we can measure yet.
-            </span>
-          </p>
-        ) : null}
+        {est.nextStep ? <NextStep step={est.nextStep} lang={lang} /> : null}
       </PageSection>
     );
   }
@@ -131,39 +112,22 @@ export function CaseEstimatePanel({
   // everything about how it's worked out folded below. The window isn't a
   // confidence interval, so each model words it for what it is.
   return (
-    <PageSection id={ESTIMATE_ANCHOR} title="When this case could be decided">
+    <PageSection id={ESTIMATE_ANCHOR} title={t.dateTitle}>
       {dateShownAbove ? null : (
-        <p className="font-heading text-3xl font-bold">Around {fmtDate(est.estimatedDate)}</p>
+        <p className="font-heading text-3xl font-bold">{t.around(fmtDate(est.estimatedDate, lang))}</p>
       )}{" "}
       <p className={dateShownAbove ? "max-w-2xl text-base leading-relaxed text-soft" : "mt-1 max-w-2xl text-base leading-relaxed text-soft"}>
-        {est.earliestDate && est.latestDate ? (
-          <>
-            {est.modelId === "decision-pace"
-              ? est.rangeFrom === "measured"
-                ? "Going by how far recent decisions landed from their dates, between "
-                : "If DOL keeps its recent pace, between "
-              : est.modelId === "queue-advance"
-                ? "At the fastest and slowest the queue has moved, between "
-                : est.modelId === "rfi-clock"
-                  ? "Going by how RFIs have gone, between "
-                : est.modelId === "stragglers"
-                  ? "Half of the cases still in line behind DOL's queue are decided by the date above, and eight in ten between "
-                  : "Between "}
-            <b>{fmtDate(est.earliestDate)}</b> and <b>{fmtDate(est.latestDate)}</b>.{" "}
-          </>
-        ) : null}
-        {est.totalDays.toLocaleString("en-US")} days from filing. An estimate, not a promise.
+        {est.earliestDate && est.latestDate
+          ? t.window(est.modelId, est.rangeFrom === "measured", fmtDate(est.earliestDate, lang), fmtDate(est.latestDate, lang))
+          : null}
+        {t.totalDays(count(est.totalDays, lang))}
       </p>{" "}
       {est.stage ? (
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">{est.stage.note}</p>
       ) : null}{" "}
-      <FinePrint summary="How this is worked out" className="mt-4">
-        <p>
-          {est.modelLabel}: {est.basis} Source: {est.source}
-        </p>{" "}
-        {est.stage ? (
-          <p>Adjusted for the case&apos;s stage: the {est.stage.percentile}th percentile of its filing month.</p>
-        ) : null}{" "}
+      <FinePrint summary={t.howSummary} className="mt-4">
+        <p>{t.modelLine(est.modelLabel, est.basis, est.source)}</p>{" "}
+        {est.stage ? <p>{t.adjusted(est.stage.percentile)}</p> : null}{" "}
         {est.caveats.map((c) => (
           <Fragment key={c}>
             {" "}
@@ -171,11 +135,32 @@ export function CaseEstimatePanel({
           </Fragment>
         ))}{" "}
         <p>
-          Every model and its spread, side by side, is on{" "}
-          <Link href="/tools/perm-timeline-calculator">the processing time calculator</Link>, and how each
-          is computed on <Link href="/methodology">the methodology page</Link>.
+          {t.everyModel(
+            <Link href="/tools/perm-timeline-calculator">{t.calculatorLink}</Link>,
+            <Link href="/methodology">{t.methodologyLink}</Link>,
+          )}
         </p>
       </FinePrint>
     </PageSection>
+  );
+}
+
+/** Where the cases we watched leave this stage went, as a share of the exits seen. */
+function NextStep({ step, lang }: { step: { to: string; share: number; observed: number }; lang: Lang }) {
+  const t = ESTIMATE_PANEL[lang];
+  const analyst = step.to.toUpperCase() === "ANALYST REVIEW";
+  const pct = Math.round(step.share * 100);
+  return (
+    <p className="mt-4 border-l-4 border-primary bg-muted px-4 py-3 text-base leading-relaxed text-soft">
+      {t.nextStep(
+        <b className="font-semibold text-foreground">{lang === "en" ? <>{pct}%</> : percentLabel(pct, lang, 0)}</b>,
+        count(step.observed, lang),
+        <b className="font-semibold text-foreground">
+          {lang === "en" ? step.to.toLowerCase() : analyst ? t.analystReview : step.to.toUpperCase()}
+        </b>,
+        analyst,
+      )}{" "}
+      <span className="text-muted-foreground">{t.nextUnknown}</span>
+    </p>
   );
 }

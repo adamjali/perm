@@ -176,6 +176,77 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 const daysWords = (d: number) => (d === 14 ? 'two weeks' : d === 7 ? 'a week' : `${d} days`);
 
 /**
+ * What the caveat under a pace range says, as data: which case it is and its figures. `rangeCaveat` words it
+ * in English; a translated page words the same note in its own language, so the two can't say different things.
+ */
+export type RangeNote =
+  /** A measured range, tested on start days it wasn't drawn from. Shares 0 to 1. */
+  | { kind: 'measured-served'; judged: number; insideShare: number; stuckShare: number; judgeDays: number }
+  /** A measured range, quoted on the recent cases it was measured on. */
+  | { kind: 'measured-row'; judged: number; insideShare: number; stuckShare: number; judgeDays: number }
+  /** A measured range with no figures to quote. */
+  | { kind: 'measured' }
+  /** The pace rule, at a distance the record of real decisions doesn't reach yet. */
+  | { kind: 'pace-far' }
+  /** The pace rule, with no test to quote. */
+  | { kind: 'pace-untested' }
+  /** The pace rule, tested each week. Percent values, already rounded. */
+  | { kind: 'pace-tested'; insidePct: number; judged: number; within7Pct: number | null };
+
+/** Which caveat a pace range gets. `at` is the estimate it sits under; see `rangeCaveat`. */
+export function rangeNoteOf(
+  c: RangeCoverage | null | undefined,
+  at?: { rawDays: number; rangeFrom: 'measured' | 'pace' } | null,
+): RangeNote {
+  const row = at && c?.measured?.find((r) => r.fromDays <= at.rawDays && at.rawDays <= r.toDays);
+  if (c && at?.rangeFrom === 'measured' && row) {
+    const judgeDays = c.judgeDays ?? 14;
+    const s = c.served;
+    if (s && s.judged >= SERVED_MIN_JUDGED) {
+      return { kind: 'measured-served', judged: s.judged, insideShare: s.insideShare, stuckShare: s.stuckShare, judgeDays };
+    }
+    if (row.insideShare !== null && row.stuckShare !== null) {
+      return { kind: 'measured-row', judged: row.judged, insideShare: row.insideShare, stuckShare: row.stuckShare, judgeDays };
+    }
+    return { kind: 'measured' };
+  }
+  // Measured near the front, not at this distance: the record of real
+  // decisions doesn't reach dates this far out yet.
+  if (at && c?.measured?.length) return { kind: 'pace-far' };
+  if (!c || !(c.judged > 0)) return { kind: 'pace-untested' };
+  return {
+    kind: 'pace-tested',
+    insidePct: Math.round(c.insideShare * 100),
+    judged: c.judged,
+    within7Pct: c.within7Share !== null ? Math.round(c.within7Share * 100) : null,
+  };
+}
+
+/** A range note in English. */
+export function rangeNoteText(n: RangeNote): string {
+  const measuredLead = 'The range is where most of DOL\'s recent decisions landed against dates this far out, measured again every night.';
+  const paceLead = 'The range is what happens if DOL keeps to its recent pace, not a confidence interval.';
+  switch (n.kind) {
+    case 'measured-served':
+      return `${measuredLead} Tested on ${n.judged.toLocaleString('en-US')} cases it wasn't drawn from, ${pct(n.insideShare)} were decided inside it and ${pct(n.stuckShare)} were still waiting ${daysWords(n.judgeDays)} after their date, usually on hold or at an RFI.`;
+    case 'measured-row':
+      return `${measuredLead} On the ${n.judged.toLocaleString('en-US')} recent cases it was measured on, ${pct(n.insideShare)} were decided inside it and ${pct(n.stuckShare)} were still waiting ${daysWords(n.judgeDays)} after their date, usually on hold or at an RFI.`;
+    case 'measured':
+      return measuredLead;
+    case 'pace-far':
+      return `${paceLead} Dates this far out can't be tested on real decisions yet, so lean on the single date.`;
+    case 'pace-untested':
+      return `${paceLead} Real decisions often land outside it, so lean on the single date.`;
+    case 'pace-tested':
+      return (
+        `${paceLead} Tested each week on real decisions, it held for ${n.insidePct}% of ${n.judged.toLocaleString('en-US')} cases` +
+        (n.within7Pct !== null ? `, while ${n.within7Pct}% were decided within a week of the single date` : '') +
+        '.'
+      );
+  }
+}
+
+/**
  * The caveat under a pace range: what it is, and how often it has held.
  * `at` is the estimate it sits under; without it (an older caller) the pace
  * rule's own test is quoted.
@@ -184,35 +255,52 @@ export function rangeCaveat(
   c: RangeCoverage | null | undefined,
   at?: { rawDays: number; rangeFrom: 'measured' | 'pace' } | null,
 ): string {
-  const row = at && c?.measured?.find((r) => r.fromDays <= at.rawDays && at.rawDays <= r.toDays);
-  if (c && at?.rangeFrom === 'measured' && row) {
-    const lead = 'The range is where most of DOL\'s recent decisions landed against dates this far out, measured again every night.';
-    const wait = daysWords(c.judgeDays ?? 14);
-    const s = c.served;
-    if (s && s.judged >= SERVED_MIN_JUDGED) {
-      return `${lead} Tested on ${s.judged.toLocaleString('en-US')} cases it wasn't drawn from, ${pct(s.insideShare)} were decided inside it and ${pct(s.stuckShare)} were still waiting ${wait} after their date, usually on hold or at an RFI.`;
-    }
-    if (row.insideShare !== null && row.stuckShare !== null) {
-      return `${lead} On the ${row.judged.toLocaleString('en-US')} recent cases it was measured on, ${pct(row.insideShare)} were decided inside it and ${pct(row.stuckShare)} were still waiting ${wait} after their date, usually on hold or at an RFI.`;
-    }
-    return lead;
+  return rangeNoteText(rangeNoteOf(c, at));
+}
+
+/**
+ * Each caveat as data, beside its English sentence in `caveats` (same order, built from the same note through
+ * `estimateNoteText`), so a translated page words the same facts and never parses English.
+ */
+export type EstimateNote =
+  /** DOL's queue passed the filing month this many months ago. */
+  | { kind: 'overdue'; filingMonth: string; months: number }
+  /** The caveat under the decision-pace range. */
+  | { kind: 'range'; range: RangeNote }
+  /** Why the decision-pace model isn't the one answering. `detail` is decisionPace's own English. */
+  | { kind: 'pace-absent'; why: 'stale-data'; sweepAgeDays: number; detail: string }
+  | { kind: 'pace-absent'; why: 'pace-unmeasurable'; detail: string }
+  | { kind: 'pace-absent'; why: 'no-count' }
+  | { kind: 'pace-absent'; why: 'no-rate' }
+  /** DOL hasn't started on the filing month. */
+  | { kind: 'cohort-unstarted'; filingMonth: string }
+  /** DOL is still working through the filing month. */
+  | { kind: 'cohort-open'; filingMonth: string }
+  /** No model could be built. */
+  | { kind: 'no-data' }
+  /** Every dated estimate: DOL doesn't decide in strict order. */
+  | { kind: 'out-of-order' };
+
+/** One caveat in English. */
+export function estimateNoteText(n: EstimateNote): string {
+  switch (n.kind) {
+    case 'overdue':
+      return `DOL's analyst-review queue passed ${n.filingMonth} about ${n.months} month(s) ago. A case from this month that is still pending is usually in audit, supervised recruitment, or awaiting a response to a request for information.`;
+    case 'range':
+      return rangeNoteText(n.range);
+    case 'pace-absent':
+      if (n.why === 'no-count') return `${PACE_ABSENT} the count of cases ahead of this one couldn't be made from today's data.`;
+      if (n.why === 'no-rate') return `${PACE_ABSENT} DOL's measured decision rate couldn't be read today.`;
+      return `${PACE_ABSENT} ${n.detail}`;
+    case 'cohort-unstarted':
+      return `DOL has not started on ${n.filingMonth} yet. A handful of cases from that month already have a determination, but those are withdrawals and other early closures rather than a processing time, so they are left out.`;
+    case 'cohort-open':
+      return `DOL is still working through ${n.filingMonth}. Cases decided first are the quickest ones, so the raw timings of those already decided would read far too optimistically for the rest of the month.`;
+    case 'no-data':
+      return 'There is not enough published DOL data to estimate this filing date yet.';
+    case 'out-of-order':
+      return 'DOL does not decide cases in strict order. An audit, supervised recruitment, or a request for information adds months, and none of them are predictable from a filing date.';
   }
-  const lead = 'The range is what happens if DOL keeps to its recent pace, not a confidence interval.';
-  if (at && c?.measured?.length) {
-    // Measured near the front, not at this distance: the record of real
-    // decisions doesn't reach dates this far out yet.
-    return `${lead} Dates this far out can't be tested on real decisions yet, so lean on the single date.`;
-  }
-  if (!c || !(c.judged > 0)) {
-    return `${lead} Real decisions often land outside it, so lean on the single date.`;
-  }
-  const inside = Math.round(c.insideShare * 100);
-  const week = c.within7Share !== null ? Math.round(c.within7Share * 100) : null;
-  return (
-    `${lead} Tested each week on real decisions, it held for ${inside}% of ${c.judged.toLocaleString('en-US')} cases` +
-    (week !== null ? `, while ${week}% were decided within a week of the single date` : '') +
-    '.'
-  );
 }
 
 // ============================================================================
@@ -252,7 +340,19 @@ export interface EstimateModel {
   rangeNote?: string;
   /** decision-pace only: a range the backtest measured, or the pace rule's. */
   rangeFrom?: 'measured' | 'pace';
+  /** The figures `basis` and `source` are worded from, so a translated page words the same ones. */
+  facts?: ModelFacts;
+  /** `rangeNote` as data. */
+  rangeFacts?: RangeNote;
 }
+
+/** Each model's figures, by model. */
+export type ModelFacts =
+  | { id: 'decision-pace'; casesAhead: number; pace: number; rawDays: number }
+  | { id: 'queue-advance'; queueMonth: string; monthsBehind: number; rate: number; asOf: string }
+  | { id: 'dol-average'; avgDays: number; asOf: string }
+  | { id: 'cohort-percentile'; decided: number; month: string; medianDays: number }
+  | { id: 'cohort-shape'; decided: number; total: number; month: string; fromPercentile: number };
 
 export type QueuePosition = 'awaiting-queue' | 'queue-reached' | 'overdue';
 
@@ -308,6 +408,8 @@ export interface QueueEstimate {
   models: EstimateModel[];
   /** Caveats that apply to this specific case, not boilerplate. */
   caveats: string[];
+  /** The same caveats as data, in the same order. */
+  notes: EstimateNote[];
   /** Cohort context, when the disclosure data covers this filing month. */
   cohort: {
     month: string;
@@ -484,6 +586,11 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
 
   const models: EstimateModel[] = [];
   const caveats: string[] = [];
+  const notes: EstimateNote[] = [];
+  const note = (n: EstimateNote) => {
+    notes.push(n);
+    caveats.push(estimateNoteText(n));
+  };
 
   // --- Position relative to DOL's published frontier ---------------------
   let monthsBehind: number | null = null;
@@ -502,9 +609,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       position = 'queue-reached';
     } else {
       position = 'overdue';
-      caveats.push(
-        `DOL's analyst-review queue passed ${filingMonth} about ${Math.abs(monthsBehind)} month(s) ago. A case from this month that is still pending is usually in audit, supervised recruitment, or awaiting a response to a request for information.`,
-      );
+      note({ kind: 'overdue', filingMonth, months: Math.abs(monthsBehind) });
     }
   }
 
@@ -557,8 +662,9 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       // measured it. That is a pace scenario, not a confidence interval, and
       // labelling it as one ("80% confident") is the most checkable false
       // claim a queue estimator can make.
-      const rangeNote = rangeCaveat(input.rangeCoverage, paced);
-      caveats.push(rangeNote);
+      const rangeFacts = rangeNoteOf(input.rangeCoverage, paced);
+      const rangeNote = rangeNoteText(rangeFacts);
+      note({ kind: 'range', range: rangeFacts });
       const toISO = (d: number) => formatUTC(new Date(d * MS_PER_DAY));
       models.push({
         id: 'decision-pace',
@@ -573,6 +679,8 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
         source: 'Our own count of DOL\'s live queue, and the decision rate we have observed over the last 28 days',
         rangeNote,
         rangeFrom: paced.rangeFrom,
+        facts: { id: 'decision-pace', casesAhead: input.casesAhead, pace: Math.round(paced.pace), rawDays: paced.rawDays },
+        rangeFacts,
       });
     } else if (
       paced.kind === 'refused' &&
@@ -581,7 +689,11 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     ) {
       // SAY WHY THE LEAD MODEL IS MISSING, or a fallback answers in its place
       // and a reader sees a different model's date with no reason.
-      caveats.push(`${PACE_ABSENT} ${paced.detail}`);
+      note(
+        paced.reason === 'stale-data'
+          ? { kind: 'pace-absent', why: 'stale-data', sweepAgeDays: input.sweepAgeDays ?? 0, detail: paced.detail }
+          : { kind: 'pace-absent', why: 'pace-unmeasurable', detail: paced.detail },
+      );
     }
   } else if (
     monthsBehind !== null &&
@@ -590,9 +702,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     // never uses it, null means it tried and the input was missing.
     (input.casesAhead !== undefined || input.decisionPace !== undefined)
   ) {
-    caveats.push(
-      `${PACE_ABSENT} ${typeof input.casesAhead !== 'number' ? "the count of cases ahead of this one couldn't be made from today's data." : "DOL's measured decision rate couldn't be read today."}`,
-    );
+    note({ kind: 'pace-absent', why: typeof input.casesAhead !== 'number' ? 'no-count' : 'no-rate' });
   }
 
   // --- Model B: queue advance -- THE LEAD MODEL --------------------------
@@ -637,6 +747,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       earliestDate: earliest,
       latestDate: latest,
       source: `Measured frontier movement against DOL FLAG, as of ${input.frontier.asOf}`,
+      facts: { id: 'queue-advance', queueMonth: input.frontier.analystQueueMonth, monthsBehind, rate, asOf: input.frontier.asOf },
     });
   }
 
@@ -669,6 +780,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       earliestDate: null,
       latestDate: null,
       source: `DOL FLAG processing times, as of ${input.frontier.asOf}`,
+      facts: { id: 'dol-average', avgDays, asOf: input.frontier.asOf },
     });
   }
 
@@ -735,11 +847,10 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
         earliestDate: p25 ? formatUTC(addDays(filed, p25.days)) : null,
         latestDate: p75 ? formatUTC(addDays(filed, p75.days)) : null,
         source: 'DOL PERM disclosure data',
+        facts: { id: 'cohort-percentile', decided: cohortRow.decided, month: cohortRow.cohortMonth, medianDays: median.days },
       });
     } else if (maturity === 'unstarted') {
-      caveats.push(
-        `DOL has not started on ${filingMonth} yet. A handful of cases from that month already have a determination, but those are withdrawals and other early closures rather than a processing time, so they are left out.`,
-      );
+      note({ kind: 'cohort-unstarted', filingMonth });
     } else {
       // The honest median is not reportable yet - but the cohort SHAPE is
       // tight enough to imply one from the percentile that IS observed. This
@@ -765,23 +876,24 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
           earliestDate: null,
           latestDate: null,
           source: 'DOL PERM disclosure data, adjusted using finished cohorts',
+          facts: {
+            id: 'cohort-shape',
+            decided: cohortRow.decided,
+            total: total ?? cohortRow.decided,
+            month: cohortRow.cohortMonth,
+            fromPercentile: implied.fromPercentile,
+          },
         });
       }
-      caveats.push(
-        `DOL is still working through ${filingMonth}. Cases decided first are the quickest ones, so the raw timings of those already decided would read far too optimistically for the rest of the month.`,
-      );
+      note({ kind: 'cohort-open', filingMonth });
     }
   }
 
   // --- Caveats that apply to every estimate ------------------------------
   if (models.length === 0) {
-    caveats.push(
-      'There is not enough published DOL data to estimate this filing date yet.',
-    );
+    note({ kind: 'no-data' });
   } else {
-    caveats.push(
-      'DOL does not decide cases in strict order. An audit, supervised recruitment, or a request for information adds months, and none of them are predictable from a filing date.',
-    );
+    note({ kind: 'out-of-order' });
   }
 
   // A forecast whose date has already elapsed is not a forecast. For a month
@@ -807,6 +919,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     position,
     models: liveModels,
     caveats,
+    notes,
     cohort: cohortOut,
   };
 }

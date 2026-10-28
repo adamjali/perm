@@ -32,7 +32,7 @@ describe("validateTimeline", () => {
 
   it("refuses a timeline with no date after PERM", () => {
     const r = validateTimeline({ category: "eb3", public: true }, TODAY);
-    expect(r).toEqual({ ok: false, message: expect.stringMatching(/at least one date/) });
+    expect(r).toEqual({ ok: false, code: "no-dates", message: expect.stringMatching(/at least one date/) });
   });
 
   it.each([
@@ -67,6 +67,21 @@ describe("validateTimeline", () => {
     const r = validateTimeline({ route: "consular", i140FiledOn: "2026-01-01", eadOn: "2026-05-01" }, TODAY);
     expect(r.ok).toBe(false);
     expect(validateTimeline({ route: "consular", i140FiledOn: "2026-01-01", interviewOn: "2026-08-01" }, TODAY).ok).toBe(true);
+  });
+
+  it("names each refusal with a code, so a translated page can word it", () => {
+    const code = (input: Parameters<typeof validateTimeline>[0]) => {
+      const r = validateTimeline(input, TODAY);
+      return r.ok ? null : "field" in r ? `${r.code}:${r.field}` : r.code;
+    };
+    expect(code({ category: "eb9", i140FiledOn: "2026-03-01" })).toBe("choice:category");
+    expect(code({ i140FiledOn: "2026-13-01" })).toBe("date");
+    expect(code({ category: "eb2" })).toBe("no-dates");
+    expect(code({ i140FiledOn: "2026-03-01", i140ApprovedOn: "2026-02-01" })).toBe("i140-order");
+    expect(code({ i485FiledOn: "2026-03-01", greenCardOn: "2026-02-01" })).toBe("green-card-order");
+    expect(code({ i140FiledOn: "2026-03-01", rfeForm: "i140", rfeIssuedOn: "2026-04-01", rfeRespondedOn: "2026-03-20" })).toBe("rfe-order");
+    expect(code({ i140FiledOn: "2026-03-01", rfeReason: "experience" })).toBe("rfe-form");
+    expect(code({ route: "consular", i140FiledOn: "2026-01-01", eadOn: "2026-05-01" })).toBe("adjustment-only:eadOn");
   });
 });
 

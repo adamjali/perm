@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { measurePace } from './decisionPace';
 import { PACE_ABSENT,
+  estimateNoteText,
+  rangeCaveat,
+  rangeNoteOf,
+  rangeNoteText,
   estimateQueueDecision,
   measureFrontierAdvance,
   measureFrontierAdvanceRange,
@@ -827,5 +831,49 @@ describe('no employer-letter shift (removed 2026-09-26)', () => {
       cohorts: [],
     });
     expect('letterDeltaDays' in r).toBe(false);
+  });
+});
+
+describe('caveats as data, for a page in another language (Oct 28 2026)', () => {
+  // Each caveat is pushed as a structured note and worded from it, so the
+  // English a page shows and the figures a translation words can't disagree.
+  const cases: Array<Partial<QueueEstimateInput>> = [
+    {},
+    { casesAhead: null },
+    { decisionPace: null },
+    { sweepAgeDays: 9 },
+    { filingDate: '2024-11-05' },
+    { cohorts: [MATURE_COHORT], filingDate: '2024-06-15' },
+    { cohorts: [IMMATURE_COHORT], filingDate: '2026-03-15' },
+    { frontier: null, frontierAdvanceRate: null, casesAhead: undefined, decisionPace: undefined },
+  ];
+
+  it('words every caveat from its note, in the same order', () => {
+    for (const over of cases) {
+      const r = paceAsk(over);
+      expect(r.notes.length).toBe(r.caveats.length);
+      expect(r.notes.map(estimateNoteText)).toEqual(r.caveats);
+    }
+  });
+
+  it('carries the figures each model is worded from', () => {
+    const r = paceAsk({ cohorts: [MATURE_COHORT], filingDate: '2024-06-15', today: '2025-01-10' });
+    expect(r.models.map((m) => m.id)).toEqual(['dol-average', 'cohort-percentile']);
+    for (const m of [...r.models, ...paceAsk().models]) expect(m.facts?.id).toBe(m.id);
+    const pace = paceAsk().models.find((m) => m.id === 'decision-pace')!;
+    expect(pace.facts).toEqual({
+      id: 'decision-pace',
+      casesAhead: 30_000,
+      pace: Math.round(PACE.pace),
+      rawDays: Math.round(30_000 / PACE.pace),
+    });
+    expect(pace.rangeNote).toBe(rangeNoteText(pace.rangeFacts!));
+  });
+
+  it('keeps rangeCaveat the same words as its note', () => {
+    const c = { insideShare: 0.29, judged: 8023, within7Share: 0.77, through: '2026-08-20' };
+    expect(rangeCaveat(c)).toBe(rangeNoteText(rangeNoteOf(c)));
+    expect(rangeNoteOf(c)).toEqual({ kind: 'pace-tested', insidePct: 29, judged: 8023, within7Pct: 77 });
+    expect(rangeNoteOf(null).kind).toBe('pace-untested');
   });
 });

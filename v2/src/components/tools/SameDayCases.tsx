@@ -2,10 +2,14 @@ import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { PageSection } from "@/components/data/PageSection";
+import { Bold } from "@/components/i18n/Bold";
 import type { DayGroup, SameDay } from "@/lib/sameDay";
 import { prettyStatus } from "@/components/queue/stages";
 import { cn } from "@/lib/utils";
-import { longDate } from "@convex/lib/months";
+import { localizedPath, type Lang } from "@/lib/i18n/lang";
+import { dayLabel, intLabel } from "@/lib/i18n/format";
+
+import { SAME_DAY, type SameDayText } from "./SameDayCases.messages";
 
 /**
  * "Are people who filed when I did hearing back?", answered from the record.
@@ -18,12 +22,12 @@ import { longDate } from "@convex/lib/months";
  * colour alone.
  */
 
-const GROUPS: { key: DayGroup; label: string; tone: string }[] = [
-  { key: "certified", label: "Certified", tone: "bg-data-good" },
-  { key: "denied", label: "Denied", tone: "bg-data-bad" },
-  { key: "withdrawn", label: "Withdrawn", tone: "bg-chart-purple" },
-  { key: "aside", label: "On hold, RFI or appeal", tone: "bg-data-warn" },
-  { key: "inLine", label: "Still in line", tone: "bg-card bg-hatch text-input" },
+const GROUPS: { key: DayGroup; tone: string }[] = [
+  { key: "certified", tone: "bg-data-good" },
+  { key: "denied", tone: "bg-data-bad" },
+  { key: "withdrawn", tone: "bg-chart-purple" },
+  { key: "aside", tone: "bg-data-warn" },
+  { key: "inLine", tone: "bg-card bg-hatch text-input" },
 ];
 // The neighbour squares carry a number, so "still in line" is a plain card
 // there: a hatch behind small type would fight it. A number on a coloured fill
@@ -40,32 +44,31 @@ const INK: Record<DayGroup, string> = {
 const TONE = Object.fromEntries(
   GROUPS.map((g) => [g.key, cn(g.key === "inLine" ? "bg-card" : g.tone, INK[g.key])]),
 ) as Record<DayGroup, string>;
-const LABEL = Object.fromEntries(GROUPS.map((g) => [g.key, g.label])) as Record<DayGroup, string>;
-
-const longDay = (iso: string) => longDate(iso) ?? iso;
-
-export function SameDayCases({ data, className }: { data: SameDay; className?: string }) {
+export function SameDayCases({ data, className, lang = "en" }: { data: SameDay; className?: string; lang?: Lang }) {
+  const t: SameDayText = SAME_DAY[lang];
+  const n = (x: number) => intLabel(x, lang);
+  const day = dayLabel(data.day, lang) ?? data.day;
   const decided = data.counts.certified + data.counts.denied + data.counts.withdrawn;
   const shown = GROUPS.filter((g) => data.counts[g.key] > 0);
+  const [filed, decidedLine] = t.lede(n(data.total), day, n(decided));
   return (
     <PageSection
       id="same-day"
-      title="Filed the same day"
+      title={t.title}
       className={className}
       lede={
         <>
-          <b className="font-semibold text-foreground">{data.total.toLocaleString("en-US")}</b> PERM cases were filed
-          on {longDay(data.day)}. <b className="font-semibold text-foreground">{decided.toLocaleString("en-US")}</b>{" "}
-          have been decided.
+          <Bold parts={filed} className="font-semibold text-foreground" />
+          <Bold parts={decidedLine} className="font-semibold text-foreground" />
         </>
       }
     >
-      <ChartTips label={`Cases filed on ${longDay(data.day)}, by what has happened to them`}>
+      <ChartTips label={t.chartLabel(day)}>
       <div className="flex h-5 w-full overflow-hidden border-input border" aria-hidden="true">
         {shown.map((g) => (
           <div
             key={g.key}
-            data-tip={`${g.label}\n${data.counts[g.key].toLocaleString("en-US")} of the ${data.total.toLocaleString("en-US")} filed ${longDay(data.day)}`}
+            data-tip={t.tip(t.group[g.key], n(data.counts[g.key]), n(data.total), day)}
             className={cn("h-full", g.tone)}
             style={{ width: `${(data.counts[g.key] / data.total) * 100}%` }}
           />
@@ -77,8 +80,8 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
           <Fragment key={g.key}>{" "}
           <li className="flex items-center gap-1.5">
             <span className={cn("inline-block size-3.5 shrink-0 border-input border", g.tone)} aria-hidden="true" />{" "}
-            <span className="text-soft">{g.label}</span>{" "}
-            <span className="font-mono font-semibold tabular-nums">{data.counts[g.key].toLocaleString("en-US")}</span>
+            <span className="text-soft">{t.group[g.key]}</span>{" "}
+            <span className="font-mono font-semibold tabular-nums">{n(data.counts[g.key])}</span>
           </li>
           </Fragment>
         ))}
@@ -86,24 +89,24 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
 
       {data.nearby.length > 1 ? (
         <>
-          <h3 className="mt-8 text-base font-semibold">The cases numbered beside it</h3>{" "}
+          <h3 className="mt-8 text-base font-semibold">{t.nearbyTitle}</h3>{" "}
           <ol className="mt-3 flex flex-wrap gap-1.5" translate="no">
-            {data.nearby.map((n) => (
-              <Fragment key={n.caseNumber}>{" "}
+            {data.nearby.map((c) => (
+              <Fragment key={c.caseNumber}>{" "}
               <li>
                 <a
-                  href={`/perm-case-status?case=${n.caseNumber}`}
+                  href={localizedPath(`/perm-case-status?case=${c.caseNumber}`, lang)}
                   rel="nofollow"
-                  title={`${n.caseNumber}: ${n.status ? prettyStatus(n.status) : "no status"}`}
+                  title={`${c.caseNumber}: ${c.status ? prettyStatus(c.status) : t.noStatus}`}
                   className={cn(
                     "flex size-11 items-center justify-center border-input font-mono text-sm font-semibold tabular-nums transition-[color,background-color,border-color,box-shadow,transform] hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:hover:-translate-y-0.5 border",
-                    TONE[n.group],
-                    n.isThis && "outline outline-2 outline-offset-2 outline-primary-text",
+                    TONE[c.group],
+                    c.isThis && "outline outline-2 outline-offset-2 outline-primary-text",
                   )}
                 >
-                  <span aria-hidden="true">{n.isThis ? "this" : n.caseNumber.slice(-3)}</span>{" "}
+                  <span aria-hidden="true">{c.isThis ? t.thisShort : c.caseNumber.slice(-3)}</span>{" "}
                   <span className="sr-only">
-                    {n.isThis ? "This case" : n.caseNumber}, {LABEL[n.group]}
+                    {c.isThis ? t.thisCase : c.caseNumber}, {t.group[c.group]}
                   </span>
                 </a>
               </li>
@@ -111,7 +114,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
             ))}
           </ol>{" "}
           <p className="mt-2 text-sm text-muted-foreground">
-            Last three digits of each case number, in the order DOL issued them. Tap one to look it up.
+            {t.digitsNote}
           </p>
         </>
       ) : null}

@@ -149,9 +149,26 @@ export interface TimelineFields {
   public: boolean;
 }
 
+/** The choice fields, each checked against its own list. */
+export type TimelineChoiceField = "category" | "country" | "route" | "i140Center" | "rfeForm" | "rfeReason" | "rfeOutcome";
+
+/**
+ * Why a timeline was refused, beside the English `message`, so a page in another language can word the same
+ * refusal without reading the English back.
+ */
+export type TimelineProblem =
+  | { code: "choice"; field: TimelineChoiceField }
+  | { code: "date" }
+  | { code: "no-dates" }
+  | { code: "i140-order" }
+  | { code: "green-card-order" }
+  | { code: "rfe-order" }
+  | { code: "rfe-form" }
+  | { code: "adjustment-only"; field: DateFieldId };
+
 export type ValidationResult =
   | { ok: true; value: TimelineFields }
-  | { ok: false; message: string };
+  | ({ ok: false; message: string } & TimelineProblem);
 
 function pick<T extends { id: string }>(list: readonly T[], raw: unknown): T["id"] | undefined | null {
   if (raw === undefined || raw === null || raw === "") return undefined;
@@ -185,7 +202,7 @@ export function isoToday(now: number = Date.now()): string {
 export function validateTimeline(input: TimelineInput, today: string = isoToday()): ValidationResult {
   const out: TimelineFields = { public: input.public === true };
 
-  const choices: [keyof TimelineFields, readonly { id: string }[], unknown, string][] = [
+  const choices: [TimelineChoiceField, readonly { id: string }[], unknown, string][] = [
     ["category", CATEGORIES, input.category, "category"],
     ["country", COUNTRIES, input.country, "country"],
     ["route", ROUTES, input.route, "route"],
@@ -196,7 +213,7 @@ export function validateTimeline(input: TimelineInput, today: string = isoToday(
   ];
   for (const [key, list, raw, name] of choices) {
     const v = pick(list, raw);
-    if (v === null) return { ok: false, message: `That ${name} isn't one this form records.` };
+    if (v === null) return { ok: false, code: "choice", field: key, message: `That ${name} isn't one this form records.` };
     if (v !== undefined) (out as unknown as Record<string, unknown>)[key] = v;
   }
   if (input.premium === true || input.premium === false) out.premium = input.premium;
@@ -208,36 +225,41 @@ export function validateTimeline(input: TimelineInput, today: string = isoToday(
   ];
   for (const [key, raw] of dates) {
     const v = isoOrUndefined(raw, today);
-    if (v === null) return { ok: false, message: "Enter each date as YYYY-MM-DD, from 2005 on and not in the future." };
+    if (v === null) return { ok: false, code: "date", message: "Enter each date as YYYY-MM-DD, from 2005 on and not in the future." };
     if (v !== undefined) (out as unknown as Record<string, unknown>)[key] = v;
   }
 
   const any = DATE_FIELDS.some((f) => out[f.id] !== undefined);
-  if (!any) return { ok: false, message: "Add at least one date after PERM to record a timeline." };
+  if (!any) return { ok: false, code: "no-dates", message: "Add at least one date after PERM to record a timeline." };
 
   const before = (a?: string, b?: string) => a !== undefined && b !== undefined && b < a;
   if (before(out.i140FiledOn, out.i140ApprovedOn)) {
-    return { ok: false, message: "The I-140 approval is dated before its filing." };
+    return { ok: false, code: "i140-order", message: "The I-140 approval is dated before its filing." };
   }
   if (before(out.i485FiledOn, out.greenCardOn) && out.route !== "consular") {
-    return { ok: false, message: "The green card is dated before the I-485 filing." };
+    return { ok: false, code: "green-card-order", message: "The green card is dated before the I-485 filing." };
   }
   // An I-485 filed before the I-140 is NOT checked: concurrent filing puts
   // them in on the same day, and a refiled or upgraded I-140 can carry a
   // later date than the I-485 it supports. A person's own dates are theirs.
   if (before(out.rfeIssuedOn, out.rfeRespondedOn)) {
-    return { ok: false, message: "The RFE response is dated before the RFE." };
+    return { ok: false, code: "rfe-order", message: "The RFE response is dated before the RFE." };
   }
   const rfeAny = out.rfeForm || out.rfeReason || out.rfeIssuedOn || out.rfeRespondedOn || out.rfeOutcome;
   if (rfeAny && !out.rfeForm) {
-    return { ok: false, message: "Say which form the RFE was on." };
+    return { ok: false, code: "rfe-form", message: "Say which form the RFE was on." };
   }
   if (out.route === "consular") {
     // An adjustment-only date on a consular timeline is a contradiction the
     // board would print as fact. Refuse it rather than silently dropping it.
     for (const f of DATE_FIELDS) {
       if (out[f.id] !== undefined && !(f.routes as readonly string[]).includes("consular")) {
-        return { ok: false, message: `${f.label} applies to an adjustment in the US, not consular processing.` };
+        return {
+          ok: false,
+          code: "adjustment-only",
+          field: f.id,
+          message: `${f.label} applies to an adjustment in the US, not consular processing.`,
+        };
       }
     }
   }

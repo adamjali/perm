@@ -1,8 +1,10 @@
 import { Fragment } from "react";
 
-import { formatInt } from "@/lib/format";
+import type { Lang } from "@/lib/i18n/lang";
+import { intLabel } from "@/lib/i18n/format";
 
 import { STAGE_META, STAGE_ORDER, type StageGroup } from "./stages";
+import { STAGE_TEXT, type StageText } from "./stages.messages";
 
 /**
  * One filing month's pending cases, drawn as a segmented bar.
@@ -37,22 +39,25 @@ export interface StageBarProps {
   /** The bar's height class: a row on the wall, or one bar standing alone. */
   height?: string;
   className?: string;
+  /** The hover detail's language; English by default. */
+  lang?: Lang;
 }
 
 /**
  * What one segment says on hover: its stage and count, the DOL statuses
  * folded into it (which the bar can't show), and the bar's whole.
  */
-export function stageTip(stage: StageGroup, own: number, heading?: string): string {
+export function stageTip(stage: StageGroup, own: number, heading?: string, lang: Lang = "en"): string {
+  const t: StageText = STAGE_TEXT[lang];
   const folded =
     stage.statuses.length > 1
-      ? stage.statuses.slice(0, 4).map((s) => `${s.status}: ${formatInt(s.count)}`)
+      ? stage.statuses.slice(0, 4).map((s) => `${s.status}: ${intLabel(s.count, lang)}`)
       : [];
   return [
     heading,
-    `${STAGE_META[stage.stage].label}: ${formatInt(stage.count)} ${stage.count === 1 ? "case" : "cases"}`,
+    t.tipCount(t.label[stage.stage], intLabel(stage.count, lang), stage.count),
     ...folded,
-    `Of ${formatInt(own)} pending`,
+    t.tipOf(intLabel(own, lang)),
   ]
     .filter(Boolean)
     .join("\n");
@@ -103,7 +108,7 @@ const MIN_SEGMENT_PX = 4;
 // pastel and against the white track alike.
 const SEGMENT_EDGE = "border-r-2 border-foreground/50";
 
-export function StageBar({ stages, scale, tipHeading, height = "h-5", className }: StageBarProps) {
+export function StageBar({ stages, scale, tipHeading, height = "h-5", className, lang = "en" }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
   const denominator = scale === "composition" ? own : scale;
   if (denominator <= 0 || own === 0) {
@@ -127,7 +132,7 @@ export function StageBar({ stages, scale, tipHeading, height = "h-5", className 
         return (
           <span
             key={stage}
-            data-tip={stageTip(group, own, tipHeading)}
+            data-tip={stageTip(group, own, tipHeading, lang)}
             className={`block h-full ${SEGMENT_EDGE} ${STAGE_META[stage].fill}`}
             style={{ width: `${pct}%`, minWidth: `${MIN_SEGMENT_PX}px` }}
           />
@@ -148,10 +153,13 @@ export function StageBar({ stages, scale, tipHeading, height = "h-5", className 
 export function StageLegend({
   stages,
   className,
+  lang = "en",
 }: {
   stages: readonly StageGroup[];
   className?: string;
+  lang?: Lang;
 }) {
+  const t: StageText = STAGE_TEXT[lang];
   return (
     // Three columns at every width: stacked, the three counts ran a phone's
     // screen and a half before the picture below them (Oct 28 2026).
@@ -172,14 +180,14 @@ export function StageLegend({
                   aria-hidden="true"
                 />{" "}
                 <span className="text-sm font-bold text-soft">
-                  {meta.label}
+                  {t.label[stage]}
                 </span>
               </span>{" "}
               <span className="mt-1 block font-heading text-xl font-bold tabular-nums sm:text-2xl">
-                {formatInt(group?.count ?? 0)}
+                {intLabel(group?.count ?? 0, lang)}
               </span>{" "}
               <span className="mt-1 block text-sm leading-snug text-muted-foreground">
-                {meta.gloss}
+                {t.gloss[stage]}
               </span>
             </li>
           </Fragment>

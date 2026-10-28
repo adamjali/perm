@@ -284,3 +284,36 @@ test("today shows the reader's own bulletin line and looks further back at DOL's
   // Each step's line in and out sits in its own card.
   await expect(page.getByText(/^[A-Z][a-z]{2} \d+ to [A-Z][a-z]{2} \d+$/).first()).toBeVisible();
 });
+
+// Each translated case page, in its own language: the heading, a real case's record, and the source block's
+// citation, which opens in the browser. A client part handed something a browser can't receive (two message
+// functions, Oct 28 2026) turned every one of these pages into the error screen, and only a real render shows it.
+const TRANSLATED = [
+  { lang: "es", heading: "Consulte el estado de su caso PERM", record: "El registro", cite: "Citar esta página" },
+  { lang: "zh", heading: "查询您的 PERM 案件状态", record: "记录", cite: "引用本页" },
+  { lang: "pt-br", heading: "Consulte o status do seu caso PERM", record: "O registro", cite: "Citar esta página" },
+  { lang: "ko", heading: "PERM 케이스 상태 조회", record: "기록", cite: "이 페이지 인용하기" },
+  { lang: "vi", heading: "Tra cứu tình trạng hồ sơ PERM", record: "Hồ sơ lưu", cite: "Trích dẫn trang này" },
+] as const;
+
+for (const t of TRANSLATED) {
+  test(`the case page answers in ${t.lang}, from the heading to the citation`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/perm-decision-activity");
+    const href = await page.locator('a[href*="/perm-case-status?case="]').first().getAttribute("href");
+    const number = new URL(href!, "https://permtracker.app").searchParams.get("case")!;
+    const res = await page.goto(`/${t.lang}/perm-case-status?case=${encodeURIComponent(number)}`);
+    expect(res?.status()).toBe(200);
+    if (await page.getByRole("heading", { name: "Performing security verification" }).isVisible()) {
+      console.log(`note: /${t.lang} is behind Cloudflare's lookup check here`);
+      return;
+    }
+    await expect(page.locator("html")).toHaveAttribute("lang", /./);
+    await expect(page.getByRole("heading", { level: 1, name: t.heading })).toBeVisible();
+    await expect(page.getByRole("heading", { name: t.record, exact: true })).toBeVisible();
+    await expect(page.getByText(number, { exact: true }).first()).toBeVisible();
+    // The citation is built in the browser when its fold opens, from the page's own canonical address.
+    await page.getByText(t.cite, { exact: true }).click();
+    await expect(page.locator("details[open] p").filter({ hasText: `/${t.lang}/perm-case-status` })).toBeVisible();
+  });
+}
