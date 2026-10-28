@@ -627,6 +627,38 @@
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
   "alt": "The PERM Tracker case list in dark mode"
  },
+ "changelog/a-clearer-site-and-did-you-mean": {
+  "capture": {
+   "url": "/uscis-rfe-rates",
+   "clip": "fromm:Every I-129 visa, by fiscal year"
+  },
+  "credit": "Screenshot of permtracker.app, October 28, 2026",
+  "alt": "How often USCIS asked for more evidence on each I-129 work visa, a small chart per visa by fiscal year, on permtracker.app"
+ },
+ "changelog/search-by-job-and-the-recruitment-record": {
+  "capture": {
+   "url": "/perm-recruitment",
+   "clip": "fromm:How long before filing"
+  },
+  "credit": "Screenshot of permtracker.app, October 28, 2026",
+  "alt": "How long before filing each PERM recruitment step ran, against the rule's 30-to-180-day window, on permtracker.app"
+ },
+ "changelog/layoffs-rules-and-every-step-today": {
+  "capture": {
+   "url": "/policy-changes",
+   "clip": "fromm:Rules in the pipeline"
+  },
+  "credit": "Screenshot of permtracker.app, October 28, 2026",
+  "alt": "Rules on their way, each with its steps from White House review to the Federal Register, on permtracker.app"
+ },
+ "changelog/the-whole-green-card-plan": {
+  "capture": {
+   "url": "/tools/green-card-timeline?where=perm-certified&pd=2025-03-14&cat=EB2&country=worldwide",
+   "clip": "fromm:How long each step takes"
+  },
+  "credit": "Screenshot of permtracker.app, October 28, 2026",
+  "alt": "The green card timeline drawn as a chart: each step from the PERM to the green card as a dated bar, on permtracker.app"
+ },
  "changelog/alerts-in-minutes-and-measured-estimates": {
   "tour": {
    "file": "notifications-light.webp",

@@ -110,6 +110,9 @@ function MonthChart({ points, label }: { points: RfeMonthPoint[]; label: string 
             <ChartHit key={p.key} tip={tip} x={L + i * bw} width={bw} y={T} height={plotH}>
               <rect x={x} y={y(share)} width={w} height={(share * 100 * plotH) / top} className="fill-chart-blue" />
               <rect x={x} y={y(ok)} width={w} height={(ok * 100 * plotH) / top} className="fill-chart-green" />
+              {/* Ink caps: the soft fills sit near 1.2:1 on paper, under WCAG 1.4.11's 3:1 for a mark; the caps pass. */}
+              {share > 0 ? <rect x={x} y={y(share)} width={w} height={CAP} className="fill-data-info-ink" /> : null}
+              {ok > 0 ? <rect x={x} y={y(ok)} width={w} height={CAP} className="fill-data-good-ink" /> : null}
             </ChartHit>
           );
         })}
@@ -117,6 +120,9 @@ function MonthChart({ points, label }: { points: RfeMonthPoint[]; label: string 
     </ChartTips>
   );
 }
+
+/** A bar's ink cap, in the drawing's own units: the 2px edge the site's column chart gives its soft fills. */
+const CAP = 2;
 
 /** One visa's RFE share by fiscal year, on the scale every card shares. */
 function YearBars({ label, years, top }: { label: string; years: RfeYear[]; top: number }) {
@@ -136,6 +142,7 @@ function YearBars({ label, years, top }: { label: string; years: RfeYear[]; top:
           return (
             <ChartHit key={yr.fy} tip={tip} x={i * bw} width={bw} y={0} height={H - B}>
               <rect x={i * bw + 1} y={H - B - h} width={Math.max(bw - 2, 1)} height={h} className="fill-chart-blue" />
+              {h > 0 ? <rect x={i * bw + 1} y={H - B - h} width={Math.max(bw - 2, 1)} height={CAP} className="fill-data-info-ink" /> : null}
             </ChartHit>
           );
         })}
