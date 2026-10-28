@@ -49,3 +49,15 @@ describe("BulletinStation", () => {
     expect(screen.getByText("not listed")).toBeInTheDocument();
   });
 });
+
+describe("BulletinStation, a line with a dated cutoff", () => {
+  it("names the filing chart under the split, never the cutoff a second time", () => {
+    // Arrange
+    const dated: BulletinLine = { ...line("EB2", "worldwide", "Apr 1, 2025", "Mar 15, 2026"), cutoffIso: "2025-04-01" };
+    // Act
+    render(<ul><BulletinStation step={4} lines={[dated]} bulletinMonth="2026-11" monthLabel="November 2026" /></ul>);
+    // Assert
+    expect(screen.getByText("Mar 15, 2026").closest("figcaption")).not.toBeNull();
+    expect(screen.queryByText(/Your priority date before/)).toBeNull();
+  });
+});

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react";
-import { Fragment, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,8 @@ export interface StageCard {
   howLongNote?: string;
   what: string;
   watch: string;
+  /** How the step's line is moving, where no card on the board shows it (the I-485). */
+  moving?: ReactNode;
   href: string;
   linkLabel: string;
 }
@@ -109,6 +111,7 @@ export function StagePicker({ stages, initial = 0 }: { stages: StageCard[]; init
               <dd className="mt-1 text-base font-semibold leading-snug">{s.form}</dd>
             </div>
           </dl>{" "}
+          {s.moving ? <div className="max-w-md">{s.moving}</div> : null}{" "}
           <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-border pt-5 sm:grid-cols-2 [&>*]:min-w-0">
             <p className="text-base leading-relaxed">
               <span className="font-semibold">What happens. </span>

@@ -4,9 +4,9 @@ import { Fragment } from "react";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import {
-  Balance,
   BulletinGrid,
   DecidedBar,
+  FlowPair,
   Station,
   StatusTiles,
   Track,
@@ -193,14 +193,15 @@ export default async function TodayPage() {
       )
     : [];
 
-  // USCIS's two lines as the same picture, from its quarterly received and completed counts
-  // (Adam, Oct 27 2026: "why just those 2?"). USCIS publishes them once a quarter, so the
-  // caption names the quarter rather than 30 days.
+  // USCIS's two lines in and out, from its quarterly received and completed counts (Adam,
+  // Oct 27 2026: "why just those 2?"): the I-140's in its card, the I-485's in its tab. USCIS
+  // publishes them once a quarter, so the caption names the quarter rather than 30 days; the
+  // step already says it's USCIS's.
   const uscisLine = (row: (typeof i140)[number] | undefined) => {
     if (!row || row.received === null || row.completed === null) return null;
     const end = row.quarterEnd;
     const start = shiftMonth(end.slice(0, 7), -2);
-    const words = `USCIS, ${monthYear(start)?.split(" ")[0] ?? start} to ${monthYear(end.slice(0, 7)) ?? end}`;
+    const words = `${monthYear(start)?.split(" ")[0] ?? start} to ${monthYear(end.slice(0, 7)) ?? end}`;
     return { flow: { ...lineFlow(row.received, row.completed), from: `${start}-01`, to: end }, period: words };
   };
   const i140Line = uscisLine(i140.filter((r) => r.received !== null).at(-1));
@@ -266,6 +267,7 @@ export default async function TodayPage() {
       howLongNote: i485 ? `USCIS's median for employment-based cases, Q${i485.quarter} ’${String(i485.fy).slice(2)}` : undefined,
       what: "USCIS decides the green card itself. A work permit and a travel document can come while it waits.",
       watch: "The visa bulletin decides the month you can file, from your category, country and priority date.",
+      moving: i485Line ? <FlowPair flow={i485Line.flow} period={i485Line.period} labels={["Received", "Completed"]} say /> : undefined,
       href: "/i485-by-field-office",
       linkLabel: "The I-485 by office",
     },
@@ -310,6 +312,7 @@ export default async function TodayPage() {
                 />
               ) : null
             }
+            detail={pwd ? <FlowPair flow={pwd.flow} /> : null}
             shift={pwdShift}
             status={pwdStatus}
             facts={factsOf(pwd)}
@@ -333,6 +336,7 @@ export default async function TodayPage() {
                 />
               ) : null
             }
+            detail={perm ? <FlowPair flow={perm.flow} /> : null}
             shift={permShift}
             status={permStatus}
             facts={factsOf(perm)}
@@ -356,6 +360,7 @@ export default async function TodayPage() {
                 />
               ) : null
             }
+            detail={i140Line ? <FlowPair flow={i140Line.flow} period={i140Line.period} labels={["Received", "Completed"]} say /> : null}
             shift={i140Shift}
             status={i140Status}
             href="/uscis-processing-times"
@@ -380,29 +385,6 @@ export default async function TodayPage() {
           Date every step for your case <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
         </Link>
       </section>{" "}
-      {pwd || perm ? (
-        <section aria-labelledby="lines" className="mt-16">
-          <h2 id="lines" className="font-heading text-2xl font-bold">
-            Are the lines getting shorter?
-          </h2>{" "}
-          <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 [&>*]:min-w-0">
-            {pwd ? <Balance name="Wage requests" flow={pwd.flow} href="/pwd-cases" /> : null}{" "}
-            {perm ? <Balance name="PERM cases" flow={perm.flow} href="/perm-queue" /> : null}{" "}
-            {i140Line ? (
-              <Balance name="I-140 petitions" flow={i140Line.flow} period={i140Line.period} labels={["Received", "Completed"]} href="/uscis-processing-times" />
-            ) : null}{" "}
-            {i485Line ? (
-              <Balance
-                name="I-485, employment-based"
-                flow={i485Line.flow}
-                period={i485Line.period}
-                labels={["Received", "Completed"]}
-                href="/i485-by-field-office"
-              />
-            ) : null}
-          </div>
-        </section>
-      ) : null}{" "}
       <section aria-labelledby="day" className="mt-16">
         <h2 id="day" className="font-heading text-2xl font-bold">
           PERM at DOL{perm ? <>, {dayLabel}</> : null}

@@ -56,6 +56,13 @@ export function BulletinStation({
   const line = lines.find((l) => l.category === category && l.country === country) ?? lines[0];
   if (!line) return null;
   const name = `${categoryName(line.category)}, ${countryName(line.country)}`;
+  // The filing chart sits under the split, where the other steps name their ends; with no split
+  // to draw (a line that's current or shut) it sits under the pickers.
+  const filingChart = (
+    <>
+      Dates for filing: <b className="font-semibold text-foreground">{line.datesForFiling ?? "not listed"}</b>
+    </>
+  );
 
   return (
     <Station
@@ -69,6 +76,7 @@ export function BulletinStation({
             cutoff={line.cutoffIso}
             bulletinMonth={bulletinMonth}
             label={`In the ${monthLabel} bulletin, ${name} priority dates before ${shortDate(line.cutoffIso)} are current`}
+            note={filingChart}
           />
         ) : null
       }
@@ -96,9 +104,7 @@ export function BulletinStation({
               ))}
             </select>
           </div>{" "}
-          <p className="mt-2 text-sm text-soft">
-            Dates for filing: <b className="font-semibold text-foreground">{line.datesForFiling ?? "not listed"}</b>
-          </p>
+          {line.cutoffIso ? null : <p className="mt-2 text-sm text-soft">{filingChart}</p>}
         </div>
       }
       shift={line.shift}

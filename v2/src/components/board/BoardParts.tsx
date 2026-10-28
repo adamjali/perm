@@ -74,6 +74,7 @@ export function Station({
   href,
   linkLabel,
   controls,
+  detail,
 }: {
   step: number;
   name: string;
@@ -92,6 +93,8 @@ export function Station({
   linkLabel: string;
   /** Anything the reader changes in this step, under its picture. */
   controls?: ReactNode;
+  /** The step's line in and out, under its picture. */
+  detail?: ReactNode;
 }) {
   return (
     <li className="object flex flex-col p-5">
@@ -106,6 +109,7 @@ export function Station({
       <p className="font-heading text-[1.75rem] font-bold leading-tight tabular-nums">{big}</p>{" "}
       <div className="mt-5 h-24">{picture}</div>{" "}
       {controls}{" "}
+      {detail}{" "}
       {/* The state and the link sit at the card's foot, so the four steps' lines align. */}
       <div className="mt-auto pt-3">
         {status || shift ? <StepState status={status ?? null} shift={shift ?? null} facts={facts} /> : null}{" "}
@@ -235,7 +239,18 @@ export function WaitBar({
  * it up to the bulletin's month (still waiting). A cutoff isn't a wait, so it
  * doesn't share the other steps' bar.
  */
-export function CutoffLine({ cutoff, bulletinMonth, label }: { cutoff: string; bulletinMonth: string; label: string }) {
+export function CutoffLine({
+  cutoff,
+  bulletinMonth,
+  label,
+  note,
+}: {
+  cutoff: string;
+  bulletinMonth: string;
+  label: string;
+  /** The line under the split, where the other steps name their ends. */
+  note?: ReactNode;
+}) {
   const c = Date.parse(`${cutoff}T12:00:00Z`);
   const end = Date.parse(`${bulletinMonth}-01T12:00:00Z`);
   // The line starts as far before the cutoff as a third of the waiting span, so both sides read.
@@ -252,9 +267,7 @@ export function CutoffLine({ cutoff, bulletinMonth, label }: { cutoff: string; b
         <div className="absolute inset-y-0 right-0 bg-data-info-ink" style={{ left: `${at}%` }} />
         <span className="absolute -top-1 size-5 -translate-x-1/2 border-2 border-foreground bg-primary" style={{ left: `${at}%` }} />
       </div>
-      <figcaption className="mt-2.5 text-sm text-soft">
-        Your priority date before <b className="font-semibold text-foreground">{monthDay(cutoff)}</b>: current
-      </figcaption>
+      {note ? <figcaption className="mt-2.5 text-sm text-soft">{note}</figcaption> : null}
     </figure>
   );
 }
@@ -264,59 +277,55 @@ export function CutoffLine({ cutoff, bulletinMonth, label }: { cutoff: string; b
 // ---------------------------------------------------------------------------
 
 /** Filed against decided over a window, as two bars on one scale, with the line's direction. */
-export function Balance({
-  name,
+/** What a line's in and out add up to, in words: "52,265 more received than completed". */
+export function flowSentence(flow: LineFlow, labels: readonly [string, string] = ["filed", "decided"]): string {
+  const [inWord, outWord] = labels.map((l) => l.toLowerCase());
+  if (flow.trend === "level") return `About as many ${outWord} as ${inWord}`;
+  return flow.change > 0 ? `${n(flow.change)} more ${inWord} than ${outWord}` : `${n(-flow.change)} more ${outWord} than ${inWord}`;
+}
+
+/**
+ * A step's line in and out, small enough for its card: filed (or received)
+ * against decided (or completed) on one scale, with the window under them. On
+ * the board the state line below says what the pair adds up to; where nothing
+ * below says it, `say` adds it to the window's line.
+ */
+export function FlowPair({
   flow,
-  href,
   labels = ["Filed", "Decided"],
   period,
+  say = false,
 }: {
-  name: string;
   flow: LineFlow & { from: string; to: string };
-  href: string;
   /** The two bars' words: USCIS says received and completed. */
   labels?: [string, string];
   /** The window in words, where it isn't the last 30 days (a USCIS quarter). */
   period?: string;
+  /** Add what the two add up to after the window. */
+  say?: boolean;
 }) {
   const max = Math.max(flow.filed, flow.decided, 1);
-  const Icon = flow.trend === "growing" ? ArrowUpIcon : flow.trend === "shrinking" ? ArrowDownIcon : ArrowRightIcon;
-  const verdict =
-    flow.trend === "level" ? "About level" : flow.trend === "shrinking" ? `${n(-flow.change)} shorter` : `${n(flow.change)} longer`;
+  const window = period ?? `${monthDay(flow.from)} to ${monthDay(flow.to)}`;
   return (
-    <div className="bg-tint p-5 sm:p-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="font-heading text-lg font-bold">
-          {/* 44px to tap; the negative margin keeps the heading's line. */}
-          <Link href={href} className="link -my-3 inline-flex min-h-11 items-center">
-            {name}
-          </Link>
-        </h3>{" "}
-        <p
-          className={cn(
-            "flex items-center gap-1 font-heading text-xl font-bold",
-            flow.trend === "shrinking" ? "text-data-good-ink" : flow.trend === "growing" ? "text-data-warn-ink" : "",
-          )}
-        >
-          <Icon aria-hidden="true" weight="bold" className="size-5" />
-          {verdict}
-        </p>
-      </div>{" "}
-      <dl className="mt-5 space-y-3">
+    <div className="mt-4">
+      <dl className="space-y-2">
         {[
           { k: labels[0], v: flow.filed, fill: "bg-data-info-ink" },
           { k: labels[1], v: flow.decided, fill: "bg-data-good-ink" },
         ].map((r) => (
-          <div key={r.k} className="grid grid-cols-[5.5rem_minmax(0,1fr)_4.5rem] items-center gap-3">
+          <div key={r.k} className="grid grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-2">
             <dt className="text-sm font-semibold">{r.k}{" "}</dt>{" "}
-            <dd className="h-5 bg-background">
+            <dd className="h-3.5 bg-tint">
               <div className={cn("h-full", r.fill)} style={{ width: `${(r.v / max) * 100}%` }} />
             </dd>{" "}
-            <dd className="text-right font-mono text-base tabular-nums">{n(r.v)}{" "}</dd>
+            <dd className="text-right font-mono text-sm tabular-nums">{n(r.v)}{" "}</dd>
           </div>
         ))}
-      </dl>
-      <p className="mt-3 text-sm text-soft">{period ?? `${monthDay(flow.from)} to ${monthDay(flow.to)}`}</p>
+      </dl>{" "}
+      <p className="mt-2 text-sm text-soft">
+        {window}
+        {say ? `: ${flowSentence(flow, labels)}` : null}
+      </p>
     </div>
   );
 }
