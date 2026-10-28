@@ -195,6 +195,12 @@ def test_judge() -> None:
     check("pre-loads under 40% aren't named, whatever else happened", w == [], str(w))
     w = perf.judge(None, None, [{"runs": 6, "meanMs": 1500, "sql": "SELECT slow"}], None, [])
     check("a statement averaging over a second is named", len(w) == 1 and "SELECT slow" in w[0], str(w))
+    load = "SELECT case_number,status,received_date,decision_date,days,fiscal_year,employer_name,employer_slug FROM perm_cases WHERE case_number > ? ORDER BY case_number LIMIT ?"
+    w = perf.judge(None, None, [{"runs": 19, "meanMs": 3000, "sql": load}], None, [])
+    check("a load job's paged read of a whole table isn't a warning", w == [], str(w))
+    page = "SELECT case_number, status, received_date, decision_date, days, fiscal_year, employer_name FROM perm_cases WHERE employer_slug = ?"
+    w = perf.judge(None, None, [{"runs": 6, "meanMs": 1500, "sql": page}], None, [])
+    check("a page's read of the same columns still is", len(w) == 1, str(w))
     w = perf.judge(None, None, None, {"busyShare": 0.2, "ours": [], "inspectorLeftOpen": True}, [])
     check("an inspector left open is said", len(w) == 1, str(w))
 

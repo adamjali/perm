@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import urllib.error
 import urllib.request
 
 KEY_FILE = pathlib.Path("/etc/permtracker/db-admin.env")
@@ -36,8 +37,12 @@ def stats(port: int) -> dict:
         f"http://127.0.0.1:{port}/v1/namespaces/default/stats",
         headers={"Authorization": f"basic {admin_key()}"},
     )
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return json.load(r)
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.load(r)
+    except (urllib.error.URLError, ConnectionError) as e:
+        raise SystemExit(f"nothing answers sqld's admin API on 127.0.0.1:{port} ({e}): check that its unit "
+                         f"starts sqld with --admin-listen-addr 127.0.0.1:{port} and was restarted since")
 
 
 def main() -> int:

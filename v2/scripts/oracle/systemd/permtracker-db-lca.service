@@ -12,7 +12,10 @@ Group=permtracker
 # permtracker-db.service, whose comments explain each flag; the clients send a
 # statement naming lca_cases here (DATABASE_LCA_URL, src/lib/db/lcaRoute.ts).
 # Writes land once a month, with DOL's quarterly LCA file.
-ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db-lca/data.sqld --http-listen-addr 127.0.0.1:8082 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB --max-log-size 4096
+# Its admin API on 127.0.0.1:9098, the main one's beside it on 9097, with the same
+# key file (Oct 28 2026: the query-statistics tool had nothing to read for this database).
+EnvironmentFile=-/etc/permtracker/db-admin.env
+ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db-lca/data.sqld --http-listen-addr 127.0.0.1:8082 --admin-listen-addr 127.0.0.1:9098 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB --max-log-size 4096
 Restart=always
 RestartSec=2
 LimitNOFILE=65536

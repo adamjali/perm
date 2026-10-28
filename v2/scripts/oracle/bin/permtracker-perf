@@ -73,6 +73,22 @@ PRELOAD_SHARE = 0.40
 # every day, builds 266 ms, nobody shown busy in four days).
 REFUSED_PAGES = 20
 SLOW_STATEMENT_MS = 1000  # mean, over 5+ runs in the hour
+# The load jobs' paged reads of a whole table: each page reads thousands of wide
+# rows on purpose, and no visitor waits on one. Named on a line of their own
+# instead of warned on (Oct 28 2026: db_migrate.py's 20,000-row pages of
+# perm_cases averaged 3.0 s and read as a slow page). Matched on the statement's
+# start, which is each job's own column list joined without spaces.
+BULK_READS = {
+    # db_migrate.py and ingest_perm_history.py share the case columns, and read
+    # perm_cases and perm_cases_history 20,000 rows a page to diff a load.
+    "SELECT case_number,status,received_date,decision_date,days,fiscal_year,employer_name,": "a PERM load reading a case table",
+}
+# The site's own reads join columns with ", ", so none of them can match a prefix above.
+
+
+def bulk_read(sql: str) -> str | None:
+    """The load job a statement belongs to, or None when it may be a page's."""
+    return next((job for start, job in BULK_READS.items() if sql.startswith(start)), None)
 REGRESSION = 2.0          # twice the week's typical hour
 
 ENTITY_FAMILIES = ("/perm-employers/*", "/perm-attorneys/*", "/perm-wages/*")
@@ -546,7 +562,7 @@ def judge(pages: dict | None, pre: dict | None, db: list[dict] | None, prof: dic
             hurt = f"{refused:,} page requests were turned away busy" if refused >= REFUSED_PAGES else "pages were slow"
             w.append(f"Background pre-loads are {pre['share']:.0%} of requests in an hour when {hurt}.")
     for s in (db or []):
-        if s["runs"] >= 5 and s["meanMs"] > SLOW_STATEMENT_MS:
+        if s["runs"] >= 5 and s["meanMs"] > SLOW_STATEMENT_MS and not bulk_read(s["sql"]):
             w.append(f"A database statement averages {s['meanMs'] / 1000:.1f} s over {s['runs']} runs: {s['sql'][:90]}")
     if prof and not prof.get("error"):
         if prof.get("busyShare") is not None and prof["busyShare"] > BUSY_COPY:
