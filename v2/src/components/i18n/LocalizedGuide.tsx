@@ -6,7 +6,7 @@ import { LanguageLinks } from "@/components/i18n/LanguageLinks";
 import { PageLanguage } from "@/components/i18n/PageLanguage";
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { GUIDE_COPY } from "@/lib/i18n/guide";
-import { GLOSSED_STATUSES, SECTION_IDS } from "@/lib/i18n/guide/types";
+import { GLOSSED_STATUSES, SECTION_IDS, type GuideStep } from "@/lib/i18n/guide/types";
 import { getGuideData, type GuideData } from "@/lib/i18n/guideData";
 import { languageAlternates, localeByCode, type LocaleCode, type LocaleDef } from "@/lib/i18n/locales";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -15,6 +15,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { ISO_MONTH_RE } from "@convex/lib/months";
+import { easternDay } from "@convex/lib/time";
+import { lengthParts } from "@/lib/board";
+import { getPlanReading } from "@/lib/db/planFigures";
+import { journeySteps } from "@/lib/journey";
+import { calculateGreenCardFees, FEE_SCHEDULE } from "@/lib/perm";
 
 /**
  * One localized guide: the page body every `/zh`, `/es`, `/pt-br`, `/ko` and
@@ -119,6 +124,40 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
   ].filter((f): f is { label: string; value: React.ReactNode } => f !== null);
   const bulletinMonth = data?.bulletin ? month(data.bulletin.month, locale.intl) : null;
 
+  // Each step's length now and government fee, the English guide's own figures (`JourneyNow`): the
+  // planner's reading, and USCIS's fee schedule for one adult with a work permit and a travel document.
+  const reading = await getPlanReading().catch(() => null);
+  const spans = reading?.figures.spans;
+  const fees = calculateGreenCardFees({ petitioner: "regular", adults: 1, workPermits: 1, travelDocuments: 1 });
+  const abroad = calculateGreenCardFees({ petitioner: "regular", adults: 1, route: "cp" });
+  const live = new Map<GuideStep, { days: number | null; fee: number }>(
+    journeySteps(
+      {
+        pwd: spans?.pwd?.mid ?? null,
+        recruitment: spans?.recruitment?.mid ?? null,
+        perm: spans?.perm?.mid ?? null,
+        i140: spans?.i140.EB2?.mid ?? null,
+        i485: spans?.i485?.mid ?? null,
+      },
+      fees,
+    ).map((s) => [s.key, { days: s.days, fee: s.fee }]),
+  );
+  // Abroad, the planner's length rests partly on an assumed interview wait, so only the fee is printed.
+  live.set("consular", { days: null, fee: abroad.applicationTotal });
+  const money = (x: number) => x.toLocaleString(locale.intl, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const feeOf = (step: GuideStep): React.ReactNode => {
+    const fee = live.get(step)?.fee ?? 0;
+    return fee > 0 ? <D>{money(fee)}</D> : copy.steps.noFee;
+  };
+  const takes = (step: GuideStep): React.ReactNode => {
+    if (step === "visa") return copy.steps.dependsOnLine;
+    const days = live.get(step)?.days ?? null;
+    if (days === null) return copy.steps.notRead;
+    const { n: amount, unit } = lengthParts(days);
+    const shown = <D>{amount.toLocaleString(locale.intl, { maximumFractionDigits: 1 })}</D>;
+    return unit === "years" ? copy.steps.years(shown) : copy.steps.months(shown);
+  };
+
   return (
     <div lang={locale.tag} className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">
       <PageLanguage tag={locale.tag} />
@@ -201,7 +240,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
         <p className="mt-3 text-base leading-relaxed text-soft">{copy.steps.intro}</p>
         <ol className="mt-5 grid grid-cols-1 gap-3 [&>*]:min-w-0">
           {copy.steps.items.map((s, i) => (
-            <Fragment key={s.form}>
+            <Fragment key={s.step}>
               {" "}
               <li className="grid grid-cols-[2.75rem_1fr] gap-4 bg-tint p-4 [&>*]:min-w-0 border-2 border-border">
                 <span
@@ -212,14 +251,30 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                 </span>{" "}
                 <div>
                   <p className="font-heading text-lg font-bold leading-snug">
-                    <F>{s.form}</F> <span className="font-bold">{s.name}</span>
+                    {s.form ? <><F>{s.form}</F>{" "}</> : null}
+                    <span className="font-bold">{s.name}</span>
                   </p>{" "}
-                  <p className="mt-1 text-base leading-relaxed text-soft">{s.body}</p>
+                  <p className="mt-1 text-base leading-relaxed text-soft">{s.body}</p>{" "}
+                  <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                    {s.step === "consular" ? null : (
+                      <div className="flex gap-1.5">
+                        <dt className="text-soft">{copy.steps.takes}</dt>{" "}
+                        <dd className="font-semibold">{takes(s.step)}</dd>
+                      </div>
+                    )}{" "}
+                    <div className="flex gap-1.5">
+                      <dt className="text-soft">{copy.steps.fee}</dt>{" "}
+                      <dd className="font-semibold">{feeOf(s.step)}</dd>
+                    </div>
+                  </dl>
                 </div>
               </li>
             </Fragment>
           ))}
         </ol>{" "}
+        <p className="mt-3 text-sm leading-relaxed text-soft">
+          {copy.steps.source(<D>{day(easternDay(), locale.intl)}</D>, <D>{FEE_SCHEDULE.edition}</D>)}
+        </p>{" "}
         <p className="mt-4 text-base leading-relaxed text-soft">{copy.steps.skipPerm}</p>
       </section>
 

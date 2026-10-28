@@ -4,6 +4,7 @@ import type { BulletinMonth } from "@/lib/perm";
 
 import {
   aboutMonths,
+  lengthParts,
   backlogStatus,
   bulletinMoves,
   bulletinStatus,
@@ -168,5 +169,14 @@ describe("paceReading: a step's wait, its pace and how the wait changed", () => 
     expect(cutoffPaceFact(0.43)).toBe("The cutoff has gained 0.4 months a month; at 1 the wait holds level, under 1 it grows");
     expect(cutoffPaceFact(1)).toBe("The cutoff has gained 1 month a month; at 1 the wait holds level, under 1 it grows");
     expect(cutoffPaceFact(null)).toBeNull();
+  });
+});
+
+describe("lengthParts: the same span for a page in another language", () => {
+  it("gives aboutMonths's own number and unit", () => {
+    expect(lengthParts(288)).toEqual({ n: 9.5, unit: "months" });
+    expect(lengthParts(31)).toEqual({ n: 1, unit: "months" });
+    expect(lengthParts(1_280)).toEqual({ n: 3.5, unit: "years" });
+    expect(lengthParts(9)).toEqual({ n: 1, unit: "months" });
   });
 });

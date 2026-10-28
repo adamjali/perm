@@ -23,7 +23,7 @@ export const es: GuideCopy = {
   toc: {
     check: "Consulte su caso",
     queue: "La fila del DOL hoy",
-    steps: "Después del PERM",
+    steps: "Cada paso",
     "eb3-other-workers": "EB-3 Otros Trabajadores",
     cutoffs: "Fechas para su país",
     statuses: "Términos de estado",
@@ -63,20 +63,33 @@ export const es: GuideCopy = {
       "El DOL revisa las solicitudes PERM más o menos en el orden en que las recibió, mes por mes. Si su caso se presentó en el mes que aparece arriba, o antes, un analista está trabajando ahora en su mes. Si se presentó después, su mes todavía está más atrás en la fila.",
       "El promedio de arriba incluye todos los casos decididos hace poco, también los lentos, con auditoría o con una solicitud de información (RFI). Por eso un caso sin complicaciones suele tardar menos que ese promedio.",
       <>
-        Para una estimación según su propia fecha de presentación, use la <En href="/tools/perm-timeline-calculator">calculadora de tiempos del PERM</En> (en inglés). Es una estimación, no una promesa, y su precisión se publica en el <En href="/estimate-scorecard">registro de precisión</En> (en inglés).
+        Para una estimación según su propia fecha de presentación, use la <En href="/tools/perm-timeline-calculator">calculadora de tiempos del PERM</En> (en inglés). Es una estimación, no una promesa.
       </>,
     ],
   },
   steps: {
-    h2: "Qué sigue después del PERM",
-    intro: "Cuando el DOL certifica el PERM, el caso pasa al Servicio de Ciudadanía e Inmigración de los Estados Unidos (USCIS), y a partir de ahí depende del boletín de visas.",
+    h2: "Cada paso, de la solicitud de salario a la green card",
+    intro: "Un caso por empleo pasa por estos pasos en orden, con dos agencias y el boletín de visas entre ellas. Cada uno muestra cuánto tarda hoy, según los registros del propio DOL y de USCIS, y cuánto cobra el gobierno.",
     items: [
       {
+        step: "pwd",
+        form: "ETA-9141",
+        name: "Solicitud de salario prevaleciente (DOL)",
+        body: <>El empleador le pide al DOL el salario mínimo del puesto, y nada más puede empezar hasta que el DOL lo fija. Este paso también se consulta con su número, que empieza con <D>P-100-</D>.</>,
+      },
+      {
+        step: "recruitment",
+        name: "Reclutamiento (el empleador)",
+        body: "El empleador publica la oferta para comprobar que no hay trabajadores estadounidenses calificados: una orden de empleo, dos anuncios de domingo y un aviso en el lugar de trabajo. Después espera 30 días antes de presentar el PERM. Este paso no deja ningún registro público.",
+      },
+      {
+        step: "perm",
         form: "ETA-9089",
         name: "Certificación laboral PERM (DOL)",
         body: "El DOL confirma que no había un trabajador estadounidense calificado disponible para el puesto. La fecha en que el DOL recibió la solicitud es su fecha de prioridad (priority date), y esa fecha cuenta en todos los pasos siguientes.",
       },
       {
+        step: "i140",
         form: "I-140",
         name: "Petición de inmigrante (USCIS)",
         body: (
@@ -86,22 +99,33 @@ export const es: GuideCopy = {
         ),
       },
       {
+        step: "visa",
         form: "Visa Bulletin",
         name: "La espera de su fecha de prioridad",
         body: "Cada año hay un número fijo de green cards por empleo, con un límite por país. Cuando hay más solicitantes que visas, el Departamento de Estado publica cada mes una fecha de corte. Usted solo puede dar el último paso cuando su fecha de prioridad es anterior a la fecha de corte de su categoría y su país. Vea la tabla más abajo.",
       },
       {
+        step: "i485",
         form: "I-485",
         name: "Ajuste de estatus, dentro de EE. UU. (USCIS)",
         body: "Cuando llega su fecha, presenta la I-485 para obtener la green card sin salir del país. La mayoría presenta al mismo tiempo la I-765 (permiso de trabajo, llamado EAD) y la I-131 (advance parole, un permiso de viaje). Cada mes USCIS indica qué tabla del boletín acepta: las fechas de acción final o las fechas para presentar.",
       },
       {
+        step: "consular",
         form: "DS-260",
         name: "Procesamiento consular, fuera de EE. UU. (Departamento de Estado)",
         body: "Si está fuera del país, el caso pasa al Centro Nacional de Visas (National Visa Center), usted llena el DS-260 y tiene una entrevista en una embajada o un consulado de EE. UU.",
       },
     ],
     skipPerm: "Las peticiones EB-1 y EB-2 con exención por interés nacional (NIW) no pasan por el PERM: empiezan directamente en la I-140.",
+    takes: "Hoy tarda",
+    fee: "Tarifa del gobierno",
+    noFee: "Sin tarifa",
+    dependsOnLine: "Depende de su fila",
+    months: (n) => <>unos {n} meses</>,
+    years: (n) => <>unos {n} años</>,
+    notRead: "No se pudo leer hoy",
+    source: (d, ed) => <>Duraciones según los registros del propio DOL y de USCIS, leídos el {d}. Tarifas según la tabla de tarifas de USCIS, edición {ed}, y la del Departamento de Estado para el DS-260, para un adulto, con permiso de trabajo y permiso de viaje; el empleador paga por ley los costos del PERM.</>,
   },
   ew3: {
     h2: "EB-3 Otros Trabajadores (Other Workers)",

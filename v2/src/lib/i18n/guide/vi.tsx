@@ -24,7 +24,7 @@ export const vi: GuideCopy = {
   toc: {
     check: "Tra cứu hồ sơ",
     queue: "Hàng chờ của DOL",
-    steps: "Sau PERM",
+    steps: "Từng bước",
     "eb3-other-workers": "EB-3 lao động phổ thông",
     cutoffs: "Ngày chốt của nước bạn",
     statuses: "Các từ chỉ tình trạng",
@@ -64,20 +64,33 @@ export const vi: GuideCopy = {
       "DOL xét đơn PERM gần như theo thứ tự nhận đơn, từng tháng một. Nếu hồ sơ của bạn nộp vào tháng ghi ở trên hoặc sớm hơn, chuyên viên đang xử lý tháng của bạn. Nếu nộp muộn hơn, tháng của bạn vẫn còn ở phía sau trong hàng chờ.",
       "Con số trung bình ở trên tính mọi hồ sơ được quyết định gần đây, kể cả những hồ sơ chậm vì bị kiểm tra (audit) hoặc bị yêu cầu bổ sung thông tin (RFI). Vì vậy, một hồ sơ suôn sẻ thường nhanh hơn con số trung bình này.",
       <>
-        Để ước tính theo ngày nộp của riêng bạn, hãy dùng <En href="/tools/perm-timeline-calculator">công cụ tính thời gian PERM</En> (tiếng Anh). Đó là ước tính, không phải lời hứa, và độ chính xác của nó được công khai ở <En href="/estimate-scorecard">bảng điểm ước tính</En> (tiếng Anh).
+        Để ước tính theo ngày nộp của riêng bạn, hãy dùng <En href="/tools/perm-timeline-calculator">công cụ tính thời gian PERM</En> (tiếng Anh). Đó là ước tính, không phải lời hứa.
       </>,
     ],
   },
   steps: {
-    h2: "Các bước sau PERM",
-    intro: "Khi DOL chấp thuận PERM, hồ sơ chuyển sang Sở Di trú và Nhập tịch Hoa Kỳ (USCIS), và sau đó phụ thuộc vào Bản tin Thị thực.",
+    h2: "Từng bước, từ yêu cầu mức lương đến thẻ xanh",
+    intro: "Một hồ sơ theo diện việc làm đi qua các bước này theo thứ tự, qua hai cơ quan và Bản tin Thị thực ở giữa. Mỗi bước cho thấy hôm nay mất bao lâu, theo hồ sơ của chính DOL và USCIS, và chính phủ thu bao nhiêu.",
     items: [
       {
+        step: "pwd",
+        form: "ETA-9141",
+        name: "Yêu cầu mức lương hiện hành (DOL)",
+        body: <>Chủ lao động đề nghị DOL xác định mức lương tối thiểu cho vị trí, và chưa có mức lương thì chưa bước nào khác bắt đầu được. Bước này cũng tra cứu được bằng số hồ sơ, bắt đầu bằng <D>P-100-</D>.</>,
+      },
+      {
+        step: "recruitment",
+        name: "Tuyển dụng (chủ lao động)",
+        body: "Chủ lao động đăng tuyển để chứng minh không có người lao động Mỹ đủ điều kiện: một đơn đăng tuyển với cơ quan việc làm tiểu bang, hai quảng cáo báo Chủ nhật và một thông báo tại nơi làm việc. Sau đó phải chờ 30 ngày mới nộp PERM. Bước này không để lại hồ sơ công khai.",
+      },
+      {
+        step: "perm",
         form: "ETA-9089",
         name: "Chứng nhận lao động PERM (DOL)",
         body: "DOL xác nhận không có người lao động Mỹ đủ điều kiện cho vị trí này. Ngày DOL nhận đơn là ngày ưu tiên (priority date) của bạn, và ngày này quyết định mọi bước sau đó.",
       },
       {
+        step: "i140",
         form: "I-140",
         name: "Đơn bảo lãnh định cư (USCIS)",
         body: (
@@ -87,22 +100,33 @@ export const vi: GuideCopy = {
         ),
       },
       {
+        step: "visa",
         form: "Visa Bulletin",
         name: "Chờ ngày ưu tiên đến lượt",
         body: "Mỗi năm chỉ có một số lượng thẻ xanh diện việc làm cố định, kèm giới hạn cho từng quốc gia. Khi số người nộp nhiều hơn số visa, Bộ Ngoại giao công bố một ngày chốt mỗi tháng. Bạn chỉ làm được bước cuối khi ngày ưu tiên của bạn sớm hơn ngày chốt của diện và quốc gia của bạn. Xem bảng bên dưới.",
       },
       {
+        step: "i485",
         form: "I-485",
         name: "Điều chỉnh tình trạng, trong nước Mỹ (USCIS)",
         body: "Khi đến lượt, bạn nộp I-485 để nhận thẻ xanh mà không phải rời nước Mỹ. Phần lớn mọi người nộp kèm I-765 (giấy phép lao động, gọi là EAD) và I-131 (advance parole, giấy phép đi lại). Mỗi tháng USCIS cho biết nhận bảng nào của Bản tin Thị thực: Ngày chung kết (Final Action Date) hay Ngày nộp hồ sơ (Date for Filing).",
       },
       {
+        step: "consular",
         form: "DS-260",
         name: "Thủ tục lãnh sự, ngoài nước Mỹ (Bộ Ngoại giao)",
         body: "Nếu bạn ở nước ngoài, hồ sơ chuyển sang Trung tâm Thị thực Quốc gia (National Visa Center), bạn điền mẫu DS-260 và phỏng vấn tại đại sứ quán hoặc lãnh sự quán Mỹ.",
       },
     ],
     skipPerm: "Đơn EB-1 và đơn EB-2 miễn trừ vì lợi ích quốc gia (NIW) không cần PERM: bắt đầu thẳng từ I-140.",
+    takes: "Hiện mất",
+    fee: "Lệ phí chính phủ",
+    noFee: "Không mất phí",
+    dependsOnLine: "Tùy hàng chờ của bạn",
+    months: (n) => <>khoảng {n} tháng</>,
+    years: (n) => <>khoảng {n} năm</>,
+    notRead: "Hôm nay không đọc được",
+    source: (d, ed) => <>Thời gian theo hồ sơ của chính DOL và USCIS, đọc ngày {d}. Lệ phí theo bảng phí của USCIS, bản {ed} (DS-260 theo phí của Bộ Ngoại giao), cho một người lớn, kèm giấy phép làm việc và giấy phép đi lại; theo luật, chủ lao động trả chi phí PERM.</>,
   },
   ew3: {
     h2: "EB-3 lao động phổ thông (Other Workers)",

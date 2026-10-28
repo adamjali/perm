@@ -185,6 +185,16 @@ export function aboutMonths(days: number): string {
   return `about ${whole}${halves % 2 ? "½" : ""} month${halves === 2 ? "" : "s"}`;
 }
 
+/**
+ * The same span as a number and a unit, to the nearest half month, or half year from two years:
+ * for a page that words it in its own language (the localized guides). `aboutMonths`'s arithmetic.
+ */
+export function lengthParts(days: number): { n: number; unit: "months" | "years" } {
+  const halves = Math.round(days / (DAYS_PER_MONTH / 2));
+  if (halves >= YEARS_FROM_MONTHS * 2) return { n: Math.round(days / (DAYS_PER_MONTH * 6)) / 2, unit: "years" };
+  return { n: Math.max(1, halves / 2), unit: "months" };
+}
+
 /** The longest wait the board draws on one scale: a year, or longer when a wait runs past it, in whole quarters. */
 export function waitScaleDays(waits: readonly number[]): number {
   const longest = Math.max(365, ...waits.filter((w) => Number.isFinite(w)));

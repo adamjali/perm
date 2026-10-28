@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 
 import type { CountryKey } from "@/lib/perm";
 import type { GuideCategory } from "../cutoffs";
+import type { JourneyKey } from "@/lib/journey";
+
+/** A step the localized guide walks: the journey's, and the consulate for readers abroad. */
+export type GuideStep = JourneyKey | "consular";
 
 /**
  * Everything a localized guide says, in one typed object per language, so a
@@ -64,8 +68,20 @@ export interface GuideCopy {
   steps: {
     h2: string;
     intro: ReactNode;
-    items: Array<{ form: string; name: string; body: ReactNode }>;
+    /** Each step in order: the plan step it is (its length and fee are read live), and its form where it has one. */
+    items: Array<{ step: GuideStep; form?: string; name: string; body: ReactNode }>;
     skipPerm: ReactNode;
+    /** The live line under each step: how long it takes now and what the government charges. */
+    takes: string;
+    fee: string;
+    noFee: string;
+    dependsOnLine: string;
+    /** "about {n} months", the number already formatted in the reader's locale. */
+    months: (n: ReactNode) => ReactNode;
+    years: (n: ReactNode) => ReactNode;
+    notRead: string;
+    /** Where the lengths and fees come from: the day they were read and the fee schedule's edition. */
+    source: (date: ReactNode, edition: ReactNode) => ReactNode;
   };
   ew3: { h2: string; body: ReactNode[] };
   cutoffs: {

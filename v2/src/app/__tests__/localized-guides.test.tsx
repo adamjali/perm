@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const guideData = vi.fn();
 vi.mock("@/lib/i18n/guideData", () => ({ getGuideData: () => guideData() }));
+const planReading = vi.fn();
+vi.mock("@/lib/db/planFigures", () => ({ getPlanReading: () => planReading() }));
 
 import { LocalizedGuide, localizedGuideMetadata } from "@/components/i18n/LocalizedGuide";
 import { createContentDetailPage } from "@/lib/content/createContentDetailPage";
@@ -14,6 +16,7 @@ import { GUIDE_COPY } from "@/lib/i18n/guide";
 import { GLOSSED_STATUSES } from "@/lib/i18n/guide/types";
 import { ENGLISH_GUIDE, LOCALES, displayWidth, languageAlternates } from "@/lib/i18n/locales";
 import { getStatusMeaning } from "@/lib/permStatus";
+import { calculateGreenCardFees } from "@/lib/perm";
 
 /**
  * The five localized guides, rendered with a fixed day's figures. What must
@@ -52,8 +55,17 @@ const DATA = {
 
 const html = async (code: (typeof LOCALES)[number]["code"]) => renderToStaticMarkup(await LocalizedGuide({ code }));
 
+// The planner's lengths on one day, in days: the PERM about 9½ months.
+const span = (mid: number) => ({ low: mid, mid, high: mid });
+const READING = {
+  figures: { spans: { pwd: span(95), recruitment: span(120), perm: span(288), i140: { EB2: span(118), EB3: span(122) }, i485: span(183) } },
+  standing: {},
+  sources: {},
+};
+
 beforeEach(() => {
   guideData.mockReset().mockResolvedValue(DATA);
+  planReading.mockReset().mockResolvedValue(READING);
 });
 
 describe.each(LOCALES.map((l) => [l.code, l] as const))("/%s", (code, locale) => {
@@ -105,6 +117,27 @@ describe.each(LOCALES.map((l) => [l.code, l] as const))("/%s", (code, locale) =>
       const mdx = h.startsWith("/guides/") ? join(CONTENT, `${h.slice(1)}.mdx`) : null;
       expect(existsSync(page) || (mdx !== null && existsSync(mdx)) || h === "/", h).toBe(true);
     }
+  });
+
+  it("walks every step from the wage request, each with its length now and its fee", async () => {
+    const copy = GUIDE_COPY[code];
+    expect(copy.steps.items.map((s) => s.step)).toEqual(["pwd", "recruitment", "perm", "i140", "visa", "i485", "consular"]);
+    const out = await html(code);
+    const nine = (9.5).toLocaleString(locale.intl, { maximumFractionDigits: 1 });
+    const text = (h: string) => h.replace(/<[^>]+>/g, "");
+    expect(text(out)).toContain(text(renderToStaticMarkup(<>{copy.steps.months(nine)}</>)));
+    const i140 = calculateGreenCardFees({ petitioner: "regular", adults: 1, workPermits: 1, travelDocuments: 1 }).lines
+      .filter((l) => l.form === "I-140" || l.form === "Asylum Program Fee")
+      .reduce((sum, l) => sum + l.each, 0);
+    expect(out).toContain(i140.toLocaleString(locale.intl, { style: "currency", currency: "USD", maximumFractionDigits: 0 }));
+    expect(out).toContain(copy.steps.noFee);
+    expect(out).toContain(copy.steps.dependsOnLine);
+  });
+
+  it("says a length wasn't read today rather than guess it", async () => {
+    planReading.mockRejectedValue(new Error("database down"));
+    const out = await html(code);
+    expect(out).toContain(GUIDE_COPY[code].steps.notRead);
   });
 
   it("says so in its own language when DOL's figures or the bulletin can't be read", async () => {
