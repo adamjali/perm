@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_entity_detail import city_key, city_labels  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
-from lib_db import Database, record_run, rows_of  # noqa: E402
+from lib_db import SLUG_WINDOWS, Database, record_run, rows_of, slug_window  # noqa: E402
 
 TABLE = "lca_cities"
 COLS = ["key", "slug", "label", "total", "certified", "fy_from", "fy_to", "detail"]
@@ -61,14 +61,28 @@ def num(v) -> int:
         return 0
 
 
+def sliced(db: Database, select: str, where: str, group: str, args: list, *, no_slug: bool) -> list[list]:
+    """`select FROM lca_cases WHERE where GROUP BY group`, a slice of employer slugs at a time
+    (lib_db.SLUG_WINDOWS: the whole read outlasted the tunnel's 100 s on Oct 27 2026). Every
+    group here is summed or min/maxed across slices, so a group split between two adds up.
+    `no_slug` reads the rows without an employer slug too."""
+    rows: list[list] = []
+    for lo, hi in SLUG_WINDOWS:
+        w, a = slug_window("employer_slug", lo, hi)
+        rows += rows_of(db.execute(f"{select} FROM lca_cases WHERE {where} AND {w} GROUP BY {group}", [*args, *a]))
+    if no_slug:
+        rows += rows_of(db.execute(f"{select} FROM lca_cases WHERE {where} AND employer_slug IS NULL GROUP BY {group}", args))
+    return rows
+
+
 def read(db: Database) -> dict:
     totals: dict[str, list[int]] = {}
     votes: dict[str, Counter] = defaultdict(Counter)
     fy: dict[str, list[int]] = {}
-    for city, state, n, cert, lo, hi in rows_of(db.execute(
-            "SELECT worksite_city, worksite_state, COUNT(*), SUM(case_status = 'CERTIFIED'), MIN(fiscal_year), "
-            "MAX(fiscal_year) FROM lca_cases WHERE worksite_city IS NOT NULL AND worksite_state IS NOT NULL "
-            "GROUP BY worksite_city, worksite_state")):
+    for city, state, n, cert, lo, hi in sliced(
+            db, "SELECT worksite_city, worksite_state, COUNT(*), SUM(case_status = 'CERTIFIED'), MIN(fiscal_year), "
+            "MAX(fiscal_year)", "worksite_city IS NOT NULL AND worksite_state IS NOT NULL",
+            "worksite_city, worksite_state", [], no_slug=True):
         key = city_key(str(city), str(state))
         if not key:
             continue
@@ -86,22 +100,21 @@ def read(db: Database) -> dict:
     since = top_fy - YEARS + 1
     employers: dict[str, Counter] = defaultdict(Counter)
     names: dict[str, str] = {}
-    for city, state, slug, name, n in rows_of(db.execute(
-            "SELECT worksite_city, worksite_state, employer_slug, MAX(employer_name), COUNT(*) FROM lca_cases "
-            "WHERE case_status = 'CERTIFIED' AND fiscal_year >= ? AND worksite_city IS NOT NULL "
-            "AND worksite_state IS NOT NULL AND employer_slug IS NOT NULL "
-            "GROUP BY worksite_city, worksite_state, employer_slug", [since])):
+    for city, state, slug, name, n in sliced(
+            db, "SELECT worksite_city, worksite_state, employer_slug, MAX(employer_name), COUNT(*)",
+            "case_status = 'CERTIFIED' AND fiscal_year >= ? AND worksite_city IS NOT NULL AND worksite_state IS NOT NULL",
+            "worksite_city, worksite_state, employer_slug", [since], no_slug=False):
         key = city_key(str(city), str(state))
         if key in keep:
             employers[key][str(slug)] += num(n)
             names.setdefault(str(slug), str(name or slug))
     occupations: dict[str, Counter] = defaultdict(Counter)
     soc_titles: dict[str, str] = {}
-    for city, state, soc, title, n in rows_of(db.execute(
-            "SELECT worksite_city, worksite_state, substr(soc_code, 1, 7), MAX(soc_title), COUNT(*) FROM lca_cases "
-            "WHERE case_status = 'CERTIFIED' AND fiscal_year >= ? AND worksite_city IS NOT NULL "
-            "AND worksite_state IS NOT NULL AND soc_code IS NOT NULL "
-            "GROUP BY worksite_city, worksite_state, substr(soc_code, 1, 7)", [since])):
+    for city, state, soc, title, n in sliced(
+            db, "SELECT worksite_city, worksite_state, substr(soc_code, 1, 7), MAX(soc_title), COUNT(*)",
+            "case_status = 'CERTIFIED' AND fiscal_year >= ? AND worksite_city IS NOT NULL "
+            "AND worksite_state IS NOT NULL AND soc_code IS NOT NULL",
+            "worksite_city, worksite_state, substr(soc_code, 1, 7)", [since], no_slug=True):
         key = city_key(str(city), str(state))
         if key in keep:
             occupations[key][str(soc)] += num(n)

@@ -135,6 +135,10 @@ def main() -> int:
         return sum(1 for lo, hi in bem.SLUG_WINDOWS if slug >= lo and (hi is None or slug < hi))
     samples = ["", "-x", "0", "3m", "9-lives", "a", "acme", "m", "s-corp", "z", "zz-top", "{", "~"]
     check("every slug is read in exactly one slice", [s for s in samples if windows_holding(s) != 1], [])
+    # Every window but the last is bounded at both ends, so each is one index range:
+    # open at the top, every slice scanned to the index's end (317 s for the map).
+    check("every slice but the last has an upper bound", [w for w in bem.SLUG_WINDOWS[:-1] if w[1] is None], [])
+    check("a bounded slice is a two-sided range", bem.slug_window("s", "a", "am"), ("s >= ? AND s < ?", ["a", "am"]))
 
     db = seed()
     slugs = bem.read_sources(db)

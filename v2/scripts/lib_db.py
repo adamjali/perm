@@ -270,6 +270,28 @@ def typed_cell(c: dict):
     return v
 
 
+# A big table is read a slice of slugs at a time, by first character: a whole
+# read through the tunnel can outlast the 100 s Cloudflare allows a request
+# (HTTP 524; the LCA employer read took 184 s from a cold disk on Oct 26 2026,
+# and the LCA city read failed the same way on Oct 27). Every window is a range
+# bounded at both ends on the slug index, so the slices add up to one pass; a
+# window open at the top made each slice scan to the index's end. A slug is
+# [a-z0-9-], and the last window catches anything that sorts after "z". A NULL
+# slug is in no window: a read that counts rows without one asks for them itself.
+# Each letter is split at "m" (a to am, am to b): whole letters, the busiest
+# ("a") took 66 s of the LCA city read from a cold disk on Oct 28 2026.
+_SLUG_EDGES = ["", *"0123456789", *(f"{c}{half}" for c in "abcdefghijklmnopqrstuvwxyz" for half in ("", "m")), "{"]
+SLUG_WINDOWS: list[tuple[str, str | None]] = [
+    (lo, _SLUG_EDGES[i + 1] if i + 1 < len(_SLUG_EDGES) else None) for i, lo in enumerate(_SLUG_EDGES)]
+
+
+def slug_window(col: str, lo: str, hi: str | None) -> tuple[str, list[str]]:
+    """One window's WHERE clause over `col`, and its arguments."""
+    if hi is None:
+        return f"{col} >= ?", [lo]
+    return f"{col} >= ? AND {col} < ?", [lo, hi]
+
+
 def rows_of(res: dict) -> list[list]:
     """An `execute()` response's rows, each cell decoded by `cell`."""
     return [[cell(c) for c in r] for r in res["response"]["result"]["rows"]]
