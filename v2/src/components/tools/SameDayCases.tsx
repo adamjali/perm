@@ -21,7 +21,7 @@ import { longDate } from "@convex/lib/months";
 const GROUPS: { key: DayGroup; label: string; tone: string }[] = [
   { key: "certified", label: "Certified", tone: "bg-data-good" },
   { key: "denied", label: "Denied", tone: "bg-data-bad" },
-  { key: "withdrawn", label: "Withdrawn", tone: "bg-data-none" },
+  { key: "withdrawn", label: "Withdrawn", tone: "bg-chart-purple" },
   { key: "aside", label: "On hold, RFI or appeal", tone: "bg-data-warn" },
   { key: "inLine", label: "Still in line", tone: "bg-card bg-hatch text-input" },
 ];

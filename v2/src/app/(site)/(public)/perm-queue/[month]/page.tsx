@@ -566,11 +566,11 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
   const pct = m.total ? m.decided / m.total : 0;
   const parts = [
     // Soft colours by meaning, no black or grey (round 3, Oct 15 2026), the
-    // status chips' own: certified green, denied red, withdrawn orange, in
+    // status chips' own: certified green, denied red, withdrawn purple, in
     // DOL's line yellow, out of order blue.
     { key: "certified", n: m.certified + m.otherDecided, cls: "bg-primary", text: "certified" },
     { key: "denied", n: m.denied, cls: "bg-chart-red", text: "denied" },
-    { key: "withdrawn", n: m.withdrawn, cls: "bg-chart-orange", text: "withdrawn by the employer" },
+    { key: "withdrawn", n: m.withdrawn, cls: "bg-chart-purple", text: "withdrawn by the employer" },
     { key: "line", n: m.inLine, cls: "bg-chart-yellow", text: "in DOL's line" },
     { key: "outside", n: m.outside, cls: "bg-chart-blue", text: "on hold, at an RFI or on appeal" },
   ].filter((p) => p.n > 0);
@@ -703,7 +703,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
                 className="flex h-full min-w-0 flex-1 flex-col justify-end"
                 data-tip={`${shortDay(d.date)}\n${formatInt(d.certified)} certified, ${formatInt(d.denied)} denied, ${formatInt(d.withdrawn)} withdrawn`}
               >
-                <span className="block w-full bg-chart-orange" style={{ height: `${(d.withdrawn / max) * 100}%` }} />
+                <span className="block w-full bg-chart-purple" style={{ height: `${(d.withdrawn / max) * 100}%` }} />
                 <span className="block w-full bg-chart-red" style={{ height: `${(d.denied / max) * 100}%` }} />
                 <span className="block w-full bg-primary" style={{ height: `${(d.certified / max) * 100}%` }} />
                 <span className="sr-only">{` ${shortDay(d.date)}: ${formatInt(total)} decided. `}</span>

@@ -31,7 +31,7 @@ const SERIES = [
   // graphic floor, and a legend swatch that does not match its bar is worse
   // than either alone.
   { key: "deniedPct", label: "Denied", bg: "bg-data-bad-ink" },
-  { key: "withdrawnPct", label: "Withdrawn by the employer", bg: "bg-data-warn-ink" },
+  { key: "withdrawnPct", label: "Withdrawn by the employer", bg: "bg-data-purple-ink" },
 ] as const;
 
 const tip = (q: OutcomeQuarter) =>

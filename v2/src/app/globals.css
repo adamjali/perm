@@ -138,6 +138,7 @@
   --data-none-ink: #4B5563;    /* the same meaning, as text */
   --data-info: #2563EB;        /* neutral notice: scheduled, informational */
   --data-info-ink: #1D4ED8;    /* the same meaning, as text (6.4:1 on paper) */
+  --data-purple-ink: #6D28D9;  /* withdrawn, the employer's own step, as text */
 
   /* Transitions - matching mockup */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -181,14 +182,17 @@
   --rail-hover: #FFFFFF;       /* a data-rail row under the pointer: lifted to white, lime edge */
   --soft-good: #D5EBCD;        /* certified, issued, decided */
   --soft-wait: #FBEFC2;        /* in DOL's line, in process, waiting */
-  --soft-warn: #F9DDBB;        /* withdrawn, the employer's own step */
+  --soft-warn: #F9DDBB;        /* the employer's own step, a correction */
+  /* withdrawn is --soft-purple since Oct 27 2026 (owner: red denied, green certified,
+     yellow filed, purple withdrawn) */
   --soft-bad: #F6D2CD;         /* denied, rejected */
   --soft-info: #D9E6FA;        /* on hold, appeal: out of order */
   --soft-purple: #E7DEF7;      /* a case's progress: under review */
   /* Chart colours (round 3, Oct 15 2026: "avoid black and grey in charts").
      Soft but visible fills for marks; text stays ink. Meaning, not order:
-     green done or ahead, yellow waiting or behind you, orange the employer's
-     own step, red denied, blue out of order, sage a neutral second series
+     green done or ahead, yellow waiting or behind you, purple withdrawn (the
+     employer's own step; orange before Oct 27 2026), red denied, blue out of
+     order, sage a neutral second series
      (the job grey used to do). Each sits on paper with an ink edge where it
      must read as a shape. */
   --chart-green: #8FD694;
@@ -197,6 +201,7 @@
   --chart-red: #EE9A90;
   --chart-blue: #9EC3F0;
   --chart-sage: #C9E2C0;
+  --chart-purple: #C3AEEB;
   /* The site header is one fixed 64px bar at every width (Oct 14 2026). Pages
      pad by it and every in-page anchor lands below it (scroll-padding-top on
      html, below), so nothing else repeats the number. */
@@ -219,6 +224,7 @@
   --data-none-ink: #CBD5E1;
   --data-info: #60A5FA;
   --data-info-ink: #93C5FD;
+  --data-purple-ink: #C4B5FD;
 
   --background: #111111;
   --foreground: #EDEDED;
@@ -285,6 +291,7 @@
   --chart-red: #C0605A;
   --chart-blue: #4F7FB8;
   --chart-sage: #3B5A3F;
+  --chart-purple: #8A72C4;
 }
 
 /* ---------------------------------------------------------------------------
@@ -414,6 +421,7 @@ html {
   --color-data-bad-on-ink: var(--data-bad-on-ink);
   --color-data-info: var(--data-info);
   --color-data-info-ink: var(--data-info-ink);
+  --color-data-purple-ink: var(--data-purple-ink);
   --color-sage: var(--sage);
   --color-sage-hover: var(--sage-hover);
   --color-rail-hover: var(--rail-hover);
@@ -429,6 +437,7 @@ html {
   --color-chart-red: var(--chart-red);
   --color-chart-blue: var(--chart-blue);
   --color-chart-sage: var(--chart-sage);
+  --color-chart-purple: var(--chart-purple);
   /* The text forms of the accent and the destructive colour, for the variants
      the remap below cannot reach (hover:, group-hover:, decoration-). */
   --color-primary-text: var(--primary-text);

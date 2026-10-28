@@ -52,8 +52,8 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
       key: "withdrawn",
       label: "Withdrawn",
       n: withdrawn,
-      fill: "var(--chart-orange)",
-      ink: "var(--data-warn-ink)",
+      fill: "var(--chart-purple)",
+      ink: "var(--data-purple-ink)",
     },
     {
       key: "open",

@@ -43,7 +43,7 @@ export const MOVE_FILL: Record<MoveTone, string> = {
   good: "bg-chart-green",
   line: "bg-chart-yellow",
   bad: "bg-chart-red",
-  withdrawn: "bg-chart-orange",
+  withdrawn: "bg-chart-purple",
   aside: "bg-chart-blue",
   other: "bg-chart-sage",
 };

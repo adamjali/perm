@@ -223,7 +223,7 @@ describe("RfiOutcomes", () => {
       el.className.includes("border-r-2"),
     );
     expect(segs.length).toBe(4);
-    for (const el of segs) expect(el.style.backgroundColor).toMatch(/var\(--chart-(green|red|orange|yellow)\)/);
+    for (const el of segs) expect(el.style.backgroundColor).toMatch(/var\(--chart-(green|red|orange|yellow|purple)\)/);
     for (const el of segs) expect(el.className).toMatch(/border-border/);
     const frames = [...container.querySelectorAll<HTMLElement>(".border-foreground.border-2")];
     expect(frames.length).toBeGreaterThan(0);

@@ -336,7 +336,7 @@ export default async function PermByTheNumbersPage() {
                 parts: [
                   { value: d.certified, fill: "bg-data-good-ink" },
                   { value: d.denied, fill: "bg-data-bad-ink" },
-                  { value: d.withdrawn, fill: "bg-chart-orange" },
+                  { value: d.withdrawn, fill: "bg-chart-purple" },
                 ],
               }))}
             />{" "}
@@ -350,7 +350,7 @@ export default async function PermByTheNumbersPage() {
                 Denied
               </li>{" "}
               <li className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-chart-orange" />
+                <span aria-hidden="true" className="size-3 bg-chart-purple" />
                 Withdrawn by the employer
               </li>
             </ul>

@@ -74,7 +74,7 @@ function Count({ n }: { n: number | null }) {
 const TINT_BAR: Record<CaseStatusTint, string> = {
   wait: "bg-chart-yellow",
   good: "bg-chart-green",
-  withdrawn: "bg-chart-orange",
+  withdrawn: "bg-chart-purple",
   bad: "bg-chart-red",
   aside: "bg-chart-blue",
   flat: "bg-chart-sage",

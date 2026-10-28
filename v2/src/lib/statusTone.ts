@@ -64,7 +64,7 @@ export function caseStatusTint(status: string | null | undefined): CaseStatusTin
 export const CASE_STATUS_FILL: Record<CaseStatusTint, string> = {
   wait: "bg-soft-wait",
   good: "bg-soft-good",
-  withdrawn: "bg-soft-warn",
+  withdrawn: "bg-soft-purple",
   bad: "bg-soft-bad",
   aside: "bg-soft-info",
   flat: "bg-muted",

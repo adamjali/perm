@@ -25,11 +25,11 @@ export interface YearCount {
 }
 
 // Soft chart colours by outcome (round 3, Oct 15 2026: no grey in charts):
-// certified green, denied red, withdrawn (the employer's own step) orange.
+// certified green, denied red, withdrawn (the employer's own step) purple.
 const TONE = {
   certified: "bg-chart-green",
   denied: "bg-chart-red",
-  withdrawn: "bg-chart-orange",
+  withdrawn: "bg-chart-purple",
 } as const;
 
 /** What a year's bar says on hover: the year, its total, then each outcome. */

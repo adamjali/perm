@@ -191,7 +191,7 @@ describe("OutcomeMix", () => {
     expect(screen.getByText("Denied")).toBeTruthy();
     expect(screen.getByText(/Withdrawn by the employer/)).toBeTruthy();
     expect(container.querySelectorAll(".bg-data-bad-ink").length).toBeGreaterThan(0);
-    expect(container.querySelectorAll(".bg-data-warn-ink").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".bg-data-purple-ink").length).toBeGreaterThan(0);
   });
 
   it("carries each quarter's decided count", () => {

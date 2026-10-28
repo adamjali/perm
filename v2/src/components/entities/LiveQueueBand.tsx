@@ -13,14 +13,14 @@ import { DAYS_PER_MONTH, MS_PER_DAY } from "@/lib/time";
 /**
  * Each stage's rule in the soft chart colour of what the stage means (round 3,
  * Oct 15 2026: no black or grey in charts): the ordinary line yellow, held or
- * diverted blue, appeals and denials red, withdrawn orange, decided green.
+ * diverted blue, appeals and denials red, withdrawn purple, decided green.
  * Each rule carries a thin edge in its own hue's stronger shade, so the shape
  * reads on paper; the count and share beside it carry the figure.
  */
 const STAGE_BAR: Record<CaseStatusTint, string> = {
   wait: "bg-chart-yellow border-data-warn",
   good: "bg-chart-green border-data-good-ink",
-  withdrawn: "bg-chart-orange border-data-warn-ink",
+  withdrawn: "bg-chart-purple border-data-purple-ink",
   bad: "bg-chart-red border-data-bad",
   aside: "bg-chart-blue border-data-info",
   flat: "bg-chart-sage border-data-good-ink",

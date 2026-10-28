@@ -235,7 +235,7 @@ export default async function SeasonalCasesPage() {
                 const parts = [
                   { key: "certified", n: v.certified, word: "certified", cls: "bg-chart-green" },
                   { key: "denied", n: v.denied, word: "denied or rejected", cls: "bg-chart-red" },
-                  { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-chart-orange" },
+                  { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-chart-purple" },
                 ];
                 return (
                   <li key={v.visa} className="bg-sage p-4 border-2 border-border">

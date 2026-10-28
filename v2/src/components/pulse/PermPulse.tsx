@@ -165,7 +165,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         {/* Thirty days. Weekends sit low because DOL decides little then.
             Withdrawn is the employer's own step, so it takes the withdrawn
-            orange the status chips use (round 3, Oct 15 2026: no grey marks). */}
+            purple the status chips use (Oct 27 2026; no grey marks). */}
         <figure className="m-0 bg-card p-5 lg:col-span-2 border-2 shadow-hard-sm border-border">
           <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
             <span className="text-base font-semibold">The last {bars.length} days</span>{" "}
@@ -179,7 +179,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
                 Denied
               </span>{" "}
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-chart-orange" />
+                <span aria-hidden="true" className="size-3 bg-chart-purple" />
                 Withdrawn
               </span>
             </span>
@@ -203,7 +203,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
               >
                 <div className="bg-data-good-ink" style={{ height: `${b.total ? (b.certified / b.total) * 100 : 0}%` }} />
                 <div className="bg-data-bad-ink" style={{ height: `${b.total ? (b.denied / b.total) * 100 : 0}%` }} />
-                <div className="bg-chart-orange" style={{ height: `${b.total ? (b.withdrawn / b.total) * 100 : 0}%` }} />
+                <div className="bg-chart-purple" style={{ height: `${b.total ? (b.withdrawn / b.total) * 100 : 0}%` }} />
               </div>
             ))}
           </div>
