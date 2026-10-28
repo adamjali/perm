@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useRef } from "react";
 
 import { Pagination } from "@/components/ui/pagination";
+import { useUrlPatch, useUrlSearchParams } from "@/hooks/useUrlSearchParams";
+import { INITIAL_RE } from "@/lib/employerInitial";
 import { DAY_PAGE_SIZE, dayView, type DayCase } from "@/lib/filingDay";
 import { formatInt } from "@/lib/format";
 import { CASE_STATUS_FILL, caseStatusTint, prettyStatus } from "@/lib/statusTone";
@@ -12,8 +14,9 @@ import { cn } from "@/lib/utils";
 /**
  * One filing day's cases, PERM and wage requests (owner, Oct 27 2026: a month opened down
  * to the cases). Every status leads as a bar in the site's status colours and as chips that
- * filter the list; the employer's first letter narrows it too. Picks and the page are the
- * reader's own; the day's rows come from the server.
+ * filter the list; the employer's first letter narrows it too. Picks and the page live in the
+ * address (`?kind=pwd&status=...&letter=B&page=2`), so a month page's status or letter can link
+ * straight to them and a view can be shared; the day's rows come from the server.
  */
 
 const KINDS = [
@@ -26,19 +29,20 @@ const CHIP = "inline-flex min-h-11 items-center gap-2 border-2 px-3 text-sm font
 const fill = (status: string) => CASE_STATUS_FILL[caseStatusTint(status)];
 
 export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayCase[]; dayLabel: string }) {
-  const [kind, setKind] = useState<Kind>(perm.length > 0 || pwd.length === 0 ? "perm" : "pwd");
-  const [status, setStatus] = useState<string | null>(null);
-  const [letter, setLetter] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const params = useUrlSearchParams();
+  const patch = useUrlPatch();
+  const fallback: Kind = perm.length > 0 || pwd.length === 0 ? "perm" : "pwd";
+  const kind: Kind = KINDS.some((k) => k.key === params.get("kind")) ? (params.get("kind") as Kind) : fallback;
+  const status = params.get("status") || null;
+  const letterRaw = params.get("letter");
+  const letter = letterRaw && INITIAL_RE.test(letterRaw) ? letterRaw : null;
+  const page = Math.max(1, Math.floor(Number(params.get("page")) || 1));
   const top = useRef<HTMLDivElement>(null);
   const cases = kind === "perm" ? perm : pwd;
   const view = dayView(cases, { status, letter, page });
-  const reset = (k: Kind) => {
-    setKind(k);
-    setStatus(null);
-    setLetter(null);
-    setPage(1);
-  };
+  // A pick starts the list from its first page; the default kind leaves the address clean.
+  const reset = (k: Kind) => patch({ kind: k === fallback ? null : k, status: null, letter: null, page: null });
+  const pick = (p: { status?: string | null; letter?: string | null }) => patch({ ...p, page: null });
 
   return (
     <div ref={top} className="scroll-mt-24">
@@ -72,10 +76,7 @@ export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayC
                 <button
                   type="button"
                   aria-pressed={status === s.status}
-                  onClick={() => {
-                    setStatus(status === s.status ? null : s.status);
-                    setPage(1);
-                  }}
+                  onClick={() => pick({ status: status === s.status ? null : s.status })}
                   className={cn(CHIP, status === s.status ? "border-foreground" : "border-transparent", fill(s.status))}
                 >
                   {prettyStatus(s.status)} <span className="font-mono tabular-nums">{formatInt(s.n)}</span>
@@ -90,10 +91,7 @@ export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayC
                   type="button"
                   aria-pressed={letter === l.letter}
                   aria-label={`${l.letter === "#" ? "A digit or symbol" : l.letter}, ${l.n} ${l.n === 1 ? "case" : "cases"}`}
-                  onClick={() => {
-                    setLetter(letter === l.letter ? null : l.letter);
-                    setPage(1);
-                  }}
+                  onClick={() => pick({ letter: letter === l.letter ? null : l.letter })}
                   className={cn(
                     "min-h-11 min-w-11 border-2 px-2 font-mono text-sm font-semibold",
                     letter === l.letter ? "border-foreground bg-foreground text-background" : "border-input bg-background",
@@ -128,7 +126,7 @@ export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayC
               className="mt-6"
               page={view.page}
               pageCount={view.pageCount}
-              onPage={setPage}
+              onPage={(n) => patch({ page: n > 1 ? String(n) : null })}
               total={view.total}
               perPage={DAY_PAGE_SIZE}
               noun={kind === "perm" ? "cases" : "requests"}

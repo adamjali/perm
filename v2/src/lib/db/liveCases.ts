@@ -3,6 +3,7 @@ import { cache } from "react";
 import { MS_PER_DAY } from "@/lib/time";
 import { one, rows } from "./client";
 import { ISO_MONTH_RE, shiftMonth } from "@convex/lib/months";
+import { INITIAL_RE, OTHER_INITIAL } from "@/lib/employerInitial";
 import { LIKE_ESCAPE, likeContains } from "./like";
 
 /**
@@ -42,6 +43,13 @@ export function isLiveKind(v: string): v is LiveKind {
 
 /** `YYYY-MM`, with a real month. `2025-13` and `2025-1` are not months. */
 
+/**
+ * An employer's first character as the month detail counts it (scripts/ingest_case_status_direct.py,
+ * `write_month_detail`): uppercase, after trimming, with every non-letter under "#". The two are
+ * held equal by a test that reads the Python.
+ */
+export const INITIAL_SQL = "upper(substr(trim(employer_name), 1, 1))";
+
 export interface LivePlan {
   /** Everything after WHERE. Never empty: "1" when nothing filters. */
   where: string;
@@ -56,7 +64,7 @@ export interface LivePlan {
  * for a date column, but this one is compared as text and a later ingest
  * could carry a timestamp; the half-open form is correct under both.
  */
-export function planLiveSql(kind: LiveKind, month: string | null | undefined, q?: string | null): LivePlan {
+export function planLiveSql(kind: LiveKind, month: string | null | undefined, q?: string | null, letter?: string | null): LivePlan {
   const conds: string[] = [];
   const params: (string | number)[] = [];
   if (kind === "pending") {
@@ -78,6 +86,14 @@ export function planLiveSql(kind: LiveKind, month: string | null | undefined, q?
     const like = likeContains(needle);
     conds.push(`(employer_name LIKE ? ${LIKE_ESCAPE} OR case_number LIKE ? ${LIKE_ESCAPE} OR job_title LIKE ? ${LIKE_ESCAPE})`);
     params.push(like, like, like);
+  }
+  if (letter) {
+    if (!INITIAL_RE.test(letter)) throw new Error(`not an initial: ${letter}`);
+    if (letter === OTHER_INITIAL) conds.push(`NOT (${INITIAL_SQL} BETWEEN 'A' AND 'Z')`);
+    else {
+      conds.push(`${INITIAL_SQL} = ?`);
+      params.push(letter);
+    }
   }
   return { where: conds.length ? conds.join(" AND ") : "1", params };
 }
@@ -124,6 +140,8 @@ export interface LiveListArgs {
   order?: "newest" | "oldest";
   /** Free text over the case number, employer and job title; a contains-match, `%` and `_` literal. */
   q?: string | null;
+  /** The employer's first letter, A to Z, or "#" for anything else. */
+  letter?: string | null;
   sort?: LiveSort;
   numItems?: number;
   cursor?: string | null;
@@ -177,7 +195,7 @@ const toRow = (r: LiveListDbRow): LiveListRow => ({
  */
 export async function listLiveCases(args: LiveListArgs): Promise<LiveListPage> {
   const month = args.month || null;
-  const plan = planLiveSql(args.kind, month, args.q);
+  const plan = planLiveSql(args.kind, month, args.q, args.letter);
   const take = clamp(args.numItems);
   const offset = parseCursor(args.cursor);
   const order = args.order === "oldest" ? "oldest" : "newest";

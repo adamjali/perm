@@ -19,6 +19,7 @@ import {
   isLiveSort,
   listLiveCases,
 } from "@/lib/db/liveCases";
+import { INITIAL_RE } from "@/lib/employerInitial";
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 import { ISO_MONTH_RE } from "@convex/lib/months";
 
@@ -203,12 +204,15 @@ export async function GET(request: Request) {
     if (q && (q.length < SEARCH_TEXT_MIN || q.length > SEARCH_TEXT_MAX)) return bad(`q must be ${SEARCH_TEXT_MIN}..${SEARCH_TEXT_MAX} chars`);
     const sortRaw = p.get("sort") ?? "filed";
     if (!isLiveSort(sortRaw)) return bad("sort must be filed, employer or status");
+    const letter = p.get("letter");
+    if (letter && !INITIAL_RE.test(letter)) return bad("letter must be A to Z or #");
     const rawItems = Number(p.get("numItems") ?? LIVE_DEFAULT_ITEMS);
     const page = await listLiveCases({
       kind,
       month: month ?? null,
       order,
       q: q || null,
+      letter: letter || null,
       sort: sortRaw,
       cursor: cursor ?? null,
       ...(Number.isFinite(rawItems) ? { numItems: Math.floor(rawItems) } : {}),

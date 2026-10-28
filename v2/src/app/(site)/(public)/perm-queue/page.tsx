@@ -21,7 +21,10 @@ import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { findFront } from "@/lib/liveQueue";
 import { findVolumeAnomalies } from "@/lib/queueAhead";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
-import { getBacklogCensus, getCensusDays } from "@/lib/db/backlog";
+import { censusFrom, getBacklogCensus, getCensusDays, getCensusOn } from "@/lib/db/backlog";
+import { statusShift } from "@/lib/backlogMonths";
+import { SinceDay } from "@/components/queue/SinceDay";
+import { easternDay } from "@convex/lib/time";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { getAlphabet } from "@/lib/db/alphabet";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -30,6 +33,7 @@ import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
 import { EbSplit } from "@/components/queue/EbSplit";
 import { getEbSplit } from "@/lib/db/ebSplit";
+import { statusCasesHref } from "@/components/queue/statusLinks";
 
 /**
  * Where DOL's PERM queue stands right now, from a per-case scan.
@@ -99,6 +103,17 @@ export default async function PermQueuePage() {
     // Its own document (scripts/build_eb_split.py); a missing one is a missing panel.
     getEbSplit().catch(() => null),
   ]);
+
+  // The whole line at the end of the newest replayed day before today, for "since".
+  const today = easternDay();
+  const sinceDay = pastDays.filter((d) => d < today).at(-1) ?? null;
+  const pastCensus = sinceDay
+    ? await getCensusOn(sinceDay).catch((e: unknown) => {
+        console.warn("[perm-queue] the past day is unreadable", e);
+        return null;
+      })
+    : null;
+  const since = sinceDay && pastCensus ? statusShift(census.statuses, censusFrom(pastCensus).statuses) : null;
 
   const { stages } = groupByStage(census.statuses);
   const front = findFront(
@@ -310,6 +325,7 @@ export default async function PermQueuePage() {
             <PendingCensus
               stages={stages}
               caption="Every DOL status a pending PERM case was last seen in, grouped by queue"
+              hrefFor={(status) => statusCasesHref(status)}
             />
           </div>
         </FinePrint>
@@ -326,6 +342,8 @@ export default async function PermQueuePage() {
           Colours split each month across the three queues. Any month opens its
           own page.
         </p>{" "}
+
+        {since && sinceDay ? <SinceDay className="mt-5" shift={since} since={sinceDay} hrefFor={(status) => statusCasesHref(status)} /> : null}{" "}
 
         <div data-embed="perm-queue" className="mt-6">
           <QueueDayPicker

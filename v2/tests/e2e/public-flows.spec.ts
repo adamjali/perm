@@ -191,6 +191,10 @@ test("a filing month opens to a day, and the day's list filters by status", asyn
   await chip.click();
   await expect(chip).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText(/^\d[\d,]* of \d[\d,]* PERM cases, /)).toBeVisible();
+  // The filter lives in the address, so a reload (or a link from the month page) keeps it.
+  await expect(page).toHaveURL(/[?&]status=/);
+  await page.reload();
+  await expect(page.getByRole("group", { name: "Status" }).getByRole("button").first()).toHaveAttribute("aria-pressed", "true");
   // Every case is a lookup of its own.
   await expect(page.locator('a[href^="/perm-case-status?case=G-"]').first()).toBeVisible();
 });
@@ -204,4 +208,33 @@ test("the queue wall goes back to a past day and returns to today", async ({ pag
   await expect(page.getByText("Today", { exact: true }).first()).toBeVisible();
   await page.getByRole("button", { name: "Back to today" }).click();
   await expect(slider).toHaveAttribute("aria-valuetext", "Today");
+});
+
+test("a filing month says what moved since the last replayed day, and its first letters open its cases", async ({ page }) => {
+  await page.goto("/perm-queue/2026-01");
+  await expect(page.getByText(/^Since the end of [A-Z][a-z]+day, [A-Z][a-z]{2} \d+/)).toBeVisible();
+  // The end-of-month estimate carries its range, never a broken date.
+  await expect(page.getByText(/^Between [A-Z][a-z]+ \d+ and [A-Z][a-z]+ \d+/)).toBeVisible();
+  await expect(page.getByText("Invalid Date")).toHaveCount(0);
+  const letterA = page.locator('a[href^="/perm-cases?filed=2026-01&letter=A"]');
+  await expect(letterA).toBeVisible();
+  await letterA.click();
+  await expect(page).toHaveURL(/\/perm-cases\?filed=2026-01&letter=A/);
+  const chip = page.getByRole("button", { name: /Showing employers from A; show every employer/ });
+  await expect(chip).toBeVisible();
+  await chip.click();
+  await expect(chip).toHaveCount(0);
+});
+
+test("the queue wall says what moved since the last replayed day, and a waiting status opens its cases", async ({ page }) => {
+  await page.goto("/perm-queue");
+  const line = page.getByText(/^Since the end of [A-Z][a-z]+day, [A-Z][a-z]{2} \d+/);
+  await expect(line).toBeVisible();
+  // A quiet day moves nothing and says so. A waiting status opens its cases; a decided one has no single list to open.
+  const tiles = line.locator("xpath=following-sibling::ul[1]//li");
+  if ((await tiles.count()) === 0) await expect(line).toContainText("no status moved");
+  const links = tiles.locator("a");
+  for (let i = 0; i < (await links.count()); i++) await expect(links.nth(i)).toHaveAttribute("href", /^\/(case-search|perm-rfi-audit)/);
+  const review = tiles.filter({ hasText: /^Analyst Review/ });
+  if ((await review.count()) > 0) await expect(review.locator("a")).toHaveAttribute("href", /stage=analyst-review/);
 });

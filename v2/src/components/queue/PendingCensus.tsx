@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Fragment } from "react";
 
 import { formatInt } from "@/lib/format";
@@ -33,9 +34,12 @@ import { STAGE_META, prettyStatus, type StageGroup } from "./stages";
 export function PendingCensus({
   stages,
   caption,
+  hrefFor,
 }: {
   stages: readonly StageGroup[];
   caption: string;
+  /** Where a status's own cases are listed, when a page can say; the status then opens them. */
+  hrefFor?: (status: string) => string | null;
 }) {
   const populated = stages.filter((s) => s.statuses.length > 0);
   if (populated.length === 0) return null;
@@ -84,16 +88,25 @@ export function PendingCensus({
                   </span>{" "}
                 </th>
               </tr>
-              {group.statuses.map((s) => (
-                <tr key={s.status} className="border-b-2 border-border">
-                  <td className="py-2 pr-4 text-base text-soft">
-                    {prettyStatus(s.status)}{" "}
-                  </td>
-                  <td className="py-2 text-right text-base font-bold tabular-nums">
-                    {formatInt(s.count)}{" "}
-                  </td>
-                </tr>
-              ))}
+              {group.statuses.map((s) => {
+                const href = hrefFor?.(s.status) ?? null;
+                return (
+                  <tr key={s.status} className="border-b-2 border-border">
+                    <td className="py-2 pr-4 text-base text-soft">
+                      {href ? (
+                        <Link href={href} className="link inline-flex min-h-11 items-center">
+                          {prettyStatus(s.status)}
+                        </Link>
+                      ) : (
+                        prettyStatus(s.status)
+                      )}{" "}
+                    </td>
+                    <td className="py-2 text-right text-base font-bold tabular-nums">
+                      {formatInt(s.count)}{" "}
+                    </td>
+                  </tr>
+                );
+              })}
             </Fragment>
           );
         })}

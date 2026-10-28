@@ -12,6 +12,7 @@ import { formatMonth } from "@/lib/dolFormat";
 // here would be a build error. A type import compiles to nothing.
 import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/lib/db/liveCases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { INITIAL_RE, OTHER_INITIAL } from "@/lib/employerInitial";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { CaseStatusChip } from "@/components/ui/badge";
@@ -82,6 +83,9 @@ export function LiveCaseBrowser({
   const filedParam = params.get("filed");
   const initialMonth =
     fixedMonth ?? (filedParam && ISO_MONTH_RE.test(filedParam) ? filedParam : "");
+  // `?letter=B` is how a month page's first-letter grid opens its employers from one letter.
+  const letterParam = params.get("letter");
+  const [letter, setLetter] = useState<string>(letterParam && INITIAL_RE.test(letterParam) ? letterParam : "");
 
   const [kind, setKind] = useState<LiveKind>("all");
   const [month, setMonth] = useState<string>(initialMonth);
@@ -99,7 +103,7 @@ export function LiveCaseBrowser({
   }, [qInput]);
   useEffect(() => {
     setCursors([]);
-  }, [q, sort]);
+  }, [q, sort, letter]);
 
   const months = useMemo(
     () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
@@ -113,7 +117,7 @@ export function LiveCaseBrowser({
   // Every month lists its cases, however few.
   const withheld = false as boolean;
   const pristine =
-    Boolean(seed) && kind === "all" && month === initialMonth && cursors.length === 0 && q === "" && sort === "filed";
+    Boolean(seed) && kind === "all" && month === initialMonth && cursors.length === 0 && q === "" && sort === "filed" && letter === "";
 
   const url = useMemo(() => {
     if (withheld || pristine) return "skip" as const;
@@ -122,12 +126,13 @@ export function LiveCaseBrowser({
     p.set("kind", kind);
     if (month) p.set("month", month);
     if (q) p.set("q", q);
+    if (letter) p.set("letter", letter);
     if (sort !== "filed") p.set("sort", sort);
     p.set("numItems", String(PAGE_SIZE));
     const cursor = cursors[cursors.length - 1];
     if (cursor) p.set("cursor", cursor);
     return `/api/perm-cases?${p.toString()}`;
-  }, [kind, month, q, sort, cursors, withheld, pristine]);
+  }, [kind, month, q, letter, sort, cursors, withheld, pristine]);
 
   const fetched = usePublicQuery<LiveListPage>(url);
   const page = pristine ? seed ?? undefined : fetched.data;
@@ -212,6 +217,16 @@ export function LiveCaseBrowser({
               className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
             />
           </label>{" "}
+          {letter ? (
+            <button
+              type="button"
+              onClick={() => setLetter("")}
+              className={choiceVariants({ on: true })}
+              aria-label={`Showing employers from ${letter === OTHER_INITIAL ? "a number or symbol" : letter}; show every employer`}
+            >
+              {`Employers from ${letter === OTHER_INITIAL ? "0-9 and symbols" : letter}`} <span aria-hidden="true">×</span>
+            </button>
+          ) : null}{" "}
           <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
             <span>Sort by</span>{" "}
             <select

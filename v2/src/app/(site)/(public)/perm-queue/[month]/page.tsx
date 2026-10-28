@@ -16,9 +16,13 @@ import { currentMonthUtc, formatAsOf, formatMonth, monthsMoved } from "@/lib/dol
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
 import {
   getAdjacentMonths,
+  getLatestCensusDayBefore,
   getMonthBacklog,
+  getMonthCensusOn,
   getPendingBefore,
 } from "@/lib/db/backlog";
+import { statusShift } from "@/lib/backlogMonths";
+import { SinceDay } from "@/components/queue/SinceDay";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { getLiveRemainderSummary, listLiveCases } from "@/lib/db/liveCases";
 import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
@@ -43,6 +47,8 @@ import { monthDay } from "@convex/lib/months";
 import { cn } from "@/lib/utils";
 import { CaveatBox } from "@/components/ui/note";
 import { ISO_MONTH_RE } from "@convex/lib/months";
+import { statusCasesHref } from "@/components/queue/statusLinks";
+import { getRangeCoverage } from "@/lib/db/rangeCoverage";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -137,7 +143,7 @@ export default async function CohortPage({
   // review" living on this page, and the day those two disagree the queue
   // board and the calculator start quoting different frontiers for one thing.
   // The extra reads are three indexed lookups an hour per month page.
-  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail, monthDays] = await Promise.all([
+  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail, monthDays, rangeCoverage, pastDay] = await Promise.all([
     getMonthBacklog(month),
     getPendingBefore(month),
     getAdjacentMonths(month),
@@ -151,9 +157,19 @@ export default async function CohortPage({
       console.warn("[perm-queue/month] day counts failed", e);
       return null;
     }),
+    // The measured range by distance, the case page's own; without it, the pace rule's range.
+    getRangeCoverage().catch(() => null),
+    // The month at the end of the newest replayed day: what "since" compares against.
+    getLatestCensusDayBefore(easternDay())
+      .then(async (day) => (day ? { day, month: await getMonthCensusOn(day, month) } : null))
+      .catch((e: unknown) => {
+        console.warn("[perm-queue/month] the past day is unreadable", e);
+        return null;
+      }),
   ]);
   if (!backlog || backlog.total === 0) notFound();
   const makeup = monthMakeup(backlog.statuses);
+  const since = pastDay ? statusShift(backlog.statuses, pastDay.month?.statuses ?? []) : null;
   const end = monthEndDate({
     backlog: allMonths,
     month,
@@ -161,6 +177,7 @@ export default async function CohortPage({
     frontierMonth: estimator.frontier?.analystQueueMonth ?? null,
     sweepFinishedOn: sweep?.finishedOn ?? null,
     today: new Date().toISOString().slice(0, 10),
+    rangeCoverage,
   });
 
   // The month's LIVE rows: every case filed this month that DOL's published
@@ -196,6 +213,7 @@ export default async function CohortPage({
           Filed {label}
         </h1>{" "}
         <MonthHeadline makeup={makeup} label={label} end={end} />{" "}
+        {since && pastDay ? <SinceDay className="mt-5" shift={since} since={pastDay.day} hrefFor={(status) => statusCasesHref(status, month)} /> : null}{" "}
         <SourceNote className="mt-4" />
       </header>{" "}
 
@@ -314,6 +332,7 @@ export default async function CohortPage({
               <PendingCensus
                 stages={split.stages}
                 caption={`Every DOL status a pending case filed in ${label} was last seen in, grouped by queue`}
+                hrefFor={(status) => statusCasesHref(status, month)}
               />
             </div>
           </>
@@ -650,6 +669,7 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
             <>
               <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
               <dd className="mt-1 font-heading text-2xl font-bold sm:text-3xl">{`around ${longDay(end.date)}`}</dd>{" "}
+              <dd className="text-sm text-muted-foreground">{`Between ${longDay(end.early)} and ${longDay(end.late)}${end.rangeFrom === "measured" ? ", as far as recent decisions landed from their dates" : ""}`}</dd>{" "}
               <dd className="text-sm text-muted-foreground">{`${formatInt(end.casesThrough)} cases in line through ${label}, at DOL's recent pace`}</dd>
             </>
           ) : end?.kind === "passed" ? (
@@ -751,17 +771,21 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           const share = v[0] ? v[1] / v[0] : 0;
           return (
             <Fragment key={l}>{" "}
-            <li
-              className="bg-sage p-2 border-2 border-border"
-              data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}
-            >
-              <span className="flex items-baseline justify-between gap-1">
-                <span className="font-heading text-lg font-bold">{l}</span>{" "}
-                <span className="font-mono text-sm tabular-nums">{v[0] ? formatShare(share) : "none"}</span>
-              </span>{" "}
-              <span className="mt-1 block h-2 border border-input bg-soft-wait" aria-hidden="true">
-                <span className="block h-full bg-primary" style={{ width: `${Math.round(share * 100)}%` }} />
-              </span>
+            <li data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}>
+              {/* Each letter opens the month's live cases from employers starting with it. */}
+              <Link
+                href={`/perm-cases?filed=${month}&letter=${encodeURIComponent(l)}#live`}
+                className="block border-2 border-border bg-sage p-2 transition-colors hover:bg-sage-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                aria-label={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided. Show these employers' cases`}
+              >
+                <span className="flex items-baseline justify-between gap-1">
+                  <span className="font-heading text-lg font-bold">{l}</span>{" "}
+                  <span className="font-mono text-sm tabular-nums">{v[0] ? formatShare(share) : "none"}</span>
+                </span>{" "}
+                <span className="mt-1 block h-2 border border-input bg-soft-wait" aria-hidden="true">
+                  <span className="block h-full bg-primary" style={{ width: `${Math.round(share * 100)}%` }} />
+                </span>
+              </Link>
             </li>
             </Fragment>
           );

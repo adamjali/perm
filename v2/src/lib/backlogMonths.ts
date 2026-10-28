@@ -97,3 +97,47 @@ function summariseMonth(month: string, statuses: BacklogStatusCount[]): BacklogM
     statuses: statuses.sort((a, b) => b.count - a.count),
   };
 }
+
+/** One status's change between two readings of the same cases. */
+export interface StatusChange {
+  status: string;
+  /** Which side of the line the status sits on, from the newer reading. */
+  isFinal: boolean;
+  /** Newer count less older count. */
+  change: number;
+}
+
+export interface StatusShift {
+  /** Every status whose count moved, the largest move first. */
+  statuses: StatusChange[];
+  /** The change in cases still waiting and in cases decided. */
+  pending: number;
+  decided: number;
+  /** The change in cases held: filings found since the older reading, less any that left. */
+  total: number;
+}
+
+/**
+ * How a set of cases moved between two readings, status by status: today's
+ * live count against a past day's replayed one (`perm_census_days`), for one
+ * filing month or for every month together. Both sides are counts of the same
+ * kind, so the difference is DOL's work plus the filings found in between.
+ */
+export function statusShift(now: readonly BacklogStatusCount[], before: readonly BacklogStatusCount[]): StatusShift {
+  const byStatus = new Map<string, StatusChange>();
+  for (const s of before) byStatus.set(s.status, { status: s.status, isFinal: s.isFinal, change: -s.count });
+  for (const s of now) {
+    const held = byStatus.get(s.status);
+    byStatus.set(s.status, { status: s.status, isFinal: s.isFinal, change: s.count + (held ? held.change : 0) });
+  }
+  const statuses = [...byStatus.values()]
+    .filter((s) => s.change !== 0)
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change) || a.status.localeCompare(b.status));
+  let pending = 0;
+  let decided = 0;
+  for (const s of statuses) {
+    if (s.isFinal) decided += s.change;
+    else pending += s.change;
+  }
+  return { statuses, pending, decided, total: pending + decided };
+}

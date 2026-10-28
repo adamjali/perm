@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { LinkSimpleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
@@ -8,7 +7,7 @@ import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePublicQuery } from "@/hooks/usePublicQuery";
-import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
+import { useUrlPatch, useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import type { BulletinCheck } from "@/lib/bulletinCheck";
 import { cutoffLabel } from "@/lib/bulletinNext";
 import type { PlanReading } from "@/lib/db/planFigures";
@@ -42,19 +41,9 @@ const COPIED_MS = 2500;
  * cases ahead of it, by the same models its own pages use (/api/plan).
  */
 export function GreenCardPlanner({ reading, check, today }: { reading: PlanReading; check: BulletinCheck | null; today: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const params = useUrlSearchParams();
   const state = readPlanUrl(params, today);
-  const set = (patch: Record<string, string | null>) => {
-    const next = new URLSearchParams(params.toString());
-    for (const [k, v] of Object.entries(patch)) {
-      if (v === null || v === "") next.delete(k);
-      else next.set(k, v);
-    }
-    const qs = next.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  };
+  const set = useUrlPatch();
 
   const [o, setO] = useState<Overrides>(NO_OVERRIDES);
   const [fees, setFees] = useState<FeeChoices>(DEFAULT_FEES);

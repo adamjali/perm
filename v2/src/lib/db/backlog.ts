@@ -123,6 +123,32 @@ export async function getCensusOn(day: string): Promise<BacklogMonth[]> {
   }
 }
 
+/**
+ * The newest day the replay holds before `today` (an Eastern date): the day
+ * a "since" comparison reads against. A read of the table's own key, newest
+ * first. Null before the table exists or while it holds no earlier day.
+ */
+export async function getLatestCensusDayBefore(today: string): Promise<string | null> {
+  try {
+    const got = await rows<{ day: string }>("SELECT day FROM perm_census_days WHERE day < ? ORDER BY day DESC LIMIT 1", [today]);
+    return got[0] ? String(got[0].day) : null;
+  } catch (e) {
+    if (/no such table/i.test(String(e))) return null;
+    throw e;
+  }
+}
+
+/** One filing month at the end of one past DOL day: a seek on the table's key. Null when the replay held none of its cases. */
+export async function getMonthCensusOn(day: string, month: string): Promise<BacklogMonth | null> {
+  try {
+    const got = await rows<RawRow>("SELECT month, status, is_final, n FROM perm_census_days WHERE day = ? AND month = ?", [day, month]);
+    return foldBacklogRows(got)[0] ?? null;
+  } catch (e) {
+    if (/no such table/i.test(String(e))) return null;
+    throw e;
+  }
+}
+
 /** The whole live population, in one shape. */
 export interface BacklogCensus {
   /** Every status in the mirror, largest first. */

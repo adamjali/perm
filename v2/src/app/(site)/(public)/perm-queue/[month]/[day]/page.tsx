@@ -5,6 +5,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FiledOnDay } from "@/components/queue/FiledOnDay";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { getFiledOn } from "@/lib/db/filingDay";
 import { filingDayOf } from "@/lib/filingDay";
 import { formatInt } from "@/lib/format";
@@ -75,7 +76,10 @@ export default async function FiledOnDayPage({ params }: { params: Promise<Param
         ))}
       </dl>{" "}
       <section aria-label="The cases" className="mt-10">
-        <FiledOnDay perm={perm} pwd={pwd} dayLabel={dayLabel} />
+        {/* The list reads its filters from the address, so it needs a boundary whose fallback is the list itself. */}
+        <SearchParamsBoundary>
+          <FiledOnDay perm={perm} pwd={pwd} dayLabel={dayLabel} />
+        </SearchParamsBoundary>
         {capped ? <p className="mt-4 text-sm text-soft">This day holds more than the list shows; it lists the first of them by employer.</p> : null}
       </section>{" "}
       <nav aria-label="Other days" className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 border-t-2 border-border pt-6">

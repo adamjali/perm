@@ -588,7 +588,7 @@ export const CASE_SEARCH_PATH = "/case-search";
  * A link into the case search, for any page that hands it a search: its words
  * capped as the route caps them, the parameter names the search reads back.
  */
-export function caseSearchHref(params: Partial<Record<"q" | "firm" | "occupation" | "state" | "stage", string>>): string {
+export function caseSearchHref(params: Partial<Record<"q" | "firm" | "occupation" | "state" | "stage" | "from" | "to", string>>): string {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     const t = (v ?? "").trim().slice(0, SEARCH_TEXT_MAX);

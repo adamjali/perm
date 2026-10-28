@@ -58,6 +58,7 @@ import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 import { formatInt } from "@/lib/format";
 import { entityHref } from "@/lib/entityPayload";
 import { planHref } from "@/components/tools/planner/planUrl";
+import { statusCasesHref } from "@/components/queue/statusLinks";
 
 /**
  * Everything this project can honestly say about one case, arranged.
@@ -1073,6 +1074,7 @@ function CohortQueues({
         <PendingCensus
           stages={split.stages}
           caption={`Every DOL status a pending case filed in ${label} is currently in, grouped by queue`}
+          hrefFor={(status) => statusCasesHref(status, month)}
         />
       </FinePrint>
       <p className="mt-4 text-sm">

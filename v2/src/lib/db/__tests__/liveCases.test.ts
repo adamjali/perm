@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -22,10 +24,28 @@ const {
   isLiveKind,
   listLiveCases,
   parseLiveRemainderDoc,
+  INITIAL_SQL,
   planLiveSql,
 } = await import("../liveCases");
 
 const DAY = 24 * 60 * 60 * 1000;
+
+describe("planLiveSql, by the employer's first letter", () => {
+  it("narrows to one letter, and '#' to everything that isn't a letter", () => {
+    expect(planLiveSql("all", "2026-01", null, "B")).toEqual({
+      where: `filing_date >= ? AND filing_date < ? AND ${INITIAL_SQL} = ?`,
+      params: ["2026-01-01", "2026-02-01", "B"],
+    });
+    expect(planLiveSql("all", "2026-01", null, "#").where).toContain(`NOT (${INITIAL_SQL} BETWEEN 'A' AND 'Z')`);
+    expect(() => planLiveSql("all", "2026-01", null, "b")).toThrow();
+    expect(() => planLiveSql("all", "2026-01", null, "AB")).toThrow();
+  });
+
+  it("counts the initial exactly as the month detail does (scripts/ingest_case_status_direct.py)", () => {
+    const py = readFileSync(join(process.cwd(), "scripts/ingest_case_status_direct.py"), "utf8");
+    expect(py).toContain(INITIAL_SQL);
+  });
+});
 
 describe("planLiveSql", () => {
   it("pending and decided are the two values of is_final, nothing else", () => {

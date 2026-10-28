@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DayCase } from "@/lib/filingDay";
 
@@ -12,6 +12,43 @@ const mk = (i: number, over: Partial<DayCase> = {}): DayCase => ({
   jobTitle: "Software Engineer",
   final: false,
   ...over,
+});
+
+// The address as a store: router.replace writes it and every reader re-renders, as Next's does.
+const nav = vi.hoisted(() => {
+  let qs = "";
+  const subs = new Set<() => void>();
+  return {
+    get: () => qs,
+    set: (next: string) => {
+      qs = next;
+      subs.forEach((f) => f());
+    },
+    subs,
+  };
+});
+vi.mock("next/navigation", async (importOriginal) => {
+  const React = await import("react");
+  return {
+    ...(await importOriginal<object>()),
+    usePathname: () => "/perm-queue/2026-01/15",
+    useRouter: () => ({ replace: (u: string) => nav.set(u.split("?")[1] ?? ""), push: vi.fn(), prefetch: vi.fn() }),
+    useSearchParams: () => {
+      const qs = React.useSyncExternalStore(
+        (cb: () => void) => {
+          nav.subs.add(cb);
+          return () => nav.subs.delete(cb);
+        },
+        nav.get,
+        nav.get,
+      );
+      return new URLSearchParams(qs);
+    },
+  };
+});
+
+beforeEach(() => {
+  act(() => nav.set(""));
 });
 
 const caseLinks = () => screen.queryAllByRole("link").filter((a) => a.getAttribute("href")?.startsWith("/perm-case-status"));
@@ -58,6 +95,15 @@ describe("FiledOnDay", () => {
     expect(caseLinks()).toHaveLength(50);
     fireEvent.click(screen.getByRole("button", { name: "Page 3" }));
     expect(caseLinks()).toHaveLength(20);
+  });
+
+  it("keeps its picks in the address, and opens from one", () => {
+    act(() => nav.set("status=CERTIFIED&letter=B"));
+    render(<FiledOnDay perm={[mk(1, { employer: "Acme" }), mk(2, { employer: "Beta", status: "CERTIFIED", final: true })]} pwd={[]} dayLabel="x" />);
+    expect(caseLinks()).toHaveLength(1);
+    expect(screen.getByText("1 of 2 PERM cases, Certified, employers under B")).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: /Certified/ }));
+    expect(nav.get()).toBe("letter=B");
   });
 
   it("says so when the day holds none of a kind", () => {

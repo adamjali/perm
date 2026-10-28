@@ -10,7 +10,7 @@
  * Plain module (no server-only) so the unit project can test it.
  */
 
-import { estimateByPace, type MeasuredPace } from "@/lib/perm";
+import { estimateByPace, type MeasuredPace, type RangeCoverage } from "@/lib/perm";
 import { casesAheadOfDay, deriveQueueAhead, inLine, lineAheadByMonth, type DayCounts, type LineAheadRow, type MonthQueue } from "@/lib/queueAhead";
 import { MS_PER_DAY } from "@/lib/time";
 
@@ -60,7 +60,16 @@ export function caseEstimateInputs(input: {
 }
 
 export type MonthEnd =
-  | { kind: "estimate"; date: string; casesThrough: number }
+  | {
+      kind: "estimate";
+      date: string;
+      /** The quick and slow ends, as the case page draws them. */
+      early: string;
+      late: string;
+      /** Whether the range is the measured one for that distance (the nightly backtest) or the pace rule's. */
+      rangeFrom: "measured" | "pace";
+      casesThrough: number;
+    }
   | { kind: "passed"; inLine: number };
 
 /**
@@ -78,6 +87,8 @@ export function monthEndDate(input: {
   frontierMonth: string | null;
   sweepFinishedOn: string | null;
   today: string;
+  /** The backtest's measured range by distance, as the case page passes it; without it, the pace rule's. */
+  rangeCoverage?: RangeCoverage | null;
 }): MonthEnd | null {
   const { backlog, month, pace, frontierMonth, sweepFinishedOn, today } = input;
   const months: MonthQueue[] = backlog.map((m) => ({
@@ -100,7 +111,9 @@ export function monthEndDate(input: {
     status: "ANALYST REVIEW",
     monthsBehindFrontier: monthsBehind,
     sweepAgeDays,
+    measuredRange: input.rangeCoverage?.measured ?? null,
   });
   if (r.kind !== "estimate") return null;
-  return { kind: "estimate", date: new Date(r.day * MS_PER_DAY).toISOString().slice(0, 10), casesThrough };
+  const iso = (d: number) => new Date(d * MS_PER_DAY).toISOString().slice(0, 10);
+  return { kind: "estimate", date: iso(r.day), early: iso(r.early), late: iso(r.late), rangeFrom: r.rangeFrom, casesThrough };
 }

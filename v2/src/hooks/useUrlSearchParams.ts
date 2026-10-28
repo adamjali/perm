@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, createElement, Suspense, useContext, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 /**
  * useSearchParams for the public data tools, with a way to render them with
@@ -51,4 +51,24 @@ export function SearchParamsBoundary({ children }: { children: ReactNode }) {
     { fallback: createElement(WithoutSearchParams, null, children) },
     children,
   );
+}
+
+/**
+ * Write a patch to the address without scrolling: a key set to null or "" leaves it, the rest
+ * stay as they are. The way a tool keeps its filters in the URL, so a view can be shared and
+ * linked into.
+ */
+export function useUrlPatch(): (patch: Record<string, string | null>) => void {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useUrlSearchParams();
+  return (patch) => {
+    const next = new URLSearchParams(params.toString());
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null || v === "") next.delete(k);
+      else next.set(k, v);
+    }
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 }

@@ -22,6 +22,19 @@ describe("monthEndDate", () => {
       .toEqual({ kind: "passed", inLine: 463 });
   });
 
+  it("ranges the date the way the case page does: by the measured distance when one covers it", () => {
+    const base = { backlog, month: "2025-12", pace, frontierMonth: "2025-12", sweepFinishedOn: "2026-10-08", today: "2026-10-08" };
+    const measured = monthEndDate({ ...base, rangeCoverage: { measured: [{ fromDays: 0, toDays: 30, earlyDays: -6, lateDays: 13 }] } as never });
+    if (measured?.kind !== "estimate") throw new Error("expected a date");
+    expect(measured.rangeFrom).toBe("measured");
+    const day = (d: string) => Date.parse(`${d}T00:00:00Z`) / 86_400_000;
+    expect([day(measured.date) - day(measured.early), day(measured.late) - day(measured.date)]).toEqual([6, 13]);
+    // Without the measurement, the pace rule's own range.
+    const paced = monthEndDate(base);
+    if (paced?.kind !== "estimate") throw new Error("expected a date");
+    expect(paced.rangeFrom).toBe("pace");
+  });
+
   it("prints no date when the model refuses: a stale sweep, or no pace", () => {
     expect(monthEndDate({ backlog, month: "2026-01", pace, frontierMonth: "2025-12", sweepFinishedOn: "2026-10-01", today: "2026-10-08" })).toBeNull();
     expect(monthEndDate({ backlog, month: "2026-01", pace: null, frontierMonth: "2025-12", sweepFinishedOn: "2026-10-08", today: "2026-10-08" })).toBeNull();
