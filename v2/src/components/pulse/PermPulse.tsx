@@ -15,8 +15,9 @@ import { checkedLabel } from "@/lib/time";
  * weekend or a federal holiday after it is named, never led with), the 30
  * days before it, and the shape of a week.
  *
- * Every figure is a count of DOL's own decisions, dated by the day our sweep
- * saw them change; nothing is modelled.
+ * Every figure is a count of DOL's own decisions, dated by the day DOL worked:
+ * the day our sweep saw them change, or the day before when it saw them before
+ * 7 AM Eastern (src/lib/dolDay.ts); nothing is modelled.
  *
  * THE BARS ARE HTML, NOT SVG. SVG text scales with its viewBox, and this
  * repo measured 13px labels rendering at 5.5px in a phone column. Divs keep
@@ -274,7 +275,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <p className="text-sm text-muted-foreground">
-          Counted from DOL&apos;s own case status, by the day our check saw each case change.
+          Counted from DOL&apos;s own case status, by the day DOL worked: a change our check saw before 7 AM counts on the day before.
         </p>{" "}
         {showLink ? (
           <Link href="/perm-decision-activity" className="link inline-flex min-h-11 items-center">

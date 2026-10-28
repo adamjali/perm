@@ -14,7 +14,8 @@ import { SourceNote } from "@/components/queue/SourceNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { PendingCensus } from "@/components/queue/PendingCensus";
 import { AlphabetEffect } from "@/components/queue/AlphabetEffect";
-import { StageLegend } from "@/components/queue/StageBar";
+import { StageBar, StageLegend } from "@/components/queue/StageBar";
+import { ChartTips } from "@/components/data/ChartTips";
 import { groupByStage } from "@/components/queue/stages";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { findFront } from "@/lib/liveQueue";
@@ -148,16 +149,20 @@ export default async function PermQueuePage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Where the PERM queue stands
         </h1>{" "}
-        {/* Two banners, not two grey paragraphs (round 3, Oct 15 2026): what
-            DOL publishes, then how to read the sweep's counts. */}
-        <NoteBanner className="mt-5 max-w-3xl">
-          <p>
-            DOL publishes which month it&rsquo;s working and nothing about the
-            size of what&rsquo;s behind it. Its disclosure files carry no pending
-            rows, so the backlog cannot be derived from them.
-          </p>
-        </NoteBanner>{" "}
-        <SourceNote className="mt-3 max-w-3xl" />
+        {/* The page opens on its figures (owner, Oct 27 2026: "visual heavy,
+            not text blobs"); how the count is read is folded under them. */}
+        <FinePrint summary="How this count is read" className="mt-3">
+          <div className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-6 [&>*]:min-w-0">
+            <NoteBanner>
+              <p>
+                DOL publishes which month it&rsquo;s working and nothing about the
+                size of what&rsquo;s behind it. Its disclosure files carry no pending
+                rows, so the backlog cannot be derived from them.
+              </p>
+            </NoteBanner>{" "}
+            <SourceNote />
+          </div>
+        </FinePrint>
       </header>
 
       {/* The provisional notice sits ABOVE every figure it qualifies, for the
@@ -284,19 +289,21 @@ export default async function PermQueuePage() {
           What those {formatInt(census.pending)} cases were doing
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
-          Analyst review moves in filing order; the other two queues
-          don&rsquo;t, which is the answer when DOL has passed your month and
-          you still have nothing.
+          Analyst review moves in filing order; the other two don&rsquo;t.
         </p>{" "}
-
-        <StageLegend stages={stages} className="mt-6" />
-
-        <div className="mt-8 border-t-2 border-border pt-6">
-          <PendingCensus
-            stages={stages}
-            caption="Every DOL status a pending PERM case was last seen in, grouped by queue"
-          />
-        </div>
+        {/* The whole line as one bar, each queue its share. */}
+        <ChartTips label="Pending PERM cases by queue" className="mt-6">
+          <StageBar stages={stages} scale="composition" tipHeading="Every pending case" height="h-12" />
+        </ChartTips>{" "}
+        <StageLegend stages={stages} className="mt-5" />{" "}
+        <FinePrint summary="Every DOL status, with its count" className="mt-6">
+          <div className="mt-2">
+            <PendingCensus
+              stages={stages}
+              caption="Every DOL status a pending PERM case was last seen in, grouped by queue"
+            />
+          </div>
+        </FinePrint>
       </section>{" "}
 
       <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">

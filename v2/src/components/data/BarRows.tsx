@@ -61,8 +61,15 @@ export function BarRows({
   max,
   label = "Bar chart",
   className,
+  inline = false,
 }: {
   rows: readonly BarRow[];
+  /**
+   * Each row on one line from 640px: the name and its note, the bar, the
+   * figure. For a list that fills a wide column, where a name above each bar
+   * left the figures far from their bars.
+   */
+  inline?: boolean;
   /** What the bars show, for the keyboard focus announcement. */
   label?: string;
   /** The value that fills the bar; defaults to the largest value present. */
@@ -77,6 +84,25 @@ export function BarRows({
         const width = r.value === null || top <= 0 ? 0 : Math.max(1, (r.value / top) * 100);
         return (
           <Fragment key={r.key}>{" "}
+          {inline ? (
+            <li
+              data-tip={barRowTip(r)}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(10rem,22rem)_minmax(0,1fr)_auto] sm:gap-x-6"
+            >
+              <div className="col-span-2 min-w-0 sm:col-span-1">
+                <p className="text-base font-semibold leading-snug">{r.label}</p>{" "}
+                {r.sub ? <p className="text-sm text-muted-foreground">{r.sub}</p> : null}
+              </div>{" "}
+              <div className="h-2.5 w-full bg-sage" aria-hidden="true">
+                {r.value !== null ? (
+                  <div className={cn("h-full", BAR_TONE[r.tone ?? "primary"])} style={{ width: `${width}%` }} />
+                ) : null}
+              </div>{" "}
+              <span className="min-w-[6rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums">
+                {r.value === null ? "withheld" : r.text}
+              </span>
+            </li>
+          ) : (
           <li data-tip={barRowTip(r)} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
             <div className="min-w-0">
               <p className="text-base font-semibold leading-snug">{r.label}</p>{" "}
@@ -95,6 +121,7 @@ export function BarRows({
               {r.value === null ? "withheld" : r.text}
             </span>
           </li>
+          )}
           </Fragment>
         );
       })}

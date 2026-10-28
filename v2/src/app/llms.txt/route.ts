@@ -315,6 +315,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "The PERM totals DOL's own case records add up to and DOL doesn't publish, counted each night from its case-status search: cases waiting by stage and filing month, holds by employer with the day each began, decisions per day, new filings by week, job and employer, employers new to PERM, RFIs issued per week, wage requests waiting, and every reading of DOL's processing-times page.",
   },
   {
+    path: "/today",
+    label: "Where every green card step stands today",
+    blurb: "The wage request, PERM, I-140 and visa bulletin on one board: how long each step is taking now, from DOL's, USCIS's and the State Department's own records, whether each line moved forward or back, the day's PERM decisions by outcome, every status cases wait in, and the newest bulletin's moves for every employment category.",
+  },
+  {
     path: "/perm-recruitment",
     label: "PERM recruitment: ads, steps and timing",
     blurb: "Where PERM employers recruit and how long before filing, from DOL's Form 9089 Section H over every decided case filed on the current form: the Sunday ads and the newspapers by state, the additional steps, the notice of filing, and the days from each step to filing.",

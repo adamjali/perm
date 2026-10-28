@@ -31,17 +31,40 @@ question in sections that fold open and link to the full page; and the pieces ar
 process they belong to (wage request, recruitment, PERM, I-140, green card line), with employers and wages as their
 own, instead of "Wait times" and "Approvals and denials". The rail, the board's sections and the data overview
 (/tools) use one map, so a page sits in one obvious place everywhere.
+Design (Oct 27 2026, evening):
+- **Where:** a new page, `/today` ("Where every step stands today"), in the sitemap, the rail's top, the header's Data
+  menu and the palette. Every existing page stays where it is and keeps its address.
+- **The map, one list:** the rail groups become the steps of the process, in order: Wage request, Recruitment, PERM,
+  I-140, Green card line (bulletin, I-485, NVC, visas issued), then Employers and firms, Wages, Other visas (H-1B LCAs,
+  H-2A, H-2B, CW-1, lottery, OPT). The board's sections, the rail and `/tools` all read that one list (siteMap.ts), so a
+  page sits in one place everywhere. Every group's height checked against the rail's budget.
+- **The board's top:** one row per step (wage request, PERM, I-140, final action, dates for filing): the day or month
+  being worked, the wait now, decided on DOL's last working day, filed and decided over 30 days and so growing or
+  shrinking, each with its date. The I-485 rows switch category and country.
+- **Then one section per step**, each: three or four figures, one chart, the step's pages as links, and a fold for the
+  detail. PERM's section carries the status table (today's and the week's change, from the event log), the line by
+  filing month, and decisions over 30, 90 and 180 days.
+- **Data:** a `perm_docs['board']` doc written by the sweep (flows from filings and `daily_decisions`; status moves from
+  `perm_case_events`), so the page is one read. Missing parts are said, never zero.
+- **Width:** one column, every block fills it or shares a row (the Oct 27 spacing fix).
 The homepage's answer and a full board on /perm-queue (or a new /board), visual first:
 - [ ] 2.1 One row per stage: wage request, PERM, I-485 final action, I-485 dates for filing. The exact day DOL is on,
       the wait now in days, the pace (days of filings cleared per calendar day), growing or shrinking, the 30-day change,
       decided today with its time. Category and country switches on the I-485 rows; retrogressed or advanced.
-- [ ] 2.2 "Is the wait growing" in one line per queue.
+- [x] 2.2 "Is the wait growing" in one line per queue (on /today: filed against decided over 30 days, PERM and wage requests).
 - [ ] 2.3 Status table: every status, in progress and closed, with its change today and over 7 days, by period.
 - [ ] 2.4 Queue by filing month with today's change per month; open a month: by status, by filing day, by employer
       letter, each tappable to its case list.
 - [ ] 2.5 Time travel: the queue on any past day (event log from Aug 26 2026).
 - [ ] 2.6 Daily decisions 30, 90, 180 days, by day or week; analyst review over time; filed and decided per month.
 - [ ] 2.7 Live refresh of an open page when the sweep moves (a cached version stamp; measure the server cost first).
+Built Tue Oct 27 2026, evening (live with the next night deploy): `/today` reads straight from the tables
+(`src/lib/db/board.ts`), not a `perm_docs['board']` doc yet. One station per step on a numbered track (wage request,
+PERM, I-140, the EB-2 rest-of-world cutoff), each with its wait drawn on one shared scale and its move since the
+week before or the quarter before in colour and arrow; the two balance panels (2.2); DOL's last working day as a
+decided bar and the waiting statuses with their week's change (2.3, part); the 30-day pulse charts (2.6, part); the
+bulletin grid with every cell's move coloured. Still open in Phase 2: the I-485 switches, the rail regrouped by step,
+the month drill-down (2.4), time travel (2.5), live refresh (2.7), and the sweep-written doc.
 
 ## Phase 3: one planner, every step to the green card (2 to 3 days)
 - [ ] 3.1 Where you are now (about to file the wage request, wage request filed, PERM filed, I-140 filed or approved),

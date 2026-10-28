@@ -1,17 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { ABOUT_DOCS, AboutScatter } from "../AboutScatter";
+import { ABOUT_DOCS } from "../aboutDocs";
+import { SourcePages } from "../SourcePages";
 
-describe("AboutScatter on the server", () => {
-  const html = renderToStaticMarkup(
-    <AboutScatter>
-      <figure>portrait</figure>
-    </AboutScatter>,
-  );
+describe("SourcePages on the server", () => {
+  const html = renderToStaticMarkup(<SourcePages />);
 
-  it("renders the portrait it's given, and six federal pages", () => {
-    expect(html).toContain("<figure>portrait</figure>");
+  it("renders six federal pages", () => {
     expect(ABOUT_DOCS).toHaveLength(6);
     expect(html.match(/<li /g)?.length).toBe(6);
   });
@@ -31,10 +27,6 @@ describe("AboutScatter on the server", () => {
     const forms = ABOUT_DOCS.filter((d) => d.page.startsWith("Form"));
     expect(forms.length).toBe(3);
     for (const f of forms) expect(f.page).not.toContain("-");
-  });
-
-  it("draws nothing moved on the server: the drift comes only from scrolling", () => {
-    expect(html).not.toMatch(/--drift:\s*\d/);
   });
 
   it("says what the pages are, in one quiet line", () => {

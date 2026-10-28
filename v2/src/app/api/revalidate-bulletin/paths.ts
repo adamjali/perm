@@ -21,6 +21,8 @@ export const BULLETIN_PAGES = [
   "/badges",
   // Draws every bulletin month held.
   "/perm-by-the-numbers",
+  // The board: EB-2's cutoff and the newest bulletin's moves.
+  "/today",
   "/open-data",
   "/open-data/visa-bulletins.csv",
   "/open-data/visa-bulletins.json",

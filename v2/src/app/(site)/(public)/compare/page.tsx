@@ -12,11 +12,13 @@
  */
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { TrackerMatrix, MARK_WORD, MarkIcon } from "@/components/compare/TrackerMatrix";
 import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { HOME_SHOTS } from "@/lib/compare/homeShots";
 import { RIVALS } from "@/lib/compare/rivals";
 import { CHECKED_ON, PERM_TRACKER, ROWS, type Tracker } from "@/lib/compare/trackers";
 import { longDate as formatLongDate } from "@convex/lib/months";
@@ -80,55 +82,90 @@ export default function ComparePage() {
         <TrackerMatrix trackers={trackers} />
       </section>{" "}
       {fresh.length > 1 ? (
-        <section aria-labelledby="fresh" className="mt-14 max-w-3xl">
+        <section aria-labelledby="fresh" className="mt-14">
           <h2 id="fresh" className="font-heading text-2xl font-bold">
             How old each site&apos;s newest data was
           </h2>{" "}
           <p className="mt-2 text-base text-soft">On {checked}, by each site&apos;s own date stamp. Shorter is fresher.</p>{" "}
-          <BarRows rows={fresh} label="How old each site's newest data was" className="mt-6" />
+          {/* One line a site, across the page's whole width, like the grid above
+              and the cards below (owner, Oct 27 2026: every block had its own
+              narrower width and sat at the left edge). */}
+          <BarRows rows={fresh} label="How old each site's newest data was" className="mt-6" inline />
         </section>
       ) : null}{" "}
       <section aria-labelledby="each" className="mt-14">
         <h2 id="each" className="font-heading text-2xl font-bold">
           Each one, in short
         </h2>{" "}
-        <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
-          {RIVALS.map((t) => (
-            <li key={t.slug} className="object flex flex-col gap-3 p-5">
-              <div>
-                <p className="font-heading text-xl font-bold">{t.name}</p>{" "}
-                <p className="text-sm text-soft">
-                  {t.url.replace(/^https?:\/\//, "")}
-                  {t.operator ? <>, run by {t.operator}</> : null}{" "}
-                </p>
-              </div>{" "}
-              <p className="text-base">
-                <span className="font-semibold">Price:</span> {t.price}
-              </p>{" "}
-              {t.strengths.length ? (
-                <div>
-                  <p className="text-sm font-semibold">What it does well</p>{" "}
-                  <ul className="mt-1 list-disc space-y-1 pl-5 text-base">
-                    {t.strengths.map((s) => (
-                      <li key={s}>{s}{" "}</li>
-                    ))}
-                  </ul>
+        {/* Each card opens with the site's own homepage, as it looked the day
+            it was read. Rows line up on the pictures, and each card is its own
+            height: stretched to the tallest, the short ones were half empty. */}
+        <ul className="mt-6 grid grid-cols-1 items-start gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+          {RIVALS.map((t) => {
+            const shot = HOME_SHOTS[t.slug];
+            return (
+              <li key={t.slug} className="object flex flex-col">
+                {shot ? (
+                  <a
+                    href={t.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${t.name}'s homepage (opens in a new tab)`}
+                    className="block border-b-2 border-foreground"
+                  >
+                    <Image
+                      src={shot.src}
+                      width={shot.width}
+                      height={shot.height}
+                      alt={shot.alt}
+                      sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+                      className="block h-auto w-full"
+                    />
+                  </a>
+                ) : null}{" "}
+                <div className="flex flex-col gap-3 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                    <div className="min-w-0">
+                      <p className="font-heading text-xl font-bold">{t.name}</p>{" "}
+                      <p className="text-sm text-soft">
+                        {t.url.replace(/^https?:\/\//, "")}
+                        {t.operator ? <>, run by {t.operator}</> : null}{" "}
+                      </p>
+                    </div>{" "}
+                    <p className="bg-tint px-2.5 py-1 text-sm font-semibold">{t.price}</p>
+                  </div>{" "}
+                  {t.strengths.length ? (
+                    <ul aria-label="What it does well" className="space-y-2 text-base">
+                      {t.strengths.map((s) => (
+                        <li key={s} className="flex items-start gap-2.5">
+                          <MarkIcon mark="yes" className="mt-0.5 size-5 shrink-0 [&_svg]:size-3" />
+                          <span>{s}{" "}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
-              ) : null}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
+        <p className="mt-4 text-sm text-soft">Each site&apos;s homepage as it opened on {checked}.</p>
       </section>{" "}
-      <section aria-labelledby="check" className="object mt-14 max-w-3xl p-5 sm:p-6">
-        <h2 id="check" className="font-heading text-xl font-bold">
-          Check your case here
-        </h2>{" "}
-        <p className="mt-2 text-base text-soft">
-          Straight from DOL&apos;s case-status service, with an email when it changes. Free, and no account needed.
-        </p>{" "}
-        <CaseLookupForm className="mt-4" compact label="Case number or employer" names help={null} source="compare" />
+      <section
+        aria-labelledby="check"
+        className="object mt-14 grid grid-cols-1 gap-4 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-center lg:gap-10 [&>*]:min-w-0"
+      >
+        <div>
+          <h2 id="check" className="font-heading text-xl font-bold">
+            Check your case here
+          </h2>{" "}
+          <p className="mt-2 text-base text-soft">
+            Straight from DOL&apos;s case-status service, with an email when it changes. Free, and no account needed.
+          </p>
+        </div>{" "}
+        <CaseLookupForm compact label="Case number or employer" names help={null} source="compare" />
       </section>{" "}
-      <details className="mt-14 max-w-4xl border-t-2 border-border pt-6">
+      <details className="mt-14 border-t-2 border-border pt-6">
         <summary className="cursor-pointer py-2">
           <h2 className="inline font-heading text-xl font-bold">What each mark rests on</h2>
         </summary>{" "}

@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { ABOUT_ONE_LINER } from "@/lib/constants/about";
 import Link from "next/link";
-import { CalendarCheckIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
+import { FolderSimpleIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 
 import { ColumnChart, type Column } from "@/components/numbers/ColumnChart";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
@@ -169,13 +169,19 @@ export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionPr
                 Still waiting
               </span>{" "}
               <span className="hidden sm:inline">Each bar is one filing month. Tap one to see its cases.</span>{" "}
-              <Link href="/perm-queue" className="link">
+              {/* 44px tall to tap on a phone; the negative margin keeps the caption's line height. */}
+              <Link href="/perm-queue" className="link -my-3 inline-flex min-h-11 items-center">
                 Where the line stands
               </Link>
             </figcaption>
           </figure>
         ) : null}{" "}
-        <div className="object mt-8 max-w-3xl p-5 sm:p-6">
+        {/* One row under the chart, filling the column the headline and the
+            chart fill: the case box in two thirds, what the site is in the
+            last third. Each had stopped at 768px with nothing beside it,
+            leaving the right of the hero empty (owner, Oct 27 2026). */}
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-center lg:gap-12 [&>*]:min-w-0">
+        <div className="object p-5 sm:p-6">
           <p className="font-heading text-lg font-bold">Check a case</p>{" "}
           {/* What the number gets: the two reasons people come (owner, Oct 15). */}
           <CasePromises compact className="mt-3" />{" "}
@@ -196,7 +202,7 @@ export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionPr
         {/* What the site is, both halves, after the answer: search engines
             still read it in the first section, and people meet the answer
             first. */}
-        <div className="mt-10 max-w-3xl border-t-2 border-border pt-6">
+        <div className="border-t-2 border-border pt-6 lg:border-l-2 lg:border-t-0 lg:pl-10 lg:pt-0">
           <p className="text-base leading-normal text-soft sm:text-lg">{ABOUT_ONE_LINER}</p>{" "}
           <ul aria-label="Free on both sides" className="mt-3 flex flex-col gap-2 text-base">
             <li className="flex items-start gap-2.5">
@@ -204,7 +210,7 @@ export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionPr
               <span>A lookup of any PERM, wage request, LCA, H-2A or H-2B case{" "}</span>
             </li>{" "}
             <li className="flex items-start gap-2.5">
-              <CalendarCheckIcon size={20} weight="bold" aria-hidden="true" className="mt-0.5 shrink-0 text-primary-text" />{" "}
+              <FolderSimpleIcon size={20} weight="bold" aria-hidden="true" className="mt-0.5 shrink-0 text-primary-text" />{" "}
               <span>
                 A case-management app for attorneys, paralegals and HR teams.{" "}
                 <Link href="/for-attorneys" className="link">
@@ -213,6 +219,7 @@ export function HeroSection({ waitRows = [], board, months = [] }: HeroSectionPr
               </span>
             </li>
           </ul>
+        </div>
         </div>
       </div>
     </section>

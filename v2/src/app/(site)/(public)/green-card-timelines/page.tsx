@@ -113,7 +113,7 @@ export default async function GreenCardTimelinesPage() {
                 </div>
               </>
             ) : (
-              <NoteBanner className="mt-4 max-w-2xl">
+              <NoteBanner className="mt-4 [&_p]:max-w-3xl">
                 <p className="font-heading text-xl font-bold">
                   Opens at {board.opensAt} shared timelines. {board.shared.toLocaleString("en-US")} so far.
                 </p>{" "}

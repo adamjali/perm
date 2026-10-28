@@ -24,6 +24,8 @@ export const SWEEP_PAGES = [
   "/perm-employers/under-review",
   // The board of totals: the census, holds, decisions per day, RFIs, new filings.
   "/perm-by-the-numbers",
+  // Where every step stands: the day's decisions, each status's moves, the census.
+  "/today",
   // Opens with today's holds, from the same document as the page above.
   "/press",
   "/tools/perm-timeline-calculator",

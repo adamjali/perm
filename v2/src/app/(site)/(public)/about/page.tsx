@@ -35,7 +35,7 @@ import {
   ScalesIcon,
 } from "@phosphor-icons/react/ssr";
 
-import { AboutScatter } from "@/components/about/AboutScatter";
+import { SourcePages } from "@/components/about/SourcePages";
 import { RecordStrip } from "@/components/home/RecordStrip";
 import { AppWindow, type WindowShots } from "@/components/marketing/AppWindow";
 import { TOUR_SHOTS } from "@/components/marketing/tourShots";
@@ -91,10 +91,13 @@ function monthLabel(ym: string): string {
 
 const LINK = "link";
 
-/** The public case lookup, as the guide's header picture captured it. */
+/**
+ * The public case lookup: the guide's header capture cut to the page itself,
+ * since the header carries a wide plain margin that left it small in the window.
+ */
 const CASE_PAGE: WindowShots = {
-  light: { src: "/images/content/heroes/guides/check-perm-case-status.webp", width: 1600, height: 1200 },
-  dark: { src: "/images/content/heroes/guides/check-perm-case-status.webp", width: 1600, height: 1200 },
+  light: { src: "/images/about/case-page.webp", width: 1162, height: 794 },
+  dark: { src: "/images/about/case-page.webp", width: 1162, height: 794 },
 };
 
 const HALVES = [
@@ -206,17 +209,16 @@ export default async function AboutPage() {
     <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-10 sm:px-6 sm:pb-28 sm:pt-14">
       <JsonLdScript schema={aboutSchema} />
 
-      {/* The definition beside the person who runs it. */}
+      {/* The definition and the record it stands on, beside the person who runs
+          it (owner, Oct 27 2026: the scattered forms read as clutter, the plain
+          version as boring; the record's own figures, set large, carry the left). */}
       <section
         data-about-hero=""
-        className="grid grid-cols-1 items-center gap-12 [&>*]:min-w-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16"
+        className="grid grid-cols-1 items-center gap-12 [&>*]:min-w-0 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] md:gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,23rem)] lg:gap-20"
       >
         <div>
-          <h1 className="font-heading text-5xl font-bold leading-tight sm:text-6xl">About PERM Tracker</h1>{" "}
+          <h1 className="font-heading text-5xl font-bold leading-[1.05] sm:text-6xl">About PERM Tracker</h1>{" "}
           <p className="mt-6 max-w-xl text-xl leading-relaxed">{ABOUT_ONE_LINER}</p>{" "}
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            It&apos;s free on both sides: for the person waiting on a case, and for the attorney who filed it.
-          </p>{" "}
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/perm-case-status" className={buttonVariants({ size: "lg" })}>
               Check a case <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
@@ -224,59 +226,64 @@ export default async function AboutPage() {
             <Link href="/for-attorneys" className={buttonVariants({ variant: "outline", size: "lg" })}>
               For professionals
             </Link>
-          </div>
+          </div>{" "}
+          <p className="mt-5 flex flex-wrap items-center gap-x-5 text-sm text-muted-foreground">
+            <span>Run by {SABRINA.name}</span>{" "}
+            <a href={DC_BAR_SABRINA_URL} className="link inline-flex min-h-11 items-center" rel="noopener" target="_blank">
+              D.C. Bar, 2025
+            </a>{" "}
+            <a href={LINKEDIN_SABRINA_URL} className="link inline-flex min-h-11 items-center" rel="me noopener" target="_blank">
+              LinkedIn
+            </a>{" "}
+            <span>Live since {monthLabel(LIVE_SINCE)}</span>
+          </p>{" "}
+          {record.length ? (
+            <dl className="mt-12 grid grid-cols-1 gap-x-8 gap-y-5 border-t-2 border-foreground pt-6 sm:grid-cols-3 [&>*]:min-w-0">
+              {record.slice(0, 3).map((f) => (
+                <div key={`${f.href} ${f.label}`}>
+                  <dt className="font-heading text-4xl font-bold tabular-nums tracking-tight">{f.value.toLocaleString("en-US")}</dt>{" "}
+                  <dd className="mt-1 text-base leading-snug">
+                    <Link href={f.href} className="link">
+                      {f.label}
+                    </Link>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>{" "}
-        <AboutScatter>
-          <figure className="relative mx-auto w-full max-w-sm">
-            <div className="relative bg-tint p-3 border-2 border-border">
-              <Image
-                src={SABRINA.image}
-                alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
-                width={SABRINA.imageSize[0]}
-                height={SABRINA.imageSize[1]}
-                sizes="(min-width: 1024px) 24rem, 90vw"
-                className="aspect-[4/5] w-full border-border object-cover object-top border"
-                priority
-              />{" "}
-              <figcaption className="px-1 pb-1 pt-3">
-                <span className="block font-heading text-xl font-bold leading-tight">{SABRINA.name}</span>{" "}
-                <span className="block text-base text-muted-foreground">{SABRINA.jobTitle}, runs PERM Tracker</span>{" "}
-                <span className="mt-1 block text-sm text-muted-foreground">Live since {monthLabel(LIVE_SINCE)}</span>
-              </figcaption>
-            </div>
-          </figure>
-        </AboutScatter>
+        {/* The portrait as a composition in the site's own language: a thick lime
+            offset behind it, and her name on an ink tag over its corner, like a
+            credit (owner, Oct 27 2026: the boxed card read as an ID badge). */}
+        <figure className="mx-auto w-full max-w-sm pb-10 pl-4 pr-3 sm:pr-4 md:max-w-none">
+          <div className="relative">
+            <Image
+              src={SABRINA.image}
+              alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
+              width={SABRINA.imageSize[0]}
+              height={SABRINA.imageSize[1]}
+              sizes="(min-width: 1024px) 23rem, (min-width: 768px) 20rem, 90vw"
+              className="block aspect-[4/5] w-full border-2 border-foreground object-cover object-top shadow-[10px_10px_0_0_var(--primary)] sm:shadow-[14px_14px_0_0_var(--primary)]"
+              priority
+            />{" "}
+            <figcaption className="absolute -bottom-8 -left-4 max-w-[85%] border-2 border-foreground bg-foreground px-4 py-3 text-background">
+              <span className="block font-heading text-2xl font-bold leading-tight">{SABRINA.name}</span>{" "}
+              <span className="mt-0.5 block text-sm">{SABRINA.jobTitle}</span>
+            </figcaption>
+          </div>
+        </figure>{" "}
       </section>
 
-      {/* Who runs it: the words beside the record that backs them. */}
-      <section aria-labelledby="who" className="mt-24 grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
-        <div>
-          <SectionHead id="who" title="Who runs it" />{" "}
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed">
-            {SABRINA.name} is an immigration attorney. She started PERM Tracker because her clients had no way to
-            see where a case stood between the filing and the decision, and their questions still shape what the site
-            answers first.
-          </p>
-        </div>{" "}
-        <dl className="grid grid-cols-1 gap-2 self-start">
-          <div className="bg-tint px-5 py-4">
-            <dt className="text-sm text-muted-foreground">Admitted</dt>{" "}
-            <dd className="mt-0.5 font-heading text-lg font-bold">
-              D.C. Bar, 2025.{" "}
-              <a href={DC_BAR_SABRINA_URL} className={LINK} rel="noopener" target="_blank">
-                Her bar record
-              </a>
-            </dd>
-          </div>{" "}
-          <div className="bg-tint px-5 py-4">
-            <dt className="text-sm text-muted-foreground">Also on</dt>{" "}
-            <dd className="mt-0.5 font-heading text-lg font-bold">
-              <a href={LINKEDIN_SABRINA_URL} className={LINK} rel="me noopener" target="_blank">
-                LinkedIn
-              </a>
-            </dd>
-          </div>
-        </dl>
+      {/* Why it exists, said once and large: the reason is the story, so it's set
+          in the heading face beside a lime rule instead of a grey paragraph. */}
+      <section aria-labelledby="who" className="mt-16 md:mt-24">
+        <h2 id="who" className="text-base font-semibold text-muted-foreground">
+          Who runs it
+        </h2>{" "}
+        <p className="mt-4 max-w-4xl border-l-8 border-primary pl-6 font-heading text-2xl font-bold leading-snug sm:pl-8 sm:text-3xl">
+          {SABRINA.name} is an immigration attorney. She started PERM Tracker because her clients had no way to see
+          where a case stood between the filing and the decision.
+        </p>
       </section>
 
       {/* The two halves, as the pages each one actually gets. */}
@@ -314,7 +321,10 @@ export default async function AboutPage() {
           title="Where every figure comes from"
           line="Three federal agencies, read several times a day and live on every case lookup. Each figure carries its source and its date."
         />{" "}
-        <div className="mt-10 grid grid-cols-1 items-stretch gap-4 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,0.8fr)_auto_minmax(0,1fr)]">
+        <div className="mt-10">
+          <SourcePages />
+        </div>{" "}
+        <div className="mt-12 grid grid-cols-1 items-stretch gap-4 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,0.8fr)_auto_minmax(0,1fr)]">
           <ol className="grid grid-cols-1 gap-3">
             {SOURCES.map((s) => (
               <Fragment key={s.agency}>
@@ -355,9 +365,11 @@ export default async function AboutPage() {
             ))}
           </ul>
         </div>{" "}
-        <div className="mt-12 max-w-3xl">
+        {/* The record fills the column, as it does on the homepage; only the
+            sentence under it keeps a reading width (owner, Oct 27 2026). */}
+        <div className="mt-12">
           <RecordStrip record={record} />{" "}
-          <p className="mt-4 text-base text-muted-foreground">
+          <p className="mt-4 max-w-2xl text-base text-muted-foreground">
             Estimated dates are labelled as estimates and graded in public on the{" "}
             <Link href="/estimate-scorecard" className={LINK}>estimate scorecard</Link>.{" "}
             <Link href="/methodology" className={LINK}>The methodology page</Link> traces every number.

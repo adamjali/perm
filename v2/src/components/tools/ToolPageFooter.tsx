@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRightIcon } from "@phosphor-icons/react/ssr";
 
+import { cn } from "@/lib/utils";
+
 
 /**
  * The end of a calculator page: the other calculators, and the writing that
@@ -27,6 +29,7 @@ export interface ToolPageFooterProps {
 
 /** A page ends with a few related reads, never a wall of links. */
 const MAX_READING = 3;
+const COLUMNS: Record<number, string> = { 1: "", 2: "sm:grid-cols-2", 3: "md:grid-cols-3" };
 
 export function ToolPageFooter({ reading }: ToolPageFooterProps) {
   return (
@@ -34,7 +37,9 @@ export function ToolPageFooter({ reading }: ToolPageFooterProps) {
       {reading.length > 0 ? (
         <section className="mt-12">
           <h2 className="font-heading text-2xl font-bold">The rules behind these numbers</h2>
-          <ul className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          {/* As many columns as links, so a third link never sits alone under
+              two with an empty space beside it (owner, Oct 27 2026). */}
+          <ul className={cn("mt-6 grid gap-x-8 gap-y-6", COLUMNS[Math.min(reading.length, MAX_READING)])}>
             {reading.slice(0, MAX_READING).map((r) => (
               <li key={r.href} className="flex">
                 <Link

@@ -34,6 +34,8 @@ export interface StageBarProps {
    * caller places the `ChartTips` around one bar or a whole board of them.
    */
   tipHeading?: string;
+  /** The bar's height class: a row on the wall, or one bar standing alone. */
+  height?: string;
   className?: string;
 }
 
@@ -101,13 +103,13 @@ const MIN_SEGMENT_PX = 4;
 // pastel and against the white track alike.
 const SEGMENT_EDGE = "border-r-2 border-foreground/50";
 
-export function StageBar({ stages, scale, tipHeading, className }: StageBarProps) {
+export function StageBar({ stages, scale, tipHeading, height = "h-5", className }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
   const denominator = scale === "composition" ? own : scale;
   if (denominator <= 0 || own === 0) {
     return (
       <span
-        className={`block h-5 w-full border border-input bg-card ${className ?? ""}`}
+        className={`block ${height} w-full border border-input bg-card ${className ?? ""}`}
         aria-hidden="true"
       />
     );
@@ -115,7 +117,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
 
   return (
     <span
-      className={`flex h-5 w-full overflow-hidden border border-input bg-card ${className ?? ""}`}
+      className={`flex ${height} w-full overflow-hidden border border-input bg-card ${className ?? ""}`}
       aria-hidden="true"
     >
       {STAGE_ORDER.map((stage) => {

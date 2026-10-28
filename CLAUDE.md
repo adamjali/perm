@@ -1433,3 +1433,41 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
 - **Washington's WARN reader walks back to 2019 on its first load and weekly**: it had stopped at 400 days, so nothing
   before July 2025 was ever loaded.
 
+
+## Oct 27 2026 (evening): DOL's day, the board, and pictures before words
+
+- **A decision is dated to the day DOL worked** (`observed_day`, `dolDayOf`/`dolDayBounds` in `src/lib/dolDay.ts`,
+  held together by `scripts/fixtures/dol_day.json`): a change our sweep sees before 7 AM Eastern counts on the day
+  before. `daily_decisions` was still on calendar days until the first sweep after the 5:54 PM EDT push; Oct 26 reads
+  596 there and 792 by DOL's day.
+- **DOL's submitted date is the queue date** (`queue_date` in `scripts/lib_flag_serials.py`), and the line ahead of a
+  case is counted by filing day (`perm_docs['perm_day_queue']`, `casesAheadOfDay(..., byDay)`).
+- **A broad LCA employer name reads newest-first** on `lca_cases_recv` (Sentry 59); a weekday-afternoon pass checks
+  the wage requests DOL is working (`pwd-active`).
+- **`/today`, where every step stands** (`src/components/board/BoardParts.tsx`, `src/lib/board.ts`,
+  `src/lib/db/board.ts`): the four steps on one numbered rail. Wage request, PERM and I-140 are bars on one shared
+  scale (filed to decided; USCIS's median); the bulletin is a split line, green before its cutoff ("current"), blue
+  after ("waiting"). Each step carries one coloured line for how it moved: green up for forward or quicker, red down
+  for back or slower (`positionShift`, `medianShift`, `bulletinShift`). Below: filed against decided per line, the
+  day's decisions as one bar (decided statuses count what came in, so a certification lapsing isn't subtracted),
+  every waiting status as a tile (fewer is green, more is amber), and the bulletin as a grid coloured by move.
+- **The bulletin archive keys categories as State codes them** (`EB2`, `EW3`), never "EB-2": a lookup with the
+  hyphen reads nothing and printed "not listed".
+- **Pictures before words, everywhere touched** (owner, Oct 27: "visual heavy, not text blobs"): `/compare` opens
+  each tracker's card with its own homepage (`src/lib/compare/homeShots.ts`, one load each, robots.txt read first;
+  H1BPerm's is the capture taken in a person's browser), `/perm-queue` opens on its figures with its notes folded
+  and the waiting cases as one bar, `/methodology`'s sources are tiles with the paragraphs folded, `/about` has one
+  picture in the hero (the portrait, a lime offset and an ink name tag) and the six federal pages as one even row
+  with the sources.
+- **One column per page**: every box either fills it or shares a row; only prose keeps a reading width.
+- **Share cards end on whitespace and fit their content** (`scripts/capture-card-shots.mjs`): the capture finds the
+  lowest line inside the frame no box, picture or text crosses (full-width bands count as ground), never ends on a
+  heading whose content was cut, lifts the top past anything it would slice, and records the crop's real height;
+  `make-page-cards.mjs` gives each frame the picture's own shape. Before this, most of the 92 cards were cut mid-box.
+  A cut never leaves a frame under 55% full (Badges and Glossary had ended on one line), a page whose first block is
+  too tall to frame whole names its picture's section with `from`, and the capture hides DOL's notice banner and the
+  side list by its current label ("Data sections"): it had been renamed, and its lime current-page row showed at the
+  left edge of every data card.
+- **Hosting, domains and mail, priced from each provider's own page**: `~/.claude/reference/web-infra-and-seo.md`,
+  "Hosting, domains and mail". Oracle's trial ends Oct 28-29; the tenancy checked that night holds only Always Free
+  resources.

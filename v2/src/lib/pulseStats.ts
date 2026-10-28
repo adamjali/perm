@@ -17,7 +17,8 @@
  * comparison that means something is the same weekday over the weeks before.
  *
  * Nothing here is projected. Every figure is a count of decisions DOL made,
- * dated by the day our sweep saw them change.
+ * dated by the day DOL worked (the day our sweep saw them change, or the day
+ * before when it saw them before 7 AM Eastern).
  */
 import { federalHolidayName, isFederalHoliday } from "@/lib/perm";
 import { MS_PER_DAY } from "@/lib/time";

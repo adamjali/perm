@@ -12,7 +12,17 @@ import { BarRows } from "@/components/data/BarRows";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { DisclosureList } from "@/components/tools/FaqList";
-import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
+import {
+  AirplaneTiltIcon,
+  ArrowRightIcon,
+  ArrowSquareOutIcon,
+  BriefcaseIcon,
+  CurrencyDollarIcon,
+  MapPinIcon,
+  ShoppingCartIcon,
+  StairsIcon,
+} from "@phosphor-icons/react/ssr";
+import { FinePrint } from "@/components/data/FinePrint";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -182,6 +192,8 @@ const TRACE: {
 const SOURCES = [
   {
     name: "DOL FLAG processing times",
+    short: "DOL's queue months and average days",
+    every: "Daily",
     seal: "/agency/dol-seal.png",
     sealAlt: "Seal of the US Department of Labor",
     what: "Queue positions and average days, the figures on the processing times page.",
@@ -190,6 +202,8 @@ const SOURCES = [
   },
   {
     name: "DOL PERM disclosure files",
+    short: "Every decided case, with its dates",
+    every: "Quarterly",
     seal: "/agency/dol-seal.png",
     sealAlt: "Seal of the US Department of Labor",
     what: "Case-level decisions, the basis of the timeline calculator's cohort record. The files are unioned and de-duplicated by case number.",
@@ -198,6 +212,8 @@ const SOURCES = [
   },
   {
     name: "USCIS I-140 quarterly counts",
+    short: "Pending and completed I-140s",
+    every: "Quarterly",
     seal: "/agency/dhs-seal.png",
     sealAlt: "Seal of the US Department of Homeland Security",
     what: "Pending and completed petitions by category, the I-140 calculator's queue.",
@@ -206,6 +222,8 @@ const SOURCES = [
   },
   {
     name: "USCIS quarterly performance workbooks",
+    short: "Every form's median time, by quarter",
+    every: "Quarterly",
     seal: "/agency/dhs-seal.png",
     sealAlt: "Seal of the US Department of Homeland Security",
     what: "Every form's median months to a decision, the I-485 by field office, approved I-140s awaiting a visa number by category and country, and I-140 approvals by class and country. Each sheet is reconciled against USCIS's own totals before it is written.",
@@ -214,6 +232,8 @@ const SOURCES = [
   },
   {
     name: "USCIS Case Status API",
+    short: "One receipt number's status",
+    every: "Per lookup",
     seal: "/agency/dhs-seal.png",
     sealAlt: "Seal of the US Department of Homeland Security",
     what: "USCIS's own status text and dated history for one receipt number, read at lookup time under credentials issued to PERM Tracker LLC. Off until USCIS grants access; the lookup page says so.",
@@ -222,6 +242,8 @@ const SOURCES = [
   },
   {
     name: "State Department visa bulletin",
+    short: "Every cutoff date since 2005",
+    every: "Monthly",
     seal: "/agency/dos-seal.png",
     sealAlt: "Seal of the US Department of State",
     what: "Cutoff dates from every bulletin since October 2014 and most back to June 2005, read from the State Department's own pages as each one appears, with some months from the Internet Archive's copies of the same pages. A few older months are missing, where State's pages don't parse or aren't linked. Paces and backward steps are measured from October 2014. Nothing in it is forecast.",
@@ -261,8 +283,11 @@ export default async function MethodologyPage() {
         </p>
         {/* Six readings of one figure on one scale, shortest first, DOL's own
             in ink: the spread is the point. */}
-        <div className="mt-6 max-w-3xl bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border">
+        {/* The column's whole width, one line a source (owner, Oct 27 2026:
+            boxes that stopped at 768px left the rest of the row empty). */}
+        <div className="mt-6 bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border">
           <BarRows
+            inline
             rows={[...SPREAD]
               .sort((a, b) => a.days - b.days)
               .map((row) => ({
@@ -289,31 +314,24 @@ export default async function MethodologyPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">What our figures are</h2>
-        <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4">
-          {SOURCES.map((s, i) => (
-            <div
-              key={s.name}
-              className={
-                "p-6 border-2 shadow-hard-sm border-border " +
-                (i % 2 === 0 ? "bg-card" : "bg-tint")
-              }
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  {/* The agency's own seal, sourced from its published
-                      artwork - identification, not endorsement. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={s.seal}
-                    alt={s.sealAlt}
-                    width={44}
-                    height={44}
-                    loading="lazy"
-                    className="h-11 w-11 shrink-0"
-                  />
-                  <h3 className="font-heading text-lg font-bold">{s.name}</h3>
-                </div>{" "}
+        <h2 className="font-heading text-2xl font-bold">What our figures are</h2>{" "}
+        {/* A tile per source: the agency's seal, what it gives in a line and how
+            often; the detail is folded (owner, Oct 27 2026: "not text blobs"). */}
+        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+          {SOURCES.map((s) => (
+            <li key={s.name} className="flex flex-col bg-tint p-5">
+              <div className="flex items-start gap-3">
+                {/* The agency's own seal, sourced from its published
+                    artwork - identification, not endorsement. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={s.seal} alt={s.sealAlt} width={44} height={44} loading="lazy" className="h-11 w-11 shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-heading text-lg font-bold leading-snug">{s.name}</h3>{" "}
+                  <p className="mt-1 text-base">{s.short}</p>
+                </div>
+              </div>{" "}
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                <span className="bg-background px-2.5 py-1 text-sm font-semibold">{s.every}</span>{" "}
                 <a
                   href={s.href}
                   target="_blank"
@@ -323,14 +341,14 @@ export default async function MethodologyPage() {
                   Source
                   <ArrowSquareOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
-              </div>
-              <p className="mt-2 text-base leading-relaxed text-muted-foreground">{s.what}</p>{" "}
-              <p className="mt-2 text-sm text-muted-foreground">
-                {s.cadence}
-              </p>
-            </div>
+              </div>{" "}
+              <FinePrint summary="How it's read">
+                <p className="mt-1 text-sm leading-relaxed text-soft">{s.what}</p>{" "}
+                <p className="mt-2 text-sm text-soft">{s.cadence}</p>
+              </FinePrint>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
       {/* The page's own claim, made checkable. A source list says where a
@@ -386,65 +404,74 @@ export default async function MethodologyPage() {
           Occupation and city pages also draw on six other federal sources. Each is loaded from the agency&apos;s own
           file, checked against that file&apos;s own totals or shape before it&apos;s used, and dated on the page.
         </p>{" "}
-        <dl className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0">
-          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border" id="onet">
-            <dt className="font-heading text-lg font-bold">O*NET, what a job is</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-soft">
-              Descriptions, tasks, Job Zones and reported education from the O*NET Database, and the Bright Outlook list
-              from O*NET OnLine, both by the U.S. Department of Labor, Employment and Training Administration
-              (USDOL/ETA), used under the CC BY 4.0 license. O*NET® is a trademark of USDOL/ETA. What we changed: we show
-              the six core tasks O*NET rates most important rather than every task, round the education shares to whole
-              percents and leave out levels under 5%, and show eight of the titles workers report. Nothing is reworded.
-              USDOL/ETA has not approved, endorsed, or tested these changes.
-            </dd>
-          </div>{" "}
-          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
-            <dt className="font-heading text-lg font-bold">BLS, what a job pays and where it&apos;s heading</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-soft">
-              Market pay from the Bureau of Labor Statistics&apos; Occupational Employment and Wage Statistics: what
-              employers report paying everyone in a job, nationally, by state and by metro, as five percentiles. The
-              ten-year employment projections and typical entry education come from BLS&apos;s projections tables. A
-              percentile BLS publishes as top-coded is shown as &quot;at least&quot; its ceiling, never as a number.
-            </dd>
-          </div>{" "}
-          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
-            <dt className="font-heading text-lg font-bold">DOL&apos;s wage tables, every year since 2021-22</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-soft">
-              The four prevailing wage levels for every job in every area, from the tables the Office of Foreign Labor
-              Certification publishes each July, both the all-industries table and the one for universities and research
-              employers (ACWIA). Most levels are hourly in DOL&apos;s files and shown a year at 2,080 hours, as DOL
-              computes them. Jobs DOL publishes yearly (teachers, professors, pilots) are shown as published: DOL
-              labels them from 2023-24 on, and in the two older years we read a figure of $5,000 or more as yearly,
-              since no hourly level in any year comes near it. DOL&apos;s own average column is for the H-2 programs and
-              is never shown as a level.
-            </dd>
-          </div>{" "}
-          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
-            <dt className="font-heading text-lg font-bold">Census, where a city is</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-soft">
-              A worksite city is matched to Census&apos;s place and county-subdivision files (which is where New England
-              towns and New Jersey townships are), then to its county and metro area, then to the DOL wage area that
-              county belongs to. A place in several counties takes the county nearest its center, and the page says
-              so. Two places with the same name in one state, or a name Census doesn&apos;t list, stay unmatched rather
-              than guessed.
-            </dd>
-          </div>{" "}
-          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
-            <dt className="font-heading text-lg font-bold">BEA, what prices are where</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-soft">
-              Regional price parities from the Bureau of Economic Analysis: a metro&apos;s price level against 100 for
-              the country, for all items and for housing rents, read through BEA&apos;s API.
-            </dd>
-          </div>{" "}
-          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
-            <dt className="font-heading text-lg font-bold">State, the visas issued</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-soft">
-              The State Department&apos;s monthly immigrant visa issuances since March 2017, by visa class and by
-              country or consulate. A month is used only when its rows add up exactly to State&apos;s own grand total.
-              Categories follow State&apos;s symbol legend. These are consular issuances only.
-            </dd>
-          </div>
-        </dl>
+        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+          <li className="flex flex-col bg-tint p-5" id="onet">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center bg-foreground text-background">
+                <BriefcaseIcon weight="bold" className="size-6" />
+              </span>{" "}
+              <h3 className="font-heading text-lg font-bold leading-snug">O*NET, what a job is</h3>
+            </div>{" "}
+            <FinePrint summary="How it's used" className="mt-3">
+              <p className="mt-1 text-sm leading-relaxed text-soft">Descriptions, tasks, Job Zones and reported education from the O*NET Database, and the Bright Outlook list from O*NET OnLine, both by the U.S. Department of Labor, Employment and Training Administration (USDOL/ETA), used under the CC BY 4.0 license. O*NET® is a trademark of USDOL/ETA. What we changed: we show the six core tasks O*NET rates most important rather than every task, round the education shares to whole percents and leave out levels under 5%, and show eight of the titles workers report. Nothing is reworded. USDOL/ETA has not approved, endorsed, or tested these changes.</p>
+            </FinePrint>
+          </li>{" "}
+          <li className="flex flex-col bg-tint p-5">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center bg-foreground text-background">
+                <CurrencyDollarIcon weight="bold" className="size-6" />
+              </span>{" "}
+              <h3 className="font-heading text-lg font-bold leading-snug">BLS, what a job pays and where it&apos;s heading</h3>
+            </div>{" "}
+            <FinePrint summary="How it's used" className="mt-3">
+              <p className="mt-1 text-sm leading-relaxed text-soft">Market pay from the Bureau of Labor Statistics&apos; Occupational Employment and Wage Statistics: what employers report paying everyone in a job, nationally, by state and by metro, as five percentiles. The ten-year employment projections and typical entry education come from BLS&apos;s projections tables. A percentile BLS publishes as top-coded is shown as &quot;at least&quot; its ceiling, never as a number.</p>
+            </FinePrint>
+          </li>{" "}
+          <li className="flex flex-col bg-tint p-5">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center bg-foreground text-background">
+                <StairsIcon weight="bold" className="size-6" />
+              </span>{" "}
+              <h3 className="font-heading text-lg font-bold leading-snug">DOL&apos;s wage tables, every year since 2021-22</h3>
+            </div>{" "}
+            <FinePrint summary="How it's used" className="mt-3">
+              <p className="mt-1 text-sm leading-relaxed text-soft">The four prevailing wage levels for every job in every area, from the tables the Office of Foreign Labor Certification publishes each July, both the all-industries table and the one for universities and research employers (ACWIA). Most levels are hourly in DOL&apos;s files and shown a year at 2,080 hours, as DOL computes them. Jobs DOL publishes yearly (teachers, professors, pilots) are shown as published: DOL labels them from 2023-24 on, and in the two older years we read a figure of $5,000 or more as yearly, since no hourly level in any year comes near it. DOL&apos;s own average column is for the H-2 programs and is never shown as a level.</p>
+            </FinePrint>
+          </li>{" "}
+          <li className="flex flex-col bg-tint p-5">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center bg-foreground text-background">
+                <MapPinIcon weight="bold" className="size-6" />
+              </span>{" "}
+              <h3 className="font-heading text-lg font-bold leading-snug">Census, where a city is</h3>
+            </div>{" "}
+            <FinePrint summary="How it's used" className="mt-3">
+              <p className="mt-1 text-sm leading-relaxed text-soft">A worksite city is matched to Census&apos;s place and county-subdivision files (which is where New England towns and New Jersey townships are), then to its county and metro area, then to the DOL wage area that county belongs to. A place in several counties takes the county nearest its center, and the page says so. Two places with the same name in one state, or a name Census doesn&apos;t list, stay unmatched rather than guessed.</p>
+            </FinePrint>
+          </li>{" "}
+          <li className="flex flex-col bg-tint p-5">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center bg-foreground text-background">
+                <ShoppingCartIcon weight="bold" className="size-6" />
+              </span>{" "}
+              <h3 className="font-heading text-lg font-bold leading-snug">BEA, what prices are where</h3>
+            </div>{" "}
+            <FinePrint summary="How it's used" className="mt-3">
+              <p className="mt-1 text-sm leading-relaxed text-soft">Regional price parities from the Bureau of Economic Analysis: a metro&apos;s price level against 100 for the country, for all items and for housing rents, read through BEA&apos;s API.</p>
+            </FinePrint>
+          </li>{" "}
+          <li className="flex flex-col bg-tint p-5">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center bg-foreground text-background">
+                <AirplaneTiltIcon weight="bold" className="size-6" />
+              </span>{" "}
+              <h3 className="font-heading text-lg font-bold leading-snug">State, the visas issued</h3>
+            </div>{" "}
+            <FinePrint summary="How it's used" className="mt-3">
+              <p className="mt-1 text-sm leading-relaxed text-soft">The State Department&apos;s monthly immigrant visa issuances since March 2017, by visa class and by country or consulate. A month is used only when its rows add up exactly to State&apos;s own grand total. Categories follow State&apos;s symbol legend. These are consular issuances only.</p>
+            </FinePrint>
+          </li>
+        </ul>
       </section>
 
       <section className="dark mt-12 border-2 shadow-hard border-black bg-[#141414] text-foreground p-6 sm:p-8">

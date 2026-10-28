@@ -53,6 +53,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/opt-employers": "opt stem opt cpt f-1 student students practical training sevis ice",
   "/tools/green-card-line": "green card line place in line queue ahead of me how many years wait backlog priority date eb-2 eb-3 india china",
   "/sponsor-finder": "sponsor sponsors green card employer employers find search filter job occupation state industry wage salary timing transfer cap-exempt",
+  "/today": "today now everything board dashboard overview summary all steps wage request pwd perm i-140 i140 visa bulletin cutoff where line stands growing shrinking moved forward back retrogression status",
   "/perm-by-the-numbers": "numbers statistics stats totals counts data pending waiting on hold holds decisions per day new filings jobs crew member new employers sponsors rfi wage requests visa bulletin archive press",
   "/perm-recruitment": "recruitment sunday ad ads advertisement newspaper newspapers job order notice of filing additional steps professional journal timing",
   "/h1b-employers": "h-1b h1b top employers sponsors biggest largest busiest companies ranking lca uscis data hub approvals by state",
