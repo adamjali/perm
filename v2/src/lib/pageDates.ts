@@ -65,7 +65,9 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   "/perm-employers/[slug]": "2026-10-17",
   "/perm-employers/browse/[letter]": "2026-10-15",
   "/perm-industries/[slug]": "2026-10-16",
-  "/perm-queue/[month]": "2026-10-16",
+  // Oct 28 2026: every month page gained what moved since yesterday, its status links and its day calendar.
+  "/perm-queue/[month]": "2026-10-28",
+  "/perm-queue/[month]/[day]": "2026-10-28",
   "/perm-rfi-audit/[stage]": "2026-10-17",
   "/perm-wages/[slug]": "2026-10-16",
   "/perm-wages/browse/[letter]": "2026-10-15",
