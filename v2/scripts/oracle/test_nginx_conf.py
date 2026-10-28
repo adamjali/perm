@@ -19,6 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CONF_PATH = HERE / "nginx" / "permtracker.conf"
+LOCALES_TS = HERE.parent.parent / "src" / "lib" / "i18n" / "locales.ts"
 ERRORS_DIR = HERE / "nginx" / "errors"
 
 failures: list[str] = []
@@ -433,6 +434,30 @@ def run(conf_text: str) -> None:
     check("defense log records whether a request is a pre-load",
           fmt is not None and fmt.group(1).endswith('"$http_user_agent" $http_next_router_prefetch'))
 
+    # A translated page says its own language in the HTML (Oct 28 2026). The tags
+    # are the app's own; an English page keeps its tag and its compression.
+    tags = dict(re.findall(r'code: "([a-z-]+)", path: "/[a-z-]+", tag: "([A-Za-z-]+)"', LOCALES_TS.read_text()))
+    check("html lang: the app's five languages were read", len(tags) == 5, str(tags))
+    for code, tag in tags.items():
+        for path in (f"/{code}", f"/{code}/perm-case-status"):
+            got = eval_map(head, "pt_html_lang", {"uri": path})
+            check(f"html lang: {path} is {tag}", got == tag, got)
+            check(f"html lang: {path} asks the app for plain HTML",
+                  eval_map(head, "pt_upstream_ae", {"uri": path, "http_accept_encoding": "gzip, br"}) == "")
+    for path in ("/", "/perm-case-status", "/zhaw", "/escape-plan", "/visa-bulletin", "/perm-employers/vi-jon-inc"):
+        check(f"html lang: {path} stays en", eval_map(head, "pt_html_lang", {"uri": path}) == "en")
+        # nginx passes the browser's own header on; the evaluator names the variable rather than reading it.
+        check(f"html lang: {path} keeps the browser's compression",
+              eval_map(head, "pt_upstream_ae", {"uri": path}) == "$http_accept_encoding")
+    layout = (HERE.parent.parent / "src" / "app" / "layout.tsx").read_text()
+    html_at = layout.find("<html ")
+    check("html lang: the root layout's <html> says lang=\"en\", the page's first lang",
+          html_at >= 0 and 'lang="en"' in layout[html_at: layout.find(">", html_at)] and "lang=" not in layout[:html_at].split("return (")[-1])
+    check("html lang: the tag is written at server level, once",
+          "sub_filter ' lang=\"en\"' ' lang=\"$pt_html_lang\"';" in server_level
+          and "sub_filter_once on;" in server_level
+          and "proxy_set_header Accept-Encoding $pt_upstream_ae;" in server_level)
+
 
 def probe() -> None:
     """The checks must fail on the drifts they exist for."""
@@ -501,6 +526,12 @@ def probe() -> None:
         "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
         "php probes sent to the app": good.replace("        return 404;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
         "WordPress folders matched anywhere in the path": good.replace("|^/(wp-admin|", "|/(wp-admin|", 1),
+        "an English page's tag rewritten to nothing": good.replace("    default         en;\n}", "    default         \"\";\n}", 1),
+        "every page loses its compression": good.replace("{ en $http_accept_encoding; default \"\"; }", "{ default \"\"; }", 1),
+        "a language prefix matches a longer word": good.replace('"~^/zh(/|$)"', '"~^/zh"', 1),
+        "the tag no longer written": good.replace("    sub_filter ' lang=\"en\"' ' lang=\"$pt_html_lang\"';\n", "", 1),
+        "matched on the tag's opening, which the deployment id breaks": good.replace(
+            "sub_filter ' lang=\"en\"' ' lang=\"$pt_html_lang\"';", "sub_filter '<html lang=\"en\"' '<html lang=\"$pt_html_lang\"';", 1),
     }
     global failures
     for name, text in mutations.items():
