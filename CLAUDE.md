@@ -1565,3 +1565,19 @@ Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pum
 - **The dev server's watcher can go stale**: when served output doesn't match the source, restart it before debugging.
   `pnpm check` bails at the first failure locally, and GitHub runs no pull_request workflow while a PR conflicts with main.
 - **The "Claude Code Review" workflow fails on every PR**: the Claude GitHub App isn't installed on the repo. Not a gate.
+
+## Oct 28 2026 (evening): the catch-up release is live, and what followed it
+
+- **Live at 4:43 PM EDT** (abce2f44, `-f when=now` on the owner's "Live right now"); Convex deployed after; PR #69 merged.
+  Read back on build 331: 12 pages, glued text, hidden content, headings, links, trust, axe and flows all passed.
+- **Fixed after, on main for the 2 AM run:** an article byline at 20px (now 44, `min-h-11`); the memory alarm alarms on
+  swap that's moving (pages a second) and holds until clear, not on idle swap (installed by hand that evening);
+  /compare's quotes are `<q>` and the em-dash check skips quoted words.
+- **The homepage's wait is /today's** (`liveWait` in the homepage, `HeroWait`): it said "A PERM case takes 13 months"
+  from DOL's June file while /today said about 9½. `waitTrend.ts` is gone. Found by the h1bgrader comparison
+  (`~/.claude/explanations/20261028_h1bgrader/`), which also lists ten things it does that we don't, ranked.
+- **The pre-push hook finds its identity check through `--git-common-dir`**, so a push from a worktree runs it too
+  (`--git-dir` points at the worktree's own folder, which has no hooks, and the push failed).
+- **Translated data pages are on branch `i18n/data-pages`**, not live: the case status page in five languages under
+  `/<lang>/perm-case-status` (a `[lang]` segment, typed messages that fail the typecheck when a language is missing,
+  `Intl` for dates and numbers, hreflang both ways). It ships only on the owner's yes after review.
