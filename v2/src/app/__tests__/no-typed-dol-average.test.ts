@@ -16,6 +16,8 @@ const DATED_RECORDS = new Set([
   "content/guides/how-accurate-are-perm-estimates.mdx", // "On one day in August 2026, six public PERM tools..."
   "content/guides/reading-the-perm-data.mdx", // "On August 24, 2026 it said 372, while public tools..."
   "src/app/(site)/(public)/methodology/page.tsx", // SPREAD: readings taken 2026-08-24
+  "content/changelog/corrections.mdx", // quotes the wrong figure a page printed, beside the day it was corrected
+  "src/components/tools/dataShots.ts", // each picture's alt says what its dated capture shows, retaken with the picture
 ]);
 
 // "about 372 days", "average ... 336 days", "working cases filed around September 2025"
@@ -24,6 +26,11 @@ const TYPED = [
   /working cases filed (?:around|in)\s+\*{0,2}(?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d\d/i,
   // DOL's wage-request wait: "NPWC processing takes 4-7 months", "Processing time**: Currently 4-7 months"
   /\b(?:NPWC|PWD|prevailing wage|processing time)\b[^.,;()\n|]{0,40}?\b\d+\s*(?:-|to|–)\s*\d+\s*(?:months|mo)\b/i,
+  // DOL's month in other words (Oct 28 2026, the featured guide): "DOL is reviewing applications filed in
+  // November 2025", "DOL is working requests received in April 2026"
+  /\bDOL(?:'s|’s)?\s+(?:analyst review\s+)?is\s+(?:working|reviewing|deciding|processing|adjudicating)\s+(?:on\s+)?(?:cases|applications|requests|filings|PERM cases|wage requests)\s+(?:received|filed|submitted)\s+(?:around|in)\s+\*{0,2}(?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d\d/i,
+  // an average said another way: "The average time to a determination is 336 days"
+  /\baverage\b[^.\n]{0,40}?\bis\s+\*{0,2}[2-4]\d\d\*{0,2}\s+days/i,
 ];
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -46,7 +53,7 @@ export function typedDolFigures(src: string): string[] {
 describe("DOL's figures are read live, not typed", () => {
   it("finds a typed figure when one is there (control)", () => {
     expect(typedDolFigures("DOL's average is about 372 days as of August 2026.")).toHaveLength(1);
-    expect(typedDolFigures("As of August 2026 DOL is working cases filed around September 2025.")).toHaveLength(1);
+    expect(typedDolFigures("As of August 2026 DOL is working cases filed around September 2025.").length).toBeGreaterThan(0);
     expect(typedDolFigures("an average of about **372 days** from filing")).toHaveLength(1);
     expect(typedDolFigures("<DolNow show=\"average\" /> on DOL's published average")).toHaveLength(0);
     expect(typedDolFigures("Current NPWC processing takes 4-7 months per OFLC.")).toHaveLength(1);
@@ -54,6 +61,10 @@ describe("DOL's figures are read live, not typed", () => {
     expect(typedDolFigures("NPWC processing times currently range from 4 to 7 months")).toHaveLength(1);
     expect(typedDolFigures("- **Processing time**: <DolNow show=\"pwdWait\" /> on DOL’s queue")).toHaveLength(0);
     expect(typedDolFigures("the prevailing wage determination, the recruitment period (2-3 months)")).toHaveLength(0);
+    expect(typedDolFigures("DOL is reviewing applications filed in November 2025, as of its own figure")).toHaveLength(1);
+    expect(typedDolFigures("DOL is working requests received in April 2026 for the standard queue")).toHaveLength(1);
+    expect(typedDolFigures("The average time to a determination is 336 days, about eleven months")).toHaveLength(1);
+    expect(typedDolFigures("DOL is deciding cases filed in <DolNow show=\"month\" />")).toHaveLength(0);
   });
 
   it("no page or article types DOL's average or queue month", () => {

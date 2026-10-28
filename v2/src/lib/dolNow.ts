@@ -20,18 +20,25 @@ export interface DolNow {
   decidedIn: string | null;
   /** The filing month analyst review is working, "December 2025". */
   frontier: string | null;
+  /** The filing month audited cases are being reviewed from, in their own line, "December 2025". */
+  auditFrontier: string | null;
   /** The day DOL published these figures, "October 5, 2026". */
   asOf: string | null;
 }
 
+/** DOL's row for audited cases, worked in their own line. */
+const AUDIT_REVIEW = /audit review/i;
+
 export function dolNow(t: ProcessingTimesSnapshot | null): DolNow {
-  if (!t) return { days: null, decidedIn: null, frontier: null, asOf: null };
+  if (!t) return { days: null, decidedIn: null, frontier: null, auditFrontier: null, asOf: null };
   const avg = analystReviewAverage(t.permAverageDays ?? []);
   const queue = analystReviewQueue(t.permQueues ?? []);
+  const audit = (t.permQueues ?? []).find((q) => AUDIT_REVIEW.test(q.queue));
   return {
     days: avg?.calendarDays ?? null,
     decidedIn: formatMonth(avg?.month),
     frontier: formatMonth(queue?.priorityDate),
+    auditFrontier: formatMonth(audit?.priorityDate),
     asOf: formatAsOf(t.permAsOf),
   };
 }
@@ -88,6 +95,8 @@ export interface DolPwdNow {
   asOf: string | null;
   /** How long those requests have waited, "3 to 4 months" or "about 4 months". */
   wait: string | null;
+  /** The month for requests that name another wage source than OEWS (a survey, a union contract), "May 2026". */
+  otherFrontier: string | null;
 }
 
 const DAY_MS = 86_400_000;
@@ -116,6 +125,7 @@ export function dolPwdNow(t: ProcessingTimesSnapshot | null): DolPwdNow {
     frontierShort: formatMonthShort(month),
     asOf: formatAsOf(t?.pwdAsOf),
     wait: waitPhrase(month, t?.pwdAsOf),
+    otherFrontier: formatMonth(row?.nonOewsReceiptDate ?? null),
   };
 }
 

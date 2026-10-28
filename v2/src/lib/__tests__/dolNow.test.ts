@@ -17,6 +17,12 @@ const OCT_5 = {
 } as unknown as ProcessingTimesSnapshot;
 
 describe("DOL's figures in prose", () => {
+  it("reads the audit line's month apart from analyst review's", () => {
+    const later = { ...OCT_5, permQueues: [OCT_5.permQueues[0], { queue: "Audit Review", priorityDate: "2025-09", raw: "September 2025" }] } as unknown as ProcessingTimesSnapshot;
+    expect(dolNow(later)).toMatchObject({ frontier: "December 2025", auditFrontier: "September 2025" });
+    expect(dolNow(null).auditFrontier).toBeNull();
+  });
+
   it("dates the average", () => {
     expect(averagePhrase(dolNow(OCT_5))).toBe("336 days as of October 5, 2026");
   });
@@ -84,6 +90,12 @@ describe("DOL's wage-request queue in prose", () => {
   it("reads the PERM row, never another program's", () => {
     const h2bOnly = { ...SEP_30_PWD, pwdQueues: [{ program: "H-2B", oewsReceiptDate: "2026-08", nonOewsReceiptDate: null }] } as unknown as ProcessingTimesSnapshot;
     expect(dolPwdNow(h2bOnly).frontier).toBeNull();
+  });
+
+  it("reads the other wage-source month from the PERM row", () => {
+    const other = { ...SEP_30_PWD, pwdQueues: [{ program: "PERM", oewsReceiptDate: "2026-06", nonOewsReceiptDate: "2026-05" }] } as unknown as ProcessingTimesSnapshot;
+    expect(dolPwdNow(other).otherFrontier).toBe("May 2026");
+    expect(dolPwdNow(null).otherFrontier).toBeNull();
   });
 
   it("never prints a number DOL didn't publish", () => {

@@ -1,8 +1,8 @@
 ---
 title: "Waiting on an employer-sponsored green card"
-description: "The whole employment green card from the applicant's side: what each federal filing is, how long it takes now, and how to check yours yourself."
+description: "The whole employment green card from the applicant's side: what each filing is, how long it takes now, what it costs, and how to check yours."
 date: "2026-09-03"
-updated: "2026-09-26"
+updated: "2026-10-28"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/waiting-on-your-green-card.webp"
 imageAlt: "USCIS's guide to the 2023 green card, showing the old and redesigned cards front and back"
@@ -11,7 +11,7 @@ imageSource: "https://www.uscis.gov/sites/default/files/document/guides/GreenCar
 tags: ["perm", "pwd", "i-140", "i-485", "green-card", "guide", "beneficiary"]
 category: "start"
 seoTitle: "Employer-Sponsored Green Card: The Process"
-seoDescription: "Every step of an employment green card, what each takes right now, and how to check your own case with the Department of Labor and USCIS."
+seoDescription: "Every step of an employment green card: how long each takes right now, what it costs, and how to check your own case with DOL and USCIS."
 featured: true
 published: true
 ---
@@ -22,17 +22,11 @@ This is written for the person waiting, not the lawyer. Nothing here is legal ad
 
 ## The shape of it
 
-An employer-sponsored green card is a sequence of separate filings with two different agencies. Each one has to finish before the next begins, each has its own number, and each has its own queue.
+An employer-sponsored green card is six steps with two agencies, and the State Department's visa bulletin between them. Each finishes before the next begins, and each has its own queue. Here is how long each takes today, and what the government charges for it.
 
-| Step | Agency | What it is | Roughly how long |
-|---|---|---|---|
-| Prevailing wage determination | Labor | DOL sets the minimum salary for the job | <DolNow show="pwdWait" /> |
-| Recruitment | none | The employer advertises the job | 2 to 4 months |
-| PERM (ETA-9089) | Labor | DOL certifies no US worker was available | about 11 months |
-| I-140 | USCIS | The employer petitions for you | months, or 15 days with premium processing |
-| I-485 or consular | USCIS or State | You get the status | depends entirely on your priority date |
+<JourneyNow />
 
-The last row is the one that varies most. For some people it's a few months. For others, the wait after I-140 approval is measured in years, and none of the earlier steps change that.
+The bulletin wait is the step that varies most. For some people it's a few months. For others, the wait after I-140 approval is measured in years, and none of the earlier steps change that.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/waiting-on-your-green-card-awaiting-visa.webp"
@@ -47,7 +41,7 @@ The last row is the one that varies most. For some people it's a few months. For
 
 Before an employer can advertise the job, it has to ask the Department of Labor what the job pays. That request is Form ETA-9141, and DOL's answer sets the floor the employer must offer.
 
-**How long right now.** DOL is working requests received in April 2026 for the standard queue, and March 2026 for requests using a different wage source. The average time to a determination is 336 days, about eleven months, though that average covers a long tail.
+**How long right now.** <DolNow show="pwd" /> Requests that name another wage source than DOL's own survey wait in a separate queue, at <DolNow show="pwdOtherMonth" />.
 
 **How to check yours.** The request has its own case number, starting with `P-100-`. Paste it into [case status](/perm-case-status) and you get DOL's own status for it, pending or decided, plus the wage once it's issued. If you don't have the number, [search the employer](/pwd-cases).
 
@@ -61,7 +55,7 @@ There's a persistent myth that pending wage requests can't be checked by the pub
 
 The employer has to genuinely test the US labour market: newspaper ads, a job order with the state workforce agency, and several other steps, each with its own timing rule. There's a quiet period after the ads before the PERM can be filed, and a hard outer limit after which the ads go stale.
 
-**How long.** Two to four months, mostly determined by the timing rules rather than by anyone's effort.
+**How long.** <RecruitmentNow /> The timing rules set most of it, rather than anyone's effort.
 
 **How to check.** You can't, directly. Recruitment produces no public record. What you can do is understand the clocks, because they're what decides when the PERM can actually be filed. The [deadline calculator](/tools/perm-deadline-calculator) works them out from the determination date.
 
@@ -71,7 +65,7 @@ The employer has to genuinely test the US labour market: newspaper ads, a job or
 
 The employer files Form ETA-9089 and DOL decides whether to certify it. This is the step people mean when they say "my PERM is pending."
 
-**How long right now.** DOL is reviewing applications filed in November 2025, as of its own figure from 28 August 2026. So the wait is running around nine to ten months for a case that goes straight through.
+**How long right now.** <DolNow /> That average includes the cases DOL pulled aside for an audit or a request for information, so a case that goes straight through usually waits a little less.
 
 **How to check yours.** The case number starts with `G-100-` (older ones use an `A-` format). Put it into [case status](/perm-case-status) and you'll see DOL's own status word, what it means in plain English, and where your filing month sits in the queue.
 
@@ -90,15 +84,15 @@ You can also leave an email address and hear when the status changes, so you don
 
 **What can go wrong.** Denials happen, and the [measured rates](/perm-denial-risk) are published by factor rather than blended into one score, because the factors aren't independent and a single number would imply a precision the data doesn't support.
 
-**About estimates.** Any date anyone gives you for your PERM is an estimate built on how fast DOL has been moving. Ours is graded against real decisions on the [estimate scorecard](/estimate-scorecard). Treat a predicted month as a rough centre, not a date to plan around.
+**About estimates.** Any date anyone gives you for your PERM is an estimate built on how fast DOL has been moving. Treat a predicted month as a rough centre, not a date to plan around.
 
 ## Step four: the I-140
 
 Once the PERM is certified, the employer has 180 days to file the I-140 petition with USCIS. Miss that window and the certification expires.
 
-**How long.** Ordinary processing runs months and varies by service centre. Premium processing is 15 business days for an extra fee, and most employers use it.
+**How long.** USCIS's median today is in the steps above, read from its quarterly figures. Premium processing decides it within 15 business days, for an extra fee.
 
-**How to check.** This is USCIS, not DOL, so the tracking is different. You'll have a receipt number beginning with three letters. USCIS has its own case status tool. The [I-140 queue tool](/tools/i140-calculator) shows how deep the queue is at each service centre.
+**How to check.** This is USCIS, not DOL, so the tracking is different. You'll have a receipt number beginning with three letters. USCIS has its own case status tool. The [I-140 calculator](/tools/i140-calculator) shows USCIS's current times for each I-140 class.
 
 **What matters more than the timing.** Your priority date is locked in when the PERM was filed, and it survives the I-140. That date is what governs everything after this point.
 

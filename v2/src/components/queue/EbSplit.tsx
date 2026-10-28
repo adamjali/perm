@@ -31,11 +31,14 @@ export function EbSplit({
           EB-2 or EB-3: what the jobs require
         </h2>
       ) : null}{" "}
-      <p className={titled ? "mt-2 max-w-3xl text-base leading-relaxed text-soft" : "max-w-3xl text-base leading-relaxed text-soft"}>
-        The employer picks the line at the <span className="whitespace-nowrap">I-140</span>, after the PERM. The job decides which it can pick: a master&rsquo;s or
-        higher, or a bachelor&rsquo;s and five years, meets the EB-2 bar.
-      </p>{" "}
-      <div className="mt-6 max-w-3xl">
+      {/* Inside an article its own lead says what the bar is; on its own the chart says it. */}
+      {titled ? (
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
+          The employer picks the line at the <span className="whitespace-nowrap">I-140</span>, after the PERM. The job decides which it can pick: a master&rsquo;s or
+          higher, or a bachelor&rsquo;s and five years, meets the EB-2 bar.
+        </p>
+      ) : null}{" "}
+      <div className={titled ? "mt-6 max-w-3xl" : "max-w-3xl"}>
         <div aria-hidden="true" className="flex h-12 w-full border-2 border-border">
           <span className={`h-full ${EB_LINE_COLOURS.EB2.fill}`} style={{ width: `${eb2}%` }} />
           <span className={`h-full ${EB_LINE_COLOURS.EB3.fill}`} style={{ width: `${100 - eb2}%` }} />

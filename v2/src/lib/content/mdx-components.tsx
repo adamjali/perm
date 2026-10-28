@@ -20,6 +20,7 @@ import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { EbLinesNow } from "@/components/content/EbLinesNow";
 import { EbApprovalsNow } from "@/components/content/EbApprovalsNow";
 import { EbSplitNow } from "@/components/content/EbSplitNow";
+import { JourneyNow } from "@/components/content/JourneyNow";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
 import { RecruitmentNow } from "@/components/content/RecruitmentNow";
@@ -208,6 +209,7 @@ export const mdxComponents: MDXComponents = {
   EbLinesNow,
   EbApprovalsNow,
   EbSplitNow,
+  JourneyNow,
 
   // Headings
   //

@@ -20,6 +20,8 @@ const FIGURE_ROUTES: Record<string, Array<"sweep" | "dol" | "bulletin">> = {
   PwdQueueFigure: ["sweep", "dol"],
   // EB-2 and EB-3 side by side, from the newest bulletin (src/components/content)
   EbLinesNow: ["bulletin"],
+  // every step's length now, from DOL's boards, which the sweep writes (src/components/content)
+  JourneyNow: ["sweep"],
 };
 
 async function lists() {

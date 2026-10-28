@@ -4,7 +4,7 @@ description: "How long PERM takes in 2026, from DOL's own published figures: the
 seoTitle: "PERM Processing Times 2026: How Long It Takes"
 seoDescription: "How long PERM takes in 2026: the filing month DOL is reviewing, the current average wait, and what can add months to a case."
 date: "2026-01-25"
-updated: "2026-10-06"
+updated: "2026-10-28"
 author: "PERM Tracker team"
 image: "/images/content/heroes/blog/perm-processing-times-2026.webp"
 imageAlt: "PERM processing times: the month DOL is reviewing and its average days to a decision, from DOL's own page"
@@ -15,7 +15,7 @@ published: true
 featured: true
 ---
 
-**Short answer, as of DOL's figure from 22 September 2026: the Department of Labor is reviewing PERM applications filed in December 2025, and its published average from filing to determination is 336 days, about eleven months.**
+**Short answer:** <DolNow />
 
 That number moves, so the [processing times page](/perm-processing-times) reads it from DOL daily rather than repeating a figure from January. What follows is what the number means, what it leaves out, and what actually adds months to an individual case.
 
@@ -25,11 +25,11 @@ There are two different answers, and confusing them is the most common mistake.
 
 | Measure | Current figure | What it tells you |
 |---|---|---|
-| Analyst review queue | December 2025 filings | Which month DOL is working *now* |
-| Average to a determination | 336 days | How long *decided* cases took |
-| Audit review queue | December 2025 filings | Where audited cases sit, in their own line |
-| Prevailing wage, OEWS | April 2026 requests | The step *before* PERM |
-| Prevailing wage, non-OEWS | March 2026 requests | Same step, different wage source |
+| Analyst review queue | <DolNow show="month" /> filings | Which month DOL is working *now* |
+| Average to a determination | <DolNow show="average" /> | How long *decided* cases took |
+| Audit review queue | <DolNow show="auditMonth" /> filings | Where audited cases sit, in their own line |
+| Prevailing wage, OEWS | <DolNow show="pwdFullMonth" /> requests | The step *before* PERM |
+| Prevailing wage, non-OEWS | <DolNow show="pwdOtherMonth" /> requests | Same step, different wage source |
 
 The queue month is the more useful of the two. An average is a summary of cases already finished, so it lags. The filing month DOL is currently reviewing tells you where the line actually is today.
 
@@ -44,17 +44,17 @@ The queue month is the more useful of the two. An average is a summary of cases 
 
 A PERM is the third of five federal steps, and the two before it are not counted in any DOL processing figure.
 
-1. **The prevailing wage determination.** DOL sets the minimum salary for the job. It is currently working April 2026 requests, and its average to a determination is also running around eleven months.
-2. **Recruitment.** Two to four months, set by timing rules rather than by anyone's effort. There is a mandatory quiet period, and an outer limit after which the ads go stale.
-3. **The PERM itself.** The eleven months above.
+1. **The prevailing wage determination.** DOL sets the minimum salary for the job. <DolNow show="pwd" />
+2. **Recruitment.** Set by timing rules rather than by anyone's effort: a mandatory quiet period, and an outer limit after which the ads go stale. <RecruitmentNow />
+3. **The PERM itself.** The average above.
 
-So a case starting today is realistically two years from a certified PERM, and that is before the I-140 and before any wait for a visa number. Anyone quoting you "about a year" is quoting step three only.
+So a case starting today is well over a year from a certified PERM, before the I-140 and any wait for a visa number. Anyone quoting you "about a year" is quoting step three only. The [green card timeline](/tools/green-card-timeline) dates every step from today's figures.
 
 ## What actually adds months
 
 Four things add months: an audit, a request for information, supervised recruitment, and a withdrawn or refiled prevailing wage request.
 
-- **An audit.** The case moves to a separate queue, currently working December 2025. An audit is a request for proof rather than a decision, and most are resolved, but it adds months.
+- **An audit.** The case moves to a separate queue, currently working <DolNow show="auditMonth" /> filings. An audit is a request for proof rather than a decision, and most are resolved, but it adds months.
 - **A request for information.** Similar effect, smaller scope.
 - **Supervised recruitment.** DOL runs the recruitment itself. This is the longest of the three.
 - **A withdrawn or refiled prevailing wage request.** Restarts the clock before PERM even begins.
@@ -72,10 +72,10 @@ An average is a poor answer to "when will *mine* be decided". DOL answers per ca
 
 ## Has it got faster or slower?
 
-DOL publishes today's position and keeps no archive, so the trend has to be reconstructed. Between the last two publications on record, the analyst review queue advanced two months in eight days, which is faster than a calendar month per month. Read one movement as noise; the [queue page](/perm-queue) holds the series.
+The [queue page](/perm-queue) draws it day by day since August 30, 2026, because DOL publishes only today's position and keeps no archive. Read one day's movement as noise and the run of days as the trend.
 
 <Callout type="important" title="On any predicted date, including ours">
-Every PERM date estimate is arithmetic on how fast DOL has moved recently. Ours is graded in public on the [estimate scorecard](/estimate-scorecard), misses included. Treat a predicted month as a rough centre, never as a date to plan a move, a job change or a trip around.
+Every PERM date estimate is arithmetic on how fast DOL has moved recently. Treat a predicted month as a rough centre, never as a date to plan a move, a job change or a trip around.
 </Callout>
 
 ## What this page cannot tell you

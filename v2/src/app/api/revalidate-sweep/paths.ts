@@ -42,4 +42,5 @@ export const SWEEP_PAGES = [
   "/guides/how-the-perm-queue-works",
   "/guides/perm-rfi-issued-what-to-do",
   "/guides/track-a-prevailing-wage-request",
+  "/guides/waiting-on-your-green-card",
 ] as const;
