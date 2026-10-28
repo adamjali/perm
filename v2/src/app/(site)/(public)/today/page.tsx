@@ -62,7 +62,8 @@ import { monthDay, monthYear, shiftMonth, shortDate } from "@convex/lib/months";
  */
 export const revalidate = 21600;
 
-const TITLE = "Where Every Green Card Step Stands Today";
+// "PERM update" is a common search this page answers (Search Console, Oct 28 2026: position 30).
+const TITLE = "Today's PERM Update: Where Every Step Stands";
 const DESCRIPTION =
   "The wage request, PERM, I-140 and visa bulletin on one page: where DOL and the State Department are, whether each line is growing, and what moved today.";
 

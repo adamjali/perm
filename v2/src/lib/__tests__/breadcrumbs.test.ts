@@ -10,7 +10,7 @@ describe("breadcrumbTrail", () => {
   it.each([
     ["/about", ["Home", "About"]],
     ["/tools", ["Home", "Data"]],
-    ["/perm-case-status", ["Home", "Data", "Case status"]],
+    ["/perm-case-status", ["Home", "Data", "PERM case status"]],
     ["/perm-employers/adobe-inc", ["Home", "Data", "Employers"]],
     ["/perm-employers/browse/a", ["Home", "Data", "Employers", "Browse A to Z", "A"]],
     ["/perm-queue/2025-11", ["Home", "Data", "Queue backlog", "November 2025"]],

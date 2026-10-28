@@ -138,7 +138,7 @@ const SOURCES = [
 ] as const;
 
 const PAGES = [
-  { href: "/perm-case-status", label: "Case status" },
+  { href: "/perm-case-status", label: "PERM case status" },
   { href: "/perm-processing-times", label: "Processing times" },
   { href: "/perm-wages", label: "Wages by occupation" },
   { href: "/perm-decision-activity", label: "Decisions, day by day" },

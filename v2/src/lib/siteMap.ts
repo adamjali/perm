@@ -133,7 +133,8 @@ export const OVERVIEW = { key: "overview" as const, name: "Data", label: "Data",
 export const CALCULATORS = s("calculators", "Calculators", "Calculators", "/calculators");
 
 export const SECTIONS: DataNavSection[] = [
-  s("case-status", "Your case", "Case status", "/perm-case-status"),
+  // Named for the phrase people search (Search Console, Oct 28 2026: "perm case status" found the homepage first).
+  s("case-status", "Your case", "PERM case status", "/perm-case-status"),
   s("all-cases", "Your case", "Find a case", "/case-search"),
   t("green-card-timeline", "Your case", "Green card timeline and planner", "/tools/green-card-timeline", "Every step dated from your own dates, with the fees."),
   t("which-green-card", "Your case", "Which green card fits", "/tools/which-green-card", "The categories your job points to."),

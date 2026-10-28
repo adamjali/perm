@@ -19,8 +19,10 @@ export const CASE_STATUS_FRAME = "mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm
  * nothing readable) it's the PERM lookup the page is named for.
  */
 export function headingFor(typed: string): string {
-  const ref = normaliseFlagCaseNumber(typed);
-  return `Check ${programNounWithArticle(ref?.program ?? "perm")}`;
+  const program = normaliseFlagCaseNumber(typed)?.program ?? "perm";
+  // A PERM case's heading carries the phrase people search for it, "PERM case status" (Search Console, Oct 28 2026:
+  // the homepage outranked this page for it).
+  return program === "perm" ? "Check your PERM case status" : `Check ${programNounWithArticle(program)}`;
 }
 
 /**

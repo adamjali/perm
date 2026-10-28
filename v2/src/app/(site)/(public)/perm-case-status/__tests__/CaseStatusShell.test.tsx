@@ -18,7 +18,7 @@ describe("CaseStatusHead", () => {
   it("renders no <h1> while loading, still announced as a level-1 heading", () => {
     const { container } = render(<CaseStatusHead typed="G-100-26239-123456" loading />);
     expect(container.querySelectorAll("h1")).toHaveLength(0);
-    expect(screen.getByRole("heading", { level: 1, name: "Check a PERM case" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Check your PERM case status" })).toBeInTheDocument();
   });
 
   it("looks the same either way", () => {

@@ -40,7 +40,9 @@ import { SITE_URL } from "@/lib/constants/site";
  * census doc the sweep writes, never computed on a render.
  */
 
-const TITLE = "PERM Case Status: What Each DOL Status Means";
+// The meanings, not the lookup: "PERM case status" searches belong to /perm-case-status, which answers them (Search
+// Console, Oct 28 2026: this page took 833 of them at position 11.5 for one click).
+const TITLE = "What Each PERM Status Means";
 const DESCRIPTION =
   "What each DOL status means for a PERM, wage request or LCA case, from Analyst Review to Certified, and how to check your own case for free.";
 const PATH = "/perm-case-statuses";

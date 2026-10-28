@@ -79,7 +79,7 @@ export default function RfiDeadlinePage() {
         reading={[
           { href: "/perm-rfi-audit", label: "RFI and audit rates", note: "how often cases leave filing order, and how long they wait" },
           { href: "/tools/perm-deadline-calculator", label: "PERM deadline calculator", note: "every other date in the PERM" },
-          { href: "/perm-case-status", label: "Case status", note: "whether DOL has your case at RFI ISSUED today" },
+          { href: "/perm-case-status", label: "PERM case status", note: "whether DOL has your case at RFI ISSUED today" },
         ]}
       />
     </div>
