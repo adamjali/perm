@@ -64,6 +64,8 @@ import { OccupationReference } from "@/components/reference/OccupationReference"
 import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
 import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
+import { getPwdLinks } from "@/lib/db/pwdLinks";
+import { PwdToPerm } from "@/components/entities/PwdToPerm";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -231,7 +233,8 @@ export default async function OccupationPage({
   // The materialised wage cells are keyed by SOC code, so an occupation with
   // no code on file simply has no ladder rather than a wrong one.
   const wageKey = row.code ?? "";
-  const [stats, dist, near, ladderYears, stateLadders, facets, freshness, workers, h1b] = await Promise.all([
+  const socKey = socGroup(row.code);
+  const [stats, dist, near, ladderYears, stateLadders, facets, freshness, workers, h1b, pwdLinks] = await Promise.all([
     getDisclosureSummary(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -255,6 +258,8 @@ export default async function OccupationPage({
     // The same job's certified H-1B LCAs (FY2020 onward), from the salary
     // explorer's own read: precomputed for 5,000+ filings, live below that.
     row.code ? getLcaWageStats({ socCode: row.code, status: "certified" }).catch(() => null) : Promise.resolve(null),
+    // Wage determination to PERM filing for the job, keyed by its SOC group (perm_pwd_stats).
+    socKey ? getPwdLinks("occupation", socKey) : Promise.resolve(null),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
@@ -475,6 +480,7 @@ export default async function OccupationPage({
           </div>
         </section>
       ) : null}{" "}
+      <PwdToPerm links={pwdLinks} who={displayTitle(row)} className="mt-12" />{" "}
       {socGroup(row.code) ? (
         <ul className="mt-6 space-y-2 text-base">
           <li>

@@ -61,6 +61,8 @@ import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
 import { EmployerWait } from "@/components/entities/EmployerWait";
 import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/db/employerWait";
+import { getPwdLinks } from "@/lib/db/pwdLinks";
+import { PwdToPerm } from "@/components/entities/PwdToPerm";
 import { similarSponsors } from "@/lib/db/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
@@ -661,7 +663,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -715,6 +717,8 @@ export default async function EmployerPage({
       getEmployerLottery(canonicalSlug).catch(() => null),
       // Each part of its record ranked against other sponsors (sponsor_index).
       getSponsorProfile(canonicalSlug).catch(() => null),
+      // Wage determination to PERM filing, from the two files joined (perm_pwd_stats).
+      getPwdLinks("employer", canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -944,7 +948,8 @@ export default async function EmployerPage({
       </Chapter>
 
       <Chapter id="wait" title="How long it takes">
-        <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} className="mt-8" />
+        <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} className="mt-8" />{" "}
+        <PwdToPerm links={pwdLinks} who={row.name} className="mt-12" />
       </Chapter>
 
       <Chapter id="programs" title="Every program">

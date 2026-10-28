@@ -76,6 +76,8 @@ import {
 } from "@/lib/db/entityDetail";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
+import { getPwdLinks } from "@/lib/db/pwdLinks";
+import { PwdToPerm } from "@/components/entities/PwdToPerm";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -248,7 +250,7 @@ export default async function AttorneyPage({
   // memoises on them, so all 3,736 share one cohort read. The peer window is
   // wide because the state filter thins it hard: California holds 604 firms
   // and Wyoming a handful.
-  const [stats, dist, near, facets, variants, absorbed, freshness, debarments, programs, firmProfile] = await Promise.all([
+  const [stats, dist, near, facets, variants, absorbed, freshness, debarments, programs, firmProfile, pwdLinks] = await Promise.all([
     getDisclosureSummary(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -273,6 +275,8 @@ export default async function AttorneyPage({
     // read on the page's own window; a profile change refreshes the page through
     // /api/revalidate-firm. A failed read shows no block rather than an error.
     queryStatic(api.firmClaims.publishedProfile, { slug: canonicalSlug }, revalidate).catch(() => null),
+    // Wage determination to PERM filing, from the two files joined (perm_pwd_stats).
+    getPwdLinks("attorney", canonicalSlug),
   ]);
   const band = await sizeBand(KIND, row.rank);
 
@@ -409,7 +413,8 @@ export default async function AttorneyPage({
             steps={facets.recruit_step}
             lead={facets.recruit_lead}
             className="mt-4"
-          />
+          />{" "}
+          <PwdToPerm links={pwdLinks} who={row.name} className="mt-12" />
         </Chapter>
       ) : null}
 

@@ -36,6 +36,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Employers, law firms and occupations ranked from decided cases only.",
   "stage-cohorts":
     "Filing-month durations over decided cases. How much of each month is still pending comes from the live sweep, not from here.",
+  "perm-pwd-links":
+    "Decided PERM cases joined to the wage request each names, for wage requests determined long enough ago that their PERMs have been decided. A PERM still pending isn't counted.",
 
   // --- our own live sweep of DOL: pending included ------------------------
   "perm-case-status":
@@ -241,6 +243,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "daily-decisions": "Daily decisions",
   entities: "Employers and firms",
   "stage-cohorts": "Cases by stage",
+  "perm-pwd-links": "Wage request to PERM",
   "perm-case-status": "Per-case statuses",
   "perm-case-status-full": "Per-case statuses, full sweep",
   "pwd-status": "Wage request statuses",

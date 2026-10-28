@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { DecidedTimeline } from "@/components/tools/DecidedTimeline";
+import type { DecidedTimelineRead } from "@/lib/db/decidedTimeline";
 import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
@@ -87,6 +89,8 @@ const MIN_RATE_SAMPLE = 20;
 
 
 export interface CaseStatusResultProps {
+  /** A decided case's own dates, wage request to decision (perm_cases joined to pwd_cases). */
+  timeline?: DecidedTimelineRead | null;
   result: CaseLookupResult;
   backlog: readonly CohortMonth[];
   cohortStatuses: readonly StatusCount[];
@@ -163,6 +167,7 @@ export function CaseStatusResult({
   stageDuration,
   rfi = null,
   sameDay,
+  timeline = null,
   today,
 }: CaseStatusResultProps) {
   const { live, decided, cohort, employer, statusOutlook } = result;
@@ -298,7 +303,8 @@ export function CaseStatusResult({
         />
       ) : null}
 
-      {decided ? <TheDecision decided={decided} duration={duration} cohort={cohort} wage={wage} /> : null}
+      {decided ? <TheDecision decided={decided} duration={duration} cohort={cohort} wage={wage} /> : null}{" "}
+      {decided ? <DecidedTimeline read={timeline} /> : null}
 
       {meaning && actionStage ? (
         <PageSection title={<>What &ldquo;{meaning.label}&rdquo; means</>}>
