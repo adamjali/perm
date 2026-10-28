@@ -65,8 +65,10 @@ export function ReviewCard({
         </span>{" "}
         <span className="text-sm text-muted-foreground">{`${r.rating} of 5`}</span>
       </div>{" "}
+      {/* A reviewer's words are never the site's search snippet (Bing quoted a film's transcript for the
+          homepage, Oct 28 2026): data-nosnippet, which Google honours, keeps them out of it. */}
       {r.text ? (
-        <blockquote className={cn("mt-4 flex-1 [overflow-wrap:anywhere]", compact ? "text-base" : "text-lg", "leading-relaxed")}>
+        <blockquote data-nosnippet="" className={cn("mt-4 flex-1 [overflow-wrap:anywhere]", compact ? "text-base" : "text-lg", "leading-relaxed")}>
           <QuotesIcon weight="fill" className="mb-1 size-6 text-primary" aria-hidden="true" />
           <span ref={words} className={cn("block whitespace-pre-line", open ? "" : CLAMP[lines])}>
             {r.text}

@@ -31,6 +31,11 @@ describe("ReviewCard", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
+  it("keeps a reviewer's words out of the page's search snippet", () => {
+    const { container } = render(<ReviewCard review={{ ...review, text: "Short." }} />);
+    expect(container.querySelector("blockquote")?.hasAttribute("data-nosnippet")).toBe(true);
+  });
+
   it("says a rating left without words, with no empty quote", () => {
     const { container } = render(<ReviewCard review={{ ...review, text: "" }} />);
     expect(screen.getByText("Rated without words.")).toBeTruthy();
