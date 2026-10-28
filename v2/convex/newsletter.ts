@@ -326,7 +326,7 @@ export async function readRuleMoves(sinceIso: string, weekOf: string): Promise<D
           : e.kind === "proposed-published" ? str(row.proposed_url)
             : e.kind === "final-published" ? str(row.final_url)
               : null;
-      return { rin: e.rin, date: e.onDate, sentence: stepSentence(e, rule), url: url ?? reginfoUrl(e.rin) };
+      return { rin: e.rin, kind: e.kind, date: e.onDate, sentence: stepSentence(e, rule), url: url ?? reginfoUrl(e.rin) };
     });
 }
 

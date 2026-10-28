@@ -14,6 +14,7 @@
 import { SITE_URL } from "./links";
 import { formatInt } from "./format";
 import { MONTH_NAMES, shortDate } from "./months";
+import type { RuleStepKind } from "./ruleSteps";
 
 export interface DigestNotice {
   title: string;
@@ -180,6 +181,8 @@ export const EMPLOYER_MOVES_MAX = 6;
  */
 export interface DigestRuleMove {
   rin: string;
+  /** Which step; absent on issues stored before it was recorded, which read as a review step. */
+  kind?: RuleStepKind;
   date: string;
   sentence: string;
   /** Where the step is on record: OIRA's page for a review, the Register for the rest. */
@@ -252,6 +255,14 @@ export function shortMonthLabel(ym: string): string {
  */
 export function composeSubject(d: DigestData): string {
   const parts: string[] = [];
+  // A rule published in the Register is the week's biggest news for anyone waiting on these
+  // programs, so it leads, and the subject's shortening never drops it.
+  const published = (d.ruleMoves ?? []).filter((m) => m.kind === "proposed-published" || m.kind === "final-published");
+  const publishedRins = new Set(published.map((m) => m.rin));
+  if (publishedRins.size > 1) parts.push(`${publishedRins.size} rules published`);
+  else if (published.length > 0) {
+    parts.push(published.some((m) => m.kind === "final-published") ? "A final rule published" : "A proposed rule published");
+  }
   if (d.frontierMonth) parts.push(`DOL at ${shortMonthLabel(d.frontierMonth)}`);
   if (d.bulletinMonth && d.bulletinMoves) {
     const mon = shortMonthLabel(d.bulletinMonth).slice(0, 3);
@@ -264,7 +275,7 @@ export function composeSubject(d: DigestData): string {
     );
   }
   if (uscisIsNews(d)) parts.push(`USCIS ${d.uscisQuarter} medians`);
-  const ruleCount = new Set((d.ruleMoves ?? []).map((m) => m.rin)).size;
+  const ruleCount = new Set((d.ruleMoves ?? []).map((m) => m.rin).filter((rin) => !publishedRins.has(rin))).size;
   if (ruleCount > 0) parts.push(`${ruleCount} ${ruleCount === 1 ? "rule" : "rules"} moved`);
   if (d.notices.length > 0) parts.push(`${d.notices.length} new ${d.notices.length === 1 ? "notice" : "notices"}`);
   const suffix = ` · week of ${dateLabel(d.weekOf).replace(/,\s*\d{4}$/, "")}`;

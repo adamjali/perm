@@ -322,4 +322,20 @@ describe("rules that moved this week (2026-10-27)", () => {
   it("leaves the block out on a week no rule moved", () => {
     expect(composeText({ ...full, ruleMoves: [] })).not.toContain("RULES THAT MOVED");
   });
+
+  it("leads the subject with a rule published in the Register, the week it is", () => {
+    const published = { ...move, kind: "proposed-published" as const, sentence: "published" };
+    expect(composeSubject({ ...full, ruleMoves: [published, move] })).toMatch(
+      /^A proposed rule published, DOL at Nov 2025\b.* · week of/,
+    );
+    // Two rules: the published one leads, the other is still counted.
+    expect(composeSubject({ ...full, bulletinMonth: null, bulletinMoves: null, ruleMoves: [published, { ...move, rin: "1615-AD25" }] })).toMatch(
+      /^A proposed rule published, DOL at Nov 2025, 1 rule moved\b.* · week of/,
+    );
+    const final = { ...published, kind: "final-published" as const };
+    expect(composeSubject({ ...full, ruleMoves: [final] })).toMatch(/^A final rule published, /);
+    expect(composeSubject({ ...full, ruleMoves: [final, { ...published, rin: "1615-AD25" }] })).toMatch(/^2 rules published, /);
+    // A review step, or an issue stored before steps carried their kind, keeps the count.
+    expect(composeSubject({ ...full, bulletinMonth: null, bulletinMoves: null, ruleMoves: [move] })).toMatch(/^DOL at Nov 2025, 1 rule moved/);
+  });
 });
