@@ -25,6 +25,7 @@ import { isLookupGap } from "@/lib/dolMiss";
 import { formatInt } from "@/lib/format";
 import { formatDay } from "@/lib/dolFormat";
 import { prettyStatus } from "@/components/queue/stages";
+import { getPermsNamingPwd, type PermNamingPwd } from "@/lib/db/decidedTimeline";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -66,7 +67,7 @@ function validUntil(decisionDate: string | null): string | null {
 }
 
 /** DOL's own determination, from the quarterly disclosure file: the part the live endpoint never says. */
-function Determination({ d }: { d: PwdDisclosedRow }) {
+function Determination({ d, perms = [] }: { d: PwdDisclosedRow; perms?: readonly PermNamingPwd[] }) {
   const issued = ISSUED.test(d.status.toUpperCase());
   const wage = formatWage(d.wage, d.wageUnit);
   const until = issued ? validUntil(d.decisionDate) : null;
@@ -102,6 +103,24 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
           ...(until ? [{ label: "Valid until", value: formatDay(until) }] : []),
         ]}
       />{" "}
+      {perms.length > 0 ? (
+        <div className="mt-6 max-w-3xl border-l-4 border-primary bg-tint px-4 py-3">
+          <p className="font-semibold">{perms.length === 1 ? "A decided PERM names this wage request" : "Decided PERM cases name this wage request"}</p>{" "}
+          <ul className="mt-1 space-y-1">
+            {perms.map((p) => (
+              <li key={p.caseNumber}>
+                <Link href={`/perm-case-status?case=${encodeURIComponent(p.caseNumber)}`} className="link inline-flex min-h-11 items-center font-mono">
+                  {p.caseNumber}
+                </Link>{" "}
+                <span className="text-soft">
+                  {prettyStatus(p.status.toUpperCase())}
+                  {p.decisionDate ? `, ${formatDay(p.decisionDate)}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}{" "}
       {until ? (
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           The PERM must be filed, or recruitment started, before the determination expires. Every date after it is
@@ -117,12 +136,14 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
 }
 
 export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
-  const [{ row, dolMiss }, disclosed, est, dayData] = await Promise.all([
+  const [{ row, dolMiss }, disclosed, est, dayData, perms] = await Promise.all([
     // A failure to read our own table is also "could not settle it", never "no record".
     lookupPwdCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupPwdDetermination(caseNumber).catch(() => null),
     getPwdEstimatorData().catch(() => null),
     getPwdDayData().catch(() => null),
+    // The PERM that followed, on its own index; a failure only drops the link.
+    getPermsNamingPwd(caseNumber).catch((): PermNamingPwd[] => []),
   ]);
 
   if (!row && disclosed) {
@@ -146,7 +167,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           </b>
           . Its live case system didn&apos;t return the number, so the record below is from the quarterly file.
         </AnswerPanel>
-        <Determination d={disclosed} />
+        <Determination d={disclosed} perms={perms} />
         <PageSection title="The record">
           <RecordList
             rows={[
@@ -290,7 +311,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         </p>
       ) : null}
 
-      {disclosed ? <Determination d={disclosed} /> : null}
+      {disclosed ? <Determination d={disclosed} perms={perms} /> : null}
 
       {pending && !notPerm ? (
         <PageSection id="wage-queue" title="Where it sits in DOL's wage queue">

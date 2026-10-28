@@ -2,7 +2,7 @@ import "server-only";
 
 import type { DecidedRecord } from "@/lib/decidedTimeline";
 
-import { one } from "./client";
+import { one, rows } from "./client";
 
 /**
  * One decided case's own dates from DOL's current published file, joined to the wage request it
@@ -66,4 +66,28 @@ export async function getDecidedTimeline(caseNumber: string): Promise<DecidedTim
     // A year before 1700 or a headcount of 0 is a typing slip in the form, not a fact.
     employer: { employees: employees && employees > 0 ? employees : null, since: since && since >= 1700 ? since : null },
   };
+}
+
+/** A decided PERM that names a wage request: the link back from the wage request's own page. */
+export interface PermNamingPwd {
+  caseNumber: string;
+  status: string;
+  decisionDate: string | null;
+}
+
+/**
+ * The decided PERM cases in DOL's published file that name this wage request, newest first, on
+ * `idx_pc_pwd_number`. A pending PERM's live record doesn't name its wage request, so an empty
+ * answer means no decided PERM names it yet, never that none was filed.
+ */
+export async function getPermsNamingPwd(pwdNumber: string): Promise<PermNamingPwd[]> {
+  const got = await rows<Record<string, unknown>>(
+    "SELECT case_number, status, decision_date FROM perm_cases WHERE pwd_number = ? ORDER BY decision_date DESC LIMIT 5",
+    [pwdNumber],
+  );
+  return got.flatMap((r) => {
+    const caseNumber = str(r.case_number);
+    const status = str(r.status);
+    return caseNumber && status ? [{ caseNumber, status, decisionDate: str(r.decision_date) }] : [];
+  });
 }
