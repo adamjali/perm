@@ -9,6 +9,8 @@ import { join } from "node:path";
 
 const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath, revalidateTag: vi.fn() }));
+const writeBoardDoc = vi.fn();
+vi.mock("@/lib/db/board", () => ({ writeBoardDoc: () => writeBoardDoc() }));
 
 const { POST } = await import("../route");
 const { SWEEP_PAGES } = await import("../paths");
@@ -22,6 +24,7 @@ const post = (secret: string | null = SECRET) =>
 
 beforeEach(() => {
   revalidatePath.mockReset();
+  writeBoardDoc.mockReset().mockResolvedValue({ perm: null, pwd: null, computedAt: 1 });
   process.env.REVALIDATE_SECRET = SECRET;
 });
 
@@ -32,6 +35,26 @@ describe("POST /api/revalidate-sweep", () => {
     delete process.env.REVALIDATE_SECRET;
     expect((await POST(post(null))).status).toBe(403);
     expect(revalidatePath).not.toHaveBeenCalled();
+    expect(writeBoardDoc).not.toHaveBeenCalled();
+  });
+
+  it("saves the board before it expires the pages that read it", async () => {
+    const order: string[] = [];
+    writeBoardDoc.mockImplementation(async () => void order.push("board"));
+    revalidatePath.mockImplementation(() => void order.push("expire"));
+    const body = await (await POST(post())).json();
+    expect(body.board).toBe("saved");
+    expect(order[0]).toBe("board");
+  });
+
+  it("says a failed save in its answer and still expires the pages", async () => {
+    writeBoardDoc.mockRejectedValue(new Error("read-only token"));
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = await (await POST(post())).json();
+    expect(body.board).toBe("failed");
+    expect(revalidatePath).toHaveBeenCalledTimes(SWEEP_PAGES.length);
+    expect(errors).toHaveBeenCalledWith("[revalidate-sweep] the board didn't save", expect.any(Error));
+    errors.mockRestore();
   });
 
   it("expires every listed literal path on a valid call", async () => {

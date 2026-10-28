@@ -17,18 +17,21 @@ import {
 import { dolDayBounds, dolDayOf } from "@/lib/dolDay";
 import { MS_PER_DAY } from "@/lib/time";
 
-import { rows } from "./client";
+import { exec, rows } from "./client";
 import { OBSERVED_SOURCE } from "./decisionPace";
+import { doc } from "./publicData";
 import { DIRECT_EVENT_SOURCE } from "./rfi";
+import { getSweepCoverage } from "./sweepCoverage";
 
 /**
  * The PERM half of the board (/today): where DOL's decisions fell on its last
  * working day and on the working days a week and a month before it, whether the
  * line grew over 30 days, and how each status moved.
  *
- * Every read is bounded by a date range on an indexed column, and the page is
- * cached and expired by the sweep (/api/revalidate-sweep), so these run once a
- * pass, not once a visit. A read that fails throws: the page keeps its last
+ * Every read is bounded by a date range on an indexed column. The sweep's own refresh call
+ * (/api/revalidate-sweep, after every pass) runs them once and saves the result as
+ * perm_docs['board']; /today and the planner read that, and run the reads live only when it's
+ * missing or older than the newest sweep. A read that fails throws: the page keeps its last
  * good render rather than showing an empty board as a quiet day.
  */
 
@@ -94,7 +97,7 @@ export function dayBeforeOf(day: string, worked: readonly string[], days: number
 const readingOn = async (day: string | null, spanOn: (d: string) => Promise<DecidedSpan | null>): Promise<SpanReading | null> =>
   day ? { day, span: await spanOn(day) } : null;
 
-export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
+async function readPermBoard(): Promise<PermBoard | null> {
   // The newest 40 days of the daily series: its last row is DOL's last
   // working day our record holds whole (the day in progress is withheld).
   const series = await rows<{ date: string; total: number }>(
@@ -135,7 +138,7 @@ export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
     weekBefore,
     monthBefore,
   };
-});
+}
 
 // ---------------------------------------------------------------------------
 // The wage-request half: PERM wage requests (P-100, the PERM visa class).
@@ -169,7 +172,7 @@ async function pwdSpanOn(day: string): Promise<DecidedSpan | null> {
   return decidedSpan(r.map((x) => String(x.f)));
 }
 
-export const getPwdBoard = cache(async (): Promise<PwdBoard | null> => {
+async function readPwdBoard(): Promise<PwdBoard | null> {
   const since = Date.now() - 40 * MS_PER_DAY;
   // One row per sweep stamp (a run writes one), folded into DOL's days.
   const stamps = await rows<{ t: number; n: number }>(
@@ -212,4 +215,46 @@ export const getPwdBoard = cache(async (): Promise<PwdBoard | null> => {
     weekBefore,
     monthBefore,
   };
+}
+
+// ---------------------------------------------------------------------------
+// The saved board: written once a sweep, read by every page that shows it.
+// ---------------------------------------------------------------------------
+
+export const BOARD_DOC = "board";
+
+export interface BoardDoc {
+  perm: PermBoard | null;
+  pwd: PwdBoard | null;
+  /** When it was written, epoch ms (perm_docs.computed_at). */
+  computedAt: number;
+}
+
+/** Runs the board's reads and saves the result. Called by the sweep's refresh, once a pass. */
+export async function writeBoardDoc(): Promise<BoardDoc> {
+  const [perm, pwd] = await Promise.all([readPermBoard(), readPwdBoard()]);
+  const computedAt = Date.now();
+  await exec("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)", [
+    BOARD_DOC,
+    JSON.stringify({ perm, pwd }),
+    computedAt,
+  ]);
+  return { perm, pwd, computedAt };
+}
+
+/** The saved board, or null when it's missing or older than the newest sweep (its write failed or hasn't run). */
+const savedBoard = cache(async (): Promise<BoardDoc | null> => {
+  const [saved, coverage] = await Promise.all([doc<BoardDoc>(BOARD_DOC), getSweepCoverage()]);
+  if (!saved) return null;
+  return coverage && saved.computedAt < coverage.checkedAt ? null : saved;
+});
+
+export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
+  const saved = await savedBoard();
+  return saved ? saved.perm : readPermBoard();
+});
+
+export const getPwdBoard = cache(async (): Promise<PwdBoard | null> => {
+  const saved = await savedBoard();
+  return saved ? saved.pwd : readPwdBoard();
 });

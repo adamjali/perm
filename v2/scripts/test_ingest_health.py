@@ -140,13 +140,19 @@ def main() -> int:
     # both use because they also want `computed_at` for their staleness cutoff.
     # The first version of this gate matched only the helper and reported two
     # perfectly-read docs as unread - the gate was the defect, as usual.
+    # A third: the key in a constant (`BOARD_DOC = "board"`) that a doc(...) call reads by name.
+    def via_constant(k: str) -> bool:
+        return any(
+            _re.search(rf"""doc(?:<[^>]*>)?\(\s*{name}\s*\)""", corpus)
+            for name in _re.findall(rf"""const\s+(\w+)\s*=\s*["']{_re.escape(k)}["']""", corpus)
+        )
     unread = [
         k for k in health.PRECOMPUTED_DOCS
         if not _re.search(
             rf"""doc(?:<[^>]*>)?\(\s*["']{_re.escape(k)}["']"""
             rf"""|key\s*=\s*["']{_re.escape(k)}["']""",
             corpus,
-        )
+        ) and not via_constant(k)
     ]
     check("every checked doc is actually read by a doc() call", not unread,
           f"read by nothing: {unread}")
