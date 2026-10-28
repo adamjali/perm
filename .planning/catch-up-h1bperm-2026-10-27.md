@@ -65,6 +65,18 @@ week before or the quarter before in colour and arrow; the two balance panels (2
 decided bar and the waiting statuses with their week's change (2.3, part); the 30-day pulse charts (2.6, part); the
 bulletin grid with every cell's move coloured. Still open in Phase 2: the I-485 switches, the rail regrouped by step,
 the month drill-down (2.4), time travel (2.5), live refresh (2.7), and the sweep-written doc.
+Later the same night, from Sabrina's look at H1BPerm (texts, 8:38 to 9:43 PM EDT): each step on /today carries one
+line of state, its figures folded (backlog shrinking or growing, getting quicker or slower, advancing, holding or
+retrogressed), a "Pick a
+step" picker sits under the track (3.1's "where you are" begins there), withdrawn is purple everywhere, and the
+EB-2 vs EB-3 guide is retitled "EB-2 or EB-3: what's the difference?".
+
+Overnight plan, Tue Oct 27 2026, 11:05 PM EDT (owner asleep, wants it right by morning): finish the last share
+cards (API, the deadline, timeline, EB-2 vs EB-3 and green card line calculators, wage levels, employer compare, the
+A-to-Z grids) and check all 91 at full size; phone and glued-text checks on /today, /about, /compare, /methodology,
+/perm-queue; `pnpm check`; push before 1:30 AM for the 2 AM night run only if every check passes; read the live pages
+and served cards after; a morning report with screenshots. Later: blue as a light second accent, the rest of Phase 2,
+the planner (Phase 3, building on "Pick a step"), Sabrina's weekend roll-forward answer.
 
 ## Phase 3: one planner, every step to the green card (2 to 3 days)
 - [ ] 3.1 Where you are now (about to file the wage request, wage request filed, PERM filed, I-140 filed or approved),

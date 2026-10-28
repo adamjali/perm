@@ -1464,10 +1464,26 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
   lowest line inside the frame no box, picture or text crosses (full-width bands count as ground), never ends on a
   heading whose content was cut, lifts the top past anything it would slice, and records the crop's real height;
   `make-page-cards.mjs` gives each frame the picture's own shape. Before this, most of the 92 cards were cut mid-box.
-  A cut never leaves a frame under 55% full (Badges and Glossary had ended on one line), a page whose first block is
-  too tall to frame whole names its picture's section with `from`, and the capture hides DOL's notice banner and the
-  side list by its current label ("Data sections"): it had been renamed, and its lime current-page row showed at the
-  left edge of every data card.
+  A cut never leaves a frame under 55% full (Badges and Glossary had ended on one line). A tool or table in one tall
+  box is **closed** rather than cut: the capture finds a line no text, picture or field crosses and ends each box
+  that line runs through just under it, clipped at its content edge, with its own border and shadow. Each frame size
+  (1, 1.15, 1.3 times the standard) is measured first and the first that fills 70% of a standard frame is applied.
+  Every card names its page's most useful picture with `from` (a heading) or `fromEl`, and a calculator gets `fill`
+  (sample values typed by field label) or an address that carries its inputs. The capture hides DOL's notice banner
+  and the side list by its current label ("Data sections": renamed once, its lime row showed on every data card),
+  and writes the site's own address over the dev server's in the page. `CARD_DEBUG=1` prints why each line and size
+  was refused.
+- **Sabrina's notes on H1BPerm (texts, Oct 27 evening)** became: one quiet line at the foot of each /today step, a
+  dot and a word with its figures folded under it (`StepState`; owner: "one line and expandable for details, less
+  highlight"): "Backlog shrinking" or "growing" from the 30-day filed-against-decided count, "Getting quicker" or
+  "slower" for the I-140, "Advancing", "Holding" or "Retrogressed" for the bulletin (`backlogStatus`, `paceStatus`,
+  `bulletinStatus`); a
+  "Pick a step" picker on /today (`StagePicker`: six tabs, every panel in the HTML, each with who files, the form,
+  how long now from the live figures, what happens and what to watch); and the EB-2 vs EB-3 guide retitled to the
+  plain question.
+- **One status colour code, everywhere** (Sabrina's, and the owner's call, Oct 27): certified green, denied red,
+  filed or waiting yellow, withdrawn purple (`--chart-purple`, `--data-purple-ink`, `--soft-purple`). Withdrawn had
+  been orange in most charts, amber in one and grey in another.
 - **Hosting, domains and mail, priced from each provider's own page**: `~/.claude/reference/web-infra-and-seo.md`,
   "Hosting, domains and mail". Oracle's trial ends Oct 28-29; the tenancy checked that night holds only Always Free
   resources.
