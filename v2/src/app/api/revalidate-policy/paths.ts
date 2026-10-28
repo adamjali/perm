@@ -10,3 +10,9 @@
  * pipeline can't quietly show yesterday's stage for six hours.
  */
 export const POLICY_PAGES = ["/policy-changes"] as const;
+
+/**
+ * The article parts that read the rule watch's record. Every article using one is expired too,
+ * found by reading the articles (`postsUsing`), so a new article on a rule needs no entry here.
+ */
+export const RULE_PARTS = ["RuleStatus", "RuleCompare"] as const;

@@ -12,6 +12,7 @@ import {
   lastMoved,
   parseAgendaDetail,
   RULE_STEP_KINDS,
+  ruleCompareCells,
   ruleTitle,
   shownInPipeline,
   standing,
@@ -317,5 +318,47 @@ describe("which rules get a full card", () => {
   });
   it("never for the agenda alone: an edition relists rules that haven't moved", () => {
     expect(isActiveRule({ ...EMPTY, rin: "x", ...LISTED, aPublished: "2026-10-20", aListed: "2026-10-20" }, today)).toBe(false);
+  });
+});
+
+describe("a rule's row in an article's comparison", () => {
+  const today = "2026-10-28";
+  const ac29 = { ...EMPTY, rin: "1205-AC29", pReceived: "2026-09-14", pCompleted: "2026-10-23", pDecision: "Consistent with Change" };
+
+  it("a rule not yet published says so in every cell", () => {
+    const c = ruleCompareCells(ac29, today);
+    expect(c.proposed).toEqual({ text: "Not yet" });
+    expect(c.comments).toEqual({ text: "Not open yet" });
+    expect(c.final).toEqual({ text: "Not yet" });
+    expect(c.inForce).toEqual({ text: "No" });
+  });
+
+  it("on public inspection: the filing and its publication day", () => {
+    const c = ruleCompareCells({ ...ac29, piFiled: "2026-10-30", piScheduled: "2026-11-02", piUrl: "https://pi" }, today);
+    expect(c.proposed).toEqual({ text: "On public inspection Oct 30, 2026, to be published Nov 2, 2026", href: "https://pi" });
+  });
+
+  it("published and open for comment, with its citation", () => {
+    const c = ruleCompareCells(
+      { ...ac29, proposedPublished: "2026-11-02", proposedCitation: "91 FR 70000", proposedUrl: "https://fr", commentsClose: "2027-01-02" },
+      today,
+    );
+    expect(c.proposed).toEqual({ text: "Nov 2, 2026 (91 FR 70000)", href: "https://fr" });
+    expect(c.comments).toEqual({ text: "Open until Jan 2, 2027" });
+  });
+
+  it("comments closed, a final rule taking effect later, then in force", () => {
+    const ac30 = {
+      ...EMPTY, rin: "1205-AC30", proposedPublished: "2026-03-27", proposedCitation: "91 FR 15454", commentsClose: "2026-05-26",
+    };
+    expect(ruleCompareCells(ac30, today).comments).toEqual({ text: "Closed May 26, 2026" });
+    const final = { ...ac30, finalPublished: "2026-12-01", finalCitation: "91 FR 90000", finalUrl: "https://f", effectiveOn: "2027-01-30" };
+    expect(ruleCompareCells(final, "2026-12-05").final).toEqual({ text: "Dec 1, 2026 (91 FR 90000)", href: "https://f" });
+    expect(ruleCompareCells(final, "2026-12-05").inForce).toEqual({ text: "From Jan 30, 2027" });
+    expect(ruleCompareCells(final, "2027-02-01").inForce).toEqual({ text: "Since Jan 30, 2027" });
+  });
+
+  it("a proposal with no deadline on record says that, not that comments aren't open", () => {
+    expect(ruleCompareCells({ ...ac29, proposedPublished: "2026-11-02" }, today).comments).toEqual({ text: "No deadline on record" });
   });
 });

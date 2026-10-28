@@ -85,7 +85,18 @@ function postedLine(rule: RuleRecord, today: string, count: CommentCount | undef
   return `${count.comments.toLocaleString("en-US")} ${count.comments === 1 ? "comment" : "comments"} posted so far`;
 }
 
-function RuleCard({ rule, today, count }: { rule: RuleRecord; today: string; count?: CommentCount }) {
+/** One rule's card: a list item on the policy page, a block of its own in an article (`as="div"`). */
+export function RuleCard({
+  rule,
+  today,
+  count,
+  as: Tag = "li",
+}: {
+  rule: RuleRecord;
+  today: string;
+  count?: CommentCount;
+  as?: "li" | "div";
+}) {
   const moved = lastMoved(rule);
   const posted = postedLine(rule, today, count);
   const thisWeek = moved !== "" && daysBetween(moved, today) <= 7;
@@ -96,7 +107,7 @@ function RuleCard({ rule, today, count }: { rule: RuleRecord; today: string; cou
   if (rule.finalUrl) links.push({ href: rule.finalUrl, label: "The final rule" });
   if (posted && count?.docketUrl) links.push({ href: count.docketUrl, label: "The posted comments" });
   return (
-    <li className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
+    <Tag className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <span className="font-mono text-sm text-muted-foreground">{rule.agency ?? "Agency not named"}</span>{" "}
         <span className="font-mono text-sm text-muted-foreground">RIN {rule.rin}</span>{" "}
@@ -127,7 +138,7 @@ function RuleCard({ rule, today, count }: { rule: RuleRecord; today: string; cou
           </span>
         ))}
       </p>
-    </li>
+    </Tag>
   );
 }
 

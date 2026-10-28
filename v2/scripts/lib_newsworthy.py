@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import pathlib
 import re
 import statistics
 from dataclasses import dataclass, field
@@ -70,6 +71,7 @@ class Inputs:
     # comments_close_on, effective_on, first_seen_at
     documents: list[dict] = field(default_factory=list)
     rule_documents: set[str] = field(default_factory=set)  # Register numbers the rule watch follows
+    articles: dict[str, list[str]] = field(default_factory=dict)  # RIN -> the articles that follow it
 
 
 def day_label(iso: str | None) -> str:
@@ -130,6 +132,26 @@ def rule_source(kind: str) -> str:
     return "OIRA's review lists on reginfo.gov" if kind.startswith("oira") else "the Federal Register"
 
 
+# Steps that bring a document to read: an article following the rule gets its status from the
+# record by itself (RuleStatus, RuleCompare), but its text about what the rule says needs a person.
+TEXT_STEPS = {"public-inspection", "proposed-published", "final-published"}
+CONTENT = pathlib.Path(__file__).resolve().parent.parent / "content"
+# How an article names the rule it follows: <RuleStatus rin="..." /> or a RuleCompare row's rin: "...".
+ARTICLE_RIN = re.compile(r'<RuleStatus\s+rin="([0-9]{4}-[A-Z]{2}[0-9]{2})"|\brin:\s*"([0-9]{4}-[A-Z]{2}[0-9]{2})"')
+
+
+def articles_by_rin(content: pathlib.Path = CONTENT) -> dict[str, list[str]]:
+    """Every article that follows a rule, by RIN, as its path on the site."""
+    out: dict[str, list[str]] = {}
+    for f in sorted(content.glob("*/*.mdx")):
+        text = f.read_text(encoding="utf8", errors="ignore")
+        if "<RuleStatus" not in text and "<RuleCompare" not in text:
+            continue
+        for m in ARTICLE_RIN.finditer(text):
+            out.setdefault(m.group(1) or m.group(2), []).append(f"/{f.parent.name}/{f.stem}")
+    return {rin: sorted(set(paths)) for rin, paths in out.items()}
+
+
 def _rule_items(inputs: Inputs, since_ms: int, now_ms: int) -> list[dict]:
     floor = (dt.datetime.fromtimestamp(now_ms / 1000, tz=ET).date()
              - dt.timedelta(days=RULE_STEP_RECENT_DAYS)).isoformat()
@@ -143,8 +165,12 @@ def _rule_items(inputs: Inputs, since_ms: int, now_ms: int) -> list[dict]:
         if e["kind"] == "agenda":
             editions.setdefault(e["on_date"], []).append(e)
             continue
-        out.append({"kind": "rule", "when": e["on_date"], "what": rule_sentence(e),
-                    "source": rule_source(e["kind"])})
+        what = rule_sentence(e)
+        pages = inputs.articles.get(e["rin"], [])
+        if e["kind"] in TEXT_STEPS and pages:
+            what += (f" Read it and update {', '.join(pages)}: the status there updates itself, "
+                     "the text about what the rule says doesn't.")
+        out.append({"kind": "rule", "when": e["on_date"], "what": what, "source": rule_source(e["kind"])})
     for on, events in editions.items():
         out.append({"kind": "rule", "when": on, "what": agenda_sentence(events),
                     "source": "reginfo.gov's Unified Agenda"})
@@ -451,4 +477,5 @@ def read_inputs(db, since_ms: int) -> Inputs:
         "SELECT pi_document AS n FROM rule_pipeline WHERE pi_document IS NOT NULL UNION "
         "SELECT proposed_document FROM rule_pipeline WHERE proposed_document IS NOT NULL UNION "
         "SELECT final_document FROM rule_pipeline WHERE final_document IS NOT NULL", []) if r.get("n")}
+    inputs.articles = articles_by_rin()
     return inputs

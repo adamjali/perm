@@ -11,13 +11,15 @@
  * `rules_changed` and its runner POSTs.
  *
  * Takes no input, like `revalidate-bulletin`: a caller either knows the secret
- * and expires this fixed set, or does nothing.
+ * and expires this set (the policy page and every article using a rule part), or does nothing.
  */
 
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { POLICY_PAGES } from "./paths";
+import { postsUsing } from "@/lib/content";
+
+import { POLICY_PAGES, RULE_PARTS } from "./paths";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = request.headers.get("x-revalidate-secret");
@@ -26,7 +28,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  for (const path of POLICY_PAGES) revalidatePath(path);
+  // The articles that show a rule's status, read from the articles each run: a new one needs no list.
+  const pages = [...POLICY_PAGES, ...postsUsing(RULE_PARTS)];
+  for (const path of pages) revalidatePath(path);
 
-  return NextResponse.json({ revalidated: POLICY_PAGES.length, now: Date.now() });
+  return NextResponse.json({ revalidated: pages.length, now: Date.now() });
 }

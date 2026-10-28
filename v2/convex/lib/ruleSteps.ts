@@ -493,3 +493,38 @@ export function stepsBetween(events: RuleStepEvent[], from: string, to: string):
     .filter((e) => e.onDate >= from && e.onDate <= to)
     .sort((a, b) => b.onDate.localeCompare(a.onDate) || RULE_STEP_KINDS.indexOf(b.kind) - RULE_STEP_KINDS.indexOf(a.kind));
 }
+
+/** One cell of a rule's column in an article's comparison: its words, and the record's link where there is one. */
+export interface RuleCell {
+  text: string;
+  href?: string;
+}
+
+const cell = (text: string, href: string | null | undefined): RuleCell => (href ? { text, href } : { text });
+
+/**
+ * A rule's column for an article that compares rules (`RuleCompare`): the proposal, its comments,
+ * the final rule and whether it's in force, each from the record, so the column changes the day
+ * the Register does.
+ */
+export function ruleCompareCells(
+  r: RuleRecord,
+  today: string,
+): { proposed: RuleCell; comments: RuleCell; final: RuleCell; inForce: RuleCell } {
+  const cite = (on: string, citation: string | null) => (citation ? `${day(on)} (${citation})` : day(on));
+  const proposed = r.proposedPublished
+    ? cell(cite(r.proposedPublished, r.proposedCitation), r.proposedUrl)
+    : r.piFiled && r.piType !== "Rule"
+      ? cell(`On public inspection ${day(r.piFiled)}${r.piScheduled ? `, to be published ${day(r.piScheduled)}` : ""}`, r.piUrl)
+      : cell("Not yet", null);
+  const comments = !r.proposedPublished
+    ? cell("Not open yet", null)
+    : !r.commentsClose
+      ? cell("No deadline on record", null)
+      : cell(r.commentsClose >= today ? `Open until ${day(r.commentsClose)}` : `Closed ${day(r.commentsClose)}`, null);
+  const final = r.finalPublished ? cell(cite(r.finalPublished, r.finalCitation), r.finalUrl) : cell("Not yet", null);
+  const inForce = !r.effectiveOn
+    ? cell("No", null)
+    : cell(r.effectiveOn <= today ? `Since ${day(r.effectiveOn)}` : `From ${day(r.effectiveOn)}`, null);
+  return { proposed, comments, final, inForce };
+}

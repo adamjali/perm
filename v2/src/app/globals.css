@@ -1478,6 +1478,18 @@ body[data-scroll-locked] {
   margin-bottom: 1.25em;
 }
 
+/* A component in an article that draws itself with the site's own parts (the rule card in
+   `RuleStatus`) takes `prose-reset`: these article rules are UNLAYERED, so they beat every
+   Tailwind class inside it, and the card's paragraphs and step list came out with article
+   margins, list numbers and an indent. `revert-layer` hands each property back to the layered
+   cascade, the component's own classes. Scoped to the class, not to every `not-prose`, because
+   older article components rely on the article's paragraph spacing. */
+.prose-article .prose-reset :where(p, ul, ol, li) {
+  margin: revert-layer;
+  padding: revert-layer;
+  list-style: revert-layer;
+}
+
 /* Links. --primary-text, NEVER --primary: this rule is UNLAYERED, so it beats
    the layered `.text-primary` remap regardless of specificity, and with
    var(--primary) it would paint every in-article link #2ECC40 on #FAFAFA,

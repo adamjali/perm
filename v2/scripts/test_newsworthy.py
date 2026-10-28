@@ -216,9 +216,24 @@ def main() -> int:
     check("an older edition seen today isn't news", not any("1205-AC29" in w or "Jul 3" in w for w in lines), str(lines))
     check("its source is the agenda", bool(got) and got[0]["source"] == "reginfo.gov's Unified Agenda", str(got))
 
+    # A followed rule published: the evening check names the articles whose text needs the document.
+    pub = {"rin": "1205-AC29", "kind": "proposed-published", "on_date": "2026-10-27", "detail": "91 FR 70000",
+           "seen_at": ms(2026, 10, 27, 12), "title": "Modernizing the Labor Market Test (NPRM)", "agency": "DOL",
+           "comments_close": "2026-12-28", "effective_on": None}
+    got = nw.newsworthy(nw.Inputs(rule_events=[pub], articles={"1205-AC29": ["/blog/proposed-perm-rule-rin-1205-ac29"]}), morning, now)
+    check("a published rule names the article to update",
+          len(got) == 1 and "update /blog/proposed-perm-rule-rin-1205-ac29" in got[0]["what"])
+    review = dict(pub, kind="oira-completed", detail="Consistent with Change")
+    got = nw.newsworthy(nw.Inputs(rule_events=[review], articles={"1205-AC29": ["/blog/x"]}), morning, now)
+    check("a review step names no article: the status updates itself", len(got) == 1 and "update" not in got[0]["what"])
+    found = nw.articles_by_rin()
+    check("the real article is found by its RIN", "/blog/proposed-perm-rule-rin-1205-ac29" in found.get("1205-AC29", []))
+    check("a compared rule is found too", "/blog/proposed-perm-rule-rin-1205-ac29" in found.get("1205-AC30", []))
+
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -257,3 +257,19 @@ export function extractVideoRefs(content: string): { src: string; alt: string }[
   }
   return videos;
 }
+
+/**
+ * Every article whose MDX uses one of these components, as `/<type>/<slug>`: how a refresh route
+ * finds the articles that show its data, read from the articles themselves rather than kept by hand.
+ */
+export function postsUsing(tags: readonly string[]): string[] {
+  const uses = tags.map((t) => new RegExp(`<${t}\\b`));
+  const out: string[] = [];
+  for (const type of Object.keys(CONTENT_TYPE_CONFIG) as ContentType[]) {
+    for (const slug of getPostSlugs(type)) {
+      const post = getPostBySlug(type, slug);
+      if (post && uses.some((u) => u.test(post.content))) out.push(`/${type}/${slug}`);
+    }
+  }
+  return out;
+}

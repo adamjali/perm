@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import type { RuleRecord, RuleStepEvent, RuleStepKind } from "@convex/lib/ruleSteps";
 import { RULE_STEP_KINDS, shownInPipeline } from "@convex/lib/ruleSteps";
 
@@ -181,4 +183,34 @@ export async function getRulePipeline(today: string): Promise<RulePipeline> {
     if (noTable(err)) return { rules: [], events: [] };
     throw err;
   }
+}
+
+/**
+ * The named rules, by RIN, for an article that follows one rule (`RuleStatus`, `RuleCompare`). A
+ * RIN the rule watch doesn't hold is simply absent from the map, so the caller can say so. The
+ * agenda's newest edition is read too, so an agenda-only note reads the same as on the policy page.
+ */
+export const getRules = cache(async (rinsKey: string): Promise<Map<string, RuleRecord>> => {
+  const rins = rinsKey.split(",").filter(Boolean);
+  if (rins.length === 0) return new Map();
+  const marks = rins.map(() => "?").join(", ");
+  try {
+    const [ruleRows, newest] = await Promise.all([
+      rows<DbRule>(`SELECT * FROM rule_pipeline WHERE rin IN (${marks})`, rins),
+      rows<{ p: string | null }>("SELECT MAX(a_pub_id) AS p FROM rule_pipeline").catch((err: unknown) => {
+        if (noAgendaColumn(err)) return [{ p: null }];
+        throw err;
+      }),
+    ]);
+    const newestPub = pubKey(s(newest[0]?.p));
+    return new Map(ruleRows.map((r) => [r.rin, toRecord(r, newestPub)]));
+  } catch (err) {
+    if (noTable(err)) return new Map();
+    throw err;
+  }
+});
+
+/** The same, from a list: React's cache keys on its argument by identity, so the list goes in as one string. */
+export function readRules(rins: readonly string[]): Promise<Map<string, RuleRecord>> {
+  return getRules([...rins].sort().join(","));
 }

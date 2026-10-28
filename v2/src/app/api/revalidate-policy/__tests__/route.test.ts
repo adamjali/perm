@@ -12,7 +12,7 @@ const revalidatePath = vi.fn();
 vi.mock("next/cache", () => ({ revalidatePath, revalidateTag: vi.fn() }));
 
 const { POST } = await import("../route");
-const { POLICY_PAGES } = await import("../paths");
+const { POLICY_PAGES, RULE_PARTS } = await import("../paths");
 
 const SECRET = "test-secret-value";
 const appDir = join(process.cwd(), "src", "app");
@@ -50,11 +50,18 @@ describe("POST /api/revalidate-policy", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("expires every listed page", async () => {
+  it("expires every listed page, and every article that shows a rule's status", async () => {
     const res = await POST(post());
     expect(res.status).toBe(200);
     for (const p of POLICY_PAGES) expect(revalidatePath).toHaveBeenCalledWith(p);
-    expect(revalidatePath).toHaveBeenCalledTimes(POLICY_PAGES.length);
+    // Control: the article on DOL's PERM proposal uses RuleStatus and RuleCompare.
+    expect(revalidatePath).toHaveBeenCalledWith("/blog/proposed-perm-rule-rin-1205-ac29");
+    const articles = revalidatePath.mock.calls.map((c) => c[0] as string).filter((p) => !(POLICY_PAGES as readonly string[]).includes(p));
+    for (const a of articles) {
+      const [, type, slug] = a.split("/");
+      const src = readFileSync(join(process.cwd(), "content", type!, `${slug}.mdx`), "utf8");
+      expect(RULE_PARTS.some((t) => src.includes(`<${t}`)), `${a} expired without a rule part`).toBe(true);
+    }
   });
 
   it("lists every cached page that reads the rule pipeline", () => {
