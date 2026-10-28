@@ -1,0 +1,25 @@
+{
+  "note": "The last recruitment step before the quiet period, held equal in getLastRecruitmentDate (convex/lib/perm/dates/filingWindow.ts) and last_recruitment_date (scripts/lib_recruitment.py). Fields use the TypeScript names.",
+  "cases": [
+    { "why": "the base steps only: the latest of the second ad and the job order's end", "professional": false,
+      "input": { "sundayAdSecondDate": "2025-06-22", "jobOrderEndDate": "2025-06-23" }, "expect": "2025-06-23" },
+    { "why": "a professional job: the additional steps count, the latest-dated one excepted (656.17(e)(1)(ii))", "professional": true,
+      "input": { "sundayAdSecondDate": "2025-06-22", "jobOrderEndDate": "2025-06-23",
+        "additionalRecruitmentMethods": [
+          { "startDate": "2025-05-26", "endDate": "2025-06-26" },
+          { "startDate": "2025-06-12", "endDate": "2025-06-18" },
+          { "startDate": "2025-06-20", "endDate": "2025-07-10" } ] }, "expect": "2025-06-26" },
+    { "why": "a job that isn't professional ignores additional steps", "professional": false,
+      "input": { "sundayAdSecondDate": "2025-06-22", "jobOrderEndDate": "2025-06-23",
+        "additionalRecruitmentMethods": [ { "startDate": "2025-06-20", "endDate": "2025-07-10" }, { "startDate": "2025-06-01", "endDate": "2025-06-30" } ] }, "expect": "2025-06-23" },
+    { "why": "one additional step alone is the excepted one", "professional": true,
+      "input": { "jobOrderEndDate": "2025-06-23", "additionalRecruitmentMethods": [ { "startDate": "2025-06-20", "endDate": "2025-07-10" } ] }, "expect": "2025-06-23" },
+    { "why": "an unreadable end falls back to the start", "professional": true,
+      "input": { "jobOrderEndDate": "2025-06-01", "additionalRecruitmentMethods": [ { "startDate": "2025-06-15", "endDate": "not-a-date" }, { "date": "2025-07-01" } ] }, "expect": "2025-06-15" },
+    { "why": "a single date and its sub-entries count", "professional": true,
+      "input": { "jobOrderEndDate": "2025-06-01", "additionalRecruitmentMethods": [ { "date": "2025-06-05", "subEntries": [ { "date": "2025-06-09" } ] }, { "date": "2025-06-30" } ] }, "expect": "2025-06-09" },
+    { "why": "the older form's one end date counts for a professional job", "professional": true,
+      "input": { "jobOrderEndDate": "2025-06-01", "additionalRecruitmentEndDate": "2025-06-12" }, "expect": "2025-06-12" },
+    { "why": "nothing recorded", "professional": true, "input": {}, "expect": null }
+  ]
+}

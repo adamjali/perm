@@ -259,6 +259,18 @@ jobs:
         working-directory: v2
         run: timeout 10m python3 scripts/build_seasonal_timing.py
 
+      # Each decided PERM joined to the wage request it names, after a wage-request load
+      # (the PERM load runs it too): the employer, firm and job pages' timing figures.
+      - name: Rebuild the PERM to wage-request timing
+        if: success() && matrix.program == 'pw' && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
+        working-directory: v2
+        run: |
+          timeout 20m python3 scripts/build_pwd_links.py || {
+            python3 scripts/record_ingest_failure.py --script build_pwd_links.py \
+              --note "PERM to wage-request timing: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
+
       # H-2A, H-2B and CW-1 decisions per day, by DOL's own decision date
       # (/seasonal-cases draws them). A failure is recorded, never silent, and
       # leaves the old series in place.
