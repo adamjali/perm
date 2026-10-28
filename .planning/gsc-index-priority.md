@@ -1620,3 +1620,18 @@ Still to request, in order:
 
 The allowance frees about 1:48 PM, so the 1:07 PM round will likely meet Quota Exceeded again; the 3:07 PM round
 should get the full allowance.
+
+## Queue after the Oct 28 night deploys (5aa3b1a3 at about 1:25 AM, 6193037e at about 3:00 AM EDT)
+
+From `node scripts/gsc_queue.mjs --since 568bed7c` (45 pages and families since Oct 27). Work top down.
+
+1. New: `/today` and `/compare`.
+2. `/tools/green-card-timeline` (now the planner: every step dated, fees, the inputs in the address).
+3. `/perm-queue` (the wall on any day since Aug 30) and one month, `/perm-queue/2026-01` (its day-by-day calendar).
+   Never request a `/perm-queue/<month>/<day>` page: they're noindex, out of the sitemap and behind robots.txt.
+4. `/calculators`, `/tools` (grouped by step), `/perm-by-the-numbers`, `/`.
+5. The three guides whose pictures or links changed: `/guides/three-180-day-clocks`, `/guides/ultimate-perm-guide-2026`,
+   `/guides/eb2-vs-eb3-perm`.
+6. Inspect only, request if last crawled before Oct 27: the rest of the list the script prints.
+
+After this list: `node scripts/gsc_queue.mjs --since 6193037e` for anything newer.

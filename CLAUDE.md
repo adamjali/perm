@@ -1522,11 +1522,11 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
   by then (`getProcessingTimesOn`, `analystPositionOf`, which `getEstimatorData` uses too). The days come from
   `perm_census_days`, written by `scripts/build_census_days.py` after the full sweep: a past day's status is the
   from_status of the case's first change after it, else its status now, each change on DOL's day. The page stays
-  static; `/api/queue-day` serves a day (404 outside `CENSUS_DAYS_FROM` to yesterday without a read, cached a day).
+  static; `/api/queue-day` serves a day (404 outside `CENSUS_DAYS_FROM` to yesterday without a read).
   Backfilled on the server Oct 28, 2:35 AM EDT: 59 days, 16,353 rows, the newest day equal to the live table.
 - **An open page redraws itself when a sweep lands**: `RefreshWhenStale` asks `/api/sweep-stamp` every 5 minutes
-  while visible (`POLL_MS`; Cloudflare keeps the answer a minute) and calls `router.refresh()` when the sweep's finish
-  time moves. Measure the origin's load from nginx's log after a day of it.
+  while visible (`POLL_MS`) and calls `router.refresh()` when the sweep's finish time moves. Cloudflare answers DYNAMIC
+  for `/api`, so every ask reaches the server (one point read); measure the load from nginx's log after a day of it.
 - **Big reads through the tunnel go in bounded slug slices** (`SLUG_WINDOWS`, `slug_window` in `scripts/lib_db.py`,
   each letter split at "m"): the LCA city rebuild hit Cloudflare's 100-second cut on Oct 27 (HTTP 524, the 10:40 AM
   pending sweep), and the employer map's slices, open at the top, each scanned to the index's end (pending sweeps
