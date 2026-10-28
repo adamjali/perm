@@ -18,7 +18,7 @@ import { usePathname, useRouter } from "next/navigation";
  *
  * A page that stays on screen refreshes too (owner, Oct 27 2026: figures update
  * live). While it's visible it asks `/api/sweep-stamp` every POLL_MS when our
- * DOL sweep last finished, and redraws once that moves past the time it saw
+ * DOL sweep last finished (one point read on the server), and redraws once that moves past the time it saw
  * first: a sweep's new counts reach an open page within minutes, with no reload.
  */
 export const STALE_AFTER_MS = 30 * 60 * 1000;

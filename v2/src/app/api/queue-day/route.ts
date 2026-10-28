@@ -12,7 +12,8 @@ import { easternDay } from "@convex/lib/time";
  * with DOL's analyst-review position as DOL had published it by then.
  *
  * A past day changes only when the walk finds a case filed on or before it, so
- * Cloudflare keeps an answer a day. A day outside the series (before its first
+ * an answer may be kept a day (Cloudflare doesn't cache /api; a browser or
+ * proxy may). A day outside the series (before its first
  * day, or today and later) answers 404 without a read, so an invented date
  * can't mint a cache entry and a database read; a day the table doesn't hold
  * answers 404, a malformed one 400, a failed read 503: never an empty queue.

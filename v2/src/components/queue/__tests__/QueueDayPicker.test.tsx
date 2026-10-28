@@ -41,7 +41,7 @@ describe("QueueDayPicker", () => {
     expect(screen.getByRole("slider")).toHaveAttribute("aria-valuetext", "Today");
 
     fireEvent.click(screen.getByRole("button", { name: "A day earlier" }));
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/queue-day?day=2026-09-02");
+    await waitFor(() => expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/queue-day?day=2026-09-02"));
     await screen.findByText("1,340 cases still pending at the end of September 2, 2026, against 700 today.");
     expect(screen.getByRole("slider")).toHaveAttribute("aria-valuetext", "September 2, 2026");
     expect(screen.getByText("Today", { selector: "p" })).toBeInTheDocument();
@@ -50,6 +50,16 @@ describe("QueueDayPicker", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back to today" }));
     await waitFor(() => expect(screen.getByRole("slider")).toHaveAttribute("aria-valuetext", "Today"));
     expect(screen.queryByText(/cases still pending at the end of/)).toBeNull();
+  });
+
+  it("asks once the slider rests: quick steps are one request, for the day it stops on", async () => {
+    const fetchMock = vi.fn(async (url: string) => new Response(JSON.stringify({ ...past, day: url.slice(-10) }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<QueueDayPicker days={["2026-09-01", "2026-09-02"]} today={today} />);
+    fireEvent.click(screen.getByRole("button", { name: "A day earlier" }));
+    fireEvent.click(screen.getByRole("button", { name: "A day earlier" }));
+    await screen.findByText(/at the end of September 1, 2026/);
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual(["/api/queue-day?day=2026-09-01"]);
   });
 
   it("says so when a day can't be read, and offers to try again", async () => {

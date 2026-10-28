@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { useDebounce } from "@/hooks/useDebounce";
 import { usePublicQuery } from "@/hooks/usePublicQuery";
 import type { BacklogMonth } from "@/lib/backlogMonths";
 import { formatAsOf } from "@/lib/dolFormat";
@@ -31,6 +32,9 @@ interface QueueDay {
   dol: { month: string; asOf: string } | null;
 }
 
+/** How long the slider rests before the day is asked for. */
+const ASK_AFTER_MS = 250;
+
 const STEP = "inline-flex min-h-11 min-w-11 items-center justify-center border-2 border-input bg-background disabled:opacity-40";
 
 /** The wall's month inputs from a day's months: where the queue's front is, and which months collapsed. */
@@ -54,8 +58,11 @@ export function QueueDayPicker({
   // The slider's last stop is today; every other stop is a past day.
   const [at, setAt] = useState(days.length);
   const day = at < days.length ? (days[at] ?? null) : null;
-  const q = usePublicQuery<QueueDay>(day ? `/api/queue-day?day=${day}` : "skip");
+  // Asked once the slider rests: a drag across sixty days is one request, not sixty (nginx allows 60 a minute on /api).
+  const asked = useDebounce(day, ASK_AFTER_MS);
+  const q = usePublicQuery<QueueDay>(asked ? `/api/queue-day?day=${asked}` : "skip");
   const shown = day ? (q.data ?? q.previous) : undefined;
+  const settled = day !== null && q.data?.day === day;
   const todayPending = useMemo(() => new Map(today.months.map((m) => [m.month, m.pending])), [today.months]);
   const total = (months: readonly BacklogMonth[]) => months.reduce((n, m) => n + m.pending, 0);
 
@@ -101,7 +108,7 @@ export function QueueDayPicker({
       {day && q.failed ? (
         <RequestFailed className="mt-4 bg-tint p-4 border-2 border-border" what={`The queue on ${label}`} failure={q.failure} onRetry={q.retry} />
       ) : null}{" "}
-      <div className={cn("mt-4", day && !q.data && !q.failed && "opacity-60")} aria-busy={day !== null && !q.data && !q.failed}>
+      <div className={cn("mt-4", day && !settled && !q.failed && "opacity-60")} aria-busy={day !== null && !settled && !q.failed}>
         {day && shown ? (
           <BacklogWall
             {...today}
