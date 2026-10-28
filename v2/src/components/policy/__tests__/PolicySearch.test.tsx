@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { PolicySearch, filterPolicy, type PolicyItem } from "../PolicySearch";
+import { policyFacets } from "@/lib/policySearch";
 
 function item(over: Partial<PolicyItem>): PolicyItem {
   return {
@@ -17,6 +18,7 @@ const ITEMS = [
   item({ id: "oflc-1", date: "2019-03-02", kind: "OFLC", title: "FLAG launch", text: "flag launch" }),
 ];
 const q = { text: "", kind: "", year: "", openOnly: false };
+const facets = policyFacets(ITEMS);
 
 describe("policy search", () => {
   it("matches every word, in any order, across title and agency", () => {
@@ -30,16 +32,58 @@ describe("policy search", () => {
     expect(filterPolicy(ITEMS, { ...q, openOnly: true }).map((i) => i.id)).toEqual(["2026-2"]);
   });
 
-  it("shows the page as it was until something is asked, then only the matches", () => {
+  it("the page carries only the box's parts: kinds, years newest first, the count", () => {
+    expect(facets).toEqual({ kinds: ["Final rule", "OFLC", "Proposed rule"], years: ["2026", "2019"], anyOpen: true, count: 3 });
+  });
+
+  it("asks for the documents only once the box is used, and once", async () => {
+    const load = vi.fn(async () => ITEMS);
     render(
-      <PolicySearch items={ITEMS}>
+      <PolicySearch facets={facets} load={load}>
+        <p>the full lists</p>
+      </PolicySearch>,
+    );
+    expect(load).not.toHaveBeenCalled();
+    fireEvent.focus(screen.getByLabelText("Search every document"));
+    fireEvent.change(screen.getByLabelText("Search every document"), { target: { value: "flag" } });
+    expect(await screen.findByRole("link", { name: "FLAG launch" })).toHaveAttribute("href", ITEMS[2]!.url);
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the page as it was until something is asked, then only the matches", async () => {
+    render(
+      <PolicySearch facets={facets} load={async () => ITEMS}>
         <p>the full lists</p>
       </PolicySearch>,
     );
     expect(screen.getByText("the full lists")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Search every document"), { target: { value: "flag" } });
     expect(screen.queryByText("the full lists")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "FLAG launch" })).toHaveAttribute("href", ITEMS[2]!.url);
+    expect(await screen.findByRole("link", { name: "FLAG launch" })).toHaveAttribute("href", ITEMS[2]!.url);
     expect(screen.getByRole("status")).toHaveTextContent("1 of 3 documents match");
+  });
+
+  it("says it's searching while the documents arrive, never that nothing matched", () => {
+    render(
+      <PolicySearch facets={facets} load={() => new Promise<PolicyItem[]>(() => {})}>
+        <p>the full lists</p>
+      </PolicySearch>,
+    );
+    fireEvent.change(screen.getByLabelText("Search every document"), { target: { value: "flag" } });
+    expect(screen.getByRole("status")).toHaveTextContent("Searching 3 documents");
+    expect(screen.getByRole("status")).not.toHaveTextContent("match");
+  });
+
+  it("a failed load says so and offers a retry that asks again", async () => {
+    const load = vi.fn().mockRejectedValueOnce(new Error("down")).mockResolvedValueOnce(ITEMS);
+    render(
+      <PolicySearch facets={facets} load={load}>
+        <p>the full lists</p>
+      </PolicySearch>,
+    );
+    fireEvent.change(screen.getByLabelText("Search every document"), { target: { value: "flag" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("link", { name: "FLAG launch" })).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });

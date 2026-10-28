@@ -5,14 +5,15 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { RecordStrip } from "@/components/home/RecordStrip";
 import { DocRow, typeLabel } from "@/components/policy/DocRow";
-import { PolicySearch, type PolicyItem } from "@/components/policy/PolicySearch";
+import { PolicySearch } from "@/components/policy/PolicySearch";
 import { monthYear } from "@/components/policy/format";
 import { OflcArchive } from "@/components/policy/OflcArchive";
 import { PolicyStrip, StripLegend } from "@/components/policy/PolicyStrip";
 import { RulePipeline } from "@/components/policy/RulePipeline";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { buildFeed, buildStrip, commentWindow, feedLedger } from "@/lib/policyFeed";
+import { buildFeed, buildStrip, feedLedger } from "@/lib/policyFeed";
+import { policyFacets, policySearchItems } from "@/lib/policySearch";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { withSocialCard } from "@/lib/socialCard";
 import { getCommentCounts } from "@/lib/db/policyComments";
@@ -97,24 +98,8 @@ export default async function PolicyChangesPage() {
   const earlier = strip.earlierRegister + strip.earlierAnnouncements;
   const coming = [...feed.filed, ...feed.signed];
   const empty = feed.register.length === 0 && feed.announcements.length === 0 && coming.length === 0;
-  // Everything the lists below hold, as strings the search can match. The
-  // OFLC years folded under their summaries are included on purpose: those
-  // are the titles a reader can't otherwise find without opening every year.
-  const searchable: PolicyItem[] = [...coming, ...feed.register, ...feed.announcements, ...feed.bills, ...feed.decisions]
-    .map((n) => ({
-      id: n.documentNumber,
-      date: n.publicationDate,
-      kind: typeLabel(n.type),
-      title: n.title,
-      url: n.url,
-      agencies: n.agencies.join(", "),
-      text: [n.title, n.abstract, n.agencies.join(" "), n.citation, n.documentNumber]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase(),
-      commentsOpen: commentWindow(n, today)?.state === "open",
-    }))
-    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  // The search box's parts; its documents load when someone uses it (src/lib/policySearch.ts).
+  const facets = policyFacets(policySearchItems(feed, today));
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
@@ -177,7 +162,7 @@ export default async function PolicyChangesPage() {
             ) : null}
           </section>{" "}
 
-          <PolicySearch items={searchable}>
+          <PolicySearch facets={facets}>
           <section className="mt-12" id="register">
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">

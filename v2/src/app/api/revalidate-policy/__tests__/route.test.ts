@@ -28,13 +28,13 @@ function walk(dir: string, out: string[] = []): string[] {
   for (const e of readdirSync(dir)) {
     const p = join(dir, e);
     if (statSync(p).isDirectory()) walk(p, out);
-    else if (e === "page.tsx") out.push(p);
+    else if (e === "page.tsx" || e === "route.ts") out.push(p);
   }
   return out;
 }
 
 const routeOf = (file: string) =>
-  "/" + file.slice(appDir.length + 1).replace(/\/page\.tsx$/, "").replace(/\([^)]*\)\/?/g, "").replace(/^\/+|\/+$/g, "");
+  "/" + file.slice(appDir.length + 1).replace(/\/(page\.tsx|route\.ts)$/, "").replace(/\([^)]*\)\/?/g, "").replace(/^\/+|\/+$/g, "");
 
 beforeEach(() => {
   revalidatePath.mockReset();
