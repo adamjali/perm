@@ -241,3 +241,15 @@ call shapes, so html-to-text would break), and a local patch skipping `__proto__
 Accepted in `scripts/daily_monitor.py`'s `ACCEPTED_ADVISORIES` until 2027-01-28, when the morning report asks
 again: by then deepmerge, html-to-text or the renderer may have moved.
 
+
+## motion 14.5.0 (Oct 28 2026, branch catchup/oct28; supersedes Dependabot PR #68)
+
+- **Taken:** 14.5.0 (released Oct 21 2026 12:35 AM EDT), past the 7-day release floor. 14.7.1 (Oct 27) is under
+  it and waits for the next pass.
+- **What changed for us:** nothing. 14.0.0's changelog (read Oct 28) removes only internal APIs the 13.5.1
+  release had restored, none of which this repo imports.
+- **What holds it:** `src/lib/__tests__/motion-ssr.ssr.test.tsx` renders motion on the server with the real
+  library (the `ssr` project mocks nothing): a canary that `initial` still reaches the HTML, and the shared
+  providers, the reading bar and the back-to-top button showing their content. Probed by giving the providers a
+  hidden first frame (red). The SSR visibility audit over 40 pages on the dev server: 0 findings.
+- PR #68 is closed as superseded at go-live, with a link to this note.
