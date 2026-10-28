@@ -152,6 +152,19 @@ jobs:
                  --script "build_straggler_rates.py" \
                  --note "stragglers: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
+      # The queue on each past day, for /perm-queue's day picker: the event log
+      # replayed backward from today's statuses, one row per day, month and
+      # status, written only where it changed (a case the walk finds late
+      # rewrites the days it belonged to). About half a minute.
+      - name: Replay the queue's past days
+        if: env.MODE == 'full'
+        working-directory: v2
+        run: |
+          timeout 10m python3 scripts/build_census_days.py \
+            || python3 scripts/record_ingest_failure.py \
+                 --script "build_census_days.py" \
+                 --note "census days: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       # The standing estimator backtest, every night on the full pass. It
       # scores the site's dates against what DOL decided since, re-measures
       # the range the case page prints for each distance, and writes the one

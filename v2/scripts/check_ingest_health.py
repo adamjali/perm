@@ -532,6 +532,7 @@ NIGHTLY_BUILDERS = {
     "build_sponsor_index.py": 3,
     "build_lca_cities.py": 3,
     "build_straggler_rates.py": 3,
+    "build_census_days.py": 3,
     "sync_published_live.py": 3,
 }
 
