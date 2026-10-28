@@ -3,16 +3,17 @@ import { withSocialCard } from "@/lib/socialCard";
 import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
+import { ArrowLeftIcon, ArrowRightIcon, CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { StageBar, StageLegend } from "@/components/queue/StageBar";
 import { groupByStage } from "@/components/queue/stages";
-import { currentMonthUtc, formatAsOf, formatMonth, monthsMoved } from "@/lib/dolFormat";
+import { currentMonthUtc, formatMonth, monthsMoved } from "@/lib/dolFormat";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
 import {
   getAdjacentMonths,
@@ -43,8 +44,7 @@ import { easternDay } from "@convex/lib/time";
 import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { buttonVariants } from "@/components/ui/button";
-import { monthDay } from "@convex/lib/months";
-import { cn } from "@/lib/utils";
+import { monthDay, shortDate } from "@convex/lib/months";
 import { CaveatBox } from "@/components/ui/note";
 import { ISO_MONTH_RE } from "@convex/lib/months";
 import { statusCasesHref } from "@/components/queue/statusLinks";
@@ -64,10 +64,10 @@ import { getRangeCoverage } from "@/lib/db/rangeCoverage";
  * my month at all yet". Those feel identical from inside and they are not the
  * same situation.
  *
- * WHAT IT REFUSES. No date, no estimate, no "you should hear by". The queue
- * ahead is a count of real pending cases and the frontier is DOL's own
- * figure; turning either into a date for one case is the line this whole
- * product exists on the correct side of.
+ * WHAT IT DATES, AND WHAT IT DOESN'T. The month's end is dated by the case
+ * page's own model (`monthEndDate`), with its measured range; no single case
+ * on this page is given a date. The queue ahead is a count of real pending
+ * cases and the frontier is DOL's own figure.
  */
 
 
@@ -199,7 +199,6 @@ export default async function CohortPage({
   const split = groupByStage(backlog.statuses);
   const label = formatMonth(month) ?? month;
   const dolMonth = estimator.frontier?.analystQueueMonth ?? null;
-  const dolAsOf = estimator.frontier ? formatAsOf(estimator.frontier.asOf) : null;
   const isNoted = month === OCTOBER_2025.month;
   // An alert on a month DOL has already reached would fire at once, so the
   // form is offered only for a month still ahead of DOL.
@@ -212,9 +211,9 @@ export default async function CohortPage({
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Filed {label}
         </h1>{" "}
-        <MonthHeadline makeup={makeup} label={label} end={end} />{" "}
-        {since && pastDay ? <SinceDay className="mt-5" shift={since} since={pastDay.day} hrefFor={(status) => statusCasesHref(status, month)} /> : null}{" "}
-        <SourceNote className="mt-4" />
+        <MonthHeadline makeup={makeup} label={label} end={end} month={month} dolMonth={dolMonth} dolAsOfIso={estimator.frontier?.asOf ?? null} ahead={ahead} />{" "}
+        {since && pastDay ? <SinceDay className="mt-6" shift={since} since={pastDay.day} hrefFor={(status) => statusCasesHref(status, month)} /> : null}{" "}
+        <SourceNote compact className="mt-4" />
       </header>{" "}
 
       {detail && dolDecisions(detail.days) >= 50 ? <MonthActivity detail={detail} label={label} month={month} /> : null}{" "}
@@ -230,39 +229,6 @@ export default async function CohortPage({
           <OctoberNote />
         </div>
       ) : null}
-
-      <section className="mt-8 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
-        <h2 className="font-heading text-xl font-bold">
-          Where this month sits
-        </h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-soft">
-          <FrontierSentence month={month} dolMonth={dolMonth} dolAsOf={dolAsOf} />
-        </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-soft">
-          {ahead > 0 ? (
-            <>
-              <b className="font-bold">{formatInt(ahead)}</b> cases filed before{" "}
-              {label} were undecided at their last check, so that&rsquo;s what
-              sits in front of this month, counting only cases DOL still has to
-              decide. Some will have been decided since, so it runs a little
-              high. It isn&rsquo;t divided into a wait: the{" "}
-              <Link
-                href="/tools/perm-timeline-calculator"
-                className="link"
-              >
-                timeline calculator
-              </Link>{" "}
-              gives the envelope, from the spread of cases DOL has actually
-              decided.
-            </>
-          ) : (
-            <>
-              Nothing filed before {label} is still undecided, so this month has
-              no queue in front of it.
-            </>
-          )}
-        </p>
-      </section>{" "}
 
       {monthDays ? (
         <section aria-labelledby="by-day" className="mt-8">
@@ -287,9 +253,10 @@ export default async function CohortPage({
         className="mt-6"
       />{" "}
 
-      <details className="mt-6 bg-sage">
-        <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
-          {`Every status, pending and decided, and the ${label} cases themselves`}
+      <details className="group mt-6 bg-sage">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
+          <span>{`Every status, pending and decided, and the ${label} cases themselves`}</span>{" "}
+          <CaretDownIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none" />
         </summary>
         <div className="border-t-2 border-border px-4 pb-6 sm:px-5">
       <section className="mt-6">
@@ -465,66 +432,6 @@ export default async function CohortPage({
  * and "DOL has not reached your month" both look like silence from where the
  * applicant is standing.
  */
-function FrontierSentence({
-  month,
-  dolMonth,
-  dolAsOf,
-}: {
-  month: string;
-  dolMonth: string | null;
-  dolAsOf: string | null;
-}) {
-  if (dolMonth === null) {
-    return (
-      <>
-        DOL published no readable analyst-review priority date at its last
-        update, so there&rsquo;s no official position to place this month
-        against.
-      </>
-    );
-  }
-  const dolLabel = formatMonth(dolMonth) ?? dolMonth;
-  const stamp = dolAsOf ? ` as of ${dolAsOf}` : "";
-  const gap = monthsMoved(dolMonth, month);
-
-  if (month === dolMonth) {
-    return (
-      <>
-        DOL publishes <b className="font-bold">{dolLabel}</b> as the filing
-        month its analyst review is working{stamp}. This is that month.
-      </>
-    );
-  }
-  if (month < dolMonth) {
-    return (
-      <>
-        DOL publishes <b className="font-bold">{dolLabel}</b> as the filing
-        month its analyst review is working{stamp}, so it has worked past{" "}
-        {formatMonth(month) ?? month}. Anything still open here is behind the
-        main queue rather than waiting for its turn.
-      </>
-    );
-  }
-  return (
-    <>
-      DOL publishes <b className="font-bold">{dolLabel}</b> as the filing month
-      its analyst review is working{stamp}.{" "}
-      {gap !== null ? (
-        <>
-          {formatMonth(month) ?? month} is {gap}{" "}
-          {gap === 1 ? "month" : "months"} ahead of that, so DOL hasn&rsquo;t
-          reached it yet.
-        </>
-      ) : (
-        <>
-          {formatMonth(month) ?? month} is ahead of that, so DOL hasn&rsquo;t
-          reached it yet.
-        </>
-      )}
-    </>
-  );
-}
-
 /**
  * What a small "decided" share on an unreached month actually consists of.
  *
@@ -595,15 +502,40 @@ function SiblingLink({
   );
 }
 
-const longDay = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
-
 /**
  * The month in one number first: the share DOL has decided, the split as one
- * bar, then three tiles. Every figure is the census's, the same counts the
+ * bar, then one row of figures. Every figure is the census's, the same counts the
  * folded tables below carry, so the headline can't disagree with them.
  */
-function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: string; end: MonthEnd | null }) {
+/** Where DOL's line is against this month, in a few words: past it, on it, or months before it. */
+function dolPlace(month: string, dolMonth: string, asOfIso: string | null): string {
+  const asOf = monthDay(asOfIso ?? "");
+  const by = asOf ? `, as of ${asOf}` : "";
+  if (month < dolMonth) return `Past this month${by}`;
+  if (month === dolMonth) return `This month${by}`;
+  const gap = monthsMoved(dolMonth, month);
+  return gap ? `${gap} ${gap === 1 ? "month" : "months"} before this one${by}` : `Before this month${by}`;
+}
+
+function MonthHeadline({
+  makeup: m,
+  label,
+  end,
+  month,
+  dolMonth,
+  dolAsOfIso,
+  ahead,
+}: {
+  makeup: MonthMakeup;
+  label: string;
+  end: MonthEnd | null;
+  month: string;
+  dolMonth: string | null;
+  /** DOL's own as-of day for its month, "YYYY-MM-DD". */
+  dolAsOfIso: string | null;
+  /** Cases filed before this month still undecided at their last check. */
+  ahead: number;
+}) {
   const pct = m.total ? m.decided / m.total : 0;
   const parts = [
     // Soft colours by meaning, no black or grey (round 3, Oct 15 2026), the
@@ -645,48 +577,29 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
           </Fragment>
         ))}
       </ul>{" "}
-      {/* The tiles take their part's colour from the bar above (round 3, Oct
-          15 2026): in the line yellow, outside it blue, and the month's end by
-          where the queue is, as the timeline calculator colours it. */}
-      <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="bg-soft-wait p-4 border-2 shadow-hard-sm border-border">
-          <dt className="text-sm font-bold">In DOL&apos;s line</dt>{" "}
-          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine)}</dd>{" "}
-          <dd className="text-sm text-muted-foreground">analyst review, worked in filing order</dd>
-        </div>{" "}
-        <div className="bg-soft-info p-4 border-2 shadow-hard-sm border-border">
-          <dt className="text-sm font-bold">Outside the line</dt>{" "}
-          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.outside)}</dd>{" "}
-          <dd className="text-sm text-muted-foreground">on hold, at an RFI or on appeal</dd>
-        </div>{" "}
-        <div
-          className={cn(
-            "p-4 border-2 shadow-hard-sm border-border",
-            end?.kind === "estimate" ? "bg-soft-wait" : end?.kind === "passed" ? "bg-soft-bad" : "bg-sage",
-          )}
-        >
-          {end?.kind === "estimate" ? (
-            <>
-              <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
-              <dd className="mt-1 font-heading text-2xl font-bold sm:text-3xl">{`around ${longDay(end.date)}`}</dd>{" "}
-              <dd className="text-sm text-muted-foreground">{`Between ${longDay(end.early)} and ${longDay(end.late)}${end.rangeFrom === "measured" ? ", as far as recent decisions landed from their dates" : ""}`}</dd>{" "}
-              <dd className="text-sm text-muted-foreground">{`${formatInt(end.casesThrough)} cases in line through ${label}, at DOL's recent pace`}</dd>
-            </>
-          ) : end?.kind === "passed" ? (
-            <>
-              <dt className="text-sm font-bold">DOL&apos;s queue has passed this month</dt>{" "}
-              <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(end.inLine)}</dd>{" "}
-              <dd className="text-sm text-muted-foreground">still in line, decided as DOL gets to them</dd>
-            </>
-          ) : (
-            <>
-              <dt className="text-sm font-bold">Waiting in all</dt>{" "}
-              <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine + m.outside)}</dd>{" "}
-              <dd className="text-sm text-muted-foreground">no date printed without a fresh pace</dd>
-            </>
-          )}
-        </div>
-      </dl>
+      {/* One row of figures, the queue page's own (Adam, Oct 28 2026: no tiles that repeat the
+          key above them): what's still waiting, where DOL's line is (lime: the reader's own
+          question), when the line reaches this month's end, and what's filed ahead of it. */}
+      <FigureRow className="mt-6">
+        <Figure
+          label="Still waiting"
+          value={formatInt(m.inLine + m.outside)}
+          note={`${formatInt(m.inLine)} in DOL's line, ${formatInt(m.outside)} outside it`}
+        />{" "}
+        {dolMonth ? (
+          <Figure tone="lime" label="DOL is working" value={formatMonth(dolMonth) ?? dolMonth} note={dolPlace(month, dolMonth, dolAsOfIso)} />
+        ) : null}{" "}
+        {end?.kind === "estimate" ? (
+          <Figure
+            label="The line reaches this month's end"
+            value={shortDate(end.date) ?? end.date}
+            note={`${monthDay(end.early) ?? end.early} to ${monthDay(end.late) ?? end.late}, at DOL's recent pace`}
+          />
+        ) : null}{" "}
+        {dolMonth && month > dolMonth && ahead > 0 ? (
+          <Figure label="Filed earlier, still waiting" value={formatInt(ahead)} note="ahead of this month" />
+        ) : null}
+      </FigureRow>
     </div>
   );
 }
@@ -758,10 +671,21 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
         <span>{shortDay(days[0]!.date)}</span>{" "}
         <span>{shortDay(newest!.date)}</span>
       </div>{" "}
-      <p className="mt-2 text-sm text-muted-foreground">
-        Green certified, red denied, orange withdrawn by the employer. Days are when our sweep first saw each decision,
-        not DOL&apos;s own date.
-      </p>{" "}
+      <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        {[
+          ["bg-primary", "Certified"],
+          ["bg-chart-red", "Denied"],
+          ["bg-chart-purple", "Withdrawn by the employer"],
+        ].map(([cls, text]) => (
+          <Fragment key={text}>
+            {" "}
+            <li className="flex items-center gap-2">
+              <span aria-hidden="true" className={`inline-block size-3 border border-input ${cls}`} />
+              {text}
+            </li>
+          </Fragment>
+        ))}
+      </ul>{" "}
       <h3 className="mt-8 font-heading text-lg font-bold">By the employer&apos;s first letter</h3>{" "}
       <p className="mt-1 max-w-2xl text-base text-soft">
         {`DOL tends to work a month loosely from A to Z. The share of ${label}'s cases decided, by the first letter of the employer's name.`}

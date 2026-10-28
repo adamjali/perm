@@ -26,7 +26,32 @@ import { NoteBanner } from "@/components/ui/note";
 /** DOL's own case-status search: the source, and the authority for one case. */
 export const DOL_CASE_STATUS_URL = "https://flag.dol.gov/case-status-search";
 
-export function SourceNote({ className }: { className?: string }) {
+export function SourceNote({ className, compact = false }: { className?: string; compact?: boolean }) {
+  const where = (
+    <p>
+      Anything undecided here is read from{" "}
+      <a href={DOL_CASE_STATUS_URL} rel="noopener">
+        DOL&rsquo;s own case-status search
+      </a>
+      , in batches: every case daily, and the undecided ones at least twice
+      a day. That page is also the authority for any single case.
+    </p>
+  );
+  if (compact) {
+    // Under a page's own figures (Adam, Oct 28 2026: no text boxes on top): the
+    // direction of the error in one line, where it comes from folded.
+    return (
+      <div className={className}>
+        <p className="text-sm text-soft">
+          Counted at our last sweep of DOL&rsquo;s case-status search, so a case decided since then still reads as
+          waiting.
+        </p>{" "}
+        <FinePrint summary="Where these come from" className="mt-1">
+          {where}
+        </FinePrint>
+      </div>
+    );
+  }
   return (
     // A banner with the alert mark (round 3, Oct 15 2026: the grey paragraph
     // read as boring and awkwardly set). The direction of the error stays in
@@ -40,14 +65,7 @@ export function SourceNote({ className }: { className?: string }) {
         rather than a little low.
       </p>{" "}
       <FinePrint summary="Where these come from" className="mt-2">
-        <p>
-          Anything undecided here is read from{" "}
-          <a href={DOL_CASE_STATUS_URL} rel="noopener">
-            DOL&rsquo;s own case-status search
-          </a>
-          , in batches: every case daily, and the undecided ones at least twice
-          a day. That page is also the authority for any single case.
-        </p>
+        {where}
       </FinePrint>
     </NoteBanner>
   );

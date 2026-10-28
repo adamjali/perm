@@ -279,7 +279,7 @@ def main() -> int:
     check("both complete days are written and today is not",
           sorted(got) == sorted([two, yday]), str(sorted(got)))
     check("the doc records the dating so the label cannot be lost",
-          "not DOL" in (doc(db) or {}).get("dating", ""), str(doc(db)))
+          "the day DOL worked" in (doc(db) or {}).get("dating", ""), str(doc(db)))
 
     # A day that BECOMES unpublishable loses its row, or the series keeps a
     # number this run has just decided it cannot stand behind.

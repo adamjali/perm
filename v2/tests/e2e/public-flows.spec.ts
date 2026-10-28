@@ -214,7 +214,7 @@ test("a filing month says what moved since the last replayed day, and its first 
   await page.goto("/perm-queue/2026-01");
   await expect(page.getByText(/^Since the end of [A-Z][a-z]+day, [A-Z][a-z]{2} \d+/)).toBeVisible();
   // The end-of-month estimate carries its range, never a broken date.
-  await expect(page.getByText(/^Between [A-Z][a-z]+ \d+ and [A-Z][a-z]+ \d+/)).toBeVisible();
+  await expect(page.getByText(/^[A-Z][a-z]{2} \d+ to [A-Z][a-z]{2} \d+, at DOL's recent pace$/)).toBeVisible();
   await expect(page.getByText("Invalid Date")).toHaveCount(0);
   const letterA = page.locator('a[href^="/perm-cases?filed=2026-01&letter=A"]');
   await expect(letterA).toBeVisible();
@@ -263,4 +263,24 @@ test("PERM by the numbers draws filed and decided by month, and a period picks t
   await expect(filed).not.toHaveText(all ?? "");
   // A month DOL's files and our sweep both miss is named, never drawn as zero.
   await expect(tile.getByText(/no complete record: DOL's published files end with/)).toBeVisible();
+});
+
+test("today shows the reader's own bulletin line and looks further back at DOL's decisions", async ({ page }) => {
+  await page.goto("/today");
+  // The bulletin step answers for the line the reader picks, with no fetch.
+  const station = page.locator("li", { has: page.locator("select") });
+  await station.getByLabel("Category").selectOption("EB3");
+  await station.getByLabel("Country of birth").selectOption("india");
+  await expect(station.getByText(/^EB-3, India: current if filed before$/)).toBeVisible();
+  await expect(station.getByText(/^Dates for filing:/)).toBeVisible();
+  // The decisions chart reaches back 90 and 180 days, the pick drawn as the site's choice.
+  const back = page.getByRole("group", { name: "How far back" });
+  await expect(back.getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "true");
+  await back.getByRole("button", { name: "90 days" }).click();
+  await expect(back.getByRole("button", { name: "90 days" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("img", { name: /^PERM decisions per (day|week), the last 90 days/ })).toBeVisible();
+  await back.getByRole("button", { name: "180 days" }).click();
+  await expect(page.getByRole("img", { name: /^PERM decisions per (day|week), the last 180 days/ })).toBeVisible();
+  // Each step's line in and out sits in its own card.
+  await expect(page.getByText(/^[A-Z][a-z]{2} \d+ to [A-Z][a-z]{2} \d+$/).first()).toBeVisible();
 });

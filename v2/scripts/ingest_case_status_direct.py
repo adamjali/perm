@@ -1435,6 +1435,11 @@ def write_decided_percentiles(db) -> None:
 DOL_DAY_STARTS_HOUR = 7
 
 
+# How `observed_day` dates a decision, recorded in each doc it dates so the label can't be lost.
+DOL_DAY_DATING = ("the day DOL worked: the Eastern day our sweep first saw the decision, or the day "
+                  f"before when it saw it before {DOL_DAY_STARTS_HOUR} AM Eastern")
+
+
 def observed_day(changed_at: int) -> str:
     """The day DOL worked, for a `perm_case_events.changed_at`: its Eastern
     date, or the day before when it was first seen before 7 AM Eastern.
@@ -1644,7 +1649,7 @@ def write_month_detail(db) -> None:
     stamp = int(time.time() * 1000)
     doc = {
         "asOf": max(publishable),
-        "dating": "when our sweep first observed the decision, not DOL's own decision date",
+        "dating": DOL_DAY_DATING,
         "frontDays": FRONT_DAYS,
         "months": detail,
     }
@@ -1730,8 +1735,7 @@ def write_observed_decisions(db) -> None:
     doc = {
         "asOf": today,
         "source": OBSERVED_SOURCE,
-        "dating": "when our sweep first observed the change, not DOL's own "
-                  "decision date",
+        "dating": DOL_DAY_DATING,
         "from": dates[0], "to": dates[-1],
         "decisions": sum(days[d]["total"] for d in dates),
         "withheld": [{"date": d, "reason": r} for d, r in sorted(withheld.items())],
