@@ -18,9 +18,13 @@ Order of work: case status (their own case, the highest stakes), homepage, the e
 - **Words:** one typed message module per page or part (`*.messages.ts`): `Record<Lang, Messages>` with
   `satisfies`, so a language missing a string fails the typecheck. English lives in the same module, so the
   English page reads the same keys and can't drift from the translations.
-- **Which language:** server components read it from a request-scoped store (`src/lib/i18n/request.ts`,
-  React `cache`, the pattern next-intl's `setRequestLocale` uses); the `[lang]` page sets it first. Client
-  components get their messages from `MessagesProvider` (context), English when there is none.
+- **Which language:** server components take a `lang` prop (default `"en"`), passed down from the `[lang]`
+  page; client components read `useLang()` from `LangProvider`, which the `[lang]` layout sets. (A
+  request-scoped store was the first plan; an explicit prop was chosen because a store set by the page isn't
+  reliably set before a shared layout renders.) **A client component receives the language, never message
+  functions:** a server component can't pass a function to a client one, and doing so (DataProvenance to
+  CiteThis, fixed Oct 28 2026) turned every translated case page into the error screen. The browser flow
+  "the case page answers in <lang>" catches it.
 - **Formatting:** dates and numbers through `Intl` in the locale's `intl` tag; never hand-built strings.
 - **What stays as printed:** DOL's and State's own words (statuses, form names, case numbers, cutoffs), each
   glossed in the reader's language the first time. Employer, firm and job names stay as DOL prints them.
@@ -35,3 +39,13 @@ Order of work: case status (their own case, the highest stakes), homepage, the e
 Typecheck (all five languages complete), a render test per language, a Playwright flow (look a case up in
 Spanish), axe at 390 and 1440 in both themes, the phone sweep, glued text, headings, screenshots read at full
 size, hreflang reciprocal (test), sitemap entries, the switcher.
+
+## Before any translated page goes live (blockers)
+
+- **The lookup's protections must cover the translated addresses.** Cloudflare's rule 1 (Meta) and rule 4
+  (the browser check and 20 a minute per address) and nginx's lookup cap (`pt_lookup_conn`, 24 of the app's 64
+  slots, and the scraper label's 30 a minute) match `/perm-case-status` exactly, so `/es/perm-case-status?case=`
+  and the four others would ask DOL live with none of them. Before shipping: widen each rule to
+  `/(es|zh|pt-br|ko|vi)/perm-case-status`, extend `test_nginx_conf.py` with a probe per language, and read each
+  rule back live (Oct 28 2026, found writing the browser flows).
+- **The owner's review**: screenshots of each language, light and dark, desktop and phone.
