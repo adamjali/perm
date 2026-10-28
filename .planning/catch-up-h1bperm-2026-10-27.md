@@ -48,16 +48,16 @@ Design (Oct 27 2026, evening):
   `perm_case_events`), so the page is one read. Missing parts are said, never zero.
 - **Width:** one column, every block fills it or shares a row (the Oct 27 spacing fix).
 The homepage's answer and a full board on /perm-queue (or a new /board), visual first:
-- [ ] 2.1 One row per stage: wage request, PERM, I-485 final action, I-485 dates for filing. The exact day DOL is on,
+- [~] 2.1 One row per stage: wage request, PERM, I-485 final action, I-485 dates for filing. The exact day DOL is on,
       the wait now in days, the pace (days of filings cleared per calendar day), growing or shrinking, the 30-day change,
       decided today with its time. Category and country switches on the I-485 rows; retrogressed or advanced.
 - [x] 2.2 "Is the wait growing" in one line per queue (on /today: filed against decided over 30 days, PERM and wage requests).
-- [ ] 2.3 Status table: every status, in progress and closed, with its change today and over 7 days, by period.
-- [ ] 2.4 Queue by filing month with today's change per month; open a month: by status, by filing day, by employer
+- [x] 2.3 Status table: every status, in progress and closed, with its change today and over 7 days, by period.
+- [~] 2.4 Queue by filing month with today's change per month; open a month: by status, by filing day, by employer
       letter, each tappable to its case list.
-- [ ] 2.5 Time travel: the queue on any past day (event log from Aug 26 2026).
-- [ ] 2.6 Daily decisions 30, 90, 180 days, by day or week; analyst review over time; filed and decided per month.
-- [ ] 2.7 Live refresh of an open page when the sweep moves (a cached version stamp; measure the server cost first).
+- [x] 2.5 Time travel: the queue on any past day (event log from Aug 26 2026).
+- [~] 2.6 Daily decisions 30, 90, 180 days, by day or week; analyst review over time; filed and decided per month.
+- [x] 2.7 Live refresh of an open page when the sweep moves (a cached version stamp; measure the server cost first).
 Built Tue Oct 27 2026, evening (live with the next night deploy): `/today` reads straight from the tables
 (`src/lib/db/board.ts`), not a `perm_docs['board']` doc yet. One station per step on a numbered track (wage request,
 PERM, I-140, the EB-2 rest-of-world cutoff), each with its wait drawn on one shared scale and its move since the
@@ -82,6 +82,26 @@ statuses; (4) the rail regrouped by step, one list for rail, /today and /tools; 
 travel; (7) live refresh, cost measured first; (8) the API and deadline card fixes. Not tonight: Phase 4 (DOL
 workbooks load on GitHub's runners), Phase 5 (weeks), Sabrina's weekend answer, deepmerge (no fix published).
 
+Built and live Wed Oct 28 2026, 1:15 to 3:45 AM EDT (owner asleep, "do all and live"):
+- 2.1 in part: the bulletin step picks any category and country and shows dates for filing beside final action; the
+  exact day DOL is on is the existing ruler. 2.3: closed statuses as their own tiles, with today's and the week's change.
+- 2.4 in part: each month page opens day by day (`MonthDays`), and every day has its page (`/perm-queue/<month>/<day>`,
+  status chips and the employer's first letter). The per-month change today isn't drawn yet.
+- 2.5: the wall on any day since Aug 30 (`perm_census_days`, replayed nightly; `QueueDayPicker`).
+- 2.6 in part: decisions over 30, 90 or 180 days by day or week, on /today and /perm-by-the-numbers. Analyst review
+  over time and filed and decided per month aren't drawn yet.
+- 2.7: an open page asks `/api/sweep-stamp` every 5 minutes and redraws when a sweep lands. Measure the load from nginx.
+- 4.1 in part: `pwd_number`, `emp_payroll`, `emp_year` loaded at 3:25 AM: 281,482 of 373,939 PERM cases carry their
+  wage request's number, 151,466 of them a wage request we hold. The links on pages (4.2 to 4.4, 4.6) are next and
+  need a nightly precomputed table, not a per-page join.
+- 4.7 in part: `ingest_i485_inventory.py --archive` loads the Archive's copies (22 files, April 2024 on); the Archive
+  answered 429 twice tonight, so the server's daily I-485 job asks again each day. Feb 2022 to Mar 2024 sit under other
+  file names, still to find.
+- 4.8 measured, not changed: /visa-bulletin 966 KB (the December history's closed folds 131 KB, the every-bulletin
+  index 109 KB, each sent twice as HTML and as the RSC payload). Loading the folds on open would cut it, at the cost of
+  what search engines read: the owner's call.
+- 4.3, 4.4, 4.6 and Phase 5: not started.
+
 ## Phase 3: one planner, every step to the green card (2 to 3 days)
 - [x] 3.1 Where you are now (about to file the wage request, wage request filed, PERM filed, I-140 filed or approved),
       filing date, category, country of birth, premium processing. Each step's date range from our measured methods:
@@ -96,18 +116,18 @@ is in part: each step's "Now" line says where DOL, USCIS and the bulletin stand;
 the line aren't on it yet (the green card line tool has them).
 
 ## Phase 4: the record, deeper (3 to 4 days)
-- [ ] 4.1 Load JOB_OPP_PWD_NUMBER from DOL's PERM files; link each PERM to its wage request (exact), employer and
+- [~] 4.1 Load JOB_OPP_PWD_NUMBER from DOL's PERM files; link each PERM to its wage request (exact), employer and
       title (inferred, labelled). Fix the comment in convex/lib/pipelineMatch.ts.
 - [ ] 4.2 Days from wage request to PERM on employer, firm and job pages; did a PERM follow each wage request.
 - [ ] 4.3 EB-2 and EB-3 split of the queue from the linked wage request's education and experience (needs the wage
       file's education columns), labelled as an estimate.
 - [ ] 4.4 A decided case's page: the dated timeline (wage request, job order, each ad and paper, quiet period, filing,
       decision, wage validity), employer size and year founded (EMP_NUM_PAYROLL, EMP_YEAR_COMMENCED), linked wage request.
-- [ ] 4.5 A page per filing day listing every PERM and wage request filed that day, live status, paged and filtered;
+- [x] 4.5 A page per filing day listing every PERM and wage request filed that day, live status, paged and filtered;
       per employer letter inside a month. Kept out of the sitemap and behind a robots rule for crawl cost.
 - [ ] 4.6 Law-firm filing speed: days from the end of the quiet period to filing, share within 14 days, clients;
       statistics, never a rating.
-- [ ] 4.7 I-485 inventory history back to February 2022.
+- [~] 4.7 I-485 inventory history back to February 2022.
 - [ ] 4.8 Lighter pages: visa bulletin 956 KB and employer pages 602 KB of HTML against their 343 and 335.
 
 ## Phase 5: the site in the readers' languages (weeks)
