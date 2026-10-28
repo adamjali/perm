@@ -158,8 +158,7 @@ def parse_announcements(text: str) -> list[dict]:
         haystack = f"{title}\n{abstract or ''}"
         topics = [t for t, rx in TOPICS.items() if re.search(rx, haystack, flags=re.I)]
         # A stable id for a public notice, not a security hash; another hash would re-key every held row.
-        # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
-        digest = hashlib.sha1(f"{head['date']}|{title}".encode()).hexdigest()[:8]
+        digest = hashlib.sha1(f"{head['date']}|{title}".encode(), usedforsecurity=False).hexdigest()[:8]
         out.append(
             {
                 "document_number": f"oflc-{head['date']}-{digest}",

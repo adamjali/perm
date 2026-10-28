@@ -404,8 +404,7 @@ def pm_rows(items: list[dict]) -> list[dict]:
         if not keep_policy_manual(i["title"], i["summary"], i["sections"]):
             continue
         # A stable id for a public notice, not a security hash; another hash would re-key every held row.
-        # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
-        digest = hashlib.sha1(f"{i['kind']}|{i['title']}".encode()).hexdigest()[:8]
+        digest = hashlib.sha1(f"{i['kind']}|{i['title']}".encode(), usedforsecurity=False).hexdigest()[:8]
         citations = list(dict.fromkeys(s[2] for s in i["sections"]))
         url = i["pdf_url"] or (i["sections"][0][3] if i["sections"] else PM_URL)
         rows.append({
