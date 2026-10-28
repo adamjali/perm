@@ -23,6 +23,7 @@ SHAPE OF THE WORKBOOK, all of it verified by reading rather than assumed:
 """
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import pathlib
 import re
@@ -169,6 +170,34 @@ def rows_from(z: zipfile.ZipFile, shared: list[str], sheet_path: str) -> tuple[s
     return as_of, out
 
 
+# USCIS keeps only its recent releases, so older months are read from the
+# Internet Archive's copies of the same files, at the same address. USCIS's
+# robots.txt allows /document/data/, and the Archive has no robots rule; the
+# Archive is asked through lib_warn's spaced, backed-off reader.
+ARCHIVE_PREFIX = "www.uscis.gov/sites/default/files/document/data/eb_inventory"
+ARCHIVE_NAME = r"^eb_inventory_[a-z]+_\d{4}.*\.xlsx$"
+
+
+def archive_workbooks(held: set[str]) -> list[tuple[str, str]]:
+    """Every inventory workbook the Archive captured for a month not held, oldest first.
+
+    `held` is months as YYYY-MM. Two files for one month (a reissue, as April
+    2024's) are both read, the later name last, so its rows are the ones kept.
+    """
+    from lib_warn import archive_index
+
+    out: list[tuple[int, int, str, str]] = []
+    for url in archive_index(ARCHIVE_PREFIX, ARCHIVE_NAME):
+        m = re.search(r"eb_inventory_([a-z]+)_(\d{4})", url, re.I)
+        month = MONTHS.get(m.group(1).capitalize(), 0) if m else 0
+        if not month:
+            continue
+        label = f"{m.group(2)}-{month:02d}"
+        if label not in held:
+            out.append((int(m.group(2)), month, url.rsplit("/", 1)[-1], url))
+    return [(url, f"{y}-{mo:02d}") for y, mo, _, url in sorted(out)]
+
+
 def store(db: Database, as_of: str, records: list[dict]) -> int:
     """Replace one as-of wholesale. Idempotent, and it REFUSES on loss."""
     db.execute("DELETE FROM i485_inventory WHERE as_of = ?", [as_of])
@@ -217,6 +246,10 @@ def parse_workbook(blob: bytes) -> tuple[str | None, list[dict]]:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
+    ap.add_argument("--archive", action="store_true",
+                    help="load months USCIS no longer lists, from the Internet Archive's copies")
+    args = ap.parse_args()
     db = Database()
     db.execute("""CREATE TABLE IF NOT EXISTS i485_inventory (
         as_of TEXT NOT NULL, country TEXT NOT NULL, category TEXT NOT NULL,
@@ -225,6 +258,9 @@ def main() -> int:
         PRIMARY KEY (as_of, country, category, status, pd_year, pd_month))""")
     db.execute("""CREATE INDEX IF NOT EXISTS i485_lookup
         ON i485_inventory (country, category, as_of, pd_year, pd_month)""")
+
+    if args.archive:
+        return load_archive(db)
 
     newest_as_of, newest_total, newest_sup = None, 0, 0
     for url, label in discover_workbooks():
@@ -268,6 +304,41 @@ def main() -> int:
     )
     record_run(db, "ingest_i485_inventory.py", status="ok",
                rows_written=newest_total, note=f"as of {newest_as_of}")
+    return 0
+
+
+def load_archive(db: Database) -> int:
+    """The months USCIS no longer lists, each from the Archive's copy.
+
+    History only: it never stamps freshness, which describes the newest month
+    USCIS lists, and its runs are recorded under their own name. A month the
+    Archive can't serve whole is named and left for the next run.
+    """
+    from lib_warn import archive_copy, is_xlsx
+
+    started = time.time()
+    held = {str(a)[:7] for (a,) in query_rows(db, "SELECT DISTINCT as_of FROM i485_inventory")}
+    loaded, missed = [], []
+    for url, label in archive_workbooks(held):
+        try:
+            copy = archive_copy(url, accept=is_xlsx)
+        except (LookupError, OSError) as exc:
+            log(f"  {label}: no usable copy ({exc})")
+            missed.append(label)
+            continue
+        as_of, records = parse_workbook(copy.data)
+        if not records or not as_of:
+            log(f"  {label}: the copy captured {copy.captured} parsed to nothing")
+            missed.append(label)
+            continue
+        n = store(db, as_of, records)
+        log(f"  {label}: as of {as_of}, {n:,} cells, {sum(r['count'] for r in records):,} applications "
+            f"(the Archive's copy of {copy.captured})")
+        loaded.append(as_of)
+    note = f"{len(loaded)} month(s) from the Internet Archive" + (f"; not served: {', '.join(dict.fromkeys(missed))}" if missed else "")
+    log(f"  {note}")
+    record_run(db, "ingest_i485_inventory.py --archive", status="ok" if loaded or not missed else "partial",
+               rows_written=len(loaded), note=note, started_at=started)
     return 0
 
 
