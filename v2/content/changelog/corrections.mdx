@@ -1,7 +1,7 @@
 ---
 title: "Corrections"
 description: "Every time this site published something wrong about its data, its process or the rules: what it said, what was true, and what changed."
-date: "2026-10-16"
+date: "2026-10-24"
 author: "PERM Tracker team"
 image: "/images/content/heroes/changelog/corrections.webp"
 imageAlt: "How the numbers are computed: six readings of one PERM average side by side"
@@ -19,9 +19,113 @@ The bar for an entry is a reader who could have formed a false belief from the
 page; an internal bug alone doesn't qualify. A wrong number on a live page
 qualifies. A typo doesn't, and a design somebody disliked doesn't unless it misled.
 
+## The case alert emails · Oct 24, 2026
+
+**It said:** "DOL last checked it on July 16", in alerts and confirmations about cases our sweep had read that week.
+
+**What was true:** The date was a retired mirror's stamp that nothing had written since August 27. The site's own record shows the day it first saw each status.
+
+**What changed:** Alerts and confirmations say "DOL's record has shown this status since at least" the day the sweep first recorded it, in Eastern time. A test fails if the old field is read again.
+
+## The priority date tools · Oct 21, 2026
+
+**It said:** A priority date on the very day of the bulletin's cutoff was current.
+
+**What was true:** The State Department prints on every chart that a date must be earlier than the final action date. A date on the cutoff day is still waiting.
+
+**What changed:** Only a date before the cutoff counts as current, everywhere the site checks one, with a test. [See the priority date calculator](/tools/priority-date-calculator).
+
+## The case tracker's dashboard, case list and calendar · Oct 21, 2026
+
+**It said:** A passed wage determination expiry was overdue on cases still free to file, because recruitment had begun inside it, and a filed case's ETA 9089 and recruitment tabs read "Expired".
+
+**What was true:** Those cases could still file (see the October 16 entry), and a filed case has nothing left to expire.
+
+**What changed:** Every surface passes the whole case to the one deadline rule, and a test checks the dashboard, calendar, reminders and calendar sync against it. The filed tabs say what was filed and when.
+
+## The About page · Oct 11, 2026
+
+**It said:** "Nothing is modeled or crowd-sourced."
+
+**What was true:** The site's decision estimates are models, and the shared timelines come from people waiting on their own case.
+
+**What changed:** The sentence is gone. The page says which figures are DOL's own and which are estimates. [See the About page](/about).
+
+## The case status pages and alert emails · Oct 11, 2026
+
+**It said:** That statuses came "via a third-party mirror", and that I-203 numbers were H-1B filings.
+
+**What was true:** Statuses have come from DOL's own case-status service since August 27. In DOL's own files, I-203 is the E-3 filing for Australian workers.
+
+**What changed:** Both are corrected on every page and email that said them. [See a case page](/perm-case-status).
+
+## The guides, blog and FAQ · Oct 9, 2026
+
+**It said:** DOL's average wait was "about 372 days as of August 2026", in seven places.
+
+**What was true:** DOL's published average was 336 days, and its queue had moved from September to December 2025.
+
+**What changed:** Articles and the FAQ read DOL's figures live with the date DOL published them, and a test fails a typed one. [See DOL's current figures](/perm-processing-times).
+
+## The wage level tool · Oct 5, 2026
+
+**It said:** The four wage levels for "July 2026 to June 2027", while showing the year before's figures, from September 9.
+
+**What was true:** DOL's live wage search names each year by the June that closes it, so the tool had asked for the wrong year.
+
+**What changed:** The tool asks for the year DOL means, checked against DOL's own published tables. [See the wage levels](/tools/wage-levels).
+
+## Employer pages · Oct 4, 2026
+
+**It said:** Intel's page counted 8,219 H-1B filings made by three other companies whose names start the same way, and Salesforce's missed 5,645 filed under "Salesforce.com, Inc."
+
+**What was true:** The pages matched other programs by a name prefix.
+
+**What changed:** Every spelling in every program is mapped to one employer page, and each page reads only its own. [See an employer page](/perm-employers).
+
+## The employer switching panel · Oct 4, 2026
+
+**It said:** "180 days after approval, the priority date moves with you."
+
+**What was true:** Under 8 CFR 204.5(e) the priority date is kept from approval, unless USCIS revokes the petition for fraud, a revoked certification or a material error. The 180 days decide only whether withdrawing the petition revokes it.
+
+**What changed:** The panel states the rules as the regulation writes them. [See the comparison](/perm-employers/compare).
+
+## The salary tools and the case search · Oct 3, 2026
+
+**It said:** Averages and medians that counted about 5,400 filings whose amount can't be pay for its unit ($100,000 "per month"), and wage bounds that compared DOL's raw amount across units, so "at least $100,000" dropped a $50-an-hour job.
+
+**What was true:** Those filings are yearly salaries typed under the wrong unit in DOL's own files, and an hourly wage has to be made yearly before it's compared.
+
+**What changed:** Such a wage is shown as DOL printed it, with a note, and left out of every average. Wage bounds and sorting compare yearly figures. [See the salary explorer](/tools/salary-explorer).
+
+## The wage request estimate · Oct 3, 2026
+
+**It said:** A request filed in June 2026 would be decided around July 2026, a month already past.
+
+**What was true:** The wait was counted from the request's month where it should have been counted from DOL's date.
+
+**What changed:** The estimate counts from DOL's date. [See the wage request search](/pwd-cases).
+
+## The decision activity page · Oct 1, 2026
+
+**It said:** "The last 28 days", over June's decisions.
+
+**What was true:** The page read a source retired on September 18, so it showed the last month that source held.
+
+**What changed:** It reads the site's own record of DOL's decisions, and the break in the series is dated from the series itself. [See the page](/perm-decision-activity).
+
+## Employers under review · Sep 25, 2026
+
+**It said:** That one employer had 100% of its pending cases under review (31 of 31), and split seven employers across two rows each.
+
+**What was true:** Appealed cases had been counted on a row of their own. Across all its pending cases, that employer had 44 of 143 under review, 31%.
+
+**What changed:** Every case is counted under its employer once, whatever table holds it, and each figure names who acted: a hold is DOL's, an appeal the employer's. [See the page](/perm-employers/under-review).
+
 ## The deadline calculator, the case tracker and the deadline guides · Oct 16, 2026
 
-**It said:** The ETA 9089 filing window always closes when the prevailing wage determination expires, if that comes before 180 days after the first recruitment step. The tracker would not save a filing dated after the expiry, and closed a case automatically when the determination expired before the filing.
+**It said:** The ETA 9089 filing window always closes when the prevailing wage determination expires, if that comes before 180 days after the first recruitment step. The tracker wouldn't save a filing dated after the expiry, and closed a case automatically when the determination expired before the filing.
 
 **What was true:** [20 CFR 656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40) asks employers to "file their applications or begin the recruitment period" while the determination is valid, and either is enough. Recruitment that begins on or after the determination date and on or before its expiry can be filed after the determination expires, inside the 180-day window. The Board of Alien Labor Certification Appeals read the rule this way en banc in *Karl Storz Endoscopy-America* (2011-PER-00040, December 1, 2011). The expiry still closes the window early when recruitment began before the determination was issued. The August 29 correction below fixed a calculator that ignored the expiry, and went too far the other way.
 
@@ -45,7 +149,7 @@ qualifies. A typo doesn't, and a design somebody disliked doesn't unless it misl
 
 ## The RFI and audit hub · Sep 6, 2026
 
-**It said:** A two-case PERM review stage that did not exist.
+**It said:** A two-case PERM review stage that didn't exist.
 
 **What was true:** Two prevailing wage request rows had leaked into the PERM table through the lookup path before a guard was deployed, and were counted as a PERM stage.
 
