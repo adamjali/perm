@@ -33,7 +33,7 @@ import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_gov_data import POLITE_PAUSE_S, fetch, iter_rows, log, read_shared_strings  # noqa: E402
-from lib_db import Database, query_rows, record_run, stamp_freshness  # noqa: E402
+from lib_db import Database, query_rows, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 # The full listing, not the landing page: the bare data page shows only the ten
 # newest items, and the quarterly performance files can push every monthly
@@ -172,30 +172,72 @@ def rows_from(z: zipfile.ZipFile, shared: list[str], sheet_path: str) -> tuple[s
 
 # USCIS keeps only its recent releases, so older months are read from the
 # Internet Archive's copies of the same files, at the same address. USCIS's
-# robots.txt allows /document/data/, and the Archive has no robots rule; the
-# Archive is asked through lib_warn's spaced, backed-off reader.
-ARCHIVE_PREFIX = "www.uscis.gov/sites/default/files/document/data/eb_inventory"
-ARCHIVE_NAME = r"^eb_inventory_[a-z]+_\d{4}.*\.xlsx$"
+# robots.txt allows /document/, and the Archive has no robots rule; the Archive
+# is asked through lib_warn's spaced, backed-off reader.
+#
+# The files sit in two folders and carry two kinds of name (the Archive's own
+# index, read Oct 28 2026): /document/data/eb_inventory_<month>_<year>.xlsx
+# from April 2024, sometimes with a reissue date after it, and
+# /document/reports/eb_inventory_<mmddyyyy>.xlsx (Feb 2024) beside
+# eb_inventory_<month>_<year>_<mmddyy>.xlsx (Mar to Aug 2024). A month may be
+# written whole or by its first three letters.
+ARCHIVE_PREFIXES = (
+    "www.uscis.gov/sites/default/files/document/data/eb_inventory",
+    "www.uscis.gov/sites/default/files/document/reports/eb_inventory",
+)
+ARCHIVE_NAME = r"^eb_inventory_.+\.xlsx$"
+# The file names already loaded, so a dated name (whose month only the
+# workbook says) is asked for once, not on every daily run.
+LOADED_DOC = "i485_archive_files"
+_MONTH_ABBR = {m[:3].lower(): n for m, n in MONTHS.items()}
 
 
-def archive_workbooks(held: set[str]) -> list[tuple[str, str]]:
-    """Every inventory workbook the Archive captured for a month not held, oldest first.
+def name_month(name: str) -> tuple[int, int] | None:
+    """(year, month) a file's name says it covers, or None when only the workbook says."""
+    m = re.search(r"eb_inventory_([a-z]+)_(\d{4})", name, re.I)
+    if not m:
+        return None
+    month = _MONTH_ABBR.get(m.group(1)[:3].lower(), 0)
+    return (int(m.group(2)), month) if month else None
 
-    `held` is months as YYYY-MM. Two files for one month (a reissue, as April
-    2024's) are both read, the later name last, so its rows are the ones kept.
+
+def name_date(name: str) -> str | None:
+    """The day in a dated name (eb_inventory_02222024.xlsx), ISO, or None."""
+    m = re.search(r"eb_inventory_(\d{2})(\d{2})(\d{4})\b", name, re.I)
+    return f"{m.group(3)}-{m.group(1)}-{m.group(2)}" if m else None
+
+
+def archive_workbooks(held: set[str], loaded: set[str] | frozenset[str] = frozenset()) -> list[tuple[str, str]]:
+    """Every inventory workbook the Archive captured that isn't held yet, oldest first, as (url, label).
+
+    `held` is months as YYYY-MM; `loaded` is file names already read. A month-named
+    file is skipped when its month is held. A dated file says its month only inside
+    the workbook, so it's skipped once its name was loaded. Two files for one month
+    (a reissue, as April 2024's) are both read, the later name last, so its rows are
+    kept. A name that fits neither form is logged, never silently dropped.
     """
     from lib_warn import archive_index
 
-    out: list[tuple[int, int, str, str]] = []
-    for url in archive_index(ARCHIVE_PREFIX, ARCHIVE_NAME):
-        m = re.search(r"eb_inventory_([a-z]+)_(\d{4})", url, re.I)
-        month = MONTHS.get(m.group(1).capitalize(), 0) if m else 0
-        if not month:
-            continue
-        label = f"{m.group(2)}-{month:02d}"
-        if label not in held:
-            out.append((int(m.group(2)), month, url.rsplit("/", 1)[-1], url))
-    return [(url, f"{y}-{mo:02d}") for y, mo, _, url in sorted(out)]
+    out: list[tuple[str, str, str]] = []  # (sort key, label, url)
+    seen: set[str] = set()
+    for prefix in ARCHIVE_PREFIXES:
+        for url in archive_index(prefix, ARCHIVE_NAME):
+            name = url.rsplit("/", 1)[-1]
+            if name.lower() in seen:
+                continue
+            seen.add(name.lower())
+            ym = name_month(name)
+            day = name_date(name)
+            if ym:
+                label = f"{ym[0]}-{ym[1]:02d}"
+                if label not in held:
+                    out.append((f"{label}-00 {name}", label, url))
+            elif day:
+                if name not in loaded:
+                    out.append((f"{day[:7]}-01 {name}", f"published {day}", url))
+            else:
+                log(f"  can't tell which month {name} covers; skipped")
+    return [(url, label) for _, label, url in sorted(out)]
 
 
 def store(db: Database, as_of: str, records: list[dict]) -> int:
@@ -320,10 +362,11 @@ def load_archive(db: Database) -> int:
 
     started = time.time()
     held = {str(a)[:7] for (a,) in query_rows(db, "SELECT DISTINCT as_of FROM i485_inventory")}
+    files = set((read_doc(db, LOADED_DOC) or {}).get("files", []))
     loaded: list[str] = []
     refused: list[str] = []
     broken: list[str] = []
-    for url, label in archive_workbooks(held):
+    for url, label in archive_workbooks(held, files):
         try:
             copy = archive_copy(url, accept=is_xlsx)
         except (LookupError, OSError) as exc:
@@ -339,6 +382,8 @@ def load_archive(db: Database) -> int:
         log(f"  {label}: as of {as_of}, {n:,} cells, {sum(r['count'] for r in records):,} applications "
             f"(the Archive's copy of {copy.captured})")
         loaded.append(as_of)
+        files.add(url.rsplit("/", 1)[-1])
+        write_doc(db, LOADED_DOC, {"files": sorted(files)})
     note = f"{len(loaded)} month(s) from the Internet Archive"
     if refused:
         note += f"; the Archive didn't serve {', '.join(dict.fromkeys(refused))}, asked again next run"
