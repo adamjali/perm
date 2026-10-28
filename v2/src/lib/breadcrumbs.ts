@@ -16,6 +16,7 @@ import { detailName } from "@/lib/breadcrumbNames";
 import { SITE_URL } from "@/lib/constants/site";
 import { OVERVIEW, PAGE_NAMES, isDataPath, sectionForPath } from "@/lib/siteMap";
 import { MONTH_NAMES } from "@convex/lib/months";
+import { HOME_NAME, TRANSLATED_PAGE_NAMES, translatedPage } from "@/lib/i18n/lang";
 
 export interface Crumb {
   name: string;
@@ -53,6 +54,16 @@ function normalise(pathname: string): string {
 export function breadcrumbTrail(pathname: string): Crumb[] {
   const path = normalise(pathname);
   if (path === "/") return [];
+
+  // A translated page (/es/perm-case-status) is home and then the page, in its own language. Walking its URL
+  // would name /es, which is the Spanish guide, not this page's parent.
+  const translated = translatedPage(path);
+  if (translated) {
+    return [
+      { name: HOME_NAME[translated.lang], href: "/" },
+      { name: TRANSLATED_PAGE_NAMES[translated.page][translated.lang], href: path },
+    ];
+  }
 
   const trail: Crumb[] = [HOME];
   const push = (href: string, name: string | null | undefined) => {

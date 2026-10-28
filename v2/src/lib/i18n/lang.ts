@@ -56,3 +56,33 @@ export function pageAlternates(path: TranslatedPath): Record<string, string> {
     "x-default": path,
   };
 }
+
+/** "Home" in each language: the first crumb of a translated page's trail. */
+export const HOME_NAME: Messages<string> = {
+  en: "Home",
+  es: "Inicio",
+  zh: "首页",
+  "pt-br": "Início",
+  ko: "홈",
+  vi: "Trang chủ",
+};
+
+/** Each translated page's short name, as menus and breadcrumbs show it. */
+export const TRANSLATED_PAGE_NAMES: Record<TranslatedPath, Messages<string>> = {
+  "/perm-case-status": {
+    en: "PERM case status",
+    es: "Estado de caso PERM",
+    zh: "PERM 案件状态",
+    "pt-br": "Status de caso PERM",
+    ko: "PERM 케이스 상태",
+    vi: "Tình trạng hồ sơ PERM",
+  },
+};
+
+/** `/es/perm-case-status` as its language and English page, or null for any other path. */
+export function translatedPage(path: string): { lang: Exclude<Lang, "en">; page: TranslatedPath } | null {
+  const m = /^\/([a-z]{2}(?:-[a-z]{2})?)(\/.+)$/.exec(path);
+  if (!m || !isLang(m[1]) || m[1] === "en") return null;
+  const page = m[2] as TranslatedPath;
+  return (TRANSLATED_PATHS as readonly string[]).includes(page) ? { lang: m[1], page } : null;
+}

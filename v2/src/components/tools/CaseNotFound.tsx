@@ -19,6 +19,9 @@ import { CASE_NUMBER_ACCURACY } from "@/lib/permCaseNumber";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 import { isLookupGap, unsettledClause, unsettledVerdict, type DiscoveryMiss } from "@/lib/dolMiss";
 import { formatInt } from "@/lib/format";
+import type { Lang } from "@/lib/i18n/lang";
+import { dayLabel, intLabel, monthLabel } from "@/lib/i18n/format";
+import { CASE_STATUS_EMPTY } from "./CaseStatusEmpty.messages";
 
 /**
  * A case number we hold no record for. A real state, not an error.
@@ -266,33 +269,29 @@ export function CaseStatusEmpty({
   publishedFront,
   publishedAsOf,
   mirrorSize,
+  lang = "en",
 }: {
   front: string | null;
   wallTotal: number | null;
   publishedFront: string | null;
   publishedAsOf: string | null;
   mirrorSize: number | null;
+  lang?: Lang;
 }) {
+  const t = CASE_STATUS_EMPTY[lang];
   const facts: { label: string; value: string; note: string }[] = [];
   if (front) {
-    facts.push({
-      label: "Oldest month still open",
-      value: formatMonth(front) ?? front,
-      note: "the oldest filing month DOL hasn't substantially decided",
-    });
+    facts.push({ label: t.oldestOpen, value: monthLabel(front, lang) ?? front, note: t.oldestOpenNote });
   }
   if (wallTotal !== null) {
-    facts.push({
-      label: "Undecided cases",
-      value: formatInt(wallTotal),
-      note: "across every filing month, the whole wall",
-    });
+    facts.push({ label: t.undecided, value: intLabel(wallTotal, lang), note: t.undecidedNote });
   }
   if (publishedFront && publishedFront !== front) {
+    const asOf = dayLabel(publishedAsOf, lang);
     facts.push({
-      label: "DOL is working",
-      value: formatMonth(publishedFront) ?? publishedFront,
-      note: publishedAsOf ? `as of ${formatAsOf(publishedAsOf)}` : "analyst review",
+      label: t.dolWorking,
+      value: monthLabel(publishedFront, lang) ?? publishedFront,
+      note: asOf ? t.asOf(asOf) : t.analystReview,
     });
   }
 
@@ -308,29 +307,20 @@ export function CaseStatusEmpty({
           ))}
         </FigureRow>
       ) : null}{" "}
-      <PageSection title="What a case number gets you here">
+      <PageSection title={t.sectionTitle}>
         <ul className="max-w-3xl space-y-3 text-base leading-relaxed text-soft">
-          <li>
-            <b className="font-semibold text-foreground">The status, decoded.</b> DOL shows one word and explains
-            none of them. Some mean waiting and some mean a 30-day clock is running on the employer.
-          </li>{" "}
-          <li>
-            <b className="font-semibold text-foreground">The position.</b> How many undecided cases were filed
-            before it, and how far its filing month sits behind the month DOL is working.
-          </li>{" "}
-          <li>
-            <b className="font-semibold text-foreground">An estimated decision date, and an email when it moves.</b>
-          </li>{" "}
-          <li>
-            <b className="font-semibold text-foreground">For a decided case, DOL&apos;s own file.</b> The outcome,
-            the days it took, the offered wage against its occupation, and the worksite state.
-          </li>
+          {t.bullets.map((b) => (
+            <Fragment key={b.lead}>
+              <li>
+                <b className="font-semibold text-foreground">{b.lead}</b>
+                {b.rest ? ` ${b.rest}` : null}
+              </li>{" "}
+            </Fragment>
+          ))}
         </ul>
         {mirrorSize ? (
           <p className="mt-5 text-sm text-muted-foreground border-t-2 border-border">
-            Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search,
-            plus DOL&apos;s published decisions for FY2024 to FY2026. Nothing is stored and nothing is sent anywhere
-            else.
+            {t.searched(intLabel(mirrorSize, lang))}
           </p>
         ) : null}
       </PageSection>

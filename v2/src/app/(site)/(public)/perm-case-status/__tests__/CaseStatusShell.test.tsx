@@ -27,3 +27,27 @@ describe("CaseStatusHead", () => {
     expect(loading).toBe(page);
   });
 });
+
+describe("the case status frame in each language", () => {
+  it.each([
+    ["es", "Consulte el estado de su caso PERM", "Consulte una solicitud de salario prevaleciente"],
+    ["zh", "查询您的 PERM 案件状态", "查询现行工资认定申请"],
+    ["pt-br", "Consulte o status do seu caso PERM", "Consulte um pedido de salário prevalecente"],
+    ["ko", "PERM 케이스 상태 조회", "적정임금(PWD) 신청 조회"],
+    ["vi", "Tra cứu tình trạng hồ sơ PERM", "Tra cứu đơn xác định mức lương hiện hành"],
+  ] as const)("%s names the program the typed number belongs to", (lang, perm, pwd) => {
+    render(<CaseStatusHead typed="" lang={lang} />);
+    expect(screen.getByRole("heading", { level: 1, name: perm })).toBeInTheDocument();
+    render(<CaseStatusHead typed="P-100-26125-123456" lang={lang} withBox={false} />);
+    expect(screen.getByRole("heading", { level: 1, name: pwd })).toBeInTheDocument();
+  });
+
+  it("every translation fills every FAQ and keeps the English count", async () => {
+    const { CASE_STATUS } = await import("../caseStatus.messages");
+    for (const [lang, t] of Object.entries(CASE_STATUS)) {
+      expect(t.faqs, lang).toHaveLength(CASE_STATUS.en.faqs.length);
+      for (const f of t.faqs) expect(f.q.length > 3 && f.a.length > 20, `${lang}: ${f.q}`).toBe(true);
+      if (lang !== "en") expect(t.machine.length, lang).toBeGreaterThan(20);
+    }
+  });
+});

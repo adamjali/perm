@@ -246,7 +246,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
           </Suspense>
         ) : (
           <Suspense fallback={<LookupSkeleton />}>
-            <Empty />
+            <Empty lang={lang} />
           </Suspense>
         )}
       </div>
@@ -429,7 +429,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
 }
 
 /** The page with nothing typed in: still the national picture, not a blank. */
-async function Empty() {
+async function Empty({ lang }: { lang: Lang }) {
   const [backlog, estimator, mirrorSize] = await Promise.all([
     getLiveBacklog().catch((): CohortMonth[] => []),
     getEstimatorData().catch(() => null),
@@ -443,6 +443,7 @@ async function Empty() {
       publishedFront={estimator?.frontier?.analystQueueMonth ?? null}
       publishedAsOf={estimator?.frontier?.asOf ?? null}
       mirrorSize={mirrorSize || null}
+      lang={lang}
     />
   );
 }
