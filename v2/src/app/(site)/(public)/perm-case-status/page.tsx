@@ -25,6 +25,7 @@ import { getMonthBacklog } from "@/lib/db/backlog";
 import { getCaseWageContext, getCohortDuration } from "@/lib/db/caseContext";
 import { lookupCase } from "@/lib/db/caseLookup";
 import { getDecidedTimeline } from "@/lib/db/decidedTimeline";
+import { getStatusHistory } from "@/lib/db/statusHistory";
 import { normalisePwdCaseNumber } from "@/lib/db/pwdCases";
 import { normaliseLcaCaseNumber } from "@/lib/db/lcaCases";
 import { normaliseSeasonalCaseNumber } from "@/lib/db/seasonalCases";
@@ -428,7 +429,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
   }
 
   const isDecided = result.decided !== null;
-  const [monthBacklog, wage, duration, stageStats, sameDay, timeline] = await Promise.all([
+  const [monthBacklog, wage, duration, stageStats, sameDay, timeline, history] = await Promise.all([
     month ? getMonthBacklog(month).catch(() => null) : Promise.resolve(null),
     // Only for a decided case: a pending one has no wage in DOL's files, and
     // asking for one is a round trip that can only ever return null.
@@ -446,6 +447,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
     // A decided case's own dates: one primary-key read joined to its wage request. A failure
     // only drops the section, like the wage ladder above.
     isDecided ? getDecidedTimeline(result.caseNumber).catch(() => null) : Promise.resolve(null),
+    // Every status change our checks saw: one primary-key read. A failure only drops the section.
+    getStatusHistory(result.caseNumber).catch(() => null),
   ]);
 
   return (
@@ -472,6 +475,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       stageDuration={stageDurationFor(stageStats, result.live?.status ?? "")}
       sameDay={sameDay}
       timeline={timeline}
+      history={history}
       today={today}
     />
   );
