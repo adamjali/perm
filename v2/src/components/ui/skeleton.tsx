@@ -14,13 +14,15 @@ import { cn } from "@/lib/utils"
  * that is loading.
  */
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+interface SkeletonProps extends React.HTMLAttributes<HTMLElement> {
   variant?: "line" | "block" | "circle"
+  /** `span` inside text (a heading's meta line is a `<p>`, which can't hold a `div`). */
+  as?: "div" | "span"
 }
 
-function Skeleton({ className, variant = "block", ...props }: SkeletonProps) {
+function Skeleton({ className, variant = "block", as: Tag = "div", ...props }: SkeletonProps) {
   return (
-    <div
+    <Tag
       data-slot="skeleton"
       className={cn(
         "skeleton-pulse border border-border/25",

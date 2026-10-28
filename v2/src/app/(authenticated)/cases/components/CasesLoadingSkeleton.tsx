@@ -34,7 +34,7 @@ export function CasesLoadingSkeleton() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <PageHeading meta={<Skeleton variant="line" className="inline-block h-4 w-16 align-middle" />} title="Cases" />
+          <PageHeading meta={<Skeleton as="span" variant="line" className="inline-block h-4 w-16 align-middle" />} title="Cases" />
           <Skeleton variant="block" className="h-11 w-[5.5rem]" />
         </div>
         <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0 md:flex md:flex-wrap md:items-center">

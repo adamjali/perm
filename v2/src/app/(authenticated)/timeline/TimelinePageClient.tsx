@@ -31,7 +31,7 @@ export function TimelineSkeleton() {
             on a phone, one row from sm. */}
         <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
           <PageHeading
-            meta={<Skeleton variant="line" className="inline-block h-4 w-36 align-middle" />}
+            meta={<Skeleton as="span" variant="line" className="inline-block h-4 w-36 align-middle" />}
             title="Timeline"
           />
           <div className="grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">

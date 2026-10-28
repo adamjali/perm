@@ -37,7 +37,7 @@ export function CalendarSkeleton() {
       {/* Header: the real title; only the count under it waits. */}
       <div className="mb-4">
         <PageHeading
-          meta={<Skeleton variant="line" className="inline-block h-4 w-56 align-middle" />}
+          meta={<Skeleton as="span" variant="line" className="inline-block h-4 w-56 align-middle" />}
           title="Calendar"
         />
       </div>
