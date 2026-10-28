@@ -495,7 +495,7 @@
    0,
    0,
    2200,
-   1384
+   1504
   ],
   "fill": [
    [
@@ -511,9 +511,10 @@
     "2026-05-10"
    ]
   ],
-  "from": "Your PERM deadlines",
   "viewport": 1440,
-  "maxWidth": 1100
+  "maxWidth": 1100,
+  "fromEl": "main figure:has(svg[aria-label^=\"The case's regulatory windows\"])",
+  "css": "main :has(> * figure svg[aria-label^=\"The case's regulatory windows\"]),main .object:has(svg[aria-label^=\"The case's regulatory windows\"]){border-color:transparent!important;box-shadow:none!important}"
  },
  {
   "slug": "perm-employers-browse",

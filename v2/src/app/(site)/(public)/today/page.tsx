@@ -20,6 +20,7 @@ import {
   bulletinMoves,
   bulletinShift,
   bulletinStatus,
+  lineFlow,
   medianShift,
   paceStatus,
   positionShift,
@@ -38,7 +39,7 @@ import { parseCutoff, type BulletinMonth, type CountryKey } from "@/lib/perm";
 import { GROUPS, SECTIONS } from "@/lib/siteMap";
 import { withSocialCard } from "@/lib/socialCard";
 import { checkedLabel } from "@/lib/time";
-import { monthDay, monthYear, shortDate } from "@convex/lib/months";
+import { monthDay, monthYear, shiftMonth, shortDate } from "@convex/lib/months";
 
 /**
  * Where every step stands today: one page that gathers the answer each data
@@ -76,7 +77,7 @@ const BULLETIN_CATEGORIES = ["EB1", "EB2", "EB3", "EW3"];
 const BULLETIN_COUNTRIES: CountryKey[] = ["worldwide", "china", "india", "mexico", "philippines"];
 
 export default async function TodayPage() {
-  const [perm, pwd, census, observed, coverage, i140, bulletins, i485] = await Promise.all([
+  const [perm, pwd, census, observed, coverage, i140, bulletins, i485, i485History] = await Promise.all([
     getPermBoard().catch(() => null),
     getPwdBoard().catch(() => null),
     getLiveCensus().catch(() => null),
@@ -85,6 +86,7 @@ export default async function TodayPage() {
     getUscisFormHistory("I-140"),
     getVisaBulletins().catch(() => []),
     getUscisFormMedian("I-485", "Employment"),
+    getUscisFormHistory("I-485"),
   ]);
 
   // How many PERM cases sit in each status now, from the census.
@@ -142,6 +144,19 @@ export default async function TodayPage() {
   const i140Status = i140Now && i140Prev ? paceStatus(i140Prev.value, i140Now.value) : null;
   const eb2Status = eb2 ? bulletinStatus(eb2.kind) : null;
   const eb2Shift = eb2 && latest ? bulletinShift(eb2.kind, eb2.movedDays, monthYear(latest.bulletinMonth)?.split(" ")[0] ?? "the newest bulletin") : null;
+
+  // USCIS's two lines as the same picture, from its quarterly received and completed counts
+  // (Adam, Oct 27 2026: "why just those 2?"). USCIS publishes them once a quarter, so the
+  // caption names the quarter rather than 30 days.
+  const uscisLine = (row: (typeof i140)[number] | undefined) => {
+    if (!row || row.received === null || row.completed === null) return null;
+    const end = row.quarterEnd;
+    const start = shiftMonth(end.slice(0, 7), -2);
+    const words = `USCIS, ${monthYear(start)?.split(" ")[0] ?? start} to ${monthYear(end.slice(0, 7)) ?? end}`;
+    return { flow: { ...lineFlow(row.received, row.completed), from: `${start}-01`, to: end }, period: words };
+  };
+  const i140Line = uscisLine(i140.filter((r) => r.received !== null).at(-1));
+  const i485Line = uscisLine(i485History.filter((r) => /\(Employment\)/.test(r.title) && r.received !== null).at(-1));
 
   // Each step to a green card, picked one at a time (Sabrina, Oct 27 2026: "pick a stage is
   // nice"). How long each takes now comes from the same live figures as the track above.
@@ -333,7 +348,19 @@ export default async function TodayPage() {
           </h2>{" "}
           <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 [&>*]:min-w-0">
             {pwd ? <Balance name="Wage requests" flow={pwd.flow} href="/pwd-cases" /> : null}{" "}
-            {perm ? <Balance name="PERM" flow={perm.flow} href="/perm-queue" /> : null}
+            {perm ? <Balance name="PERM" flow={perm.flow} href="/perm-queue" /> : null}{" "}
+            {i140Line ? (
+              <Balance name="I-140" flow={i140Line.flow} period={i140Line.period} labels={["Received", "Completed"]} href="/uscis-processing-times" />
+            ) : null}{" "}
+            {i485Line ? (
+              <Balance
+                name="I-485, employment-based"
+                flow={i485Line.flow}
+                period={i485Line.period}
+                labels={["Received", "Completed"]}
+                href="/i485-by-field-office"
+              />
+            ) : null}
           </div>
         </section>
       ) : null}{" "}

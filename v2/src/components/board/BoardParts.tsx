@@ -253,7 +253,21 @@ export function CutoffLine({ cutoff, bulletinMonth, label }: { cutoff: string; b
 // ---------------------------------------------------------------------------
 
 /** Filed against decided over a window, as two bars on one scale, with the line's direction. */
-export function Balance({ name, flow, href }: { name: string; flow: LineFlow & { from: string; to: string }; href: string }) {
+export function Balance({
+  name,
+  flow,
+  href,
+  labels = ["Filed", "Decided"],
+  period,
+}: {
+  name: string;
+  flow: LineFlow & { from: string; to: string };
+  href: string;
+  /** The two bars' words: USCIS says received and completed. */
+  labels?: [string, string];
+  /** The window in words, where it isn't the last 30 days (a USCIS quarter). */
+  period?: string;
+}) {
   const max = Math.max(flow.filed, flow.decided, 1);
   const Icon = flow.trend === "growing" ? ArrowUpIcon : flow.trend === "shrinking" ? ArrowDownIcon : ArrowRightIcon;
   const verdict =
@@ -279,10 +293,10 @@ export function Balance({ name, flow, href }: { name: string; flow: LineFlow & {
       </div>{" "}
       <dl className="mt-5 space-y-3">
         {[
-          { k: "Filed", v: flow.filed, fill: "bg-data-info-ink" },
-          { k: "Decided", v: flow.decided, fill: "bg-data-good-ink" },
+          { k: labels[0], v: flow.filed, fill: "bg-data-info-ink" },
+          { k: labels[1], v: flow.decided, fill: "bg-data-good-ink" },
         ].map((r) => (
-          <div key={r.k} className="grid grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] items-center gap-3">
+          <div key={r.k} className="grid grid-cols-[5.5rem_minmax(0,1fr)_4.5rem] items-center gap-3">
             <dt className="text-sm font-semibold">{r.k}{" "}</dt>{" "}
             <dd className="h-5 bg-background">
               <div className={cn("h-full", r.fill)} style={{ width: `${(r.v / max) * 100}%` }} />
@@ -291,9 +305,7 @@ export function Balance({ name, flow, href }: { name: string; flow: LineFlow & {
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-sm text-soft">
-        {monthDay(flow.from)} to {monthDay(flow.to)}
-      </p>
+      <p className="mt-3 text-sm text-soft">{period ?? `${monthDay(flow.from)} to ${monthDay(flow.to)}`}</p>
     </div>
   );
 }
