@@ -122,12 +122,19 @@ def prose_em_dashes(html: str) -> list[str]:
     before the dash and the nearest "<" after it.
     """
     body = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
+    # Quoted material keeps its own punctuation: /compare quotes rivals' pages word for word (Oct 28
+    # 2026, six false findings). A quote is marked up as one, and its text is blanked here.
+    body = re.sub(r"<(q|blockquote)\b[^>]*>.*?</\1>", lambda m: " " * len(m.group(0)), body,
+                  flags=re.S | re.I)
     hits: list[str] = []
     for m in re.finditer("\u2014", body):
         left = body.rfind(">", 0, m.start()) + 1
         right = body.find("<", m.end())
         if right == -1:
             right = len(body)
+        # A dash inside a tag sits in an attribute (a hover tip quoting the same words), not in prose.
+        if body.rfind("<", 0, m.start()) >= left:
+            continue
         run = html_mod.unescape(body[left:right])
         # The run is the dash and nothing else: a no-value cell, not prose.
         if run.strip().strip("\u2014").strip() == "":

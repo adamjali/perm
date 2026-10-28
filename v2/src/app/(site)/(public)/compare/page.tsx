@@ -188,7 +188,9 @@ export default function ComparePage() {
                         </p>
                         {c.evidence ? (
                           <p className="mt-0.5 break-words text-sm text-soft">
-                            {c.evidence.quote ? <>&ldquo;{c.evidence.quote}&rdquo;{" "}</> : null}
+                            {/* A <q>: the browser draws the curly quotes, and checkers can tell the
+                                rival's own words (dashes and all) from ours. */}
+                            {c.evidence.quote ? <><q>{c.evidence.quote}</q>{" "}</> : null}
                             <a href={c.evidence.url} target="_blank" rel="noopener noreferrer nofollow" className="link">
                               {c.evidence.url.replace(/^https?:\/\//, "")}
                             </a>
