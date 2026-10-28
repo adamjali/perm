@@ -9,6 +9,7 @@ import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { aboutMonths } from "@/lib/board";
+import { DAYS_PER_MONTH } from "@convex/lib/time";
 import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
 import { cutoffLabel } from "@/lib/bulletinNext";
 import {
@@ -319,7 +320,7 @@ function Milestones({
         {plan.current
           ? `Current in the ${month} bulletin, so the I-485 goes in with the I-140.`
           : plan.bulletinMonths !== null
-            ? `About ${Math.round(plan.bulletinMonths)} months after the ${month} cutoff, at the pace it has kept.`
+            ? `At the pace it has kept, the ${month} cutoff reaches your date in ${aboutMonths(plan.bulletinMonths * DAYS_PER_MONTH)}.`
             : `${why} Every step before the bulletin is still dated.`}
       </p>
     </div>

@@ -135,6 +135,7 @@ describe("GreenCardPlanner, the priority date tile", () => {
     expect(labels.length).toBeGreaterThan(1);
     expect(labels.length).toBeLessThanOrEqual(7);
     expect(tile("Green card")).toHaveTextContent(/In about \d+(½)? years/);
+    expect(screen.getByText(/the November 2026 cutoff reaches your date in about \d+(½)? years\./)).toBeInTheDocument();
   });
 });
 
