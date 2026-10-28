@@ -30,6 +30,7 @@ export interface CaseStatusText {
   checkYourself: string;
   readingWait: { label: string; note: string };
   readingQueue: { label: string; note: string };
+  readingTitle: string;
   /** Translated pages only: what the reader is looking at, and where the authority is. */
   machine: string;
   readInEnglish: string;
@@ -91,6 +92,7 @@ export const CASE_STATUS = {
     checkYourself: "Check it yourself at flag.dol.gov",
     readingWait: { label: "How long the wait runs", note: "This page counts what is in front of a case. That one gives the envelope, from cases DOL has actually decided." },
     readingQueue: { label: "The whole queue", note: "Every filing month DOL still has undecided cases in, and where the work front sits." },
+    readingTitle: "The rules behind these numbers",
     machine: "",
     readInEnglish: "",
   },
@@ -149,6 +151,7 @@ export const CASE_STATUS = {
     checkYourself: "Compruébelo usted mismo en flag.dol.gov",
     readingWait: { label: "Cuánto dura la espera (en inglés)", note: "Esta página cuenta lo que hay delante de un caso. Aquella da el rango, a partir de casos que el DOL ya decidió." },
     readingQueue: { label: "Toda la fila (en inglés)", note: "Cada mes de presentación en el que el DOL aún tiene casos sin decidir, y dónde va el trabajo." },
+    readingTitle: "Las reglas detrás de estas cifras",
     machine:
       "Esta página fue traducida por una máquina y ningún hablante nativo la ha revisado. Los términos del DOL quedan en inglés, como los publica el DOL. La versión en inglés es la que vale.",
     readInEnglish: "Ver en inglés",
@@ -207,6 +210,7 @@ export const CASE_STATUS = {
     checkYourself: "在 flag.dol.gov 自行核对",
     readingWait: { label: "等待需要多久（英文页面）", note: "本页统计排在案件前面的情况，那一页根据劳工部已判定的案件给出时间范围。" },
     readingQueue: { label: "整个队列（英文页面）", note: "劳工部仍有未判定案件的每个递交月份，以及审理进度所在的位置。" },
+    readingTitle: "这些数字背后的规则",
     machine: "本页由机器翻译，尚未经过母语人士审阅。劳工部的用语保留英文原文。以英文版本为准。",
     readInEnglish: "查看英文版",
   },
@@ -265,6 +269,7 @@ export const CASE_STATUS = {
     checkYourself: "Confira você mesmo em flag.dol.gov",
     readingWait: { label: "Quanto tempo dura a espera (em inglês)", note: "Esta página conta o que está à frente de um caso. Aquela dá a faixa, a partir de casos que o DOL já decidiu." },
     readingQueue: { label: "A fila inteira (em inglês)", note: "Cada mês de protocolo em que o DOL ainda tem casos sem decisão, e onde está o trabalho." },
+    readingTitle: "As regras por trás destes números",
     machine:
       "Esta página foi traduzida por máquina e não foi revisada por um falante nativo. Os termos do DOL ficam em inglês, como o DOL os publica. A versão em inglês é a que vale.",
     readInEnglish: "Ver em inglês",
@@ -324,6 +329,7 @@ export const CASE_STATUS = {
     checkYourself: "flag.dol.gov에서 직접 확인하기",
     readingWait: { label: "대기 기간(영어 페이지)", note: "이 페이지는 케이스 앞에 있는 건수를 셉니다. 그 페이지는 노동부가 실제로 결정한 케이스로 기간의 범위를 보여 줍니다." },
     readingQueue: { label: "전체 대기열(영어 페이지)", note: "노동부에 아직 결정되지 않은 케이스가 남아 있는 접수 월과 심사가 진행 중인 위치." },
+    readingTitle: "이 숫자들의 기준",
     machine:
       "이 페이지는 기계 번역되었으며 원어민의 검토를 거치지 않았습니다. 노동부의 용어는 노동부가 쓰는 대로 영어로 둡니다. 영어 페이지가 기준입니다.",
     readInEnglish: "영어로 보기",
@@ -383,6 +389,7 @@ export const CASE_STATUS = {
     checkYourself: "Tự kiểm tra tại flag.dol.gov",
     readingWait: { label: "Thời gian chờ bao lâu (trang tiếng Anh)", note: "Trang này đếm những gì đứng trước một hồ sơ. Trang kia cho khoảng thời gian, dựa trên các hồ sơ DOL đã thật sự quyết định." },
     readingQueue: { label: "Toàn bộ hàng chờ (trang tiếng Anh)", note: "Mọi tháng nộp mà DOL vẫn còn hồ sơ chưa quyết định, và nơi công việc đang đến." },
+    readingTitle: "Quy tắc đằng sau các con số này",
     machine:
       "Trang này được dịch bằng máy và chưa được người bản ngữ xem lại. Các thuật ngữ của DOL được giữ bằng tiếng Anh như DOL công bố. Bản tiếng Anh là bản có giá trị.",
     readInEnglish: "Xem bằng tiếng Anh",

@@ -1,6 +1,9 @@
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { MS_PER_DAY } from "@/lib/time";
 import { longDate } from "@convex/lib/months";
+import type { Lang } from "@/lib/i18n/lang";
+import { dayLabel } from "@/lib/i18n/format";
+import { CASE_NUMBER_PLATE } from "./CaseNumberPlate.messages";
 
 /**
  * The case number, read back as the artifact it is.
@@ -20,8 +23,8 @@ import { longDate } from "@convex/lib/months";
  * number after it, so the plate doesn't invent one.
  */
 
-/** "2026-05-05" to "May 5, 2026"; a value that isn't a date prints as given. */
-const dayWords = (iso: string) => longDate(iso) ?? iso;
+/** "2026-05-05" to "May 5, 2026" (or the reader's language); a value that isn't a date prints as given. */
+const dayWords = (iso: string, lang: Lang = "en") => (lang === "en" ? longDate(iso) : dayLabel(iso, lang)) ?? iso;
 
 export interface CaseNumberPlateProps {
   parsed: ParsedCaseNumber;
@@ -31,12 +34,14 @@ export interface CaseNumberPlateProps {
    */
   recordedFilingDate?: string | null;
   className?: string;
+  lang?: Lang;
 }
 
 export function CaseNumberPlate({
   parsed,
   recordedFilingDate,
   className,
+  lang = "en",
 }: CaseNumberPlateProps) {
   const [letter, office] = parsed.prefix.split("-");
   const yy = parsed.filingDate.slice(2, 4);
@@ -48,14 +53,15 @@ export function CaseNumberPlate({
     ) + 1,
   ).padStart(3, "0");
 
+  const t = CASE_NUMBER_PLATE[lang];
   const segments = [
-    { text: `${letter}-${office}`, label: "Prefix" },
-    { text: yy, label: "Year" },
-    { text: dayOfYear, label: "Day of year" },
-    { text: parsed.serial, label: "Serial" },
+    { text: `${letter}-${office}`, label: t.prefix },
+    { text: yy, label: t.year },
+    { text: dayOfYear, label: t.dayOfYear },
+    { text: parsed.serial, label: t.serial },
   ];
 
-  const decoded = dayWords(parsed.filingDate);
+  const decoded = dayWords(parsed.filingDate, lang);
   const disagrees =
     !!recordedFilingDate && recordedFilingDate !== parsed.filingDate;
 
@@ -88,25 +94,18 @@ export function CaseNumberPlate({
         </div>
 
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground border-t-2 border-border">
-          The middle five digits are a date:{" "}
-          <b className="font-semibold text-foreground">
-            day {Number(dayOfYear)} of 20{yy}
-          </b>
-          , which is {decoded}.
+          {t.middleLead}{" "}
+          <b className="font-semibold text-foreground">{t.dayOf(Number(dayOfYear), `20${yy}`)}</b>
+          {t.which(decoded)}
           {disagrees ? (
             <>
               {" "}
-              DOL&apos;s own record puts the receipt date one or two days off
-              that, at{" "}
-              <b className="font-semibold text-foreground">
-                {dayWords(recordedFilingDate)}
-              </b>
-              , and the record is what every figure on this page uses.
+              {t.disagreeLead}{" "}
+              <b className="font-semibold text-foreground">{dayWords(recordedFilingDate, lang)}</b>
+              {t.disagreeRest}
             </>
           ) : null}{" "}
-          {letter === "G"
-            ? "The G is PERM; DOL publishes no key for the number after it."
-            : null}
+          {letter === "G" ? t.gNote : null}
         </p>
       </div>
     </div>

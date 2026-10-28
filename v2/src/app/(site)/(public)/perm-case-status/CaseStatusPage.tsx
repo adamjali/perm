@@ -242,7 +242,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
           </Suspense>
         ) : caseNumber ? (
           <Suspense key={caseNumber} fallback={<LookupSkeleton />}>
-            <Lookup caseNumber={caseNumber} />
+            <Lookup caseNumber={caseNumber} lang={lang} />
           </Suspense>
         ) : (
           <Suspense fallback={<LookupSkeleton />}>
@@ -271,6 +271,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
 
       <ToolPageFooter
         currentHref="/perm-case-status"
+        title={t.readingTitle}
         reading={[
           { href: "/tools/perm-timeline-calculator", ...t.readingWait },
           { href: "/perm-queue", ...t.readingQueue },
@@ -296,7 +297,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
  * ahead of its data hits precisely this window, and each section renders its
  * own absence.
  */
-async function Lookup({ caseNumber }: { caseNumber: string }) {
+async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) {
   const today = todayUtc();
 
   const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage, rfiClock, byDay] =
@@ -372,6 +373,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
         mirrorSize={mirrorSize || null}
         // A lookup that threw is "our records couldn't be read", never "not found".
         dolMiss={result ? (result.dolMiss ?? null) : "records"}
+        lang={lang}
       />
     );
   }
