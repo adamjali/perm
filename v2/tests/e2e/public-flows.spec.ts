@@ -201,7 +201,7 @@ test("a filing month opens to a day, and the day's list filters by status", asyn
 
 test("the queue wall goes back to a past day and returns to today", async ({ page }) => {
   await page.goto("/perm-queue");
-  const slider = page.getByRole("slider", { name: "Day" });
+  const slider = page.getByRole("slider", { name: "Day", exact: true });
   await expect(slider).toHaveAttribute("aria-valuetext", "Today");
   await page.getByRole("button", { name: "A day earlier" }).click();
   await expect(page.getByText(/cases still pending at the end of .*, against [\d,]+ today\./)).toBeVisible();
