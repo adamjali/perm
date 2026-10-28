@@ -50,13 +50,23 @@ describe("the answer and the figures at the top of the homepage", () => {
     expect(rows).toEqual([{ label: "PERM cases waiting", value: "91,933" }]);
   });
 
+  it("the wait is the live reading, dated, never the quarterly file's month (Oct 28 2026)", () => {
+    // The hero said "A PERM case takes 13 months" from DOL's June file while DOL was deciding January's
+    // cases in October (about 9 months). The figure is /today's: what DOL's last working day's cases waited.
+    const html = renderToStaticMarkup(<HeroSection board={board} months={months} wait={{ days: 289, on: "2026-10-27" }} />);
+    expect(textOf(html)).toContain("Cases decided Oct 27 waited");
+    expect(textOf(html)).toContain("9½ months");
+    expect(textOf(html)).not.toContain("13 months");
+    expect(heroFigures(board, { days: 0, on: "2026-10-27" }).some((r) => r.label.endsWith("waited"))).toBe(false);
+  });
+
   it("names the day by its date, never a weekday that reads as a month", () => {
     const rows = heroFigures(
       { frontierMonth: "2025-12-01", lastDay: { date: "2026-09-30", total: 901 }, pending: 91933, checkedAt: null, pwdPending: 47941 },
-      13,
+      { days: 289, on: "2026-09-30" },
     );
     expect(rows.map((r) => `${r.label}=${r.value}`)).toEqual([
-      "A PERM case takes=13 months",
+      "Cases decided Sep 30 waited=9½ months",
       "PERM cases waiting=91,933",
       "Decided on Sep 30=901",
       "Wage requests waiting=47,941",
