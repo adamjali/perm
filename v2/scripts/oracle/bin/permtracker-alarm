@@ -22,8 +22,11 @@ day is shared with every subscriber's mail).
               on, it clears only 5 GB (or 6 hours) past its line, so a reading
               sitting on the line can't switch it on and off every check
   disk-crit   under 10 GB free
-  memory      under 500 MB available, or over 2 GB of swap in use while
-              under 2 GB of memory is available
+  memory      under 500 MB available, or swap moving over 100 pages a second
+              while under 2 GB of memory is available (swap that only holds
+              old pages costs nothing). Once on, it clears 256 MB above its
+              lines and with swap under half its rate, so a reading sitting on
+              a line can't switch it on and off every check
   units       a PERM Tracker job or service, nginx, cloudflared or the
               database is in systemd's "failed" state, or is switched on but
               stopped after an error (a crash into systemd's start limit
@@ -83,8 +86,13 @@ TREND_WINDOW_S = 2 * 3600       # the rate is read over the last two hours
 TREND_MIN_S = 3600              # ... once there is at least an hour of readings
 HISTORY_S = 6 * 3600            # readings kept in /run
 MEM_MIN_MB = 500
-SWAP_MAX_MB = 2048
 SWAP_SHORT_MEM_MB = 2048
+# Pages a second moved to or from swap that count as the server swapping
+# (daily_monitor.py's SWAP_ACTIVE_PAGES_S). Oct 28 2026: with the database
+# file locked in RAM, 2.5 to 3.6 GB of old pages sat in swap moving about 42
+# a second, and the old "over 2 GB of swap" rule emailed five times in a day.
+SWAP_ACTIVE_PAGES_S = 100
+MEM_CLEAR_MARGIN_MB = 256
 SAMPLER_STALE_S = 30 * 60
 PRUNE_STALE_S = int(2.5 * 3600)
 # A release whose .next/server holds this much more than the cap counted has
@@ -122,6 +130,21 @@ def rate_gb_per_hour(points: list[list[float]], now: float) -> float | None:
     return -slope * 3600
 
 
+def swap_rate(prev: list | None, now: float, pages: int | None) -> float | None:
+    """Pages a second moved to or from swap since the last reading, or None.
+
+    None on the first run, after a reboot (the counter starts again) or across
+    a gap of an hour or more.
+    """
+    if not prev or pages is None:
+        return None
+    t, before = prev
+    dt = now - t
+    if not 60 <= dt < 3600 or pages < before:
+        return None
+    return round((pages - before) / dt, 1)
+
+
 def evaluate(snap: dict, rate: float | None, already_on=()) -> dict[str, str]:
     """The alarms on now, each with its one-line reason.
 
@@ -151,12 +174,19 @@ def evaluate(snap: dict, rate: float | None, already_on=()) -> dict[str, str]:
         if hours is not None:
             why += f", falling {rate:.1f} GB an hour: full in about {hours:.0f} hours"
         on["disk"] = why
-    # Swap that only holds pages set aside earlier costs nothing; it counts
-    # when memory is short too (see daily_monitor.py's SWAP_WARN_MB).
-    if snap["mem_available_mb"] < MEM_MIN_MB or (snap["swap_used_mb"] > SWAP_MAX_MB
-                                                 and snap["mem_available_mb"] < SWAP_SHORT_MEM_MB):
-        on["memory"] = (f"{snap['mem_available_mb']} MB of memory available, "
-                        f"{snap['swap_used_mb']} MB of swap in use")
+    # Swap that only holds pages set aside earlier costs nothing; swap MOVING
+    # while memory is short is what slows the site (the morning report's rule).
+    # Once on, its lines move out so a reading on a line can't flip it.
+    mem_held = "memory" in already_on
+    margin_mb = MEM_CLEAR_MARGIN_MB if mem_held else 0
+    swapping = snap.get("swap_rate")
+    swap_line = SWAP_ACTIVE_PAGES_S / 2 if mem_held else SWAP_ACTIVE_PAGES_S
+    avail = snap["mem_available_mb"]
+    if avail < MEM_MIN_MB + margin_mb or (swapping is not None and swapping > swap_line
+                                          and avail < SWAP_SHORT_MEM_MB + margin_mb):
+        moving = "" if swapping is None else f", {swapping:g} pages a second moving"
+        on["memory"] = (f"{avail} MB of memory available, "
+                        f"{snap['swap_used_mb']} MB of swap in use{moving}")
     down = []
     if snap["failed_units"]:
         down.append("failed: " + ", ".join(sorted(snap["failed_units"])))
@@ -281,7 +311,14 @@ def snapshot(now: float) -> dict:
         headroom = cache_headroom(report) if prune_age <= PRUNE_STALE_S else None
     except (OSError, ValueError, KeyError, TypeError):
         pass
+    swapped = None
+    try:
+        swapped = sum(int(ln.split()[1]) for ln in open("/proc/vmstat")
+                      if ln.startswith(("pswpin ", "pswpout ")))
+    except (OSError, ValueError, IndexError):
+        pass
     return {
+        "swap_pages": swapped,
         "disk_free_gb": disk.free / GB,
         "mem_available_mb": mem.get("MemAvailable", 0) // 1024,
         "swap_used_mb": (mem.get("SwapTotal", 0) - mem.get("SwapFree", 0)) // 1024,
@@ -470,6 +507,9 @@ def main() -> int:
     points.append([now, round(snap["disk_free_gb"], 2)])
     state["disk"] = points
     rate = rate_gb_per_hour(points, now)
+    snap["swap_rate"] = swap_rate(state.get("swap"), now, snap.get("swap_pages"))
+    if snap.get("swap_pages") is not None:
+        state["swap"] = [now, snap["swap_pages"]]
     on = evaluate(snap, rate, state.get("alarms", {}).keys())
     actions = heal(on)
     mail, planned = plan(on, state, now)

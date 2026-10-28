@@ -171,9 +171,34 @@ check("a mixed email's subject names only what is wrong now", mixed_subject == "
 # Swap that only holds old pages, with memory to spare, is no alarm (Oct 11 2026).
 check("2.5 GB of swap with 7 GB of memory free is no alarm",
       "memory" not in alarm.evaluate(healthy(swap_used_mb=2500, mem_available_mb=7000), None))
-check("...but with under 2 GB free it is", "memory" in alarm.evaluate(healthy(swap_used_mb=2500, mem_available_mb=1500), None))
 check("under 500 MB available is an alarm whatever swap holds",
       "memory" in alarm.evaluate(healthy(swap_used_mb=0, mem_available_mb=400), None))
+# Oct 28 2026: with the database file locked in RAM again (4 GB), memory sat near 1.9 to 2.9 GB available
+# with 2.5 to 3.6 GB of OLD pages in swap, moving about 42 pages a second, and the alarm emailed "memory is
+# low" five times in a day, clearing in between. Swap held is no alarm; swap moving while memory is short is.
+check("swap held but barely moving, under 2 GB available, is no alarm",
+      "memory" not in alarm.evaluate(healthy(swap_used_mb=3600, mem_available_mb=1900, swap_rate=42), None))
+check("swap moving over 100 pages a second with under 2 GB available is",
+      "memory" in alarm.evaluate(healthy(swap_used_mb=3600, mem_available_mb=1900, swap_rate=300), None))
+check("swap moving fast with memory to spare is no alarm",
+      "memory" not in alarm.evaluate(healthy(swap_used_mb=3600, mem_available_mb=5000, swap_rate=300), None))
+check("an unknown swap rate (the first run) raises nothing from swap alone",
+      "memory" not in alarm.evaluate(healthy(swap_used_mb=3600, mem_available_mb=1900), None))
+# Once on, it holds until memory is clear of its line and swap has slowed well under its own.
+check("on, it holds at 2,100 MB available with swap at 80 pages a second",
+      "memory" in alarm.evaluate(healthy(mem_available_mb=2100, swap_rate=80), None, ["memory"]))
+check("...and clears at 2,400 MB with swap at 20",
+      "memory" not in alarm.evaluate(healthy(mem_available_mb=2400, swap_rate=20), None, ["memory"]))
+check("on for low memory, it holds at 650 MB available",
+      "memory" in alarm.evaluate(healthy(mem_available_mb=650, swap_rate=0), None, ["memory"]))
+check("...and clears at 900 MB",
+      "memory" not in alarm.evaluate(healthy(mem_available_mb=900, swap_rate=0), None, ["memory"]))
+check("off, 650 MB with no swap moving is no alarm (the hold only applies once on)",
+      "memory" not in alarm.evaluate(healthy(mem_available_mb=650, swap_rate=0), None))
+check("the swap rate: pages moved over the seconds between readings",
+      alarm.swap_rate([1000.0, 5000], 1300.0, 17000) == 40.0, str(alarm.swap_rate([1000.0, 5000], 1300.0, 17000)))
+check("no swap rate across a reboot (the counter went back) or a long gap",
+      alarm.swap_rate([1000.0, 5000], 1300.0, 10) is None and alarm.swap_rate([1000.0, 5000], 9000.0, 9000) is None)
 
 # Our services stopped after an error without being marked failed (a crash
 # into systemd's start limit leaves a unit "inactive").
