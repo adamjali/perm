@@ -1535,3 +1535,33 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 27 2026 (morning): every p
   only the email renderer's own options). Reasons in `.planning/VERSION-DECISIONS.md`.
 - **Blue as a light second accent is built on `preview/blue-accent`, not shipped** (owner, Oct 27: show screenshots
   first): note edges, single-colour charts' bars and the rail's group icons in blue; lime stays the action colour.
+
+## Oct 28 2026: the catch-up branch (`catchup/oct28`), what it taught
+
+Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pumpkin.md`.
+
+- **A picked option is lime, every time** (owner, Oct 28: "green is primary remember that"): every row of choices uses
+  `choiceVariants`, and `pressed-choices-are-lime.test.ts` fails a toggle whose pressed class is the ink fill (two had
+  shipped that week). Blue is the light second accent: information, and the second of a pair (EB-2 lime, EB-3 blue,
+  `src/components/queue/ebLineColours.ts`), never a selected state.
+- **Typed DOL figures hide in other words.** The featured guide said "DOL is working requests received in April 2026" and
+  gave PERM's 336-day average as the wage request's; two posts typed the same average and five table cells typed months.
+  `no-typed-dol-average.test.ts` now catches "DOL is reviewing applications filed in <month>" and "average ... is N days";
+  table cells use `<DolNow show="month" | "auditMonth" | "pwdFullMonth" | "pwdOtherMonth" />`.
+- **An article's unlayered prose rules reach inside `not-prose`**: paragraph margins and list padding as well as images.
+  A content part (`src/components/content/*Now.tsx`) uses blocks and `role="list"`, never `<p>` or `<ol>`.
+- **The featured guide is the journey hub** (`waiting-on-your-green-card`): `<JourneyNow />` draws every step as wide as it
+  takes today (the planner's `getPlanReading`), with its government fee (`calculateGreenCardFees`) and its live page. It's
+  on the sweep's refresh list; a second overview article would compete with it for the same search.
+- **The step picker on /today carries the I-485's in and out**; each board card carries its own filed-and-decided pair
+  (`FlowPair`), where a section below had repeated the cards' verdicts.
+- **A filing month opens on one figure row** (still waiting; DOL is working, lime; the month's end; filed earlier) and
+  `SourceNote compact`. The month detail and `daily_decisions` docs' `dating` field is `DOL_DAY_DATING`: the day DOL
+  worked, since Oct 27.
+- **The planner dates an undated stage as reached today** (`reached` in `buildPlan`), and step lengths print in ink, with
+  the bars and numbers carrying the colour.
+- **`scripts/audit_trust.py`** (in `page_checks.py`) holds every page to the footer's trust links, the legal name, a
+  modified date and, on articles, the author and standards links.
+- **The dev server's watcher can go stale**: when served output doesn't match the source, restart it before debugging.
+  `pnpm check` bails at the first failure locally, and GitHub runs no pull_request workflow while a PR conflicts with main.
+- **The "Claude Code Review" workflow fails on every PR**: the Claude GitHub App isn't installed on the repo. Not a gate.
