@@ -271,6 +271,17 @@ jobs:
             exit 1
           }
 
+      # How many PERM jobs meet the EB-2 bar, from what their wage requests require.
+      - name: Rebuild the EB-2 bar split
+        if: success() && matrix.program == 'pw' && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
+        working-directory: v2
+        run: |
+          timeout 10m python3 scripts/build_eb_split.py || {
+            python3 scripts/record_ingest_failure.py --script build_eb_split.py \
+              --note "EB-2 bar split: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
+
       # H-2A, H-2B and CW-1 decisions per day, by DOL's own decision date
       # (/seasonal-cases draws them). A failure is recorded, never silent, and
       # leaves the old series in place.

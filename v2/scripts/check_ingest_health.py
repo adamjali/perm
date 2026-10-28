@@ -416,6 +416,8 @@ PRECOMPUTED_DOCS = {
     # Saved by the site after every PERM and wage-request sweep (/api/revalidate-sweep); /today
     # and the planner run their reads live without it, so a stale one is slow, never wrong.
     "board": (3, "/today's steps and the planner's DOL lengths"),
+    # Rebuilt after each monthly wage-request load: three loads missed is the job stopping.
+    "eb_split": (100, "the EB-2 bar share on /perm-queue"),
     # Rebuilt after every PERM sweep; the month pages hide its section without it.
     "month_detail": (3, "the filing-month pages' decisions per day and initials grid"),
     # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).

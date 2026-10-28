@@ -143,13 +143,13 @@ def main() -> int:
     # A third: the key in a constant (`BOARD_DOC = "board"`) that a doc(...) call reads by name.
     def via_constant(k: str) -> bool:
         return any(
-            _re.search(rf"""doc(?:<[^>]*>)?\(\s*{name}\s*\)""", corpus)
+            _re.search(rf"""doc(?:<[^()]*?>)?\(\s*{name}\s*\)""", corpus)
             for name in _re.findall(rf"""const\s+(\w+)\s*=\s*["']{_re.escape(k)}["']""", corpus)
         )
     unread = [
         k for k in health.PRECOMPUTED_DOCS
         if not _re.search(
-            rf"""doc(?:<[^>]*>)?\(\s*["']{_re.escape(k)}["']"""
+            rf"""doc(?:<[^()]*?>)?\(\s*["']{_re.escape(k)}["']"""
             rf"""|key\s*=\s*["']{_re.escape(k)}["']""",
             corpus,
         ) and not via_constant(k)

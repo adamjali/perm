@@ -28,6 +28,8 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { MoreText } from "@/components/data/MoreText";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
+import { EbSplit } from "@/components/queue/EbSplit";
+import { getEbSplit } from "@/lib/db/ebSplit";
 
 /**
  * Where DOL's PERM queue stands right now, from a per-case scan.
@@ -83,7 +85,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 export default async function PermQueuePage() {
-  const [census, estimator, alphabet, pastDays] = await Promise.all([
+  const [census, estimator, alphabet, pastDays, ebSplit] = await Promise.all([
     getBacklogCensus(),
     getEstimatorData(),
     // Its own document and its own writer, so a missing one is a missing
@@ -94,6 +96,8 @@ export default async function PermQueuePage() {
       console.warn("[perm-queue] past days unreadable", e);
       return [] as string[];
     }),
+    // Its own document (scripts/build_eb_split.py); a missing one is a missing panel.
+    getEbSplit().catch(() => null),
   ]);
 
   const { stages } = groupByStage(census.statuses);
@@ -310,6 +314,8 @@ export default async function PermQueuePage() {
           </div>
         </FinePrint>
       </section>{" "}
+
+      {ebSplit ? <EbSplit split={ebSplit} className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" /> : null}{" "}
 
       <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold sm:text-3xl">
