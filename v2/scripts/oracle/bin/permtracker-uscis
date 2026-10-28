@@ -14,7 +14,12 @@ fail(){ python3 scripts/record_ingest_failure.py --script "$1" --note "oracle ti
 ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; record_run(Database(), sys.argv[1], status="ok", note=sys.argv[2])' "$1" "oracle timer ($job): $2" || echo "could not record the ok row"; }
 rc=0
 case "$job" in
-  i485) python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; } ;;
+  i485)
+    python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; }
+    # Older months, from the Internet Archive's copies of USCIS's files (Oct 28 2026). It loads only
+    # months not held and names any the Archive won't serve in its own run row, so a busy Archive costs
+    # a month's wait, never this job's status.
+    timeout 30m python3 scripts/ingest_i485_inventory.py --archive || true ;;
   # DOL's own notice on FLAG (a maintenance window), read every 15 minutes so
   # the site can say why statuses are late (Oct 27 2026). It writes its own run row.
   flag-notice) timeout 2m python3 scripts/ingest_flag_notice.py || { rc=1; fail ingest_flag_notice.py "exited non-zero or ran past 2m"; } ;;

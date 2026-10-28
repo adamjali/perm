@@ -46,9 +46,17 @@ def main() -> int:
     check("a month the Archive can't serve leaves the run going", inv.load_archive(db), 0)
     rows = db.execute("SELECT script, status, note FROM ingest_runs")["response"]["result"]["rows"]
     last = [c.get("value") for c in rows[-1]]
-    check("the run is recorded under its own name, partial, naming the months", (last[0], last[1]),
-          ("ingest_i485_inventory.py --archive", "partial"))
-    check("and the note names them", "2024-04" in last[2] and "2026-06" in last[2], True)
+    check("a refusing Archive is no failure of ours: the run is ok, under its own name", (last[0], last[1]),
+          ("ingest_i485_inventory.py --archive", "ok"))
+    check("and the note names the months to ask for again", "2024-04" in last[2] and "2026-06" in last[2], True)
+
+    lib_warn.archive_copy = lambda url, accept=None, newest=12: lib_warn.ArchiveCopy(b"PK", "2025-01-01", url)
+    inv.parse_workbook = lambda blob: (None, [])
+    inv.load_archive(db)
+    rows = db.execute("SELECT status, note FROM ingest_runs")["response"]["result"]["rows"]
+    last = [c.get("value") for c in rows[-1]]
+    check("a copy that parses to nothing is ours to look at: partial, named", (last[0], "parsed to nothing" in last[1]),
+          ("partial", True))
     print(f"{len(FAILED)} failure(s)")
     return 1 if FAILED else 0
 

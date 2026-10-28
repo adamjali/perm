@@ -312,32 +312,40 @@ def load_archive(db: Database) -> int:
 
     History only: it never stamps freshness, which describes the newest month
     USCIS lists, and its runs are recorded under their own name. A month the
-    Archive can't serve whole is named and left for the next run.
+    Archive won't serve (it refuses for long stretches) is named and left for
+    the next run, and the run is still ok: that's the Archive, not us. A copy
+    that parses to nothing is ours to look at, and marks the run partial.
     """
     from lib_warn import archive_copy, is_xlsx
 
     started = time.time()
     held = {str(a)[:7] for (a,) in query_rows(db, "SELECT DISTINCT as_of FROM i485_inventory")}
-    loaded, missed = [], []
+    loaded: list[str] = []
+    refused: list[str] = []
+    broken: list[str] = []
     for url, label in archive_workbooks(held):
         try:
             copy = archive_copy(url, accept=is_xlsx)
         except (LookupError, OSError) as exc:
             log(f"  {label}: no usable copy ({exc})")
-            missed.append(label)
+            refused.append(label)
             continue
         as_of, records = parse_workbook(copy.data)
         if not records or not as_of:
             log(f"  {label}: the copy captured {copy.captured} parsed to nothing")
-            missed.append(label)
+            broken.append(label)
             continue
         n = store(db, as_of, records)
         log(f"  {label}: as of {as_of}, {n:,} cells, {sum(r['count'] for r in records):,} applications "
             f"(the Archive's copy of {copy.captured})")
         loaded.append(as_of)
-    note = f"{len(loaded)} month(s) from the Internet Archive" + (f"; not served: {', '.join(dict.fromkeys(missed))}" if missed else "")
+    note = f"{len(loaded)} month(s) from the Internet Archive"
+    if refused:
+        note += f"; the Archive didn't serve {', '.join(dict.fromkeys(refused))}, asked again next run"
+    if broken:
+        note += f"; parsed to nothing: {', '.join(dict.fromkeys(broken))}"
     log(f"  {note}")
-    record_run(db, "ingest_i485_inventory.py --archive", status="ok" if loaded or not missed else "partial",
+    record_run(db, "ingest_i485_inventory.py --archive", status="partial" if broken else "ok",
                rows_written=len(loaded), note=note, started_at=started)
     return 0
 
