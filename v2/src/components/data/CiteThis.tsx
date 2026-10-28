@@ -5,6 +5,7 @@ import { CaretRightIcon } from "@phosphor-icons/react";
 
 import { CopyButton } from "@/components/badges/BadgeCatalogue";
 import { intlLocale, type Lang } from "@/lib/i18n/lang";
+import { PROVENANCE } from "./DataProvenance.messages";
 
 /**
  * "Cite this page": the page's title, PERM Tracker, the date its data runs
@@ -16,12 +17,10 @@ import { intlLocale, type Lang } from "@/lib/i18n/lang";
  * so one component serves every data page. Shut, it costs nothing; a crawler
  * reads only the summary line.
  */
-/** A translated page's own words for the citation; English otherwise. */
+/** The citation's own words in a language. */
 export interface CiteWords {
-  summary: string;
   data: (date: string) => string;
   accessed: (date: string) => string;
-  locale: Lang;
 }
 
 export function citationFor(
@@ -29,7 +28,7 @@ export function citationFor(
   url: string,
   dataThrough: string | null,
   today: string,
-  words?: Pick<CiteWords, "data" | "accessed">,
+  words?: CiteWords,
 ): string {
   const name = title.replace(/\s*\|\s*PERM Tracker\s*$/, "").trim();
   const data = dataThrough ? (words ? words.data(dataThrough) : `, data through ${dataThrough}`) : "";
@@ -37,13 +36,20 @@ export function citationFor(
   return `${name}. PERM Tracker${data}. ${url} ${accessed}.`;
 }
 
-export function CiteThis({ dataThrough, words }: { dataThrough: string | null; words?: CiteWords }) {
+/**
+ * `lang` is the one thing a translated page passes: the words come from the messages module here, in the
+ * browser, because a server component can't hand a function to a client one (every translated case page
+ * rendered the error screen until Oct 28 2026, when this took `words` with two functions in it).
+ */
+export function CiteThis({ dataThrough, lang = "en" }: { dataThrough: string | null; lang?: Lang }) {
+  const t = PROVENANCE[lang];
+  const words = lang === "en" ? undefined : { data: t.citeData, accessed: t.citeAccessed };
   const [text, setText] = useState("");
   function build(open: boolean) {
     if (!open || text) return;
     const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute("href");
     const url = canonical || window.location.href.split("#")[0] || "";
-    const today = new Date().toLocaleDateString(words ? intlLocale(words.locale) : "en-US", {
+    const today = new Date().toLocaleDateString(intlLocale(lang), {
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -59,7 +65,7 @@ export function CiteThis({ dataThrough, words }: { dataThrough: string | null; w
           weight="bold"
           aria-hidden="true"
         />{" "}
-        {words?.summary ?? "Cite this page"}
+        {t.citeSummary}
       </summary>{" "}
       <div className="flex max-w-3xl flex-wrap items-start gap-3 pb-1 pl-5">
         <p className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground">{text}</p>{" "}

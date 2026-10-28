@@ -92,7 +92,7 @@ export async function DataProvenance({
       ) : null}{" "}
       <CiteThis
         dataThrough={latest(rows, fmt)}
-        words={lang === "en" ? undefined : { summary: t.citeSummary, data: t.citeData, accessed: t.citeAccessed, locale: lang }}
+        lang={lang}
       />
     </div>
   );
