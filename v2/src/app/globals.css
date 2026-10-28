@@ -2260,6 +2260,31 @@ input[type="week"] {
   .rail-row:hover { transform: none; }
 }
 
+/* A page in a group, not the one open: about 110 of these on every data page,
+   so its look is one class here rather than a 190-character class string in
+   each row, twice (Oct 28 2026; the same utilities, applied once). */
+.rail-leaf {
+  @apply pl-9 text-sm mr-[16px] text-foreground/75 font-semibold motion-safe:hover:translate-x-[3px] hover:bg-rail-hover hover:text-foreground hover:shadow-[inset_3px_0_0_var(--primary)];
+}
+
+/* The visa bulletin's every-month strip: about 240 cells (BulletinMonthStrip). */
+.month-cell {
+  @apply flex min-h-11 items-center justify-center border border-input bg-card font-mono text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-safe:active:translate-y-px;
+}
+.month-cell[aria-current="page"] {
+  @apply bg-primary text-primary-foreground shadow-hard-sm transition-colors hover:bg-primary;
+}
+.month-cell-missing {
+  @apply flex min-h-11 items-center justify-center border border-dashed border-foreground/20 font-mono text-sm text-muted-foreground;
+}
+
+/* A list of bulletin moves in one cell: each move kept on one line (the
+   history tables, 800 a page). Colour is inherited, never set here: in dark
+   mode these tables sit on a light panel with dark ink. */
+.move-list > span {
+  @apply whitespace-nowrap;
+}
+
 /* The hairline that runs down the indented rows. */
 .rail-guide {
   position: absolute;

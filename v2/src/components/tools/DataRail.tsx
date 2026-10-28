@@ -84,6 +84,10 @@ export function DataRail() {
 
   // Below `lg` the rail is a side panel that slides in from the same edge.
   const [panelOpen, setPanelOpen] = useState(false);
+  // The panel's rows are drawn the first time it opens, then kept. The desktop
+  // rail already carries every link in the page's HTML; drawing the phone copy
+  // up front put about 45 KB of duplicate rows on every data page (Oct 28 2026).
+  const [panelDrawn, setPanelDrawn] = useState(false);
 
   // Desktop starts open, and collapsing is a layout change, not an overlay.
   // The state isn't kept in a URL or cookie: reading either would make every
@@ -407,7 +411,10 @@ export function DataRail() {
         type="button"
         aria-expanded={panelOpen}
         aria-controls="data-rail-panel"
-        onClick={() => setPanelOpen((v) => !v)}
+        onClick={() => {
+          setPanelDrawn(true);
+          setPanelOpen((v) => !v);
+        }}
         // The header's measured height, not a constant: it shrinks on scroll.
         style={{ top: "calc(var(--site-header-h, 4.5rem) + 4px)" }}
         className={cn(
@@ -470,8 +477,12 @@ export function DataRail() {
           panelOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {renderBody("panel")}
-        <RailFooter />
+        {panelDrawn ? (
+          <>
+            {renderBody("panel")}
+            <RailFooter />
+          </>
+        ) : null}
       </nav>
     </>
   );
@@ -551,13 +562,13 @@ function Tab({
         "rail-row",
         // Size is the hierarchy: Overview is the parent of every group, so it
         // takes a larger type step and a taller row; leaves keep the indent.
-        kind === "home" ? "min-h-11 pl-4 text-base" : "pl-9 text-sm",
+        kind === "home" ? "min-h-11 pl-4 text-base" : current && "pl-9 text-sm",
         // Where the row stops. A leaf sits in a clip box 16px wider than the
         // rail, so its margin subtracts back: 2px leaves the fill 12px past the
         // border with the shadow inside the box; 16px pulls an unselected row
         // back to the border. Overview sits in the nav itself and reaches
         // further (18px) to mark it as the parent.
-        kind === "leaf" && (current ? "mr-[2px]" : "mr-[16px]"),
+        kind === "leaf" && current && "mr-[2px]",
         current
           ? // The pulled tab, the same shape wherever it sits: from the screen
             // edge past the border, with the shadow. Black on lime is 9.83:1.
@@ -567,10 +578,10 @@ function Tab({
               "bg-primary pr-4 font-heading font-bold text-black shadow-hard-sm",
               kind === "home" && "-mr-[20px]",
             )
-          : cn(
-              "text-foreground/75 motion-safe:hover:translate-x-[3px] hover:bg-rail-hover hover:text-foreground hover:shadow-[inset_3px_0_0_var(--primary)]",
-              kind === "home" ? "font-heading font-bold" : "font-semibold",
-            ),
+          : kind === "home"
+            ? "text-foreground/75 motion-safe:hover:translate-x-[3px] hover:bg-rail-hover hover:text-foreground hover:shadow-[inset_3px_0_0_var(--primary)] font-heading font-bold"
+            : // An unselected leaf, the row repeated about 110 times a page: one class (globals.css).
+              "rail-leaf",
       )}
     >
       {kind === "leaf" && !current ? (

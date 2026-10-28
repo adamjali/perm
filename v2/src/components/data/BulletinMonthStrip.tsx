@@ -52,12 +52,8 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                   <Link
                     href={`/visa-bulletin/${ym}`}
                     aria-current={current ? "page" : undefined}
-                    className={
-                      "flex min-h-11 items-center justify-center border-input font-mono text-sm font-semibold transition-colors border " +
-                      (current
-                        ? "bg-primary text-primary-foreground shadow-hard-sm"
-                        : "bg-card hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-safe:active:translate-y-px transition-[color,background-color,border-color,box-shadow,transform]")
-                    }
+                    // One short class (globals.css): about 240 cells, each in the HTML and again in the page's payload.
+                    className="month-cell"
                   >
                     {m}
                     {/* The year is in the row's label for the eye; a crawler and a
@@ -67,7 +63,7 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                 ) : (
                   <span
                     title={`${label(ym)}: not held`}
-                    className="flex min-h-11 items-center justify-center border-dashed border-foreground/20 font-mono text-sm text-muted-foreground border"
+                    className="month-cell-missing"
                   >
                     <span aria-hidden="true">{m}</span>{" "}
                     <span className="sr-only">{`${label(ym)}, not held`}</span>

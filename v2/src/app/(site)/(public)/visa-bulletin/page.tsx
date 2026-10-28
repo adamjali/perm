@@ -425,13 +425,15 @@ export default async function VisaBulletinPage() {
                           </>
                         )}
                       {" "}</td>
-                      <td className="p-3 font-mono text-sm leading-relaxed">
+                      <td className="move-list p-3 font-mono text-sm leading-relaxed">
                         {r.moves.map((m, i) => (
                           // Mapped siblings arrive with nothing between them; the
                           // space is part of each iteration or it does not exist.
+                          // `move-list` (globals.css) keeps each move on one line
+                          // with no class on any of them.
                           <Fragment key={m.bulletinMonth}>
-                            {i > 0 ? <span className="text-muted-foreground"> · </span> : null}
-                            <span className="whitespace-nowrap">{m.bulletinMonth.slice(0, 4)} {moveLabel(m)}</span>
+                            {i > 0 ? " · " : null}
+                            <span>{m.bulletinMonth.slice(0, 4)} {moveLabel(m)}</span>
                           </Fragment>
                         ))}
                       {" "}</td>
