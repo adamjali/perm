@@ -15,8 +15,28 @@ import { usePathname, useRouter } from "next/navigation";
  * screen, a back-forward restore) and its figures are older than
  * STALE_AFTER_MS, it asks the server for the current page. `router.refresh()`
  * re-renders the server parts and keeps whatever the reader typed.
+ *
+ * A page that stays on screen refreshes too (owner, Oct 27 2026: figures update
+ * live). While it's visible it asks `/api/sweep-stamp` every POLL_MS when our
+ * DOL sweep last finished, and redraws once that moves past the time it saw
+ * first: a sweep's new counts reach an open page within minutes, with no reload.
  */
 export const STALE_AFTER_MS = 30 * 60 * 1000;
+
+/** How often a visible page asks whether a sweep has finished since it loaded. */
+export const POLL_MS = 5 * 60 * 1000;
+
+/** The sweep's finish time, or null when it can't be told (a failed request changes nothing). */
+async function sweepStamp(): Promise<number | null> {
+  try {
+    const res = await fetch("/api/sweep-stamp");
+    if (!res.ok) return null;
+    const { checkedAt } = (await res.json()) as { checkedAt: unknown };
+    return typeof checkedAt === "number" ? checkedAt : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Whether figures fetched at `freshAt` are too old to show at `now`. */
 export function isStale(freshAt: number, now: number, after: number = STALE_AFTER_MS): boolean {
@@ -51,6 +71,27 @@ export function RefreshWhenStale() {
       document.removeEventListener("visibilitychange", check);
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("online", check);
+    };
+  }, [router]);
+
+  useEffect(() => {
+    let seen: number | null = null;
+    let alive = true;
+    const poll = async () => {
+      if (document.visibilityState !== "visible") return;
+      const at = await sweepStamp();
+      if (!alive || at === null) return;
+      if (seen !== null && at > seen) {
+        freshAt.current = Date.now();
+        router.refresh();
+      }
+      seen = at;
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), POLL_MS);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
     };
   }, [router]);
 

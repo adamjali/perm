@@ -8,9 +8,19 @@ vi.mock("next/navigation", async (importOriginal) => ({
   usePathname: () => "/",
 }));
 
-import { isStale, RefreshWhenStale, STALE_AFTER_MS } from "../refresh-when-stale";
+import { isStale, POLL_MS, RefreshWhenStale, STALE_AFTER_MS } from "../refresh-when-stale";
 
 let visibility: DocumentVisibilityState = "visible";
+/** What /api/sweep-stamp answers: the sweep's finish time. */
+let stamp: number | null = 1000;
+const fetchStamp = vi.fn(async () => new Response(JSON.stringify({ checkedAt: stamp }), { status: 200 }));
+
+/** Let a poll's request and its answer land. */
+async function settle(ms = 0) {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+}
 
 function showPage() {
   visibility = "visible";
@@ -29,6 +39,9 @@ function hidePage() {
 describe("RefreshWhenStale", () => {
   beforeEach(() => {
     refresh.mockReset();
+    fetchStamp.mockClear();
+    stamp = 1000;
+    vi.stubGlobal("fetch", fetchStamp);
     visibility = "visible";
     vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility);
     vi.useFakeTimers();
@@ -38,6 +51,7 @@ describe("RefreshWhenStale", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("asks for the current page when a tab left open a week is shown again", () => {
@@ -80,6 +94,41 @@ describe("RefreshWhenStale", () => {
       window.dispatchEvent(e);
     });
     expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("redraws a page left on screen once a sweep finishes after it loaded", async () => {
+    render(<RefreshWhenStale />);
+    await settle();
+    expect(fetchStamp).toHaveBeenCalledWith("/api/sweep-stamp");
+    await settle(POLL_MS);
+    expect(refresh).not.toHaveBeenCalled();
+    stamp = 2000;
+    await settle(POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await settle(POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks nothing while the page is hidden", async () => {
+    render(<RefreshWhenStale />);
+    await settle();
+    hidePage();
+    fetchStamp.mockClear();
+    await settle(POLL_MS * 3);
+    expect(fetchStamp).not.toHaveBeenCalled();
+  });
+
+  it("a stamp it can't read changes nothing", async () => {
+    render(<RefreshWhenStale />);
+    await settle();
+    fetchStamp.mockImplementation(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    await settle(POLL_MS);
+    stamp = null;
+    fetchStamp.mockImplementation(async () => new Response(JSON.stringify({ checkedAt: stamp }), { status: 200 }));
+    await settle(POLL_MS);
+    expect(refresh).not.toHaveBeenCalled();
   });
 
   it("judges age by the window", () => {
