@@ -48,6 +48,10 @@ async function main() {
   // Retried with backoff: this runs unattended once a day, and DOL's evening
   // maintenance windows are exactly the kind of blip a short backoff rides out.
   let res: Response | undefined;
+  // The body is read inside the loop too: a connection can drop after the
+  // headers arrive, and that failed the 1:05 PM EDT Oct 28 2026 run with no
+  // retry ("fetch failed" two seconds in, before the page's size was printed).
+  let html: string | undefined;
   for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
     try {
       // Assign, don't redeclare: a `const res` here would shadow the outer
@@ -59,7 +63,10 @@ async function main() {
           Accept: "text/html,application/xhtml+xml",
         },
       });
-      if (res.ok) break;
+      if (res.ok) {
+        html = await res.text();
+        break;
+      }
       if (!RETRYABLE_STATUS.includes(res.status) || attempt === FETCH_ATTEMPTS) {
         throw new Error(`DOL returned ${res.status}`);
       }
@@ -70,9 +77,8 @@ async function main() {
     }
     await new Promise((r) => setTimeout(r, RETRY_BASE_MS * 3 ** (attempt - 1)));
   }
-  if (!res?.ok) throw new Error(`DOL unreachable after ${FETCH_ATTEMPTS} attempts`);
+  if (!res?.ok || html === undefined) throw new Error(`DOL unreachable after ${FETCH_ATTEMPTS} attempts`);
 
-  const html = await res.text();
   console.log(`  ${html.length.toLocaleString()} bytes`);
 
   // Throws DolParseError on a shape it does not recognise. That is the point:
