@@ -397,11 +397,15 @@ describe("sitemap.ts", () => {
     expect(families.length).toBeGreaterThanOrEqual(10);
     // Every exclusion names a family that exists, so a stale one fails here.
     expect(Object.keys(UNLISTED).filter((f) => !families.includes(f))).toEqual([]);
-    const urls = (await sitemap()).map((e) => e.url);
-    const under = (prefix: string) =>
-      new RegExp(`^https://permtracker\\.app/${prefix.replace(/\[[^\]]+\]/g, "[^/]+")}/`);
+    const paths = (await sitemap()).map((e) => new URL(e.url).pathname.split("/").filter(Boolean));
+    // A URL is in a family when it has more segments than the family's path and each one matches,
+    // a [param] segment matching any value.
+    const under = (prefix: string, path: string[]) => {
+      const want = prefix.split("/");
+      return path.length > want.length && want.every((w, i) => /^\[.+\]$/.test(w) || w === path[i]);
+    };
     const missing = [...new Set(families)].filter(
-      (prefix) => !(prefix in UNLISTED) && !urls.some((u) => under(prefix).test(u)),
+      (prefix) => !(prefix in UNLISTED) && !paths.some((path) => under(prefix, path)),
     );
     expect(missing).toEqual([]);
   });
