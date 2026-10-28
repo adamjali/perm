@@ -38,6 +38,8 @@ describe("readRuleMoves", () => {
     expect(moves).toEqual([
       {
         rin: "1205-AC29",
+        // The step, so the subject can lead with a rule published in the Register.
+        kind: "oira-completed",
         date: "2026-10-23",
         sentence:
           'OIRA finished its review of "Modernizing the Labor Market Test and Improving Protections for U.S. Workers in the PERM Immigrant Visa Program" on Oct 23, 2026. Its decision: "Consistent with Change".',
