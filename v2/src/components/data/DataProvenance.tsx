@@ -8,6 +8,9 @@ import { getFreshness, type DatasetFreshness } from "@/lib/db/publicData";
 import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
 import { cn } from "@/lib/utils";
 import { MONTH_ABBR } from "@convex/lib/months";
+import type { Lang } from "@/lib/i18n/lang";
+import { dayLabel, monthLabel } from "@/lib/i18n/format";
+import { PROVENANCE, type ProvenanceText } from "./DataProvenance.messages";
 
 /**
  * Where a page's figures came from, rendered beside them: one line per
@@ -23,7 +26,19 @@ import { MONTH_ABBR } from "@convex/lib/months";
  * mistake, the same line an article ends with (Oct 28 2026, E-E-A-T:
  * scripts/audit_trust.py finds this block by `data-provenance`).
  */
-export async function DataProvenance({ datasets, className }: { datasets: string[]; className?: string }) {
+export async function DataProvenance({
+  datasets,
+  className,
+  lang = "en",
+}: {
+  datasets: string[];
+  className?: string;
+  /** A translated page's language; English everywhere else. */
+  lang?: Lang;
+}) {
+  const t: ProvenanceText = PROVENANCE[lang];
+  const label = (d: string) => labelIn(t, d);
+  const fmt = (iso: string) => dateIn(iso, lang);
   const all: Record<string, DatasetFreshness> = await getFreshness().catch(() => ({}));
   // A type-guard filter: .filter(Boolean) doesn't narrow away the
   // `| undefined` that noUncheckedIndexedAccess puts on all[d].
@@ -32,7 +47,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
     .filter((r): r is DatasetFreshness => r !== undefined);
   if (rows.length === 0) return null;
   const covered = rows.flatMap((r) => {
-    const text = coverageFor(r.dataset);
+    const text = t.coverage[r.dataset] ?? coverageFor(r.dataset);
     return text ? [{ dataset: r.dataset, text }] : [];
   });
   return (
@@ -44,30 +59,30 @@ export async function DataProvenance({ datasets, className }: { datasets: string
         // between them, so two lines would otherwise read as one run of text.
         <Fragment key={r.dataset}>
           {" "}
-          {r.stale ? <StaleLine r={r} /> : (
+          {r.stale ? <StaleLine r={r} lang={lang} /> : (
             <p className="text-sm text-muted-foreground">
               <span className="font-bold text-soft">{label(r.dataset)}:</span> {r.source}
-              {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
+              {r.asOf ? <> · {t.dataThrough(fmt(r.asOf))}</> : null} · {cadenceIn(t, r.cadence)}
             </p>
           )}
         </Fragment>
       ))}{" "}
       <p className="text-sm text-muted-foreground">
         <Link href="/methodology" className="link">
-          How these figures are counted
+          {t.howCounted}
         </Link>
-        . Spotted an error?{" "}
+        {t.end} {t.spotted}{" "}
         <Link href="/contact" className="link">
-          Tell us
+          {t.tellUs}
         </Link>
-        ; every fix is dated in the{" "}
+        {t.everyFix}{" "}
         <Link href="/changelog/corrections" className="link">
-          corrections log
+          {t.correctionsLog}
         </Link>
-        .
+        {t.end}
       </p>{" "}
       {covered.length > 0 ? (
-        <FinePrint summary={covered.length === 1 ? "What this data includes" : "What each source includes"} className="mt-1">
+        <FinePrint summary={covered.length === 1 ? t.includesOne : t.includesMany} className="mt-1">
           {covered.map((c) => (
             <p key={c.dataset}>
               <span className="font-bold text-soft">{label(c.dataset)}:</span> {c.text}
@@ -75,13 +90,16 @@ export async function DataProvenance({ datasets, className }: { datasets: string
           ))}
         </FinePrint>
       ) : null}{" "}
-      <CiteThis dataThrough={latest(rows)} />
+      <CiteThis
+        dataThrough={latest(rows, fmt)}
+        words={lang === "en" ? undefined : { summary: t.citeSummary, data: t.citeData, accessed: t.citeAccessed, locale: lang }}
+      />
     </div>
   );
 }
 
 /** The newest date any of the page's datasets runs to, as the lines print it. */
-function latest(rows: DatasetFreshness[]): string | null {
+function latest(rows: DatasetFreshness[], fmt: (iso: string) => string): string | null {
   const dates = rows.map((r) => r.asOf).filter((d): d is string => !!d && /^\d{4}-\d{2}/.test(d));
   if (dates.length === 0) return null;
   return fmt(dates.reduce((a, b) => (a > b ? a : b)));
@@ -94,7 +112,23 @@ function latest(rows: DatasetFreshness[]): string | null {
  * and the budget to be known: an unreadable date isn't evidence of staleness,
  * and a warning on every page teaches people to ignore the one that matters.
  */
-function StaleLine({ r }: { r: DatasetFreshness }) {
+function StaleLine({ r, lang }: { r: DatasetFreshness; lang: Lang }) {
+  const t: ProvenanceText = PROVENANCE[lang];
+  const fmt = (iso: string) => dateIn(iso, lang);
+  const cadence = cadenceIn(t, r.cadence);
+  if (lang !== "en") {
+    return (
+      <p className="mt-2 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-3 py-2 text-sm text-soft first:mt-0">
+        <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
+        <span>
+          <b className="font-bold text-data-warn-ink">{t.stale(labelIn(t, r.dataset), r.ageDays)}</b>{" "}
+          {t.staleBody(cadence)} {t.source} {r.source}
+          {r.asOf ? <> · {t.dataThrough(fmt(r.asOf))}</> : null}
+          {t.end}
+        </span>
+      </p>
+    );
+  }
   return (
     <p className="mt-2 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-3 py-2 text-sm text-soft first:mt-0">
       <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
@@ -123,6 +157,23 @@ function agePhrase(r: DatasetFreshness): string {
 }
 
 const label = datasetLabel;
+
+/** A dataset's name in the page's language, English when that dataset has no translation yet. */
+function labelIn(t: ProvenanceText, dataset: string): string {
+  return t.labels[dataset] ?? datasetLabel(dataset);
+}
+
+/** The registry's cadence ("Daily") in the page's language, lower-cased English when untranslated. */
+function cadenceIn(t: ProvenanceText, cadence: string): string {
+  const key = cadence.toLowerCase();
+  return t.cadence[key] ?? key;
+}
+
+/** English keeps its short dates ("Oct 28, 2026"); a translation uses its own long form. */
+function dateIn(iso: string, lang: Lang): string {
+  if (lang === "en") return fmt(iso);
+  return dayLabel(iso, lang) ?? monthLabel(iso, lang) ?? iso;
+}
 
 function fmt(iso: string): string {
   // "2026-06-30" -> "Jun 30, 2026"; "2026-09" -> "Sep 2026"; else verbatim.

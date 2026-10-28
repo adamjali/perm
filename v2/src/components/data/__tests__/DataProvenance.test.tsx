@@ -136,3 +136,34 @@ describe("DataProvenance", () => {
     expect(screen.getAllByText("Case data:")).toHaveLength(2);
   });
 });
+
+describe("DataProvenance in another language", () => {
+  it("speaks the page's language, keeps DOL's source names, and dates in its own form", async () => {
+    getFreshness.mockResolvedValue({
+      "perm-case-status": row({ dataset: "perm-case-status", source: "flag.dol.gov (DOL, direct)", asOf: "2026-10-28" }),
+    });
+    const { container } = render(await DataProvenance({ datasets: ["perm-case-status"], lang: "es" }));
+    const text = container.textContent ?? "";
+    // The label names the line and its coverage note.
+    expect(screen.getAllByText("Estados de cada caso:").length).toBeGreaterThanOrEqual(1);
+    expect(text).toContain("flag.dol.gov (DOL, direct) · datos hasta el 28 de octubre de 2026 · a diario");
+    expect(text).toContain("Todos los casos PERM que el DOL indexa");
+    expect(screen.getByRole("link", { name: "Avísenos" })).toHaveAttribute("href", "/contact");
+  });
+
+  it("falls back to the English name for a dataset not yet translated, never a blank", async () => {
+    getFreshness.mockResolvedValue({ "perm-month-stats": row() });
+    render(await DataProvenance({ datasets: ["perm-month-stats"], lang: "zh" }));
+    expect(screen.getAllByText("Pending case counts:").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("link", { name: "告诉我们" })).toBeInTheDocument();
+  });
+
+  it("warns about a stale dataset in the page's language", async () => {
+    getFreshness.mockResolvedValue({
+      "perm-cases": row({ dataset: "perm-cases", stale: true, ageDays: 41, cadence: "Quarterly" }),
+    });
+    render(await DataProvenance({ datasets: ["perm-cases"], lang: "pt-br" }));
+    expect(screen.getByText("Dados de casos não é atualizado há 41 dias.")).toBeInTheDocument();
+    expect(screen.getByText(/Deveria ser atualizado trimestralmente/)).toBeInTheDocument();
+  });
+});

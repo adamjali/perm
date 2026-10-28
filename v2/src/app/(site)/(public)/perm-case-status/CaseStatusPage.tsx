@@ -258,9 +258,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
         <FaqList items={t.faqs} />
       </section>
 
-      <DataProvenance
-        datasets={["perm-case-status", "perm-cases", "processing-times"]}
-      />
+      <DataProvenance datasets={["perm-case-status", "perm-cases", "processing-times"]} lang={lang} />
       <MoreText gist={t.provenanceGist} className="mt-2">
         <p className="text-sm text-muted-foreground">
           {t.provenanceBody}{" "}

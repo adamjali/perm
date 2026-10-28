@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CaretRightIcon } from "@phosphor-icons/react";
 
 import { CopyButton } from "@/components/badges/BadgeCatalogue";
+import { intlLocale, type Lang } from "@/lib/i18n/lang";
 
 /**
  * "Cite this page": the page's title, PERM Tracker, the date its data runs
@@ -15,24 +16,40 @@ import { CopyButton } from "@/components/badges/BadgeCatalogue";
  * so one component serves every data page. Shut, it costs nothing; a crawler
  * reads only the summary line.
  */
-export function citationFor(title: string, url: string, dataThrough: string | null, today: string): string {
-  const name = title.replace(/\s*\|\s*PERM Tracker\s*$/, "").trim();
-  return `${name}. PERM Tracker${dataThrough ? `, data through ${dataThrough}` : ""}. ${url} (accessed ${today}).`;
+/** A translated page's own words for the citation; English otherwise. */
+export interface CiteWords {
+  summary: string;
+  data: (date: string) => string;
+  accessed: (date: string) => string;
+  locale: Lang;
 }
 
-export function CiteThis({ dataThrough }: { dataThrough: string | null }) {
+export function citationFor(
+  title: string,
+  url: string,
+  dataThrough: string | null,
+  today: string,
+  words?: Pick<CiteWords, "data" | "accessed">,
+): string {
+  const name = title.replace(/\s*\|\s*PERM Tracker\s*$/, "").trim();
+  const data = dataThrough ? (words ? words.data(dataThrough) : `, data through ${dataThrough}`) : "";
+  const accessed = words ? words.accessed(today) : `(accessed ${today})`;
+  return `${name}. PERM Tracker${data}. ${url} ${accessed}.`;
+}
+
+export function CiteThis({ dataThrough, words }: { dataThrough: string | null; words?: CiteWords }) {
   const [text, setText] = useState("");
   function build(open: boolean) {
     if (!open || text) return;
     const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute("href");
     const url = canonical || window.location.href.split("#")[0] || "";
-    const today = new Date().toLocaleDateString("en-US", {
+    const today = new Date().toLocaleDateString(words ? intlLocale(words.locale) : "en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
       timeZone: "America/New_York",
     });
-    setText(citationFor(document.title, url, dataThrough, today));
+    setText(citationFor(document.title, url, dataThrough, today, words));
   }
   return (
     <details className="group mt-1" onToggle={(e) => build(e.currentTarget.open)}>
@@ -42,7 +59,7 @@ export function CiteThis({ dataThrough }: { dataThrough: string | null }) {
           weight="bold"
           aria-hidden="true"
         />{" "}
-        Cite this page
+        {words?.summary ?? "Cite this page"}
       </summary>{" "}
       <div className="flex max-w-3xl flex-wrap items-start gap-3 pb-1 pl-5">
         <p className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground">{text}</p>{" "}
