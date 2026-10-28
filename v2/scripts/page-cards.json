@@ -81,7 +81,8 @@
    1376,
    942
   ],
-  "css": "main figure pre{max-height:9.5rem!important;overflow:hidden!important}main *:not(:has(figure[aria-label^=\"The employer lookup\"])):not(figure[aria-label^=\"The employer lookup\"]):not(figure[aria-label^=\"The employer lookup\"] *){visibility:hidden!important}main :has(figure[aria-label^=\"The employer lookup\"]){border-color:transparent!important;box-shadow:none!important;background:transparent!important}"
+  "css": "main figure pre{max-height:17rem!important;overflow:hidden!important}main *:not(:has(figure[aria-label^=\"The employer lookup\"])):not(figure[aria-label^=\"The employer lookup\"]):not(figure[aria-label^=\"The employer lookup\"] *){visibility:hidden!important}main :has(figure[aria-label^=\"The employer lookup\"]){border-color:transparent!important;box-shadow:none!important;background:transparent!important}",
+  "above": 12
  },
  {
   "slug": "api-terms",
@@ -499,7 +500,7 @@
    0,
    0,
    2200,
-   1504
+   1496
   ],
   "fill": [
    [
@@ -518,7 +519,8 @@
   "viewport": 1440,
   "maxWidth": 1100,
   "fromEl": "main figure:has(svg[aria-label^=\"The case's regulatory windows\"])",
-  "css": "main :has(> * figure svg[aria-label^=\"The case's regulatory windows\"]),main .object:has(svg[aria-label^=\"The case's regulatory windows\"]){border-color:transparent!important;box-shadow:none!important}"
+  "css": "main *:has(svg[aria-label^=\"The case's regulatory windows\"]){border-color:transparent!important;box-shadow:none!important;background:transparent!important}",
+  "above": 20
  },
  {
   "slug": "perm-employers-browse",
