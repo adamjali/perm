@@ -44,7 +44,7 @@ export function localizedGuideMetadata(code: LocaleCode): Metadata {
       title: `${copy.title} | PERM Tracker`,
       description: copy.description,
       url: locale.path,
-      locale: locale.tag.replace("-", "_"),
+      locale: locale.ogLocale,
     },
   };
 }

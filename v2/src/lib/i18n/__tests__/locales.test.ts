@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { countryCutoffRows, newestBulletin } from "../cutoffs";
-import { ENGLISH_GUIDE, LOCALES, displayWidth, languageAlternates } from "../locales";
+import { ENGLISH_GUIDE, LOCALES, displayWidth, languageAlternates, localeOfPath } from "../locales";
 
 const PUBLIC = join(__dirname, "..", "..", "..", "app", "(site)", "(public)");
 const CONTENT = join(__dirname, "..", "..", "..", "..", "content");
@@ -28,8 +28,20 @@ describe("the locale registry", () => {
       "pt-BR": "/pt-br",
       ko: "/ko",
       vi: "/vi",
+      pt: "/pt-br",
       "x-default": "/guides/waiting-on-your-green-card",
     });
+  });
+
+  it("writes Open Graph's language_TERRITORY form, and finds a path's language", () => {
+    // ogp.me: "Format language_TERRITORY". zh_Hans, es and ko had been written from the BCP 47 tag.
+    expect(LOCALES.map((l) => l.ogLocale)).toEqual(["zh_CN", "es_LA", "pt_BR", "ko_KR", "vi_VN"]);
+    for (const l of LOCALES) expect(l.ogLocale).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
+    expect(localeOfPath("/zh")?.tag).toBe("zh-Hans");
+    expect(localeOfPath("/pt-br/perm-case-status")?.tag).toBe("pt-BR");
+    expect(localeOfPath("/zhaw")).toBeNull();
+    expect(localeOfPath("/escape-plan")).toBeNull();
+    expect(localeOfPath("/")).toBeNull();
   });
 
   it("names no alternates for a page outside the set", () => {
