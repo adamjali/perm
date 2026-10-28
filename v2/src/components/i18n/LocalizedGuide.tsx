@@ -250,8 +250,16 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                   {i + 1}
                 </span>{" "}
                 <div>
+                  {/* The form is a line of its own above the step's name: run together, "Visa Bulletin" and
+                      "La espera de su fecha de prioridad" read as one heading (Oct 28 2026). */}
                   <p className="font-heading text-lg font-bold leading-snug">
-                    {s.form ? <><F>{s.form}</F>{" "}</> : null}
+                    {s.form ? (
+                      <>
+                        <span className="block text-sm font-semibold text-soft">
+                          <F>{s.form}</F>
+                        </span>{" "}
+                      </>
+                    ) : null}
                     <span className="font-bold">{s.name}</span>
                   </p>{" "}
                   <p className="mt-1 text-base leading-relaxed text-soft">{s.body}</p>{" "}

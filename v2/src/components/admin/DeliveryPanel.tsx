@@ -146,7 +146,8 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           Alert delivery, last 7 days
         </h2>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
-          One email per person per day at most. Several updates for one person wait in the outbox and go out together.
+          {"A case's status change goes out the moment it's seen. Queue, bulletin and employer news reach a person " +
+            "at most once a day: several wait in the outbox and go out together."}
         </p>{" "}
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <Figure value={formatInt(w.emails)} label="emails sent" />

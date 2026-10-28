@@ -1635,3 +1635,39 @@ From `node scripts/gsc_queue.mjs --since 568bed7c` (45 pages and families since 
 6. Inspect only, request if last crawled before Oct 27: the rest of the list the script prints.
 
 After this list: `node scripts/gsc_queue.mjs --since 6193037e` for anything newer.
+
+## Queue after the Oct 28 afternoon release (abce2f44, live 4:43 PM EDT), replacing every list above
+
+From `node scripts/gsc_queue.mjs --since d7f3de25` (136 pages and families). Ranked by the Search Console numbers
+read the same day (3 months: "perm case status" 2,754 appearances at position 10.8, "perm update" 137 at 30.5,
+"perm processing time" 40 at 36.8 with /perm-processing-times at 13.9). Inspect each first; request it when Google's
+copy predates 4:43 PM EDT Oct 28. Cloudflare's copies were purged by the deploy (live pages read age 0 after it).
+
+1. `/perm-case-status`: heading now "Check your PERM case status", site name "PERM case status".
+2. `/perm-case-statuses`: title "What Each PERM Status Means" (it had been taking the lookup's search).
+3. `/today`: title "Today's PERM Update: Where Every Step Stands", filed-and-decided in each step.
+4. `/perm-processing-times`: first sentence is DOL's live month and average.
+5. `/tools/green-card-timeline`: the planner rebuilt (every step a range, the bulletin wait two ways, costs).
+6. `/blog/perm-processing-times-2026`: retitled for "How Long Does PERM Take in 2026?", live figures.
+7. `/guides/waiting-on-your-green-card`: the journey hub, each step's length and fee now.
+8. New: `/blog/eb2-vs-eb3-by-the-numbers`, `/editorial-standards`.
+9. `/visa-bulletin`, `/perm-queue`, `/perm-queue/2026-01` (new tops).
+10. `/`: review quotes kept out of the snippet (data-nosnippet), Bing's snippet fix.
+11. `/es`, `/zh`, `/ko`, `/vi`, `/pt-br`: every step with its length and fee.
+12. `/perm-by-the-numbers`, `/pwd-cases`, `/tools/i140-calculator`, `/tools/perm-timeline-calculator`, `/calculators`.
+13. New changelog entries: `/changelog/the-whole-green-card-plan`, `/changelog/layoffs-rules-and-every-step-today`,
+    `/changelog/search-by-job-and-the-recruitment-record`, `/changelog/a-clearer-site-and-did-you-mean`, and
+    `/changelog/corrections`.
+14. Inspect only: the rest of the script's list. About 100 guides and posts changed only in their section openings
+    (the answer-first pass); the sitemap's lastmod carries those, so request one only when Google's copy is older than
+    Oct 20.
+
+Never request a `/perm-queue/<month>/<day>` page (noindex). After this list: `gsc_queue.mjs --since abce2f44`.
+
+**Requested Wed Oct 28, 4:52 to 5:17 PM EDT (11, then Quota Exceeded):** `/perm-case-status` (Google's copy from
+Oct 26), `/perm-case-statuses` (Oct 27), `/today` (Oct 28 1:37 AM), `/perm-processing-times` (Oct 27),
+`/tools/green-card-timeline` (Oct 27; the first live test hung over three minutes, a second went through),
+`/blog/perm-processing-times-2026` (Oct 20), `/guides/waiting-on-your-green-card` (Oct 1), `/blog/eb2-vs-eb3-by-the-numbers`
+and `/editorial-standards` (both unknown to Google), `/visa-bulletin` (Oct 25), `/perm-queue` (Oct 24).
+Refused: `/` (crawled Oct 28, 2:49 PM, before the release). Next round, about 5 PM Thu Oct 29: `/`, then item 9's
+`/perm-queue/2026-01`, then items 11 onward.

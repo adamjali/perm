@@ -51,7 +51,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             <span className="flex items-center gap-1.5">
               <UserIcon aria-hidden="true" className="size-4" />
               {/* Who writes it and how it's checked: the byline opens the editorial standards. */}
-              <Link href="/editorial-standards" className="link">
+              <Link href="/editorial-standards" className="link inline-flex min-h-11 items-center">
                 {meta.author}
               </Link>
             </span>{" "}
