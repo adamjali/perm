@@ -65,7 +65,7 @@ import { formatInt } from "@/lib/format";
 import { trackEstimateShown } from "@/lib/funnelEvents";
 import { buttonVariants } from "@/components/ui/button";
 import { CaveatBox } from "@/components/ui/note";
-import { ISO_MONTH_RE } from "@convex/lib/months";
+import { ISO_MONTH_RE, longDate, monthDay } from "@convex/lib/months";
 
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
@@ -820,7 +820,7 @@ export function PermTimelineEstimator({
                   {formatMonth(frontier.analystQueueMonth)}
                 </p>{" "}
                 <p className="mt-1 text-sm text-muted-foreground">
-                  DOL analyst review, {frontier.asOf}
+                  DOL analyst review, as of {monthDay(frontier.asOf) ?? frontier.asOf}
                 </p>
               </div>
             ) : null}
@@ -870,7 +870,7 @@ export function PermTimelineEstimator({
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             DOL&apos;s analyst review queue is working{" "}
             <strong>{formatMonth(frontier.analystQueueMonth)}</strong>, as of{" "}
-            {frontier.asOf}.
+            {longDate(frontier.asOf) ?? frontier.asOf}.
             {estimate.monthsBehindFrontier !== null && estimate.monthsBehindFrontier > 0
               ? ` Your month is ${estimate.monthsBehindFrontier} further on.`
               : ""}

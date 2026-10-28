@@ -17,15 +17,15 @@ export const DATA_SHOTS: Record<DataShot, { shots: WindowShots; alt: string; cap
       light: { src: "/images/data/wait-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/data/wait-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The PERM processing times page: DOL is reviewing applications filed in January 2026, 336 days on average to a determination, the audit review queue at December 2025 and wage requests at June 2026, as DOL published them on October 5, 2026.",
-    captured: "2026-10-21",
+    alt: "The PERM processing times page: about 336 days from filing to a decision by DOL's figure of October 21, 2026, DOL deciding cases filed in January 2026, the audit review queue at December 2025 and wage requests at June 2026.",
+    captured: "2026-10-28",
   },
   "pwd": {
     shots: {
       light: { src: "/images/data/pwd-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/data/pwd-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The wage requests page: 48,159 waiting at DOL now, 634,638 decided with the wage set and published through June 30, 2026, and DOL deciding requests filed in June 2026 as of September 30, 2026, with where DOL is in the line by filing month.",
+    alt: "The wage request page: PERM wage requests taking 3 to 4 months by DOL's figure of September 30, 2026, 47,494 waiting and 886,809 decided, DOL deciding requests filed in June 2026, and a search by employer.",
     captured: "2026-10-28",
   },
   "recruitment": {
@@ -65,8 +65,8 @@ export const DATA_SHOTS: Record<DataShot, { shots: WindowShots; alt: string; cap
       light: { src: "/images/data/line-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/data/line-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The visa bulletin page for November 2026: of 96 past bulletins first seen before their month, half were out by the 13th of the month before and nine in ten by the 22nd, drawn by day.",
-    captured: "2026-10-21",
+    alt: "The visa bulletin page: what the November 2026 bulletin did to every employment category and country, EB-2 rest of world moving 90 days to April 1, 2025, then what every earlier December bulletin did.",
+    captured: "2026-10-28",
   },
   "i140": {
     shots: {

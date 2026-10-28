@@ -9,7 +9,7 @@ export const CALCULATOR_SHOTS: Record<CalculatorShot, { shots: WindowShots; alt:
       light: { src: "/images/calculators/plan-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/calculators/plan-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The green card timeline for a sample PERM filed January 15, 2026, EB-2 rest of world: the PERM decided around November 1, 2026, the I-140 around February 28, 2027, the bulletin wait to July 2027 and the green card around January 2028, each step a bar on one time line with where DOL and USCIS stand today.",
+    alt: "The green card timeline for a sample PERM filed January 15, 2026, EB-2 rest of world: the PERM certified around November 2, 2026, the I-140 approved around March 2027, the I-485 filed around July 2027 and the green card around January 2028, 15 months from today, with $3,645 in government fees.",
     captured: "2026-10-28",
   },
   "pwd": {
@@ -31,14 +31,16 @@ export const CALCULATOR_SHOTS: Record<CalculatorShot, { shots: WindowShots; alt:
       light: { src: "/images/calculators/decision-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/calculators/decision-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The PERM processing time calculator for a case DOL received on January 15, 2026: most likely around Tuesday, November 3, 2026, between October 28 and November 12, at DOL's pace of 644 decisions a working day.",
+    alt: "The PERM processing time calculator for a case DOL received on January 15, 2026: most likely decided around Monday, November 2, 2026, in a window from October 29 to November 11, with DOL deciding 644 cases a working day and its queue at January 2026.",
+    captured: "2026-10-28",
   },
   "i140": {
     shots: {
       light: { src: "/images/calculators/i140-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/calculators/i140-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The I-140 queue calculator for advanced-degree petitions: 8,644 waiting, 12,477 decided last quarter, and USCIS's published time of 3 months.",
+    alt: "The I-140 queue calculator for advanced-degree petitions: 8,644 waiting and 12,477 decided last quarter, USCIS's published time of 3 months and its quarterly median of 3.9 months for every I-140, and the queue 2,999 petitions longer than the quarter before.",
+    captured: "2026-10-28",
   },
   "line": {
     shots: {
