@@ -24,10 +24,10 @@ import { getAllPosts, latestPostDate } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { getDisclosureStats } from "@/lib/db/publicData";
-import { DISAMBIGUATION } from "@/lib/constants/about";
+import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, LIVE_SINCE, NOT_LEGAL_SERVICES, PRESS_EMAIL, SABRINA } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
-import { longDate, MONTH_NAMES } from "@convex/lib/months";
+import { longDate, MONTH_NAMES, monthYear } from "@convex/lib/months";
 
 const BASE_URL = SITE_URL;
 
@@ -508,6 +508,19 @@ export async function GET() {
     "Where the figures come from: the Department of Labor's own records (its FLAG case-status service, read every night; its quarterly OFLC disclosure files; its published processing times), the State Department's visa bulletins, and USCIS's published reports. Each figure carries the date or window it covers, and how each is counted is on the methodology page. Where the data can't support a number, the site says so rather than guessing one: there is no per-case denial-risk score.",
     "",
     `How figures are made: ${BASE_URL}/methodology. Corrections, each dated: ${BASE_URL}/changelog/corrections. Who runs it: ${BASE_URL}/about.`,
+    "",
+    // Hard facts an assistant can quote whole, each one sentence, from the
+    // constants the About page and the Organization markup read.
+    "## Key facts",
+    "",
+    `- Name: PERM Tracker, at ${BASE_URL}. Not affiliated with other sites of similar names.`,
+    `- Run by: ${LEGAL_NAME}, ${LEGAL_FORM}. The person named on the site is ${SABRINA.name}, an ${SABRINA.jobTitle.toLowerCase()}.`,
+    `- Online since: ${monthYear(LIVE_SINCE)}.`,
+    "- Cost: free. A case lookup, the calculators and the data pages need no account; the attorney deadline app needs a free one.",
+    "- Source of every case status: the Department of Labor's own FLAG case-status service, read every night, plus DOL's quarterly OFLC disclosure files for decided cases.",
+    "- Programs covered: PERM, prevailing wage requests, H-1B, H-1B1 and E-3 labor condition applications, and H-2A, H-2B and CW-1 applications.",
+    `- Not legal advice: ${NOT_LEGAL_SERVICES}`,
+    `- Contact: ${PRESS_EMAIL} for the press; corrections through ${BASE_URL}/contact.`,
     "",
   ];
 
