@@ -371,6 +371,40 @@ def main() -> int:
     except ValueError:
         pass
 
+    # A window the state answers with "no matches" is the state saying it has
+    # nothing new (Kansas, May to Oct 2026), which the ingest must not count as
+    # a failure: the loader says so in its own exception, never with an empty list.
+    real_get, real_pause, real_full = ws.get, ws.pause, ws.full_history
+    ws.get = lambda url, **k: b("ks_search_empty.html")
+    ws.pause = lambda *a, **k: None
+    ws.full_history = lambda st: False
+    try:
+        ws.load_job_center("KS")(None)
+        check(False, "a job-center window with no notices raises NoneSince", f)
+    except lw.NoneSince as e:
+        check(bool(e.since), "a job-center window with no notices raises NoneSince, naming its first day", f)
+    finally:
+        ws.get, ws.pause, ws.full_history = real_get, real_pause, real_full
+
+    real_states = iw.STATES
+    def boom(exc):
+        def load(_):
+            raise exc
+        return load
+    iw.STATES = {
+        "aa": {"name": "A", "load": lambda _: [{"notice_date": "2026-10-01"}]},
+        "bb": {"name": "B", "load": boom(lw.NoneSince("2026-06-30"))},
+        "cc": {"name": "C", "load": boom(urllib.error.HTTPError("u", 503, "busy", {}, None))},
+        "dd": {"name": "D", "load": boom(ValueError("no table"))},
+        "ee": {"name": "E", "load": lambda _: []},
+    }
+    try:
+        got = {st: iw.load_state(st, None)[1] for st in iw.STATES}
+    finally:
+        iw.STATES = real_states
+    check(got == {"aa": "ok", "bb": "none", "cc": "down", "dd": "failed", "ee": "failed"},
+          "a state's read is ok, nothing new, down or failed, and only a broken or empty read fails", f)
+
     detail = ws.parse_job_center_detail(b("ks_notice.html").decode())
     check(detail == {"employees": 67, "site": "7373 East 29th Street Wichita, Kansas 67226"},
           "a job-center notice page gives its count and address", f)

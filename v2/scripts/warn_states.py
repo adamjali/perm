@@ -47,7 +47,7 @@ from collections.abc import Callable
 
 from lib_warn import (
     DATE_TOKEN, archive_copy, archive_captures, archive_index, cell, clean, col, csv_rows, decode, find_header,
-    finish, first_date, get, get_text, header_of, get_with, is_pdf, is_unreachable, is_xlsx, join_site, links,
+    NoneSince, finish, first_date, get, get_text, header_of, get_with, is_pdf, is_unreachable, is_xlsx, join_site, links,
     notice, parse_date, parse_int, parse_month, pause, pdf_tables, post, session, table_with, tables, text_of,
     xlsx_sheets,
 )
@@ -1557,6 +1557,11 @@ def load_job_center(state: str) -> Callable[[str | None], list[dict]]:
             if len(got) < 25 or f"page={n + 1}" not in page:
                 break
             pause()
+        if not rows:
+            # parse_job_center_list returns nothing only for the search's own "no
+            # matches" answer (anything else raises), so this is the state saying
+            # it has nothing in the window: Kansas posted nothing from May to Oct 2026.
+            raise NoneSince(since)
         rows = finish(rows, SINCE)
         held = held_for(state)
         deadline = time.monotonic() + (JC_FILL_SECONDS if full_history(state) else JC_DETAIL_SECONDS)

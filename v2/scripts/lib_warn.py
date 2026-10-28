@@ -367,6 +367,17 @@ def is_unreachable(exc: BaseException) -> bool:
                             http.client.HTTPException))
 
 
+class NoneSince(Exception):
+    """The state's own search answered that it holds no notices since a day.
+    That is an answer, not a broken read: nothing to write, nothing failed, and
+    the state's freshness row (stamped only when it writes) still ages as the
+    alarm if the state goes quiet for longer than its budget."""
+
+    def __init__(self, since: str) -> None:
+        super().__init__(f"no notices since {since}, as the state's own search says")
+        self.since = since
+
+
 # --- the Internet Archive -----------------------------------------------------------
 # A state whose own host refuses scripts is read from the Archive's newest copy
 # of its file or page (see the module docstring). The Archive answers its own

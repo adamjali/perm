@@ -56,7 +56,7 @@ from lib_db import (  # noqa: E402
     Database, add_missing_columns, query_rows, record_run, stamp_freshness,
 )
 from lib_gov_data import robots_allowed  # noqa: E402
-from lib_warn import as_of_date, assign_ids, get, is_unreachable  # noqa: E402
+from lib_warn import NoneSince, as_of_date, assign_ids, get, is_unreachable  # noqa: E402
 
 CA_URL = "https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx"
 CA_PAGE = "https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/"
@@ -773,6 +773,27 @@ def stamp_date(d: str) -> str:
     return min(as_of_date(d), dt.date.today().isoformat())
 
 
+def load_state(st: str, from_file: str | None) -> tuple[list[dict], str]:
+    """One state's rows and how the read went: "ok"; "none" when the state's own
+    search says it has nothing in the window; "down" when its site was down or
+    refusing (its freshness row is the alarm); "failed" when the read broke or
+    found nothing, which is ours to fix. One state's trouble never costs the others."""
+    name = STATES[st]["name"]
+    try:
+        rows = STATES[st]["load"](from_file)
+    except NoneSince as e:
+        log(f"{name}: {e}; nothing to write")
+        return [], "none"
+    except Exception as e:  # noqa: BLE001
+        down = is_unreachable(e)
+        log(f"{'::warning::' if down else ''}{name}: {type(e).__name__}: {str(e)[:200]}")
+        return [], "down" if down else "failed"
+    if not rows:
+        log(f"{name}: no rows parsed; refusing to write it")
+        return [], "failed"
+    return rows, "ok"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="read the database to match employers; write nothing")
@@ -793,25 +814,28 @@ def main() -> int:
     parsed: dict[str, list[dict]] = {}
     failed: list[str] = []        # ours to fix: a parse that broke or found nothing
     unreachable: list[str] = []   # the state's site was down or refusing; its freshness row is the alarm
+    quiet: list[str] = []         # the state answered that it has nothing in the window
     for st in wanted:
         t0 = time.time()
-        try:
-            rows = STATES[st]["load"](a.from_file)
-        except Exception as e:  # one state's outage must not cost the others
-            down = is_unreachable(e)
-            log(f"{'::warning::' if down else ''}{STATES[st]['name']}: {type(e).__name__}: {str(e)[:200]}")
-            (unreachable if down else failed).append(st)
-            continue
-        if not rows:
-            log(f"{STATES[st]['name']}: no rows parsed; refusing to write it")
-            failed.append(st)
+        rows, outcome = load_state(st, a.from_file)
+        if outcome != "ok":
+            {"down": unreachable, "failed": failed, "none": quiet}[outcome].append(st)
             continue
         parsed[st] = rows
         log(f"{STATES[st]['name']}: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to "
             f"{max(r['notice_date'] for r in rows)} ({time.time() - t0:.0f}s)")
     if a.parse_only:
-        return report_parsed(parsed, failed, unreachable)
+        return report_parsed(parsed, failed, unreachable, quiet)
     if not parsed:
+        if quiet and not failed:
+            # Every state asked answered that it has nothing new: a clean run with nothing to write.
+            script = "ingest_warn.py" if a.state == "all" else f"ingest_warn.py:{a.state}"
+            note = f"nothing new: {', '.join(STATES[st]['name'] for st in quiet)}"
+            if unreachable:
+                note += f"; site down or refusing: {', '.join(STATES[st]['name'] for st in unreachable)}"
+            record_run(db, script, status="ok", rows_written=0, note=note, started_at=started)
+            log(note)
+            return 0
         log("nothing parsed for any state")
         return 1
     every = [r for rows in parsed.values() for r in rows]
@@ -854,6 +878,8 @@ def main() -> int:
     note = f"{len(parsed)} states, {len(every)} notices"
     if unreachable:
         note += f"; site down or refusing: {', '.join(STATES[st]['name'] for st in unreachable)}"
+    if quiet:
+        note += f"; nothing new: {', '.join(STATES[st]['name'] for st in quiet)}"
     if failed:
         note += f"; FAILED: {', '.join(STATES[st]['name'] for st in failed)}"
     # The dataset-wide row speaks for every state, so only an all-states run may
@@ -873,7 +899,8 @@ def main() -> int:
     return 0
 
 
-def report_parsed(parsed: dict[str, list[dict]], failed: list[str], unreachable: list[str]) -> int:
+def report_parsed(parsed: dict[str, list[dict]], failed: list[str], unreachable: list[str],
+                  quiet: list[str] = ()) -> int:
     """What a parse-only run found, one line a state, nothing written anywhere."""
     print(f"\n{'state':22} {'notices':>7}  {'first':10}  {'newest':10}  counts  sites")
     for st, rows in parsed.items():
@@ -882,11 +909,11 @@ def report_parsed(parsed: dict[str, list[dict]], failed: list[str], unreachable:
         sites = sum(1 for r in rows if r.get("site"))
         print(f"{STATES[st]['name']:22} {len(rows):7}  {dates[0]:10}  {dates[-1]:10}  {counts:6}  {sites:5}"
               + (f"  ({warn_states.SOURCE_NOTES[st]})" if warn_states.SOURCE_NOTES.get(st) else ""))
-    for label, sts in (("site down or refusing", unreachable), ("FAILED", failed)):
+    for label, sts in (("nothing new", quiet), ("site down or refusing", unreachable), ("FAILED", failed)):
         if sts:
             print(f"{label}: {', '.join(STATES[st]['name'] for st in sts)}")
     print(f"{len(parsed)} states parsed, {sum(len(r) for r in parsed.values())} notices")
-    return 0 if parsed else 1
+    return 0 if parsed or quiet else 1
 
 
 if __name__ == "__main__":
