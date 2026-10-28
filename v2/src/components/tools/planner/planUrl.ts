@@ -1,4 +1,4 @@
-import { MILESTONE_ORDER, type Milestone } from "@/lib/perm";
+import { GREEN_CARD_ROUTES, MILESTONE_ORDER, type GreenCardRoute, type Milestone } from "@/lib/perm";
 import { PLAN_CATEGORIES, PLAN_COUNTRIES, type PlanCategory, type PlanCountry } from "@/lib/planQuery";
 import { ISO_DATE_REGEX } from "@convex/lib/dateValidation";
 
@@ -45,7 +45,12 @@ export interface PlanUrlState {
   category: PlanCategory;
   country: PlanCountry;
   premium: boolean;
+  /** Adjustment of status inside the US, or consular processing abroad. */
+  route: GreenCardRoute;
 }
+
+/** The route's address key; adjustment of status, the default, leaves it out. */
+export const ROUTE_PARAM = "route";
 
 const isoOrNull = (v: string | null) => (v && ISO_DATE_REGEX.test(v) ? v : null);
 const whereOf = (key: string | null) => WHERE.find((w) => w.key === key) ?? WHERE[0];
@@ -87,6 +92,7 @@ export function readPlanUrl(params: URLSearchParams, today: string): PlanUrlStat
     category,
     country,
     premium: params.get("premium") === "1",
+    route: GREEN_CARD_ROUTES.find((r) => r === params.get(ROUTE_PARAM)) ?? "aos",
   };
 }
 
@@ -97,6 +103,7 @@ export function planPatch(patch: Partial<Record<Milestone, string | null>> & {
   category?: PlanCategory;
   country?: PlanCountry;
   premium?: boolean;
+  route?: GreenCardRoute;
 }): Record<string, string | null> {
   const out: Record<string, string | null> = { [LEGACY_DATE]: null };
   for (const m of MILESTONE_ORDER) if (m in patch) out[MILESTONE_PARAM[m]] = patch[m] ?? null;
@@ -105,6 +112,7 @@ export function planPatch(patch: Partial<Record<Milestone, string | null>> & {
   if (patch.category !== undefined) out.cat = patch.category === "EB2" ? null : patch.category;
   if (patch.country !== undefined) out.country = patch.country === "worldwide" ? null : patch.country;
   if (patch.premium !== undefined) out.premium = patch.premium ? "1" : null;
+  if (patch.route !== undefined) out[ROUTE_PARAM] = patch.route === "aos" ? null : patch.route;
   return out;
 }
 

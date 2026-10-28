@@ -2,16 +2,18 @@
 
 import { useId, useMemo, useState } from "react";
 
+import { ROUTE_LABEL } from "@/components/tools/greenCardRoute";
 import { Label } from "@/components/ui/label";
-import { calculateGreenCardFees, FEE_SCHEDULE, type FeeInput } from "@/lib/perm";
+import { calculateGreenCardFees, FEE_SCHEDULE, GREEN_CARD_ROUTES, STATE_FEES, type FeeInput, type GreenCardRoute } from "@/lib/perm";
 
 /**
  * USCIS fees for one employment-based case, from Form G-1055.
  *
  * Every number comes from one edition of the fee schedule and the edition
  * is printed under the total. The form asks only what changes a fee: who the
- * petitioner is (the asylum program fee tier), the filing channel, premium
- * processing, and how many people adjust. What the table leaves out is named
+ * petitioner is (the asylum program fee tier), where the green card is got
+ * (inside the US or at a consulate), the filing channel, premium processing,
+ * and how many people immigrate. What the table leaves out is named
  * under it, because a total that reads as the whole cost is worse than none.
  */
 
@@ -39,6 +41,8 @@ export function GreenCardFeesCalculator() {
   const childrenId = useId();
   const permitsId = useId();
   const travelId = useId();
+  const routeName = useId();
+  const [route, setRoute] = useState<GreenCardRoute>("aos");
   const [petitioner, setPetitioner] = useState<FeeInput["petitioner"]>("regular");
   const [online, setOnline] = useState(false);
   const [premium, setPremium] = useState(false);
@@ -48,13 +52,39 @@ export function GreenCardFeesCalculator() {
   const [travel, setTravel] = useState(1);
 
   const result = useMemo(
-    () => calculateGreenCardFees({ petitioner, onlineI140: online, premium, adults, children, workPermits: permits, travelDocuments: travel }),
-    [petitioner, online, premium, adults, children, permits, travel],
+    () => calculateGreenCardFees({ petitioner, online, route, premium, adults, children, workPermits: permits, travelDocuments: travel }),
+    [petitioner, online, route, premium, adults, children, permits, travel],
   );
 
   return (
     <div className="object p-5 sm:p-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+      <fieldset>
+        <legend className="text-sm font-medium">Where you&apos;ll get the green card</legend>{" "}
+        <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 [&>*]:min-w-0">
+          {GREEN_CARD_ROUTES.map((r) => (
+            <label
+              key={r}
+              htmlFor={`${routeName}-${r}`}
+              className="flex min-h-11 cursor-pointer items-start gap-3 border-2 border-input px-3 py-2 has-[:checked]:border-foreground has-[:checked]:bg-tint has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
+            >
+              <input
+                id={`${routeName}-${r}`}
+                type="radio"
+                name={routeName}
+                value={r}
+                checked={route === r}
+                onChange={() => setRoute(r)}
+                className="mt-0.5 size-5 shrink-0 accent-primary"
+              />{" "}
+              <span className="min-w-0">
+                <span className="block font-semibold">{ROUTE_LABEL[r].name}</span>{" "}
+                <span className="block text-sm text-soft">{ROUTE_LABEL[r].note}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>{" "}
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
         <div>
           <Label htmlFor={petitionerId}>Petitioner</Label>{" "}
           <select id={petitionerId} value={petitioner} onChange={(e) => setPetitioner(e.target.value as FeeInput["petitioner"])} className={NUMBER}>
@@ -66,20 +96,25 @@ export function GreenCardFeesCalculator() {
         </div>{" "}
         <div className="flex flex-col justify-end gap-3">
           <label htmlFor={onlineId} className="flex min-h-11 items-center gap-3 text-base">
-            <input id={onlineId} type="checkbox" checked={online} onChange={(e) => setOnline(e.target.checked)} className="size-5 accent-primary" /> I-140 filed online ({usd(FEE_SCHEDULE.i140Online)} instead of {usd(FEE_SCHEDULE.i140Paper)})
+            <input id={onlineId} type="checkbox" checked={online} onChange={(e) => setOnline(e.target.checked)} className="size-5 accent-primary" />{" "}
+            {route === "aos" ? "Filed online where USCIS allows (I-140, I-485, I-131)" : `I-140 filed online (${usd(FEE_SCHEDULE.i140Online)} instead of ${usd(FEE_SCHEDULE.i140Paper)})`}
           </label>{" "}
           <label htmlFor={premiumId} className="flex min-h-11 items-center gap-3 text-base">
             <input id={premiumId} type="checkbox" checked={premium} onChange={(e) => setPremium(e.target.checked)} className="size-5 accent-primary" /> Premium processing on the I-140 ({usd(FEE_SCHEDULE.i907I140)})
           </label>
         </div>{" "}
-        <Count id={adultsId} label="Applicants 14 and over" value={adults} onChange={setAdults} note="The principal and any spouse or older child adjusting status." />{" "}
-        <Count id={childrenId} label="Children under 14 filing with a parent" value={children} onChange={setChildren} />{" "}
-        <Count id={permitsId} label="Work permits (I-765)" value={permits} onChange={setPermits} note="One per adult who wants one; capped at the adult count." />{" "}
-        <Count id={travelId} label="Advance parole (I-131)" value={travel} onChange={setTravel} note="One per adult who wants one; capped at the adult count." />
+        <Count id={adultsId} label="Applicants 14 and over" value={adults} onChange={setAdults} note="The principal and any spouse or older child immigrating." />{" "}
+        <Count id={childrenId} label="Children under 14" value={children} onChange={setChildren} />{" "}
+        {route === "aos" ? (
+          <>
+            <Count id={permitsId} label="Work permits (I-765)" value={permits} onChange={setPermits} note="One per adult who wants one; capped at the adult count." />{" "}
+            <Count id={travelId} label="Advance parole (I-131)" value={travel} onChange={setTravel} note="One per adult who wants one; capped at the adult count." />
+          </>
+        ) : null}
       </div>{" "}
 
       <div className="mt-6 bg-tint p-4 border-2 border-border" aria-live="polite">
-        <p className="text-sm font-bold">USCIS fees, total{" "}</p>{" "}
+        <p className="text-sm font-bold">{route === "aos" ? "USCIS fees, total" : "USCIS and State fees, total"}{" "}</p>{" "}
         <p className="mt-1 font-heading text-4xl font-bold tabular-nums">{usd(result.total)}</p>{" "}
         {/* THE TOTAL, SPLIT BY FORM, at the share each fee takes. The table
             below lists the same lines; this shows at a glance that the
@@ -113,14 +148,14 @@ export function GreenCardFeesCalculator() {
             <dd className="font-bold tabular-nums">{usd(result.petitionTotal)}</dd>
           </div>{" "}
           <div className="flex items-baseline justify-between gap-3 border-t border-border/40 pt-2">
-            <dt>Adjustment stage (I-485 and what rides it){" "}</dt>{" "}
-            <dd className="font-bold tabular-nums">{usd(result.adjustmentTotal)}</dd>
+            <dt>{route === "aos" ? "Adjustment stage (I-485 and what rides it)" : "Visa stage (State's visa fee and USCIS's immigrant fee)"}{" "}</dt>{" "}
+            <dd className="font-bold tabular-nums">{usd(result.applicationTotal)}</dd>
           </div>
         </dl>
       </div>{" "}
 
       <table className="mt-4 w-full border-collapse text-left text-sm">
-        <caption className="sr-only">Each USCIS fee in the total{" "}</caption>
+        <caption className="sr-only">Each fee in the total{" "}</caption>
         <thead>
           <tr className="border-b-2 border-border">
             <th scope="col" className="py-2 pr-3 font-bold">Form{" "}</th>
@@ -144,10 +179,18 @@ export function GreenCardFeesCalculator() {
         </tbody>
       </table>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
-        Every figure is from USCIS Form G-1055, edition {result.edition}, read at{" "}
+        USCIS&apos;s figures are from its Form G-1055, edition {result.edition}, read at{" "}
         <a href={result.source} className="link" rel="noopener">
           uscis.gov/g-1055
         </a>
+        {route === "cp" ? (
+          <>
+            ; State&apos;s visa fee from{" "}
+            <a href={STATE_FEES.source} className="link" rel="noopener">
+              {STATE_FEES.citation}
+            </a>
+          </>
+        ) : null}
         . Check the current edition before paying; a fee paid short is a rejected filing.
       </p>{" "}
       <div className="mt-5 border-t-2 border-border pt-4">
@@ -155,19 +198,30 @@ export function GreenCardFeesCalculator() {
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
           <li>The PERM and the prevailing wage request: DOL charges no filing fee for either.</li>{" "}
           <li>Recruitment costs and attorney fees, which 20 CFR 656.12 puts on the employer for the PERM stage.</li>{" "}
-          <li>
-            The I-693 medical exam: USCIS charges nothing, the civil surgeon does.{" "}
-            <a
-              href="https://www.uscis.gov/tools/find-a-civil-surgeon"
-              rel="noopener"
-              className="link"
-            >
-              USCIS lists civil surgeons by ZIP code
-            </a>
-            .
-          </li>{" "}
-          <li>Consular processing (DS-260 and the immigrant visa fee) for anyone adjusting abroad instead of filing an I-485.</li>{" "}
-          <li>Premium processing on an I-485, which USCIS does not offer.</li>
+          {route === "aos" ? (
+            <>
+              <li>
+                The I-693 medical exam: USCIS charges nothing, the civil surgeon does.{" "}
+                <a
+                  href="https://www.uscis.gov/tools/find-a-civil-surgeon"
+                  rel="noopener"
+                  className="link"
+                >
+                  USCIS lists civil surgeons by ZIP code
+                </a>
+                .
+              </li>{" "}
+              <li>Premium processing on an I-485, which USCIS does not offer.</li>
+            </>
+          ) : (
+            <>
+              <li>The medical exam: a panel physician the consulate names charges for it.</li>{" "}
+              <li>
+                The affidavit of support review ($120 at NVC), which an employment case needs only when a relative who is a citizen
+                or permanent resident filed the I-140 or owns 5% or more of the employer (8 CFR 213a.2(a)(2)(i)(C)).
+              </li>
+            </>
+          )}
         </ul>
       </div>
     </div>

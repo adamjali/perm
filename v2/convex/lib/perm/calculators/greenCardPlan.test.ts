@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { FILING_WINDOW_WAIT_DAYS, JOB_ORDER_MIN_DAYS } from '../constants';
 import {
   buildPlan,
+  CONSULAR_INTERVIEW_DAYS_ASSUMED,
   I140_FILE_BY_DAYS,
+  milestoneLabel,
   MILESTONE_ORDER,
   orderedSpan,
   PLAN_STAGES,
+  planStages,
   RECRUITMENT_MIN_DAYS,
   type PlanFigures,
   type PlanInput,
@@ -24,7 +27,10 @@ const FIGURES: PlanFigures = {
     i485: { low: 180, mid: 183, high: 200 },
     ead: { low: 170, mid: 195, high: 230 },
     ap: { low: 160, mid: 177, high: 260 },
+    // NVC's review (60 to 75 days) plus the consulate's interview, the assumption.
+    consular: { low: 60 + 30, mid: 69 + 90, high: 75 + 180 },
   },
+  nvcCreation: { low: 7, mid: 9, high: 14 },
   pace: {
     // 180 days of cutoff movement over 12 months: 15 days a month.
     'EB2|worldwide': { latest: { kind: 'date', iso: '2025-04-01' }, movedDays: 180, spanMonths: 12, retrogressions: [] },
@@ -252,6 +258,71 @@ describe('buildPlan', () => {
 
     it('adds premium processing to the fees only when chosen', () => {
       expect(buildPlan({ ...base, premium: true }, FIGURES).fees.total).toBeGreaterThan(buildPlan(base, FIGURES).fees.total);
+    });
+  });
+
+  describe('through a consulate', () => {
+    const cp: PlanInput = { ...base, route: 'cp' };
+
+    it('swaps the I-485 for NVC and the consulate, with no work permit or travel document', () => {
+      const plan = buildPlan({ ...cp, known: { permFiled: '2024-01-10' } }, FIGURES);
+      expect(plan.route).toBe('cp');
+      expect(plan.steps.map((s) => s.key)).toEqual(planStages('cp').map((s) => s.key));
+      expect(plan.steps.some((s) => s.key === 'i485')).toBe(false);
+      expect(step(plan, 'consular').owner).toBe('state');
+      expect(plan.sideSteps).toEqual([]);
+    });
+
+    it("never files with the I-140: NVC creates the case after the approval, then the documents go in", () => {
+      const plan = buildPlan({ ...cp, category: 'EB3', known: { permFiled: '2026-01-10' } }, FIGURES);
+      expect(plan.current).toBe(true);
+      const approved = plan.milestones.i140Approved!;
+      // Current already: the documents go in once NVC has created the case, 7, 9 and 14 days after approval.
+      const plus = (d: string, n: number) => new Date(Date.parse(`${d}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+      expect(plan.milestones.i485Filed).toEqual({ low: plus(approved.low, 7), mid: plus(approved.mid, 9), high: plus(approved.high, 14) });
+      // And the visa comes NVC's review plus the interview later.
+      expect(plan.greenCard!.mid).toBe(plus(plan.milestones.i485Filed!.mid, 69 + 90));
+    });
+
+    it('waits for the cutoff when the date is not current, never before the approval', () => {
+      const plan = buildPlan({ ...cp, known: { permFiled: '2025-12-15' } }, FIGURES);
+      expect(plan.current).toBe(false);
+      expect(plan.milestones.i485Filed!.mid >= plan.milestones.i140Approved!.mid).toBe(true);
+      expect(plan.milestones.i485Filed!.mid >= plan.bulletin.reach!.mid).toBe(true);
+    });
+
+    it("prices State's visa fee at NVC and USCIS's immigrant fee once the visa is issued", () => {
+      const plan = buildPlan({ ...cp, known: { permFiled: '2024-01-10' }, fees: { petitioner: 'small', adults: 2 } }, FIGURES);
+      const visa = plan.costs.find((c) => c.form === 'DS-260')!;
+      const fee = plan.costs.find((c) => c.form === 'USCIS Immigrant Fee')!;
+      expect([visa.amount, visa.step]).toEqual([690, 'consular']);
+      expect(visa.due).toEqual(plan.milestones.i485Filed);
+      expect(fee.due).toEqual(plan.milestones.greenCard);
+      expect(plan.costs.some((c) => c.form === 'I-485')).toBe(false);
+      // The asylum program fee is the small employer's either way.
+      expect(plan.costs.find((c) => c.form === 'Asylum Program Fee')!.amount).toBe(300);
+    });
+
+    it("names the attorney and the medical exam for a consulate", () => {
+      const plan = buildPlan({ ...cp, known: { permFiled: '2024-01-10' }, own: { i485Attorney: 2000, medicalEach: 400 } }, FIGURES);
+      expect(plan.costs.find((c) => c.key === 'i485Attorney')).toMatchObject({ label: 'Attorney, consular processing', step: 'consular' });
+      expect(plan.costs.find((c) => c.key === 'medicalEach')!.label).toMatch(/panel physician/);
+    });
+
+    it('calls the last two milestones what they are abroad', () => {
+      expect(milestoneLabel('i485Filed', 'cp')).toBe('Documents in at the National Visa Center');
+      expect(milestoneLabel('greenCard', 'cp')).toBe('Immigrant visa issued');
+      expect(milestoneLabel('i485Filed')).toBe('I-485 filed');
+    });
+
+    it('gives no visa date without NVC figures, rather than a guess', () => {
+      const plan = buildPlan({ ...cp, known: { permFiled: '2024-01-10' } }, { ...FIGURES, spans: { ...FIGURES.spans, consular: null } });
+      expect(plan.greenCard).toBeNull();
+      expect(step(plan, 'consular').end).toBeNull();
+    });
+
+    it("the interview assumption runs a month to six", () => {
+      expect(CONSULAR_INTERVIEW_DAYS_ASSUMED).toEqual({ low: 30, mid: 90, high: 180 });
     });
   });
 

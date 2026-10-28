@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils";
 import { dayLabel, rangeLabel } from "./format";
 
 /** The milestones the plan leads with, in order; the green card ends the line. */
-const STOPS: readonly { key: Milestone; label: string }[] = [
+const STOPS: readonly { key: Milestone; label: string; cpLabel?: string }[] = [
   { key: "pwdIssued", label: "Wage determination" },
   { key: "permFiled", label: "Priority date" },
   { key: "permCertified", label: "PERM certified" },
   { key: "i140Approved", label: "I-140 approved" },
-  { key: "i485Filed", label: "I-485 filed" },
-  { key: "greenCard", label: "Green card" },
+  { key: "i485Filed", label: "I-485 filed", cpLabel: "Documents in at NVC" },
+  { key: "greenCard", label: "Green card", cpLabel: "Immigrant visa" },
 ];
 
 /**
@@ -46,7 +46,7 @@ export function DateRail({ plan, today, noDateWhy }: { plan: Plan; today: string
                       : "border-2 border-foreground bg-background",
               )}
             />{" "}
-            <p className="text-sm text-soft">{t.label}</p>{" "}
+            <p className="text-sm text-soft">{plan.route === "cp" ? (t.cpLabel ?? t.label) : t.label}</p>{" "}
             <p className={cn("font-heading font-bold leading-tight tabular-nums", last ? "text-2xl" : "text-xl")}>
               {r ? dayLabel(r.mid, today, known) : before ? "Done" : "No date yet"}
             </p>{" "}

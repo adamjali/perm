@@ -47,6 +47,8 @@ export const LENGTH_UNIT: Record<LengthKey, "days" | "months"> = {
   i140Prep: "days",
   i140: "months",
   i485: "months",
+  // NVC's review and the consulate's interview are counted in days (NVC's page dates its queue by the day).
+  consular: "days",
   ead: "months",
   ap: "months",
 };

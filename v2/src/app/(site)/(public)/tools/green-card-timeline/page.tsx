@@ -40,7 +40,7 @@ export const metadata: Metadata = withSocialCard(
 const FAQS = [
   {
     q: "Where do the step lengths come from?",
-    a: "The wage request and the PERM use the filing days DOL decided on its last working day: the latest-filed tenth is the quick end, the middle is typical, the earliest-filed tenth the slow end. A wage request or PERM you've already filed is dated from the cases still ahead of it at DOL's measured pace, as its own case page dates it. Recruitment uses how long employers took in DOL's own record, first recruitment step to filing, never under the 60 days the rules require. The I-140, the I-485, the work permit and the travel document use USCIS's quarterly medians over the last year. Every length is yours to change in its step.",
+    a: "The wage request and the PERM use the filing days DOL decided on its last working day: the latest-filed tenth is the quick end, the middle is typical, the earliest-filed tenth the slow end. A wage request or PERM you've already filed is dated from the cases still ahead of it at DOL's measured pace, as its own case page dates it. Recruitment uses how long employers took in DOL's own record, first recruitment step to filing, never under the 60 days the rules require. The I-140, the I-485, the work permit and the travel document use USCIS's quarterly medians over the last year. Through a consulate, the National Visa Center's own weekly figures date its case creation and document review. Every length is yours to change in its step.",
   },
   {
     q: "How is the wait for the visa bulletin worked out?",
@@ -56,7 +56,11 @@ const FAQS = [
   },
   {
     q: "Can I file the I-485 with the I-140?",
-    a: "Only when your priority date is already current. Then the planner files them together, which is called concurrent filing. Otherwise the I-485 waits until the bulletin reaches your date.",
+    a: "Only inside the US, and only when your priority date is already current. Then the planner files them together, which is called concurrent filing. Otherwise the I-485 waits until the bulletin reaches your date.",
+  },
+  {
+    q: "What if I'll get the green card at a consulate abroad?",
+    a: "Choose \"At a US consulate abroad\". The I-485 step becomes the National Visa Center and the consulate: NVC takes the case once the I-140 is approved, the documents go in once your date is current, and NVC's review time comes from the State Department's own weekly figure. The consulate's interview wait has no public figure, so the planner assumes one to six months, and you set your consulate's. The fees change too: State's visa fee and USCIS's immigrant fee for each person, and no work permit or travel document.",
   },
   {
     q: "Does premium processing shorten the whole timeline?",
@@ -96,7 +100,7 @@ export default async function GreenCardTimelinePage() {
         <h2 className="font-heading text-2xl font-bold">FAQs</h2>{" "}
         <FaqList items={FAQS} />
       </section>
-      <DataProvenance datasets={["pwd-status", "perm-case-status", "perm-cases", "uscis-form-quarters", "visa-bulletin", "i485-inventory"]} />
+      <DataProvenance datasets={["pwd-status", "perm-case-status", "perm-cases", "uscis-form-quarters", "visa-bulletin", "i485-inventory", "nvc-timeframes"]} />
       <ToolPageFooter
         currentHref="/tools/green-card-timeline"
         reading={[

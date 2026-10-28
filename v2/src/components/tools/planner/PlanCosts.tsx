@@ -3,7 +3,7 @@
 import { CaretDownIcon } from "@phosphor-icons/react";
 import { useId } from "react";
 
-import { FEE_SCHEDULE, PLAN_STAGES, type OwnCosts, type PetitionerKind, type Plan, type PlanStage } from "@/lib/perm";
+import { CONSULAR_STAGE, FEE_SCHEDULE, PLAN_STAGES, STATE_FEES, type OwnCosts, type PetitionerKind, type Plan, type PlanStage } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
 import { CHECK, Field, FIELD } from "./CaseInputs";
@@ -19,26 +19,35 @@ export interface FeeChoices {
   petitioner: PetitionerKind;
   adults: number;
   kids: number;
-  /** A work permit and a travel document for each adult. */
+  /** A work permit and a travel document for each adult (inside the US only). */
   extras: boolean;
+  /** The forms USCIS takes online (the I-140, I-485 and I-131) filed that way. */
   online: boolean;
 }
 export const DEFAULT_FEES: FeeChoices = { petitioner: "regular", adults: 1, kids: 0, extras: true, online: false };
 
 /** The costs no schedule fixes, each with where it's typed. */
-const OWN_FIELDS: readonly { key: keyof OwnCosts; label: string }[] = [
+const OWN_FIELDS: readonly { key: keyof OwnCosts; label: string; cpLabel?: string }[] = [
   { key: "permAttorney", label: "Attorney for the PERM" },
   { key: "recruitment", label: "Recruitment and ads" },
   { key: "i140Attorney", label: "Attorney for the I-140" },
-  { key: "i485Attorney", label: "Attorney for the I-485" },
+  { key: "i485Attorney", label: "Attorney for the I-485", cpLabel: "Attorney for consular processing" },
   { key: "medicalEach", label: "Medical exam, each" },
 ];
 
-const STEP_NAME = Object.fromEntries(PLAN_STAGES.map((s) => [s.key, s.name])) as Record<PlanStage, string>;
+/** The asylum program fee on the I-140 turns on the employer's size (G-1055). */
+const PETITIONER_LABEL: Record<PetitionerKind, string> = {
+  regular: "26 or more employees",
+  small: "25 or fewer employees",
+  nonprofit: "A nonprofit",
+};
+
+const STEP_NAME = Object.fromEntries([...PLAN_STAGES, CONSULAR_STAGE].map((s) => [s.key, s.name])) as Record<PlanStage, string>;
 const PAYER_LABEL = { employer: "Employer pays", agreed: "Employer or you" } as const;
 
 /**
- * Every cost, on the day it falls due: USCIS's fees from its schedule, and the reader's own
+ * Every cost, on the day it falls due: the government fees from USCIS's schedule (and State's,
+ * through a consulate), and the reader's own
  * lines for what no schedule fixes. The PERM's costs are the employer's by law; the rest is for
  * the employer and the worker to agree.
  */
@@ -92,7 +101,18 @@ export function PlanCosts({
               </dt>{" "}
               <dd className="text-base font-semibold tabular-nums">{usd(agreed)}</dd>
             </div>
-          </dl>
+          </dl>{" "}
+          <div className="mt-5 border-t-2 border-border pt-4">
+            <Field id={ids("pet")} label="The employer" hint={`The I-140's asylum program fee: ${usd(FEE_SCHEDULE.asylumProgramFee.regular)}, ${usd(FEE_SCHEDULE.asylumProgramFee.small)} for 25 or fewer, none for a nonprofit`}>
+              <select id={ids("pet")} value={fees.petitioner} onChange={(e) => setFees({ ...fees, petitioner: e.target.value as PetitionerKind })} className={FIELD}>
+                {(Object.keys(PETITIONER_LABEL) as PetitionerKind[]).map((k) => (
+                  <option key={k} value={k}>
+                    {PETITIONER_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
         </div>{" "}
         <ol aria-label="Each cost, in the order it falls due" className="relative border-l-2 border-border pl-5">
           {rows.map((c) => (
@@ -123,22 +143,18 @@ export function PlanCosts({
         </summary>{" "}
         <div className="grid grid-cols-1 gap-8 pb-6 lg:grid-cols-2 [&>*]:min-w-0">
           <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <legend className="mb-2 text-sm text-soft">USCIS&apos;s fees depend on these</legend>
-            <Field id={ids("pet")} label="Employer's staff">
-              <select id={ids("pet")} value={fees.petitioner} onChange={(e) => setFees({ ...fees, petitioner: e.target.value as PetitionerKind })} className={FIELD}>
-                <option value="regular">26 or more</option>
-                <option value="small">25 or fewer</option>
-                <option value="nonprofit">A nonprofit</option>
-              </select>
-            </Field>{" "}
+            <legend className="mb-2 text-sm text-soft">The government fees depend on these</legend>
             <NumberBox id={ids("adults")} label="People 14 and over" value={fees.adults} min={1} max={MAX_PEOPLE} step={1} onChange={(n) => setFees({ ...fees, adults: people(n, 1) })} />{" "}
             <NumberBox id={ids("kids")} label="Children under 14" value={fees.kids} min={0} max={MAX_PEOPLE} step={1} onChange={(n) => setFees({ ...fees, kids: people(n, 0) })} />{" "}
-            <div className="space-y-1 self-end">
-              <label htmlFor={ids("extras")} className="flex min-h-11 items-center gap-3 text-base">
-                <input id={ids("extras")} type="checkbox" checked={fees.extras} onChange={(e) => setFees({ ...fees, extras: e.target.checked })} className={CHECK} /> Work permit and travel document
-              </label>{" "}
+            <div className="space-y-1 self-end sm:col-span-2">
+              {plan.route === "aos" ? (
+                <label htmlFor={ids("extras")} className="flex min-h-11 items-center gap-3 text-base">
+                  <input id={ids("extras")} type="checkbox" checked={fees.extras} onChange={(e) => setFees({ ...fees, extras: e.target.checked })} className={CHECK} /> Work permit and travel document
+                </label>
+              ) : null}{" "}
               <label htmlFor={ids("online")} className="flex min-h-11 items-center gap-3 text-base">
-                <input id={ids("online")} type="checkbox" checked={fees.online} onChange={(e) => setFees({ ...fees, online: e.target.checked })} className={CHECK} /> I-140 filed online
+                <input id={ids("online")} type="checkbox" checked={fees.online} onChange={(e) => setFees({ ...fees, online: e.target.checked })} className={CHECK} />{" "}
+                {plan.route === "aos" ? "Filed online where USCIS allows (I-140, I-485, I-131)" : "I-140 filed online"}
               </label>
             </div>
           </fieldset>{" "}
@@ -148,7 +164,7 @@ export function PlanCosts({
               <NumberBox
                 key={f.key}
                 id={ids(f.key)}
-                label={f.label}
+                label={plan.route === "cp" ? (f.cpLabel ?? f.label) : f.label}
                 prefix="$"
                 value={own[f.key] ?? null}
                 max={MAX_OWN_COST}
@@ -170,7 +186,17 @@ export function PlanCosts({
         (<a href={FEE_SCHEDULE.source} target="_blank" rel="noopener noreferrer" className="link">
           read it at USCIS
         </a>
-        ). DOL charges nothing for the wage request or the PERM. The employer must pay the PERM&apos;s own costs, its attorney and
+        ).{" "}
+        {plan.route === "cp" ? (
+          <>
+            The State Department&apos;s visa fee is from its own schedule,{" "}
+            <a href={STATE_FEES.source} target="_blank" rel="noopener noreferrer" className="link">
+              {STATE_FEES.citation}
+            </a>
+            .{" "}
+          </>
+        ) : null}
+        DOL charges nothing for the wage request or the PERM. The employer must pay the PERM&apos;s own costs, its attorney and
         recruitment included (20 CFR 656.12(b)).
       </p>
     </section>

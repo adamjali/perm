@@ -74,6 +74,7 @@ export function figuresFor(
       i485: own.i485 ?? base.spans.i485,
       ead: own.ead ?? base.spans.ead,
       ap: own.ap ?? base.spans.ap,
+      consular: own.consular ?? base.spans.consular,
     },
     pwdByQueue: o.byQueue.pwd ? (answer?.pwd ?? null) : null,
     permByQueue: o.byQueue.perm ? (answer?.perm ?? null) : null,

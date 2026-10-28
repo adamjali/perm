@@ -4,7 +4,8 @@ import { useId, type ReactNode } from "react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
-import { MILESTONES, type Milestone } from "@/lib/perm";
+import { ROUTE_LABEL } from "@/components/tools/greenCardRoute";
+import { GREEN_CARD_ROUTES, milestoneLabel, type Milestone } from "@/lib/perm";
 import { PLAN_CATEGORIES, PLAN_COUNTRIES, type PlanCategory, type PlanCountry } from "@/lib/planQuery";
 
 import { milestonesUpTo, planPatch, requiredMilestones, WHERE, type PlanUrlState, type WhereKey } from "./planUrl";
@@ -24,7 +25,6 @@ export const COUNTRY_LABEL: Record<PlanCountry, string> = {
   mexico: "Mexico",
   philippines: "Philippines",
 };
-const MILESTONE_LABEL = Object.fromEntries(MILESTONES.map((m) => [m.key, m.label])) as Record<Milestone, string>;
 
 export function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: ReactNode }) {
   return (
@@ -48,7 +48,7 @@ export function CaseInputs({ state, set }: { state: PlanUrlState; set: (patch: R
   const knownMore = more.some((m) => state.known[m]);
 
   const dateBox = (m: Milestone) => (
-    <Field key={m} id={ids(m)} label={MILESTONE_LABEL[m]}>
+    <Field key={m} id={ids(m)} label={milestoneLabel(m, state.route)}>
       <DateInput id={ids(m)} value={state.known[m] ?? ""} onChange={(e) => set(planPatch({ [m]: e.target.value || null }))} className="mt-1.5" />
     </Field>
   );
@@ -61,7 +61,7 @@ export function CaseInputs({ state, set }: { state: PlanUrlState; set: (patch: R
           <select id={ids("where")} value={state.where} onChange={(e) => set(planPatch({ where: e.target.value as WhereKey }))} className={FIELD}>
             {WHERE.map((w) => (
               <option key={w.key} value={w.key}>
-                {w.label}
+                {w.milestone === "i485Filed" ? milestoneLabel("i485Filed", state.route) : w.label}
               </option>
             ))}
           </select>
@@ -91,7 +91,33 @@ export function CaseInputs({ state, set }: { state: PlanUrlState; set: (patch: R
             ))}
           </select>
         </Field>{" "}
-        <label htmlFor={ids("premium")} className="flex min-h-11 items-center gap-3 text-base sm:col-span-2 lg:col-span-4">
+        <fieldset className="sm:col-span-2 lg:col-span-3">
+          <legend className="text-sm font-medium">Where you&apos;ll get the green card</legend>{" "}
+          <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 [&>*]:min-w-0">
+            {GREEN_CARD_ROUTES.map((r) => (
+              <label
+                key={r}
+                htmlFor={ids(`route-${r}`)}
+                className="flex min-h-11 cursor-pointer items-start gap-3 border-2 border-input px-3 py-2 has-[:checked]:border-foreground has-[:checked]:bg-tint has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
+              >
+                <input
+                  id={ids(`route-${r}`)}
+                  type="radio"
+                  name={ids("route")}
+                  value={r}
+                  checked={state.route === r}
+                  onChange={() => set(planPatch({ route: r }))}
+                  className="mt-0.5 size-5 shrink-0 accent-primary"
+                />{" "}
+                <span className="min-w-0">
+                  <span className="block font-semibold">{ROUTE_LABEL[r].name}</span>{" "}
+                  <span className="block text-sm text-soft">{ROUTE_LABEL[r].note}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>{" "}
+        <label htmlFor={ids("premium")} className="flex min-h-11 items-center gap-3 self-end text-base">
           <input id={ids("premium")} type="checkbox" checked={state.premium} onChange={(e) => set(planPatch({ premium: e.target.checked }))} className={CHECK} />{" "}
           Premium processing on the I-140
         </label>

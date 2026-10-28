@@ -162,6 +162,21 @@ test("the green card timeline plans a certified case, takes the reader's own fig
   await page.getByText("Your family, and your own costs").click();
   await page.getByLabel("Attorney for the PERM").fill("5000");
   await expect(page.locator("dt", { hasText: "Employer pays" }).locator("xpath=..").getByText("$5,000")).toBeVisible();
+
+  // The employer's size sits beside the total: 25 or fewer employees halves the I-140's asylum program fee.
+  await page.getByLabel("The employer").selectOption("small");
+  await expect(page.getByRole("list", { name: "Each cost, in the order it falls due" }).getByText("$300")).toBeVisible();
+
+  // Through a consulate: NVC and the consulate in place of the I-485, State's visa fee, no work permit, and it stays in the address.
+  // The choice goes through the address, so the radio turns on once the address has it.
+  const abroad = yourCase.getByRole("radio", { name: /At a US consulate abroad/ });
+  await abroad.click();
+  await expect(page).toHaveURL(/route=cp/);
+  await expect(abroad).toBeChecked();
+  await expect(chart.getByRole("link", { name: "NVC and the consulate", exact: true })).toBeVisible();
+  await expect(chart.getByRole("link", { name: "I-485 and the green card", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Each cost, in the order it falls due" }).getByText("DS-260")).toBeVisible();
+  await expect(page.getByLabel("Work permit and travel document")).toHaveCount(0);
 });
 
 test("a filing month opens to a day, and the day's list filters by status", async ({ page }) => {

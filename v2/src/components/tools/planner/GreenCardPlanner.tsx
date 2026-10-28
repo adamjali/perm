@@ -87,9 +87,10 @@ export function GreenCardPlanner({ reading, check, today }: { reading: PlanReadi
     category: state.category,
     country: state.country,
     premium: state.premium,
+    route: state.route,
     fees: {
       petitioner: fees.petitioner,
-      onlineI140: fees.online,
+      online: fees.online,
       adults: fees.adults,
       children: fees.kids,
       workPermits: fees.extras ? fees.adults : 0,

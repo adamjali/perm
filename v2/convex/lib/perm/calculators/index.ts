@@ -110,13 +110,17 @@ export {
 } from './i140Queue';
 export {
   buildPlan,
+  CONSULAR_INTERVIEW_DAYS_ASSUMED,
+  CONSULAR_STAGE,
   I140_FILE_BY_DAYS,
   I140_PREP_DAYS_ASSUMED,
   MILESTONE_ORDER,
   MILESTONES,
+  milestoneLabel,
   monthsToDays,
   orderedSpan,
   PLAN_STAGES,
+  planStages,
   RECRUITMENT_MIN_DAYS,
   SIDE_STAGES,
   type BulletinMethod,
@@ -155,6 +159,9 @@ export {
 export {
   calculateGreenCardFees,
   FEE_SCHEDULE,
+  GREEN_CARD_ROUTES,
+  STATE_FEES,
+  type GreenCardRoute,
   type FeeInput,
   type FeeLine,
   type FeeResult,

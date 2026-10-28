@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import type { DecidedSpan } from "@/lib/board";
 import {
+  CONSULAR_INTERVIEW_DAYS_ASSUMED,
   I140_PREP_DAYS_ASSUMED,
   monthsToDays,
   paceByLine,
@@ -19,6 +20,7 @@ import { shortDate } from "@convex/lib/months";
 import { MS_PER_DAY } from "@convex/lib/time";
 
 import { getPermBoard, getPwdBoard } from "./board";
+import { doc } from "./publicData";
 import { getBulletinBoard } from "./bulletin";
 import { getRecruitmentSummary } from "./recruitment";
 import { getUscisFormHistory, type UscisFormHistoryPoint } from "./uscisQuarterly";
@@ -37,6 +39,43 @@ const USCIS_ROWS = {
 } as const;
 
 export type PlanSpans = PlanFigures["spans"];
+
+/** The National Visa Center's weekly readings (scripts/ingest_nvc_timeframes.py), newest first. */
+export interface NvcReading {
+  asOf: string;
+  createdThrough: string;
+  reviewedThrough: string;
+  creationLagDays: number;
+  reviewLagDays: number;
+}
+/** The weekly readings that set NVC's quick and slow ends: about three months. */
+const NVC_READINGS_FOR_RANGE = 12;
+
+/**
+ * Through a consulate: NVC's case creation after the I-140 and its document review, each the
+ * newest week's lag between the quickest and slowest of the recent weeks; the step to the visa
+ * adds the consulate's interview wait, an assumption. Null without a reading.
+ */
+export function nvcSpans(readings: readonly NvcReading[] | null | undefined): { creation: Span; consular: Span; newest: NvcReading } | null {
+  const recent = (readings ?? []).filter((r) => Number.isFinite(r.creationLagDays) && Number.isFinite(r.reviewLagDays)).slice(0, NVC_READINGS_FOR_RANGE);
+  const newest = recent[0];
+  if (!newest) return null;
+  const range = (pick: (r: NvcReading) => number): Span => ({
+    low: Math.min(...recent.map(pick)),
+    mid: pick(newest),
+    high: Math.max(...recent.map(pick)),
+  });
+  const review = range((r) => r.reviewLagDays);
+  return {
+    creation: range((r) => r.creationLagDays),
+    consular: {
+      low: review.low + CONSULAR_INTERVIEW_DAYS_ASSUMED.low,
+      mid: review.mid + CONSULAR_INTERVIEW_DAYS_ASSUMED.mid,
+      high: review.high + CONSULAR_INTERVIEW_DAYS_ASSUMED.high,
+    },
+    newest,
+  };
+}
 
 /** The figures the plan starts from, before any of the reader's own. */
 export type PlanBase = Omit<PlanFigures, "permByQueue" | "pwdByQueue" | "missMonthsAt" | "supply" | "bulletinMethod" | "paceDaysPerMonth">;
@@ -85,7 +124,7 @@ const quarterOf = (points: readonly UscisFormHistoryPoint[], title: string): str
  * step undated rather than failing the page.
  */
 export const getPlanReading = cache(async (): Promise<PlanReading> => {
-  const [perm, pwd, board, recruitment, i140, i485, i765, i131] = await Promise.all([
+  const [perm, pwd, board, recruitment, i140, i485, i765, i131, nvcDoc] = await Promise.all([
     getPermBoard().catch(() => null),
     getPwdBoard().catch(() => null),
     getBulletinBoard().catch(() => null),
@@ -94,7 +133,9 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
     getUscisFormHistory(USCIS_ROWS.i485.form),
     getUscisFormHistory(USCIS_ROWS.ead.form),
     getUscisFormHistory(USCIS_ROWS.ap.form),
+    doc<{ readings?: NvcReading[] }>("nvc_timeframes").catch(() => null),
   ]);
+  const nvc = nvcSpans(nvcDoc?.readings);
 
   const lead = recruitment?.lead.firstStep ?? null;
   const eighty = (cat: keyof typeof PLAN_I140_CLASS) =>
@@ -116,7 +157,9 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
       i485: uscisSpanOf(i485, USCIS_ROWS.i485.title),
       ead: uscisSpanOf(i765, USCIS_ROWS.ead.title),
       ap: uscisSpanOf(i131, USCIS_ROWS.ap.title),
+      consular: nvc?.consular ?? null,
     },
+    nvcCreation: nvc?.creation ?? null,
     pace: paceByLine(board?.finalAction ?? [], (c) => (c.category in PLAN_I140_CLASS ? `${c.category}|${c.country}` : null)),
     bulletinMonth: board?.lastMonth ?? null,
   };
@@ -134,6 +177,10 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
     if (m !== null && q) standing[key] = `Now: USCIS's median is ${m} months, ${q}`;
   }
 
+  if (nvc) {
+    standing.consular = `Now: the National Visa Center is reviewing documents sent on ${shortDate(nvc.newest.reviewedThrough)} (State, as of ${shortDate(nvc.newest.asOf)})`;
+  }
+
   const sources: PlanReading["sources"] = {
     pwd: "The filing days DOL decided on its last working day: the latest-filed tenth, the middle, the earliest-filed tenth",
     perm: "The filing days DOL decided on its last working day: the latest-filed tenth, the middle, the earliest-filed tenth",
@@ -145,6 +192,8 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
     i485: "USCIS's employment-based median, the newest quarter between the quickest and slowest of the last four",
     ead: "USCIS's work-permit median for a pending I-485, the last four quarters",
     ap: "USCIS's advance-parole median inside the US, the last four quarters",
+    consular:
+      "NVC's document review, this week's between the quickest and slowest of the last 12 weeks (State's NVC Timeframes page), then the consulate's interview: an assumption, not measured, because State publishes no wait for it. Set it to your consulate's",
   };
   return { figures, standing, sources };
 });

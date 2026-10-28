@@ -5,7 +5,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { GreenCardFeesCalculator } from "@/components/tools/GreenCardFeesCalculator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { FEE_SCHEDULE } from "@/lib/perm";
+import { FEE_SCHEDULE, STATE_FEES } from "@/lib/perm";
 import { withSocialCard } from "@/lib/socialCard";
 
 /**
@@ -18,7 +18,7 @@ import { withSocialCard } from "@/lib/socialCard";
  */
 
 const TITLE = "Green Card Government Fees Calculator";
-const DESCRIPTION = `USCIS filing fees for an employment-based green card, from Form G-1055 (${FEE_SCHEDULE.edition}): I-140, the asylum program fee, premium processing, I-485, work permit.`;
+const DESCRIPTION = `Government fees for an employment-based green card, from USCIS's Form G-1055 (${FEE_SCHEDULE.edition}): the I-140, its asylum fee, the I-485 or a consulate's.`;
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -42,7 +42,15 @@ const FAQS = [
   },
   {
     q: "Are the work permit and advance parole still free with an I-485?",
-    a: `Not since April 1, 2024. An I-765 filed with or after a pending I-485 costs ${usd(FEE_SCHEDULE.i765WithPendingI485)} and an I-131 costs ${usd(FEE_SCHEDULE.i131WithPendingI485)} on the ${FEE_SCHEDULE.edition} schedule. Renewals of each are charged again.`,
+    a: `Not since April 1, 2024. An I-765 filed with or after a pending I-485 costs ${usd(FEE_SCHEDULE.i765WithPendingI485)} and an I-131 costs ${usd(FEE_SCHEDULE.i131WithPendingI485)} on paper, ${usd(FEE_SCHEDULE.i131WithPendingI485Online)} online, on the ${FEE_SCHEDULE.edition} schedule. Renewals of each are charged again.`,
+  },
+  {
+    q: "What does it cost to get the green card at a consulate instead?",
+    a: `No I-485, work permit or travel document. Each person immigrating pays the State Department's employment-based visa fee, ${usd(STATE_FEES.ivEmployment)} (${STATE_FEES.citation}), at the National Visa Center, and USCIS's immigrant fee, ${usd(FEE_SCHEDULE.immigrantFee)}, once the visa is issued and before travelling. The I-140 and its asylum program fee are the same either way.`,
+  },
+  {
+    q: "Is it cheaper to file online?",
+    a: `For the forms USCIS takes online, yes: on the ${FEE_SCHEDULE.edition} schedule the I-140 is ${usd(FEE_SCHEDULE.i140Online)} online against ${usd(FEE_SCHEDULE.i140Paper)} on paper, and the I-485 ${usd(FEE_SCHEDULE.i485AdultOnline)} against ${usd(FEE_SCHEDULE.i485Adult)}. The work permit with a pending I-485 is ${usd(FEE_SCHEDULE.i765WithPendingI485)} either way.`,
   },
   {
     q: "Can I pay to speed up the I-485?",

@@ -9,7 +9,7 @@ import {
   PREMIUM_I140_BUSINESS_DAYS,
 } from '../constants';
 import { addBusinessDays } from '../dates/businessDays';
-import { calculateGreenCardFees, type FeeInput, type FeeLine, type FeeResult } from './greenCardFees';
+import { calculateGreenCardFees, type FeeInput, type FeeLine, type FeeResult, type GreenCardRoute } from './greenCardFees';
 import { monthsToReach, type PaceBasis } from './priorityDate';
 
 /**
@@ -46,7 +46,7 @@ export const MILESTONES = [
 export type Milestone = (typeof MILESTONES)[number]['key'];
 export const MILESTONE_ORDER: readonly Milestone[] = MILESTONES.map((m) => m.key);
 
-export type PlanStage = 'pwd' | 'recruitment' | 'perm' | 'i140Prep' | 'i140' | 'visa' | 'i485';
+export type PlanStage = 'pwd' | 'recruitment' | 'perm' | 'i140Prep' | 'i140' | 'visa' | 'i485' | 'consular';
 /** What the I-485 brings while it waits: the work permit and the travel document. */
 export type SideStage = 'ead' | 'ap';
 
@@ -125,13 +125,52 @@ export const PLAN_STAGES: readonly StageInfo[] = [
   },
 ];
 
+/**
+ * Through a consulate the last step is the National Visa Center and the consulate's interview,
+ * in place of the I-485. It runs from the documents going in at NVC to the immigrant visa.
+ */
+export const CONSULAR_STAGE: StageInfo = {
+  key: 'consular',
+  name: 'NVC and the consulate',
+  owner: 'state',
+  detail:
+    'The National Visa Center reviews the fees, the DS-260 and the documents, then the consulate interviews you and issues the immigrant visa. You become a permanent resident when you enter the US on it; the green card follows by mail.',
+  from: 'i485Filed',
+  to: 'greenCard',
+};
+
+/** Every step for a route: the I-485 inside the US, or the consulate abroad. */
+export function planStages(route: GreenCardRoute = 'aos'): readonly StageInfo[] {
+  if (route === 'aos') return PLAN_STAGES;
+  return PLAN_STAGES.map((s) =>
+    s.key === 'i485'
+      ? CONSULAR_STAGE
+      : s.key === 'visa'
+        ? {
+            ...s,
+            detail:
+              "The State Department's monthly final action cutoff has to pass your priority date, and the I-140 must be approved. The visa application then goes in at the National Visa Center.",
+          }
+        : s,
+  );
+}
+
+/** What a milestone is called on a route: through a consulate, the last two are NVC's and the visa's. */
+const CONSULAR_MILESTONE_LABEL: Partial<Record<Milestone, string>> = {
+  i485Filed: 'Documents in at the National Visa Center',
+  greenCard: 'Immigrant visa issued',
+};
+export function milestoneLabel(m: Milestone, route: GreenCardRoute = 'aos'): string {
+  return (route === 'cp' ? CONSULAR_MILESTONE_LABEL[m] : undefined) ?? MILESTONES.find((x) => x.key === m)!.label;
+}
+
 /** The two things a pending I-485 brings, each its own form. */
 export const SIDE_STAGES: readonly { key: SideStage; name: string; form: string }[] = [
   { key: 'ead', name: 'Work permit', form: 'I-765' },
   { key: 'ap', name: 'Travel document', form: 'I-131' },
 ];
 
-const stageInfo = (key: PlanStage): StageInfo => PLAN_STAGES.find((s) => s.key === key)!;
+const stageInfo = (key: PlanStage): StageInfo => [...PLAN_STAGES, CONSULAR_STAGE].find((s) => s.key === key)!;
 
 /** The shortest recruitment the rules allow: the 30-day job order, then the 30-day quiet period. */
 export const RECRUITMENT_MIN_DAYS = JOB_ORDER_MIN_DAYS + FILING_WINDOW_WAIT_DAYS;
@@ -143,6 +182,14 @@ export const RECRUITMENT_MIN_DAYS = JOB_ORDER_MIN_DAYS + FILING_WINDOW_WAIT_DAYS
  * 180 days a certification is valid (20 CFR 656.30(b)(1)).
  */
 export const I140_PREP_DAYS_ASSUMED = 30;
+/**
+ * Days from the documents going in at the National Visa Center to the immigrant visa, past NVC's
+ * own review: the consulate's interview wait. State publishes no wait for immigrant visa
+ * interviews (NVC's review time it does publish, weekly, and the plan reads it), so this is an
+ * assumption the page names as one and the reader sets to their consulate's.
+ */
+export const CONSULAR_INTERVIEW_DAYS_ASSUMED: Span = { low: 30, mid: 90, high: 180 };
+
 /** The last day an I-140 can be filed on a certification, counted from certification. */
 export const I140_FILE_BY_DAYS = ETA9089_EXPIRATION_DAYS;
 
@@ -182,7 +229,11 @@ export interface PlanFigures {
     i485: Span | null;
     ead: Span | null;
     ap: Span | null;
+    /** Through a consulate: NVC's document review and the consulate's interview, to the visa. */
+    consular: Span | null;
   };
+  /** Through a consulate: days from the I-140's approval until NVC has created the case (NVC's own weekly figure). */
+  nvcCreation?: Span | null;
   /**
    * For a PERM filed on or before today: its decision from the cases still ahead of it
    * and DOL's measured pace, the case page's own model. It replaces the plain wait.
@@ -212,9 +263,9 @@ export interface OwnCosts {
   recruitment?: number;
   /** The attorney for the I-140. */
   i140Attorney?: number;
-  /** The attorney for the I-485 and its forms. */
+  /** The attorney for the I-485 and its forms, or for consular processing. */
   i485Attorney?: number;
-  /** The civil surgeon's medical exam (Form I-693), each person. */
+  /** The medical exam, each person: the civil surgeon's (Form I-693), or a panel physician's abroad. */
   medicalEach?: number;
 }
 
@@ -226,7 +277,9 @@ export interface PlanInput {
   category: 'EB2' | 'EB3';
   country: string;
   premium: boolean;
-  fees: Omit<FeeInput, 'premium'>;
+  /** Adjustment of status inside the US (the default) or consular processing abroad. */
+  route?: GreenCardRoute;
+  fees: Omit<FeeInput, 'premium' | 'route'>;
   own?: OwnCosts;
   /** Today, ISO. */
   today: string;
@@ -285,8 +338,9 @@ export interface Plan {
   milestones: Record<Milestone, DayRange | null>;
   knownMilestones: ReadonlySet<Milestone>;
   steps: PlanStep[];
-  /** The work permit and travel document, once the I-485 is dated. */
+  /** The work permit and travel document, once the I-485 is dated (none through a consulate). */
   sideSteps: PlanStep[];
+  route: GreenCardRoute;
   priorityDate: DayRange | null;
   greenCard: DayRange | null;
   /** True when the priority date is already current in the newest bulletin. */
@@ -356,15 +410,36 @@ const SCHEDULE_STEP: Record<string, PlanStage> = {
   'I-485': 'i485',
   'I-765': 'i485',
   'I-131': 'i485',
+  'DS-260': 'consular',
+  'USCIS Immigrant Fee': 'consular',
 };
+/** A fee paid at a step's end, not its start: USCIS's immigrant fee goes in once the visa is issued, before travel. */
+const FEE_DUE_AT: Record<string, Milestone> = { 'USCIS Immigrant Fee': 'greenCard' };
 
 /** Where each own cost falls due, who pays it, and how it's named. */
-const OWN_COSTS: readonly { key: keyof OwnCosts; label: string; step: PlanStage; at: Milestone; payer: Payer; perPerson?: true }[] = [
+const OWN_COSTS: readonly {
+  key: keyof OwnCosts;
+  label: string;
+  /** The name through a consulate, where it differs. */
+  cpLabel?: string;
+  step: PlanStage;
+  at: Milestone;
+  payer: Payer;
+  perPerson?: true;
+}[] = [
   { key: 'permAttorney', label: 'Attorney, wage request and PERM', step: 'pwd', at: 'pwdFiled', payer: 'employer' },
   { key: 'recruitment', label: 'Job order, ads and recruitment', step: 'recruitment', at: 'pwdIssued', payer: 'employer' },
   { key: 'i140Attorney', label: 'Attorney, I-140', step: 'i140', at: 'i140Filed', payer: 'agreed' },
-  { key: 'i485Attorney', label: 'Attorney, I-485 and its forms', step: 'i485', at: 'i485Filed', payer: 'agreed' },
-  { key: 'medicalEach', label: 'Medical exam (I-693), civil surgeon', step: 'i485', at: 'i485Filed', payer: 'agreed', perPerson: true },
+  { key: 'i485Attorney', label: 'Attorney, I-485 and its forms', cpLabel: 'Attorney, consular processing', step: 'i485', at: 'i485Filed', payer: 'agreed' },
+  {
+    key: 'medicalEach',
+    label: 'Medical exam (I-693), civil surgeon',
+    cpLabel: 'Medical exam, panel physician abroad',
+    step: 'i485',
+    at: 'i485Filed',
+    payer: 'agreed',
+    perPerson: true,
+  },
 ];
 
 /** "18,000 cases ahead of yours, at DOL's pace of 625 a day". */
@@ -407,6 +482,9 @@ function holdUnderKnown(at: Record<Milestone, DayRange | null>, known: PlanInput
 
 export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   const { known, today } = input;
+  const route: GreenCardRoute = input.route ?? 'aos';
+  const stages = planStages(route);
+  const last: PlanStage = route === 'cp' ? 'consular' : 'i485';
   const problems = checkKnown(known);
   const knownSet = new Set(MILESTONE_ORDER.filter((k) => known[k]));
   const first = MILESTONE_ORDER.find((k) => known[k]) ?? null;
@@ -505,9 +583,14 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   const reach: DayRange | null = current ? fixed(bulletinFrom) : method === 'supply' ? reachBySupply : reachByPace;
 
   // The I-485 goes in once the cutoff passes the priority date and the I-140 is in:
-  // with the I-140 when the date is already current (concurrent filing).
+  // with the I-140 when the date is already current (concurrent filing). Through a consulate
+  // there's no concurrent filing: NVC takes the case only after the I-140 is approved, creates
+  // it (its own weekly figure), and the documents go in once the date is current.
   if (known.i485Filed) at.i485Filed = fixed(known.i485Filed);
-  else if (reach && at.i140Filed) at.i485Filed = laterRange(reach, at.i140Filed);
+  else if (route === 'cp') {
+    const created = at.i140Approved && figures.nvcCreation ? shift(at.i140Approved, orderedSpan(figures.nvcCreation)) : at.i140Approved;
+    if (reach && created) at.i485Filed = laterRange(reach, created);
+  } else if (reach && at.i140Filed) at.i485Filed = laterRange(reach, at.i140Filed);
   else if (reach && startIdx >= MILESTONE_ORDER.indexOf('i140Approved') && at.i140Approved) at.i485Filed = laterRange(reach, at.i140Approved);
   basis.visa = knownSet.has('i485Filed')
     ? 'Your date'
@@ -519,16 +602,21 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
           ? `Your pace, ${figures.paceDaysPerMonth} days a month`
           : "The cutoff's measured pace";
 
+  const lastSpan = route === 'cp' ? figures.spans.consular : figures.spans.i485;
   if (known.greenCard) at.greenCard = fixed(known.greenCard);
-  else if (at.i485Filed && figures.spans.i485) at.greenCard = shift(at.i485Filed, orderedSpan(figures.spans.i485));
-  basis.i485 = knownSet.has('greenCard') ? 'Your date' : "USCIS's employment-based medians, the last four quarters";
+  else if (at.i485Filed && lastSpan) at.greenCard = shift(at.i485Filed, orderedSpan(lastSpan));
+  basis[last] = knownSet.has('greenCard')
+    ? 'Your date'
+    : route === 'cp'
+      ? "NVC's document review this week, then the consulate's interview wait, an assumption"
+      : "USCIS's employment-based medians, the last four quarters";
   holdUnderKnown(at, known);
 
   // Every step, end to end: the ones before the first date the reader gave are done.
   const state = (start: DayRange, end: DayRange | null): StepState =>
     end && end.mid <= today ? 'done' : start.mid <= today ? 'now' : 'ahead';
   const steps: PlanStep[] = [];
-  for (const s of PLAN_STAGES) {
+  for (const s of stages) {
     if (MILESTONE_ORDER.indexOf(s.to) <= startIdx) {
       const [start, end] = [at[s.from], at[s.to]];
       if (start && end) {
@@ -539,7 +627,11 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     // The visa wait runs from the I-140's decision to the I-485; a current date has none,
     // so it sits on the day the I-485 goes in.
     const start =
-      s.key !== 'visa' ? at[s.from] : current ? (at.i485Filed ?? at.i140Filed) : (at.i140Approved ?? at.i140Filed ?? at[startAt]);
+      s.key !== 'visa'
+        ? at[s.from]
+        : current
+          ? (at.i485Filed ?? (route === 'cp' ? at.i140Approved : at.i140Filed))
+          : (at.i140Approved ?? at.i140Filed ?? at[startAt]);
     if (!start) {
       steps.push({ ...s, start: at[startAt]!, end: null, known: { start: false, end: false }, state: 'ahead', basis: basis[s.key] ?? 'Waits on the step before' });
       continue;
@@ -555,9 +647,9 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     });
   }
 
-  // The work permit and travel document ride the pending I-485.
+  // The work permit and travel document ride the pending I-485; a consulate has neither.
   const sideSteps: PlanStep[] = [];
-  if (at.i485Filed) {
+  if (at.i485Filed && route === 'aos') {
     for (const side of SIDE_STAGES) {
       const span = figures.spans[side.key];
       const end = span ? shift(at.i485Filed, orderedSpan(span)) : null;
@@ -578,10 +670,10 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
   }
 
   // Every cost, on the day its step starts.
-  const fees = calculateGreenCardFees({ ...input.fees, premium: input.premium });
+  const fees = calculateGreenCardFees({ ...input.fees, premium: input.premium, route });
   const due = (m: Milestone) => at[m];
   const costs: PlanCost[] = fees.lines.map((l: FeeLine) => {
-    const step = SCHEDULE_STEP[l.form] ?? 'i485';
+    const step = SCHEDULE_STEP[l.form] ?? last;
     return {
       key: `${l.form} ${l.label}`,
       form: l.form,
@@ -591,7 +683,7 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
       amount: l.total,
       step,
       payer: 'agreed' as const,
-      due: due(stageInfo(step).from),
+      due: due(FEE_DUE_AT[l.form] ?? stageInfo(step).from),
       source: 'schedule' as const,
     };
   });
@@ -600,7 +692,9 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     const each = input.own?.[c.key] ?? 0;
     if (!(each > 0)) continue;
     const count = c.perPerson ? people : 1;
-    costs.push({ key: c.key, label: c.label, each, count, amount: each * count, step: c.step, payer: c.payer, due: due(c.at), source: 'own' });
+    const label = route === 'cp' ? (c.cpLabel ?? c.label) : c.label;
+    const step = c.step === 'i485' ? last : c.step;
+    costs.push({ key: c.key, label, each, count, amount: each * count, step, payer: c.payer, due: due(c.at), source: 'own' });
   }
   const sum = (p?: Payer) => costs.filter((c) => !p || c.payer === p).reduce((n, c) => n + c.amount, 0);
 
@@ -609,6 +703,7 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
     knownMilestones: knownSet,
     steps,
     sideSteps,
+    route,
     priorityDate: pd,
     greenCard: at.greenCard,
     current,

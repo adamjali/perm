@@ -18,6 +18,7 @@ export const STEP_HREF: Record<PlanStep["key"], string> = {
   i140: "/uscis-processing-times#green-card-forms",
   visa: "/visa-bulletin",
   i485: "/i485-by-field-office",
+  consular: "/visa-issuances",
   ead: "/uscis-processing-times#green-card-forms",
   ap: "/uscis-processing-times#green-card-forms",
 };

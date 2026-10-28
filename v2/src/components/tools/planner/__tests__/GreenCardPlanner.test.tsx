@@ -26,7 +26,9 @@ const READING: PlanReading = {
       i485: { low: 180, mid: 183, high: 200 },
       ead: { low: 170, mid: 195, high: 230 },
       ap: { low: 160, mid: 177, high: 260 },
+      consular: { low: 90, mid: 159, high: 255 },
     },
+    nvcCreation: { low: 7, mid: 9, high: 14 },
     pace: {
       // 180 days of cutoff movement over 12 months: 15 days a month.
       "EB2|worldwide": { latest: { kind: "date", iso: "2025-04-01" }, movedDays: 180, spanMonths: 12, retrogressions: [] },
@@ -193,5 +195,33 @@ describe("GreenCardPlanner, the costs", () => {
     expect(screen.getAllByText("$7,645").length).toBeGreaterThan(0);
     const employer = screen.getByText("Employer pays", { selector: "dt" }).closest("div")!;
     expect(within(employer).getByText("$4,000")).toBeInTheDocument();
+  });
+  it("plans a green card through a consulate: NVC's steps and State's fee, no I-485 or work permit", () => {
+    nav.params = new URLSearchParams("where=perm-filed&pd=2024-01-10");
+    renderPlanner();
+    expect(row("I-485 and the green card")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /At a US consulate abroad/ }));
+    // The choice lands in the address, and the plan follows it.
+    expect(nav.replace).toHaveBeenLastCalledWith(expect.stringContaining("route=cp"), expect.anything());
+  });
+
+  it("reads a consular plan from its address", () => {
+    nav.params = new URLSearchParams("where=perm-filed&pd=2024-01-10&route=cp");
+    renderPlanner();
+    expect(row("NVC and the consulate")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^I-485 and the green card$/ })).toBeNull();
+    expect(within(screen.getByRole("list", { name: "Your dates" })).getByText("Immigrant visa")).toBeInTheDocument();
+    const costs = screen.getByRole("list", { name: "Each cost, in the order it falls due" });
+    expect(within(costs).getByText("DS-260")).toBeInTheDocument();
+    expect(within(costs).queryByText("I-485")).toBeNull();
+    expect(screen.queryByLabelText("Work permit and travel document")).toBeNull();
+  });
+
+  it("puts the employer's size beside the total, where its fee changes it", () => {
+    renderPlanner();
+    const glance = screen.getByRole("region", { name: "Your plan at a glance" });
+    expect(within(glance).getByText("$3,645")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("The employer"), { target: { value: "small" } });
+    expect(within(glance).getByText("$3,345")).toBeInTheDocument();
   });
 });
