@@ -22,17 +22,22 @@ import {
   bulletinMoves,
   bulletinShift,
   bulletinStatus,
+  cutoffPaceFact,
   lineFlow,
   medianShift,
+  paceFacts,
+  paceReading,
   paceStatus,
   positionShift,
   rulerOf,
   waitScaleDays,
+  type SpanReading,
   type StatusMove,
 } from "@/lib/board";
 import { cutoffLabel } from "@/lib/bulletinNext";
 import { DECISION_SPANS } from "@/lib/pulseStats";
 import { getPermBoard, getPwdBoard } from "@/lib/db/board";
+import { getBulletinBoard } from "@/lib/db/bulletin";
 import { getLiveCensus } from "@/lib/db/liveCensus";
 import { getVisaBulletins } from "@/lib/db/publicData";
 import { getObservedDays } from "@/lib/db/pulse";
@@ -40,6 +45,7 @@ import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getUscisFormHistory, getUscisFormMedian } from "@/lib/db/uscisQuarterly";
 import { parseCutoff, type BulletinMonth, type CountryKey } from "@/lib/perm";
 import { GROUPS, SECTIONS } from "@/lib/siteMap";
+import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { cn } from "@/lib/utils";
 import { checkedLabel } from "@/lib/time";
@@ -56,12 +62,16 @@ import { monthDay, monthYear, shiftMonth, shortDate } from "@convex/lib/months";
  */
 export const revalidate = 21600;
 
+const TITLE = "Where Every Green Card Step Stands Today";
+const DESCRIPTION =
+  "The wage request, PERM, I-140 and visa bulletin on one page: where DOL and the State Department are, whether each line is growing, and what moved today.";
+
 export const metadata: Metadata = withSocialCard(
   {
-    title: { absolute: "Where Every Green Card Step Stands Today | PERM Tracker" },
-    description:
-      "The wage request, PERM, I-140 and visa bulletin on one page: where DOL and the State Department are, whether each line is growing, and what moved today.",
+    title: { absolute: `${TITLE} | PERM Tracker` },
+    description: DESCRIPTION,
     alternates: { canonical: "/today" },
+    openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/today" },
   },
   "today",
 );
@@ -83,7 +93,7 @@ const BULLETIN_CATEGORIES = ["EB1", "EB2", "EB3", "EW3"];
 const BULLETIN_COUNTRIES: CountryKey[] = ["worldwide", "china", "india", "mexico", "philippines"];
 
 export default async function TodayPage() {
-  const [perm, pwd, census, observed, coverage, i140, bulletins, i485, i485History] = await Promise.all([
+  const [perm, pwd, census, observed, coverage, i140, bulletins, i485, i485History, bulletinBoard] = await Promise.all([
     getPermBoard().catch(() => null),
     getPwdBoard().catch(() => null),
     getLiveCensus().catch(() => null),
@@ -93,6 +103,7 @@ export default async function TodayPage() {
     getVisaBulletins().catch(() => []),
     getUscisFormMedian("I-485", "Employment"),
     getUscisFormHistory("I-485"),
+    getBulletinBoard().catch(() => null),
   ]);
 
   // How many PERM cases sit in each status now, from the census.
@@ -136,6 +147,13 @@ export default async function TodayPage() {
   const eb2 = moves.find((r) => r.category === "EB2")?.cells.find((c) => c.country === "worldwide") ?? null;
   const bulletinLabel = latest ? monthYear(latest.bulletinMonth) ?? latest.bulletinMonth : null;
 
+  // Each DOL step's wait in days, its pace and the month's change, folded under its state.
+  const factsOf = (b: (SpanReading & { monthBefore: SpanReading | null }) | null) => {
+    const r = b ? paceReading(b, b.monthBefore) : null;
+    return r ? paceFacts(r, r.since ? (monthDay(r.since) ?? r.since) : null) : undefined;
+  };
+  const cutoffPace = new Map((bulletinBoard?.finalAction ?? []).map((c) => [`${c.category}|${c.country}`, c.pace]));
+
   const pwdRuler = pwd?.span ? rulerOf(pwd.span, pwd.day) : null;
   const permRuler = perm?.span ? rulerOf(perm.span, perm.day) : null;
   const eb2Cut = latest ? parseCutoff(latest.finalAction["EB2"]?.worldwide) : null;
@@ -169,6 +187,7 @@ export default async function TodayPage() {
             datesForFiling: filing ? cutoffLabel(filing) : null,
             status: bulletinStatus(cell.kind),
             shift: bulletinShift(cell.kind, cell.movedDays, bulletinMonthName),
+            paceFact: cutoffPaceFact(cutoffPace.get(`${row.category}|${cell.country}`) ?? null),
           };
         }),
       )
@@ -293,6 +312,7 @@ export default async function TodayPage() {
             }
             shift={pwdShift}
             status={pwdStatus}
+            facts={factsOf(pwd)}
             href="/pwd-cases"
             linkLabel="Wage requests"
           />{" "}
@@ -315,6 +335,7 @@ export default async function TodayPage() {
             }
             shift={permShift}
             status={permStatus}
+            facts={factsOf(perm)}
             href="/perm-queue"
             linkLabel="Where the line stands"
           />{" "}
@@ -366,9 +387,9 @@ export default async function TodayPage() {
           </h2>{" "}
           <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 [&>*]:min-w-0">
             {pwd ? <Balance name="Wage requests" flow={pwd.flow} href="/pwd-cases" /> : null}{" "}
-            {perm ? <Balance name="PERM" flow={perm.flow} href="/perm-queue" /> : null}{" "}
+            {perm ? <Balance name="PERM cases" flow={perm.flow} href="/perm-queue" /> : null}{" "}
             {i140Line ? (
-              <Balance name="I-140" flow={i140Line.flow} period={i140Line.period} labels={["Received", "Completed"]} href="/uscis-processing-times" />
+              <Balance name="I-140 petitions" flow={i140Line.flow} period={i140Line.period} labels={["Received", "Completed"]} href="/uscis-processing-times" />
             ) : null}{" "}
             {i485Line ? (
               <Balance

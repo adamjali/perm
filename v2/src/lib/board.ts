@@ -281,3 +281,69 @@ export function bulletinStatus(kind: MoveKind): StepStatus | null {
       return null;
   }
 }
+
+/** How far back the board reads a step's pace and the change in its wait. */
+export const WEEK_DAYS = 7;
+export const MONTH_DAYS = 30;
+
+/** One reading of a step: the day DOL decided, and where that day's decisions fell. */
+export interface SpanReading {
+  day: string;
+  span: DecidedSpan | null;
+}
+
+/** A step's wait now, how fast DOL moves through filing days, and how the wait changed. */
+export interface PaceReading {
+  /** Days the middle decision on the newest day had waited. */
+  waitDays: number;
+  /** Filing days DOL moved through per calendar day since the earlier reading; 1 holds the wait level. */
+  perDay: number | null;
+  /** The wait now less the wait then, in days: negative is shorter. */
+  waitChange: number | null;
+  /** The earlier reading's day. */
+  since: string | null;
+}
+
+/** Filing days moved per calendar day, to one decimal place. */
+const PER_DAY_PLACES = 10;
+
+/** The step's pace and wait from two readings a month apart; nothing without the newest span. */
+export function paceReading(now: SpanReading, then: SpanReading | null): PaceReading | null {
+  if (!now.span) return null;
+  const waitDays = Math.round(dayNum(now.day) - dayNum(now.span.middle));
+  if (!Number.isFinite(waitDays)) return null;
+  if (!then?.span) return { waitDays, perDay: null, waitChange: null, since: null };
+  const elapsed = dayNum(now.day) - dayNum(then.day);
+  const moved = dayNum(now.span.middle) - dayNum(then.span.middle);
+  const waitThen = Math.round(dayNum(then.day) - dayNum(then.span.middle));
+  return {
+    waitDays,
+    perDay: elapsed > 0 ? Math.round((moved / elapsed) * PER_DAY_PLACES) / PER_DAY_PLACES : null,
+    waitChange: waitDays - waitThen,
+    since: then.day,
+  };
+}
+
+/** The reading in three short lines, for the step's fold. `since` is the earlier day as words. */
+export function paceFacts(r: PaceReading, since: string | null): string[] {
+  const out = [`Waited ${r.waitDays.toLocaleString("en-US")} days, filed to decided`];
+  if (r.perDay !== null && since) {
+    out.push(`DOL moved through ${r.perDay} filing day${r.perDay === 1 ? "" : "s"} a day since ${since}; at 1 the wait holds level`);
+  }
+  if (r.waitChange !== null && since) {
+    const n = Math.abs(r.waitChange);
+    out.push(
+      r.waitChange === 0
+        ? `The same wait as on ${since}`
+        : `${n} day${n === 1 ? "" : "s"} ${r.waitChange > 0 ? "longer" : "shorter"} than on ${since}`,
+    );
+  }
+  return out;
+}
+
+/** A bulletin line's measured pace (cutoff months gained per calendar month), in words for the step's fold. */
+export function cutoffPaceFact(pace: number | null): string | null {
+  if (pace === null || !Number.isFinite(pace)) return null;
+  const r = Math.round(pace * PER_DAY_PLACES) / PER_DAY_PLACES;
+  return `The cutoff has gained ${r} month${r === 1 ? "" : "s"} a month; at 1 the wait holds level, under 1 it grows`;
+}

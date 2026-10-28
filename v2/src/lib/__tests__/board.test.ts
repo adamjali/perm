@@ -2,7 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import type { BulletinMonth } from "@/lib/perm";
 
-import { aboutMonths, backlogStatus, bulletinMoves, bulletinStatus, decidedSpan, LEVEL_SHARE, lineFlow, paceStatus, SPAN_MIN_DECISIONS, statusMoves } from "../board";
+import {
+  aboutMonths,
+  backlogStatus,
+  bulletinMoves,
+  bulletinStatus,
+  cutoffPaceFact,
+  decidedSpan,
+  LEVEL_SHARE,
+  lineFlow,
+  paceFacts,
+  paceReading,
+  paceStatus,
+  SPAN_MIN_DECISIONS,
+  statusMoves,
+} from "../board";
 
 const days = (spec: [string, number][]) => spec.flatMap(([d, n]) => Array.from({ length: n }, () => d));
 
@@ -123,3 +137,36 @@ describe("aboutMonths: a span in words", () => {
   });
 });
 
+
+describe("paceReading: a step's wait, its pace and how the wait changed", () => {
+  const span = (middle: string) => ({ n: 600, middle, from: middle, to: middle });
+
+  it("reads the wait, the filing days moved a day and the change over a month", () => {
+    // Oct 27: the middle decision was filed Jan 13 (287 days). Sep 25: filed Dec 1 (298 days).
+    const r = paceReading({ day: "2026-10-27", span: span("2026-01-13") }, { day: "2026-09-25", span: span("2025-12-01") })!;
+    expect(r).toEqual({ waitDays: 287, perDay: 1.3, waitChange: -11, since: "2026-09-25" });
+    expect(paceFacts(r, "Sep 25")).toEqual([
+      "Waited 287 days, filed to decided",
+      "DOL moved through 1.3 filing days a day since Sep 25; at 1 the wait holds level",
+      "11 days shorter than on Sep 25",
+    ]);
+  });
+
+  it("gives the wait alone without an earlier reading, and nothing without a span", () => {
+    expect(paceReading({ day: "2026-10-27", span: span("2026-01-13") }, null)).toEqual({ waitDays: 287, perDay: null, waitChange: null, since: null });
+    expect(paceFacts({ waitDays: 287, perDay: null, waitChange: null, since: null }, null)).toEqual(["Waited 287 days, filed to decided"]);
+    expect(paceReading({ day: "2026-10-27", span: null }, null)).toBeNull();
+  });
+
+  it("says a wait that didn't change is the same", () => {
+    const r = paceReading({ day: "2026-10-27", span: span("2026-01-13") }, { day: "2026-09-27", span: span("2025-12-14") })!;
+    expect(r.waitChange).toBe(0);
+    expect(paceFacts(r, "Sep 27").at(-1)).toBe("The same wait as on Sep 27");
+  });
+
+  it("words a bulletin line's pace, and nothing when there is none", () => {
+    expect(cutoffPaceFact(0.43)).toBe("The cutoff has gained 0.4 months a month; at 1 the wait holds level, under 1 it grows");
+    expect(cutoffPaceFact(1)).toBe("The cutoff has gained 1 month a month; at 1 the wait holds level, under 1 it grows");
+    expect(cutoffPaceFact(null)).toBeNull();
+  });
+});

@@ -20,6 +20,8 @@ export interface BulletinLine {
   datesForFiling: string | null;
   status: StepStatus | null;
   shift: Shift | null;
+  /** The line's measured pace, in words, or null when none is measured. */
+  paceFact: string | null;
 }
 
 /** "EB2" as people say it: EB-2; the other-workers line in words. */
@@ -101,6 +103,7 @@ export function BulletinStation({
       }
       shift={line.shift}
       status={line.status}
+      facts={line.paceFact ? [line.paceFact] : undefined}
       href="/visa-bulletin"
       linkLabel="The visa bulletin"
     />

@@ -479,7 +479,8 @@ export async function getWageCells(
   });
 }
 
-export async function getVisaBulletins(): Promise<
+/** Every bulletin month the archive holds, read once per render however many readers ask. */
+export const getVisaBulletins = cache(async function getVisaBulletins(): Promise<
   Array<{
     bulletinMonth: string;
     sourceUrl: string | null;
@@ -501,7 +502,7 @@ export async function getVisaBulletins(): Promise<
     finalAction: x.final_action ? JSON.parse(x.final_action) : null,
     datesForFiling: x.dates_for_filing ? JSON.parse(x.dates_for_filing) : null,
   }));
-}
+});
 
 /**
  * The family-sponsored charts (F1, F2A, F2B, F3, F4), in the same shape as

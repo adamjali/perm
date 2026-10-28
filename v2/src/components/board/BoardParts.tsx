@@ -70,6 +70,7 @@ export function Station({
   picture,
   shift,
   status,
+  facts,
   href,
   linkLabel,
   controls,
@@ -85,6 +86,8 @@ export function Station({
   shift?: Shift | null;
   /** The step's state as a status board says it: backlog shrinking, retrogressed. */
   status?: StepStatus | null;
+  /** The figures behind the state, folded under it: the wait in days, the pace, the change. */
+  facts?: readonly string[];
   href: string;
   linkLabel: string;
   /** Anything the reader changes in this step, under its picture. */
@@ -105,7 +108,7 @@ export function Station({
       {controls}{" "}
       {/* The state and the link sit at the card's foot, so the four steps' lines align. */}
       <div className="mt-auto pt-3">
-        {status || shift ? <StepState status={status ?? null} shift={shift ?? null} /> : null}{" "}
+        {status || shift ? <StepState status={status ?? null} shift={shift ?? null} facts={facts} /> : null}{" "}
         <Link href={href} className="link inline-flex min-h-11 items-center gap-1 pt-1 text-sm font-semibold">
           {linkLabel} <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
         </Link>
@@ -141,16 +144,16 @@ const STATE_ICON: Record<StepStatus["kind"], typeof TrendDownIcon> = {
 /**
  * A step's state as one row (owner, Oct 27 2026: one line, the details folded, clean but
  * not bare text): an icon in its colour on a soft tile, the word, and the figure behind it.
- * What else moved folds underneath.
+ * What else moved, and the figures behind it, fold underneath.
  */
-export function StepState({ status, shift }: { status: StepStatus | null; shift: Shift | null }) {
+export function StepState({ status, shift, facts = [] }: { status: StepStatus | null; shift: Shift | null; facts?: readonly string[] }) {
   if (!status && !shift) return null;
   const tone = status?.tone ?? (shift?.tone === "good" ? "good" : shift?.tone === "bad" ? "bad" : "flat");
   const Icon = status ? STATE_ICON[status.kind] : shift?.tone === "good" ? FastForwardIcon : shift?.tone === "bad" ? RewindIcon : EqualsIcon;
   const word = status?.word ?? shift?.text ?? "";
   // The figure under the word: the state's own, or how far it moved.
   const figure = status?.detail ?? (status ? shift?.text : undefined);
-  const more = status?.detail && shift ? shift.text : null;
+  const more = [...(status?.detail && shift ? [shift.text] : []), ...facts];
   const row = (
     <>
       <span aria-hidden="true" className={cn("grid size-9 shrink-0 place-items-center", STATE_TILE[tone], STATE_TEXT[tone])}>
@@ -162,14 +165,18 @@ export function StepState({ status, shift }: { status: StepStatus | null; shift:
       </span>
     </>
   );
-  if (!more) return <div className="flex min-h-11 items-center gap-3 py-1 text-sm">{row}</div>;
+  if (!more.length) return <div className="flex min-h-11 items-center gap-3 py-1 text-sm">{row}</div>;
   return (
     <details className="group text-sm">
       <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 py-1 [&::-webkit-details-marker]:hidden">
         {row}{" "}
         <CaretDownIcon aria-hidden="true" weight="bold" className="ml-auto size-4 shrink-0 text-soft transition-transform group-open:rotate-180" />
       </summary>{" "}
-      <p className="pb-1 pl-12 text-soft">{more}</p>
+      <ul className="space-y-1 pb-1 pl-12 text-soft">
+        {more.map((m) => (
+          <li key={m}>{m} </li>
+        ))}
+      </ul>
     </details>
   );
 }

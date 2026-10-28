@@ -242,6 +242,9 @@ def table_ddl(cfg: dict) -> list[str]:
              source      TEXT,
              PRIMARY KEY (case_number, changed_at))""",
         f"CREATE INDEX IF NOT EXISTS {e}_status_time ON {e} (to_status, changed_at)",
+        # The board (/today) reads wage-request events by time, INDEXED BY this name: it was made
+        # on production by hand and is written here so a rebuilt database has it too.
+        *(["CREATE INDEX IF NOT EXISTS pwd_events_recent ON pwd_case_events (changed_at)"] if e == "pwd_case_events" else []),
     ]
 
 

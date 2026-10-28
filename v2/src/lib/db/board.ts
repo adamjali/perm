@@ -2,7 +2,18 @@ import "server-only";
 
 import { cache } from "react";
 
-import { decidedSpan, lineFlow, statusMoves, type DecidedSpan, type LineFlow, type StatusMove } from "@/lib/board";
+import {
+  decidedSpan,
+  lineFlow,
+  MONTH_DAYS,
+  SPAN_MIN_DECISIONS,
+  statusMoves,
+  WEEK_DAYS,
+  type DecidedSpan,
+  type LineFlow,
+  type SpanReading,
+  type StatusMove,
+} from "@/lib/board";
 import { dolDayBounds, dolDayOf } from "@/lib/dolDay";
 import { MS_PER_DAY } from "@/lib/time";
 
@@ -12,7 +23,8 @@ import { DIRECT_EVENT_SOURCE } from "./rfi";
 
 /**
  * The PERM half of the board (/today): where DOL's decisions fell on its last
- * working day, whether the line grew over 30 days, and how each status moved.
+ * working day and on the working days a week and a month before it, whether the
+ * line grew over 30 days, and how each status moved.
  *
  * Every read is bounded by a date range on an indexed column, and the page is
  * cached and expired by the sweep (/api/revalidate-sweep), so these run once a
@@ -23,8 +35,6 @@ import { DIRECT_EVENT_SOURCE } from "./rfi";
 export interface PermBoard {
   /** DOL's last working day our record holds whole, `YYYY-MM-DD`. */
   day: string;
-  /** Decisions that day (the daily series' own count). */
-  decidedThatDay: number;
   /** Where that day's decisions out of analyst review fell, withdrawals left out. */
   span: DecidedSpan | null;
   /** The 30 days ending that day: filed against decided. */
@@ -32,8 +42,10 @@ export interface PermBoard {
   /** Each status's moves over the last working day and the 7 days ending it. */
   movesDay: StatusMove[];
   movesWeek: StatusMove[];
-  /** The same reading a week earlier: DOL's working day 7 or more days before, and where its decisions fell. */
-  weekBefore: { day: string; span: DecidedSpan | null } | null;
+  /** The same reading on DOL's working day 7 or more days before. */
+  weekBefore: SpanReading | null;
+  /** And 30 or more days before: the step's pace and the change in its wait. */
+  monthBefore: SpanReading | null;
 }
 
 const isoMinus = (iso: string, days: number) =>
@@ -72,11 +84,15 @@ async function permSpanOn(day: string): Promise<DecidedSpan | null> {
   return decidedSpan(r.map((x) => String(x.f)));
 }
 
-/** The newest worked day at least 7 days before `day`, from a list of worked days newest first. */
-export function weekBeforeOf(day: string, worked: readonly string[]): string | null {
-  const limit = isoMinus(day, 7);
+/** The newest worked day at least `days` before `day`, from a list of worked days newest first. */
+export function dayBeforeOf(day: string, worked: readonly string[], days: number): string | null {
+  const limit = isoMinus(day, days);
   return worked.find((d) => d <= limit) ?? null;
 }
+
+/** A reading on an earlier day, or none when the record holds no worked day that far back. */
+const readingOn = async (day: string | null, spanOn: (d: string) => Promise<DecidedSpan | null>): Promise<SpanReading | null> =>
+  day ? { day, span: await spanOn(day) } : null;
 
 export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
   // The newest 40 days of the daily series: its last row is DOL's last
@@ -94,10 +110,13 @@ export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
 
   const from30 = isoMinus(day, 29);
   const week = dolDayBounds(isoMinus(day, 6));
-  const prior = weekBeforeOf(day, worked.map((d) => String(d.date)));
-  const [span, priorSpan, filed30, movesDay, movesWeek, filedDay, filedWeek] = await Promise.all([
+  // An earlier reading needs a day with enough decisions to draw its span: a Saturday's
+  // stragglers would read as nothing.
+  const workedDays = worked.filter((d) => Number(d.total) >= SPAN_MIN_DECISIONS).map((d) => String(d.date));
+  const [span, weekBefore, monthBefore, filed30, movesDay, movesWeek, filedDay, filedWeek] = await Promise.all([
     permSpanOn(day),
-    prior ? permSpanOn(prior) : Promise.resolve(null),
+    readingOn(dayBeforeOf(day, workedDays, WEEK_DAYS), permSpanOn),
+    readingOn(dayBeforeOf(day, workedDays, MONTH_DAYS), permSpanOn),
     filedBetween(from30, day),
     movesBetween(bounds.lo, bounds.hi),
     week ? movesBetween(week.lo, bounds.hi) : Promise.resolve([]),
@@ -109,12 +128,12 @@ export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
     .reduce((a, d) => a + (Number(d.total) || 0), 0);
   return {
     day,
-    decidedThatDay: Number(last.total) || 0,
     span,
     flow: { ...lineFlow(filed30, decided30), from: from30, to: day },
     movesDay: statusMoves(movesDay, "ANALYST REVIEW", filedDay),
     movesWeek: statusMoves(movesWeek, "ANALYST REVIEW", filedWeek),
-    weekBefore: prior ? { day: prior, span: priorSpan } : null,
+    weekBefore,
+    monthBefore,
   };
 });
 
@@ -129,13 +148,11 @@ const PERM_WAGE = "(s.visa_type IS NULL OR upper(s.visa_type) = 'PERM')";
 export interface PwdBoard {
   /** DOL's last working day with determinations in our record, `YYYY-MM-DD`. */
   day: string;
-  determinedThatDay: number;
   span: DecidedSpan | null;
   flow: LineFlow & { from: string; to: string };
-  /** Requests in process now. */
-  inProcess: number;
-  /** The same reading a week earlier. */
-  weekBefore: { day: string; span: DecidedSpan | null } | null;
+  /** The same reading a week and a month earlier. */
+  weekBefore: SpanReading | null;
+  monthBefore: SpanReading | null;
 }
 
 /** Where one DOL day's PERM wage determinations fell, withdrawals left out. */
@@ -174,32 +191,25 @@ export const getPwdBoard = cache(async (): Promise<PwdBoard | null> => {
   const worked = [...byDay].filter(([d, n]) => d < today && n > 0).sort(([a], [b]) => (a < b ? 1 : -1));
   const last = worked[0];
   if (!last) return null;
-  const [day, determinedThatDay] = last;
-  const bounds = dolDayBounds(day);
-  if (!bounds) return null;
+  const [day] = last;
   const from30 = isoMinus(day, 29);
-  const prior = weekBeforeOf(day, worked.map(([d]) => d));
-  const [span, priorSpan, filed, inProcess] = await Promise.all([
+  const workedDays = worked.filter(([, n]) => n >= SPAN_MIN_DECISIONS).map(([d]) => d);
+  const [span, weekBefore, monthBefore, filed] = await Promise.all([
     pwdSpanOn(day),
-    prior ? pwdSpanOn(prior) : Promise.resolve(null),
+    readingOn(dayBeforeOf(day, workedDays, WEEK_DAYS), pwdSpanOn),
+    readingOn(dayBeforeOf(day, workedDays, MONTH_DAYS), pwdSpanOn),
     rows<{ n: number }>(
       `SELECT COUNT(*) AS n FROM pwd_case_status s INDEXED BY pwd_case_status_filed
         WHERE s.case_number >= ? AND s.case_number < ? AND s.filing_date >= ? AND s.filing_date <= ? AND ${PERM_WAGE}`,
       [...PWD_RANGE, from30, day],
     ),
-    rows<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM pwd_case_status s WHERE s.case_number >= ? AND s.case_number < ?
-         AND s.current_status = 'IN PROCESS' AND ${PERM_WAGE}`,
-      [...PWD_RANGE],
-    ),
   ]);
   const determined30 = [...byDay].filter(([d]) => d >= from30 && d <= day).reduce((a, [, n]) => a + n, 0);
   return {
     day,
-    determinedThatDay,
     span,
     flow: { ...lineFlow(Number(filed[0]?.n) || 0, determined30), from: from30, to: day },
-    inProcess: Number(inProcess[0]?.n) || 0,
-    weekBefore: prior ? { day: prior, span: priorSpan } : null,
+    weekBefore,
+    monthBefore,
   };
 });
