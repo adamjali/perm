@@ -131,13 +131,16 @@ test("the green card timeline plans a certified case, takes the reader's own fig
   await expect(page.getByRole("region", { name: "Your plan at a glance" }).getByText("Cost", { exact: true })).toBeVisible();
   const chart = page.getByRole("region", { name: "How long each step takes" });
   await expect(chart.getByRole("link", { name: "I-140", exact: true })).toBeVisible();
-  await expect(chart.getByRole("link", { name: "Wage request", exact: true })).toHaveCount(0);
+  // The whole journey, the steps before the priority date included, dated back from it.
+  await expect(chart.getByRole("link", { name: "Wage request", exact: true })).toBeVisible();
+  await expect(chart.getByText(/^Done, about /).first()).toBeVisible();
 
   // A changed input goes into the address, so a reload or a shared link opens the same plan.
-  await page.getByLabel("Category").selectOption("EB3");
+  const yourCase = page.getByRole("group", { name: "Your case" });
+  await yourCase.getByLabel("Category").selectOption("EB3");
   await expect(page).toHaveURL(/cat=EB3/);
   await page.reload();
-  await expect(page.getByLabel("Category")).toHaveValue("EB3");
+  await expect(yourCase.getByLabel("Category")).toHaveValue("EB3");
 
   // A step's own length moves the plan, and today's figures come back in one press.
   await page.getByText("Change the figures").click();
@@ -147,14 +150,12 @@ test("the green card timeline plans a certified case, takes the reader's own fig
   await page.getByRole("button", { name: /Back to today's figures/ }).click();
   await expect(page.getByText("1 changed")).toHaveCount(0);
 
-  // The bulletin wait two ways: when the line isn't current, the people ahead can date the plan instead.
-  const choose = page.getByRole("button", { name: "Choose how it's worked out" });
-  if (await choose.count()) {
-    await choose.click();
-    const supply = page.getByLabel(/People ahead of you/);
+  // When the priority date becomes current, two ways: when the line isn't current, one press dates the plan by the people ahead.
+  const supply = page.getByRole("button", { name: /By the people ahead of you/ });
+  if (await supply.count()) {
     await expect(supply).toBeEnabled({ timeout: 20000 });
-    await supply.check();
-    await expect(supply).toBeChecked();
+    await supply.click();
+    await expect(supply).toHaveAttribute("aria-pressed", "true");
   }
 
   // A cost the reader adds lands on the employer's side when the law puts it there.
