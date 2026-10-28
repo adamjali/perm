@@ -8,8 +8,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1554
   ],
   "viewport": 1280
  },
@@ -22,8 +22,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1185
   ],
   "viewport": 1280
  },
@@ -36,22 +36,23 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1042
   ],
   "viewport": 1280
  },
  {
   "slug": "badges",
   "path": "/badges",
+  "from": "DOL queues",
   "title": "PERM queue badges",
   "label": "Embeddable badges of DOL's own figures, regenerated daily.",
   "shot": "badges.png",
   "crop": [
    0,
    0,
-   1456,
-   996
+   2048,
+   1232
   ]
  },
  {
@@ -64,21 +65,23 @@
    0,
    0,
    2048,
-   1400
+   1382
   ]
  },
  {
   "slug": "developers",
   "path": "/developers",
+  "fromEl": "main figure[aria-label^=\"The employer lookup\"]",
   "title": "API and MCP server",
   "label": "Federal PERM, wage, H-1B and visa bulletin records as JSON, and as tools for AI assistants.",
   "shot": "developers.png",
   "crop": [
    0,
    0,
-   2048,
-   1400
-  ]
+   1376,
+   942
+  ],
+  "css": "main figure pre{max-height:9.5rem!important;overflow:hidden!important}main *:not(:has(figure[aria-label^=\"The employer lookup\"])):not(figure[aria-label^=\"The employer lookup\"]):not(figure[aria-label^=\"The employer lookup\"] *){visibility:hidden!important}main :has(figure[aria-label^=\"The employer lookup\"]){border-color:transparent!important;box-shadow:none!important;background:transparent!important}"
  },
  {
   "slug": "api-terms",
@@ -102,9 +105,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   934
+  ],
+  "from": "PERM (permanent labor certification)"
  },
  {
   "slug": "email-preferences",
@@ -116,25 +120,27 @@
    0,
    0,
    2048,
-   1400
+   1182
   ]
  },
  {
   "slug": "estimate-scorecard",
   "path": "/estimate-scorecard",
+  "from": "Typical miss on real decisions",
   "title": "Estimate scorecard",
   "label": "Every decision-date estimate, recorded before the outcome and scored against DOL's decision.",
   "shot": "estimate-scorecard.png",
   "crop": [
    0,
    0,
-   2048,
-   1400
+   1952,
+   1100
   ]
  },
  {
   "slug": "glossary",
   "path": "/glossary",
+  "from": "Where each term comes up",
   "title": "PERM glossary",
   "label": "Every term the site uses, where it comes from, and where it meets real data.",
   "shot": "glossary.png",
@@ -142,7 +148,7 @@
    0,
    0,
    2048,
-   1400
+   1144
   ]
  },
  {
@@ -154,8 +160,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1154
   ]
  },
  {
@@ -167,8 +173,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   932
   ]
  },
  {
@@ -180,9 +186,25 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1504
+  ],
+  "fill": [
+   [
+    "First day of H-1B status",
+    "2021-10-01"
+   ],
+   [
+    "Days outside the U.S. (optional)",
+    "45"
+   ],
+   [
+    "PERM filing date (optional)",
+    "2026-06-15"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "i140-calculator",
@@ -193,9 +215,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1028
+  ],
+  "from": "Where the backlog sits"
  },
  {
   "slug": "i140-trends",
@@ -206,8 +229,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1028
   ]
  },
  {
@@ -219,22 +242,26 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1004
+  ],
+  "from": "The whole pending inventory"
  },
  {
   "slug": "green-card-line",
-  "path": "/tools/green-card-line",
+  "path": "/tools/green-card-line?category=EB2&country=india&pd=2014-06-15",
   "title": "Your place in the green card line",
   "label": "Everyone ahead of a priority date in EB-2 and EB-3, by country, as a range.",
   "shot": "green-card-line.png",
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1496
+  ],
+  "from": "Who is ahead of you?",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "eb2-vs-eb3",
@@ -245,9 +272,22 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1504
+  ],
+  "fill": [
+   [
+    "Country of chargeability",
+    "India"
+   ],
+   [
+    "Priority date",
+    "2014-06-15"
+   ]
+  ],
+  "from": "Compare the two lines",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "which-green-card",
@@ -258,9 +298,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   980
+  ],
+  "from": "One category could fit"
  },
  {
   "slug": "h1b-lottery-odds",
@@ -271,9 +312,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   864
+  ],
+  "from": "From FY2027"
  },
  {
   "slug": "visa-bulletin-categories",
@@ -284,9 +326,11 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   1546
+  ],
+  "viewport": 1440,
+  "maxWidth": 1200
  },
  {
   "slug": "nvc-waiting-list",
@@ -297,9 +341,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   944
+  ],
+  "from": "Employment-based, by category"
  },
  {
   "slug": "visa-issuances",
@@ -310,9 +355,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   988
+  ],
+  "from": "Who got them"
  },
  {
   "slug": "green-card-timelines",
@@ -323,9 +369,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1004
+  ],
+  "from": "How long each step took"
  },
  {
   "slug": "uscis-processing-times",
@@ -336,8 +383,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1028
   ]
  },
  {
@@ -351,7 +398,7 @@
    0,
    0,
    1504,
-   1028
+   1024
   ]
  },
  {
@@ -363,9 +410,11 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   1466
+  ],
+  "from": "Every office, by state",
+  "viewport": 1440
  },
  {
   "slug": "i140-awaiting-visa",
@@ -376,8 +425,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1028
   ]
  },
  {
@@ -389,8 +438,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   818
   ]
  },
  {
@@ -402,9 +451,12 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1264
+  ],
+  "fromEl": "main ul:has(> li > a[href$=\"/browse/a\"])",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "perm-case-statuses",
@@ -416,7 +468,7 @@
    0,
    0,
    2048,
-   1400
+   1602
   ]
  },
  {
@@ -428,8 +480,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1236
   ],
   "viewport": 1280
  },
@@ -442,9 +494,26 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1384
+  ],
+  "fill": [
+   [
+    "Prevailing wage determination date",
+    "2026-03-16"
+   ],
+   [
+    "First recruitment step (optional)",
+    "2026-04-05"
+   ],
+   [
+    "Last recruitment step (optional)",
+    "2026-05-10"
+   ]
+  ],
+  "from": "Your PERM deadlines",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "perm-employers-browse",
@@ -455,9 +524,12 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1264
+  ],
+  "fromEl": "main ul:has(> li > a[href$=\"/browse/a\"])",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "perm-employers-under-review",
@@ -468,22 +540,26 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   974
+  ],
+  "from": "On hold right now"
  },
  {
   "slug": "perm-timeline-calculator",
-  "path": "/tools/perm-timeline-calculator",
+  "path": "/tools/perm-timeline-calculator?date=2026-01-15",
   "title": "Processing time calculator",
   "label": "Where a filing month stands in DOL's queue, and an estimate that's checked as it goes.",
   "shot": "perm-timeline-calculator.png",
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1504
+  ],
+  "from": "When will DOL decide my PERM?",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "perm-wages-browse",
@@ -494,9 +570,12 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1264
+  ],
+  "fromEl": "main ul:has(> li > a[href$=\"/browse/a\"])",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "priority-date-calculator",
@@ -507,9 +586,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1158
+  ],
+  "from": "How the cutoff has moved"
  },
  {
   "slug": "priority-date-retention",
@@ -520,9 +600,21 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1504
+  ],
+  "fill": [
+   [
+    "I-140 approval date",
+    "2026-01-20"
+   ],
+   [
+    "I-485 receipt date (optional)",
+    "2026-03-02"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "pwd-calculator",
@@ -533,9 +625,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1020
+  ],
+  "from": "Where the backlog sits"
  },
  {
   "slug": "pwd-validity",
@@ -546,9 +639,17 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1452
+  ],
+  "fill": [
+   [
+    "Determination date",
+    "2026-02-10"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "rfi-deadline",
@@ -559,9 +660,17 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1452
+  ],
+  "fill": [
+   [
+    "Date on DOL's letter",
+    "2026-10-20"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "salary-explorer",
@@ -572,9 +681,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1000
+  ],
+  "from": "Where the wages land"
  },
  {
   "slug": "visa-bulletin-family",
@@ -585,9 +695,12 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   1554
+  ],
+  "from": "Final action dates",
+  "viewport": 1440,
+  "maxWidth": 1200
  },
  {
   "slug": "sponsor-finder",
@@ -598,8 +711,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1028
   ]
  },
  {
@@ -611,9 +724,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   620
+  ],
+  "from": "By fiscal year"
  },
  {
   "slug": "perm-recruitment",
@@ -625,7 +739,7 @@
    0,
    0,
    1504,
-   1028
+   780
   ],
   "from": "How long before filing"
  },
@@ -638,8 +752,24 @@
   "crop": [
    0,
    0,
-   1648,
-   1128
+   2432,
+   1186
+  ],
+  "viewport": 1440,
+  "maxWidth": 1408,
+  "css": "main table tbody tr:nth-child(n+6){display:none!important}"
+ },
+ {
+  "slug": "today",
+  "path": "/today",
+  "title": "Where every step stands today",
+  "label": "The wage request, PERM, I-140 and visa bulletin on one board: where DOL and the State Department are, whether each line is growing, and what moved.",
+  "shot": "today.png",
+  "crop": [
+   0,
+   0,
+   2048,
+   1334
   ]
  },
  {
@@ -651,9 +781,10 @@
   "crop": [
    0,
    0,
-   1648,
-   1128
-  ]
+   2528,
+   1730
+  ],
+  "viewport": 1440
  },
  {
   "slug": "ead-extension",
@@ -664,9 +795,21 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1480
+  ],
+  "fill": [
+   [
+    "\"Card Expires\" date on the EAD",
+    "2026-12-15"
+   ],
+   [
+    "\"Received Date\" on the renewal's I-797C",
+    "2026-09-30"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "wage-levels",
@@ -677,9 +820,26 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1444
+  ],
+  "fill": [
+   [
+    "SOC code",
+    "15-1252"
+   ],
+   [
+    "State",
+    "California"
+   ],
+   [
+    "Area",
+    "#1"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100,
+  "wait": 9000
  },
  {
   "slug": "about",
@@ -691,7 +851,7 @@
    0,
    0,
    2048,
-   1400
+   1092
   ]
  },
  {
@@ -704,7 +864,7 @@
    0,
    0,
    2048,
-   1400
+   1178
   ]
  },
  {
@@ -717,7 +877,7 @@
    0,
    0,
    2048,
-   1400
+   1276
   ],
   "fromEl": "#write form",
   "above": 60,
@@ -734,8 +894,9 @@
    0,
    0,
    2048,
-   1400
-  ]
+   1200
+  ],
+  "from": "Data notes"
  },
  {
   "slug": "calculators",
@@ -746,9 +907,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1308
+  ],
+  "from": "Which one answers your question?"
  },
  {
   "slug": "case-search",
@@ -759,8 +921,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1380
   ],
   "viewport": 1280
  },
@@ -774,7 +936,7 @@
    0,
    0,
    2048,
-   1400
+   1376
   ]
  },
  {
@@ -787,7 +949,7 @@
    0,
    0,
    2048,
-   1400
+   1820
   ]
  },
  {
@@ -799,9 +961,10 @@
   "crop": [
    0,
    0,
-   1072,
-   734
-  ]
+   1520,
+   1040
+  ],
+  "from": "Using PERM Tracker"
  },
  {
   "slug": "for-attorneys",
@@ -813,7 +976,7 @@
    0,
    0,
    2048,
-   1400
+   1376
   ],
   "above": 150,
   "maxWidth": 1408
@@ -840,12 +1003,12 @@
   "crop": [
    0,
    0,
-   1400,
-   958
+   1592,
+   790
   ],
-  "fromEl": "main ul[aria-label=\"Free on both sides\"]",
-  "maxWidth": 700,
-  "above": 12,
+  "fromEl": "#hero .object",
+  "maxWidth": 796,
+  "above": 24,
   "viewport": 1440,
   "second": {
    "file": "public/images/for-attorneys/case-card-light.webp",
@@ -863,8 +1026,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1146
   ],
   "viewport": 1280
  },
@@ -878,7 +1041,7 @@
    0,
    0,
    2048,
-   1400
+   1344
   ]
  },
  {
@@ -890,8 +1053,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1356
   ],
   "viewport": 1280
  },
@@ -904,9 +1067,11 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   2078
+  ],
+  "viewport": 1440,
+  "maxWidth": 1200
  },
  {
   "slug": "perm-case-status",
@@ -917,8 +1082,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   910
   ]
  },
  {
@@ -930,8 +1095,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1004
   ]
  },
  {
@@ -943,9 +1108,11 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   1534
+  ],
+  "from": "Which wage bands hold the denials",
+  "viewport": 1440
  },
  {
   "slug": "perm-employers",
@@ -956,8 +1123,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1356
   ],
   "viewport": 1280
  },
@@ -970,9 +1137,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1004
+  ],
+  "from": "How the queue has moved"
  },
  {
   "slug": "perm-queue",
@@ -983,9 +1151,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1028
+  ],
+  "from": "The wall, by filing month"
  },
  {
   "slug": "perm-rfi-audit",
@@ -996,8 +1165,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   1028
   ]
  },
  {
@@ -1009,8 +1178,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1090
   ],
   "viewport": 1280
  },
@@ -1024,7 +1193,7 @@
    0,
    0,
    1568,
-   1072
+   1060
   ]
  },
  {
@@ -1036,9 +1205,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   1504,
+   1000
+  ],
+  "from": "Where the wages land"
  },
  {
   "slug": "h1b-employers",
@@ -1049,9 +1219,11 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   1402
+  ],
+  "from": "The 100 busiest",
+  "viewport": 1440
  },
  {
   "slug": "compare-my-offer",
@@ -1062,9 +1234,25 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1504
+  ],
+  "fill": [
+   [
+    "Occupation",
+    "Software Developers"
+   ],
+   [
+    "Worksite state",
+    "CA"
+   ],
+   [
+    "Your offer",
+    "145000"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "policy-changes",
@@ -1076,21 +1264,24 @@
    0,
    0,
    2048,
-   1400
+   1372
   ]
  },
  {
   "slug": "employer-compare",
-  "path": "/perm-employers/compare",
+  "path": "/perm-employers/compare?a=microsoft-corporation&b=google-llc",
   "title": "Compare employers",
   "label": "Two employers side by side: PERM rate, wages and the last twelve months.",
   "shot": "employer-compare.png",
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2200,
+   1236
+  ],
+  "fromEl": "main table",
+  "viewport": 1440,
+  "maxWidth": 1100
  },
  {
   "slug": "seasonal-cases",
@@ -1101,8 +1292,8 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   908
   ]
  },
  {
@@ -1114,8 +1305,8 @@
   "crop": [
    0,
    0,
-   2032,
-   1390
+   2016,
+   1236
   ],
   "viewport": 1280
  },
@@ -1129,8 +1320,9 @@
    0,
    0,
    1824,
-   1248
-  ]
+   1412
+  ],
+  "from": "What every page is sent with"
  },
  {
   "slug": "accessibility",
@@ -1142,8 +1334,9 @@
    0,
    0,
    1568,
-   1072
-  ]
+   876
+  ],
+  "from": "What that means here"
  },
  {
   "slug": "uscis-case-status",
@@ -1154,9 +1347,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
-  ]
+   2336,
+   1478
+  ],
+  "viewport": 1440
  },
  {
   "slug": "terms",
@@ -1168,7 +1362,7 @@
    0,
    0,
    1568,
-   1072
+   1060
   ]
  },
  {
@@ -1180,10 +1374,10 @@
   "crop": [
    0,
    0,
-   1520,
-   1040
+   1504,
+   816
   ],
-  "from": "When it comes out"
+  "from": "What the "
  },
  {
   "slug": "tools",
@@ -1194,8 +1388,9 @@
   "crop": [
    0,
    0,
-   2048,
-   1400
-  ]
+   1504,
+   1008
+  ],
+  "from": "The queue, oldest first"
  }
 ]

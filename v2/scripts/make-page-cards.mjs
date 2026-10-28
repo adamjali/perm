@@ -11,7 +11,7 @@
  * card's `label` stays in the spec as the page's one-line summary; it isn't
  * drawn.
  *
- *   node scripts/make-page-cards.mjs <spec.json> <shots-dir> [--only slug]
+ *   node scripts/make-page-cards.mjs <spec.json> <shots-dir> [--only slug[,slug...]]
  *
  * The spec is scripts/page-cards.json, kept in the repo so a re-render never
  * depends on a scratch folder: capture the shots with capture-card-shots.mjs
@@ -53,12 +53,30 @@ const FOOT = 96;
 const SHADOW = 12;
 const FRAME = { left: 472, top: 52, width: W - M - SHADOW - 472, height: H - FOOT - 24 - SHADOW - 52 };
 
+/**
+ * The frame takes the picture's own shape inside the frame area: full width for
+ * a wide picture (centred on the area's height), full height for a tall one.
+ * A picture cut short of the area's ratio no longer leaves an empty band inside
+ * the frame (owner, Oct 27 2026).
+ */
+function frameFor(crop) {
+  const ratio = crop[2] / crop[3];
+  let width = FRAME.width;
+  let height = Math.round(width / ratio);
+  if (height > FRAME.height) {
+    height = FRAME.height;
+    width = Math.round(height * ratio);
+  }
+  return { left: FRAME.left + FRAME.width - width, top: FRAME.top + Math.round((FRAME.height - height) / 2), width, height };
+}
+
 async function insetDataUrl(shotPath, crop) {
   const [x, y, w, h] = crop;
   // Drawn at twice the frame's size, so the card's downscale keeps type crisp;
   // cut to the frame's ratio from the top if a crop is a little long.
-  const width = FRAME.width * 2;
-  const height = FRAME.height * 2;
+  const box = frameFor(crop);
+  const width = box.width * 2;
+  const height = box.height * 2;
   const buf = await sharp(shotPath)
     .extract({ left: x, top: y, width: w, height: h })
     .resize({ width, height, fit: "cover", position: "top" })
@@ -114,6 +132,7 @@ function secondHtml(second) {
 }
 
 function html(card, inset) {
+  const box = frameFor(card.crop);
   const f = (p) => `url(data:font/woff2;base64,${readFileSync(p).toString("base64")}) format('woff2')`;
   const n = card.title.length;
   const titlePx = n <= 12 ? 64 : n <= 20 ? 58 : n <= 30 ? 50 : 44;
@@ -139,7 +158,7 @@ html,body{width:${W}px;height:${H}px;overflow:hidden}
 </style>
 <div class="card">
   <div class="text${card.second ? " top" : ""}"><div class="title">${titleHtml(card.title)}</div></div>
-  <div class="frame"><img src="${inset}" alt=""></div>
+  <div class="frame" style="left:${box.left}px;top:${box.top}px;width:${box.width}px;height:${box.height}px"><img src="${inset}" alt=""></div>
   ${secondHtml(card.second)}
   <div class="foot"><div class="brand"><b>PERM</b> Tracker</div><div class="site">permtracker.app</div></div>
 </div>`;
@@ -148,7 +167,7 @@ html,body{width:${W}px;height:${H}px;overflow:hidden}
 const [specPath, shotsDir] = process.argv.slice(2);
 const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1] : null;
 let cards = JSON.parse(readFileSync(specPath, "utf8"));
-if (only) cards = cards.filter((c) => c.slug === only);
+if (only) cards = cards.filter((c) => only.split(",").includes(c.slug));
 if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 try {

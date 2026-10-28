@@ -72,7 +72,7 @@ export function StageBand({
         )}
       >
         <div className={cn("lg:col-span-4", flip && (pinned ? "lg:motion-reduce:order-2" : "lg:order-2"))}>
-          <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-4xl">{title}</h2>{" "}
+          <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-4xl lg:text-3xl xl:text-4xl">{title}</h2>{" "}
           <p className={cn("mt-4 text-lg leading-relaxed", ink ? "text-white/80 dark:text-soft" : "text-soft")}>{lead}</p>{" "}
           {children}
         </div>{" "}
