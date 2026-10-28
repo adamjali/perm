@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { BulletinMonth } from "@/lib/perm";
 
-import { bulletinMoves, decidedSpan, LEVEL_SHARE, lineFlow, SPAN_MIN_DECISIONS, statusMoves } from "../board";
+import { backlogStatus, bulletinMoves, bulletinStatus, decidedSpan, LEVEL_SHARE, lineFlow, paceStatus, SPAN_MIN_DECISIONS, statusMoves } from "../board";
 
 const days = (spec: [string, number][]) => spec.flatMap(([d, n]) => Array.from({ length: n }, () => d));
 
@@ -83,5 +83,27 @@ describe("bulletinMoves: each cutoff and how it moved", () => {
   it("leaves the move blank when the bulletin before isn't the month right before", () => {
     const [eb2] = bulletinMoves(month("2026-11", "01APR25", "C"), month("2026-08", "01JAN25", "C"), ["EB2"], ["worldwide"]);
     expect(eb2!.cells[0]!.move).toBe("");
+  });
+});
+
+describe("step statuses", () => {
+  it("calls a line that lost cases shrinking, and one that gained them growing", () => {
+    expect(backlogStatus(lineFlow(9000, 12000))).toEqual({ kind: "shrinking", word: "Backlog shrinking", detail: "3,000 fewer in 30 days", tone: "good" });
+    expect(backlogStatus(lineFlow(12000, 9000))).toEqual({ kind: "growing", word: "Backlog growing", detail: "3,000 more in 30 days", tone: "warn" });
+    expect(backlogStatus(lineFlow(10000, 10050)).tone).toBe("flat");
+  });
+
+  it("calls a shorter median quicker and a longer one slower", () => {
+    expect(paceStatus(4.2, 3.9).word).toBe("Getting quicker");
+    expect(paceStatus(3.9, 4.2).word).toBe("Getting slower");
+    expect(paceStatus(3.9, 3.9).tone).toBe("flat");
+  });
+
+  it("names a bulletin move advancing, retrogressed or holding", () => {
+    expect(bulletinStatus("advanced")?.word).toBe("Advancing");
+    expect(bulletinStatus("retrogressed")?.word).toBe("Retrogressed");
+    expect(bulletinStatus("shut")?.tone).toBe("bad");
+    expect(bulletinStatus("held")?.word).toBe("Holding");
+    expect(bulletinStatus("unknown")).toBeNull();
   });
 });

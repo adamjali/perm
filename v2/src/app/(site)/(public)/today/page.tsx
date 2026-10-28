@@ -12,12 +12,16 @@ import {
   Track,
   WaitBar,
 } from "@/components/board/BoardParts";
+import { StagePicker, type StageCard } from "@/components/board/StagePicker";
 import { PermPulse } from "@/components/pulse/PermPulse";
 import {
   aboutMonths,
+  backlogStatus,
   bulletinMoves,
   bulletinShift,
+  bulletinStatus,
   medianShift,
+  paceStatus,
   positionShift,
   rulerOf,
   waitScaleDays,
@@ -29,7 +33,7 @@ import { getLiveCensus } from "@/lib/db/liveCensus";
 import { getVisaBulletins } from "@/lib/db/publicData";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
-import { getUscisFormHistory } from "@/lib/db/uscisQuarterly";
+import { getUscisFormHistory, getUscisFormMedian } from "@/lib/db/uscisQuarterly";
 import { parseCutoff, type BulletinMonth, type CountryKey } from "@/lib/perm";
 import { GROUPS, SECTIONS } from "@/lib/siteMap";
 import { withSocialCard } from "@/lib/socialCard";
@@ -72,7 +76,7 @@ const BULLETIN_CATEGORIES = ["EB1", "EB2", "EB3", "EW3"];
 const BULLETIN_COUNTRIES: CountryKey[] = ["worldwide", "china", "india", "mexico", "philippines"];
 
 export default async function TodayPage() {
-  const [perm, pwd, census, observed, coverage, i140, bulletins] = await Promise.all([
+  const [perm, pwd, census, observed, coverage, i140, bulletins, i485] = await Promise.all([
     getPermBoard().catch(() => null),
     getPwdBoard().catch(() => null),
     getLiveCensus().catch(() => null),
@@ -80,6 +84,7 @@ export default async function TodayPage() {
     getSweepCoverage().catch(() => null),
     getUscisFormHistory("I-140"),
     getVisaBulletins().catch(() => []),
+    getUscisFormMedian("I-485", "Employment"),
   ]);
 
   // How many PERM cases sit in each status now, from the census.
@@ -131,7 +136,89 @@ export default async function TodayPage() {
     perm?.span && perm.weekBefore?.span ? positionShift(perm.weekBefore.span.middle, perm.span.middle, monthDay(perm.weekBefore.day) ?? perm.weekBefore.day) : null;
   const i140Prev = i140Points.length > 1 ? i140Points.at(-2)! : null;
   const i140Shift = i140Now && i140Prev ? medianShift(i140Prev.value, i140Now.value, i140Prev.tick) : null;
+  // Each step's state as a status board says it (Sabrina, Oct 27 2026: the backlog and retrogression marks).
+  const pwdStatus = pwd ? backlogStatus(pwd.flow) : null;
+  const permStatus = perm ? backlogStatus(perm.flow) : null;
+  const i140Status = i140Now && i140Prev ? paceStatus(i140Prev.value, i140Now.value) : null;
+  const eb2Status = eb2 ? bulletinStatus(eb2.kind) : null;
   const eb2Shift = eb2 && latest ? bulletinShift(eb2.kind, eb2.movedDays, monthYear(latest.bulletinMonth)?.split(" ")[0] ?? "the newest bulletin") : null;
+
+  // Each step to a green card, picked one at a time (Sabrina, Oct 27 2026: "pick a stage is
+  // nice"). How long each takes now comes from the same live figures as the track above.
+  const stages: StageCard[] = [
+    {
+      key: "wage-request",
+      name: "Wage request",
+      who: "The employer, usually through its attorney",
+      form: "ETA-9141, filed with DOL's National Prevailing Wage Center in FLAG",
+      howLong: pwdRuler ? aboutMonths(pwdRuler.waitedDays) : "Not read yet",
+      howLongNote: pwd && pwdRuler ? `Filed to decided, for DOL's middle decision on ${monthDay(pwd.day)}` : undefined,
+      what: "DOL sets the lowest wage the job may offer, for its occupation and where the work is.",
+      watch: "The determination is valid for 90 days to a year, and recruitment has to begin before it expires.",
+      href: "/pwd-cases",
+      linkLabel: "Wage requests now",
+    },
+    {
+      key: "recruitment",
+      name: "Recruitment",
+      who: "The employer",
+      form: "Nothing is filed: a state job order, two Sunday ads and a notice at the worksite, plus three more steps for a professional job",
+      howLong: "About 2 months at the least",
+      howLongNote: "A 30-day job order, then 30 days before the PERM can be filed",
+      what: "The employer tests the job market for qualified US workers who are available.",
+      watch: "File no sooner than 30 days after the last step and within 180 days of the first, or the steps have to be run again.",
+      href: "/tools/perm-deadline-calculator",
+      linkLabel: "Work out the deadlines",
+    },
+    {
+      key: "perm",
+      name: "PERM",
+      who: "The employer, through its attorney",
+      form: "ETA-9089, filed with DOL in FLAG",
+      howLong: permRuler ? aboutMonths(permRuler.waitedDays) : "Not read yet",
+      howLongNote: perm && permRuler ? `Filed to decided, for DOL's middle decision on ${monthDay(perm.day)}` : undefined,
+      what: "A DOL analyst reviews the application and certifies or denies it, sometimes after asking for more: an audit or a request for information.",
+      watch: "Cases wait in filing order. One put on hold, sent an RFI or under appeal leaves that order.",
+      href: "/perm-queue",
+      linkLabel: "Where the PERM line stands",
+    },
+    {
+      key: "i140",
+      name: "I-140",
+      who: "The employer",
+      form: "I-140, filed with USCIS with the certified ETA-9089",
+      howLong: i140Now ? `${i140Now.value} months` : "Not read yet",
+      howLongNote: i140Now ? `USCIS's median, ${i140Now.tick}. Premium processing is quicker, for a fee` : undefined,
+      what: "USCIS checks that the worker meets the job's requirements and that the employer can pay the wage. The PERM's filing date becomes the priority date.",
+      watch: "File within 180 days of the PERM's certification, or the certification expires.",
+      href: "/uscis-processing-times",
+      linkLabel: "USCIS processing times",
+    },
+    {
+      key: "i485",
+      name: "I-485",
+      who: "The worker and their family, inside the US",
+      form: "I-485, filed with USCIS once the priority date is current",
+      howLong: i485 ? `${i485.medianMonths} months` : "Not read yet",
+      howLongNote: i485 ? `USCIS's median for employment-based cases, Q${i485.quarter} ’${String(i485.fy).slice(2)}` : undefined,
+      what: "USCIS decides the green card itself. A work permit and a travel document can come while it waits.",
+      watch: "The visa bulletin decides the month you can file, from your category, country and priority date.",
+      href: "/i485-by-field-office",
+      linkLabel: "The I-485 by office",
+    },
+    {
+      key: "green-card",
+      name: "Green card",
+      who: "USCIS approves it, once a visa number is free",
+      form: "No new form: the I-485's approval",
+      howLong: eb2Cut?.kind === "date" ? `Filed before ${shortDate(eb2Cut.iso)}` : eb2?.latest ?? "Not read yet",
+      howLongNote: bulletinLabel ? `EB-2, rest of world, in the ${bulletinLabel} bulletin. Other lines differ` : undefined,
+      what: "USCIS approves the I-485 once the priority date is earlier than the final action date for its line.",
+      watch: "A cutoff can move back (retrogression), so a date that's current one month may not be the next.",
+      href: "/visa-bulletin",
+      linkLabel: "The visa bulletin",
+    },
+  ];
 
   return (
     <div className="mx-auto w-full max-w-[1200px] px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
@@ -161,6 +248,7 @@ export default async function TodayPage() {
               ) : null
             }
             shift={pwdShift}
+            status={pwdStatus}
             href="/pwd-cases"
             linkLabel="Wage requests"
           />{" "}
@@ -182,6 +270,7 @@ export default async function TodayPage() {
               ) : null
             }
             shift={permShift}
+            status={permStatus}
             href="/perm-queue"
             linkLabel="Where the line stands"
           />{" "}
@@ -203,6 +292,7 @@ export default async function TodayPage() {
               ) : null
             }
             shift={i140Shift}
+            status={i140Status}
             href="/uscis-processing-times"
             linkLabel="USCIS processing times"
           />{" "}
@@ -221,11 +311,21 @@ export default async function TodayPage() {
               ) : null
             }
             shift={eb2Shift}
+            status={eb2Status}
             href="/visa-bulletin"
             linkLabel="The visa bulletin"
           />
         </Track>
       </div>{" "}
+      <section aria-labelledby="steps" className="mt-16">
+        <h2 id="steps" className="font-heading text-2xl font-bold">
+          Pick a step
+        </h2>{" "}
+        <p className="mt-2 text-base text-soft">Who files it, where, and how long it takes right now.</p>{" "}
+        <div className="mt-6">
+          <StagePicker stages={stages} />
+        </div>
+      </section>{" "}
       {pwd || perm ? (
         <section aria-labelledby="lines" className="mt-16">
           <h2 id="lines" className="font-heading text-2xl font-bold">

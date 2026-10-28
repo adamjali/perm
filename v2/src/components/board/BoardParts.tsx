@@ -1,9 +1,22 @@
 import Link from "next/link";
-import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon } from "@phosphor-icons/react/ssr";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  CaretDownIcon,
+  EqualsIcon,
+  FastForwardIcon,
+  HourglassMediumIcon,
+  LightningIcon,
+  PauseIcon,
+  RewindIcon,
+  TrendDownIcon,
+  TrendUpIcon,
+} from "@phosphor-icons/react/ssr";
 import { Fragment, type ReactNode } from "react";
 
 import { ScrollBox } from "@/components/ui/scroll-box";
-import type { BulletinMoveRow, LineFlow, Shift, StatusMove } from "@/lib/board";
+import type { BulletinMoveRow, LineFlow, Shift, StatusMove, StepStatus } from "@/lib/board";
 import { CATEGORY_LABEL } from "@/lib/bulletinNext";
 import { cn } from "@/lib/utils";
 import { monthDay } from "@convex/lib/months";
@@ -49,19 +62,6 @@ export function Track({ steps, children }: { steps: readonly string[]; children:
   );
 }
 
-const SHIFT_TEXT: Record<Shift["tone"], string> = { good: "text-data-good-ink", bad: "text-data-bad-ink", flat: "text-soft" };
-
-/** A shift as one line, with its arrow and colour. */
-export function ShiftLine({ shift }: { shift: Shift }) {
-  const Icon = shift.tone === "good" ? ArrowUpIcon : shift.tone === "bad" ? ArrowDownIcon : ArrowRightIcon;
-  return (
-    <p className={cn("flex items-start gap-1.5 text-sm font-semibold", SHIFT_TEXT[shift.tone])}>
-      <Icon aria-hidden="true" weight="bold" className="mt-0.5 size-4 shrink-0" />
-      <span>{shift.text}</span>
-    </p>
-  );
-}
-
 export function Station({
   step,
   name,
@@ -69,6 +69,7 @@ export function Station({
   big,
   picture,
   shift,
+  status,
   href,
   linkLabel,
 }: {
@@ -81,6 +82,8 @@ export function Station({
   picture: ReactNode;
   /** How it moved, coloured by direction. */
   shift?: Shift | null;
+  /** The step's state as a status board says it: backlog shrinking, retrogressed. */
+  status?: StepStatus | null;
   href: string;
   linkLabel: string;
 }) {
@@ -96,11 +99,74 @@ export function Station({
       <p className="mt-3 text-sm text-soft">{lead}</p>{" "}
       <p className="font-heading text-[1.75rem] font-bold leading-tight tabular-nums">{big}</p>{" "}
       <div className="mt-5 h-24">{picture}</div>{" "}
-      {shift ? <div className="mt-3">{<ShiftLine shift={shift} />}</div> : null}{" "}
-      <Link href={href} className="link mt-auto inline-flex min-h-11 items-center gap-1 pt-3 text-sm font-semibold">
-        {linkLabel} <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
-      </Link>
+      {/* The state and the link sit at the card's foot, so the four steps' lines align. */}
+      <div className="mt-auto pt-3">
+        {status || shift ? <StepState status={status ?? null} shift={shift ?? null} /> : null}{" "}
+        <Link href={href} className="link inline-flex min-h-11 items-center gap-1 pt-1 text-sm font-semibold">
+          {linkLabel} <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
+        </Link>
+      </div>
     </li>
+  );
+}
+
+const STATE_TEXT: Record<StepStatus["tone"], string> = {
+  good: "text-data-good-ink",
+  warn: "text-data-warn-ink",
+  bad: "text-data-bad-ink",
+  flat: "text-soft",
+};
+const STATE_TILE: Record<StepStatus["tone"], string> = {
+  good: "bg-soft-good",
+  warn: "bg-soft-wait",
+  bad: "bg-soft-bad",
+  flat: "bg-tint",
+};
+const STATE_ICON: Record<StepStatus["kind"], typeof TrendDownIcon> = {
+  shrinking: TrendDownIcon,
+  growing: TrendUpIcon,
+  level: EqualsIcon,
+  quicker: LightningIcon,
+  slower: HourglassMediumIcon,
+  steady: EqualsIcon,
+  advancing: FastForwardIcon,
+  retrogressed: RewindIcon,
+  holding: PauseIcon,
+};
+
+/**
+ * A step's state as one row (owner, Oct 27 2026: one line, the details folded, clean but
+ * not bare text): an icon in its colour on a soft tile, the word, and the figure behind it.
+ * What else moved folds underneath.
+ */
+export function StepState({ status, shift }: { status: StepStatus | null; shift: Shift | null }) {
+  if (!status && !shift) return null;
+  const tone = status?.tone ?? (shift?.tone === "good" ? "good" : shift?.tone === "bad" ? "bad" : "flat");
+  const Icon = status ? STATE_ICON[status.kind] : shift?.tone === "good" ? FastForwardIcon : shift?.tone === "bad" ? RewindIcon : EqualsIcon;
+  const word = status?.word ?? shift?.text ?? "";
+  // The figure under the word: the state's own, or how far it moved.
+  const figure = status?.detail ?? (status ? shift?.text : undefined);
+  const more = status?.detail && shift ? shift.text : null;
+  const row = (
+    <>
+      <span aria-hidden="true" className={cn("grid size-9 shrink-0 place-items-center", STATE_TILE[tone], STATE_TEXT[tone])}>
+        <Icon weight="bold" className="size-5" />
+      </span>{" "}
+      <span className="min-w-0 leading-snug">
+        <span className={cn("block font-heading font-bold", STATE_TEXT[tone])}>{word}</span>{" "}
+        {figure ? <span className="block text-soft">{figure}</span> : null}
+      </span>
+    </>
+  );
+  if (!more) return <div className="flex min-h-11 items-center gap-3 py-1 text-sm">{row}</div>;
+  return (
+    <details className="group text-sm">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 py-1 [&::-webkit-details-marker]:hidden">
+        {row}{" "}
+        <CaretDownIcon aria-hidden="true" weight="bold" className="ml-auto size-4 shrink-0 text-soft transition-transform group-open:rotate-180" />
+      </summary>{" "}
+      <p className="pb-1 pl-12 text-soft">{more}</p>
+    </details>
   );
 }
 
@@ -239,7 +305,7 @@ export function Balance({ name, flow, href }: { name: string; flow: LineFlow & {
 const DECIDED_FILL: Record<string, string> = {
   CERTIFIED: "bg-data-good-ink",
   DENIED: "bg-data-bad-ink",
-  WITHDRAWN: "bg-chart-orange",
+  WITHDRAWN: "bg-data-purple-ink",
 };
 const DECIDED_WORDS: Record<string, string> = { CERTIFIED: "certified", DENIED: "denied", WITHDRAWN: "withdrawn" };
 

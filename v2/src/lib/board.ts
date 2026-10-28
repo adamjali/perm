@@ -226,3 +226,50 @@ export function bulletinShift(kind: MoveKind, movedDays: number | null, month: s
     default: return null;
   }
 }
+
+/** A step's state in a word or two, the way a status board says it. */
+export interface StepStatus {
+  /** Which state, for its picture. */
+  kind: "shrinking" | "growing" | "level" | "quicker" | "slower" | "steady" | "advancing" | "retrogressed" | "holding";
+  word: string;
+  /** The figure behind the word. */
+  detail?: string;
+  tone: "good" | "warn" | "bad" | "flat";
+}
+
+const fmt = (n: number) => Math.abs(n).toLocaleString("en-US");
+
+/** Whether a line shrank or grew over the window: what came in against what went out. */
+export function backlogStatus(flow: LineFlow, days = 30): StepStatus {
+  if (flow.trend === "level") return { kind: "level", word: "Backlog level", detail: `Even over ${days} days`, tone: "flat" };
+  return flow.trend === "shrinking"
+    ? { kind: "shrinking", word: "Backlog shrinking", detail: `${fmt(flow.change)} fewer in ${days} days`, tone: "good" }
+    : { kind: "growing", word: "Backlog growing", detail: `${fmt(flow.change)} more in ${days} days`, tone: "warn" };
+}
+
+/** A median against the one before it, in a word. */
+export function paceStatus(prev: number, now: number): StepStatus {
+  const d = Math.round((now - prev) * 10) / 10;
+  if (d === 0) return { kind: "steady", word: "Holding steady", tone: "flat" };
+  return d < 0 ? { kind: "quicker", word: "Getting quicker", tone: "good" } : { kind: "slower", word: "Getting slower", tone: "bad" };
+}
+
+/** A bulletin cell's move, in a word: forward is advancing, back is retrogression. */
+export function bulletinStatus(kind: MoveKind): StepStatus | null {
+  switch (kind) {
+    case "advanced":
+    case "went-current":
+    case "opened":
+      return { kind: "advancing", word: "Advancing", tone: "good" };
+    case "retrogressed":
+    case "retrogressed-from-current":
+    case "shut":
+      return { kind: "retrogressed", word: "Retrogressed", tone: "bad" };
+    case "held":
+    case "current":
+    case "unavailable":
+      return { kind: "holding", word: "Holding", tone: "flat" };
+    default:
+      return null;
+  }
+}
