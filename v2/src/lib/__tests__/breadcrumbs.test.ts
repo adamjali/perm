@@ -14,6 +14,7 @@ describe("breadcrumbTrail", () => {
     ["/perm-employers/adobe-inc", ["Home", "Data", "Employers"]],
     ["/perm-employers/browse/a", ["Home", "Data", "Employers", "Browse A to Z", "A"]],
     ["/perm-queue/2025-11", ["Home", "Data", "Queue backlog", "November 2025"]],
+    ["/perm-queue/2026-01/15", ["Home", "Data", "Queue backlog", "January 2026", "January 15"]],
     ["/visa-bulletin/2026-10", ["Home", "Data", "Visa bulletin", "October 2026"]],
     ["/visa-bulletin/categories/eb2-india", ["Home", "Data", "Visa bulletin", "By category", "EB-2, India"]],
     ["/perm-rfi-audit/rfi-issued", ["Home", "Data", "RFI and audits", "RFI issued"]],

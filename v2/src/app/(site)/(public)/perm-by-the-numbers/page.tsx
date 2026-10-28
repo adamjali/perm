@@ -42,7 +42,7 @@ import { getDatasetSchema } from "@/lib/structuredData";
 import { checkedLabel } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
-import { longDate, monthDay, monthTick, monthYear } from "@convex/lib/months";
+import { longDate, monthDay, monthTick, monthYear, weekdayName } from "@convex/lib/months";
 
 /**
  * PERM by the numbers: the totals DOL's own case records add up to, which DOL
@@ -80,8 +80,7 @@ export const metadata: Metadata = withSocialCard(
 // (/api/revalidate-sweep, -dol, -bulletin); six hours is the backstop.
 export const revalidate = 21600;
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
-const weekdayOf = (iso: string) => WEEKDAYS[new Date(`${iso}T12:00:00Z`).getUTCDay()]!;
+const weekdayOf = (iso: string) => weekdayName(iso) ?? "";
 
 /** "Week of Oct 19\n2,117 cases so far". */
 function weekColumns(weeks: readonly WeekCount[], noun: string, unitOne: string): Column[] {

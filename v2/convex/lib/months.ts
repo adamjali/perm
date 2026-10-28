@@ -67,6 +67,15 @@ export function longDate(iso: string | null | undefined): string | null {
   return m && name ? `${name} ${Number(m[3])}, ${m[1]}` : null;
 }
 
+/** The days of the week, Sunday first as `getUTCDay` counts them. */
+export const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+
+/** "2026-10-28" to "Wednesday"; null for anything else. */
+export function weekdayName(iso: string | null | undefined): string | null {
+  const m = iso ? DAY.exec(iso) : null;
+  return m ? WEEKDAY_NAMES[new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay()]! : null;
+}
+
 /** "2026-09-11" to "Sep 11, 2026", for table cells; null for anything else. */
 export function shortDate(iso: string | null | undefined): string | null {
   const m = iso ? DAY.exec(iso) : null;

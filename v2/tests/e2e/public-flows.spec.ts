@@ -134,3 +134,19 @@ test("the green card timeline plans a certified case and keeps the case in the a
   await expect(page.getByLabel("Country of birth")).toHaveValue("india");
   await expect(page.getByText(/^Government fees, the whole way$/)).toBeVisible();
 });
+
+test("a filing month opens to a day, and the day's list filters by status", async ({ page }) => {
+  await page.goto("/perm-queue/2026-01");
+  const day = page.getByRole("link", { name: /^January 14, 2026: .* filed/ });
+  await expect(day).toBeVisible();
+  await day.click();
+  await expect(page).toHaveURL(/\/perm-queue\/2026-01\/14$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Filed January 14, 2026" })).toBeVisible();
+  // A status chip narrows the list and the count says so.
+  const chip = page.getByRole("group", { name: "Status" }).getByRole("button").first();
+  await chip.click();
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/^\d[\d,]* of \d[\d,]* PERM cases, /)).toBeVisible();
+  // Every case is a lookup of its own.
+  await expect(page.locator('a[href^="/perm-case-status?case=G-"]').first()).toBeVisible();
+});

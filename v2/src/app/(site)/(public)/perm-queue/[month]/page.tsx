@@ -33,6 +33,9 @@ import { monthEndDate, type MonthEnd } from "@/lib/caseEstimateInputs";
 import { monthMakeup, type MonthMakeup } from "@/lib/monthMakeup";
 import { dolDecisions, weekOnWeek, type MonthDetail } from "@/lib/monthDetail";
 import { getMonthDetail } from "@/lib/db/monthDetail";
+import { getMonthDays } from "@/lib/db/filingDay";
+import { MonthDays } from "@/components/queue/MonthDays";
+import { easternDay } from "@convex/lib/time";
 import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { buttonVariants } from "@/components/ui/button";
@@ -134,7 +137,7 @@ export default async function CohortPage({
   // review" living on this page, and the day those two disagree the queue
   // board and the calculator start quoting different frontiers for one thing.
   // The extra reads are three indexed lookups an hour per month page.
-  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail] = await Promise.all([
+  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail, monthDays] = await Promise.all([
     getMonthBacklog(month),
     getPendingBefore(month),
     getAdjacentMonths(month),
@@ -143,6 +146,11 @@ export default async function CohortPage({
     getDecisionPace().catch(() => null),
     getSweepCoverage().catch(() => null),
     getMonthDetail(month).catch(() => null),
+    // Without it the page drops the calendar rather than draw a month of empty days.
+    getMonthDays(month).catch((e: unknown) => {
+      console.warn("[perm-queue/month] day counts failed", e);
+      return null;
+    }),
   ]);
   if (!backlog || backlog.total === 0) notFound();
   const makeup = monthMakeup(backlog.statuses);
@@ -237,6 +245,20 @@ export default async function CohortPage({
           )}
         </p>
       </section>{" "}
+
+      {monthDays ? (
+        <section aria-labelledby="by-day" className="mt-8">
+          <h2 id="by-day" className="font-heading text-xl font-bold">
+            {label}, day by day
+          </h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-soft">
+            Each day shows how many of its cases DOL hasn&apos;t decided yet. Open a day for every case filed on it.
+          </p>{" "}
+          <div className="mt-5">
+            <MonthDays month={month} days={monthDays} today={easternDay()} />
+          </div>
+        </section>
+      ) : null}{" "}
 
       {/* What most visitors to a month page want next: their own case, and
           an email when DOL gets to their month. */}

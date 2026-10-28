@@ -50,6 +50,9 @@ export default function robots(): MetadataRoute.Robots {
     '/case-search?',
     '/lca-cases?',
     '/pwd-cases?',
+    // A filing day's list of cases (/perm-queue/2026-01/15): thousands of small pages,
+    // each noindex. The month pages above them stay open.
+    '/perm-queue/*/',
   ]
 
   // High-volume crawlers that bring this product NOTHING back. Human

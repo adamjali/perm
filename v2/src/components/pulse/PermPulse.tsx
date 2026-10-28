@@ -9,6 +9,7 @@ import { type ClosedDay, certifiedShare, lastDays, pulseHeadline, pulseSummary, 
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { checkedLabel } from "@/lib/time";
+import { WEEKDAY_NAMES, weekdayName } from "@convex/lib/months";
 
 /**
  * PERM decisions, day by day: DOL's last working day under our check (a
@@ -27,12 +28,6 @@ import { checkedLabel } from "@/lib/time";
  * Server component: it renders once per regeneration, and the sweep expires
  * the pages it sits on when it finishes (/api/revalidate-sweep).
  */
-
-const WEEKDAY_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-function weekdayLong(iso: string): string {
-  return WEEKDAY_LONG[(new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7]!;
-}
 
 function dayLabel(iso: string, opts: Intl.DateTimeFormatOptions): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", ...opts });
@@ -75,7 +70,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
   const max = Math.max(1, ...bars.map((b) => b.total));
   const weekMax = Math.max(1, ...week.map((w) => w.mean));
   const share = certifiedShare(day);
-  const weekday = weekdayLong(day.date);
+  const weekday = (weekdayName(day.date) ?? "");
   const up = changePct !== null && changePct >= 0;
   const summary = pulseSummary(days);
   const summaryFigures = summary
@@ -221,10 +216,13 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
           <figcaption className="text-base font-semibold">A typical week</figcaption>{" "}
           <ChartTips label="Average decisions by day of the week">
           <div className="mt-4 flex h-40 items-end gap-2 sm:h-48" role="img" aria-label="Average decisions by day of the week over the last four weeks.">
-            {week.map((w) => (
+            {week.map((w) => {
+              // The profile counts Monday first; the shared names count Sunday first.
+              const dayName = WEEKDAY_NAMES[(w.weekday + 1) % 7];
+              return (
               <div
                 key={w.label}
-                data-tip={w.days ? `${WEEKDAY_LONG[w.weekday]}\nAbout ${formatInt(w.mean)} decided\nAverage of the last ${w.days} ${WEEKDAY_LONG[w.weekday]}s` : `${WEEKDAY_LONG[w.weekday]}\nNone on record yet`}
+                data-tip={w.days ? `${dayName}\nAbout ${formatInt(w.mean)} decided\nAverage of the last ${w.days} ${dayName}s` : `${dayName}\nNone on record yet`}
                 className="flex h-full flex-1 flex-col justify-end text-center"
               >
                 <span className="mb-1 text-sm font-semibold tabular-nums">{w.days ? formatInt(w.mean) : ""}</span>{" "}
@@ -233,7 +231,8 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
                   style={{ height: w.days ? `${Math.max(2, (w.mean / weekMax) * 100)}%` : "0" }}
                 />
               </div>
-            ))}
+              );
+            })}
           </div>
           </ChartTips>{" "}
           <div className="mt-2 flex gap-2 text-center text-sm text-muted-foreground">

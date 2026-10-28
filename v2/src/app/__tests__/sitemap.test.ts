@@ -370,31 +370,38 @@ describe("sitemap.ts", () => {
     // under each one's parent path. A generated family that nothing lists is
     // exactly how ~40 month pages went unadvertised for three weeks; this
     // reads the TREE rather than a hand-kept list so a new family cannot
-    // slip past it. Deliberate exclusions would be named here with a reason;
-    // today there are none.
+    // slip past it. A family nested under another (`[month]/[day]`) is checked
+    // too, with each `[param]` standing for any one segment. Deliberate
+    // exclusions are named here with their reason.
     vi.mocked(getAllPosts).mockReturnValue([
       mkPost("a", "blog", "2026-01-01"),
       mkPost("g", "guides", "2026-01-01"),
       mkPost("c", "changelog", "2026-01-01"),
     ]);
     const root = join(process.cwd(), "src/app/(site)/(public)");
+    const UNLISTED: Record<string, string> = {
+      // Thousands of small noindex lists of one filing day's cases; robots.txt
+      // keeps crawlers off them and the month pages carry the search value.
+      "perm-queue/[month]": "filing-day pages",
+    };
     const families: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {
         const full = join(dir, name);
         if (!statSync(full).isDirectory()) continue;
-        if (/^\[.+\]$/.test(name)) {
-          families.push(relative(root, dir).replace(/\\/g, "/"));
-          continue;
-        }
+        if (/^\[.+\]$/.test(name)) families.push(relative(root, dir).replace(/\\/g, "/"));
         walk(full);
       }
     };
     walk(root);
     expect(families.length).toBeGreaterThanOrEqual(10);
+    // Every exclusion names a family that exists, so a stale one fails here.
+    expect(Object.keys(UNLISTED).filter((f) => !families.includes(f))).toEqual([]);
     const urls = (await sitemap()).map((e) => e.url);
-    const missing = families.filter(
-      (prefix) => !urls.some((u) => u.startsWith(`https://permtracker.app/${prefix}/`)),
+    const under = (prefix: string) =>
+      new RegExp(`^https://permtracker\\.app/${prefix.replace(/\[[^\]]+\]/g, "[^/]+")}/`);
+    const missing = [...new Set(families)].filter(
+      (prefix) => !(prefix in UNLISTED) && !urls.some((u) => under(prefix).test(u)),
     );
     expect(missing).toEqual([]);
   });

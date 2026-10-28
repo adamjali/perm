@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDollars, formatInt, formatPercent, formatShare, formatShareOf } from "./format";
+import { formatCompact, formatDollars, formatInt, formatPercent, formatShare, formatShareOf } from "./format";
 
 describe("formatInt", () => {
   it("groups digits the US way", () => {
@@ -47,5 +47,14 @@ describe("formatShareOf", () => {
     expect(formatShareOf(0, 5172)).toBe("0.0%");
     expect(formatShareOf(5172, 5172)).toBe("100%");
     expect(formatShareOf(1737, 5172)).toBe("34%");
+  });
+});
+
+describe("formatCompact", () => {
+  it("leaves a number under a thousand whole, and shortens one at or past it", () => {
+    expect(formatCompact(999)).toBe("999");
+    expect(formatCompact(1094)).toBe("1.1K");
+    expect(formatCompact(12500)).toBe("12.5K");
+    expect(formatCompact(2_400_000)).toBe("2.4M");
   });
 });

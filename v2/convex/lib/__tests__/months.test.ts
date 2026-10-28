@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MONTH_ABBR, MONTH_NAMES, longDate, monthDay, monthYear, shortDate } from "../months";
+import { MONTH_ABBR, MONTH_NAMES, longDate, monthDay, monthYear, shortDate, weekdayName } from "../months";
 
 describe("the shared month names and date labels", () => {
   it("has twelve months, and the short forms are the long ones cut to three", () => {
@@ -24,5 +24,18 @@ describe("the shared month names and date labels", () => {
     }
     expect(monthYear("2026-00")).toBeNull();
     expect(monthYear("2026-09-01")).toBeNull();
+  });
+});
+
+describe("weekdayName", () => {
+  it("names the day of the week of a date, in UTC so no zone can shift it", () => {
+    expect(weekdayName("2026-10-28")).toBe("Wednesday");
+    expect(weekdayName("2026-10-25")).toBe("Sunday");
+    expect(weekdayName("2026-10-25T23:30:00-05:00")).toBe("Sunday");
+  });
+
+  it("names nothing for what isn't a date", () => {
+    expect(weekdayName("2026-10")).toBeNull();
+    expect(weekdayName(null)).toBeNull();
   });
 });

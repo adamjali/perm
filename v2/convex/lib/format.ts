@@ -16,6 +16,13 @@ export function formatInt(n: number): string {
   return n.toLocaleString("en-US");
 }
 
+const COMPACT = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+/** 1094 to "1.1K", 999 to "999": a count shortened to fit a small space. Say the full count beside it for a reader. */
+export function formatCompact(n: number): string {
+  return COMPACT.format(n);
+}
+
 /** 0.4237 with 1 digit to "42.4%": a ratio as a percent, to `digits` places. */
 export function formatPercent(ratio: number, digits: number): string {
   return `${(ratio * 100).toFixed(digits)}%`;

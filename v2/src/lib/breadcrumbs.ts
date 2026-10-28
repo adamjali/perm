@@ -25,14 +25,23 @@ export interface Crumb {
 const HOME: Crumb = { name: "Home", href: "/" };
 const DATA: Crumb = { name: OVERVIEW.name, href: OVERVIEW.href };
 
-/** A last segment the URL itself names: a month ("2025-11") or a letter ("a"). */
-function segmentName(segment: string): string | null {
+/** A month segment ("2025-11") as a name, or null. */
+function monthName(segment: string): string | null {
   const month = /^(\d{4})-(\d{2})$/.exec(segment);
-  if (month) {
-    const name = MONTH_NAMES[Number(month[2]) - 1];
-    return name ? `${name} ${month[1]}` : null;
-  }
-  if (/^[a-z0-9]$/i.test(segment)) return segment.toUpperCase();
+  const name = month ? MONTH_NAMES[Number(month[2]) - 1] : undefined;
+  return month && name ? `${name} ${month[1]}` : null;
+}
+
+/**
+ * A segment the URL itself names: a month ("2025-11") anywhere, a day ("15") under a
+ * month ("January 15"), or, last, a letter ("a").
+ */
+function segmentName(segment: string, parent: string | undefined, last: boolean): string | null {
+  const month = monthName(segment);
+  if (month) return month;
+  const inMonth = parent ? monthName(parent) : null;
+  if (inMonth && /^\d{2}$/.test(segment)) return `${inMonth.split(" ")[0]} ${Number(segment)}`;
+  if (last && /^[a-z0-9]$/i.test(segment)) return segment.toUpperCase();
   return null;
 }
 
@@ -66,7 +75,8 @@ export function breadcrumbTrail(pathname: string): Crumb[] {
   for (let i = 1; i <= segments.length; i++) {
     const prefix = `/${segments.slice(0, i).join("/")}`;
     const last = i === segments.length;
-    push(prefix, PAGE_NAMES.get(prefix) ?? (last ? segmentName(segments[i - 1]!) ?? detailName(path) : null));
+    const named = PAGE_NAMES.get(prefix) ?? segmentName(segments[i - 1]!, segments[i - 2], last);
+    push(prefix, named ?? (last ? detailName(path) : null));
   }
 
   return trail.length > 1 ? trail : [];
