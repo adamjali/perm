@@ -225,6 +225,15 @@ jobs:
           python3 scripts/ingest_visa_limits.py --discover \
             || python3 scripts/record_ingest_failure.py --script ingest_visa_limits.py --note "visa limits discovery failed"
 
+      # The National Visa Center's weekly timeframes from the same State host: how far behind it
+      # creates cases and reviews documents, which date the planner's consular processing.
+      - name: NVC timeframes (direct)
+        if: always() && inputs.quick != 'true'
+        working-directory: v2
+        run: |
+          python3 scripts/ingest_nvc_timeframes.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_nvc_timeframes.py --note "NVC timeframes read failed"
+
       # Expire the pages that print DOL's figure, only on a day DOL actually
       # republished (roughly weekly). A failed call doesn't stop the steps after
       # it (the data is already stored); it turns the run red at the end.
