@@ -95,8 +95,7 @@ export default async function I140CalculatorPage() {
         </h1>{" "}
         {/* The answer to "I-140 processing time" first, from USCIS's own figures. */}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          {i140Lead(i140Median ? { months: i140Median.medianMonths, quarter: quarterLabel(i140Median.fy, i140Median.quarter) } : null)}{" "}
-          Below: how many petitions wait in your category.
+          {i140Lead(i140Median ? { months: i140Median.medianMonths, quarter: quarterLabel(i140Median.fy, i140Median.quarter) } : null)}
         </p>
       </header>
 

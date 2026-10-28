@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { averagePhrase, dolNow, dolPwdNow, pwdSentence, pwdWaitPhrase, queueSentence } from "@/lib/dolNow";
+import { averagePhrase, dolNow, dolPwdNow, pwdLine, pwdSentence, pwdWaitPhrase, queueLine, queueSentence } from "@/lib/dolNow";
 import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
 
 // DOL's snapshot as stored on Oct 9 2026 (perm_as_of 2026-10-05), the fields this reads.
@@ -54,6 +54,18 @@ const SEP_30_PWD = {
   ],
 } as unknown as ProcessingTimesSnapshot;
 
+describe("DOL's figures in one short line", () => {
+  it("leads with the average wait, then DOL's month, dated", () => {
+    expect(queueLine(dolNow(OCT_5))).toBe(
+      "About 336 days from filing to a decision, by DOL's figure of October 5, 2026. DOL is now deciding cases filed in December 2025.",
+    );
+  });
+
+  it("says where DOL's figures are when it can't read them", () => {
+    expect(queueLine(dolNow(null))).toBe(queueSentence(dolNow(null)));
+  });
+});
+
 describe("DOL's wage-request queue in prose", () => {
   it("names the PERM month, the wait and the date", () => {
     const n = dolPwdNow(SEP_30_PWD);
@@ -62,6 +74,11 @@ describe("DOL's wage-request queue in prose", () => {
     expect(pwdSentence(n)).toBe(
       "As of September 30, 2026, DOL is issuing PERM wage determinations on requests filed in June 2026, 3 to 4 months after they were filed.",
     );
+  });
+
+  it("says the wait in one short line, dated", () => {
+    expect(pwdLine(dolPwdNow(SEP_30_PWD))).toBe("PERM wage requests take 3 to 4 months at DOL now, by its figure of September 30, 2026.");
+    expect(pwdLine(dolPwdNow(null))).toBe(pwdSentence(dolPwdNow(null)));
   });
 
   it("reads the PERM row, never another program's", () => {

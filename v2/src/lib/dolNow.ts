@@ -64,6 +64,17 @@ export function queueSentence(n: DolNow): string {
 }
 
 /**
+ * The same two figures as a page's opening line, the wait first because that's
+ * what "PERM processing time" asks, then DOL's month: two short sentences where
+ * `queueSentence` is one long one (owner, Oct 28 2026: no text blobs).
+ */
+export function queueLine(n: DolNow): string {
+  if (n.days === null || !n.frontier) return queueSentence(n);
+  const when = n.asOf ? `, by DOL's figure of ${n.asOf}` : "";
+  return `About ${n.days} days from filing to a decision${when}. DOL is now deciding cases filed in ${n.frontier}.`;
+}
+
+/**
  * DOL's wage-request queue for PERM, worded for prose. Articles had "4 to 7
  * months" typed into them; on Sep 30 2026 DOL was issuing determinations on
  * requests filed in June 2026, three to four months of waiting.
@@ -112,6 +123,12 @@ export function dolPwdNow(t: ProcessingTimesSnapshot | null): DolPwdNow {
 export function pwdWaitPhrase(n: DolPwdNow): string {
   if (!n.wait) return "a few months";
   return n.asOf ? `${n.wait} as of ${n.asOf}` : n.wait;
+}
+
+/** The wait alone, as a page's opening line: what "prevailing wage processing time" asks. */
+export function pwdLine(n: DolPwdNow): string {
+  if (!n.wait) return pwdSentence(n);
+  return `PERM wage requests take ${n.wait} at DOL now${n.asOf ? `, by its figure of ${n.asOf}` : ""}.`;
 }
 
 /** The dated sentence: which requests DOL is deciding and how long they waited. */

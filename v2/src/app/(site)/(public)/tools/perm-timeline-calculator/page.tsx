@@ -16,7 +16,7 @@ import { getDecisionPace } from "@/lib/db/decisionPace";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
-import { dolNow, queueSentence } from "@/lib/dolNow";
+import { dolNow, queueLine } from "@/lib/dolNow";
 import { getStragglerRates } from "@/lib/db/stragglers";
 import { getRangeCoverage } from "@/lib/db/rangeCoverage";
 import { getPermDayQueue } from "@/lib/db/permDayQueue";
@@ -131,7 +131,7 @@ export default async function PermTimelineCalculatorPage() {
           PERM processing time calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          {queueSentence(dolNow(times))} Enter your filing date below for an estimate of your own case.
+          {queueLine(dolNow(times))} Enter your filing date below for an estimate of your own case.
         </p>
       </header>
 
