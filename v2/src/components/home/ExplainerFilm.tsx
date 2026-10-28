@@ -30,7 +30,9 @@ function videoSchema(film: Film) {
  * time. So the caption doesn't repeat them; it holds the transcript.
  *
  * The transcript sits under it, closed, so the words are on the page without
- * taking the page over.
+ * taking the page over. It carries `data-nosnippet`: a spoken line leans on
+ * the one before it, and Bing (so Yahoo and DuckDuckGo) quoted "a free case
+ * manager built for exactly that" as the homepage's search snippet (Oct 28 2026).
  */
 export function ExplainerFilm({ film, className = "" }: { film: Film; className?: string }) {
   return (
@@ -44,7 +46,7 @@ export function ExplainerFilm({ film, className = "" }: { film: Film; className?
           <summary className="inline-flex min-h-[44px] cursor-pointer items-center font-bold text-foreground underline decoration-2 underline-offset-4">
             Read the transcript
           </summary>{" "}
-          <div className="mt-2 space-y-2 border-l-3 border-border pl-4 text-base leading-relaxed text-soft">
+          <div data-nosnippet className="mt-2 space-y-2 border-l-3 border-border pl-4 text-base leading-relaxed text-soft">
             {film.transcript.map((line) => (
               <p key={line}>{line}</p>
             ))}

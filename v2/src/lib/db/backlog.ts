@@ -149,6 +149,25 @@ export async function getMonthCensusOn(day: string, month: string): Promise<Back
   }
 }
 
+/**
+ * The cases in one status at the end of each replayed day, oldest first: DOL's
+ * analyst-review line over time, for one. A grouped read of the whole table
+ * (about 300 rows a day), on pages that regenerate a few times a day. Empty
+ * before the table exists; any other failure throws.
+ */
+export async function getStatusByDay(status: string): Promise<{ date: string; value: number }[]> {
+  try {
+    const got = await rows<{ day: string; n: number | string }>(
+      "SELECT day, SUM(n) AS n FROM perm_census_days WHERE status = ? AND is_final = 0 GROUP BY day ORDER BY day",
+      [status],
+    );
+    return got.map((r) => ({ date: String(r.day), value: Number(r.n) || 0 }));
+  } catch (e) {
+    if (/no such table/i.test(String(e))) return [];
+    throw e;
+  }
+}
+
 /** The whole live population, in one shape. */
 export interface BacklogCensus {
   /** Every status in the mirror, largest first. */

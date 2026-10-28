@@ -8,6 +8,8 @@
  * into weeks and pick the largest few.
  */
 
+import { shiftMonth } from "@convex/lib/months";
+
 /** One raw group from the database: a value as DOL printed it, its employer and a count. */
 export interface SpellingRow {
   /** The value exactly as DOL printed it (a job title, an employer name). */
@@ -186,4 +188,104 @@ export function bulletinTally(years: readonly BulletinYear[]): { held: number; m
     }
   }
   return { held, missing };
+}
+
+/** The first filing month the monthly chart draws: H1BPerm's start, and two full fiscal years back. */
+export const FLOW_FROM = "2024-01";
+
+/**
+ * The decision sources a month can be drawn from, best first: DOL's published
+ * files, then our nightly sweep. Each covers a span of days; a month is drawn
+ * from a source only when that span covers the whole month (or, for the
+ * current month, its start), so a source that began on the 27th never reads
+ * as a month of almost nothing.
+ */
+export const FLOW_SOURCES = ["dol-disclosure", "sweep-observed"] as const;
+
+export interface DecidedMonthRow {
+  month: string;
+  source: string;
+  total: number;
+  certified: number;
+  denied: number;
+  withdrawn: number;
+}
+
+export interface SourceSpan {
+  source: string;
+  first: string;
+  last: string;
+}
+
+export interface FlowDecided {
+  certified: number;
+  denied: number;
+  withdrawn: number;
+  /** Any other final status DOL used. */
+  other: number;
+  total: number;
+}
+
+export interface FlowMonth {
+  month: string;
+  /** PERM cases filed that month, as our record holds them today. */
+  filed: number;
+  /** The month holding `today`: both counts are still filling. */
+  current: boolean;
+  /** Null where no source covers the month. */
+  decided: FlowDecided | null;
+  source: string | null;
+}
+
+const lastDayOf = (ym: string) => new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0)).toISOString().slice(0, 10);
+
+/** Filed by filing month and decided by decision month, from `from` through the month holding `today`. */
+export function monthlyFlow(input: {
+  from: string;
+  today: string;
+  filed: readonly { month: string; total: number }[];
+  decided: readonly DecidedMonthRow[];
+  spans: readonly SourceSpan[];
+}): FlowMonth[] {
+  const thisMonth = input.today.slice(0, 7);
+  const filed = new Map(input.filed.map((f) => [f.month, f.total]));
+  const out: FlowMonth[] = [];
+  for (let m = input.from; m <= thisMonth; m = shiftMonth(m, 1)) {
+    const current = m === thisMonth;
+    const start = `${m}-01`;
+    const end = current ? start : lastDayOf(m);
+    const source =
+      FLOW_SOURCES.find((s) => {
+        const span = input.spans.find((x) => x.source === s);
+        return span ? span.first <= start && span.last >= end : false;
+      }) ?? null;
+    const row = source ? input.decided.find((d) => d.month === m && d.source === source) : undefined;
+    const decided: FlowDecided | null = source
+      ? {
+          certified: row?.certified ?? 0,
+          denied: row?.denied ?? 0,
+          withdrawn: row?.withdrawn ?? 0,
+          other: Math.max(0, (row?.total ?? 0) - (row?.certified ?? 0) - (row?.denied ?? 0) - (row?.withdrawn ?? 0)),
+          total: row?.total ?? 0,
+        }
+      : null;
+    out.push({ month: m, filed: filed.get(m) ?? 0, current, decided, source });
+  }
+  return out;
+}
+
+/** A stretch of months added up, with the months that have no decision record named rather than counted as zero. */
+export function flowTotals(months: readonly FlowMonth[]): { filed: number; decided: number; certified: number; noRecord: string[] } {
+  let filed = 0;
+  let decided = 0;
+  let certified = 0;
+  const noRecord: string[] = [];
+  for (const m of months) {
+    filed += m.filed;
+    if (m.decided) {
+      decided += m.decided.total;
+      certified += m.decided.certified;
+    } else noRecord.push(m.month);
+  }
+  return { filed, decided, certified, noRecord };
 }

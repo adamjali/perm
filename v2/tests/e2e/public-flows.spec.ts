@@ -238,3 +238,29 @@ test("the queue wall says what moved since the last replayed day, and a waiting 
   const review = tiles.filter({ hasText: /^Analyst Review/ });
   if ((await review.count()) > 0) await expect(review.locator("a")).toHaveAttribute("href", /stage=analyst-review/);
 });
+
+test("the queue wall draws DOL's line day by day, ending now", async ({ page }) => {
+  await page.goto("/perm-queue");
+  const chart = page.getByRole("group", { name: /^PERM cases in analyst review at the end of each day: [\d,]+ on .*, [\d,]+ now\.$/ });
+  await expect(chart).toBeVisible();
+  // The readout answers the keyboard: End lands on today's live count.
+  const slider = chart.getByRole("slider");
+  await slider.focus();
+  await page.keyboard.press("End");
+  await expect(slider).toHaveAttribute("aria-valuetext", /^Now, [\d,]+ cases$/);
+  await page.keyboard.press("Home");
+  await expect(slider).toHaveAttribute("aria-valuetext", /^Aug 30, 2026, [\d,]+ cases$/);
+});
+
+test("PERM by the numbers draws filed and decided by month, and a period picks the months", async ({ page }) => {
+  await page.goto("/perm-by-the-numbers");
+  const tile = page.locator("section", { has: page.getByRole("heading", { name: "Filed and decided, month by month" }) });
+  await expect(tile.getByRole("button", { name: /^Since \d{4}$/ })).toHaveAttribute("aria-pressed", "true");
+  const filed = tile.locator("dd").first();
+  const all = await filed.textContent();
+  await tile.getByRole("button", { name: "Last 12 months" }).click();
+  await expect(tile.getByRole("button", { name: "Last 12 months" })).toHaveAttribute("aria-pressed", "true");
+  await expect(filed).not.toHaveText(all ?? "");
+  // A month DOL's files and our sweep both miss is named, never drawn as zero.
+  await expect(tile.getByText(/no complete record: DOL's published files end with/)).toBeVisible();
+});

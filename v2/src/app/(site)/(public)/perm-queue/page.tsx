@@ -21,7 +21,9 @@ import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { findFront } from "@/lib/liveQueue";
 import { findVolumeAnomalies } from "@/lib/queueAhead";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
-import { censusFrom, getBacklogCensus, getCensusDays, getCensusOn } from "@/lib/db/backlog";
+import { censusFrom, getBacklogCensus, getCensusDays, getCensusOn, getStatusByDay } from "@/lib/db/backlog";
+import { LineChart } from "@/components/numbers/LineChart";
+import { ANALYST_REVIEW } from "@/lib/searchStages";
 import { statusShift } from "@/lib/backlogMonths";
 import { SinceDay } from "@/components/queue/SinceDay";
 import { easternDay } from "@convex/lib/time";
@@ -89,7 +91,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 export default async function PermQueuePage() {
-  const [census, estimator, alphabet, pastDays, ebSplit] = await Promise.all([
+  const [census, estimator, alphabet, pastDays, ebSplit, reviewByDay] = await Promise.all([
     getBacklogCensus(),
     getEstimatorData(),
     // Its own document and its own writer, so a missing one is a missing
@@ -102,6 +104,11 @@ export default async function PermQueuePage() {
     }),
     // Its own document (scripts/build_eb_split.py); a missing one is a missing panel.
     getEbSplit().catch(() => null),
+    // DOL's line at the end of each replayed day; without it the wall carries no line chart.
+    getStatusByDay(ANALYST_REVIEW).catch((e: unknown) => {
+      console.warn("[perm-queue] the line by day is unreadable", e);
+      return [] as { date: string; value: number }[];
+    }),
   ]);
 
   // The whole line at the end of the newest replayed day before today, for "since".
@@ -114,6 +121,12 @@ export default async function PermQueuePage() {
       })
     : null;
   const since = sinceDay && pastCensus ? statusShift(census.statuses, censusFrom(pastCensus).statuses) : null;
+  // The line over time: each replayed day's end, then today's live count.
+  const reviewNow = census.statuses.find((x) => x.status === ANALYST_REVIEW)?.count ?? null;
+  const reviewLine =
+    reviewByDay.length > 0 && reviewNow !== null && (reviewByDay.at(-1)?.date ?? "") < today
+      ? [...reviewByDay, { date: today, value: reviewNow }]
+      : reviewByDay;
 
   const { stages } = groupByStage(census.statuses);
   const front = findFront(
@@ -357,7 +370,21 @@ export default async function PermQueuePage() {
               noteAnchors: { [OCTOBER_2025.month]: OCTOBER_2025.anchorId },
             }}
           />
-        </div>
+        </div>{" "}
+
+        {reviewLine.length >= 2 ? (
+          <div className="mt-8">
+            <h3 className="font-heading text-lg font-bold">DOL&rsquo;s line, day by day</h3>{" "}
+            <p className="mt-1 text-base text-soft">Cases in analyst review at the end of each day, and now.</p>{" "}
+            <LineChart
+              className="mt-4"
+              points={reviewLine}
+              label="PERM cases in analyst review at the end of each day"
+              noun="cases"
+              nowLabel={reviewLine.at(-1)?.date === today ? "Now" : undefined}
+            />
+          </div>
+        ) : null}
       </section>{" "}
 
       {alphabet ? (

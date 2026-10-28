@@ -4,11 +4,15 @@ import { cache } from "react";
 
 import {
   daysBefore,
+  FLOW_FROM,
+  FLOW_SOURCES,
   foldSpellings,
   rankEmployers,
   weeklyCounts,
+  type DecidedMonthRow,
   type EmployerRow,
   type FoldedValue,
+  type SourceSpan,
   type SpellingRow,
   type WeekCount,
 } from "@/lib/byTheNumbers";
@@ -178,4 +182,40 @@ export const getRfiWeeks = cache(async (): Promise<RfiWeeks> => {
 export const getVisaBulletinsHeld = cache(async (): Promise<string[]> => {
   const r = await rows<{ m: string }>("SELECT bulletin_month AS m FROM visa_bulletins ORDER BY bulletin_month LIMIT 2000");
   return r.map((x) => String(x.m));
+});
+
+/**
+ * Decisions per calendar month from `FLOW_FROM`, by source and outcome, with
+ * each source's span of days so `monthlyFlow` can tell a whole month from a
+ * month a source only touched. One grouped read of `daily_decisions` (a few
+ * thousand rows), on the board's own window.
+ */
+export const getDecidedByMonth = cache(async (): Promise<{ rows: DecidedMonthRow[]; spans: SourceSpan[] }> => {
+  const sources = [...FLOW_SOURCES];
+  const marks = sources.map(() => "?").join(", ");
+  const [months, spans] = await Promise.all([
+    rows<{ month: string; source: string; total: number; certified: number; denied: number; withdrawn: number }>(
+      `SELECT substr(date, 1, 7) AS month, source,
+              SUM(total) AS total, SUM(certified) AS certified, SUM(denied) AS denied, SUM(withdrawn) AS withdrawn
+         FROM daily_decisions
+        WHERE source IN (${marks}) AND date >= ?
+        GROUP BY month, source`,
+      [...sources, `${FLOW_FROM}-01`],
+    ),
+    rows<{ source: string; first: string; last: string }>(
+      `SELECT source, MIN(date) AS first, MAX(date) AS last FROM daily_decisions WHERE source IN (${marks}) GROUP BY source`,
+      sources,
+    ),
+  ]);
+  return {
+    rows: months.map((r) => ({
+      month: String(r.month),
+      source: String(r.source),
+      total: Number(r.total) || 0,
+      certified: Number(r.certified) || 0,
+      denied: Number(r.denied) || 0,
+      withdrawn: Number(r.withdrawn) || 0,
+    })),
+    spans: spans.map((s) => ({ source: String(s.source), first: String(s.first), last: String(s.last) })),
+  };
 });

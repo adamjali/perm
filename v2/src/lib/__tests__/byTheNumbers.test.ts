@@ -4,8 +4,10 @@ import {
   bulletinCalendar,
   bulletinTally,
   daysBefore,
+  flowTotals,
   foldSpellings,
   mondayOf,
+  monthlyFlow,
   rankEmployers,
   weeklyCounts,
 } from "@/lib/byTheNumbers";
@@ -120,5 +122,63 @@ describe("bulletinCalendar", () => {
 
   it("is empty for an empty archive", () => {
     expect(bulletinCalendar([])).toEqual([]);
+  });
+});
+
+describe("monthlyFlow", () => {
+  const spans = [
+    { source: "dol-disclosure", first: "2015-10-01", last: "2026-06-30" },
+    { source: "sweep-observed", first: "2026-08-27", last: "2026-10-26" },
+  ];
+  const row = (month: string, source: string, certified: number, denied = 0, withdrawn = 0, other = 0) => ({
+    month,
+    source,
+    certified,
+    denied,
+    withdrawn,
+    total: certified + denied + withdrawn + other,
+  });
+  const flow = monthlyFlow({
+    from: "2026-05",
+    today: "2026-10-28",
+    filed: [
+      { month: "2026-04", total: 9000 },
+      { month: "2026-05", total: 11000 },
+      { month: "2026-10", total: 3100 },
+    ],
+    decided: [
+      row("2026-05", "dol-disclosure", 9000, 40, 300),
+      row("2026-06", "dol-disclosure", 8000, 30, 200, 5),
+      row("2026-08", "sweep-observed", 900),
+      row("2026-09", "sweep-observed", 12000, 50, 400),
+      row("2026-10", "sweep-observed", 7000, 20, 200),
+    ],
+    spans,
+  });
+
+  it("runs from the first month through today's, one entry each, filed counted by filing month", () => {
+    expect(flow.map((m) => m.month)).toEqual(["2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]);
+    expect(flow.map((m) => m.filed)).toEqual([11000, 0, 0, 0, 0, 3100]);
+    expect(flow.map((m) => m.current)).toEqual([false, false, false, false, false, true]);
+  });
+
+  it("draws a month's decisions only from a source that covers the whole month", () => {
+    expect(flow.find((m) => m.month === "2026-05")!.decided).toEqual({ certified: 9000, denied: 40, withdrawn: 300, other: 0, total: 9340 });
+    expect(flow.find((m) => m.month === "2026-06")!.decided!.other).toBe(5);
+    // July: DOL's files end June 30 and the sweep starts Aug 27, so nothing covers it.
+    expect(flow.find((m) => m.month === "2026-07")!.decided).toBeNull();
+    // August's five days of sweep would read as a collapse, so the month has no record.
+    expect(flow.find((m) => m.month === "2026-08")!.decided).toBeNull();
+    expect(flow.find((m) => m.month === "2026-09")!.source).toBe("sweep-observed");
+  });
+
+  it("keeps the current month, marked as still filling", () => {
+    const oct = flow.find((m) => m.month === "2026-10")!;
+    expect(oct.decided!.total).toBe(7220);
+    expect(oct.current).toBe(true);
+  });
+
+  it("totals a stretch of months, naming those with no record", () => {
+    expect(flowTotals(flow)).toEqual({ filed: 14100, decided: 9340 + 8235 + 12450 + 7220, certified: 9000 + 8000 + 12000 + 7000, noRecord: ["2026-07", "2026-08"] });
   });
 });

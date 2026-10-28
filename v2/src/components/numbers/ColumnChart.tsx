@@ -15,7 +15,9 @@ import { cn } from "@/lib/utils";
  * typical week does.
  *
  * The column marked `now` is lime (rule 3: lime marks now), hatched when it
- * is still filling, so a week in progress never reads as a drop.
+ * is still filling, so a week in progress never reads as a drop. A period no
+ * record covers is a dashed outline the chart's full height: an empty frame
+ * reads as "nothing to show here", where a zero-height column reads as "none".
  */
 
 export type ColumnTone = "yellow" | "blue" | "green";
@@ -41,6 +43,8 @@ export interface Column {
   now?: boolean;
   /** Still filling (a week in progress). */
   partial?: boolean;
+  /** No record covers this period: drawn as an empty dashed outline, never as zero. */
+  gap?: boolean;
   /** Stacked parts, bottom first; they replace the tone. */
   parts?: ColumnPart[];
   /** The table's row label. */
@@ -81,7 +85,7 @@ export function ColumnChart({
   showMax?: boolean;
 }) {
   if (columns.length === 0) return null;
-  const max = Math.max(1, ...columns.map((c) => c.value));
+  const max = Math.max(1, ...columns.filter((c) => !c.gap).map((c) => c.value));
   const labelled = columns.some((c) => c.top);
   return (
     <div className={cn(grow && "flex flex-1 flex-col", className)}>
@@ -90,9 +94,19 @@ export function ColumnChart({
         <div
           className={cn("mt-1 flex items-end gap-[3px] border-b-2 border-input", height, grow && "flex-1", labelled && "pt-7")}
           role="img"
-          aria-label={`${label}: from ${formatInt(Math.min(...columns.map((c) => c.value)))} to ${formatInt(max)}.`}
+          aria-label={`${label}: from ${formatInt(Math.min(...columns.filter((c) => !c.gap).map((c) => c.value), max))} to ${formatInt(max)}.`}
         >
           {columns.map((c) => {
+            if (c.gap) {
+              return (
+                <div
+                  key={c.key}
+                  data-tip={c.tip}
+                  data-href={c.href}
+                  className="h-full flex-1 border-2 border-dashed border-input"
+                />
+              );
+            }
             const h = c.value > 0 ? Math.max(2, (c.value / max) * 100) : 0;
             if (c.parts?.length) {
               // A stacked column's label sits at the top of its whole slot, in
@@ -102,7 +116,11 @@ export function ColumnChart({
                 <div
                   data-tip={c.tip}
                   data-href={c.href}
-                  className={cn("flex w-full flex-col-reverse", c.now && "outline outline-2 outline-offset-1 outline-foreground")}
+                  className={cn(
+                    "flex w-full flex-col-reverse",
+                    c.now && "outline outline-2 outline-offset-1 outline-foreground",
+                    c.partial && "outline outline-2 outline-dashed outline-offset-1 outline-foreground",
+                  )}
                   style={{ height: `${h}%` }}
                 >
                   {c.parts.map((p, i) => (
@@ -164,7 +182,7 @@ export function ColumnChart({
               <Fragment key={c.key}>
                 <tr>
                   <td>{c.label}{" "}</td>
-                  <td>{formatInt(c.value)}{c.partial ? " so far" : ""}{" "}</td>
+                  <td>{c.gap ? "No record" : `${formatInt(c.value)}${c.partial ? " so far" : ""}`}{" "}</td>
                 </tr>
               </Fragment>
             ))}

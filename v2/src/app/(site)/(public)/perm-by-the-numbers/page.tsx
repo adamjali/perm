@@ -13,12 +13,15 @@ import { StageBar, StageLegend } from "@/components/queue/StageBar";
 import { groupByStage } from "@/components/queue/stages";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { buttonVariants } from "@/components/ui/button";
-import { bulletinCalendar, bulletinTally, type WeekCount } from "@/lib/byTheNumbers";
+import { bulletinCalendar, bulletinTally, FLOW_FROM, monthlyFlow, type WeekCount } from "@/lib/byTheNumbers";
+import { MonthlyFlow } from "@/components/numbers/MonthlyFlow";
+import { easternDay } from "@convex/lib/time";
 import { SITE_URL } from "@/lib/constants/site";
 import { getBacklogCensus } from "@/lib/db/backlog";
 import {
   NEW_EMPLOYER_DAYS,
   RECENT_DAYS,
+  getDecidedByMonth,
   getNewEmployers,
   getRecentFilings,
   getRfiWeeks,
@@ -149,7 +152,7 @@ function Tile({
 }
 
 export default async function PermByTheNumbersPage() {
-  const [census, observed, coverage, stages, filings, newEmployers, rfiWeeks, rfiClock, pwd, snapshot, readings, bulletins] =
+  const [census, observed, coverage, stages, filings, newEmployers, rfiWeeks, rfiClock, pwd, snapshot, readings, bulletins, decidedByMonth] =
     await Promise.all([
       getBacklogCensus(),
       getObservedDays(),
@@ -163,6 +166,7 @@ export default async function PermByTheNumbersPage() {
       getProcessingTimes(),
       getProcessingTimesArchive(),
       getVisaBulletinsHeld(),
+      getDecidedByMonth(),
     ]);
 
   // The waiting line, by DOL's own month.
@@ -193,6 +197,21 @@ export default async function PermByTheNumbersPage() {
 
   const pwdMonth =
     snapshot?.pwdQueues.find((q) => q.program.toUpperCase() === "PERM")?.oewsReceiptDate?.slice(0, 7) ?? null;
+
+  // Filed by filing month (the census) beside decided by decision month (DOL's files, then our sweep).
+  const flow = monthlyFlow({
+    from: FLOW_FROM,
+    today: easternDay(),
+    filed: census.months.map((m) => ({ month: m.month, total: m.total })),
+    decided: decidedByMonth.rows,
+    spans: decidedByMonth.spans,
+  });
+  const filesEnd = decidedByMonth.spans.find((x) => x.source === "dol-disclosure")?.last ?? null;
+  const sweepStart = decidedByMonth.spans.find((x) => x.source === "sweep-observed")?.first ?? null;
+  const gapReason =
+    filesEnd && sweepStart
+      ? `DOL's published files end with ${monthYear(filesEnd.slice(0, 7))}, and our nightly sweep began counting decisions on ${longDate(sweepStart)}.`
+      : "no source covers the whole month.";
 
   const calendar = bulletinCalendar(bulletins);
   const tally = bulletinTally(calendar);
@@ -356,6 +375,15 @@ export default async function PermByTheNumbersPage() {
             grow
             columns={weekColumns(filings.weeks, "cases", "case")}
           />
+        </Tile>{" "}
+
+        <Tile
+          id="monthly"
+          className="md:col-span-2 lg:col-span-12"
+          claim="Filed and decided, month by month"
+          sub="Filed counts each case in the month it was filed; decided counts each decision in the month DOL made it. Each month opens its filing month."
+        >
+          <MonthlyFlow months={flow} gapReason={gapReason} />
         </Tile>{" "}
 
         {jobRows.length > 0 ? (
