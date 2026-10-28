@@ -23,6 +23,13 @@ const num = (v: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/** The employer's headcount and founding year as typed on a form; 0 employees or a year before 1700 is a slip, not a fact. */
+function employerFacts(payroll: unknown, year: unknown): DecidedTimelineRead["employer"] {
+  const employees = num(payroll);
+  const since = num(year);
+  return { employees: employees && employees > 0 ? employees : null, since: since && since >= 1700 ? since : null };
+}
+
 export async function getDecidedTimeline(caseNumber: string): Promise<DecidedTimelineRead | null> {
   const r = await one<Record<string, unknown>>(
     `SELECT p.received_date, p.decision_date, p.status, p.job_order_start, p.job_order_end,
@@ -35,8 +42,6 @@ export async function getDecidedTimeline(caseNumber: string): Promise<DecidedTim
   );
   if (!r) return null;
   const pwdCase = str(r.pwd_case);
-  const employees = num(r.emp_payroll);
-  const since = num(r.emp_year);
   return {
     record: {
       receivedDate: str(r.received_date),
@@ -63,8 +68,7 @@ export async function getDecidedTimeline(caseNumber: string): Promise<DecidedTim
           }
         : null,
     },
-    // A year before 1700 or a headcount of 0 is a typing slip in the form, not a fact.
-    employer: { employees: employees && employees > 0 ? employees : null, since: since && since >= 1700 ? since : null },
+    employer: employerFacts(r.emp_payroll, r.emp_year),
   };
 }
 
@@ -90,4 +94,21 @@ export async function getPermsNamingPwd(pwdNumber: string): Promise<PermNamingPw
     const status = str(r.status);
     return caseNumber && status ? [{ caseNumber, status, decisionDate: str(r.decision_date) }] : [];
   });
+}
+
+/**
+ * What an employer put on its newest decided PERM application: its headcount and the year it
+ * began. On `idx_pc_emp_dec`, newest first, so it reads back only as far as the first application
+ * that filled them in. Null when none did.
+ */
+export async function getEmployerSize(slug: string): Promise<DecidedTimelineRead["employer"] & { asOf: string | null } | null> {
+  const r = await one<Record<string, unknown>>(
+    `SELECT emp_payroll, emp_year, decision_date FROM perm_cases
+      WHERE employer_slug = ? AND (emp_payroll IS NOT NULL OR emp_year IS NOT NULL)
+      ORDER BY decision_date DESC LIMIT 1`,
+    [slug],
+  );
+  if (!r) return null;
+  const facts = employerFacts(r.emp_payroll, r.emp_year);
+  return facts.employees || facts.since ? { ...facts, asOf: str(r.decision_date) } : null;
 }

@@ -62,6 +62,7 @@ import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
 import { EmployerWait } from "@/components/entities/EmployerWait";
 import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/db/employerWait";
 import { getPwdLinks } from "@/lib/db/pwdLinks";
+import { getEmployerSize } from "@/lib/db/decidedTimeline";
 import { PwdToPerm } from "@/components/entities/PwdToPerm";
 import { similarSponsors } from "@/lib/db/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
@@ -663,7 +664,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -719,6 +720,8 @@ export default async function EmployerPage({
       getSponsorProfile(canonicalSlug).catch(() => null),
       // Wage determination to PERM filing, from the two files joined (perm_pwd_stats).
       getPwdLinks("employer", canonicalSlug),
+      // What it put on its newest application: headcount and founding year. A failure only drops the fact.
+      getEmployerSize(canonicalSlug).catch(() => null),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -803,6 +806,11 @@ export default async function EmployerPage({
         ? { label: "Main worksite state", value: topState.label, note: share(topState.n) }
         : null,
     topIndustry ? { label: "Industry", value: topIndustry.label, note: `NAICS ${topIndustry.codes[0]}` } : null,
+    size?.employees
+      ? { label: "Employees", value: formatInt(size.employees), note: size.since ? `In business since ${size.since}` : "On its newest application" }
+      : size?.since
+        ? { label: "In business since", value: String(size.since), note: "On its newest application" }
+        : null,
   ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
 
   const hasWork = Boolean(
