@@ -1430,6 +1430,21 @@
   "css": "#work li[data-tip] > span.font-mono{visibility:hidden!important} #work li[data-tip]:nth-of-type(n+4){display:none!important} #work > div > ul > li:nth-of-type(n+3){display:none!important}"
  },
  {
+  "slug": "h1b-cap-exempt-employers",
+  "path": "/h1b-cap-exempt-employers",
+  "title": "H-1B cap\u2011exempt employers",
+  "label": "The colleges, affiliated nonprofits and research organizations that hire H-1B workers outside the lottery.",
+  "shot": "h1b-cap-exempt-employers.png",
+  "from": "When they file",
+  "crop": [
+   0,
+   0,
+   1504,
+   640
+  ],
+  "css": "#months > div > p{display:none!important} #months h2 [data-fy]{display:none!important} #months li[data-tip] > span.font-mono{display:none!important} #months > p{display:none!important}"
+ },
+ {
   "slug": "law-firm-rankings",
   "path": "/law-firm-rankings",
   "title": "Top immigration law firms",

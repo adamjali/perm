@@ -19,6 +19,8 @@ import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/db/ot
 import { lcaOnlyCities } from "@/lib/db/lcaCities";
 import { getH1bSummary } from "@/lib/db/h1bRanks";
 import { getFirmRanksSummary } from "@/lib/db/firmRanks";
+import { getCapExempt } from "@/lib/db/capExempt";
+import { capExemptAsOf } from "@/lib/capExempt";
 import { firmRanksAsOf, rankedStates as firmRankedStates } from "@/lib/firmRanks";
 import { getSiteReviews } from "@/lib/reviews/read";
 import { newestReviewDay } from "@/lib/reviews/senjaParse";
@@ -204,6 +206,8 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     firmStates = [];
   }
+  // The cap-exempt employer page, dated by the newest day its figures cover.
+  const capExemptDay = capExemptAsOf(await getCapExempt().catch(() => null));
   // The reviews page is dated by its newest review, from the same read the page makes (never throws).
   const reviewsAsOf = newestReviewDay((await getSiteReviews()).reviews);
   const allPosts = getAllPosts();
@@ -247,6 +251,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     sweep: queueAsOf,
     h1b: h1bAsOf,
     firms: firmsAsOf,
+    capExempt: capExemptDay,
     corpus: await corpusAsOf(),
     reviews: reviewsAsOf,
   };
@@ -349,6 +354,7 @@ export async function pagesEntries(): Promise<Entry[]> {
       lastModified: at("/h1b-employers/[state]"),
     })),
     { url: `${base}/law-firm-rankings`, lastModified: at("/law-firm-rankings"), images: [`${base}/og/law-firm-rankings.jpg`] },
+    { url: `${base}/h1b-cap-exempt-employers`, lastModified: at("/h1b-cap-exempt-employers"), images: [`${base}/og/h1b-cap-exempt-employers.jpg`] },
     ...firmStates.map((code) => ({
       url: `${base}/law-firm-rankings/${stateSlug(code)}`,
       lastModified: at("/law-firm-rankings/[state]"),

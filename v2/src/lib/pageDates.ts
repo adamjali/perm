@@ -30,6 +30,8 @@ export type DateSource =
   | "h1b"
   /** The newest decision day the law firm rankings' shown years hold. */
   | "firms"
+  /** The newest day the cap-exempt employer page's figures cover. */
+  | "capExempt"
   /** The last decision day in DOL's published PERM files. */
   | "corpus"
   /** The day the newest shown review was left (Eastern). */
@@ -140,6 +142,7 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/h1b-employers/[state]": "h1b",
   "/law-firm-rankings": "firms",
   "/law-firm-rankings/[state]": "firms",
+  "/h1b-cap-exempt-employers": "capExempt",
 
   "/perm-employers/[slug]": "corpus",
   "/perm-attorneys/[slug]": "corpus",
@@ -167,6 +170,7 @@ export const OWN_DATE: ReadonlySet<string> = new Set([
   "/h1b-employers/[state]",
   "/law-firm-rankings",
   "/law-firm-rankings/[state]",
+  "/h1b-cap-exempt-employers",
   "/reviews",
 ]);
 

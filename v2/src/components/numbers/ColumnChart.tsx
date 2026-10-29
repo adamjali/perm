@@ -67,6 +67,7 @@ export function ColumnChart({
   grow = false,
   showMax = true,
   topsFrom,
+  scaleMax,
 }: {
   columns: readonly Column[];
   tone?: ColumnTone;
@@ -90,9 +91,11 @@ export function ColumnChart({
    * and tap readout carries each figure instead.
    */
   topsFrom?: "sm" | "xl";
+  /** The value a full-height column stands for, so two charts side by side share one scale. */
+  scaleMax?: number;
 }) {
   if (columns.length === 0) return null;
-  const max = Math.max(1, ...columns.filter((c) => !c.gap).map((c) => c.value));
+  const max = Math.max(1, scaleMax ?? 0, ...columns.filter((c) => !c.gap).map((c) => c.value));
   const labelled = columns.some((c) => c.top);
   const topShown = topsFrom === "sm" ? "hidden sm:block" : topsFrom === "xl" ? "hidden xl:block" : "";
   const topRoom = topsFrom === "sm" ? "sm:pt-7" : topsFrom === "xl" ? "xl:pt-7" : "pt-7";

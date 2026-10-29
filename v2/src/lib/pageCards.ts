@@ -93,6 +93,7 @@ export const PAGE_CARD_ALT = {
   "perm-wages": "What PERM cases pay. Wage percentiles by occupation, employer and state, from DOL's disclosure files.",
   "privacy": "Privacy policy. What the site collects, what it never collects, and who processes it.",
   "lca-wages": "H-1B salaries by occupation and state. Every wage on a certified labor condition application, as percentiles, from DOL's files.",
+  "h1b-cap-exempt-employers": "H-1B cap-exempt employers. The colleges, affiliated nonprofits and research organizations that hire outside the lottery, from DOL's files.",
   "law-firm-rankings": "The busiest immigration law firms by year and state. The 100 busiest each fiscal year, by PERM decisions and H-1B LCAs, from DOL's files.",
   "h1b-employers": "Top H-1B employers by year and state. The 100 busiest each fiscal year, from DOL's certified LCAs and USCIS's approvals.",
   "compare-my-offer": "Compare an H-1B offer against what employers actually filed for the same job and state. The offer stays in the browser.",

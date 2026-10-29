@@ -33,4 +33,14 @@ describe("the column chart's value labels", () => {
     const { container } = render(<ColumnChart columns={cols} label="Medians" first="Q1" last="Q3" unit="months" showMax={false} />);
     expect(container.querySelector('[data-tip="Q2 none held"]')?.className).toMatch(/border-dashed/);
   });
+
+  it("takes a shared scale, so two charts side by side compare", () => {
+    const one: Column[] = [{ key: "m", value: 50, label: "Mar", tip: "Mar" }];
+    const { container: own } = render(<ColumnChart columns={one} label="A" first="Mar" last="Mar" unit="LCAs" showMax={false} />);
+    const { container: shared } = render(
+      <ColumnChart columns={one} label="B" first="Mar" last="Mar" unit="LCAs" showMax={false} scaleMax={200} />,
+    );
+    expect((own.querySelector('[data-tip="Mar"]') as HTMLElement).style.height).toBe("100%");
+    expect((shared.querySelector('[data-tip="Mar"]') as HTMLElement).style.height).toBe("25%");
+  });
 });

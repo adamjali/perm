@@ -61,6 +61,7 @@ export type DataSection =
   | "compare-employers"
   | "h1b-employers"
   | "firm-rankings"
+  | "cap-exempt"
   | "opt-employers"
   | "employers-under-review"
   | "layoffs"
@@ -206,6 +207,7 @@ export const SECTIONS: DataNavSection[] = [
   s("seasonal-cases", "Other visas", "H-2A, H-2B and CW-1", "/seasonal-cases"),
   s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
   s("opt-employers", "Other visas", "OPT and CPT employers", "/opt-employers"),
+  s("cap-exempt", "Other visas", "H-1B cap-exempt employers", "/h1b-cap-exempt-employers"),
 ];
 
 export const GROUPS: DataGroup[] = [

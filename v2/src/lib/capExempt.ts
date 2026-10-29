@@ -83,3 +83,20 @@ export function monthShares(doc: Pick<CapExemptDoc, "months">): { month: string;
   const ot = doc.months.reduce((s, m) => s + m.others, 0);
   return doc.months.map((m) => ({ month: m.month, exempt: ex > 0 ? m.exempt / ex : 0, others: ot > 0 ? m.others / ot : 0 }));
 }
+
+/** The newest day the doc's figures cover: the page's date. */
+export function capExemptAsOf(doc: Pick<CapExemptDoc, "asOf"> | null | undefined): string | null {
+  if (!doc) return null;
+  const days = [doc.asOf.lcaThrough, doc.asOf.pwThrough].filter((d): d is string => Boolean(d));
+  return days.length ? days.sort().at(-1)! : null;
+}
+
+/** The share of a group's year in its three busiest months running, and which months. */
+export function busiestQuarter(shares: readonly number[]): { start: number; share: number } {
+  let best = { start: 0, share: -1 };
+  for (let i = 0; i + 2 < shares.length; i++) {
+    const s = shares[i]! + shares[i + 1]! + shares[i + 2]!;
+    if (s > best.share) best = { start: i, share: s };
+  }
+  return best;
+}
