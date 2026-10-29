@@ -192,6 +192,27 @@ def main() -> int:
     v = dm.perf_verdict(broke, pnow)
     check(v["status"] == "warn" and "inspector" in v["summary"], "perf: a failed reading is said, never skipped", str(v))
 
+    # The chat's AI models (scripts/check_chat_models.py writes perm_docs['chat_models'] daily).
+    def model(name, verdict, role="chat", reason="answered"):
+        return {"name": name, "verdict": verdict, "role": role, "reason": reason}
+    fresh = {"checkedAt": pnow - 3_600_000, "models": [model("Gemini 2.5 Flash", "ok"), model("GPT-OSS 120B", "ok"),
+                                                       model("gpt-oss-20b", "ok", "summary")]}
+    v = dm.chat_models_verdict(fresh, pnow)
+    check(v["status"] == "ok" and "2 of 2" in v["summary"], "chat: every model answering is OK", str(v))
+    check(len(v["lines"]) == 3, "chat: every model gets its line, the summarizer's included", str(v["lines"]))
+    mixed = dict(fresh, models=fresh["models"] + [model("Mistral Small", "refused", reason="the account allows 0 requests a minute")])
+    v = dm.chat_models_verdict(mixed, pnow)
+    check(v["status"] == "warn" and "Mistral Small is refused" in v["summary"] and "0 requests" in v["summary"],
+          "chat: a refused model with others answering is a warning that names it and why", str(v))
+    busy = dict(fresh, models=[model("Gemini 2.5 Flash", "ok"), model("Gemini 3.8 Flash", "busy", reason="503")])
+    check(dm.chat_models_verdict(busy, pnow)["status"] == "ok", "chat: a busy model is a line, never a warning")
+    dead = dict(fresh, models=[model("A", "gone"), model("B", "busy"), model("s", "ok", "summary")])
+    check(dm.chat_models_verdict(dead, pnow)["status"] == "fail",
+          "chat: no chat model answering fails, even with the summarizer answering")
+    old = dict(fresh, checkedAt=pnow - 31 * 3_600_000)
+    check(dm.chat_models_verdict(old, pnow)["status"] == "fail", "chat: a check over a day old means the job stopped")
+    check(dm.chat_models_verdict(None, pnow)["status"] == "warn", "chat: no check yet is a warning")
+
     runs = [
         {"name": "Case status (direct from DOL)", "status": "completed", "conclusion": "failure", "run_attempt": 1,
          "updated_at": "2026-09-29T08:30:00Z"},

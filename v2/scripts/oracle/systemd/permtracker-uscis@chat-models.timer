@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule for permtracker-uscis@chat-models
+# Every AI model the chat uses, asked once a day before the 7:30 AM morning
+# report, which prints the verdicts (Oct 29 2026). Persistent: a morning the
+# server was down is asked when it comes back.
+[Timer]
+OnCalendar=*-*-* 06:40:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@chat-models.service
+
+[Install]
+WantedBy=timers.target
