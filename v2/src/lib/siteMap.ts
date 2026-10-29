@@ -77,6 +77,7 @@ export type DataSection =
   | "i485-offices"
   | "nvc-waiting-list"
   | "visa-issuances"
+  | "visa-wait-times"
   | "risk"
   | "rfi-audit"
   | "uscis-rfe"
@@ -202,6 +203,7 @@ export const SECTIONS: DataNavSection[] = [
   t("lottery-calculator", "Other visas", "H-1B lottery calculator", "/tools/h1b-lottery-odds-calculator", "An offer's wage level and its chance in the draw."),
   t("six-year-limit", "Other visas", "H-1B six-year limit", "/tools/h1b-six-year-limit", "The end of six years and the 365-day rule."),
   s("seasonal-cases", "Other visas", "H-2A, H-2B and CW-1", "/seasonal-cases"),
+  s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
 ];
 
 export const GROUPS: DataGroup[] = [

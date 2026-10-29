@@ -27,6 +27,14 @@ describe("BarRows tooltips", () => {
     expect(barRowTip(ROWS[2]!)).toBe("Newark, NJ\nwithheld");
   });
 
+  it("prints what a row's missing value means where withheld isn't true", () => {
+    const na: BarRow = { key: "d", label: "Abuja", value: null, text: "No figure", nullText: "No figure" };
+    expect(barRowTip(na)).toBe("Abuja\nNo figure");
+    const { container } = render(<BarRows label="Waits" rows={[na]} />);
+    expect(container.textContent).toContain("No figure");
+    expect(container.textContent).not.toContain("withheld");
+  });
+
   it("lets a caller say more than the row prints", () => {
     expect(barRowTip({ ...ROWS[0]!, tip: "Custom\n1 line" })).toBe("Custom\n1 line");
   });

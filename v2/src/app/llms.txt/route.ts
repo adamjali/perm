@@ -417,6 +417,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Every immigrant visa State's consulates issued each month since March 2017, by employment and family category, by country of chargeability and by consulate, from State's own tables, each month checked against State's grand total. Consular issuances only: a green card granted inside the US isn't in it.",
   },
   {
+    path: "/visa-wait-times",
+    label: "Visa interview wait times by consulate",
+    blurb:
+      "The State Department's Global Visa Wait Times table, read each month: the next interview for work visas (H-1B, L, O, P, Q), students, visitors and crew at every U.S. embassy and consulate, with each Indian consulate's work-visa wait month by month since November 2025. Nonimmigrant visas only; State's NA is kept as no figure.",
+  },
+  {
     path: "/green-card-timelines",
     label: "Green card timelines",
     blurb:

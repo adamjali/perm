@@ -1413,5 +1413,20 @@
    1008
   ],
   "from": "The queue, oldest first"
+ },
+ {
+  "slug": "visa-wait-times",
+  "path": "/visa-wait-times",
+  "title": "Visa interview wait times",
+  "label": "The next work-visa interview at each U.S. consulate, country by country, from the State Department's own monthly table.",
+  "shot": "visa-wait-times.png",
+  "from": "The next work-visa interview, country by country",
+  "crop": [
+   0,
+   0,
+   1504,
+   1004
+  ],
+  "css": "#work li[data-tip] > span.font-mono{visibility:hidden!important} #work li[data-tip]:nth-of-type(n+4){display:none!important} #work > div > ul > li:nth-of-type(n+3){display:none!important}"
  }
 ]
