@@ -48,4 +48,9 @@ size, hreflang reciprocal (test), sitemap entries, the switcher.
   and the four others would ask DOL live with none of them. Before shipping: widen each rule to
   `/(es|zh|pt-br|ko|vi)/perm-case-status`, extend `test_nginx_conf.py` with a probe per language, and read each
   rule back live (Oct 28 2026, found writing the browser flows).
+  - **nginx: done on main** (622b1266, installed Oct 29 2026, 6:50 AM EDT): one anchored location takes the
+    English lookup and the five languages from `locales.ts`; `test_nginx_conf.py` reads the languages from that
+    list and is probed by dropping a language and the end anchor.
+  - **Cloudflare rules 1 and 4: drafted for the owner** (kept out of this public repo), to apply in the dashboard
+    the day the translated pages are approved, then read back with a script's request (403, `cf-mitigated: challenge`).
 - **The owner's review**: screenshots of each language, light and dark, desktop and phone.
