@@ -66,7 +66,8 @@
    0,
    2048,
    1382
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "developers",
@@ -223,7 +224,8 @@
    1504,
    1028
   ],
-  "from": "Where the backlog sits"
+  "from": "Where the backlog sits",
+  "mask": "figures"
  },
  {
   "slug": "i140-trends",
@@ -250,7 +252,8 @@
    1504,
    1004
   ],
-  "from": "The whole pending inventory"
+  "from": "The whole pending inventory",
+  "mask": "figures"
  },
  {
   "slug": "green-card-line",
@@ -266,7 +269,8 @@
   ],
   "from": "Who is ahead of you?",
   "viewport": 1440,
-  "maxWidth": 1100
+  "maxWidth": 1100,
+  "mask": "figures"
  },
  {
   "slug": "eb2-vs-eb3",
@@ -292,7 +296,8 @@
   ],
   "from": "Compare the two lines",
   "viewport": 1440,
-  "maxWidth": 1100
+  "maxWidth": 1100,
+  "mask": "figures"
  },
  {
   "slug": "which-green-card",
@@ -432,7 +437,8 @@
    0,
    1504,
    1028
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "layoffs",
@@ -445,7 +451,8 @@
    0,
    1504,
    818
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "perm-attorneys-browse",
@@ -488,7 +495,8 @@
    2016,
    1236
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "perm-deadline-calculator",
@@ -550,7 +558,8 @@
    1504,
    974
   ],
-  "from": "On hold right now"
+  "from": "On hold right now",
+  "mask": "figures"
  },
  {
   "slug": "perm-timeline-calculator",
@@ -692,7 +701,8 @@
    1504,
    1000
   ],
-  "from": "Where the wages land"
+  "from": "Where the wages land",
+  "mask": "figures"
  },
  {
   "slug": "visa-bulletin-family",
@@ -874,7 +884,8 @@
    0,
    2048,
    1178
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "reviews",
@@ -933,7 +944,8 @@
    2016,
    1380
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "changelog",
@@ -1038,7 +1050,8 @@
    2016,
    1146
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "methodology",
@@ -1078,7 +1091,8 @@
    2016,
    1356
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "perm-by-state",
@@ -1134,7 +1148,8 @@
    1534
   ],
   "from": "Which wage bands hold the denials",
-  "viewport": 1440
+  "viewport": 1440,
+  "mask": "figures"
  },
  {
   "slug": "perm-employers",
@@ -1176,7 +1191,8 @@
    1504,
    1028
   ],
-  "from": "The wall, by filing month"
+  "from": "The wall, by filing month",
+  "mask": "figures"
  },
  {
   "slug": "perm-rfi-audit",
@@ -1230,7 +1246,8 @@
    1504,
    1000
   ],
-  "from": "Where the wages land"
+  "from": "Where the wages land",
+  "mask": "figures"
  },
  {
   "slug": "h1b-employers",
@@ -1316,7 +1333,8 @@
    0,
    1504,
    908
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "pwd-cases",
@@ -1330,7 +1348,8 @@
    2016,
    1236
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "security",
