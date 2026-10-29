@@ -16,7 +16,7 @@
  *     5. Mistral Small (wrapped with the tool-call-ID sanitizer)
  *
  *   Tier 3, free large-context emergency fallback:
- *     6. Nemotron 3 Super via OpenRouter (262k context, free models: 50 requests a day)
+ *     6. Nemotron 3.5 Super via OpenRouter (1M context, free models: 50 requests a day)
  *
  * The summarizer (summarize.ts) uses Groq's GPT-OSS models directly.
  *
@@ -228,7 +228,12 @@ function estimateInputTokens(options: LanguageModelV4CallOptions): number {
  * account is restored. Retired that day: Gemini 2.0 Flash (404), Groq's Llama
  * 3.3 70B (gone from Groq's model list), OpenRouter's free GLM 4.5 Air (404);
  * Cerebras's free tier now answers 402. A model that's gone is reported on
- * first sight (reportModelGone), not only when every model fails.
+ * first sight (reportModelGone), not only when every model fails. Oct 29 2026:
+ * OpenRouter's free Nemotron 3 Super answered "unavailable for free"; Nemotron
+ * 3.5 Super took its place after a two-step tool call with the production key.
+ * OpenRouter serves free models only to accounts that allow free-model
+ * training (asked with training refused: "No endpoints found matching your
+ * data policy"), and Mistral's account still allows 0 requests a minute.
  *
  * Gemini's free tier counts requests per model, so three Gemini models give
  * three separate daily allowances. maxInputTokens is the realistic usable
@@ -252,7 +257,7 @@ const MODEL_CONFIGS: ModelConfig[] = [
   { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
 
   // Tier 3: free large-context emergency
-  { model: openrouter('nvidia/nemotron-3-super-120b-a12b:free'), name: 'Nemotron 3 Super (OpenRouter)' },
+  { model: openrouter('nvidia/nemotron-3.5-super-vl:free'), name: 'Nemotron 3.5 Super (OpenRouter)' },
 ];
 
 /**
@@ -493,5 +498,5 @@ export const SUPPORTED_MODELS = [
   { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2 },
 
   // Tier 3: free large-context emergency
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super', provider: 'OpenRouter', tier: 3 },
+  { id: 'nvidia/nemotron-3.5-super-vl:free', name: 'Nemotron 3.5 Super', provider: 'OpenRouter', tier: 3 },
 ] as const;
