@@ -50,10 +50,11 @@ def main() -> int:
     # lib/db) is reachable from the rail, either as an entry's href or under
     # one by prefix. A data page the rail cannot reach is listed nowhere a
     # reader browses.
-    # The rail map lives in lib/siteMap.ts since Oct 2026, its entries written s(key, group, name, href).
+    # The rail map lives in lib/siteMap.ts since Oct 2026, its entries written s(key, group, name, href)
+    # for a data page and t(key, group, name, href, does) for a calculator; the rail lists both.
     sections = (ROOT / "src/lib/siteMap.ts").read_text()
     rail = set(re.findall(r'href:\s*"(/[\w\-/]*)"', sections))
-    rail |= set(re.findall(r'\bs\(\s*"[^"]+",\s*"[^"]+",\s*"[^"]*",\s*"(/[\w\-/]*)"', sections))
+    rail |= set(re.findall(r'\b[st]\(\s*"[^"]+",\s*"[^"]+",\s*"[^"]*",\s*"(/[\w\-/]*)"', sections))
 
     rs = routes()
     print(f"public routes found : {len(rs)}")
