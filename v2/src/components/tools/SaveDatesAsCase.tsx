@@ -47,7 +47,7 @@ export function SaveDatesAsCase({ dates, headingId }: { dates: CarriedDates; hea
             Keep these dates with the case
           </h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-            Save them as a case in PERM Tracker, free for attorneys and their teams.
+            Save them as a case in PERM Tracker, free for attorneys and paralegals.
           </p>{" "}
           <ul className="mt-5 space-y-3">
             {REASONS.map(({ Icon, text }) => (
