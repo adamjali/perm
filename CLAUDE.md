@@ -1582,7 +1582,7 @@ Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pum
   `/<lang>/perm-case-status` (a `[lang]` segment, typed messages that fail the typecheck when a language is missing,
   `Intl` for dates and numbers, hreflang both ways). It ships only on the owner's yes after review.
 
-## Oct 28 2026 (night), in six lines
+## Oct 28 2026 (night), in seven lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 
@@ -1592,4 +1592,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 - **Each quarterly PERM file gets a post** whose figures come from that quarter's own doc (`QuarterNow`).
 - **`/perm-case-alerts`** holds every free alert: searches naming an alert or an email reached no page before it.
 - **"How long does PERM take" is answered from today's readings** (`howLongSentence`), the same on two pages.
-- **A share card never carries a live figure**; about a dozen still do, waiting on the owner.
+- **A share card never carries a live figure**: a card over a live page masks its figures (`"mask": "figures"`).
+- **The privacy page says what the chat's free-tier AI providers may do with what's sent** (corrected Oct 29).

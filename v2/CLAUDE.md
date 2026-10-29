@@ -10687,9 +10687,17 @@ live with the Oct 29 2 AM run. Ledger: `~/.claude/plans/cozy-sniffing-pumpkin.md
   lookup's heading "Check and track". "How long does PERM take right now?" is answered by `howLongSentence`
   (lib/dolNow.ts) on the lookup and the processing-times page: the wait of DOL's last working day's cases, then
   DOL's own month and average. The timeline calculator has one name where it had three.
-- **A card carries no live figure**: About's counts and the timeline calculator's average and date were hidden in
-  their captures (`css` in `scripts/page-cards.json`). About a dozen other cards still show live headline counts; the
-  owner decides whether they're hidden too.
+- **A card carries no live figure** (Oct 29 2026, 3:47 AM EDT, `0ac7d065`): a card whose page shows moving figures says
+  `"mask": "figures"` in `scripts/page-cards.json`, and the capture draws each count, share, dollar amount and date
+  as a grey bar of its own width (the reviews card's treatment) and hides a chart's own labels, so the card keeps the
+  page's shape. The rule is `scripts/lib_card_mask.mjs` (tested): codes and fixed wording stay (G-100-..., ETA-9089,
+  "60 days' notice"), and text that is only a number is masked whole. 19 cards carry it. A new card whose page shows
+  a live figure gets the flag; look at the rendered card, since a page can split a figure across text pieces.
+- **The privacy page says what the chat's AI providers may do** (Oct 29 2026, 3:18 AM EDT, `2f054ae5`): the chat runs
+  on Gemini's unpaid quota, whose terms let Google use what's sent to improve its products and let human reviewers
+  read it, and ask that no personal information be sent; the page had said the opposite. Mistral, OpenRouter and
+  Groq lines say what their own pages allow. The owner decides the change email the policy promises (§19, draft in
+  `~/Documents/permtracker-outreach/privacy-change-notice-2026-10-29.txt`) and whether to pay for Gemini's paid tier.
 - **Where a wage reaches each level** (`5b42ee6f`): the wage tool's every-area view, from `wageLevelsInState`
   (`/api/wage-levels/areas`), `levelReached` in `src/lib/wageLevels.ts` the one rule (a level is reached at its own
   wage; one DOL didn't publish can't be). It says where a wage sits, never a case's level.
