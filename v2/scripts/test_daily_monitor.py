@@ -345,7 +345,7 @@ def main() -> int:
                         "serverOk": {"at": "2026-09-28T07:35:00Z"}, "convexOk": {"at": "2026-09-28T07:52:00Z"},
                         "restoreOk": {"at": "2026-09-02T09:40:00Z", "tables": 44, "rows": 6_509_035},
                         "diskCopy": {"at": "2026-09-28T07:50:00Z", "count": 4, "free": "yes"}},
-             "services": {u: "active" for u in ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
+             "services": {u: "active" for u in ["permtracker-db", "permtracker-web@blue",
                                                 "permtracker-web@green", "nginx", "cloudflared"]},
              "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"},
              "pageCache": {"at": "2026-09-28T11:05:00Z", "liveGB": 3.2, "standbyGB": 4.0, "tight": False},
@@ -373,8 +373,6 @@ def main() -> int:
           "the live slot's second copy down warns (one copy still serves)")
     check(v(doc(services={f"permtracker-web@{live}2": "active"}), now_ms)["status"] == "ok",
           "both copies up reads ok")
-    check(v(doc(services={"permtracker-dbcache": "inactive"}), now_ms)["status"] == "warn",
-          "the database falling out of memory warns")
     check(v(doc(idle={"memP95": 12.0, "cpuP95": 4.0}), now_ms)["status"] == "fail",
           "memory and CPU both under 20% for the window fails (Oracle can reclaim it)")
     check(v(doc(idle={"memP95": 22.0, "cpuP95": 4.0}), now_ms)["status"] == "warn", "under 25% warns")
@@ -563,16 +561,6 @@ def main() -> int:
                  {"name": dm.SHIP_STEP, "conclusion": "success", "completed_at": "2026-10-19T06:11:20Z"}],
              2: [{"name": dm.SHIP_STEP, "conclusion": "skipped", "completed_at": "2026-10-18T14:30:00Z"}]}
     check(dm.switch_times(steps) == [ms(2026, 10, 19, 6, 11, 20)], "only a run whose ship step ran has a switch time")
-
-    # The database's RAM lock (Oct 19 2026: off since Oct 9, unnoticed).
-    on = {"permtracker-dbcache": "active"}
-    off_line = dm.ram_lock_line(on, {"dbDataBytes": 6_682_112_000, "lockedMb": 0})
-    check(off_line is not None and "6.7 GB" in off_line and "6 GB cap" in off_line, "a database over the lock cap is said")
-    check(dm.ram_lock_line(on, {"dbDataBytes": 3_000_000_000, "lockedMb": 2900}) is None, "a locked database says nothing")
-    check(dm.ram_lock_line(on, {"dbDataBytes": 6_682_112_000}) is None, "no locked figure, no claim")
-    script = (HERE / "oracle" / "bin" / "permtracker-dbcache").read_text()
-    check("$((6*1024*1024*1024))" in script and dm.DBCACHE_CAP_BYTES == 6 * 1024 ** 3,
-          "the report's cap is the lock script's cap")
 
     # The H-1B LCA filings' own database (Oct 19 2026).
     now_ms = int(dt.datetime(2026, 10, 20, 11, 30, tzinfo=dt.timezone.utc).timestamp() * 1000)

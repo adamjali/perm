@@ -157,8 +157,9 @@ def main() -> int:
         check("keeps the original file for a rollback, and drops sqld's log and snapshots",
               (s["keep"] / "data").exists() and not (s["keep"] / "wallog").exists()
               and not (s["dir"] / "wallog").exists() and not (s["dir"] / "snapshots").exists())
-        check("the database and its lock are started again", (root / "running-8080").exists()
-              and "start permtracker-dbcache permtracker-watchdog.timer" in (root / "systemctl.log").read_text())
+        check("the database and its watchdog are started again, and no RAM lock (retired Oct 29 2026)",
+              (root / "running-8080").exists() and "start permtracker-watchdog.timer" in (root / "systemctl.log").read_text()
+              and "dbcache" not in (root / "systemctl.log").read_text())
         check("the integrity check runs once it's back, and passes", "done: quick_check ok" in r.stdout, r.stdout[-200:])
 
     with tempfile.TemporaryDirectory() as tmp:
