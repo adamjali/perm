@@ -31,13 +31,12 @@ const GROUPS: { key: DayGroup; tone: string }[] = [
 ];
 // The neighbour squares carry a number, so "still in line" is a plain card
 // there: a hatch behind small type would fight it. A number on a coloured fill
-// is set in black in both themes (the fills lighten in dark mode, where the
-// page's own text colour turns light); the slate of a withdrawn case darkens
-// in dark mode instead, so its number turns white there.
+// is set in black in both themes, the withdrawn purple included (black on it is
+// 5.3:1 in dark mode; white was 4.0:1, a leftover from when withdrawn was slate).
 const INK: Record<DayGroup, string> = {
   certified: "text-black",
   denied: "text-black",
-  withdrawn: "text-black dark:text-white",
+  withdrawn: "text-black",
   aside: "text-black",
   inLine: "text-foreground",
 };
