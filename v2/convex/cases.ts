@@ -1763,6 +1763,28 @@ export const togglePinned = mutation({
  * When turning ON: schedules sync to create calendar events
  * When turning OFF: schedules deletion of existing calendar events
  */
+/**
+ * Turn the DOL live-status watch on or off for one saved case.
+ *
+ * `watchEnabled` absent means on, so this only ever writes `false` or clears
+ * back to `true`. It never touches `caseStatus`/`progressStatus`. The 5-minute
+ * sweep (convex/appCaseWatch.ts) stops reading a case whose watch is off.
+ */
+export const setWatchEnabled = mutation({
+  args: {
+    id: v.id("cases"),
+    enabled: v.boolean(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args): Promise<boolean> => {
+    const caseDoc = await ctx.db.get(args.id);
+    await verifyOwnership(ctx, caseDoc, "case");
+    if (caseDoc!.deletedAt !== undefined) throw new ConvexError("Cannot update deleted case");
+    await ctx.db.patch(args.id, { watchEnabled: args.enabled, updatedAt: Date.now() });
+    return args.enabled;
+  },
+});
+
 export const toggleCalendarSync = mutation({
   args: {
     id: v.id("cases"),

@@ -355,6 +355,7 @@ export const getRecentActivity = query({
       timestamp: c.updatedAt ?? c._creationTime,
       caseStatus: c.caseStatus,
       progressStatus: c.progressStatus,
+      liveStatus: c.liveStatus,
     }));
   },
 });

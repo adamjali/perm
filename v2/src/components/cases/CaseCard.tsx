@@ -23,6 +23,7 @@ import type { CaseCardData } from "@convex/lib/caseListTypes";
 import { countShownDates, formatClosureReasonLabel, formatCompactDate } from "./case-card.utils";
 import { useCardMutations } from "./useCardMutations";
 import { CaseBadges, CaseDates } from "./CaseCardParts";
+import { LiveStatusChip } from "./LiveStatusChip";
 import { DeadlineCountdown } from "./DeadlineCountdown";
 
 interface CaseCardProps {
@@ -169,6 +170,7 @@ export const CaseCard = memo(function CaseCard({
             <ProgressStatusBadge status={c.progressStatus} />
           )}
           <CaseBadges duplicateOf={c.duplicateOf} hasActiveRfi={c.hasActiveRfi} hasActiveRfe={c.hasActiveRfe} isSample={c.isSample} />
+          {c.liveStatus ? <LiveStatusChip status={c.liveStatus} /> : null}
         </div>
       </div>
 

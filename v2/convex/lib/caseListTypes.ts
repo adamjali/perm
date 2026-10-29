@@ -226,6 +226,10 @@ export interface CaseCardData {
   readonly isProfessionalOccupation?: boolean;
   readonly hasActiveRfi?: boolean;
   readonly hasActiveRfe?: boolean;
+  /** DOL's live status for this case, from the automatic watch (never the firm's own stage). */
+  readonly liveStatus?: string;
+  /** Whether that live status is a final DOL decision (tones the chip). */
+  readonly liveStatusIsFinal?: boolean;
   readonly calendarSyncEnabled?: boolean;
   readonly showOnTimeline?: boolean;
   readonly notes?: string; // Concatenated notes for preview
@@ -259,6 +263,8 @@ export function createCaseCardData(params: {
   isProfessionalOccupation?: boolean;
   hasActiveRfi?: boolean;
   hasActiveRfe?: boolean;
+  liveStatus?: string;
+  liveStatusIsFinal?: boolean;
   calendarSyncEnabled?: boolean;
   showOnTimeline?: boolean;
   notes?: string;
@@ -303,6 +309,8 @@ export function createCaseCardData(params: {
     isProfessionalOccupation: params.isProfessionalOccupation,
     hasActiveRfi: params.hasActiveRfi,
     hasActiveRfe: params.hasActiveRfe,
+    liveStatus: params.liveStatus,
+    liveStatusIsFinal: params.liveStatusIsFinal,
     calendarSyncEnabled: params.calendarSyncEnabled,
     showOnTimeline: params.showOnTimeline,
     notes: params.notes,

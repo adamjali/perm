@@ -160,6 +160,8 @@ interface CaseDataForProjection extends CaseDataForDeadlines {
   isFavorite?: boolean;
   isPinned?: boolean;
   isProfessionalOccupation?: boolean;
+  liveStatus?: string; // DOL's live status from the automatic watch (convex/appCaseWatch.ts)
+  liveStatusIsFinal?: boolean;
   calendarSyncEnabled?: boolean;
   pwdFilingDate?: string;
   pwdDeterminationDate?: string;
@@ -233,6 +235,8 @@ export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: st
     hasActiveRfe: (caseData.rfeEntries ?? []).some(
       (e: { receivedDate?: string; responseSubmittedDate?: string }) => !!e.receivedDate && !e.responseSubmittedDate
     ),
+    liveStatus: caseData.liveStatus,
+    liveStatusIsFinal: caseData.liveStatusIsFinal,
     calendarSyncEnabled: caseData.calendarSyncEnabled,
     notes: notesPreview,
     searchNumbers: caseSearchNumbers(caseData),

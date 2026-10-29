@@ -61,6 +61,7 @@ export interface NotificationPreferencesSectionProps {
     emailDeadlineReminderRfe?: boolean;
     emailStatusUpdates?: boolean;
     emailWeeklyDigest?: boolean;
+    watchSavedCases?: boolean;
     pushNotificationsEnabled?: boolean;
     reminderDaysBefore?: number[];
     urgentDeadlineDays?: number;
@@ -172,6 +173,7 @@ export default function NotificationPreferencesSection({
   const [deadlineRemindersExpanded, setDeadlineRemindersExpanded] = useState(false);
   const [statusUpdates, setStatusUpdates] = useState(profile.emailStatusUpdates ?? false);
   const [weeklyDigest, setWeeklyDigest] = useState(profile.emailWeeklyDigest ?? true);
+  const [watchSaved, setWatchSaved] = useState(profile.watchSavedCases ?? true);
 
   // Marketing email subscription (Resend Audiences)
   const [marketingSubscribed, setMarketingSubscribed] = useState<boolean | null>(null);
@@ -519,6 +521,26 @@ export default function NotificationPreferencesSection({
               onCheckedChange={handleWeeklyDigestToggle}
               disabled={!emailEnabled}
               indented
+            />
+          </div>
+        </div>
+
+        {/* DOL live-status watch for saved cases */}
+        <div className="border-t border-border pt-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-0.5">
+              <Label htmlFor="watch-saved-cases" className="text-sm font-medium">
+                Watch saved cases on DOL
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Check DOL for each saved case that has a case number, and flag it when its status changes. DOL&rsquo;s status shows on the case; it never changes the stage you set. An email is sent only when status updates above are on.
+              </p>
+            </div>
+            <Switch
+              id="watch-saved-cases"
+              aria-label="Watch saved cases on DOL"
+              checked={watchSaved}
+              onCheckedChange={(value) => handleToggle("watchSavedCases", value, setWatchSaved)}
             />
           </div>
         </div>

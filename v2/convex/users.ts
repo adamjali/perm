@@ -359,6 +359,8 @@ export const updateUserProfile = mutation({
     emailStatusUpdates: v.optional(v.boolean()),
     emailRfeAlerts: v.optional(v.boolean()),
     emailWeeklyDigest: v.optional(v.boolean()),
+    // Global switch for the DOL live-status watch on saved cases (appCaseWatch.ts)
+    watchSavedCases: v.optional(v.boolean()),
     // Quiet hours
     quietHoursEnabled: v.optional(v.boolean()),
     quietHoursStart: v.optional(v.string()), // HH:MM format

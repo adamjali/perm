@@ -15,8 +15,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createTestContext } from "../../test-utils/convex";
-import { internal } from "../_generated/api";
+import { createTestContext, createAuthenticatedContext } from "../../test-utils/convex";
+import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { buildDefaultProfile } from "../lib/userDefaults";
 
@@ -271,6 +271,23 @@ describe("email is in-app-first, and deduped against a public subscription", () 
     await t.finishInProgressScheduledFunctions();
   });
 
+  it("a watch-off case is skipped by the sweep entirely", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t);
+    const c = await makeCase(t, u, {
+      caseNumber: "G-100-26100-111111",
+      watchEnabled: false,
+      liveStatus: "ANALYST REVIEW",
+    });
+    MIRROR.set("G-100-26100-111111", { status: "CERTIFIED", isFinal: true });
+
+    const res = await sweep(t);
+    expect(res).toMatchObject({ checked: 0, seeded: 0, changed: 0, notified: 0 });
+    // Untouched: its old liveStatus stands and no notification was raised.
+    expect((await getCase(t, c))?.liveStatus).toBe("ANALYST REVIEW");
+    expect(await notifications(t)).toHaveLength(0);
+  });
+
   it("does NOT email when the owner is already a confirmed public subscriber on this number", async () => {
     const t = createTestContext();
     const email = "owner@example.com";
@@ -291,5 +308,25 @@ describe("email is in-app-first, and deduped against a public subscription", () 
     // The in-app notification still fires; the email is left to the public path.
     expect(res).toMatchObject({ changed: 1, notified: 1, emailed: 0 });
     expect(await notifications(t)).toHaveLength(1);
+  });
+});
+
+describe("the per-case watch toggle (cases.setWatchEnabled)", () => {
+  it("sets watchEnabled and refuses a case the caller does not own", async () => {
+    const t = createTestContext();
+    const owner = await createAuthenticatedContext(t, "Owner");
+    const caseId = await makeCase(t, owner.userId, { caseNumber: "G-100-26100-111111" });
+
+    // Owner turns the watch off, then back on.
+    await owner.ctx.mutation(api.cases.setWatchEnabled, { id: caseId, enabled: false });
+    expect((await t.run((ctx) => ctx.db.get(caseId)))?.watchEnabled).toBe(false);
+    await owner.ctx.mutation(api.cases.setWatchEnabled, { id: caseId, enabled: true });
+    expect((await t.run((ctx) => ctx.db.get(caseId)))?.watchEnabled).toBe(true);
+
+    // A different account cannot touch it.
+    const other = await createAuthenticatedContext(t, "Other");
+    await expect(
+      other.ctx.mutation(api.cases.setWatchEnabled, { id: caseId, enabled: false }),
+    ).rejects.toThrow();
   });
 });

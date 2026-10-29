@@ -290,4 +290,6 @@ export interface RecentActivityItem {
   timestamp: number;
   caseStatus: CaseStatus;
   progressStatus: ProgressStatus;
+  /** DOL's live status from the automatic watch, when we hold one (convex/appCaseWatch.ts). */
+  liveStatus?: string;
 }

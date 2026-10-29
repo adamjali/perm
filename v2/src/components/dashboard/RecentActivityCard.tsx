@@ -8,11 +8,12 @@ import { WidgetRow } from "./widget-primitives";
 /** One recent change: the case, what changed and its stage, and when. */
 export default function RecentActivityCard({ activity }: { activity: RecentActivityItem }) {
   const stage = STAGE_VISUALS[activity.caseStatus]?.label;
+  const dol = activity.liveStatus ? `DOL: ${activity.liveStatus}` : null;
   return (
     <WidgetRow
       href={`/cases/${activity.id}`}
       title={activity.employerName}
-      detail={[activity.action, activity.positionTitle, stage].filter(Boolean).join(" · ")}
+      detail={[activity.action, activity.positionTitle, stage, dol].filter(Boolean).join(" · ")}
       asideDetail={
         <time dateTime={new Date(activity.timestamp).toISOString()} data-testid="activity-timestamp">
           {safeFormatDistanceToNow(activity.timestamp)}

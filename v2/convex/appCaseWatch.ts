@@ -344,11 +344,13 @@ export const seedLiveStatus = internalMutation({
     const caseDoc = await ctx.db.get(args.caseId);
     if (!stillWatchable(caseDoc)) return false;
     if (caseDoc.liveStatus === args.status) return false;
+    // The baseline is invisible to the user, so it does NOT bump `updatedAt`:
+    // that field drives "recent activity" and last-updated sorts, and the first
+    // sweep would otherwise float every watched case to the top for no event.
     await ctx.db.patch(args.caseId, {
       liveStatus: args.status,
       liveStatusSeenAt: Date.now(),
       liveStatusIsFinal: args.isFinal,
-      updatedAt: Date.now(),
     });
     return true;
   },
