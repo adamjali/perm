@@ -122,15 +122,15 @@ export default async function SocCodesPage() {
           <div className="border-2 border-border bg-card">
             {groups.map((g) => (
               <details key={g.major} className="group border-b-2 border-border last:border-b-0">
-                <summary className="grid min-h-[44px] cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3 hover:bg-sage sm:grid-cols-[minmax(12rem,22rem)_minmax(0,1fr)_11.5rem] sm:px-6 [&::-webkit-details-marker]:hidden">
+                <summary className="grid min-h-[44px] cursor-pointer list-none grid-cols-1 items-center gap-x-4 gap-y-1.5 px-5 py-3 hover:bg-sage sm:grid-cols-[minmax(12rem,22rem)_minmax(0,1fr)_11.5rem] sm:px-6 [&::-webkit-details-marker]:hidden">
                   <span className="min-w-0 font-heading text-base font-bold">
                     <span className="font-mono text-sm text-soft">{g.major}-0000</span> {g.name}
                   </span>{" "}
-                  {/* On a phone the bar takes its own full-width line under the name and share, so every track is one length. */}
-                  <span className="order-last col-span-2 h-2.5 w-full bg-sage sm:order-none sm:col-span-1" aria-hidden="true">
+                  {/* On a phone the name, the share and the bar take a line each, so the name has the width and every track is one length. */}
+                  <span className="order-last h-2.5 w-full bg-sage sm:order-none" aria-hidden="true">
                     <span className="block h-full bg-primary" style={{ width: `${busiest > 0 && g.filings > 0 ? Math.max(1, (g.filings / busiest) * 100) : 0}%` }} />
                   </span>{" "}
-                  <span className="text-right font-mono text-sm tabular-nums">
+                  <span className="font-mono text-sm tabular-nums sm:text-right">
                     {g.codes.length} {g.codes.length === 1 ? "code" : "codes"},{" "}
                     {g.filings > 0 && allFilings > 0 ? formatShareOf(g.filings, allFilings) : "no filings"}
                   </span>
