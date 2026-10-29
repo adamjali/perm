@@ -25,6 +25,7 @@ surviving Python could have written.
 from __future__ import annotations
 
 import datetime
+import json
 import pathlib
 import re
 import sys
@@ -71,14 +72,22 @@ def run(rows) -> int:
 
 
 class FakeDocsDB:
-    """Serves `perm_docs` rows: (key, computed_at_ms, bytes)."""
+    """Serves `perm_docs` rows: (key, computed_at_ms, bytes), and a pointer doc's json."""
 
-    def __init__(self, rows):
+    def __init__(self, rows, pointer=None):
         self.rows = rows
+        # quarter_report's json; by default it points at a doc the rows hold.
+        self.pointer = pointer if pointer is not None else {"key": "quarter_report_2026q3"}
 
     def execute(self, sql, args=None):
         if "perm_docs" not in sql:
             raise AssertionError(f"read the wrong table: {sql[:60]}")
+        if sql.startswith("SELECT json FROM perm_docs"):
+            return {"response": {"result": {"rows": [[{"type": "text", "value": json.dumps(self.pointer)}]]}}}
+        if sql.startswith("SELECT length(json) FROM perm_docs"):
+            size = dict((k, n) for k, _at, n in self.rows).get((args or [None])[0])
+            out = [] if size is None else [[{"type": "integer", "value": str(size)}]]
+            return {"response": {"result": {"rows": out}}}
         asked = set(args or [])
         out = []
         for key, at, size in self.rows:
@@ -92,12 +101,13 @@ class FakeDocsDB:
         return {"response": {"result": {"rows": out}}}
 
 
-def docs(rows) -> int:
-    return health.check_precomputed_docs(FakeDocsDB(rows))
+def docs(rows, pointer=None) -> int:
+    return health.check_precomputed_docs(FakeDocsDB(rows, pointer))
 
 
 def all_fresh() -> list:
-    return [(k, int(NOW - H), 20_000) for k in health.PRECOMPUTED_DOCS]
+    return [(k, int(NOW - H), 20_000) for k in health.PRECOMPUTED_DOCS] + [
+        ("quarter_report_2026q3", int(NOW - H), 6_006)]
 
 
 def main() -> int:
@@ -108,6 +118,21 @@ def main() -> int:
     check("an EMPTY doc fails",
           docs([("lca_filter_options", int(NOW - H), 12) if r[0] == "lca_filter_options"
                 else r for r in all_fresh()]) == 1)
+    # Small by design is not empty: the EB split's five counts (93 bytes) and the
+    # quarter report's pointer (47 bytes) went red every morning from Oct 29 2026.
+    check("the EB split's real 93 bytes pass",
+          docs([("eb_split", int(NOW - H), 93) if r[0] == "eb_split" else r for r in all_fresh()]) == 0)
+    check("the quarter pointer's real 47 bytes pass",
+          docs([("quarter_report", int(NOW - H), 47) if r[0] == "quarter_report" else r
+                for r in all_fresh()]) == 0)
+    check("a small-by-design doc holding only {} still fails",
+          docs([("eb_split", int(NOW - H), 2) if r[0] == "eb_split" else r for r in all_fresh()]) == 1)
+    check("a pointer to a doc that isn't there fails",
+          docs(all_fresh(), pointer={"key": "quarter_report_2031q1"}) == 1)
+    check("a pointer naming nothing fails", docs(all_fresh(), pointer={}) == 1)
+    check("a pointer to an empty doc fails",
+          docs([("quarter_report_2026q3", int(NOW - H), 12) if r[0] == "quarter_report_2026q3" else r
+                for r in all_fresh()]) == 1)
     check("a doc with no computed_at fails",
           docs([("live_census", None, 20_000) if r[0] == "live_census" else r
                 for r in all_fresh()]) == 1)
