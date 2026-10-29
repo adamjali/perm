@@ -289,11 +289,11 @@ test("today shows the reader's own bulletin line and looks further back at DOL's
 // citation, which opens in the browser. A client part handed something a browser can't receive (two message
 // functions, Oct 28 2026) turned every one of these pages into the error screen, and only a real render shows it.
 const TRANSLATED = [
-  { lang: "es", heading: "Consulte el estado de su caso PERM", record: "El registro", cite: "Citar esta página" },
-  { lang: "zh", heading: "查询您的 PERM 案件状态", record: "记录", cite: "引用本页" },
-  { lang: "pt-br", heading: "Consulte o status do seu caso PERM", record: "O registro", cite: "Citar esta página" },
-  { lang: "ko", heading: "PERM 케이스 상태 조회", record: "기록", cite: "이 페이지 인용하기" },
-  { lang: "vi", heading: "Tra cứu tình trạng hồ sơ PERM", record: "Hồ sơ lưu", cite: "Trích dẫn trang này" },
+  { lang: "es", heading: "Consulte y siga el estado de su caso PERM", record: "El registro", cite: "Citar esta página" },
+  { lang: "zh", heading: "查询并追踪您的 PERM 案件状态", record: "记录", cite: "引用本页" },
+  { lang: "pt-br", heading: "Consulte e acompanhe o status do seu caso PERM", record: "O registro", cite: "Citar esta página" },
+  { lang: "ko", heading: "PERM 케이스 상태 조회 및 추적", record: "기록", cite: "이 페이지 인용하기" },
+  { lang: "vi", heading: "Tra cứu và theo dõi tình trạng hồ sơ PERM", record: "Hồ sơ lưu", cite: "Trích dẫn trang này" },
 ] as const;
 
 for (const t of TRANSLATED) {
