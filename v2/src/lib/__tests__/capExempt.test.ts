@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { likelyCapExempt } from "../capExempt";
+import { likelyCapExempt, monthShares } from "../capExempt";
 
 /** The cap-exempt inference fires only when most coded filings name a college or university. */
 describe("likelyCapExempt", () => {
@@ -15,5 +15,19 @@ describe("likelyCapExempt", () => {
     expect(likelyCapExempt([{ key: "611710", label: "Educational Support Services", n: 90 }])).toBeNull();
     expect(likelyCapExempt([])).toBeNull();
     expect(likelyCapExempt(null)).toBeNull();
+  });
+});
+
+describe("monthShares", () => {
+  it("gives each month its share of its own group's year, so two groups of any size compare", () => {
+    const s = monthShares({ months: [{ month: "2025-03", exempt: 10, others: 900 }, { month: "2025-04", exempt: 10, others: 100 }] });
+    expect(s).toEqual([
+      { month: "2025-03", exempt: 0.5, others: 0.9 },
+      { month: "2025-04", exempt: 0.5, others: 0.1 },
+    ]);
+  });
+
+  it("is zero, never a division by zero, for a group with no filings", () => {
+    expect(monthShares({ months: [{ month: "2025-03", exempt: 0, others: 4 }] })).toEqual([{ month: "2025-03", exempt: 0, others: 1 }]);
   });
 });
