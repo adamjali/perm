@@ -18,6 +18,7 @@ import { z } from "zod";
 
 import type { ApiCaller } from "./auth";
 import { readBulletin, readCase, readEntity, readEstimate, readQueue, searchEntities, type ReadResult } from "./reads";
+import { lookupSoc } from "./socLookup";
 import { ANONYMOUS_ACCOUNT, checkAllowance, countCall, takeMinute } from "./usage";
 
 /** Tool calls a minute from every caller without a key together, in one copy of the site. */
@@ -188,6 +189,20 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
       annotations: readOnly,
     },
     async ({ kind, slug }) => answer(caller, () => readEntity(KINDS[kind], slug)),
+  );
+
+  server.registerTool(
+    "find_soc_code",
+    {
+      title: "Find a job's SOC code",
+      description:
+        "The SOC occupation codes employers filed a job title under in DOL's PERM, prevailing wage and LCA files, with each " +
+        "code's share of the title's filings; or a code's title, and for a 2010 code the 2018 codes it became. " +
+        'Examples: {"query": "data scientist"} or {"query": "15-1132"}.',
+      inputSchema: z.object({ query: z.string().min(2).max(80).describe("A job title or a SOC code, e.g. data scientist or 15-2051.") }),
+      annotations: readOnly,
+    },
+    async ({ query }) => answer(caller, () => lookupSoc(query)),
   );
 
   return server;

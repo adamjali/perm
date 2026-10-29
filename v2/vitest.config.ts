@@ -69,6 +69,7 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/api/__tests__/reads.test.ts",
   "src/lib/api/__tests__/employerLookup.test.ts",
   "src/lib/api/__tests__/lookupRoute.test.ts",
+  "src/lib/api/__tests__/socLookup.test.ts",
   // Added 2026-10-08: the key check (fetchQuery's answers), live lookups
   // (discovery, the counter) and exports (the reads) mock per test.
   "src/lib/api/__tests__/auth.test.ts",
