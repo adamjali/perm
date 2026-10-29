@@ -1,0 +1,26 @@
+{
+  "about": "Job titles and the key each is counted under. Read by scripts/test_soc_titles.py (build_soc_titles.title_key) and src/lib/__tests__/socTitleKey.test.ts (titleKey), so the builder and the site can't key a title two ways.",
+  "cases": [
+    ["SR. SOFTWARE ENGINEER III", "software engineer"],
+    ["Software Engineer", "software engineer"],
+    ["Senior Staff Software Engineer", "software engineer"],
+    ["Software Engineer, Level II", "software engineer"],
+    ["Software Engineer Level 2", "software engineer"],
+    ["SOFTWARE DEVELOPER / ANALYST", "software developer analyst"],
+    ["Staff Nurse", "nurse"],
+    ["Accountant I", "accountant"],
+    ["Assistant Professor IV", "assistant professor"],
+    ["Senior Vice President", "vice president"],
+    ["Principal", "principal"],
+    ["Elementary School Principal", "elementary school principal"],
+    ["Lead", "lead"],
+    ["Engineer 5, Software Development & Engineering", "engineer 5 software development and engineering"],
+    ["Research & Development Engineer", "research and development engineer"],
+    ["R&D Engineer", "r and d engineer"],
+    ["Café Manager", "cafe manager"],
+    ["C++ Developer", "c developer"],
+    ["  Data   Scientist  ", "data scientist"],
+    ["   ", ""],
+    ["II", "ii"]
+  ]
+}

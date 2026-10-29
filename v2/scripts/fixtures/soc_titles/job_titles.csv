@@ -1,0 +1,86 @@
+O*NET-SOC Code,Title,Job Title,Short Title,Source(s)
+15-1252.00,Software Developers,AI Specialist (Artificial Intelligence Specialist),AI Specialist,08
+15-1252.00,Software Developers,Application Analyst,,08
+15-1252.00,Software Developers,Application Architect,,08
+15-1252.00,Software Developers,Application Developer,,"02,04,08"
+15-1252.00,Software Developers,Application Engineer,,08
+15-1252.00,Software Developers,Application Integration Engineer,,"02,04"
+15-1252.00,Software Developers,Application Integrator,,08
+15-1252.00,Software Developers,Application Programmer,,08
+15-1252.00,Software Developers,Application Software Engineering IT Specialist (Application Software Engineering Information Technology Specialist),Application Software Engineering IT Specialist,08
+15-1252.00,Software Developers,Application Support Engineer,,01
+15-1252.00,Software Developers,Application Systems Analyst,,08
+15-1252.00,Software Developers,Application Systems Architect,,01
+15-1252.00,Software Developers,Software Engineer,,"02,04,08,10"
+15-2051.00,Data Scientists,Analytics Consultant,,08
+15-2051.00,Data Scientists,Applied Scientist,,08
+15-2051.00,Data Scientists,Data Analyst,,08
+15-2051.00,Data Scientists,Data Analytic Scientist,,08
+15-2051.00,Data Scientists,Data Analytics Scientist,,10
+15-2051.00,Data Scientists,Data Analytics Specialist,,"04,08"
+15-2051.00,Data Scientists,Data Architect,,08
+15-2051.00,Data Scientists,Data Consultant,,08
+15-2051.00,Data Scientists,Data Economist,,08
+15-2051.00,Data Scientists,Data Engineer,,08
+15-2051.00,Data Scientists,Data Management Scientist,,08
+15-2051.00,Data Scientists,Data Mining Analyst,,"04,08"
+15-2051.01,Business Intelligence Analysts,Analytical Data Miner,,08
+15-2051.01,Business Intelligence Analysts,Business Analyst,,"01,02,10"
+15-2051.01,Business Intelligence Analysts,Business Consultant,,10
+15-2051.01,Business Intelligence Analysts,Business Data Analyst,,10
+15-2051.01,Business Intelligence Analysts,Business Database Analyst,,08
+15-2051.01,Business Intelligence Analysts,Business Information Analyst,,10
+15-2051.01,Business Intelligence Analysts,Business Intelligence Analyst (BI Analyst),BI Analyst,"02,08,10"
+15-2051.01,Business Intelligence Analysts,Business Intelligence Consultant (BI Consultant),BI Consultant,02
+15-2051.01,Business Intelligence Analysts,Business Intelligence Coordinator (BI Coordinator),BI Coordinator,02
+15-2051.01,Business Intelligence Analysts,Business Intelligence Engineer,,"03,08"
+15-2051.01,Business Intelligence Analysts,Business Intelligence Specialist (BI Specialist),BI Specialist,02
+15-2051.01,Business Intelligence Analysts,Business Process Analyst,,10
+25-1011.00,"Business Teachers, Postsecondary",Accountancy Professor,,02
+25-1011.00,"Business Teachers, Postsecondary",Accounting Instructor,,02
+25-1011.00,"Business Teachers, Postsecondary",Accounting Professor,,"02,04,10"
+25-1011.00,"Business Teachers, Postsecondary",Accounting Teacher,,"04,07"
+25-1011.00,"Business Teachers, Postsecondary",Adjunct Business Professor,,10
+25-1011.00,"Business Teachers, Postsecondary",Adjunct Instructor,,"02,10"
+25-1011.00,"Business Teachers, Postsecondary",Adjunct Lecturer,,10
+25-1011.00,"Business Teachers, Postsecondary",Advertising Teacher,,"04,07"
+25-1011.00,"Business Teachers, Postsecondary",Assistant Professor,,02
+25-1011.00,"Business Teachers, Postsecondary",Associate Professor,,02
+25-1011.00,"Business Teachers, Postsecondary",Banking Instructor,,"02,04"
+25-1011.00,"Business Teachers, Postsecondary",Banking Teacher,,"04,07"
+29-1141.00,Registered Nurses,Cardiac Care Unit Nurse (CCU Nurse),CCU Nurse,"02,04"
+29-1141.00,Registered Nurses,Cardiac Nurse Specialist,,09
+29-1141.00,Registered Nurses,Central Supply Nurse,,"04,07"
+29-1141.00,Registered Nurses,Certified Operating Room Nurse (CNOR),CNOR,02
+29-1141.00,Registered Nurses,Charge Nurse,,02
+29-1141.00,Registered Nurses,Circulating Nurse,,"04,07"
+29-1141.00,Registered Nurses,Community Health Nurse,,"04,07,08"
+29-1141.00,Registered Nurses,Consultant Nurse,,08
+29-1141.00,Registered Nurses,Consulting Nurse,,"04,07"
+29-1141.00,Registered Nurses,Coronary Care Unit Nurse (CCU Nurse),CCU Nurse,"02,04"
+29-1141.00,Registered Nurses,County Nurse,,"04,07"
+29-1141.00,Registered Nurses,Delivery Nurse,,09
+29-1141.01,Acute Care Nurses,Acute Care Nurse,,"02,08"
+29-1141.01,Acute Care Nurses,Admission Nurse,,10
+29-1141.01,Acute Care Nurses,Admission Nurse Coordinator,,10
+29-1141.01,Acute Care Nurses,Cardiac Interventional Care Nurse,,02
+29-1141.01,Acute Care Nurses,Cardiovascular ICU Nurse (Cardiovascular Intense Care Unit Nurse),Cardiovascular ICU Nurse,02
+29-1141.01,Acute Care Nurses,Cardiovascular Surgery Acute Care Nurse Practitioner (Cardiovascular Surgery ACNP),Cardiovascular Surgery ACNP,02
+29-1141.01,Acute Care Nurses,Care Transitions Manager,,10
+29-1141.01,Acute Care Nurses,Care Transitions Nurse,,10
+29-1141.01,Acute Care Nurses,Charge Nurse,,02
+29-1141.01,Acute Care Nurses,Chronic Condition Nurse,,10
+29-1141.01,Acute Care Nurses,DSU Nurse (Day Surgery Unit Nurse),DSU Nurse,02
+29-1141.01,Acute Care Nurses,ICU RN (Intensive Care Unit Registered Nurse),ICU RN,10
+35-2014.00,"Cooks, Restaurant",Back Line Cook,,02
+35-2014.00,"Cooks, Restaurant",Banquet Cook,,"02,04,10"
+35-2014.00,"Cooks, Restaurant",Breakfast Cook,,"02,04"
+35-2014.00,"Cooks, Restaurant",Broiler Cook,,"04,07"
+35-2014.00,"Cooks, Restaurant",Cook,,02
+35-2014.00,"Cooks, Restaurant",Foreign Food Specialty Cook,,08
+35-2014.00,"Cooks, Restaurant",Fry Cook,,02
+35-2014.00,"Cooks, Restaurant",Grill Cook,,02
+35-2014.00,"Cooks, Restaurant",Hotel Cook,,08
+35-2014.00,"Cooks, Restaurant",Larder Cook,,08
+35-2014.00,"Cooks, Restaurant",Line Cook,,"02,04,10"
+35-2014.00,"Cooks, Restaurant",Prep Cook (Preparation Cook),Prep Cook,"02,10"

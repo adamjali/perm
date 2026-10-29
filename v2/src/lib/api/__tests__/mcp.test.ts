@@ -23,6 +23,8 @@ vi.mock("../reads", () => ({
   readEstimate: vi.fn(),
   searchEntities: vi.fn(),
 }));
+const lookupSoc = vi.fn();
+vi.mock("../socLookup", () => ({ lookupSoc: (...a: unknown[]) => lookupSoc(...a) }));
 
 import { OPTIONS, POST } from "@/app/mcp/route";
 import { MCP_TOOLS } from "../openapi";
@@ -70,6 +72,13 @@ describe("the MCP server at /mcp", () => {
     const out = JSON.parse(body.result.content[0].text);
     expect(out).toMatchObject({ source: "DOL", asOf: "2026-09-22", page: meta.url });
     expect(countCall).toHaveBeenCalledWith("anonymous", "mcp");
+  });
+
+  it("finds a job's SOC code through the same read as /v1/lookup/soc", async () => {
+    lookupSoc.mockResolvedValue({ ok: true, data: { query: "data scientist", code: null, titles: [{ title: "Data Scientist" }], codes: [] }, meta });
+    const { body } = await rpc("tools/call", { name: "find_soc_code", arguments: { query: "data scientist" } });
+    expect(lookupSoc).toHaveBeenCalledExactlyOnceWith("data scientist");
+    expect(JSON.parse(body.result.content[0].text)).toMatchObject({ page: meta.url });
   });
 
   it("tells the assistant when the shared pool is full, and reads nothing", async () => {

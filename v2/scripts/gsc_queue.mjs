@@ -43,6 +43,7 @@ const SAMPLE = {
   "/visa-bulletin/categories/[line]": ["/visa-bulletin/categories/eb2-india", "/visa-bulletin/categories/eb3-india"],
   "/perm-industries/[slug]": ["/perm-industries/541511"],
   "/perm-countries/[slug]": ["/perm-countries/india"],
+  "/soc-codes/[title]": ["/soc-codes/software-engineer", "/soc-codes/data-scientist"],
 };
 
 function arg(name) {

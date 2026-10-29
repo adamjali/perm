@@ -13,6 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { WageAcrossAreas } from "@/components/tools/WageAcrossAreas";
 import { SocCodeText } from "@/components/data/SocCodeText";
+import { SocPicker } from "@/components/soc/SocPicker";
 
 /**
  * The four prevailing wage levels for one occupation in one area, read live
@@ -212,18 +213,11 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
     <div className="object p-5 sm:p-8">
       <form ref={formRef} onSubmit={lookUp} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         <div>
-          <Label htmlFor={socId}>SOC code</Label>{" "}
-          <input
-            id={socId}
-            name="soc"
-            value={soc}
-            onChange={(e) => setSoc(e.target.value)}
-            placeholder="15-1252"
-            inputMode="numeric"
-            pattern="\d{2}-\d{4}(\.\d{2})?"
-            className={SELECT}
-          />{" "}
-          <p className="mt-1 text-sm text-muted-foreground">The occupation code on the wage request or the PERM; every occupation page prints its own.</p>
+          <Label htmlFor={socId}>Job title or SOC code</Label>{" "}
+          <SocPicker id={socId} value={soc} onChange={setSoc} className={SELECT} />{" "}
+          <p className="mt-1 text-sm text-muted-foreground">
+            Type a job title and pick its code, or type the code from the wage request or the PERM.
+          </p>
         </div>{" "}
         <div>
           <Label htmlFor={stateId}>State</Label>{" "}

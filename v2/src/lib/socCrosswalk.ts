@@ -28,6 +28,24 @@ export function predecessorsOf(code: string): SocPredecessor[] {
   return soc ? (CODES[soc] ?? []) : [];
 }
 
+let successors: Map<string, string[]> | null = null;
+
+/**
+ * The 2018 codes a 2010 code became: BLS's crosswalk read the other way, so a reader holding an old LCA
+ * (15-1132) finds today's job. Empty for a code that kept its number, or isn't a code.
+ */
+export function successorsOf(code: string): string[] {
+  const soc = socGroup(code);
+  if (!soc) return [];
+  if (!successors) {
+    successors = new Map();
+    for (const [to, preds] of Object.entries(CODES)) {
+      for (const p of preds) successors.set(p.code, [...(successors.get(p.code) ?? []), to]);
+    }
+  }
+  return [...(successors.get(soc) ?? [])].sort();
+}
+
 const joinAnd = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
 /**

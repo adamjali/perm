@@ -61,6 +61,7 @@ import { workerFacets } from "@/lib/db/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/db/entityDetail";
 import { comparables, fieldDistribution, getBySlug } from "@/lib/db/entities";
 import { OccupationReference } from "@/components/reference/OccupationReference";
+import { CodeTitles } from "@/components/soc/CodeTitles";
 import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
 import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
@@ -506,6 +507,7 @@ export default async function OccupationPage({
       </Chapter>
 
       <Chapter id="the-job" title="The job itself" dek="What O*NET says the work is, what the market pays it by BLS's survey, its outlook, and DOL's wage levels year by year.">
+      <CodeTitles code={row.code} className="mt-6" />{" "}
       <OccupationReference
         code={row.code}
         name={name}

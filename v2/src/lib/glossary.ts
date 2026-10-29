@@ -474,7 +474,10 @@ export const GLOSSARY: GlossaryTerm[] = [
     aka: ["Standard Occupational Classification"],
     definition:
       "The federal occupation code, such as 15-1252 for software developers, that a wage determination and a PERM are keyed to. DOL prints it with and without a decimal suffix in its files, so the site groups on the first seven characters.",
-    see: [{ label: "PERM wages by occupation", href: "/perm-wages" }],
+    see: [
+      { label: "Find a job's SOC code", href: "/soc-codes" },
+      { label: "PERM wages by occupation", href: "/perm-wages" },
+    ],
   },
   {
     term: "Special handling",

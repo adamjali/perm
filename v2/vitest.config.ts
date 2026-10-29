@@ -56,6 +56,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/db/__tests__/gradeClock.test.ts",
   "src/lib/db/__tests__/debarments.test.ts",
   "src/lib/db/__tests__/reference.test.ts",
+  // Added 2026-10-29: mocks the database client and the doc reader for the job code finder.
+  "src/lib/db/__tests__/socTitles.test.ts",
   "src/lib/auth/__tests__/authGate.test.ts",
   // Added 2026-10-19: drives the proxy signed in, with Convex Auth mocked.
   "src/lib/auth/__tests__/proxyCarried.test.ts",
@@ -67,6 +69,7 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/api/__tests__/reads.test.ts",
   "src/lib/api/__tests__/employerLookup.test.ts",
   "src/lib/api/__tests__/lookupRoute.test.ts",
+  "src/lib/api/__tests__/socLookup.test.ts",
   // Added 2026-10-08: the key check (fetchQuery's answers), live lookups
   // (discovery, the counter) and exports (the reads) mock per test.
   "src/lib/api/__tests__/auth.test.ts",
