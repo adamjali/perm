@@ -234,6 +234,15 @@ jobs:
           python3 scripts/ingest_nvc_timeframes.py \
             || python3 scripts/record_ingest_failure.py --script ingest_nvc_timeframes.py --note "NVC timeframes read failed"
 
+      # State's Global Visa Wait Times from the same host: the wait for a nonimmigrant visa interview
+      # at each consulate, monthly. A day State hasn't republished writes nothing.
+      - name: Visa wait times (direct)
+        if: always() && inputs.quick != 'true'
+        working-directory: v2
+        run: |
+          python3 scripts/ingest_visa_wait_times.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_visa_wait_times.py --note "visa wait times read failed"
+
       # Expire the pages that print DOL's figure, only on a day DOL actually
       # republished (roughly weekly). A failed call doesn't stop the steps after
       # it (the data is already stored); it turns the run red at the end.
