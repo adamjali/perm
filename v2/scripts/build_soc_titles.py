@@ -20,7 +20,8 @@ marks at the end dropped (I to V, 1 to 9, "level 2"), never the last word. So
 
 WHAT IT WRITES.
 * `soc_titles`, one row per (title_key, soc7): the display title, where it comes from
-  (dol, onet, both), filings by program, and the commonest spellings seen. A DOL
+  (dol, onet, both), filings by program, the commonest spellings seen, and the
+  title's filings under every code (`key_filings`, the share's denominator). A DOL
   title is kept when its key has 5+ filings and the pair has 3+ and 1% of them;
   O*NET's are always kept.
 * `perm_docs['soc_codes']`: every code with its title, Job Zone, filings by program,
@@ -52,13 +53,13 @@ import zipfile
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_db import Database, record_run, rows_of, write_doc  # noqa: E402
+from lib_db import Database, add_missing_columns, record_run, rows_of, write_doc  # noqa: E402
 
 SCRIPT = "build_soc_titles.py"
 TABLE = "soc_titles"
 DOC_CODES = "soc_codes"
 DOC_PAGES = "soc_title_pages"
-COLS = ["title_key", "soc7", "title", "source", "filings", "perm", "pwd", "lca", "spellings"]
+COLS = ["title_key", "soc7", "title", "source", "filings", "perm", "pwd", "lca", "spellings", "key_filings"]
 DDL = [
     f"""CREATE TABLE IF NOT EXISTS {TABLE} (
     title_key TEXT NOT NULL,
@@ -70,6 +71,7 @@ DDL = [
     pwd INTEGER NOT NULL,
     lca INTEGER NOT NULL,
     spellings TEXT,
+    key_filings INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (title_key, soc7))""",
     # A code page lists the titles filed under it, busiest first.
     f"CREATE INDEX IF NOT EXISTS idx_soc_titles_soc ON {TABLE} (soc7, filings DESC)",
@@ -285,12 +287,12 @@ def build(dol: dict[str, Counter], onet: dict) -> tuple[list[list], dict[str, di
         spell = [[raw, n] for raw, n in p["spell"].most_common(SPELLINGS_KEPT)]
         source = "both" if (key, soc) in onet_titles else "dol"
         rows.append([key, soc, display(key), source, filings, p["perm"], p["pwd"], p["lca"],
-                     json.dumps(spell, separators=(",", ":"))])
+                     json.dumps(spell, separators=(",", ":")), total])
         keys.setdefault(key, {"total": total, "title": display(key)})
     kept = {(r[0], r[1]) for r in rows}
     for (key, soc), t in onet_titles.items():
         if (key, soc) not in kept:
-            rows.append([key, soc, onet_by_key.get(key, t), "onet", 0, 0, 0, 0, None])
+            rows.append([key, soc, onet_by_key.get(key, t), "onet", 0, 0, 0, 0, None, key_total.get(key, 0)])
             keys.setdefault(key, {"total": 0, "title": onet_by_key.get(key, t)})
     rows.sort(key=lambda r: (r[0], r[1]))
     return rows, keys
@@ -357,6 +359,7 @@ def main(argv: list[str] | None = None) -> int:
         from lib_reference import sync_rows  # noqa: E402
         for stmt in DDL:
             db.execute(stmt)
+        add_missing_columns(db, TABLE, {"key_filings": "INTEGER NOT NULL DEFAULT 0"})
         got = sync_rows(db, TABLE, ["title_key", "soc7"], COLS, rows, pause_s=0.2)
         built = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         write_doc(db, DOC_CODES, {

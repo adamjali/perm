@@ -73,8 +73,10 @@ check(("data scientist", "15-2041") in by, "a real second code is kept")
 check(("software engineer", "15-1132") in by, "a 2010 code filed often enough is kept, as filed")
 check(("rare title", "11-1021") not in by, "a title under five filings in all is dropped")
 check(keys["software engineer"]["total"] == 1450, "a key's total counts every filing, kept pairs or not")
+check(se is not None and se[9] == 1450, "each row carries its title's total, the share's denominator")
 onet_only = [r for r in rows if r[3] == "onet"]
 check(onet_only and all(r[4] == 0 and r[8] is None for r in onet_only), "O*NET-only titles carry no filings")
+check(all(len(r) == len(B.COLS) for r in rows), "every row has a value for every column")
 check(len({(r[0], r[1]) for r in rows}) == len(rows), "one row per title and code")
 
 # A DOL-only title takes its commonest bare spelling, not the senior one.
