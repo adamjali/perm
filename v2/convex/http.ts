@@ -23,6 +23,8 @@ import { reviewLinkFor, THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
 import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
 import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
 import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
+import { mailLang, withLang, type MailLang } from "../src/lib/i18n/mailLang";
+import { mailPageText } from "./lib/mailPageText";
 
 const isPrefsKind = (k: string): k is PrefsKind => (PREFS_KINDS as readonly string[]).includes(k);
 import { SLUG_RE as EMPLOYER_SLUG_RE, employerNameFor } from "./employerAlerts";
@@ -507,7 +509,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, caseNumber, source, news, newsletter } = body as Record<string, unknown>;
+    const { email, caseNumber, source, news, newsletter, lang } = body as Record<string, unknown>;
     if (typeof email !== "string" || typeof caseNumber !== "string") {
       return json({ ok: false, message: "Email and case number are both required." }, 400);
     }
@@ -525,6 +527,7 @@ http.route({
       // confirm click completes both, and the confirmation email says so.
       news: news === true,
       newsletter: newsletter === true,
+      lang: typeof lang === "string" ? lang : undefined,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
 
@@ -540,15 +543,20 @@ http.route({
   path: "/case-alert/confirm",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Confirm your case alerts",
-      "We'll email you when the Department of Labor's status for your case changes, and for a year after it's decided, in case it's appealed or reopened.",
+      t.caseConfirmGet.title,
+      t.caseConfirmGet.body,
       {
-        post: `/case-alert/confirm?token=${encodeURIComponent(token)}`,
-        label: "Confirm",
+        post: withLang(`/case-alert/confirm?token=${encodeURIComponent(token)}`, lang),
+        label: t.confirmLabel,
       },
+      [],
+      lang,
     );
   }),
 });
@@ -557,36 +565,28 @@ http.route({
   path: "/case-alert/confirm",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
 
-    const result = await ctx.runMutation(internal.caseAlerts.confirmByToken, { token });
+    const result = await ctx.runMutation(internal.caseAlerts.confirmByToken, { token, lang });
     if (!result) {
       // Also the answer for a valid token whose owner has since unsubscribed,
       // and for a replayed link with nothing staged behind it. Deliberately not
       // distinguished: re-subscribing is a fresh signup, not a link click.
-      return badLinkPage("This confirmation link is no longer valid.");
+      return badLinkPage(mailPageText(lang).linkNoLongerValid, undefined, lang);
     }
 
     const list = result.caseNumbers.join(", ");
-    // The next alert in the chain for these cases' programs, and for a PERM
-    // job's wage request the PERM it watches for (convex/lib/alertNextSteps.ts).
-    const offers = confirmOffers("case", result.caseNumbers, programOf);
-    const matchNote = result.caseNumbers.some(isPermWageRequest) ? ` ${PWD_MATCH_SENTENCE}` : "";
-    if (result.already) {
-      return messagePage(
-        "You're already on the list",
-        `Nothing more to do: we'll email you when the Department of Labor's status changes for ${list}.${matchNote}`,
-        undefined,
-        offers,
-      );
-    }
-    return messagePage(
-      "You're on the list",
-      `We'll email you when the Department of Labor's status changes for ${list}, each time it moves, and for a year after it's decided. Current figures are always on permtracker.app/perm-case-status.${matchNote}`,
-      undefined,
-      offers,
-    );
+    const t = mailPageText(lang);
+    // The onward offers and the wage-request match note are English-only niceties, so they ride the English
+    // page only; a translated page gives the core confirmation without them.
+    const english = lang === "en";
+    const offers = english ? confirmOffers("case", result.caseNumbers, programOf) : [];
+    const matchNote = english && result.caseNumbers.some(isPermWageRequest) ? ` ${PWD_MATCH_SENTENCE}` : "";
+    const page = result.already ? t.caseAlready(list) : t.caseConfirmed(list);
+    return messagePage(page.title, `${page.body}${matchNote}`, undefined, offers, lang);
   }),
 });
 
@@ -595,14 +595,14 @@ http.route({
   path: "/case-alert/unsubscribe",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
     const ok = await ctx.runMutation(internal.caseAlerts.unsubscribeByToken, { token });
-    if (!ok) return badLinkPage("This link has expired or was changed.");
-    return messagePage(
-      "You're unsubscribed",
-      "You won't receive case-status alerts from us. That covers every case this address was watching.",
-    );
+    const t = mailPageText(lang);
+    if (!ok) return badLinkPage(t.linkExpired, undefined, lang);
+    return messagePage(t.caseUnsubDone.title, t.caseUnsubDone.body, undefined, [], lang);
   }),
 });
 
@@ -612,12 +612,17 @@ http.route({
   path: "/case-alert/unsubscribe",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Stop your case alerts?",
-      "You'll stop receiving status alerts for every PERM case this address is watching.",
-      { post: `/case-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      t.caseUnsubGet.title,
+      t.caseUnsubGet.body,
+      { post: withLang(`/case-alert/unsubscribe?token=${encodeURIComponent(token)}`, lang), label: t.unsubscribeLabel },
+      [],
+      lang,
     );
   }),
 });

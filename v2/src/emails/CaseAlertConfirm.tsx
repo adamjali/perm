@@ -36,6 +36,8 @@
 import { Section, Text } from "@react-email/components";
 import { EmailButton, EmailLayout, QueueStamp } from "./components";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
+import type { MailLang } from "../lib/i18n/mailLang";
+import { CASE_CONFIRM_TEXT } from "./i18n/confirm";
 
 export interface CaseAlertConfirmProps {
   /** DOL case number, normalised, as the reader typed it. */
@@ -74,6 +76,8 @@ export interface CaseAlertConfirmProps {
    * of wrong that makes a reader doubt the whole subscription.
    */
   nounWithArticle?: string;
+  /** The reader's language (src/lib/i18n/mailLang.ts). English when not given. */
+  lang?: MailLang;
 }
 
 export function CaseAlertConfirm({
@@ -85,35 +89,31 @@ export function CaseAlertConfirm({
   includesNews = false,
   includesNewsletter = false,
   nounWithArticle = "a PERM case",
+  lang = "en",
 }: CaseAlertConfirmProps) {
   const known = currentStatus !== null;
+  const t = CASE_CONFIRM_TEXT[lang];
 
   return (
     <EmailLayout
-      previewText={
-        known
-          ? `Confirm and we'll email you when DOL's status for this case changes.`
-          : `We don't hold this case number yet. Check it before you confirm.`
-      }
+      lang={lang}
+      previewText={known ? t.previewKnown : t.previewUnknown}
       hideSettingsLink
-      footerText={`This address was entered to be told when ${nounWithArticle}\u2019s status changes. It isn\u2019t confirmed yet, so nothing else will be sent.`}
+      footerText={t.footer(nounWithArticle)}
     >
-      <QueueStamp eyebrow="Your case number" month={caseNumber}>
+      <QueueStamp eyebrow={t.eyebrow} month={caseNumber}>
         {known ? (
           <>
             <Text className="em-text-secondary" style={styles.provenance}>
-              Currently {currentStatus}
-              {employerName ? ` at ${employerName}` : ""}
+              {t.currently(currentStatus ?? "", employerName)}
             </Text>
             <Text className="em-text-secondary" style={styles.provenance}>
-              {asOf
-                ? `Shown since at least ${asOf}`
-                : "We don\u2019t have a date for this status yet"}
+              {asOf ? t.shownSince(asOf) : t.noDate}
             </Text>
           </>
         ) : (
           <Text className="em-text-secondary" style={styles.provenance}>
-            Not in our records yet
+            {t.notInRecords}
           </Text>
         )}
       </QueueStamp>
@@ -121,47 +121,37 @@ export function CaseAlertConfirm({
       {known ? (
         <>
           <Text className="em-text-body" style={styles.body}>
-            If that&rsquo;s your case, confirm below and we&rsquo;ll email you
-            every time DOL&rsquo;s status for it changes, and for a year after
-            it&rsquo;s decided, in case it&rsquo;s appealed or reopened. If it
-            isn&rsquo;t your case, ignore this and enter the number again.
+            {t.bodyKnown}
           </Text>
           <Text className="em-text-secondary" style={styles.lag}>
-            We ask DOL about watched cases every 5 minutes on weekdays from 7 AM
-            to 9 PM Eastern, and every half hour otherwise, and email a change as
-            soon as we see it. Every alert says since when DOL&rsquo;s record has shown the status.
+            {t.lag}
           </Text>
         </>
       ) : (
         <Text className="em-text-body" style={styles.body}>
-          We don&rsquo;t hold this case number yet, which is normal for a recent
-          filing and is also what a typo looks like. Check it against your
-          receipt first. Confirm and we&rsquo;ll start watching it, then email
-          you the first time its status moves after that.
+          {t.bodyUnknown}
         </Text>
       )}
 
       {includesNews ? (
         <Text className="em-text-secondary" style={styles.newsNote}>
-          You also asked for occasional product news. The same click confirms
-          that.
+          {t.news}
         </Text>
       ) : null}
       {includesNewsletter ? (
         <Text className="em-text-secondary" style={styles.newsNote}>
-          You also asked for the weekly digest. The
-          same click confirms that.
+          {t.newsletter}
         </Text>
       ) : null}
 
       <Section style={styles.cta}>
         <EmailButton href={confirmUrl} variant="primary">
-          Confirm these alerts
+          {t.button}
         </EmailButton>
       </Section>
 
       <Text className="em-text-secondary" style={styles.note}>
-        If you didn&rsquo;t ask for this, ignore it. Nothing will be sent.
+        {t.ignore}
       </Text>
     </EmailLayout>
   );

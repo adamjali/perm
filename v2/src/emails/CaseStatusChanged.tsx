@@ -47,6 +47,9 @@ import { RatingRow } from "./components/RatingRow";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
 import { SITE_URL } from "../../convex/lib/links";
 import type { NextLink, NextSteps } from "../../convex/lib/alertNextSteps";
+import type { MailLang } from "../lib/i18n/mailLang";
+import { CASE_ALERT_TEXT } from "./i18n/alerts";
+import { LAYOUT_TEXT } from "./i18n/layout";
 
 /** The public case page. The email's primary destination. */
 export const CASE_PAGE_URL = `${SITE_URL}/perm-case-status`;
@@ -127,6 +130,8 @@ export interface CaseStatusChangedProps {
    * to someone still waiting in it.
    */
   alsoLinks?: readonly NextLink[];
+  /** The reader’s language (src/lib/i18n/mailLang.ts). English when not given. */
+  lang?: MailLang;
 }
 
 export function CaseStatusChanged({
@@ -153,7 +158,10 @@ export function CaseStatusChanged({
   ratingUrl = null,
   next = null,
   alsoLinks,
+  lang = "en",
 }: CaseStatusChangedProps) {
+  const t = CASE_ALERT_TEXT[lang];
+  const L = LAYOUT_TEXT[lang];
   // Three figure groups in one email is a spec sheet. When the RFI funnel is
   // showing it is the more useful of the two, so the employer record stands
   // down rather than both being crammed in.
@@ -165,16 +173,13 @@ export function CaseStatusChanged({
       previewText={
         // "Example Systems, Inc." already ends the sentence; a second period read "Inc..".
         `${caseNumber}${employerName ? ` at ${employerName}` : ""}`.replace(/\.?$/, ".") +
-        (observedAt ? ` DOL\u2019s record has shown it since at least ${observedAt}.` : "")
+        (observedAt ? t.previewSince(observedAt) : "")
       }
+      lang={lang}
       hideSettingsLink={!prefsUrl}
       settingsUrl={prefsUrl}
-      settingsLabel="Email preferences"
-      footerText={
-        isFinal
-          ? `You asked to be told when DOL's status for ${caseNumber} changed. DOL has decided it; we'll keep watching for a year in case it's appealed or reopened, and email you only if it moves.`
-          : `You asked to be told when DOL's status for ${caseNumber} changed. We'll email you again if it moves again.`
-      }
+      settingsLabel={L.preferences}
+      footerText={isFinal ? t.footerFinal(caseNumber) : t.footerOngoing(caseNumber)}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>
           <Link
@@ -182,7 +187,7 @@ export function CaseStatusChanged({
             className="em-link"
             style={styles.footerLink}
           >
-            Stop these alerts
+            {L.stopAlerts}
           </Link>
         </Text>
       }
@@ -215,51 +220,41 @@ export function CaseStatusChanged({
         // With "What comes next" below, the reader has the step that follows;
         // saying we won't guess at the status right above it read as a contradiction.
         <Text className="em-text-body" style={styles.body}>
-          DOL doesn&rsquo;t publish what this status means, and we&rsquo;re not
-          going to guess at it. The counts below are what we can say.
+          {t.meaningFallback}
         </Text>
       )}
 
       <Text className="em-text-secondary" style={styles.caveat}>
-        {observedAt
-          ? `DOL\u2019s record has shown this status since at least ${observedAt}.`
-          : "We don\u2019t have a date for when DOL\u2019s record first showed this status."}
+        {observedAt ? t.caveatSince(observedAt) : t.caveatNoDate}
         {/* A final status IS DOL's decision, so the disclaimer written for the
             statuses before one would contradict the email (fixed Oct 6 2026). */}
-        {isFinal ? null : (
-          <>
-            {" "}
-            It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction
-            of one.
-          </>
-        )}
+        {isFinal ? null : t.notADecision}
       </Text>
 
-      {next ? <NextStepsBlock next={next} /> : null}
+      {next ? <NextStepsBlock next={next} heading={t.nextHeading} /> : null}
 
       {rfiRows && rfiRows.length > 0 ? (
         <>
           <FigureTable
-            heading="RFIs that have since resolved"
+            heading={t.rfiHeading}
             rows={rfiRows}
             provenance={rfiProvenance ?? ""}
           />
           <Text className="em-text-secondary" style={styles.caveatAfterTable}>
-            That&rsquo;s a count of other cases and the population it came from.
-            It says nothing about how yours resolves.
+            {t.rfiCaption}
           </Text>
         </>
       ) : null}
 
       <FigureTable
-        heading="Where this sits"
+        heading={t.whereHeading}
         rows={contextRows}
         provenance={contextProvenance}
       />
 
       {showEmployer && employerRows ? (
         <FigureTable
-          heading="This employer in DOL's decided record"
+          heading={t.employerHeading}
           rows={employerRows}
           provenance={employerProvenance ?? ""}
         />
@@ -267,33 +262,27 @@ export function CaseStatusChanged({
 
       <Section style={styles.cta}>
         <EmailButton href={caseUrl} variant="primary">
-          Open this case
+          {t.openCase}
         </EmailButton>
       </Section>
 
       {timelineUrl ? (
         <Section style={styles.ask}>
           <Text className="em-text-body" style={styles.body}>
-            After certification the public record stops. USCIS doesn&rsquo;t
-            publish the I-140 or the I-485 case by case, so the only way the
-            next person learns how long they take is from people who went
-            through them. When yours move, you can add the dates to this case.
-            PERM Tracker checks your PERM dates against DOL, keeps the case
-            number off the public board, and shows your timeline there only if
-            you tick the box.
+            {t.timelineAsk}
           </Text>
           <EmailButton href={timelineUrl} variant="outline">
-            Add your dates when they come
+            {t.timelineButton}
           </EmailButton>
         </Section>
       ) : null}
 
       {isFinal && ratingUrl ? (
-        <RatingRow question="How useful were these alerts?" baseUrl={ratingUrl} />
+        <RatingRow question={t.ratingQuestion} baseUrl={ratingUrl} />
       ) : null}
 
       <EmailLinkList
-        label="Also on PERM Tracker"
+        label={t.alsoHeading}
         items={[
           ...(showEmployer && employerUrl
             ? [
@@ -324,11 +313,11 @@ export function CaseStatusChanged({
  * email's second message rather than another table. One optional outline
  * button (the onward alert), then plain links.
  */
-function NextStepsBlock({ next }: { next: NextSteps }) {
+function NextStepsBlock({ next, heading }: { next: NextSteps; heading: string }) {
   return (
     <Section style={styles.next}>
       <Text className="em-text" style={styles.nextHeading}>
-        What comes next
+        {heading}
       </Text>
       {next.steps.map((s) => (
         <Text key={s.title} className="em-text-body" style={styles.nextStep}>

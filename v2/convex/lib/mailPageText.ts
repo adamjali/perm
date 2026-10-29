@@ -17,6 +17,9 @@ export interface MailPageText {
   unsubscribeLabel: string;
   prefsButton: string;
   badLink: { title: string; reason: string; next: string };
+  /** Reasons a specific confirm/unsubscribe link failed. */
+  linkNoLongerValid: string;
+  linkExpired: string;
   /** The GET button pages: a title, a sentence, and the confirm button. */
   caseConfirmGet: { title: string; body: string };
   queueConfirmGet: { title: string; body: string };
@@ -53,6 +56,8 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       reason: "This link is incomplete or out of date.",
       next: "Ask for a fresh link to your email preferences, or set up the alert again from the site.",
     },
+    linkNoLongerValid: "This confirmation link is no longer valid.",
+    linkExpired: "This link has expired or was changed.",
     caseConfirmGet: {
       title: "Confirm your case alerts",
       body: "We'll email you when the Department of Labor's status for your case changes, and for a year after it's decided, in case it's appealed or reopened.",
@@ -143,6 +148,8 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       reason: "El enlace está incompleto o vencido.",
       next: "Pida un enlace nuevo a sus preferencias de correo, o configure la alerta otra vez desde el sitio.",
     },
+    linkNoLongerValid: "Este enlace de confirmación ya no es válido.",
+    linkExpired: "Este enlace venció o fue modificado.",
     caseConfirmGet: {
       title: "Confirme sus alertas de caso",
       body: "Le enviaremos un correo cuando cambie el estado de su caso en el Departamento de Trabajo (DOL), y durante un año después de que se decida, por si hay apelación o reapertura.",
@@ -233,6 +240,8 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       reason: "链接不完整或已过期。",
       next: "请申请一个新的邮件偏好链接，或在网站上重新设置提醒。",
     },
+    linkNoLongerValid: "此确认链接已失效。",
+    linkExpired: "此链接已过期或被更改。",
     caseConfirmGet: {
       title: "确认您的案件提醒",
       body: "当劳工部（DOL）对您案件的状态发生变化时，我们会发邮件通知您；案件决定后的一年内也会，以防出现上诉或重启。",
@@ -323,6 +332,8 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       reason: "O link está incompleto ou expirado.",
       next: "Peça um link novo para suas preferências de e-mail, ou configure o alerta de novo pelo site.",
     },
+    linkNoLongerValid: "Este link de confirmação não é mais válido.",
+    linkExpired: "Este link venceu ou foi alterado.",
     caseConfirmGet: {
       title: "Confirme seus alertas de caso",
       body: "Enviaremos um e-mail quando o status do seu caso no Departamento do Trabalho (DOL) mudar, e por um ano depois de decidido, caso haja recurso ou reabertura.",
@@ -413,6 +424,8 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       reason: "링크가 불완전하거나 만료되었습니다.",
       next: "이메일 설정 링크를 새로 요청하시거나, 사이트에서 알림을 다시 설정해 주세요.",
     },
+    linkNoLongerValid: "이 확인 링크는 더 이상 유효하지 않습니다.",
+    linkExpired: "이 링크는 만료되었거나 변경되었습니다.",
     caseConfirmGet: {
       title: "케이스 알림을 확인해 주세요",
       body: "노동부(DOL)의 케이스 상태가 바뀔 때, 그리고 결정 후 1년 동안 항소나 재개가 있을 경우에 이메일로 알려 드립니다.",
@@ -503,6 +516,8 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       reason: "Liên kết không đầy đủ hoặc đã hết hạn.",
       next: "Hãy yêu cầu một liên kết mới đến tùy chọn email của bạn, hoặc thiết lập lại thông báo trên trang web.",
     },
+    linkNoLongerValid: "Liên kết xác nhận này không còn hiệu lực.",
+    linkExpired: "Liên kết này đã hết hạn hoặc bị thay đổi.",
     caseConfirmGet: {
       title: "Xác nhận thông báo hồ sơ của bạn",
       body: "Chúng tôi sẽ gửi email khi trạng thái hồ sơ của bạn ở Bộ Lao động (DOL) thay đổi, và trong một năm sau khi có quyết định, phòng khi có kháng cáo hoặc mở lại.",
