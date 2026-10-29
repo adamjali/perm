@@ -1598,3 +1598,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
   FLC Data Center files, and a job's years before 2022-23 read under BLS's 2010 codes, never blended.
 - **The database RAM lock is retired** (owner's call, Oct 29): CPU alone keeps Oracle's idle rule clear.
 - **`/compare` carries ten trackers**, each quote re-read on the rival's own page before it shipped.
+
+## Oct 29 2026, in three lines
+
+- **Every chat model is asked once a day** (`scripts/check_chat_models.py`, `permtracker-uscis chat-models`, 6:40 AM
+  Eastern): ids read from `providers.ts` and `summarize.ts`, each checked against its provider's own list and sent one
+  tiny request, verdicts in `perm_docs['chat_models']` and the morning report's "The chat's AI models". No chat model
+  answering exits 1 (the alarm emails); the health check fails after 3 days with no clean run.
+- **The privacy page's retention list says what its provider section says**: it had claimed OpenRouter kept nothing
+  ("Zero Data Retention"); `privacy-ai-providers.test.ts` holds the page to every provider the chat calls.
+- **First readings, 8:28 AM EDT:** Mistral Small refused (its free account allows 0 requests a minute); Gemini 2.5
+  and 3.8 Flash busy (503, high demand); Gemini 3.5 Flash Lite, GPT-OSS on Groq and Nemotron 3.5 on OpenRouter answered.
