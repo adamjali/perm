@@ -71,6 +71,7 @@ import sys
 import time
 import zipfile
 from dataclasses import dataclass, field
+from decimal import ROUND_HALF_UP, Decimal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import (  # noqa: E402
@@ -195,6 +196,17 @@ class Parsed:
 # Cells and labels
 # ---------------------------------------------------------------------------
 
+# A count USCIS stores with a fraction is shown by its own sheet as a whole
+# number. The FY2024 Q1 and Q3 workbooks (read from the Internet Archive on
+# Oct 28 2026) split completions into approvals and denials by a ratio, so
+# I-817's 59 completions are stored as 27.775671406003159 approved and
+# 31.224328593996841 denied, in cells formatted `#,##0` that show 28 and 31.
+# Such a count is read as the sheet shows it. A column shifted into the wrong
+# place is the reconciliation's to catch (medians over 240 months, the I-485
+# pending sum, any form's pending over the TOTAL row), and it does.
+ROUNDED = {"counts": 0, "medians": 0}
+
+
 def cell_int(v: object) -> int | None:
     """An integer cell, or None where USCIS withheld it.
 
@@ -214,7 +226,8 @@ def cell_int(v: object) -> int | None:
     except ValueError:
         return None
     if f != int(f):
-        raise Refusal(f"expected a whole number, got {s!r}")
+        ROUNDED["counts"] += 1
+        return int(Decimal(s).quantize(Decimal(1), rounding=ROUND_HALF_UP))
     return int(f)
 
 
@@ -226,9 +239,17 @@ def cell_float(v: object) -> float | None:
     if s in ("", "N/A", "n/a", "-"):
         return None
     try:
-        return float(s)
+        f = float(s)
     except ValueError:
         return None
+    # The FY2024 workbooks store medians unrounded (8.5479357999999994) in cells
+    # formatted `#,##0.0`, so the sheet shows 8.5. Four or more decimals is that
+    # storage, never footnote glue (glue adds one digit: 9.16 is 9.1 and note 6).
+    decimals = len(s.split(".", 1)[1]) if "." in s else 0
+    if decimals >= 4:
+        ROUNDED["medians"] += 1
+        return float(Decimal(s).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+    return f
 
 
 def strip_footnote(label: str) -> str:
@@ -895,6 +916,22 @@ def describe(p: Parsed) -> str:
     return f"{len(p.rows)} cells across {len(countries)} sheets ({', '.join(countries)})"
 
 
+def stamp_moves_forward(held: str | None, run: str) -> bool:
+    """Whether a run's newest quarter may be stamped: never over a newer stamp already held."""
+    return held is None or run >= held
+
+
+def held_as_of(db: Database, dataset: str) -> str | None:
+    """The as-of day the health check holds for a dataset, or None when it holds none yet."""
+    try:
+        got = rows_of(db.execute("SELECT as_of FROM data_freshness WHERE dataset = ?", [dataset]))
+    except Exception as exc:  # noqa: BLE001 - only "no such table" is an honest empty
+        if "no such table" in str(exc).lower():
+            return None
+        raise
+    return str(got[0][0]) if got and got[0][0] else None
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--local", help="Parse the quarterly workbooks in this directory instead of discovering")
@@ -941,8 +978,13 @@ def main(argv: list[str] | None = None) -> int:
                 newest_as_of[item.kind] = prior
             continue
         log(f"  {item.name}: fetching")
+        before = dict(ROUNDED)
         p = parse_blob(item, read(item))
         log(f"    parsed: {describe(p)}")
+        counts, medians = ROUNDED["counts"] - before["counts"], ROUNDED["medians"] - before["medians"]
+        if counts or medians:
+            log(f"    read as the sheet shows them: {counts} counts stored with a fraction, "
+                f"{medians} medians stored unrounded")
         # The freshness stamp is the quarter's last day for every kind. The
         # awaiting-visa sheet says "As of June 2026" and the class sheet names
         # a quarter, and neither is a date the health check can age.
@@ -998,6 +1040,12 @@ def main(argv: list[str] | None = None) -> int:
         as_of = newest_as_of.get(kind)
         if not as_of:
             log(f"  {dataset}: nothing held, not stamped")
+            continue
+        held = held_as_of(db, dataset)
+        if not stamp_moves_forward(held, as_of):
+            # A history load (older quarters from the Internet Archive, through --local) describes the past:
+            # stamping it would tell the health check the dataset is as old as the quarters it just read.
+            log(f"  {dataset}: this run's newest quarter ends {as_of}, before the {held} already held; not stamped")
             continue
         stamp_freshness(db, dataset, as_of=as_of, source=source, cadence="Quarterly",
                         note=f"{len(by_kind.get(kind, []))} quarter(s) listed by USCIS; "
