@@ -172,7 +172,7 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
           <ul className="flex flex-wrap gap-2">
             {spellings.map(([s, n]) => (
               <li key={s} className="border-2 border-border bg-card px-3 py-1.5 text-base">
-                {s} <span className="font-mono text-sm text-soft tabular-nums">{formatInt(n)}</span>
+                {s} <span className="font-mono text-sm text-soft tabular-nums">{formatInt(n)}</span>{" "}
               </li>
             ))}
           </ul>

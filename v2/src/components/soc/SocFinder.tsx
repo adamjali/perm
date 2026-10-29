@@ -141,7 +141,8 @@ export function SocFinder({ examples }: { examples: { slug: string; title: strin
           </div>
         ) : null}
       </form>{" "}
-      <div aria-live="polite" className={state.kind === "loading" ? "opacity-60 transition-opacity" : undefined}>
+      {/* Only an earlier answer dims while the next loads; a first answer arrives at full strength. */}
+      <div aria-live="polite" className={state.kind === "loading" && state.previous ? "opacity-60 transition-opacity motion-reduce:transition-none" : undefined}>
         {state.kind === "error" ? (
           <p role="alert" className="mt-6 border-2 border-destructive bg-card p-4 text-base">
             {state.message}
