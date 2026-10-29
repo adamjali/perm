@@ -1,3 +1,4 @@
+import { replyHeading } from "@/lib/alertReply";
 import type { Messages } from "@/lib/i18n/lang";
 
 /**
@@ -43,7 +44,7 @@ export interface FormsText {
 
 export const FORMS_TEXT = {
   en: {
-    replyHeading: (q) => (q ? "Your email is in a short queue" : "Check your inbox"),
+    replyHeading,
     email: "Email",
     failed: "Something went wrong. Try again in a moment.",
     dropped: "Couldn't reach the server. Try again in a moment.",

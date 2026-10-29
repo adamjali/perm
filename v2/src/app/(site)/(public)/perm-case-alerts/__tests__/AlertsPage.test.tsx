@@ -71,12 +71,15 @@ describe("the alerts page in each language", () => {
 
   it("marks links to pages that are only in English, and only on a translated page", () => {
     const es = renderPage("es").container;
-    const prefs = es.querySelector('a[href="/email-preferences"]');
-    expect(prefs?.getAttribute("hreflang")).toBe("en");
     expect(es.querySelector('a[href="/perm-employers"]')?.getAttribute("hreflang")).toBe("en");
+    // The preferences page is translated too, so its link stays in Spanish.
+    const prefs = es.querySelector('a[href="/es/email-preferences"]');
+    expect(prefs).not.toBeNull();
+    expect(prefs?.hasAttribute("hreflang")).toBe(false);
 
     const en = renderPage("en").container;
-    expect(en.querySelector('a[href="/email-preferences"]')?.hasAttribute("hreflang")).toBe(false);
+    expect(en.querySelector('a[href="/perm-employers"]')?.hasAttribute("hreflang")).toBe(false);
+    expect(en.querySelector('a[href="/email-preferences"]')).not.toBeNull();
   });
 
   it("ends a Chinese sentence with Chinese punctuation", () => {

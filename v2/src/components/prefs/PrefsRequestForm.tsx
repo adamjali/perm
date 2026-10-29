@@ -11,12 +11,27 @@
  */
 
 import * as React from "react";
-import { isQueued, replyHeading } from "@/lib/alertReply";
+import { isQueued } from "@/lib/alertReply";
 import { formText } from "@/lib/forms/formText";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { useLang } from "@/components/i18n/LangProvider";
+import { serverReply } from "@/components/alerts/alerts.messages";
+import { FORMS_TEXT } from "@/components/alerts/forms.messages";
 import { buttonVariants } from "@/components/ui/button";
+import type { Lang } from "@/lib/i18n/lang";
 
-export function PrefsRequestForm() {
+import { PREFS_FORM } from "./prefsForm.messages";
+
+/**
+ * The page's language (a translated page wraps it in LangProvider) sets the form's own words, and the server's
+ * fixed replies are translated the same way the alert forms translate theirs (serverReply): they're the same for
+ * every address, so translating them says nothing about who is signed up.
+ */
+export function PrefsRequestForm({ lang: given }: { lang?: Lang } = {}) {
+  const context = useLang();
+  const lang = given ?? context;
+  const t = PREFS_FORM[lang];
+  const shared = FORMS_TEXT[lang];
   const [email, setEmail] = React.useState("");
   const [state, setState] = React.useState<"idle" | "busy" | "done" | "error">(
     "idle",
@@ -42,11 +57,11 @@ export function PrefsRequestForm() {
         body: JSON.stringify({ email: address }),
       });
       const body = (await res.json()) as { ok?: boolean; message?: string };
-      setMessage(String(body.message ?? "Something went wrong. Try again."));
+      setMessage(body.message ? serverReply(lang, String(body.message)) : shared.failed);
       setQueued(isQueued(body));
       setState(res.ok ? "done" : "error");
     } catch {
-      setMessage("Couldn't reach the server. Try again in a moment.");
+      setMessage(shared.dropped);
       setState("error");
     }
   };
@@ -54,7 +69,7 @@ export function PrefsRequestForm() {
   if (state === "done") {
     return (
       <div className="object p-5">
-        <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
+        <p className="font-heading text-lg font-bold">{shared.replyHeading(queued)}</p>{" "}
         <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           {message}
         </p>
@@ -68,7 +83,7 @@ export function PrefsRequestForm() {
       className="bg-tint p-5 border-3 shadow-hard border-border"
     >
       <label htmlFor="prefs-email" className="font-heading text-lg font-bold">
-        Get your preferences link
+        {t.label}
       </label>{" "}
       <div className="mt-3 flex flex-col gap-3 sm:flex-row">
         <input
@@ -87,7 +102,7 @@ export function PrefsRequestForm() {
           disabled={state === "busy"}
           className={buttonVariants({ variant: "default", size: "lg", className: "justify-center" })}
         >
-          {state === "busy" ? "Sending…" : "Email me the link"}
+          {state === "busy" ? t.sending : t.button}
         </button>
       </div>
       {state === "error" ? (
@@ -96,8 +111,7 @@ export function PrefsRequestForm() {
         </p>
       ) : null}{" "}
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        The link opens a page listing everything we send to that address, with
-        a switch to turn each one off, or all of them at once.
+        {t.after}
       </p>
     </form>
   );

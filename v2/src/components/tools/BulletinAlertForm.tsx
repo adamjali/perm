@@ -11,7 +11,7 @@
  */
 
 import { useId, useState } from "react";
-import { isQueued, replyHeading } from "@/lib/alertReply";
+import { isQueued } from "@/lib/alertReply";
 import { AlertDone, AlertNote, EmailField, OptInFold } from "@/components/alerts/AlertParts";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -130,7 +130,7 @@ export function BulletinAlertForm({
   if (status === "done") {
     return (
       <div className="object p-5 sm:p-6">
-        <p className="font-heading text-xl font-bold">{lang === "en" ? replyHeading(queued) : t.replyHeading(queued)}</p>{" "}
+        <p className="font-heading text-xl font-bold">{t.replyHeading(queued)}</p>{" "}
         <AlertDone message={message} queued={queued} className="mt-2" lang={lang} />{" "}
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t.bulletin.after}</p>
       </div>

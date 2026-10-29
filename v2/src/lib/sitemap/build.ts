@@ -276,7 +276,12 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/changelog`, lastModified: at("/changelog"), images: [`${base}/og/changelog.jpg`] },
     { url: `${base}/faq`, lastModified: at("/faq"), images: [`${base}/og/faq.jpg`] },
     { url: `${base}/for-attorneys`, lastModified: at("/for-attorneys"), images: [`${base}/og/for-attorneys.jpg`] },
-    { url: `${base}/email-preferences`, lastModified: at("/email-preferences"), images: [`${base}/og/email-preferences.jpg`] },
+    { url: `${base}/email-preferences`, lastModified: at("/email-preferences"), images: [`${base}/og/email-preferences.jpg`], alternates: { languages: absoluteAlternates(base, "/email-preferences") } },
+    ...LOCALES.map((l) => ({
+      url: `${base}/${l.code}/email-preferences`,
+      lastModified: at("/email-preferences"),
+      alternates: { languages: absoluteAlternates(base, "/email-preferences") },
+    })),
     { url: `${base}/perm-processing-times`, lastModified: at("/perm-processing-times"), images: [`${base}/og/perm-processing-times.jpg`] },
     { url: `${base}/tools`, lastModified: at("/tools"), images: [`${base}/og/tools.jpg`] },
     { url: `${base}/tools/green-card-timeline`, lastModified: at("/tools/green-card-timeline"), images: [`${base}/og/green-card-timeline.jpg`] },

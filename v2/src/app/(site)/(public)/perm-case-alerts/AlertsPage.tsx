@@ -9,7 +9,7 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { DigestSignupForm } from "@/components/tools/DigestSignupForm";
 import { FaqList } from "@/components/tools/FaqList";
 import { currentMonthUtc } from "@/lib/dolFormat";
-import { localizedPath, pageAlternates, type Lang } from "@/lib/i18n/lang";
+import { hrefLangFor, localizedPath, pageAlternates, type Lang } from "@/lib/i18n/lang";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -52,7 +52,6 @@ const ORDER = ["case", "month", "wage", "bulletin", "employer", "digest"] as con
 
 export function AlertsPage({ lang }: { lang: Lang }) {
   const t = ALERTS_PAGE[lang];
-  const english = lang === "en" ? undefined : "en";
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -66,7 +65,7 @@ export function AlertsPage({ lang }: { lang: Lang }) {
         <p className="mt-4 text-lg leading-relaxed text-soft">{t.intro}</p>{" "}
         <p className="mt-3 text-base text-soft">
           {t.already}{" "}
-          <Link href="/email-preferences" className="link" hrefLang={english}>
+          <Link href={localizedPath("/email-preferences", lang)} className="link">
             {t.alreadyLink}
           </Link>
           {lang === "zh" ? "。" : "."}
@@ -132,7 +131,7 @@ export function AlertsPage({ lang }: { lang: Lang }) {
       <PageSection id="employer" title={t.kinds.employer.title} lede={t.employerLede}>
         <p className="max-w-2xl text-base leading-relaxed">
           {t.employerBefore}{" "}
-          <Link href="/perm-employers" className="link" hrefLang={english}>
+          <Link href="/perm-employers" className="link" hrefLang={hrefLangFor("/perm-employers", lang)}>
             {t.employerLink}
           </Link>
           {t.employerAfter}

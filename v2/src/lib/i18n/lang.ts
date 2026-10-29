@@ -34,15 +34,31 @@ export type Messages<T> = Record<Lang, T>;
  * The pages that exist in every language, by their English path. A link to one of these from a translated page
  * stays in the reader's language; any other link goes to the English page.
  */
-export const TRANSLATED_PATHS = ["/perm-case-status", "/perm-case-alerts"] as const;
+export const TRANSLATED_PATHS = ["/perm-case-status", "/perm-case-alerts", "/email-preferences"] as const;
 export type TranslatedPath = (typeof TRANSLATED_PATHS)[number];
 
 /** `/perm-case-status` in Spanish is `/es/perm-case-status`; a page not translated keeps its English path. */
 export function localizedPath(path: string, lang: Lang): string {
   if (lang === "en") return path;
-  const [bare, query = ""] = path.split("?");
-  if (!(TRANSLATED_PATHS as readonly string[]).includes(bare!)) return path;
-  return `/${lang}${bare}${query ? `?${query}` : ""}`;
+  const cut = path.search(/[?#]/);
+  const bare = cut < 0 ? path : path.slice(0, cut);
+  if (!isTranslatedPath(bare)) return path;
+  return `/${lang}${path}`;
+}
+
+/** Whether a page exists in every language (its bare path, no query or anchor). */
+export function isTranslatedPath(bare: string): bare is TranslatedPath {
+  return (TRANSLATED_PATHS as readonly string[]).includes(bare);
+}
+
+/**
+ * The `hreflang` a link carries on a page in `lang`: "en" when it leads to a page that is only in English, so a
+ * reader (and a screen reader) knows the language changes; nothing on an English page or for a translated target.
+ */
+export function hrefLangFor(path: string, lang: Lang): "en" | undefined {
+  if (lang === "en") return undefined;
+  const cut = path.search(/[?#]/);
+  return isTranslatedPath(cut < 0 ? path : path.slice(0, cut)) ? undefined : "en";
 }
 
 /**
@@ -84,6 +100,14 @@ export const TRANSLATED_PAGE_NAMES: Record<TranslatedPath, Messages<string>> = {
     "pt-br": "Alertas por e-mail",
     ko: "이메일 알림",
     vi: "Thông báo qua email",
+  },
+  "/email-preferences": {
+    en: "Email preferences",
+    es: "Preferencias de correo",
+    zh: "邮件偏好",
+    "pt-br": "Preferências de e-mail",
+    ko: "이메일 설정",
+    vi: "Tùy chọn email",
   },
 };
 

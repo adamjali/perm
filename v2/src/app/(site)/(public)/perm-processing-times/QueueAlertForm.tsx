@@ -26,7 +26,7 @@ import { FORMS_TEXT } from "@/components/alerts/forms.messages";
 import type { Lang } from "@/lib/i18n/lang";
 import { monthLabel } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
-import { isQueued, replyHeading } from "@/lib/alertReply";
+import { isQueued } from "@/lib/alertReply";
 import { AlertDone, AlertNote, EmailField, OptInBox } from "@/components/alerts/AlertParts";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
@@ -177,7 +177,7 @@ export function QueueAlertForm({
   if (status === "done") {
     return (
       <div className={frame}>
-        <p className="font-heading text-lg font-bold">{lang === "en" ? replyHeading(queued) : t.replyHeading(queued)}</p>{" "}
+        <p className="font-heading text-lg font-bold">{t.replyHeading(queued)}</p>{" "}
         <AlertDone message={message} queued={queued} className="mt-2" lang={lang} />
       </div>
     );

@@ -101,7 +101,7 @@ export const ALERTS_PAGE = {
     intro:
       "Alertas gratis para su caso, su mes de presentación, su solicitud de salario prevaleciente, el boletín de visas y cualquier empleador, y un resumen semanal. Sin cuenta, y un clic para dejar de recibirlas.",
     already: "¿Ya se registró?",
-    alreadyLink: "Vea y cambie todo lo que recibe su dirección (en inglés)",
+    alreadyLink: "Vea y cambie todo lo que recibe su dirección",
     kinds: {
       case: { title: "Su caso", note: "el DOL cambia su estado" },
       month: { title: "Su mes de presentación", note: "el DOL llega a él" },
@@ -163,7 +163,7 @@ export const ALERTS_PAGE = {
     h1: "PERM 案件有变化时，邮件通知您",
     intro: "免费提醒：您的案件、递交月份、现行工资申请、签证公告和任何雇主，还有每周摘要。无需账户，点一下即可取消。",
     already: "已经订阅了？",
-    alreadyLink: "查看并修改您的邮箱收到的全部邮件（英文）",
+    alreadyLink: "查看并修改您的邮箱收到的全部邮件",
     kinds: {
       case: { title: "您的案件", note: "劳工部更改其状态" },
       month: { title: "您的递交月份", note: "劳工部处理到该月" },
@@ -216,7 +216,7 @@ export const ALERTS_PAGE = {
     intro:
       "Alertas grátis para o seu caso, seu mês de protocolo, seu pedido de salário prevalecente, o boletim de vistos e qualquer empregador, e um resumo semanal. Sem conta, e um clique para parar.",
     already: "Já se inscreveu?",
-    alreadyLink: "Veja e mude tudo o que seu endereço recebe (em inglês)",
+    alreadyLink: "Veja e mude tudo o que seu endereço recebe",
     kinds: {
       case: { title: "Seu caso", note: "o DOL muda o status" },
       month: { title: "Seu mês de protocolo", note: "o DOL chega a ele" },
@@ -279,7 +279,7 @@ export const ALERTS_PAGE = {
     h1: "PERM 케이스가 바뀌면 이메일로 알려 드립니다",
     intro: "케이스, 접수 월, 적정 임금 신청, 비자 공보, 원하는 고용주에 대한 무료 알림과 주간 요약. 계정이 필요 없고, 클릭 한 번으로 끌 수 있습니다.",
     already: "이미 신청하셨나요?",
-    alreadyLink: "내 주소로 오는 모든 것을 보고 바꾸기(영어)",
+    alreadyLink: "내 주소로 오는 모든 것을 보고 바꾸기",
     kinds: {
       case: { title: "내 케이스", note: "노동부가 상태를 바꾸면" },
       month: { title: "내 접수 월", note: "노동부가 도달하면" },
@@ -342,7 +342,7 @@ export const ALERTS_PAGE = {
     intro:
       "Thông báo miễn phí cho hồ sơ, tháng nộp, đơn xin mức lương hiện hành, bản tin thị thực và bất kỳ chủ lao động nào, cùng bản tóm tắt hằng tuần. Không cần tài khoản, một cú nhấp là tắt.",
     already: "Đã đăng ký rồi?",
-    alreadyLink: "Xem và thay đổi mọi thứ địa chỉ của bạn nhận được (tiếng Anh)",
+    alreadyLink: "Xem và thay đổi mọi thứ địa chỉ của bạn nhận được",
     kinds: {
       case: { title: "Hồ sơ của bạn", note: "DOL đổi trạng thái" },
       month: { title: "Tháng nộp của bạn", note: "DOL xét đến tháng đó" },

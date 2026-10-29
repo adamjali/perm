@@ -15,6 +15,8 @@ import {
   BAD_NUMBER_REPLY,
   MONTH_REPLY,
   NEUTRAL_REPLY,
+  PREFS_REPLY,
+  QUEUED_LINK_REPLY,
   PUSH_DAY_REPLY,
   PUSH_HOUR_REPLY,
   QUEUED_REPLY,
@@ -44,12 +46,15 @@ describe("the alert boxes' translations", () => {
       expect(src, file).toContain(BAD_EMAIL_REPLY);
     }
     expect(flat(read("convex/queueAlerts.ts"))).toContain(MONTH_REPLY);
+    // The preferences link answers with its own two.
+    expect(flat(read("convex/emailPrefs.ts"))).toContain(PREFS_REPLY);
+    expect(flat(read("convex/confirmationQueue.ts"))).toContain(QUEUED_LINK_REPLY);
   });
 
   it("translate every fixed reply in every language but English", () => {
     for (const lang of LANGS) {
       if (lang === "en") continue;
-      for (const reply of [NEUTRAL_REPLY, BAD_EMAIL_REPLY, BAD_NUMBER_REPLY, MONTH_REPLY, QUEUED_REPLY, PUSH_HOUR_REPLY, PUSH_DAY_REPLY]) {
+      for (const reply of [NEUTRAL_REPLY, BAD_EMAIL_REPLY, BAD_NUMBER_REPLY, MONTH_REPLY, PREFS_REPLY, QUEUED_LINK_REPLY, QUEUED_REPLY, PUSH_HOUR_REPLY, PUSH_DAY_REPLY]) {
         const out = serverReply(lang, reply);
         expect(out, `${lang}: ${reply}`).not.toBe(reply);
         expect(out.length, `${lang}: ${reply}`).toBeGreaterThan(5);

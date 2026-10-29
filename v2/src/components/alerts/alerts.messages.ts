@@ -59,6 +59,11 @@ export const PUSH_HOUR_REPLY = "That is enough for one hour. Try again later.";
 export const PUSH_DAY_REPLY = "New browser alerts are paused for today. Try again tomorrow.";
 /** convex/queueAlerts.ts, when no filing month came with the request. */
 export const MONTH_REPLY = "Pick the month your case was filed.";
+/** convex/emailPrefs.ts and convex/confirmationQueue.ts: the preferences link's two answers. */
+export const PREFS_REPLY = "If we send anything to that address, a preferences link is on its way.";
+export const QUEUED_LINK_REPLY =
+  "We're sending a lot of email right now, so your link is in a short queue. " +
+  "It goes out on its own, usually within minutes; on the busiest days it can wait until the evening.";
 
 export const ALERT_TEXT = {
   en: {
@@ -135,6 +140,8 @@ export const ALERT_TEXT = {
       [BAD_EMAIL_REPLY]: "Esa dirección de correo no parece correcta.",
       [BAD_NUMBER_REPLY]: "Eso no parece un número de caso del DOL (G-, A-, P-, I-, H-, JO-A- o C-).",
       [MONTH_REPLY]: "Elija el mes en que se presentó su caso.",
+      [PREFS_REPLY]: "Si enviamos algo a esa dirección, ya va en camino un enlace de preferencias.",
+      [QUEUED_LINK_REPLY]: "Estamos enviando muchos correos en este momento, así que su enlace está en una fila corta. Sale solo, por lo general en minutos; en los días de más movimiento puede esperar hasta la noche.",
       [QUEUED_REPLY]:
         "Estamos enviando muchos correos en este momento, así que su confirmación está en una fila corta. Sale sola, por lo general en minutos; en los días de más movimiento puede esperar hasta la noche. No tiene que hacer nada más.",
     },
@@ -177,6 +184,8 @@ export const ALERT_TEXT = {
       [BAD_EMAIL_REPLY]: "这个邮箱地址看起来不对。",
       [BAD_NUMBER_REPLY]: "这看起来不是劳工部的案件编号（G-、A-、P-、I-、H-、JO-A- 或 C-）。",
       [MONTH_REPLY]: "请选择您的案件提交的月份。",
+      [PREFS_REPLY]: "如果我们给这个邮箱发送过任何内容，偏好链接已在发送途中。",
+      [QUEUED_LINK_REPLY]: "我们现在发送的邮件很多，您的链接正在短暂排队。它会自动发出，通常几分钟内；最忙的日子可能要等到晚上。",
       [QUEUED_REPLY]:
         "我们现在发送的邮件很多，所以您的确认邮件正在短暂排队。它会自动发出，通常几分钟内送达；最忙的日子可能要等到晚上。您无需再做任何事。",
     },
@@ -221,6 +230,8 @@ export const ALERT_TEXT = {
       [BAD_EMAIL_REPLY]: "Esse endereço de e-mail não parece correto.",
       [BAD_NUMBER_REPLY]: "Isso não parece um número de caso do DOL (G-, A-, P-, I-, H-, JO-A- ou C-).",
       [MONTH_REPLY]: "Escolha o mês em que seu caso foi apresentado.",
+      [PREFS_REPLY]: "Se enviamos algo para esse endereço, um link de preferências está a caminho.",
+      [QUEUED_LINK_REPLY]: "Estamos enviando muitos e-mails agora, então seu link está em uma fila curta. Ele sai sozinho, geralmente em minutos; nos dias mais movimentados pode esperar até a noite.",
       [QUEUED_REPLY]:
         "Estamos enviando muitos e-mails agora, então sua confirmação está em uma fila curta. Ela sai sozinha, em geral em minutos; nos dias mais movimentados pode esperar até a noite. Não precisa fazer mais nada.",
     },
@@ -264,6 +275,8 @@ export const ALERT_TEXT = {
       [BAD_EMAIL_REPLY]: "이메일 주소가 올바르지 않은 것 같습니다.",
       [BAD_NUMBER_REPLY]: "노동부 케이스 번호가 아닌 것 같습니다(G-, A-, P-, I-, H-, JO-A- 또는 C-).",
       [MONTH_REPLY]: "케이스를 제출한 달을 선택하세요.",
+      [PREFS_REPLY]: "이 주소로 보내는 것이 있다면 설정 링크가 가고 있습니다.",
+      [QUEUED_LINK_REPLY]: "지금 보내는 이메일이 많아 링크가 잠시 대기 중입니다. 보통 몇 분 안에 저절로 발송되며, 가장 바쁜 날에는 저녁까지 걸릴 수 있습니다.",
       [QUEUED_REPLY]:
         "지금 이메일을 많이 보내고 있어 확인 메일이 잠시 대기 중입니다. 보통 몇 분 안에 저절로 발송되며, 가장 바쁜 날에는 저녁까지 걸릴 수 있습니다. 더 하실 일은 없습니다.",
     },
@@ -308,6 +321,8 @@ export const ALERT_TEXT = {
       [BAD_EMAIL_REPLY]: "Địa chỉ email này có vẻ không đúng.",
       [BAD_NUMBER_REPLY]: "Đây có vẻ không phải số hồ sơ của DOL (G-, A-, P-, I-, H-, JO-A- hoặc C-).",
       [MONTH_REPLY]: "Hãy chọn tháng hồ sơ của bạn được nộp.",
+      [PREFS_REPLY]: "Nếu chúng tôi có gửi gì đến địa chỉ đó, liên kết tùy chọn đang trên đường đến.",
+      [QUEUED_LINK_REPLY]: "Hiện chúng tôi đang gửi nhiều email, nên liên kết của bạn đang trong một hàng chờ ngắn. Liên kết sẽ tự gửi đi, thường trong vài phút; vào những ngày bận nhất có thể đợi đến tối.",
       [QUEUED_REPLY]:
         "Hiện chúng tôi đang gửi rất nhiều email, nên email xác nhận của bạn đang chờ trong một hàng ngắn. Email sẽ tự gửi đi, thường trong vài phút; vào những ngày bận nhất có thể đợi đến tối. Bạn không cần làm gì thêm.",
     },

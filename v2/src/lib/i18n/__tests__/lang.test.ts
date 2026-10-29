@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { breadcrumbTrail } from "@/lib/breadcrumbs";
 import { dayLabel, intLabel, monthLabel } from "@/lib/i18n/format";
-import { LANGS, isLang, localizedPath, pageAlternates, translatedPage } from "@/lib/i18n/lang";
+import { LANGS, hrefLangFor, isLang, localizedPath, pageAlternates, translatedPage } from "@/lib/i18n/lang";
 
 describe("languages and translated addresses", () => {
   it("knows English and the five translations, nothing else", () => {
@@ -16,6 +16,10 @@ describe("languages and translated addresses", () => {
     expect(localizedPath("/perm-case-status?case=G-100-1", "zh")).toBe("/zh/perm-case-status?case=G-100-1");
     expect(localizedPath("/perm-case-status", "en")).toBe("/perm-case-status");
     expect(localizedPath("/perm-queue", "es")).toBe("/perm-queue");
+    // An anchor or a query keeps its place, and an anchor never hides a translated page.
+    expect(localizedPath("/perm-case-alerts#digest", "ko")).toBe("/ko/perm-case-alerts#digest");
+    expect(localizedPath("/email-preferences?x=1#top", "vi")).toBe("/vi/email-preferences?x=1#top");
+    expect(localizedPath("/perm-queue#top", "es")).toBe("/perm-queue#top");
   });
 
   it("names every version in one hreflang map, English as x-default", () => {
@@ -37,6 +41,16 @@ describe("languages and translated addresses", () => {
     expect(translatedPage("/es")).toBeNull();
     expect(translatedPage("/es/perm-queue")).toBeNull();
     expect(translatedPage("/fr/perm-case-status")).toBeNull();
+  });
+});
+
+describe("links that leave the reader's language", () => {
+  it("are marked English only from a translated page, and only when the target isn't translated", () => {
+    expect(hrefLangFor("/perm-employers", "es")).toBe("en");
+    expect(hrefLangFor("/settings?tab=notifications", "zh")).toBe("en");
+    expect(hrefLangFor("/perm-case-alerts#digest", "es")).toBeUndefined();
+    expect(hrefLangFor("/perm-case-status?case=G-100-1", "ko")).toBeUndefined();
+    expect(hrefLangFor("/perm-employers", "en")).toBeUndefined();
   });
 });
 
