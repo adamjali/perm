@@ -10654,3 +10654,41 @@ the old slot's second copy. `green2` held a long-lived connection (likely an MCP
 30-second stop and was killed, and systemd marked it failed; the alarm emailed "a job or service failed". Traffic had
 already moved, and nothing reached a visitor. `stop_copy` in `permtracker-deploy` now logs such a kill and clears the
 failed mark (`systemctl reset-failed`); `test_deploy_guard.py` holds both cases, and was probed by removing the reset.
+
+## Oct 28 2026 (night): what a rival showed, built from our own records, and the words people search
+
+The h1bgrader catch-up (owner, Oct 28, 7:37 PM EDT: "plz do all") and the search-word pass after it, all on `main`,
+live with the Oct 29 2 AM run. Ledger: `~/.claude/plans/cozy-sniffing-pumpkin.md`.
+
+- **A case's status history** (`62434ba5`): every status DOL has shown, the DOL day it changed and how long it held,
+  from `perm_case_events` (DOL's own rows only). A change seen by Aug 29 says where the case stood, not when it moved:
+  the record's first full sweeps caught up through then.
+- **USCIS form pages** (`b7c5a69b`, `a39f26e9`): `/uscis-processing-times/<form>`, 15 forms, every quarter held. The
+  Archive's FY2024 workbooks store fractions and unrounded medians under integer formats; the loader reads each cell
+  as its sheet shows it, and a history load never moves the freshness stamp backwards.
+- **Visa interview waits** (`9511ce46`, `494e7a40`): State's Global Visa Wait Times from adoption.state.gov (travel
+  refuses scripts), `scripts/ingest_visa_wait_times.py`, every cell kept as printed with what it reads as (NA is "No
+  figure", never 0), one reading per State date. `/visa-wait-times`, India and China first.
+- **Law firm rankings** (`04096837`, `83b6ec41`): `build_firm_ranks.py` writes `firm_ranks` (100 firms per program,
+  fiscal year and place, through `firm_page_map`) and `perm_docs['firm_ranks_summary']`, each year with its last
+  decision day; a year shows once it reaches Sep 24 (`shownYear`). `/law-firm-rankings` and a page per state. Firms
+  only, statistics only.
+- **Cap-exempt employers, from the employer's own answer** (`9b08e394`, `b83bc407`, `97efb393`, `5194b77d`): DOL's
+  wage-request file asks whether ACWIA covers the employer (Section E); `pwd_cases.acwia` and `acwia_kind` hold it, and
+  `build_cap_exempt.py` lists an employer when most of its answered requests say yes (`qualifies`). 2,252 employers on
+  `/h1b-cap-exempt-employers`, worded as likely (USCIS decides). Employer pages and the sponsor finder read the same
+  table; the industry-code guess is the fallback.
+- **The quarterly post** (`7ca66aa5`, `00e5fbae`): `build_quarter_report.py` writes one doc per quarter
+  (`quarter_report_<fy>q<n>`, and `quarter_report` names the newest), `<QuarterNow part=... />` reads it, so a post
+  types no figure and keeps its own quarter's numbers. `scripts/new_quarter_post.py --fy --q` writes each quarter's
+  post; it runs after the quarterly PERM load.
+- **Search words** (`ef8d169e`, `97e4e20d`, `05f10783`): Search Console showed searches naming an alert, an email or a
+  notification reaching no page, so `/perm-case-alerts` holds every free alert. The homepage title says "Track", the
+  lookup's heading "Check and track". "How long does PERM take right now?" is answered by `howLongSentence`
+  (lib/dolNow.ts) on the lookup and the processing-times page: the wait of DOL's last working day's cases, then
+  DOL's own month and average. The timeline calculator has one name where it had three.
+- **A card carries no live figure**: About's counts and the timeline calculator's average and date were hidden in
+  their captures (`css` in `scripts/page-cards.json`). About a dozen other cards still show live headline counts; the
+  owner decides whether they're hidden too.
+- **A full-page capture that scrolls 800 px every 50 ms leaves reveal-on-scroll sections blank**: scroll 400 px every
+  200 ms (`node_modules/.cache/qa/slow-shot.mjs`) before believing an empty band.

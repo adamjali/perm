@@ -1581,3 +1581,15 @@ Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pum
 - **Translated data pages are on branch `i18n/data-pages`**, not live: the case status page in five languages under
   `/<lang>/perm-case-status` (a `[lang]` segment, typed messages that fail the typecheck when a language is missing,
   `Intl` for dates and numbers, hreflang both ways). It ships only on the owner's yes after review.
+
+## Oct 28 2026 (night), in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
+
+- **A case page lists every status DOL has shown**, dated by DOL's day, from our own record.
+- **`/uscis-processing-times/<form>`** (15 forms), **`/visa-wait-times`** (State's table, from adoption.state.gov),
+  **`/law-firm-rankings`** (firms only) and **`/h1b-cap-exempt-employers`** (the employer's own ACWIA answer to DOL).
+- **Each quarterly PERM file gets a post** whose figures come from that quarter's own doc (`QuarterNow`).
+- **`/perm-case-alerts`** holds every free alert: searches naming an alert or an email reached no page before it.
+- **"How long does PERM take" is answered from today's readings** (`howLongSentence`), the same on two pages.
+- **A share card never carries a live figure**; about a dozen still do, waiting on the owner.
