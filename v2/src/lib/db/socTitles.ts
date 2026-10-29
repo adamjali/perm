@@ -57,13 +57,25 @@ export interface SocTitlePage {
   slug: string;
   title: string;
   filings: number;
+  /** The code employers used most for the title, and its filings. */
+  topSoc: string | null;
+  topFilings: number;
 }
 
 /** Every title with a page of its own, busiest first. */
 export async function getSocTitlePages(): Promise<{ pageMin: number; pages: SocTitlePage[] } | null> {
-  const d = await doc<{ pageMin: number; pages: [string, string, number][] }>("soc_title_pages");
+  const d = await doc<{ pageMin: number; pages: [string, string, number, string | null, number][] }>("soc_title_pages");
   if (!d) return null;
-  return { pageMin: d.pageMin, pages: (d.pages ?? []).map(([slug, title, filings]) => ({ slug, title, filings })) };
+  return {
+    pageMin: d.pageMin,
+    pages: (d.pages ?? []).map(([slug, title, filings, topSoc, topFilings]) => ({
+      slug,
+      title,
+      filings,
+      topSoc: topSoc ?? null,
+      topFilings: Number(topFilings) || 0,
+    })),
+  };
 }
 
 interface KeyRow {
@@ -163,23 +175,28 @@ export async function getSocTitle(key: string): Promise<TitleAnswer | null> {
 
 export interface CodeTitles {
   /** Titles employers filed under the code, busiest first. */
-  filed: { key: string; title: string; filings: number; share: number }[];
+  filed: { key: string; title: string; filings: number; share: number; keyFilings: number }[];
   /** Titles O*NET lists for the code. */
   onet: string[];
 }
 
 /** The titles a code is filed under, and the ones O*NET gives it. */
 export async function titlesForCode(soc: string, limit = 15): Promise<CodeTitles> {
+  // A deployment without the table yet holds no titles; any other failure is the caller's to report.
+  const none = (e: unknown): [] => {
+    if (String(e).includes("no such table")) return [];
+    throw e;
+  };
   const [filed, onet] = await Promise.all([
     rows<{ title_key: string; title: string; filings: number | string; key_filings: number | string }>(
       `SELECT title_key, title, filings, key_filings FROM soc_titles WHERE soc7 = ? AND filings > 0
        ORDER BY filings DESC LIMIT ?`,
       [soc, limit],
-    ),
+    ).catch(none),
     rows<{ title: string }>(
       `SELECT title FROM soc_titles WHERE soc7 = ? AND source != 'dol' ORDER BY key_filings DESC, title LIMIT 12`,
       [soc],
-    ),
+    ).catch(none),
   ]);
   return {
     filed: filed.map((r) => ({
@@ -187,6 +204,7 @@ export async function titlesForCode(soc: string, limit = 15): Promise<CodeTitles
       title: r.title,
       filings: Number(r.filings) || 0,
       share: Number(r.key_filings) > 0 ? (Number(r.filings) || 0) / Number(r.key_filings) : 0,
+      keyFilings: Number(r.key_filings) || 0,
     })),
     onet: [...new Set(onet.map((r) => r.title))],
   };
@@ -228,7 +246,13 @@ export async function findSoc(raw: string, limit = 5): Promise<SocSearch> {
   const index = await keyIndex();
   // The exact key first, so "Software Engineer" can't lose to a closer-spelled rarer title.
   const exact = titleKey(parsed.text);
-  const hits = index.search(parsed.text, { limit: limit * 2, min: MATCH_MIN }).map((h) => h.item.key);
+  // Among titles equally close to what was typed, the one employers file most comes first:
+  // "softwre enginer" means Software Engineer (200,000 filings), not a rarer longer title.
+  const hits = index
+    .search(parsed.text, { limit: 20, min: MATCH_MIN })
+    .sort((x, y) => Math.round(y.score * 50) - Math.round(x.score * 50) || y.item.total - x.item.total)
+    .slice(0, limit * 2)
+    .map((h) => h.item.key);
   const keys = [...new Set([exact, ...hits])].slice(0, limit + 1);
   const byKey = await rowsForKeys(keys);
   const titles = keys

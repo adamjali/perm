@@ -43,6 +43,7 @@ import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
 import { LOCALES } from "@/lib/i18n/locales";
 import { pageAlternates, type TranslatedPath } from "@/lib/i18n/lang";
 import { FORM_PAGES } from "@/lib/uscisForms";
+import { getSocTitlePages } from "@/lib/db/socTitles";
 
 /**
  * The sitemap, split into an index and per-kind children.
@@ -216,6 +217,14 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     firmStates = [];
   }
+  // The job titles with a page of their own (soc_title_pages), busiest first. A failed read lists
+  // none of them and keeps the rest of the sitemap.
+  let socTitleSlugs: string[] = [];
+  try {
+    socTitleSlugs = (await getSocTitlePages())?.pages.map((p) => p.slug) ?? [];
+  } catch {
+    socTitleSlugs = [];
+  }
   // The cap-exempt employer page, dated by the newest day its figures cover.
   const capExemptDay = capExemptAsOf(await getCapExempt().catch(() => null));
   // The reviews page is dated by its newest review, from the same read the page makes (never throws).
@@ -377,6 +386,12 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/priority-date-retention`, lastModified: at("/tools/priority-date-retention"), images: [`${base}/og/priority-date-retention.jpg`] },
     { url: `${base}/tools/green-card-fees`, lastModified: at("/tools/green-card-fees"), images: [`${base}/og/green-card-fees.jpg`] },
     { url: `${base}/tools/wage-levels`, lastModified: at("/tools/wage-levels"), images: [`${base}/og/wage-levels.jpg`] },
+    { url: `${base}/soc-codes`, lastModified: at("/soc-codes"), images: [`${base}/og/soc-codes.jpg`] },
+    // A page for each job title with 50+ filings (scripts/build_soc_titles.py), dated by the template.
+    ...socTitleSlugs.map((slug) => ({
+      url: `${base}/soc-codes/${slug}`,
+      lastModified: at("/soc-codes/[title]"),
+    })),
     // No card of their own yet, so no image entry.
     { url: `${base}/tools/h1b-lottery-odds-calculator`, lastModified: at("/tools/h1b-lottery-odds-calculator") },
     { url: `${base}/opt-employers`, lastModified: at("/opt-employers") },

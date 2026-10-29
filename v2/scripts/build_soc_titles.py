@@ -288,18 +288,23 @@ def build(dol: dict[str, Counter], onet: dict) -> tuple[list[list], dict[str, di
         source = "both" if (key, soc) in onet_titles else "dol"
         rows.append([key, soc, display(key), source, filings, p["perm"], p["pwd"], p["lca"],
                      json.dumps(spell, separators=(",", ":")), total])
-        keys.setdefault(key, {"total": total, "title": display(key)})
+        k = keys.setdefault(key, {"total": total, "title": display(key), "top": None, "topN": 0})
+        if filings > k["topN"] or (filings == k["topN"] and k["top"] and soc < k["top"]):
+            k["top"], k["topN"] = soc, filings
     kept = {(r[0], r[1]) for r in rows}
     for (key, soc), t in onet_titles.items():
         if (key, soc) not in kept:
             rows.append([key, soc, onet_by_key.get(key, t), "onet", 0, 0, 0, 0, None, key_total.get(key, 0)])
-            keys.setdefault(key, {"total": 0, "title": onet_by_key.get(key, t)})
+            keys.setdefault(key, {"total": 0, "title": onet_by_key.get(key, t), "top": None, "topN": 0})
     rows.sort(key=lambda r: (r[0], r[1]))
     return rows, keys
 
 
-def code_list(rows: list[list], onet: dict, dol_code_titles: dict[str, Counter], slugs: dict[str, str]) -> list[list]:
-    """Every code a row points at: [soc, title, zone, perm, pwd, lca, slug, titles]."""
+def code_list(rows: list[list], onet: dict, dol_code_titles: dict[str, Counter], slugs: dict[str, str],
+              old_titles: dict[str, str] | None = None) -> list[list]:
+    """Every code a row points at: [soc, title, zone, perm, pwd, lca, slug, titles]. A code's title
+    is O*NET's, else BLS's 2010 title from the crosswalk, else the one DOL's files print most."""
+    old_titles = old_titles or {}
     agg: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0, 0])
     for r in rows:
         a = agg[r[1]]
@@ -310,24 +315,53 @@ def code_list(rows: list[list], onet: dict, dol_code_titles: dict[str, Counter],
     out = []
     for soc in sorted(agg):
         perm, pwd, lca, n = agg[soc]
-        title = onet["code_titles"].get(soc) or (dol_code_titles[soc].most_common(1)[0][0] if dol_code_titles.get(soc) else soc)
+        title = (onet["code_titles"].get(soc) or old_titles.get(soc)
+                 or (dol_code_titles[soc].most_common(1)[0][0] if dol_code_titles.get(soc) else soc))
         out.append([soc, title, onet["zones"].get(soc), perm, pwd, lca, slugs.get(soc), n])
     return out
 
 
 def title_pages(keys: dict[str, dict]) -> list[list]:
-    """[slug, title, filings] for every title with a page, busiest first."""
-    pages = [[k.replace(" ", "-"), v["title"], v["total"]] for k, v in keys.items() if v["total"] >= PAGE_MIN]
+    """[slug, title, filings, top code, its filings] for every title with a page, busiest first."""
+    pages = [[k.replace(" ", "-"), v["title"], v["total"], v.get("top"), v.get("topN", 0)]
+             for k, v in keys.items() if v["total"] >= PAGE_MIN]
     pages.sort(key=lambda p: (-p[2], p[0]))
     return pages
 
 
-def occupation_slugs(db: Database) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for code, slug in rows_of(db.execute("SELECT code, slug FROM perm_entities WHERE kind = 'occupation'")):
+JUNK_NAME = re.compile(r"^\s*(n\s*/?\s*a|none|unknown)?\s*$", re.I)
+
+
+def choose_slugs(entities: list[tuple[str, str, str, int]]) -> dict[str, str]:
+    """Each code's occupation page among (code, slug, name, total): the plain SOC code or its .00
+    O*NET code first, then the busiest. O*NET splits a code into finer jobs (15-2051.01, Business
+    Intelligence Analysts), and DOL's files hold a few rows named "N/A"; neither is the code's page."""
+    best: dict[str, tuple[tuple[int, int], str]] = {}
+    for code, slug, name, total in entities:
         s = soc7_of(code)
-        if s and slug and s not in out:
-            out[s] = slug
+        if not s or not slug or JUNK_NAME.match(name or ""):
+            continue
+        c = (code or "").strip()
+        rank = (1 if c in (s, s + ".00") else 0, int(total or 0))
+        if s not in best or rank > best[s][0]:
+            best[s] = (rank, slug)
+    return {s: slug for s, (_, slug) in best.items()}
+
+
+def occupation_slugs(db: Database) -> dict[str, str]:
+    return choose_slugs([(c, sl, n, t) for c, sl, n, t in rows_of(db.execute(
+        "SELECT code, slug, name, total FROM perm_entities WHERE kind = 'occupation'"))])
+
+
+def crosswalk_titles() -> dict[str, str]:
+    """BLS's titles for the 2010 codes its 2018 crosswalk names (scripts/data/soc_2010_to_2018.json):
+    the name a code like 15-1132 had, which O*NET's current release no longer carries."""
+    path = pathlib.Path(__file__).resolve().parent / "data" / "soc_2010_to_2018.json"
+    out: dict[str, str] = {}
+    for preds in json.loads(path.read_text()).get("codes", {}).values():
+        for p in preds:
+            if p.get("code") and p.get("title"):
+                out.setdefault(p["code"], p["title"])
     return out
 
 
@@ -345,7 +379,7 @@ def main(argv: list[str] | None = None) -> int:
         dol, spans, dol_code_titles = read_dol(db)
         rows, keys = build(dol, onet)
         slugs = occupation_slugs(db)
-        codes = code_list(rows, onet, dol_code_titles, slugs)
+        codes = code_list(rows, onet, dol_code_titles, slugs, crosswalk_titles())
         pages = title_pages(keys)
         dol_keys = sum(1 for v in keys.values() if v["total"] > 0)
         print(f"{len(rows):,} rows over {len(keys):,} titles ({dol_keys:,} from DOL's files), "

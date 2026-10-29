@@ -7,7 +7,6 @@ import {
   majorGroups,
   parseCodes,
   parseSocQuery,
-  shareLabel,
   type SocTitleRow,
 } from "../socFinder";
 import { successorsOf } from "../socCrosswalk";
@@ -98,16 +97,6 @@ describe("answerForCode", () => {
     expect(a.known).toBe(false);
     expect(a.became.map((b) => b.soc)).toEqual(expect.arrayContaining(["15-1252", "15-1253"]));
     expect(a.became.find((b) => b.soc === "15-1252")).toMatchObject({ title: "Software Developers", slug: "software-developers" });
-  });
-});
-
-describe("shareLabel", () => {
-  it("never prints a clean 0% or 100% the counts don't have", () => {
-    expect(shareLabel(0.996)).toBe("over 99%");
-    expect(shareLabel(0.004)).toBe("under 1%");
-    expect(shareLabel(1)).toBe("100%");
-    expect(shareLabel(0.854)).toBe("85%");
-    expect(shareLabel(null)).toBe("");
   });
 });
 

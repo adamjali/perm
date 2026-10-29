@@ -30,11 +30,18 @@ function answer(sql: string, args: unknown[] = []): unknown[] {
     const all = [
       { title_key: "data scientist", title: "Data Scientist", total: "1000" },
       { title_key: "data science manager", title: "Data Science Manager", total: "12" },
+      { title_key: "software dev engineer", title: "Software Dev Engineer", total: "11046" },
       { title_key: "software engineer", title: "Software Engineer", total: "200000" },
     ];
     return all.filter((r) => r.title_key >= lo && (args.length < 2 || r.title_key < String(args[1])));
   }
-  if (sql.includes("WHERE title_key IN")) return DS_ROWS.filter((r) => args.includes(r.title_key));
+  if (sql.includes("WHERE title_key IN")) {
+    const se = ["software engineer", "software dev engineer"].filter((k) => args.includes(k)).map((k) => ({
+      ...DS_ROWS[0]!, title_key: k, soc7: "15-1252", title: k, filings: k === "software engineer" ? "190000" : "11000",
+      key_filings: k === "software engineer" ? "200000" : "11046",
+    }));
+    return [...DS_ROWS.filter((r) => args.includes(r.title_key)), ...se];
+  }
   if (sql.includes("filings > 0")) return [{ title_key: "software engineer", title: "Software Engineer", filings: "190000", key_filings: "200000" }];
   if (sql.includes("source != 'dol'")) return [{ title: "Software Engineer" }, { title: "Software Engineer" }, { title: "Web Developer" }];
   return [];
@@ -63,6 +70,11 @@ describe("the job code finder's reads", () => {
     expect(got.titles[0]!.codes[1]!.spellings).toEqual([]);
     const ranges = rows.mock.calls.filter(([sql]) => sql.includes("GROUP BY title_key"));
     expect(ranges.length).toBe(27);
+  });
+
+  it("among equally close titles, puts the one filed most first", async () => {
+    const got = await reads.findSoc("softwre enginer");
+    expect(got.titles[0]?.key).toBe("software engineer");
   });
 
   it("finds a code by BLS's own name for the job", async () => {

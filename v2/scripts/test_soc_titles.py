@@ -89,12 +89,31 @@ check(keys2["widget analyst"]["title"] == "Widget Analyst", "the display title i
 pages = B.title_pages({"a b": {"total": B.PAGE_MIN, "title": "A B"}, "c": {"total": B.PAGE_MIN - 1, "title": "C"},
                        "d": {"total": 500, "title": "D"}})
 check([p[0] for p in pages] == ["d", "a-b"], "a page from the floor up, busiest first, slug from the key")
+check(keys["data scientist"]["top"] == "15-2051" and keys["data scientist"]["topN"] == 300,
+      "each title carries the code employers used most for it")
+page_rows = B.title_pages(keys)
+check(next(p for p in page_rows if p[0] == "software-engineer")[3:] == ["15-1252", 1400], "a page row names its top code")
 codes = B.code_list(rows, onet, {"15-1251": Counter({"Computer Programmers": 5})}, {"15-1252": "software-developers"})
 c1252 = next(c for c in codes if c[0] == "15-1252")
 check(c1252[1] == "Software Developers" and c1252[2] == 4 and c1252[6] == "software-developers",
       "a code carries its title, Job Zone and occupation page")
 c1251 = next(c for c in codes if c[0] == "15-1251")
 check(c1251[1] == "Computer Programmers", "a code O*NET lacks takes DOL's title")
+codes2 = B.code_list(rows, onet, {"15-1132": Counter({"SOFTWARE DEVS": 9})}, {}, B.crosswalk_titles())
+c1132 = next(c for c in codes2 if c[0] == "15-1132")
+check(c1132[1] == "Software Developers, Applications", "a 2010 code takes BLS's title from the crosswalk before DOL's spelling")
+
+# ── each code's occupation page ──
+slugs = B.choose_slugs([
+    ("15-2051.01", "business-intelligence-analysts", "Business Intelligence Analysts", 900),
+    ("15-2051.00", "data-scientists", "Data Scientists", 400),
+    ("15-2031.00", "n-a-3", "N/A", 50),
+    ("15-2031", "operations-research-analysts", "Operations Research Analysts", 30),
+    ("15-1252.00", "software-developers", "Software Developers", 76524),
+    ("bad", "x", "X", 1),
+])
+check(slugs == {"15-2051": "data-scientists", "15-2031": "operations-research-analysts", "15-1252": "software-developers"},
+      "a code's page is its own code's, never a finer O*NET job or a row named N/A")
 
 print(f"\n{len(fails)} failure(s)")
 sys.exit(1 if fails else 0)

@@ -158,14 +158,6 @@ export function answerForTitle(rows: readonly SocTitleRow[], codes: Map<string, 
   return { key, title: rows[0]!.title, total, slug: total >= pageMin ? titleSlug(key) : null, codes: list };
 }
 
-/** The share as a reader reads it: never a clean 0% or 100% the counts don't have. */
-export function shareLabel(share: number | null): string {
-  if (share === null) return "";
-  if (share >= 0.995 && share < 1) return "over 99%";
-  if (share > 0 && share < 0.01) return "under 1%";
-  return `${Math.round(share * 100)}%`;
-}
-
 /** The 23 major groups with the codes and filings in each, from the codes doc. */
 export interface MajorGroup {
   major: string;
