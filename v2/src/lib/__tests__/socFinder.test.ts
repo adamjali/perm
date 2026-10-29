@@ -5,6 +5,7 @@ import {
   answerForTitle,
   codeHref,
   majorGroups,
+  mergeJobChoices,
   parseCodes,
   parseSocQuery,
   type SocTitleRow,
@@ -97,6 +98,24 @@ describe("answerForCode", () => {
     expect(a.known).toBe(false);
     expect(a.became.map((b) => b.soc)).toEqual(expect.arrayContaining(["15-1252", "15-1253"]));
     expect(a.became.find((b) => b.soc === "15-1252")).toMatchObject({ title: "Software Developers", slug: "software-developers" });
+  });
+});
+
+describe("mergeJobChoices", () => {
+  const sd = { soc: "15-1252", name: "Software Developers" };
+  const qa = { soc: "15-1253", name: "Software Quality Assurance Analysts and Testers" };
+  const ds = { soc: "15-2051", name: "Data Scientists" };
+
+  it("lets a title's codes lead when no occupation is called that", () => {
+    expect(mergeJobChoices("software engineer", [qa], [sd, qa]).map((c) => c.soc)).toEqual(["15-1252", "15-1253"]);
+  });
+
+  it("keeps the occupation whose own name was typed first", () => {
+    expect(mergeJobChoices("Data Scientists", [ds, sd], [sd]).map((c) => c.soc)).toEqual(["15-2051", "15-1252"]);
+  });
+
+  it("leaves the names alone when the words are no title", () => {
+    expect(mergeJobChoices("softwar", [sd, qa], [])).toEqual([sd, qa]);
   });
 });
 

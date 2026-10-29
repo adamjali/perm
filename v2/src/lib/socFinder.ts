@@ -183,6 +183,20 @@ export function majorGroups(codes: Map<string, SocCode>): MajorGroup[] {
     .sort((a, b) => a.major.localeCompare(b.major));
 }
 
+/**
+ * One list from the occupations a box's words name and the codes employers filed those words under
+ * as a job title: a box holding "software engineer" means 15-1252, though no occupation is called
+ * that. The occupation whose own name the words are stays first; otherwise the title's codes lead,
+ * busiest first, then the closest names. Each code once.
+ */
+export function mergeJobChoices<T extends { soc: string; name: string }>(text: string, byName: readonly T[], byTitle: readonly T[]): T[] {
+  const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const exactName = byName.length > 0 && words(byName[0]!.name) === words(text);
+  const ordered = exactName ? [byName[0]!, ...byTitle, ...byName.slice(1)] : [...byTitle, ...byName];
+  const seen = new Set<string>();
+  return ordered.filter((c) => (seen.has(c.soc) ? false : (seen.add(c.soc), true)));
+}
+
 /** Where a code goes when it's picked: its occupation page, else the wage tool set to it. */
 export function codeHref(soc: string, slug: string | null): string {
   return slug ? `/perm-wages/${slug}` : `/tools/wage-levels?soc=${encodeURIComponent(socGroup(soc) ?? soc)}`;
