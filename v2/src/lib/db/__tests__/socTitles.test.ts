@@ -51,6 +51,7 @@ const reads = await import("../socTitles");
 
 describe("the job code finder's reads", () => {
   beforeEach(() => {
+    reads.resetSocCaches();
     rows.mockReset();
     rows.mockImplementation(async (sql, args) => answer(sql, args));
     doc.mockReset();

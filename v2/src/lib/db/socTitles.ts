@@ -212,6 +212,16 @@ export async function titlesForCode(soc: string, limit = 15): Promise<CodeTitles
 
 let codeIndexCache: { codes: Map<string, SocCode>; index: FuzzyIndex<SocCode> } | null = null;
 
+/**
+ * Drop the module-level caches. Test-only: these caches are keyed by identity and TTL, so a test that asserts
+ * how many reads a call makes needs a cold start, which CI's shuffled order otherwise denies it.
+ */
+export function resetSocCaches(): void {
+  codesCache = null;
+  keysCache = null;
+  codeIndexCache = null;
+}
+
 /** BLS's own names for the jobs, matched like the titles: about 900, so built once per codes doc. */
 function codeIndexFor(codes: Map<string, SocCode>): FuzzyIndex<SocCode> {
   if (codeIndexCache?.codes !== codes) {
