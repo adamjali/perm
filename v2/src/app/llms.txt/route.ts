@@ -28,6 +28,8 @@ import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, LIVE_SINCE, NOT_LEGAL_SERVICES,
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
 import { longDate, MONTH_NAMES, monthYear } from "@convex/lib/months";
+import { RIVALS } from "@/lib/compare/rivals";
+import { checkedPhrase } from "@/lib/compare/trackers";
 import { FORM_PAGES } from "@/lib/uscisForms";
 
 const BASE_URL = SITE_URL;
@@ -617,7 +619,7 @@ export async function GET() {
     `- [About](${BASE_URL}/about): Who runs PERM Tracker (an immigration attorney), since when, and what it is not`,
     `- [Press](${BASE_URL}/press): What DOL's records on this site can tell a reporter, how to credit PERM Tracker, and the press contact`,
     `- [Reviews](${BASE_URL}/reviews): Every review left by someone outside the team, newest first, with the average rating`,
-    `- [PERM trackers compared](${BASE_URL}/compare): Seven PERM case trackers checked side by side on their own pages (Oct 27 2026): what it looks up, where its data comes from, how fresh it is and what it costs, each mark quoted and linked`,
+    `- [PERM trackers compared](${BASE_URL}/compare): ${RIVALS.length} other PERM case trackers and green card sites checked beside this one on their own pages (${checkedPhrase(RIVALS.map((t) => t.checkedOn))}): what each looks up, where its data comes from, how fresh it is and what it costs, each mark quoted and linked`,
     `- [For professionals](${BASE_URL}/for-attorneys): The case-management side for attorneys, paralegals and HR teams - every deadline computed per case, reminders, calendar sync`,
     `- [FAQ](${BASE_URL}/faq): Questions about PERM and about this site`,
     `- [Email preferences](${BASE_URL}/email-preferences): See and stop everything the site emails an address`,

@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { CheckIcon, MinusIcon, QuestionIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import { ROWS, type Cell, type Mark, type Tracker } from "@/lib/compare/trackers";
+import { GROUPS, ROWS, type Cell, type Mark, type Tracker } from "@/lib/compare/trackers";
 import { cn } from "@/lib/utils";
 
 /**
@@ -53,23 +53,60 @@ function tipFor(t: Tracker, label: string, c: Cell): string {
     .join("\n");
 }
 
+/**
+ * The columns' lists, in the order the trackers come: one header cell over each
+ * run of trackers in the same list, and a heavy rule where a new list starts.
+ */
+function groupSpans(trackers: readonly Tracker[]): { key: string; label: string; span: number }[] {
+  const spans: { key: string; label: string; span: number }[] = [];
+  for (const t of trackers) {
+    const last = spans[spans.length - 1];
+    if (last && last.key === t.group) last.span += 1;
+    else spans.push({ key: t.group, label: GROUPS.find((g) => g.key === t.group)?.label ?? t.group, span: 1 });
+  }
+  return spans;
+}
+
 export function TrackerMatrix({ trackers }: { trackers: readonly Tracker[] }) {
   // The key names only the marks the grid uses.
   const used = new Set(trackers.flatMap((t) => ROWS.map((r) => t.cells[r.key].mark)));
+  const spans = groupSpans(trackers);
+  /** The column that opens a list after the first gets the heavy rule. */
+  const startsList = (i: number) => i > 0 && trackers[i]!.group !== trackers[i - 1]!.group;
   return (
     <figure>
       <ChartTips
         label="PERM trackers compared, question by question"
         scroll="scroll-box overflow-x-auto border-2 border-foreground bg-card"
       >
-        <table className="w-full min-w-[40rem] border-collapse text-left">
+        {/* Wide enough for every site's column to hold its name on two lines; past
+            the screen the grid scrolls in its own box, the question column held. */}
+        <table className="w-full border-collapse text-left" style={{ minWidth: `${10 + trackers.length * 4.5}rem` }}>
           <caption className="sr-only">
             What each PERM tracker offers, read on each site&apos;s own pages{" "}
           </caption>
           <thead>
+            {spans.length > 1 ? (
+              <tr className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card" />
+                {spans.map((g, i) => (
+                  <Fragment key={g.key}>
+                    <th
+                      scope="colgroup"
+                      colSpan={g.span}
+                      className={cn("px-3 pb-1 pt-3 text-left text-sm font-semibold text-soft", i > 0 && "border-l-2 border-foreground")}
+                    >
+                      {g.label}{" "}
+                    </th>
+                  </Fragment>
+                ))}
+              </tr>
+            ) : null}
             <tr className="border-b-2 border-foreground">
-              <th scope="col" className="sticky left-0 z-10 w-[9.5rem] bg-card p-3 text-sm font-semibold text-soft sm:w-[15rem]">
-                Question{" "}
+              <th scope="col" className="sticky left-0 z-10 bg-card p-3 text-sm font-semibold text-soft">
+                {/* A block of fixed width holds the question column open: with eleven sites
+                    the table's own sizing squeezed every question onto three or four lines. */}
+                <span className="block w-[7.5rem] sm:w-[11.5rem]">Question{" "}</span>
               </th>
               {trackers.map((t, i) => (
                 <Fragment key={t.slug}>
@@ -78,6 +115,7 @@ export function TrackerMatrix({ trackers }: { trackers: readonly Tracker[] }) {
                     className={cn(
                       "p-3 text-center align-bottom text-sm font-bold leading-tight",
                       i === 0 && "bg-primary text-primary-foreground",
+                      startsList(i) && "border-l-2 border-foreground",
                     )}
                   >
                     {t.name}{" "}
@@ -97,7 +135,7 @@ export function TrackerMatrix({ trackers }: { trackers: readonly Tracker[] }) {
                   const c = t.cells[r.key];
                   return (
                     <Fragment key={t.slug}>
-                      <td className={cn("p-2 text-center", i === 0 && "bg-tint")}>
+                      <td className={cn("p-2 text-center", i === 0 && "bg-tint", startsList(i) && "border-l-2 border-foreground")}>
                         <span data-tip={tipFor(t, r.label, c)} className="inline-flex">
                           <MarkIcon mark={c.mark} />
                           <span className="sr-only">{MARK_WORD[c.mark]}{" "}</span>
