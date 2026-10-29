@@ -44,6 +44,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/open-data": "open data download csv json dataset bulk licence license cc-by bulletin history",
   "/perm-cities": "city cities town metro worksite location",
   "/perm-industries": "industry industries naics sector",
+  "/soc-codes": "soc code occupation code job title lookup onet o*net 15-1252 occupational classification",
   "/perm-countries": "country countries citizenship nationality birth",
   "/perm-by-state": "state states worksite location",
   "/perm-decision-activity": "decided decisions day certified denied withdrawn",

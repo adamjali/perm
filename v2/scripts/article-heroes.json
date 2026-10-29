@@ -1206,5 +1206,14 @@
   "credit": "Photo: Tdorante10 / Wikimedia Commons, CC BY-SA 4.0",
   "source": "https://commons.wikimedia.org/wiki/File:Jamaica_Av_153rd_St_td_(2022-04-11)_02_-_USCIS_Application_Support_Center.jpg",
   "alt": "A USCIS Application Support Center on Jamaica Avenue in Queens, New York, where applicants give fingerprints and photos"
+ },
+ "guides/how-to-find-your-soc-code": {
+  "capture": {
+   "url": "/soc-codes/data-scientist",
+   "clip": "fromm:SOC code for Data Scientist",
+   "maxHeight": 1000
+  },
+  "credit": "Screenshot of permtracker.app, October 29, 2026",
+  "alt": "The SOC codes employers filed Data Scientist under on permtracker.app, each with its share of the filings, BLS pay and Job Zone"
  }
 }

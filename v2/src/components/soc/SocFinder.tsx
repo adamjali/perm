@@ -216,7 +216,7 @@ function TitleResult({ title }: { title: TitleAnswer }) {
       {filed.length ? (
         <ol className="mt-4 space-y-3" aria-label={`The codes employers filed ${title.title} under`}>
           {filed.map((c) => (
-            <li key={c.soc} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
+            <li key={c.soc} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4 [&>*]:min-w-0">
               <div className="min-w-0">
                 <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center text-base font-semibold">
                   <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.codeTitle}

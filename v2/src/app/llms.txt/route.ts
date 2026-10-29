@@ -366,6 +366,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "DOL's four OEWS prevailing wage levels for any occupation in any metro or non-metro area, read live from the OFLC wage search with the series year each figure belongs to.",
   },
   {
+    path: "/soc-codes",
+    label: "SOC code lookup",
+    blurb: "A job title in, the SOC occupation codes employers filed it under in DOL's PERM, prevailing wage and LCA files out, with each code's share of the filings; a code in, its title, and for a 2010 code the 2018 codes it became. Each common title has its own page.",
+  },
+  {
     path: "/tools/green-card-fees",
     label: "Green card government fees",
     blurb: "USCIS filing fees for the employment-based green card, from Form G-1055 with its edition date: I-140 and the asylum program fee tier, premium processing, I-485, I-765 and I-131 per person.",
