@@ -710,6 +710,7 @@ export const dueForAlert = internalQuery({
       _id: v.id("dolQueueAlerts"),
       email: v.string(),
       filingMonth: v.string(),
+      lang: v.optional(v.string()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -718,6 +719,7 @@ export const dueForAlert = internalQuery({
       _id: Id<"dolQueueAlerts">;
       email: string;
       filingMonth: string;
+      lang?: string;
     }[] = [];
 
     for await (const row of ctx.db
@@ -736,7 +738,7 @@ export const dueForAlert = internalQuery({
       // sweep runs against its own frontier so a PWD row must never qualify
       // off the PERM month or vice versa.
       if ((row.queue ?? "perm") !== queue) continue;
-      out.push({ _id: row._id, email: row.email, filingMonth: row.filingMonth });
+      out.push({ _id: row._id, email: row.email, filingMonth: row.filingMonth, lang: row.lang });
       if (out.length >= args.limit) break;
     }
 
@@ -797,37 +799,41 @@ export const notifyQueueReached = internalAction({
     const frontierLabel = formatMonth(args.frontier) ?? args.frontier;
     const asOfLabel = formatAsOf(args.asOf) ?? args.asOf;
     const label = queueLabel(queue);
-    const monthNoun = queue === "perm" ? "filing month" : "submission month";
+    const perm = queue === "perm";
 
     // Arithmetic on two figures DOL published, or null. Never a projection:
     // see src/lib/queuePace.ts. Measured on the PERM analyst frontier only -
     // the PWD history is too shallow to measure yet (store began 2026-08-25),
     // and a pace from the wrong queue would be a confident wrong number.
-    const paceLine =
-      queue === "perm"
-        ? paceSentence(
-            measureQueuePace(
-              (
-                await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
-              ).map((s) => ({
-                frontier:
-                  s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))
-                    ?.priorityDate ?? null,
-                asOf: s.permAsOf,
-              })),
-            ),
-          )
-        : null;
+    // Measured ONCE for the whole sweep; each row turns it into its own
+    // language's sentence below.
+    const paceData = perm
+      ? measureQueuePace(
+          (
+            await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
+          ).map((s) => ({
+            frontier:
+              s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))
+                ?.priorityDate ?? null,
+            asOf: s.permAsOf,
+          })),
+        )
+      : null;
 
     for (const row of batch) {
       try {
+        // The reader's language is stored on the row at confirm time; the
+        // recurring alert, its subject and its unsubscribe page all follow it.
+        const lang = mailLang(row.lang);
         const token = await makeUnsubscribeToken(
           row.email,
           unsubscribeSecret(),
           "queue-unsubscribe",
         );
-        const unsubUrl = actionUrl("/queue-alert/unsubscribe", token);
+        const unsubUrl = withLang(actionUrl("/queue-alert/unsubscribe", token), lang);
         const prefsUrl = await prefsLink(row.email, unsubscribeSecret(), `queue:${row._id}`);
+        // The measured pace, as this reader's language writes it, or null.
+        const paceLine = paceSentence(paceData, lang);
 
         const filingLabel = formatMonth(row.filingMonth) ?? row.filingMonth;
         // How far DOL has run PAST this subscriber's month. 0 means it landed
@@ -848,8 +854,8 @@ export const notifyQueueReached = internalAction({
               paceLine,
               unsubscribeUrl: unsubUrl,
               prefsUrl,
-              queueName: label,
-              monthNoun,
+              perm,
+              lang,
             });
           },
         );
@@ -859,10 +865,7 @@ export const notifyQueueReached = internalAction({
           email: row.email,
           kind: "queue",
           ref: `queue:${row._id}`,
-          subject:
-            queue === "perm"
-              ? `DOL has reached ${frontierLabel} in the PERM queue`
-              : `DOL has reached ${frontierLabel} in the prevailing-wage queue`,
+          subject: alertText(lang).subject.queueReached(perm, frontierLabel),
           html,
           listUnsubscribe: unsubUrl,
           summary: {

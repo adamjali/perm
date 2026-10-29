@@ -21,6 +21,7 @@
  */
 
 import { monthsMoved } from "./dolFormat";
+import type { MailLang } from "./i18n/mailLang";
 
 /** One published observation of where the queue stood. */
 export interface FrontierSnapshot {
@@ -88,9 +89,23 @@ export function measureQueuePace(
  * and interesting fact, but it is not one to deliver inside a one-shot alert
  * that a person has waited a year for and cannot reply to.
  */
-export function paceSentence(pace: QueuePace | null): string | null {
+export function paceSentence(pace: QueuePace | null, lang: MailLang = "en"): string | null {
   if (!pace || pace.months < 1) return null;
-  const m = pace.months === 1 ? "1 month" : `${pace.months} months`;
-  const w = pace.overMonths === 1 ? "1 month" : `${pace.overMonths} months`;
-  return `DOL’s queue has moved ${m} over the last ${w}.`;
+  return PACE_SENTENCE[lang](pace.months, pace.overMonths);
 }
+
+/**
+ * The pace sentence in each language an alert is written in. English is exactly today's wording. The two spans
+ * are whole-month counts DOL published; a month is named as its own count ("3 months", "3 meses"), never a date.
+ */
+const PACE_SENTENCE: Record<MailLang, (months: number, overMonths: number) => string> = {
+  en: (m, w) =>
+    `DOL’s queue has moved ${m === 1 ? "1 month" : `${m} months`} over the last ${w === 1 ? "1 month" : `${w} months`}.`,
+  es: (m, w) =>
+    `La fila del DOL avanzó ${m === 1 ? "1 mes" : `${m} meses`} en los últimos ${w === 1 ? "1 mes" : `${w} meses`}.`,
+  zh: (m, w) => `劳工部的排队在过去 ${w} 个月里前进了 ${m} 个月。`,
+  "pt-br": (m, w) =>
+    `A fila do DOL avançou ${m === 1 ? "1 mês" : `${m} meses`} nos últimos ${w === 1 ? "1 mês" : `${w} meses`}.`,
+  ko: (m, w) => `노동부의 대기열은 지난 ${w}개월 동안 ${m}개월 전진했습니다.`,
+  vi: (m, w) => `Hàng chờ của DOL đã tiến ${m} tháng trong ${w} tháng qua.`,
+};

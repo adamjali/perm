@@ -467,6 +467,7 @@ export const liveSubscriptions = internalQuery({
       country: v.string(),
       lastSeenCutoff: v.optional(v.string()),
       lastSeenBulletin: v.optional(v.string()),
+      lang: v.optional(v.string()),
     }),
   ),
   handler: async (ctx) => {
@@ -477,6 +478,7 @@ export const liveSubscriptions = internalQuery({
       country: string;
       lastSeenCutoff?: string;
       lastSeenBulletin?: string;
+      lang?: string;
     }[] = [];
     for await (const row of ctx.db
       .query("bulletinAlerts")
@@ -489,6 +491,7 @@ export const liveSubscriptions = internalQuery({
         country: row.country,
         lastSeenCutoff: row.lastSeenCutoff,
         lastSeenBulletin: row.lastSeenBulletin,
+        lang: row.lang,
       });
     }
     return out;
@@ -600,12 +603,15 @@ export const sweep = internalAction({
       }
 
       try {
+        // The reader's language, stored at confirm time; the alert, its
+        // subject and its unsubscribe page all follow it.
+        const lang = mailLang(sub.lang);
         const token = await makeUnsubscribeToken(
           sub.email,
           unsubscribeSecret(),
           "bulletin-unsubscribe",
         );
-        const unsubUrl = actionUrl("/bulletin-alert/unsubscribe", token);
+        const unsubUrl = withLang(actionUrl("/bulletin-alert/unsubscribe", token), lang);
         const prefsUrl = await prefsLink(sub.email, unsubscribeSecret(), `bulletin:${sub._id}`);
         const label = seriesLabel(sub.category, sub.country);
         const fromWords = cutoffInWords(sub.lastSeenCutoff);
@@ -623,6 +629,7 @@ export const sweep = internalAction({
               toCutoff: toWords,
               unsubscribeUrl: unsubUrl,
               prefsUrl,
+              lang,
             });
           },
         );
@@ -632,7 +639,7 @@ export const sweep = internalAction({
           email: sub.email,
           kind: "bulletin",
           ref: `bulletin:${sub._id}`,
-          subject: `${label} moved in the ${monthLabel(latest.month)} visa bulletin`,
+          subject: alertText(lang).subject.bulletinMoved(label, monthLabel(latest.month)),
           html,
           listUnsubscribe: unsubUrl,
           summary: {
