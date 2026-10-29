@@ -122,14 +122,15 @@ export default async function SocCodesPage() {
           <div className="border-2 border-border bg-card">
             {groups.map((g) => (
               <details key={g.major} className="group border-b-2 border-border last:border-b-0">
-                <summary className="grid min-h-[44px] cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3 hover:bg-sage sm:grid-cols-[minmax(12rem,22rem)_minmax(0,1fr)_auto] sm:px-6 [&::-webkit-details-marker]:hidden">
-                  <span className="col-span-2 min-w-0 font-heading text-base font-bold sm:col-span-1">
+                <summary className="grid min-h-[44px] cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-3 hover:bg-sage sm:grid-cols-[minmax(12rem,22rem)_minmax(0,1fr)_11.5rem] sm:px-6 [&::-webkit-details-marker]:hidden">
+                  <span className="min-w-0 font-heading text-base font-bold">
                     <span className="font-mono text-sm text-soft">{g.major}-0000</span> {g.name}
                   </span>{" "}
-                  <span className="h-2.5 w-full bg-sage" aria-hidden="true">
-                    <span className="block h-full bg-primary" style={{ width: `${busiest > 0 ? Math.max(1, (g.filings / busiest) * 100) : 0}%` }} />
+                  {/* On a phone the bar takes its own full-width line under the name and share, so every track is one length. */}
+                  <span className="order-last col-span-2 h-2.5 w-full bg-sage sm:order-none sm:col-span-1" aria-hidden="true">
+                    <span className="block h-full bg-primary" style={{ width: `${busiest > 0 && g.filings > 0 ? Math.max(1, (g.filings / busiest) * 100) : 0}%` }} />
                   </span>{" "}
-                  <span className="min-w-[7rem] text-right font-mono text-sm tabular-nums">
+                  <span className="text-right font-mono text-sm tabular-nums">
                     {g.codes.length} {g.codes.length === 1 ? "code" : "codes"},{" "}
                     {g.filings > 0 && allFilings > 0 ? formatShareOf(g.filings, allFilings) : "no filings"}
                   </span>
@@ -137,8 +138,10 @@ export default async function SocCodesPage() {
                 <ul className="grid grid-cols-1 gap-x-6 border-t-2 border-border/40 px-5 py-3 sm:grid-cols-2 sm:px-6">
                   {g.codes.map((c) => (
                     <li key={c.soc}>
-                      <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center gap-2">
-                        <span className="whitespace-nowrap font-mono text-sm">{c.soc}</span> {c.title}
+                      <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center">
+                        <span>
+                          <span className="whitespace-nowrap font-mono text-sm">{c.soc}</span> {c.title}
+                        </span>
                       </Link>{" "}
                     </li>
                   ))}

@@ -179,7 +179,9 @@ function Results({ found }: { found: Found }) {
             {found.codes.map((c) => (
               <li key={c.soc}>
                 <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center">
-                  <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.title}
+                  <span>
+                    <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.title}
+                  </span>
                 </Link>{" "}
               </li>
             ))}
@@ -217,10 +219,12 @@ function TitleResult({ title }: { title: TitleAnswer }) {
       {filed.length ? (
         <ol className="mt-4 space-y-3" aria-label={`The codes employers filed ${title.title} under`}>
           {filed.map((c) => (
-            <li key={c.soc} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4 [&>*]:min-w-0">
+            <li key={c.soc} className="grid grid-cols-[minmax(0,1fr)_5.5rem] items-end gap-x-4 [&>*]:min-w-0">
               <div className="min-w-0">
                 <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center text-base font-semibold">
-                  <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.codeTitle}
+                  <span>
+                    <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.codeTitle}
+                  </span>
                 </Link>{" "}
                 {c.becameCodes.length ? (
                   <p className="text-sm text-soft">
@@ -231,7 +235,7 @@ function TitleResult({ title }: { title: TitleAnswer }) {
                   <div className="h-full bg-primary" style={{ width: `${top > 0 ? Math.max(1, ((c.share ?? 0) / top) * 100) : 0}%` }} />
                 </div>
               </div>{" "}
-              <span className="min-w-[5.5rem] text-right font-mono text-base font-bold tabular-nums">{formatShareOf(c.filings, title.total)}</span>
+              <span className="text-right font-mono text-base font-bold tabular-nums">{formatShareOf(c.filings, title.total)}</span>
             </li>
           ))}
         </ol>
@@ -287,7 +291,9 @@ function CodeResult({ code }: { code: CodeAnswer }) {
             {code.became.map((b) => (
               <li key={b.soc}>
                 <Link href={codeHref(b.soc, b.slug)} className="link inline-flex min-h-11 items-center font-semibold">
-                  <span className="whitespace-nowrap font-mono">{b.soc}</span>&nbsp;{b.title}
+                  <span>
+                    <span className="whitespace-nowrap font-mono">{b.soc}</span>&nbsp;{b.title}
+                  </span>
                 </Link>{" "}
               </li>
             ))}
