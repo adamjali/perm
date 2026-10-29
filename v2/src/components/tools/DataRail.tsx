@@ -335,10 +335,14 @@ export function DataRail() {
                 {/* The scroll box is 24px wider than the rail, so the current
                     page's tab, which crosses the rail's edge by up to 20px plus its shadow, is
                     inside it and never clipped; the content keeps the rail's
-                    width. A thin scrollbar, out in the gap beside the rail. */}
+                    width. Because the box is wider than the rail, a native
+                    scrollbar lands ~24px out in the gap, detached from the
+                    spine and wonky (Oct 29 2026), so it's hidden: the list
+                    still scrolls by wheel and trackpad, which is how a short
+                    nav spine is scrolled. */}
                 <div
                   ref={listRef}
-                  className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:thin]"
+                  className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   style={{ width: "calc(100% + 24px)" }}
                 >
                   <div style={{ width: "calc(100% - 24px)" }}>{renderBody("rail")}</div>
