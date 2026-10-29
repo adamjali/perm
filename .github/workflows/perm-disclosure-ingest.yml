@@ -162,6 +162,9 @@ jobs:
           python3 scripts/build_pwd_links.py
           # The busiest law firms by fiscal year and state, PERM and H-1B LCAs (/law-firm-rankings).
           python3 scripts/build_firm_ranks.py
+          # What the newest quarterly file says, against the quarter before and a year before
+          # (the quarter's blog post reads it; scripts/new_quarter_post.py writes the post).
+          python3 scripts/build_quarter_report.py
 
       # The pages built from this corpus sit on a week-long window, which is
       # only right if a load expires them. `success()` so a failed load never
