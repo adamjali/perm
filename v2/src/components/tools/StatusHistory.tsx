@@ -10,7 +10,7 @@ import { STATUS_HISTORY } from "./StatusHistory.messages";
 /**
  * Every status DOL's record showed for this case, oldest first, each with the day it changed and how long it
  * held. Nothing renders until our checks have seen the case change at least once. A translated page keeps DOL's
- * status words as DOL prints them, the rule the rest of the case page follows.
+ * status words in English and marks them not to be translated, as the rest of the case page does.
  */
 export function StatusHistory({
   events,
@@ -25,7 +25,6 @@ export function StatusHistory({
   if (steps.length === 0) return null;
   const t = STATUS_HISTORY[lang];
   const day = (d: string) => dayShortLabel(d, lang) ?? d;
-  const status = (s: string) => (lang === "en" ? prettyStatus(s) : s.toUpperCase());
   const now = steps.length - 1;
   return (
     <PageSection title={t.title} lede={t.lede(day(HISTORY_FROM))} id="history">
@@ -44,7 +43,7 @@ export function StatusHistory({
             </span>{" "}
             <span className="min-w-0 max-sm:col-start-2">
               <span className="block font-semibold">
-                {status(s.status)}
+                <span translate="no">{prettyStatus(s.status)}</span>
                 {i === now ? <span className="font-normal text-soft">{" "}{t.now}</span> : null}
               </span>{" "}
               {s.days !== null ? <span className="block text-sm text-soft">{t.heldFor(s.days, intLabel(s.days, lang))}</span> : null}

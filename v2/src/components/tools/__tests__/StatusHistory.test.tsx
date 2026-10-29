@@ -22,7 +22,7 @@ describe("StatusHistory", () => {
     expect(text).toContain("Nov 3, 2026 Analyst Review (now)");
   });
 
-  it("speaks a translated page's language and keeps DOL's status words as printed", () => {
+  it("speaks a translated page's language and keeps DOL's status words in English", () => {
     const { container } = render(
       <StatusHistory
         lang="es"
@@ -34,8 +34,8 @@ describe("StatusHistory", () => {
     );
     expect(screen.getByRole("heading", { name: "Cada estado que ha mostrado el DOL" })).toBeInTheDocument();
     const text = (container.textContent ?? "").replace(/\s+/g, " ");
-    expect(text).toContain("RFI ISSUED Duró 34 días");
-    expect(text).toContain("ANALYST REVIEW (ahora)");
+    expect(text).toContain("RFI Issued Duró 34 días");
+    expect(text).toContain("Analyst Review (ahora)");
     expect(text).not.toMatch(/Held for|Every status|\(now\)/);
   });
 
