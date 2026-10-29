@@ -52,6 +52,10 @@ export function SentryClientInit() {
           "ResizeObserver loop completed with undelivered notifications",
           "Failed to fetch",
           "NetworkError",
+          // Chrome's words for a response cut off mid-read (Sentry 56, on /login): the
+          // visitor's connection, not the site; nginx logged every request that minute
+          // as 200 (Oct 28 2026). PostHog still counts it, and the error screen reloads.
+          /(^|: )network error$/i,
           "Network request failed",
           "AbortError",
           /^chrome-extension:\/\//,
