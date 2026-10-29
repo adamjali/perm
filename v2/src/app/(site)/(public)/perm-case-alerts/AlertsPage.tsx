@@ -125,7 +125,7 @@ export function AlertsPage({ lang }: { lang: Lang }) {
       </PageSection>{" "}
       <PageSection id="bulletin" title={t.kinds.bulletin.title}>
         <div className="max-w-2xl">
-          <BulletinAlertForm source="alerts-page" headingLevel="h3" lang={lang} />
+          <BulletinAlertForm source="alerts-page" bare lang={lang} />
         </div>
       </PageSection>{" "}
       <PageSection id="employer" title={t.kinds.employer.title} lede={t.employerLede}>

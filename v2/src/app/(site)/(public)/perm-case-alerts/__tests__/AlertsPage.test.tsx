@@ -64,7 +64,7 @@ describe("the alerts page in each language", () => {
     // The forms really rendered, in this language.
     expect(text).toContain(FORMS_TEXT[lang].queue.button);
     expect(text).toContain(FORMS_TEXT[lang].queue.whichQueue);
-    expect(text).toContain(FORMS_TEXT[lang].bulletin.heading);
+    expect(text).toContain(FORMS_TEXT[lang].bulletin.what);
     expect(text).toContain(ALERT_TEXT[lang].digest.button);
     for (const english of englishFormWords) expect(text, `${lang}: ${english}`).not.toContain(english);
   });

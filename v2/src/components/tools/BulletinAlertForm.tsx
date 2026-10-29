@@ -12,6 +12,7 @@
 
 import { useId, useState } from "react";
 import { isQueued } from "@/lib/alertReply";
+import { cn } from "@/lib/utils";
 import { AlertDone, AlertNote, EmailField, OptInFold } from "@/components/alerts/AlertParts";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -57,8 +58,14 @@ export function BulletinAlertForm({
   priorityDate = null,
   headingLevel = "h2",
   lang = "en",
+  bare = false,
 }: {
   source: string;
+  /**
+   * No frame and no heading of its own: the form sits under a section that already names it (the alerts page),
+   * drawn like the month and wage-request boxes beside it.
+   */
+  bare?: boolean;
   /** "h3" where the form sits under a section heading of its own (the alerts page). */
   headingLevel?: "h2" | "h3";
   initialCategory?: Category;
@@ -129,7 +136,7 @@ export function BulletinAlertForm({
 
   if (status === "done") {
     return (
-      <div className="object p-5 sm:p-6">
+      <div className={bare ? undefined : "object p-5 sm:p-6"}>
         <p className="font-heading text-xl font-bold">{t.replyHeading(queued)}</p>{" "}
         <AlertDone message={message} queued={queued} className="mt-2" lang={lang} />{" "}
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t.bulletin.after}</p>
@@ -143,10 +150,10 @@ export function BulletinAlertForm({
       ref={observe}
       onFocusCapture={onFocusCapture}
       onSubmit={handleSubmit}
-      className="object p-5 sm:p-6 print:hidden"
+      className={cn(!bare && "object p-5 sm:p-6", "print:hidden")}
     >
-      <Heading className="font-heading text-xl font-bold">{t.bulletin.heading}</Heading>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">{t.bulletin.what}</p>{" "}
+      {bare ? null : <Heading className="font-heading text-xl font-bold">{t.bulletin.heading}</Heading>}{" "}
+      <p className={cn("max-w-2xl text-base leading-relaxed text-soft", !bare && "mt-2")}>{t.bulletin.what}</p>{" "}
       {priorityLabel ? (
         lang === "en" ? (
           <p className="mt-3 max-w-2xl text-base leading-relaxed">
