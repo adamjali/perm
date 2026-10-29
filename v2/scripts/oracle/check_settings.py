@@ -64,10 +64,9 @@ def bearer(k):
 
 c, _ = curl("https://generativelanguage.googleapis.com/v1beta/models?key=" + ENV["GOOGLE_GENERATIVE_AI_API_KEY"])
 show("GOOGLE_GENERATIVE_AI_API_KEY", "Gemini lists models", c == "200", c)
-for k, url in [("MISTRAL_API_KEY", "https://api.mistral.ai/v1/models"),
-               ("OPENROUTER_API_KEY", "https://openrouter.ai/api/v1/key"),
-               ("GROQ_API_KEY", "https://api.groq.com/openai/v1/models"),
-               ("CEREBRAS_API_KEY", "https://api.cerebras.ai/v1/models")]:
+# The chat's providers only: Mistral left the chain Oct 29 2026, Cerebras Oct 12.
+for k, url in [("OPENROUTER_API_KEY", "https://openrouter.ai/api/v1/key"),
+               ("GROQ_API_KEY", "https://api.groq.com/openai/v1/models")]:
     c, _ = curl(*bearer(k), url)
     show(k, "provider accepts key", c == "200", c)
 c, _ = curl("-H", "X-Subscription-Token: " + ENV["BRAVE_API_KEY"], "https://api.search.brave.com/res/v1/web/search?q=perm&count=1")

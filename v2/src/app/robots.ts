@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from "@/lib/constants/site";
+import { LOCALES } from "@/lib/i18n/locales";
 
 /** Public pages whose path starts with a disallowed prefix. */
 export const PUBLIC_UNDER_A_DISALLOW = ['/api-terms']
@@ -35,6 +36,8 @@ export default function robots(): MetadataRoute.Robots {
     // render that can ask DOL live, and a crawler walking thousands of them is
     // pure cost, in database reads and DOL requests.
     '/perm-case-status?',
+    // The same lookup in each language, at /es/perm-case-status and the rest.
+    ...LOCALES.map((l) => `${l.path}/perm-case-status?`),
     // The embedded lookup asks DOL live on every query (under a daily cap per
     // embedding site), so its query variants are the same cost, and worse.
     '/embed/case-status?',

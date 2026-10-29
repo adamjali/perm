@@ -39,4 +39,18 @@ describe("the privacy page and the chat's providers", () => {
     expect(page).not.toMatch(/(OpenRouter|Groq|Mistral AI|Google Gemini): Not stored/);
     expect(page).not.toMatch(/Does not use API data to train/i);
   });
+
+  it("names no provider the chat no longer calls", () => {
+    for (const [p, name] of Object.entries(PROVIDER_NAMES)) {
+      if (!used.includes(p)) expect(page, p).not.toMatch(name);
+    }
+  });
+
+  it("the Terms say the same: no promise that providers don't train on what's sent", () => {
+    const terms = flat(read("app/(site)/(public)/terms/page.tsx"));
+    expect(terms).not.toMatch(/(don’t|don't|do not) use your data to train/i);
+    for (const [p, name] of Object.entries(PROVIDER_NAMES)) {
+      if (!used.includes(p)) expect(terms, p).not.toMatch(name);
+    }
+  });
 });

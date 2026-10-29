@@ -19,10 +19,6 @@ vi.mock('@ai-sdk/groq', () => ({
   createGroq: vi.fn(() => vi.fn(makeMockModel('groq'))),
 }));
 
-vi.mock('@ai-sdk/mistral', () => ({
-  createMistral: vi.fn(() => vi.fn(makeMockModel('mistral'))),
-}));
-
 vi.mock('@/lib/sentry', () => ({
   captureError: vi.fn(),
   addBreadcrumb: vi.fn(),
@@ -58,17 +54,18 @@ describe('AI Providers', { timeout: 15_000 }, () => {
     }
   });
 
-  it('spans four providers, so one provider failing leaves others', async () => {
+  it('spans three providers, so one provider failing leaves others', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
     const providers = new Set(SUPPORTED_MODELS.map(m => m.provider));
-    expect([...providers].sort()).toEqual(['Google', 'Groq', 'Mistral', 'OpenRouter']);
+    expect([...providers].sort()).toEqual(['Google', 'Groq', 'OpenRouter']);
   });
 
   it('names none of the retired models', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
     const ids = SUPPORTED_MODELS.map(m => m.id as string);
-    // Oct 12 2026, then OpenRouter's free Nemotron 3 Super on Oct 29 ("unavailable for free").
-    for (const gone of ['gemini-2.0-flash', 'llama-3.3-70b-versatile', 'z-ai/glm-4.5-air:free', 'nvidia/nemotron-3-super-120b-a12b:free']) {
+    // Oct 12 2026, then on Oct 29 OpenRouter's free Nemotron 3 Super ("unavailable for free")
+    // and Mistral Small, whose free account allowed 0 requests a minute.
+    for (const gone of ['gemini-2.0-flash', 'llama-3.3-70b-versatile', 'z-ai/glm-4.5-air:free', 'nvidia/nemotron-3-super-120b-a12b:free', 'mistral-small-latest']) {
       expect(ids).not.toContain(gone);
     }
   });
@@ -549,94 +546,5 @@ describe('System Prompt', () => {
     const { SYSTEM_PROMPT } = await import('../system-prompt');
     expect(SYSTEM_PROMPT).toContain('PERM');
     expect(SYSTEM_PROMPT).toContain('immigration');
-  });
-});
-
-// =============================================================================
-// Mistral Tool Call ID Sanitizer
-// =============================================================================
-//
-// Mistral's API rejects tool_call_id values that aren't exactly 9 alphanumeric
-// chars with HTTP 400. Historical IDs from other providers (Gemini, Groq, etc.)
-// in the same conversation must be rewritten before reaching Mistral.
-// Production evidence: Sentry issue 7411490896 (release 49ece79).
-
-describe('toMistralToolCallId', () => {
-  it('passes through an already-compliant 9-char alphanumeric ID unchanged', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    const result = toMistralToolCallId('VvvODy9mT');
-    // 9-char input is its own last-9 suffix, so the value must round-trip identically.
-    expect(result).toBe('VvvODy9mT');
-  });
-
-  it('truncates longer alphanumeric IDs to last 9 chars', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    const result = toMistralToolCallId('f0ompuIpiYPzQytq'); // the Sentry offender, 16 chars
-    expect(result).toHaveLength(9);
-    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
-  });
-
-  it('strips non-alphanumerics before processing', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    const result = toMistralToolCallId('call_abc-123_xyz');
-    expect(result).toHaveLength(9);
-    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
-  });
-
-  it('pads IDs shorter than 9 chars deterministically', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    const result = toMistralToolCallId('abc');
-    expect(result).toHaveLength(9);
-    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
-  });
-
-  it('is deterministic — same input → same output (critical for call/result matching)', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    const input = 'call_long_gemini_id_xyz_123';
-    expect(toMistralToolCallId(input)).toBe(toMistralToolCallId(input));
-  });
-
-  it('maps distinct inputs to distinct outputs when originals share a common suffix', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    // Different 16-char IDs should generally produce different 9-char outputs
-    const a = toMistralToolCallId('AAAAAAAbcdefghij');
-    const b = toMistralToolCallId('ZZZZZZZmnopqrstu');
-    expect(a).not.toBe(b);
-  });
-
-  it('handles all-special-char input (pure padding path)', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    const result = toMistralToolCallId('---___!!!');
-    expect(result).toHaveLength(9);
-    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
-  });
-
-  it('handles the empty string — terminates and returns a valid 9-char id', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    // The hash seed makes the empty case terminate (no NaN loop) with a valid id.
-    const result = toMistralToolCallId('');
-    expect(result).toHaveLength(9);
-    expect(/^[a-zA-Z0-9]{9}$/.test(result)).toBe(true);
-    // Deterministic for empty input too.
-    expect(toMistralToolCallId('')).toBe(result);
-  });
-
-  it('maps distinct SHORT ids to distinct outputs (collision-hardened pad)', async () => {
-    const { toMistralToolCallId } = await import('../providers');
-    // Pre-hardening these short ids could collide via per-position char codes.
-    const a = toMistralToolCallId('a');
-    const b = toMistralToolCallId('b');
-    const c = toMistralToolCallId('ab');
-    expect(new Set([a, b, c]).size).toBe(3);
-    for (const r of [a, b, c]) {
-      expect(/^[a-zA-Z0-9]{9}$/.test(r)).toBe(true);
-    }
-  });
-});
-
-describe('wrapMistralModel', () => {
-  it('exports a wrapper function that returns a LanguageModelV4', async () => {
-    const { wrapMistralModel } = await import('../providers');
-    expect(typeof wrapMistralModel).toBe('function');
   });
 });

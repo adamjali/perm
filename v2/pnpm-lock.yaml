@@ -45,9 +45,6 @@ importers:
       '@ai-sdk/groq':
         specifier: ^4.0.66
         version: 4.0.66(zod@4.6.7)
-      '@ai-sdk/mistral':
-        specifier: ^4.0.68
-        version: 4.0.68(zod@4.6.7)
       '@ai-sdk/provider':
         specifier: ^4.0.31
         version: 4.0.31
@@ -378,12 +375,6 @@ packages:
 
   '@ai-sdk/mcp@2.0.80':
     resolution: {integrity: sha512-sgOTk2gWIvzRwmWbA+F7kmGYnZ6s69sM0ipRxmMh7zrs7YkwKDukHTOeSSDJRrCun3V4Go434v0v/zZEHv5spw==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      zod: '>=4.6.7 <5'
-
-  '@ai-sdk/mistral@4.0.68':
-    resolution: {integrity: sha512-tbdsts74yUDD0/jTjk1ZbL3hMOjAaOsUoCOpgK5x8rrQP+rjkA60ERZwMgVCCP3XERZiF22plWbExFKsQWXtRw==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: '>=4.6.7 <5'
@@ -6634,12 +6625,6 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.64(zod@4.6.7)
       cross-spawn: 7.0.6
       pkce-challenge: 5.0.1
-      zod: 4.6.7
-
-  '@ai-sdk/mistral@4.0.68(zod@4.6.7)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.31
-      '@ai-sdk/provider-utils': 5.0.64(zod@4.6.7)
       zod: 4.6.7
 
   '@ai-sdk/provider-utils@5.0.64(zod@4.6.7)':

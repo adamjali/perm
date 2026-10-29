@@ -261,7 +261,7 @@ export function compactAt(level: CompactionLevel, input: CompactionInput): Model
  *
  * The tail slice can cut between an assistant tool-call and its matching
  * tool-result, leaving the result first with no matching call. Strict providers
- * (Mistral, OpenRouter) 400 on an orphaned `tool_call_id`, so we trim any
+ * (OpenRouter among them) 400 on an orphaned `tool_call_id`, so we trim any
  * leading tool messages until the first non-tool message (the first valid
  * conversational anchor) leads the tail.
  */

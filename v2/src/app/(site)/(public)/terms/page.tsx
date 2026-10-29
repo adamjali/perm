@@ -60,7 +60,7 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 23, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 29, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -500,8 +500,8 @@ export default function TermsPage() {
             </h3>{" "}
             <p className="text-soft leading-relaxed">
               When you use the AI chat assistant, the following data may be
-              processed by third-party AI service providers (including Google
-              Gemini, OpenRouter, Mistral AI, and Groq):
+              processed by third-party AI service providers (Google Gemini,
+              Groq and OpenRouter):
             </p>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Your queries and messages to the AI system</li>{" "}
@@ -509,11 +509,13 @@ export default function TermsPage() {
               <li>Conversation history for context continuity</li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
-              These providers don’t use your data to train AI models. See our{" "}
-              <a href="/privacy" className="link">
+              The assistant uses these providers&apos; free tiers, under their
+              own terms, and some of those terms let a provider keep what is
+              sent or use it to improve its models. Our{" "}
+              <a href="/privacy#ai-chat-assistant" className="link">
                 Privacy Policy
               </a>{" "}
-              for detailed provider-specific data handling and retention policies.
+              says what each provider&apos;s terms allow.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">
               <strong>Don’t include</strong> Social Security numbers, passport

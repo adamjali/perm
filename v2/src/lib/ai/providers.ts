@@ -1,7 +1,7 @@
 /**
  * AI Provider Configuration
  *
- * 6-model free fallback chain with automatic failover. Tries each in order;
+ * 5-model free fallback chain with automatic failover. Tries each in order;
  * if one fails (503, rate limit, quota, auth, 404, any error), moves to the next.
  *
  * Chain (each checked live on Oct 12 2026, see MODEL_CONFIGS):
@@ -13,35 +13,25 @@
  *
  *   Tier 2, other providers:
  *     4. GPT-OSS 120B on Groq (8k tokens a minute free, so short conversations only)
- *     5. Mistral Small (wrapped with the tool-call-ID sanitizer)
  *
  *   Tier 3, free large-context emergency fallback:
- *     6. Nemotron 3.5 Super via OpenRouter (1M context, free models: 50 requests a day)
+ *     5. Nemotron 3.5 Super via OpenRouter (1M context, free models: 50 requests a day)
+ *
+ * Mistral Small left the chain on Oct 29 2026: its free account had allowed
+ * 0 requests a minute since at least Oct 12, so it never answered.
  *
  * The summarizer (summarize.ts) uses Groq's GPT-OSS models directly.
  *
  * All providers use NATIVE AI SDK packages (@ai-sdk/google, @ai-sdk/groq,
- * @ai-sdk/mistral, @openrouter/ai-sdk-provider).
+ * @openrouter/ai-sdk-provider).
  * Native providers handle each API's streaming format correctly, including
  * tool call parsing. Using createOpenAI() as a generic wrapper causes
  * "Expected 'function' type." errors on streaming tool calls (vercel/ai#5350).
- *
- * WHY THE MISTRAL ID SANITIZER IS NEEDED:
- *   Mistral's API requires tool_call_id values to be exactly 9 alphanumeric
- *   chars; anything else returns HTTP 400 ("Tool call id was X but must be
- *   a-z, A-Z, 0-9, length 9"). The native @ai-sdk/mistral only sanitizes IDs
- *   it GENERATES. When earlier turns produced longer IDs (Gemini, Groq, etc.)
- *   and we fall to Mistral, those historical IDs are passed through unchanged
- *   and rejected. The `wrapMistralModel` middleware rewrites incoming IDs on
- *   both assistant tool-call parts AND tool-result parts before the request
- *   goes out.
  */
 
 import { google } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
-import { createMistral } from '@ai-sdk/mistral';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { wrapLanguageModel } from 'ai';
 import type {
   LanguageModelV4,
   LanguageModelV4CallOptions,
@@ -74,106 +64,9 @@ export const groq = createGroq({
   apiKey: getApiKey('GROQ_API_KEY'),
 });
 
-export const mistral = createMistral({
-  apiKey: getApiKey('MISTRAL_API_KEY'),
-});
-
 const openrouter = createOpenRouter({
   apiKey: getApiKey('OPENROUTER_API_KEY'),
 });
-
-// =============================================================================
-// Mistral Tool Call ID Sanitizer Middleware
-// =============================================================================
-
-/**
- * Mistral requires tool_call_id to be exactly 9 alphanumeric characters.
- * Transforms any ID to exactly that shape deterministically so repeated calls
- * with the same input yield the same output, critical for matching tool-call
- * parts with their tool-result parts in the same conversation.
- *
- * For IDs shorter than 9 chars, padding is seeded from a hash of the WHOLE
- * original id (not per-position char codes), so two distinct short ids almost
- * never collide to the same 9-char output. Empty/all-special-char input is
- * handled by seeding the hash from the literal id (which may be ""), guaranteeing
- * the pad loop terminates with a valid 9-char alphanumeric value.
- */
-const TOOL_CALL_ID_CHARS =
-  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-function toMistralToolCallId(id: string): string {
-  const alphanumeric = id.replace(/[^a-zA-Z0-9]/g, '');
-
-  if (alphanumeric.length >= 9) {
-    return alphanumeric.slice(-9);
-  }
-
-  // Deterministic 32-bit hash of the full original id (FNV-1a style). Distinct
-  // inputs yield distinct seeds, so padding rarely collides; "" hashes to the
-  // offset basis, giving a stable non-empty pad for empty input.
-  let hash = 2166136261;
-  for (let i = 0; i < id.length; i++) {
-    hash ^= id.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  let padded = alphanumeric;
-  while (padded.length < 9) {
-    hash = Math.imul(hash, 16777619) >>> 0;
-    padded += TOOL_CALL_ID_CHARS[hash % TOOL_CALL_ID_CHARS.length];
-  }
-  return padded.slice(0, 9);
-}
-
-/**
- * Wrap a Mistral-based model with middleware that rewrites every tool_call_id
- * in the outgoing prompt. Handles BOTH:
- *   - assistant messages with tool-call parts (the call being made)
- *   - tool messages with tool-result parts (references to prior calls)
- *
- * Without this, historical IDs from other providers in the same conversation
- * (16-char Gemini IDs, etc.) cause Mistral to 400.
- */
-function wrapMistralModel(model: LanguageModelV4): LanguageModelV4 {
-  return wrapLanguageModel({
-    model,
-    middleware: {
-      specificationVersion: 'v4' as const,
-      transformParams: async ({ params }) => {
-        const transformedPrompt = params.prompt.map((msg) => {
-          if (msg.role === 'assistant' && Array.isArray(msg.content)) {
-            return {
-              ...msg,
-              content: msg.content.map((part) => {
-                if (part.type === 'tool-call') {
-                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
-                }
-                return part;
-              }),
-            };
-          }
-          if (msg.role === 'tool' && Array.isArray(msg.content)) {
-            return {
-              ...msg,
-              content: msg.content.map((part) => {
-                if (part.type === 'tool-result') {
-                  return { ...part, toolCallId: toMistralToolCallId(part.toolCallId) };
-                }
-                return part;
-              }),
-            };
-          }
-          return msg;
-        });
-
-        return { ...params, prompt: transformedPrompt };
-      },
-    },
-  });
-}
-
-// Export for unit testing
-export { toMistralToolCallId, wrapMistralModel };
 
 // =============================================================================
 // Model Configuration
@@ -219,13 +112,11 @@ function estimateInputTokens(options: LanguageModelV4CallOptions): number {
 }
 
 /**
- * Fallback chain (6 models). Each request tries from index 0.
+ * Fallback chain (5 models). Each request tries from index 0.
  * No shared state between requests, every request gets a fresh attempt.
  *
  * Every model here answered a two-step tool call through this SDK on
- * Oct 12 2026 with the production keys, except Mistral, whose account
- * answered "0 requests a minute" that day and stays in the chain for when the
- * account is restored. Retired that day: Gemini 2.0 Flash (404), Groq's Llama
+ * Oct 12 2026 with the production keys. Retired that day: Gemini 2.0 Flash (404), Groq's Llama
  * 3.3 70B (gone from Groq's model list), OpenRouter's free GLM 4.5 Air (404);
  * Cerebras's free tier now answers 402. A model that's gone is reported on
  * first sight (reportModelGone), not only when every model fails. Oct 29 2026:
@@ -233,7 +124,8 @@ function estimateInputTokens(options: LanguageModelV4CallOptions): number {
  * 3.5 Super took its place after a two-step tool call with the production key.
  * OpenRouter serves free models only to accounts that allow free-model
  * training (asked with training refused: "No endpoints found matching your
- * data policy"), and Mistral's account still allows 0 requests a minute.
+ * data policy"). Mistral Small left the chain the same day: its free account
+ * allowed 0 requests a minute (scripts/check_chat_models.py, Oct 29 2026).
  *
  * Gemini's free tier counts requests per model, so three Gemini models give
  * three separate daily allowances. maxInputTokens is the realistic usable
@@ -254,7 +146,6 @@ const MODEL_CONFIGS: ModelConfig[] = [
     maxInputTokens: 5000,
     maxOutputTokens: MODEL_OUTPUT_CAPS['GPT-OSS 120B (Groq)'],
   },
-  { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
 
   // Tier 3: free large-context emergency
   { model: openrouter('nvidia/nemotron-3.5-super-vl:free'), name: 'Nemotron 3.5 Super (OpenRouter)' },
@@ -495,7 +386,6 @@ export const SUPPORTED_MODELS = [
 
   // Tier 2: other providers
   { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'Groq', tier: 2 },
-  { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2 },
 
   // Tier 3: free large-context emergency
   { id: 'nvidia/nemotron-3.5-super-vl:free', name: 'Nemotron 3.5 Super', provider: 'OpenRouter', tier: 3 },

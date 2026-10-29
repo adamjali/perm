@@ -415,10 +415,6 @@ export default function PrivacyPage() {
                 <strong>OpenRouter</strong>: routes a request to a
                 model&apos;s own provider, whose policy decides whether the
                 request is kept or used for training.
-              </li>{" "}
-              <li>
-                <strong>Mistral AI</strong>: may use API requests to improve
-                its services unless the account opts out.
               </li>
             </ul>{" "}
 
@@ -973,8 +969,8 @@ export default function PrivacyPage() {
                 data; we see page counts and referrers, not people.
               </li>{" "}
               <li>
-                <strong>AI Providers:</strong> Google Gemini, OpenRouter, Mistral
-                AI, and Groq for AI chat assistance (see Section 6)
+                <strong>AI Providers:</strong> Google Gemini, Groq and
+                OpenRouter for AI chat assistance (see Section 6)
               </li>{" "}
               <li>
                 <strong>Search Providers:</strong> Tavily and Brave Search for AI
@@ -1081,10 +1077,6 @@ export default function PrivacyPage() {
               <li>
                 OpenRouter: decided by the policy of the model&apos;s own
                 provider, which may keep a request or use it for training
-              </li>{" "}
-              <li>
-                Mistral AI: per its terms, which allow it to use API requests to
-                improve its services unless the account opts out
               </li>
             </ul>{" "}
 
