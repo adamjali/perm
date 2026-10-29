@@ -382,6 +382,7 @@ async function replay(
   else if (kind === "queue") await ctx.runMutation(internal.queueAlerts.subscribe, call as never);
   else if (kind === "bulletin") await ctx.runMutation(internal.bulletinAlerts.subscribe, call as never);
   else if (kind === "prefs") await ctx.runMutation(internal.emailPrefs.requestLink, call as never);
+  else if (kind === "digest") await ctx.runMutation(internal.digestSignup.subscribe, call as never);
   // An edit-link request has its own kind; rows queued before Oct 10 2026 carry
   // kind "firm" with editLink set, and go to the same place.
   else if (kind === "firmEdit" || (kind === "firm" && args.editLink === true))

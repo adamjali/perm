@@ -249,6 +249,7 @@ const nextConfig: NextConfig = {
           { source: "/case-alert/:path*", destination: `${convexSite}/case-alert/:path*` },
           { source: "/bulletin-alert/:path*", destination: `${convexSite}/bulletin-alert/:path*` },
           { source: "/employer-alert/:path*", destination: `${convexSite}/employer-alert/:path*` },
+          { source: "/digest/:path*", destination: `${convexSite}/digest/:path*` },
           { source: "/firm-claim/:path*", destination: `${convexSite}/firm-claim/:path*` },
         ]
       : [];

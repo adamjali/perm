@@ -41,6 +41,8 @@ export interface AlertText {
     failed: string;
     dropped: string;
   };
+  /** The weekly digest's own sign-up box. */
+  digest: { label: string; button: string };
   /** The server's fixed replies, by their exact English. */
   replies: Record<string, string>;
 }
@@ -88,6 +90,7 @@ export const ALERT_TEXT = {
       failed: "That didn't go through. Try again in a moment.",
       dropped: "That didn't go through, which usually means the connection dropped.",
     },
+    digest: { label: "Your email", button: "Send me the digest" },
     replies: {},
   },
   es: {
@@ -122,6 +125,7 @@ export const ALERT_TEXT = {
       failed: "No se pudo enviar. Inténtelo de nuevo en un momento.",
       dropped: "No se pudo enviar; por lo general se cortó la conexión.",
     },
+    digest: { label: "Su correo electrónico", button: "Enviarme el resumen" },
     replies: {
       [PUSH_HOUR_REPLY]: "Es suficiente por una hora. Inténtelo más tarde.",
       [PUSH_DAY_REPLY]: "Las nuevas alertas del navegador están en pausa por hoy. Inténtelo mañana.",
@@ -162,6 +166,7 @@ export const ALERT_TEXT = {
       failed: "没有提交成功。请稍后再试。",
       dropped: "没有提交成功，通常是网络连接中断了。",
     },
+    digest: { label: "您的邮箱", button: "给我发每周摘要" },
     replies: {
       [PUSH_HOUR_REPLY]: "一小时内的次数已经够多了。请稍后再试。",
       [PUSH_DAY_REPLY]: "今天暂停新增浏览器提醒。请明天再试。",
@@ -204,6 +209,7 @@ export const ALERT_TEXT = {
       failed: "Não foi enviado. Tente de novo em instantes.",
       dropped: "Não foi enviado; em geral a conexão caiu.",
     },
+    digest: { label: "Seu e-mail", button: "Quero o resumo" },
     replies: {
       [PUSH_HOUR_REPLY]: "Já chega por uma hora. Tente mais tarde.",
       [PUSH_DAY_REPLY]: "Novos alertas do navegador estão pausados por hoje. Tente amanhã.",
@@ -245,6 +251,7 @@ export const ALERT_TEXT = {
       failed: "전송되지 않았습니다. 잠시 후 다시 시도해 주세요.",
       dropped: "전송되지 않았습니다. 보통 연결이 끊긴 경우입니다.",
     },
+    digest: { label: "이메일 주소", button: "주간 요약 받기" },
     replies: {
       [PUSH_HOUR_REPLY]: "한 시간 동안은 여기까지입니다. 나중에 다시 시도해 주세요.",
       [PUSH_DAY_REPLY]: "오늘은 새 브라우저 알림을 잠시 멈췄습니다. 내일 다시 시도해 주세요.",
@@ -287,6 +294,7 @@ export const ALERT_TEXT = {
       failed: "Chưa gửi được. Hãy thử lại sau giây lát.",
       dropped: "Chưa gửi được, thường là do mất kết nối.",
     },
+    digest: { label: "Email của bạn", button: "Gửi bản tóm tắt cho tôi" },
     replies: {
       [PUSH_HOUR_REPLY]: "Đã đủ cho một giờ. Hãy thử lại sau.",
       [PUSH_DAY_REPLY]: "Hôm nay tạm dừng nhận thông báo trình duyệt mới. Hãy thử lại vào ngày mai.",

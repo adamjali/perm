@@ -1836,6 +1836,8 @@ export default defineSchema({
     unsubscribedAt: v.optional(v.number()),
     createdAt: v.number(),
     source: v.optional(v.string()),
+    /** When the digest's own sign-up (convex/digestSignup.ts) last sent a confirmation: its 10-minute cooldown. */
+    lastConfirmationSentAt: v.optional(v.number()),
   }).index("by_email", ["email"]),
 
   /** One row per composed issue, newest first by weekOf. */
@@ -2687,6 +2689,8 @@ export default defineSchema({
       v.literal("firm"),
       /** A firm's edit-link request: its own kind, so it can't overwrite a waiting claim. */
       v.literal("firmEdit"),
+      /** The weekly digest's own sign-up (convex/digestSignup.ts). */
+      v.literal("digest"),
     ),
     pool: v.string(),
     email: v.string(),

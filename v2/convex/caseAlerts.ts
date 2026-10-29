@@ -88,6 +88,7 @@
  *   bulletin-alert confirmations   30/day   (convex/bulletinAlerts.ts)
  *   bulletin alerts                40/day   (convex/bulletinAlerts.ts)
  *   preference-center links        20/day   (convex/emailPrefs.ts)
+ *   digest confirmations           20/day   (convex/digestSignup.ts)
  *   firm-page claim emails         10/day   (convex/firmClaims.ts)
  *   webhook pause notices          20/day   (convex/webhookDelivery.ts)
  *   support mail forwards          30/day   (convex/supportEmail.ts)

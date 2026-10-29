@@ -25,6 +25,7 @@ describe("the daily email budget table", () => {
       ["bulletin-alert confirmations", BUDGETS.bulletinConfirm.limit],
       ["bulletin alerts", BUDGETS.bulletinAlert.limit],
       ["preference-center links", BUDGETS.prefsLink.limit],
+      ["digest confirmations", BUDGETS.digestConfirm.limit],
       ["firm-page claim emails", BUDGETS.firmClaim.limit],
       ["webhook pause notices", BUDGETS.webhookPause.limit],
       ["support mail forwards", BUDGETS.supportForward.limit],

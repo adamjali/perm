@@ -51,6 +51,7 @@ import type * as dashboard from "../dashboard.js";
 import type * as dataExport from "../dataExport.js";
 import type * as deadlineDigest from "../deadlineDigest.js";
 import type * as deadlineEnforcement from "../deadlineEnforcement.js";
+import type * as digestSignup from "../digestSignup.js";
 import type * as documents from "../documents.js";
 import type * as dolProcessingTimes from "../dolProcessingTimes.js";
 import type * as emailLedger from "../emailLedger.js";
@@ -299,6 +300,7 @@ declare const fullApi: ApiFromModules<{
   dataExport: typeof dataExport;
   deadlineDigest: typeof deadlineDigest;
   deadlineEnforcement: typeof deadlineEnforcement;
+  digestSignup: typeof digestSignup;
   documents: typeof documents;
   dolProcessingTimes: typeof dolProcessingTimes;
   emailLedger: typeof emailLedger;

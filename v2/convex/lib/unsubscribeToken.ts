@@ -87,6 +87,8 @@ export type TokenPurpose =
   | "employer-confirm"
   | "employer-unsubscribe"
   | "prefs"
+  /** The weekly digest's own sign-up (convex/digestSignup.ts): confirm the digest, nothing else. */
+  | "digest-confirm"
   /** The rating row in a case's last alert: rate the alerts, nothing else. */
   | "alert-rating";
 

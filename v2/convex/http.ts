@@ -1066,6 +1066,69 @@ http.route({
   }),
 });
 
+// The weekly digest on its own (convex/digestSignup.ts): the same double opt-in as the alerts.
+http.route({
+  path: "/digest/subscribe",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/digest/subscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
+    const { email, source } = body as Record<string, unknown>;
+    if (typeof email !== "string") return json({ ok: false, message: "An email address is required." }, 400);
+    const result = await ctx.runMutation(internal.digestSignup.subscribe, {
+      email: email.slice(0, 320),
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+    });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/digest/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return badLinkPage();
+    return messagePage(
+      "Confirm the weekly digest",
+      "Every Tuesday: where DOL's queue stands, what the visa bulletin moved, USCIS's processing times and the rules on their way.",
+      { post: `/digest/confirm?token=${encodeURIComponent(token)}`, label: "Confirm" },
+    );
+  }),
+});
+
+http.route({
+  path: "/digest/confirm",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return badLinkPage();
+    const result = await ctx.runMutation(internal.digestSignup.confirmByToken, { token });
+    if (!result) return badLinkPage("This confirmation link is no longer valid.");
+    return messagePage(
+      "You're on the list",
+      "The weekly digest comes to this address on Tuesdays. Every issue has a one-click link to stop it.",
+    );
+  }),
+});
+
 http.route({
   path: "/bulletin-alert/unsubscribe",
   method: "POST",

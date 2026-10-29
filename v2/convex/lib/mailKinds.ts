@@ -92,7 +92,7 @@ export const MAIL_KINDS: Record<MailKindId, MailKind> = {
     one: "Weekly digest",
     what: "DOL's queue, visa bulletin moves, USCIS times and new rules, in one email.",
     when: "Tuesdays",
-    start: ANY_ALERT_FORM,
+    start: { label: "Sign up for the digest", href: "/perm-case-alerts#digest" },
   },
   news: {
     name: "Product news",

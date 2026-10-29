@@ -5,7 +5,7 @@ import { analytics } from "@/lib/analytics";
  * email alert can be counted. The address never goes with it: only which
  * kind of alert, how it went, and (where the form knows it) which page asked.
  */
-export type AlertSignupKind = "case" | "queue" | "bulletin" | "employer";
+export type AlertSignupKind = "case" | "queue" | "bulletin" | "employer" | "digest";
 export type AlertSignupOutcome = "accepted" | "refused" | "error";
 
 export function trackAlertSignup(

@@ -34,6 +34,8 @@ export const BUDGETS = {
   bulletinConfirm: { key: "bulletin_subscribe_global", limit: 30, label: "Bulletin alert confirmations" },
   bulletinAlert: { key: "bulletin_alert_global", limit: 40, label: "Bulletin alerts" },
   prefsLink: { key: "prefs_link_global", limit: 20, label: "Preference-page links" },
+  /** The weekly digest signed up for on its own (convex/digestSignup.ts), with no alert attached. */
+  digestConfirm: { key: "digest_subscribe_global", limit: 20, label: "Digest confirmations" },
   /**
    * A law firm claiming its page (convex/firmClaims.ts): the confirmation
    * link and edit links. Rare by nature, so the bound is low. The emails an
@@ -79,6 +81,7 @@ export const LIST_MAIL_POOLS = [
   "bulletinConfirm",
   "bulletinAlert",
   "prefsLink",
+  "digestConfirm",
   "firmClaim",
   "webhookPause",
   "supportForward",
