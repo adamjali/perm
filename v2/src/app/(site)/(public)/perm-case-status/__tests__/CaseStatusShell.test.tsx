@@ -66,7 +66,7 @@ describe("the case status frame in each language", () => {
     for (const [lang, t] of Object.entries(CASE_STATUS)) {
       expect(t.faqs, lang).toHaveLength(CASE_STATUS.en.faqs.length);
       for (const f of t.faqs) expect(f.q.length > 3 && f.a.length > 20, `${lang}: ${f.q}`).toBe(true);
-      if (lang !== "en") expect(t.machine.length, lang).toBeGreaterThan(20);
+      if (lang !== "en") expect(t.termsNote.length, lang).toBeGreaterThan(15);
     }
   });
 });

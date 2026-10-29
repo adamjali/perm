@@ -222,10 +222,10 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
 
       <CaseStatusHead typed={typed} withBox={!hasNumber} lang={lang} />
 
-      {/* A translation says what it is and where the authority is, above everything it translates. */}
+      {/* A translation says where the authority is, above everything it translates. */}
       {lang !== "en" ? (
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {t.machine}{" "}
+          {t.termsNote}{" "}
           <Link href={typed ? `/perm-case-status?case=${encodeURIComponent(typed)}` : "/perm-case-status"} className="link" hrefLang="en">
             {t.readInEnglish}
           </Link>

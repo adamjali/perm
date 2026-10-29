@@ -64,8 +64,8 @@ export interface CaseStatusText {
    * `howLongSentence` (lib/dolNow.ts), the processing-times page's own sentence.
    */
   howLong: (f: HowLongWords) => string;
-  /** Translated pages only: what the reader is looking at, and where the authority is. */
-  machine: string;
+  /** Translated pages only: DOL's terms stay in English, and the English page is the original. */
+  termsNote: string;
   readInEnglish: string;
 }
 
@@ -140,7 +140,7 @@ export const CASE_STATUS = {
     readingTitle: "The rules behind these numbers",
     waitWords: () => "",
     howLong: () => "",
-    machine: "",
+    termsNote: "",
     readInEnglish: "",
   },
   es: {
@@ -228,8 +228,8 @@ export const CASE_STATUS = {
         "No se pudieron leer las cifras del DOL en este momento; la propia página del DOL, flag.dol.gov/processingtimes, las tiene.",
       );
     },
-    machine:
-      "Esta página fue traducida por una máquina y ningún hablante nativo la ha revisado. Los términos del DOL quedan en inglés, como los publica el DOL. La versión en inglés es la que vale.",
+    termsNote:
+      "Los términos del DOL quedan en inglés, como los publica el DOL. La versión en inglés es la que vale.",
     readInEnglish: "Ver en inglés",
   },
   zh: {
@@ -313,7 +313,7 @@ export const CASE_STATUS = {
         "目前无法读取劳工部的数据；劳工部自己的页面 flag.dol.gov/processingtimes 上有这些数字。",
       );
     },
-    machine: "本页由机器翻译，尚未经过母语人士审阅。劳工部的用语保留英文原文。以英文版本为准。",
+    termsNote: "劳工部的用语保留英文原文。以英文版本为准。",
     readInEnglish: "查看英文版",
   },
   "pt-br": {
@@ -401,8 +401,8 @@ export const CASE_STATUS = {
         "Não foi possível ler os números do DOL agora; a própria página do DOL, flag.dol.gov/processingtimes, tem esses dados.",
       );
     },
-    machine:
-      "Esta página foi traduzida por máquina e não foi revisada por um falante nativo. Os termos do DOL ficam em inglês, como o DOL os publica. A versão em inglês é a que vale.",
+    termsNote:
+      "Os termos do DOL ficam em inglês, como o DOL os publica. A versão em inglês é a que vale.",
     readInEnglish: "Ver em inglês",
   },
   ko: {
@@ -488,8 +488,8 @@ export const CASE_STATUS = {
         "지금은 노동부 수치를 읽을 수 없습니다. 노동부 페이지 flag.dol.gov/processingtimes에서 확인할 수 있습니다.",
       );
     },
-    machine:
-      "이 페이지는 기계 번역되었으며 원어민의 검토를 거치지 않았습니다. 노동부의 용어는 노동부가 쓰는 대로 영어로 둡니다. 영어 페이지가 기준입니다.",
+    termsNote:
+      "노동부의 용어는 노동부가 쓰는 대로 영어로 둡니다. 영어 페이지가 기준입니다.",
     readInEnglish: "영어로 보기",
   },
   vi: {
@@ -576,8 +576,8 @@ export const CASE_STATUS = {
         "Hiện chưa đọc được số liệu của DOL; trang của chính DOL, flag.dol.gov/processingtimes, có các số liệu này.",
       );
     },
-    machine:
-      "Trang này được dịch bằng máy và chưa được người bản ngữ xem lại. Các thuật ngữ của DOL được giữ bằng tiếng Anh như DOL công bố. Bản tiếng Anh là bản có giá trị.",
+    termsNote:
+      "Các thuật ngữ của DOL được giữ bằng tiếng Anh như DOL công bố. Bản tiếng Anh là bản có giá trị.",
     readInEnglish: "Xem bằng tiếng Anh",
   },
 } satisfies Messages<CaseStatusText>;
