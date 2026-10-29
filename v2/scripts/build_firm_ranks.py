@@ -23,7 +23,9 @@ WHAT EACH PROGRAM COUNTS:
 
 Rows reach a firm page through `firm_page_map`, so a firm's spellings count on
 one page; a firm with no page keeps its own slug and isn't linked.
-`perm_docs['firm_ranks_summary']` carries each year's totals per place.
+`perm_docs['firm_ranks_summary']` carries each year's last decision day (`through`) and
+its totals per place (`places`): filings with a named firm, firms, the top ten's filings,
+and the filings that name no firm.
 
 Usage:
     python3 scripts/build_firm_ranks.py            # rebuild the table and the doc
@@ -242,6 +244,18 @@ def plan_year(program: str, fy: int, agg: dict, prev: dict[tuple[str, str], int]
     return rows, totals
 
 
+def through(db: Database, program: str, fy: int) -> str | None:
+    """The last decision day a program-year holds, so a page can tell a finished year from one still loading."""
+    # A range on decision_date, which every case table indexes, never a scan by fiscal year.
+    span = [f"{fy - 1}-10-01", f"{fy}-09-30"]
+    if program == "perm":
+        table = "perm_cases_history" if fy <= PERM_HISTORY_LAST_FY else "perm_cases"
+        got = rows_of(db.execute(f"SELECT MAX(decision_date) FROM {table} WHERE decision_date >= ? AND decision_date <= ?", span))
+    else:
+        got = rows_of(db.execute("SELECT MAX(decision_date) FROM lca_cases WHERE decision_date >= ? AND decision_date <= ?", span))
+    return str(got[0][0])[:10] if got and got[0][0] else None
+
+
 def years(db: Database, program: str) -> list[int]:
     if program == "perm":
         got = [num(r[0]) for r in rows_of(db.execute("SELECT DISTINCT fiscal_year FROM perm_cases_history"))
@@ -317,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
             agg, unnamed = reader(db, fy, page_of)
             rows, totals = plan_year(program, fy, agg, prev, names, pages, unnamed)
             all_rows += rows
-            per_year[str(fy)] = totals
+            per_year[str(fy)] = {"through": through(db, program, fy), "places": totals}
             prev = all_ranks(agg)
             log(f"{program} FY{fy}: {len(rows):,} rows, {totals.get(NATION, {}).get('firms', 0):,} firms in the country")
         summary["programs"][program] = {"years": per_year}
