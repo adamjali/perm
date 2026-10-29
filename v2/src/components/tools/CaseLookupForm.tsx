@@ -175,10 +175,10 @@ export function CaseLookupForm({
       {searchHref ? (
         <p className="mt-2 text-sm text-muted-foreground">
           {t.noNumber}{" "}
-          <Link href={searchHref} className="link">
+          <Link href={searchHref} className="link" hrefLang={lang === "en" ? undefined : "en"}>
             {searchLabel}
           </Link>
-          .
+          {lang === "zh" ? "。" : "."}
         </p>
       ) : null}
     </form>

@@ -34,7 +34,7 @@ export type Messages<T> = Record<Lang, T>;
  * The pages that exist in every language, by their English path. A link to one of these from a translated page
  * stays in the reader's language; any other link goes to the English page.
  */
-export const TRANSLATED_PATHS = ["/perm-case-status"] as const;
+export const TRANSLATED_PATHS = ["/perm-case-status", "/perm-case-alerts"] as const;
 export type TranslatedPath = (typeof TRANSLATED_PATHS)[number];
 
 /** `/perm-case-status` in Spanish is `/es/perm-case-status`; a page not translated keeps its English path. */
@@ -76,6 +76,14 @@ export const TRANSLATED_PAGE_NAMES: Record<TranslatedPath, Messages<string>> = {
     "pt-br": "Status de caso PERM",
     ko: "PERM 케이스 상태",
     vi: "Tình trạng hồ sơ PERM",
+  },
+  "/perm-case-alerts": {
+    en: "Email alerts",
+    es: "Alertas por correo",
+    zh: "邮件提醒",
+    "pt-br": "Alertas por e-mail",
+    ko: "이메일 알림",
+    vi: "Thông báo qua email",
   },
 };
 

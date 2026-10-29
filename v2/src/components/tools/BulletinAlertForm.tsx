@@ -22,6 +22,10 @@ import { useAlertFormTelemetry } from "@/lib/funnelEvents";
 import { convexSiteUrl } from "@/lib/convexSite";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { longDate } from "@convex/lib/months";
+import { serverReply } from "@/components/alerts/alerts.messages";
+import { FORMS_TEXT } from "@/components/alerts/forms.messages";
+import type { Lang } from "@/lib/i18n/lang";
+import { dayLabel } from "@/lib/i18n/format";
 
 const CATEGORIES = [
   { value: "EB1", label: "EB-1" },
@@ -52,6 +56,7 @@ export function BulletinAlertForm({
   initialCountry = "india",
   priorityDate = null,
   headingLevel = "h2",
+  lang = "en",
 }: {
   source: string;
   /** "h3" where the form sits under a section heading of its own (the alerts page). */
@@ -64,7 +69,10 @@ export function BulletinAlertForm({
    * form so the cutoff in the alert can be read against it; never sent.
    */
   priorityDate?: string | null;
+  /** The page's language: the form's own words and the server's fixed replies follow it. */
+  lang?: Lang;
 }) {
+  const t = FORMS_TEXT[lang];
   const { observe, onFocusCapture } = useAlertFormTelemetry("bulletin", source);
   const emailId = useId();
   const catId = useId();
@@ -74,7 +82,7 @@ export function BulletinAlertForm({
   const [email, setEmail] = useState("");
   const [category, setCategory] = useState<string>(initialCategory);
   const [country, setCountry] = useState<string>(initialCountry);
-  const priorityLabel = longDate(priorityDate);
+  const priorityLabel = lang === "en" ? longDate(priorityDate) : dayLabel(priorityDate, lang);
   const [news, setNews] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -108,15 +116,13 @@ export function BulletinAlertForm({
       const body = (await res.json().catch(() => null)) as
         | { ok?: boolean; message?: string }
         | null;
-      setMessage(
-        String(body?.message ?? "Something went wrong. Try again in a moment."),
-      );
+      setMessage(body?.message ? serverReply(lang, String(body.message)) : t.failed);
       setQueued(isQueued(body));
       setStatus(res.ok ? "done" : "error");
       trackAlertSignup("bulletin", res.ok ? "accepted" : "refused", { status: res.status });
     } catch {
       trackAlertSignup("bulletin", "error");
-      setMessage("Couldn't reach the server. Try again in a moment.");
+      setMessage(t.dropped);
       setStatus("error");
     }
   }
@@ -124,11 +130,9 @@ export function BulletinAlertForm({
   if (status === "done") {
     return (
       <div className="object p-5 sm:p-6">
-        <p className="font-heading text-xl font-bold">{replyHeading(queued)}</p>{" "}
-        <AlertDone message={message} queued={queued} className="mt-2" />{" "}
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Once confirmed, you&apos;ll hear from us when a new bulletin moves your cutoff, and not otherwise.
-        </p>
+        <p className="font-heading text-xl font-bold">{lang === "en" ? replyHeading(queued) : t.replyHeading(queued)}</p>{" "}
+        <AlertDone message={message} queued={queued} className="mt-2" lang={lang} />{" "}
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t.bulletin.after}</p>
       </div>
     );
   }
@@ -141,53 +145,57 @@ export function BulletinAlertForm({
       onSubmit={handleSubmit}
       className="object p-5 sm:p-6 print:hidden"
     >
-      <Heading className="font-heading text-xl font-bold">Email me when my cutoff moves</Heading>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
-        When a new bulletin changes the final-action cutoff for your category and country, one email with the
-        change. Nothing in the months it doesn&apos;t move.
-      </p>{" "}
+      <Heading className="font-heading text-xl font-bold">{t.bulletin.heading}</Heading>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">{t.bulletin.what}</p>{" "}
       {priorityLabel ? (
-        <p className="mt-3 max-w-2xl text-base leading-relaxed">
-          Your priority date is <strong>{priorityLabel}</strong>. Pick the category on your I-140 and your country of
-          birth, and set each cutoff we send against that date.
-        </p>
+        lang === "en" ? (
+          <p className="mt-3 max-w-2xl text-base leading-relaxed">
+            Your priority date is <strong>{priorityLabel}</strong>. Pick the category on your I-140 and your country
+            of birth, and set each cutoff we send against that date.
+          </p>
+        ) : (
+          <p className="mt-3 max-w-2xl text-base leading-relaxed">{t.bulletin.priority(priorityLabel)}</p>
+        )
       ) : null}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
         <div>
-          <Label htmlFor={catId}>Category</Label>{" "}
+          <Label htmlFor={catId}>{t.bulletin.category}</Label>{" "}
           <SelectInput
             id={catId}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            options={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+            options={CATEGORIES.map((c) => ({
+              value: c.value,
+              label: c.value === "EW3" ? t.bulletin.otherWorkers : c.value === "EB5" ? t.bulletin.unreserved : c.label,
+            }))}
             className="mt-2 h-12"
           />
         </div>{" "}
         <div>
-          <Label htmlFor={countryId}>Country of birth</Label>{" "}
+          <Label htmlFor={countryId}>{t.bulletin.country}</Label>{" "}
           <SelectInput
             id={countryId}
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            options={COUNTRIES.map((c) => ({ value: c.value, label: c.label }))}
+            options={COUNTRIES.map((c) => ({ value: c.value, label: t.bulletin.countries[c.value] }))}
             className="mt-2 h-12"
           />
         </div>{" "}
         <div>
-          <Label htmlFor={emailId}>Email</Label>{" "}
+          <Label htmlFor={emailId}>{t.email}</Label>{" "}
           <EmailField id={emailId} value={email} onChange={setEmail} invalid={status === "error"} className="mt-2" />
         </div>
       </div>{" "}
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <Button type="submit" size="lg" loading={status === "sending"} data-ph-capture-attribute-cta="bulletin-alert">
-          Email me when it moves
+          {t.bulletin.button}
         </Button>{" "}
         {status === "error" && message ? (
           <p className="text-sm font-semibold text-data-warn-ink" role="alert">
             {message}
           </p>
         ) : (
-          <AlertNote />
+          <AlertNote lang={lang} />
         )}
       </div>{" "}
       <OptInFold
@@ -197,6 +205,7 @@ export function BulletinAlertForm({
         onNews={setNews}
         onNewsletter={setNewsletter}
         className="mt-1"
+        lang={lang}
       />
     </form>
   );

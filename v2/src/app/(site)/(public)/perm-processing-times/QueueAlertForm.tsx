@@ -21,6 +21,10 @@ import { MONTH_NAMES } from "@convex/lib/months";
 import { Button } from "@/components/ui/button";
 import { SelectInput } from "@/components/forms/SelectInput";
 import { Label } from "@/components/ui/label";
+import { serverReply } from "@/components/alerts/alerts.messages";
+import { FORMS_TEXT } from "@/components/alerts/forms.messages";
+import type { Lang } from "@/lib/i18n/lang";
+import { monthLabel } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertDone, AlertNote, EmailField, OptInBox } from "@/components/alerts/AlertParts";
@@ -41,6 +45,7 @@ import { convexSiteUrl } from "@/lib/convexSite";
 function filingMonthOptions(
   newest: string,
   frontier?: string,
+  lang: Lang = "en",
 ): { value: string; label: string }[] {
   const m = /^(\d{4})-(\d{2})$/.exec(newest);
   const newestYear = m ? Number(m[1]) : 2020;
@@ -56,12 +61,8 @@ function filingMonthOptions(
     const startMonth = year === newestYear ? newestMonth : 11;
     for (let mo = startMonth; mo >= 0; mo--) {
       const value = `${year}-${String(mo + 1).padStart(2, "0")}`;
-      options.push({
-        value,
-        label: reached(value)
-          ? `${MONTH_NAMES[mo]} ${year} (already reached)`
-          : `${MONTH_NAMES[mo]} ${year}`,
-      });
+      const name = lang === "en" ? `${MONTH_NAMES[mo]} ${year}` : (monthLabel(value, lang) ?? value);
+      options.push({ value, label: reached(value) ? FORMS_TEXT[lang].queue.reached(name) : name });
     }
   }
   return options;
@@ -75,6 +76,7 @@ export function QueueAlertForm({
   allowPwdChoice = false,
   defaultMonth,
   bare = false,
+  lang = "en",
 }: {
   /**
    * Inside a section that already names the alert: no card and no heading of
@@ -108,7 +110,10 @@ export function QueueAlertForm({
    * wage source their request used.
    */
   allowPwdChoice?: boolean;
+  /** The page's language: the form's own words and the server's fixed replies follow it. */
+  lang?: Lang;
 }) {
+  const t = FORMS_TEXT[lang];
   const { observe, onFocusCapture } = useAlertFormTelemetry("queue", source);
   const emailId = useId();
   const monthId = useId();
@@ -125,7 +130,7 @@ export function QueueAlertForm({
   const [message, setMessage] = useState("");
   const [queued, setQueued] = useState(false);
 
-  const options = filingMonthOptions(newestMonth, frontierMonth);
+  const options = filingMonthOptions(newestMonth, frontierMonth, lang);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -157,26 +162,23 @@ export function QueueAlertForm({
       const result = (await response.json()) as { ok: boolean; message: string; queued?: boolean };
       setQueued(isQueued(result));
       setStatus(result.ok ? "done" : "error");
-      setMessage(result.message);
+      setMessage(serverReply(lang, result.message));
       trackAlertSignup("queue", result.ok ? "accepted" : "refused", { source, queue: selectedQueue });
     } catch {
       trackAlertSignup("queue", "error", { source });
       setStatus("error");
-      setMessage("Something went wrong on our side. Try again in a moment.");
+      setMessage(lang === "en" ? "Something went wrong on our side. Try again in a moment." : t.failed);
     }
   }
 
   const frame = bare ? "" : "object p-5 sm:p-6";
-  const what =
-    selectedQueue === "perm"
-      ? "One email when DOL's analyst-review queue reaches the month your case was filed, and nothing after it."
-      : "One email when the prevailing wage queue you pick reaches the month your request was filed, and nothing after it.";
+  const what = selectedQueue === "perm" ? t.queue.whatPerm : t.queue.whatPwd;
 
   if (status === "done") {
     return (
       <div className={frame}>
-        <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
-        <AlertDone message={message} queued={queued} className="mt-2" />
+        <p className="font-heading text-lg font-bold">{lang === "en" ? replyHeading(queued) : t.replyHeading(queued)}</p>{" "}
+        <AlertDone message={message} queued={queued} className="mt-2" lang={lang} />
       </div>
     );
   }
@@ -184,7 +186,7 @@ export function QueueAlertForm({
   return (
     <form ref={observe} onFocusCapture={onFocusCapture} onSubmit={handleSubmit} className={cn(frame, "print:hidden")}>
       {bare ? null : (
-        <h2 className="font-heading text-xl font-bold">Email me when DOL reaches my month</h2>
+        <h2 className="font-heading text-xl font-bold">{t.queue.heading}</h2>
       )}{" "}
       {/* The queue is named from the prop: on the prevailing wage pages
           "analyst review" is the wrong queue, the PERM stage. */}
@@ -192,17 +194,17 @@ export function QueueAlertForm({
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <div>
-          <Label htmlFor={emailId}>Email</Label>{" "}
+          <Label htmlFor={emailId}>{t.email}</Label>{" "}
           <EmailField id={emailId} value={email} onChange={setEmail} invalid={status === "error"} className="mt-2" />
         </div>{" "}
         <div>
-          <Label htmlFor={monthId}>Month your {selectedQueue === "perm" ? "case" : "request"} was filed</Label>{" "}
+          <Label htmlFor={monthId}>{t.queue.month(selectedQueue === "perm")}</Label>{" "}
           <SelectInput
             id={monthId}
             required
             value={filingMonth}
             onChange={(e) => setFilingMonth(e.target.value)}
-            placeholder="Select a month"
+            placeholder={t.queue.pick}
             options={options}
             className="mt-2 h-12"
           />
@@ -211,14 +213,14 @@ export function QueueAlertForm({
 
       {allowPwdChoice ? (
         <div className="mt-4 sm:max-w-sm">
-          <Label htmlFor={queueId}>Which prevailing wage queue</Label>{" "}
+          <Label htmlFor={queueId}>{t.queue.whichQueue}</Label>{" "}
           <SelectInput
             id={queueId}
             value={selectedQueue}
             onChange={(e) => setSelectedQueue(e.target.value as "pwd-oews" | "pwd-nonoews")}
             options={[
-              { value: "pwd-oews", label: "OEWS, the standard survey" },
-              { value: "pwd-nonoews", label: "Employer-provided survey" },
+              { value: "pwd-oews", label: t.queue.oews },
+              { value: "pwd-nonoews", label: t.queue.nonOews },
             ]}
             className="mt-2"
           />
@@ -227,14 +229,14 @@ export function QueueAlertForm({
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <Button type="submit" size="lg" loading={status === "sending"} data-ph-capture-attribute-cta="queue-alert">
-          Email me when it happens
+          {t.queue.button}
         </Button>{" "}
         {status === "error" && message ? (
           <p className="text-sm font-semibold text-data-warn-ink" role="alert">
             {message}
           </p>
         ) : (
-          <AlertNote />
+          <AlertNote lang={lang} />
         )}
       </div>{" "}
 
@@ -243,30 +245,28 @@ export function QueueAlertForm({
       <details className="group mt-3">
         <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
           <CaretRightIcon className="size-3.5 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
-          More options
+          {t.queue.more}
         </summary>{" "}
         <div className="space-y-4 pb-1 pl-5">
           <div className="sm:max-w-sm">
             <Label htmlFor={roleId}>
-              You are <span className="font-normal text-muted-foreground">(optional)</span>
+              {t.queue.youAre} <span className="font-normal text-muted-foreground">{t.queue.optional}</span>
             </Label>{" "}
             <SelectInput
               id={roleId}
               value={role}
               onChange={(e) => setRole(e.target.value)}
               options={[
-                { value: "", label: "Prefer not to say" },
-                { value: "attorney", label: "Attorney or paralegal" },
-                { value: "applicant", label: "The person the case is for" },
-                { value: "employer", label: "The sponsoring employer" },
+                { value: "", label: t.queue.roles.none },
+                { value: "attorney", label: t.queue.roles.attorney },
+                { value: "applicant", label: t.queue.roles.applicant },
+                { value: "employer", label: t.queue.roles.employer },
               ]}
               className="mt-2"
             />
           </div>{" "}
-          <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} />{" "}
-          <p className="text-sm text-muted-foreground">
-            One address watches one filing month per queue; a new month replaces the old one.
-          </p>
+          <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} lang={lang} />{" "}
+          <p className="text-sm text-muted-foreground">{t.queue.oneMonth}</p>
         </div>
       </details>
     </form>

@@ -57,6 +57,8 @@ export const QUEUED_REPLY =
   "There's nothing else to do.";
 export const PUSH_HOUR_REPLY = "That is enough for one hour. Try again later.";
 export const PUSH_DAY_REPLY = "New browser alerts are paused for today. Try again tomorrow.";
+/** convex/queueAlerts.ts, when no filing month came with the request. */
+export const MONTH_REPLY = "Pick the month your case was filed.";
 
 export const ALERT_TEXT = {
   en: {
@@ -132,6 +134,7 @@ export const ALERT_TEXT = {
       [NEUTRAL_REPLY]: "Revise su bandeja de entrada para confirmar.",
       [BAD_EMAIL_REPLY]: "Esa dirección de correo no parece correcta.",
       [BAD_NUMBER_REPLY]: "Eso no parece un número de caso del DOL (G-, A-, P-, I-, H-, JO-A- o C-).",
+      [MONTH_REPLY]: "Elija el mes en que se presentó su caso.",
       [QUEUED_REPLY]:
         "Estamos enviando muchos correos en este momento, así que su confirmación está en una fila corta. Sale sola, por lo general en minutos; en los días de más movimiento puede esperar hasta la noche. No tiene que hacer nada más.",
     },
@@ -173,6 +176,7 @@ export const ALERT_TEXT = {
       [NEUTRAL_REPLY]: "请查看收件箱并确认。",
       [BAD_EMAIL_REPLY]: "这个邮箱地址看起来不对。",
       [BAD_NUMBER_REPLY]: "这看起来不是劳工部的案件编号（G-、A-、P-、I-、H-、JO-A- 或 C-）。",
+      [MONTH_REPLY]: "请选择您的案件提交的月份。",
       [QUEUED_REPLY]:
         "我们现在发送的邮件很多，所以您的确认邮件正在短暂排队。它会自动发出，通常几分钟内送达；最忙的日子可能要等到晚上。您无需再做任何事。",
     },
@@ -216,6 +220,7 @@ export const ALERT_TEXT = {
       [NEUTRAL_REPLY]: "Veja sua caixa de entrada para confirmar.",
       [BAD_EMAIL_REPLY]: "Esse endereço de e-mail não parece correto.",
       [BAD_NUMBER_REPLY]: "Isso não parece um número de caso do DOL (G-, A-, P-, I-, H-, JO-A- ou C-).",
+      [MONTH_REPLY]: "Escolha o mês em que seu caso foi apresentado.",
       [QUEUED_REPLY]:
         "Estamos enviando muitos e-mails agora, então sua confirmação está em uma fila curta. Ela sai sozinha, em geral em minutos; nos dias mais movimentados pode esperar até a noite. Não precisa fazer mais nada.",
     },
@@ -258,6 +263,7 @@ export const ALERT_TEXT = {
       [NEUTRAL_REPLY]: "받은편지함에서 확인해 주세요.",
       [BAD_EMAIL_REPLY]: "이메일 주소가 올바르지 않은 것 같습니다.",
       [BAD_NUMBER_REPLY]: "노동부 케이스 번호가 아닌 것 같습니다(G-, A-, P-, I-, H-, JO-A- 또는 C-).",
+      [MONTH_REPLY]: "케이스를 제출한 달을 선택하세요.",
       [QUEUED_REPLY]:
         "지금 이메일을 많이 보내고 있어 확인 메일이 잠시 대기 중입니다. 보통 몇 분 안에 저절로 발송되며, 가장 바쁜 날에는 저녁까지 걸릴 수 있습니다. 더 하실 일은 없습니다.",
     },
@@ -301,6 +307,7 @@ export const ALERT_TEXT = {
       [NEUTRAL_REPLY]: "Hãy kiểm tra hộp thư để xác nhận.",
       [BAD_EMAIL_REPLY]: "Địa chỉ email này có vẻ không đúng.",
       [BAD_NUMBER_REPLY]: "Đây có vẻ không phải số hồ sơ của DOL (G-, A-, P-, I-, H-, JO-A- hoặc C-).",
+      [MONTH_REPLY]: "Hãy chọn tháng hồ sơ của bạn được nộp.",
       [QUEUED_REPLY]:
         "Hiện chúng tôi đang gửi rất nhiều email, nên email xác nhận của bạn đang chờ trong một hàng ngắn. Email sẽ tự gửi đi, thường trong vài phút; vào những ngày bận nhất có thể đợi đến tối. Bạn không cần làm gì thêm.",
     },
@@ -308,7 +315,63 @@ export const ALERT_TEXT = {
 } satisfies Messages<AlertText>;
 
 /** A server reply in the reader's language: a known fixed reply translated, anything else as the server wrote it. */
+/**
+ * The two "try again in" replies (convex/lib/throttleReply.ts) carry a wait, so they're matched by shape. Neither
+ * limit depends on the address (one is the caller's own connection, the other the whole site's daily count), so
+ * translating them says nothing about who is signed up. Only the default "confirmation emails" wording is matched.
+ */
+const WAIT_RE = /^(a minute|about (\d+) (minutes|hours))$/;
+const CONNECTION_RE = /^That's a lot of requests from one connection in a short time\. Try again in (.+)\.$/;
+const SITE_RE = /^The site has sent all the confirmation emails it can for now; there's a daily limit\. Try again in (.+)\.$/;
+
+type Wait = { minute: string; minutes: (n: string) => string; hours: (n: string) => string };
+const THROTTLE: Record<Exclude<Lang, "en">, { wait: Wait; connection: (w: string) => string; site: (w: string) => string }> = {
+  es: {
+    wait: { minute: "un minuto", minutes: (n) => `unos ${n} minutos`, hours: (n) => `unas ${n} horas` },
+    connection: (w) => `Son muchas solicitudes desde una misma conexión en poco tiempo. Inténtelo de nuevo en ${w}.`,
+    site: (w) => `El sitio ya envió todos los correos de confirmación que puede por ahora; hay un límite diario. Inténtelo de nuevo en ${w}.`,
+  },
+  zh: {
+    wait: { minute: "1 分钟", minutes: (n) => `约 ${n} 分钟`, hours: (n) => `约 ${n} 小时` },
+    connection: (w) => `同一网络连接在短时间内的请求太多。请在${w}后重试。`,
+    site: (w) => `本站目前已发出能发的全部确认邮件，每天有上限。请在${w}后重试。`,
+  },
+  "pt-br": {
+    wait: { minute: "um minuto", minutes: (n) => `cerca de ${n} minutos`, hours: (n) => `cerca de ${n} horas` },
+    connection: (w) => `São muitas solicitações de uma mesma conexão em pouco tempo. Tente de novo em ${w}.`,
+    site: (w) => `O site já enviou todos os e-mails de confirmação que pode por agora; há um limite diário. Tente de novo em ${w}.`,
+  },
+  ko: {
+    wait: { minute: "1분", minutes: (n) => `약 ${n}분`, hours: (n) => `약 ${n}시간` },
+    connection: (w) => `한 연결에서 짧은 시간에 요청이 너무 많습니다. ${w} 후에 다시 시도하세요.`,
+    site: (w) => `사이트가 지금 보낼 수 있는 확인 이메일을 모두 보냈습니다. 하루 한도가 있습니다. ${w} 후에 다시 시도하세요.`,
+  },
+  vi: {
+    wait: { minute: "một phút", minutes: (n) => `khoảng ${n} phút`, hours: (n) => `khoảng ${n} giờ` },
+    connection: (w) => `Có quá nhiều yêu cầu từ một kết nối trong thời gian ngắn. Vui lòng thử lại sau ${w}.`,
+    site: (w) => `Trang đã gửi hết số email xác nhận có thể gửi lúc này; mỗi ngày có giới hạn. Vui lòng thử lại sau ${w}.`,
+  },
+};
+
+function waitIn(lang: Exclude<Lang, "en">, english: string): string | null {
+  const m = WAIT_RE.exec(english);
+  if (!m) return null;
+  const w = THROTTLE[lang].wait;
+  if (!m[2]) return w.minute;
+  return m[3] === "hours" ? w.hours(m[2]) : w.minutes(m[2]);
+}
+
 export function serverReply(lang: Lang, message: string): string {
   const replies: Record<string, string> = ALERT_TEXT[lang].replies;
-  return replies[message] ?? message;
+  const fixed = replies[message];
+  if (fixed !== undefined || lang === "en") return fixed ?? message;
+  for (const [re, say] of [
+    [CONNECTION_RE, THROTTLE[lang].connection],
+    [SITE_RE, THROTTLE[lang].site],
+  ] as const) {
+    const m = re.exec(message);
+    const wait = m?.[1] ? waitIn(lang, m[1]) : null;
+    if (wait) return say(wait);
+  }
+  return message;
 }
