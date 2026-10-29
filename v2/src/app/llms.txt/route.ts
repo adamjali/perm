@@ -28,6 +28,7 @@ import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, LIVE_SINCE, NOT_LEGAL_SERVICES,
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
 import { longDate, MONTH_NAMES, monthYear } from "@convex/lib/months";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 const BASE_URL = SITE_URL;
 
@@ -426,6 +427,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     label: "USCIS processing times, the median, by form",
     blurb:
       "The median months USCIS took to decide every form last quarter, from its quarterly performance workbook, beside receipts, completions and pending, and the historical medians back to FY2016. A different number from USCIS's processing-times page, and both are shown. DACA is Form I-821D there; its pending count, and its work permit's, include first-time requests USCIS accepts but doesn't process.",
+  },
+  {
+    path: "/uscis-processing-times/i-485",
+    label: "One page per USCIS form",
+    blurb:
+      `A page for each of the ${FORM_PAGES.map((f) => f.form).join(", ")} at /uscis-processing-times/<form>: USCIS's median months quarter by quarter for each kind of case, how many it received, decided and had waiting, and its FY2016 to FY2024 medians where it published them.`,
   },
   {
     path: "/i485-by-field-office",

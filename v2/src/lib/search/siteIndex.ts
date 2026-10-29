@@ -12,6 +12,7 @@ import {
   SECTIONS,
   type SitePage,
 } from "@/lib/siteMap";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 export interface SiteIndexEntry {
   label: string;
@@ -132,6 +133,10 @@ export function staticIndex(): SiteIndexEntry[] {
   // tabs), so search reaches every page that has a name.
   for (const [href, name] of PAGE_NAMES) {
     if (href !== "/" && href !== "/login" && href !== "/signup") add({ href, name }, "Go to");
+  }
+  // One page per USCIS form, under the name people search for ("i-485 processing time").
+  for (const f of FORM_PAGES) {
+    add({ href: `/uscis-processing-times/${f.slug}`, name: `${f.form} processing time` }, "USCIS processing times", f.terms);
   }
   // One row per page: a page in two lists keeps its first, most specific group.
   const seen = new Set<string>();

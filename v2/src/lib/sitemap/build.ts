@@ -36,6 +36,7 @@ import type { BulletinMonth } from "@/lib/perm";
 import { SITE_URL } from "@/lib/constants/site";
 import { bulletinMonthDate, employerOwnDate, pageDate, type DateSources } from "@/lib/pageDates";
 import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 /**
  * The sitemap, split into an index and per-kind children.
@@ -272,6 +273,11 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/salary-explorer`, lastModified: at("/tools/salary-explorer"), images: [`${base}/og/salary-explorer.jpg`] },
     { url: `${base}/tools/i140-trends`, lastModified: at("/tools/i140-trends"), images: [`${base}/og/i140-trends.jpg`] },
     { url: `${base}/uscis-processing-times`, lastModified: at("/uscis-processing-times"), images: [`${base}/og/uscis-processing-times.jpg`] },
+    // One page per form, a fixed list (`FORM_PAGES`), each dated by the template.
+    ...FORM_PAGES.map((f) => ({
+      url: `${base}/uscis-processing-times/${f.slug}`,
+      lastModified: at("/uscis-processing-times/[form]"),
+    })),
     { url: `${base}/i485-by-field-office`, lastModified: at("/i485-by-field-office"), images: [`${base}/og/i485-by-field-office.jpg`] },
     { url: `${base}/i140-awaiting-visa`, lastModified: at("/i140-awaiting-visa"), images: [`${base}/og/i140-awaiting-visa.jpg`] },
     // No card of its own yet, so no image entry: the sitemap names a card only once its file exists.

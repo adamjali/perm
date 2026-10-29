@@ -66,6 +66,7 @@ export function ColumnChart({
   height = "h-36 sm:h-40",
   grow = false,
   showMax = true,
+  topsFrom,
 }: {
   columns: readonly Column[];
   tone?: ColumnTone;
@@ -83,16 +84,24 @@ export function ColumnChart({
   grow?: boolean;
   /** Print the largest value above the columns (off where the value isn't a count). */
   showMax?: boolean;
+  /**
+   * The width from which the `top` labels print. Many narrow columns crowd their
+   * labels into one another on a phone ("10.310.3"); below this width the hover
+   * and tap readout carries each figure instead.
+   */
+  topsFrom?: "sm" | "xl";
 }) {
   if (columns.length === 0) return null;
   const max = Math.max(1, ...columns.filter((c) => !c.gap).map((c) => c.value));
   const labelled = columns.some((c) => c.top);
+  const topShown = topsFrom === "sm" ? "hidden sm:block" : topsFrom === "xl" ? "hidden xl:block" : "";
+  const topRoom = topsFrom === "sm" ? "sm:pt-7" : topsFrom === "xl" ? "xl:pt-7" : "pt-7";
   return (
     <div className={cn(grow && "flex flex-1 flex-col", className)}>
       {showMax ? <p className="text-sm tabular-nums text-muted-foreground">{formatInt(max)}</p> : null}{" "}
       <ChartTips label={label} className={cn(grow && "flex flex-1 flex-col")}>
         <div
-          className={cn("mt-1 flex items-end gap-[3px] border-b-2 border-input", height, grow && "flex-1", labelled && "pt-7")}
+          className={cn("mt-1 flex items-end gap-[3px] border-b-2 border-input", height, grow && "flex-1", labelled && topRoom)}
           role="img"
           aria-label={`${label}: from ${formatInt(Math.min(...columns.filter((c) => !c.gap).map((c) => c.value), max))} to ${formatInt(max)}.`}
         >
@@ -132,7 +141,7 @@ export function ColumnChart({
               return (
                 <div key={c.key} className="relative flex h-full flex-1 items-end">
                   <span
-                    className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm font-semibold tabular-nums text-foreground"
+                    className={cn("absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm font-semibold tabular-nums text-foreground", topShown)}
                     aria-hidden="true"
                   >
                     {c.top}{" "}
@@ -154,7 +163,7 @@ export function ColumnChart({
                 style={{ height: `${h}%` }}
               >
                 {c.top ? (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm tabular-nums text-soft" aria-hidden="true">
+                  <span className={cn("absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm tabular-nums text-soft", topShown)} aria-hidden="true">
                     {c.top}{" "}
                   </span>
                 ) : null}
