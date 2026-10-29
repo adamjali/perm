@@ -1453,6 +1453,11 @@ export default defineSchema({
    */
   dolQueueAlerts: defineTable({
     email: v.string(),
+    /**
+     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
+     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     */
+    lang: v.optional(v.string()),
     /** Month the case was filed with DOL, "YYYY-MM". */
     filingMonth: v.string(),
     /**
@@ -1584,6 +1589,11 @@ export default defineSchema({
    */
   caseStatusAlerts: defineTable({
     email: v.string(),
+    /**
+     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
+     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     */
+    lang: v.optional(v.string()),
     /** Normalised DOL case number, e.g. "P-100-26125-868956". */
     caseNumber: v.string(),
 
@@ -1750,6 +1760,11 @@ export default defineSchema({
 
   bulletinAlerts: defineTable({
     email: v.string(),
+    /**
+     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
+     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     */
+    lang: v.optional(v.string()),
     /** Employment category as the bulletin prints it: EB1..EB5, EW3. */
     category: v.string(),
     /** Country column: ALL, CHINA, INDIA, MEXICO, PHILIPPINES. */
@@ -1832,6 +1847,11 @@ export default defineSchema({
    */
   newsletterSubscribers: defineTable({
     email: v.string(),
+    /**
+     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
+     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     */
+    lang: v.optional(v.string()),
     confirmedAt: v.optional(v.number()),
     unsubscribedAt: v.optional(v.number()),
     createdAt: v.number(),

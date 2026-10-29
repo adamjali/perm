@@ -157,6 +157,7 @@ export function QueueAlertForm({
           source,
           queue: selectedQueue,
           news: news || undefined,
+          lang: lang === "en" ? undefined : lang,
         }),
       });
       const result = (await response.json()) as { ok: boolean; message: string; queued?: boolean };

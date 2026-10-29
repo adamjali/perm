@@ -42,7 +42,7 @@ export function DigestSignupForm({ source = "alerts-page", lang = "en", classNam
       const res = await fetch(endpoint!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: address, source }),
+        body: JSON.stringify({ email: address, source, lang: lang === "en" ? undefined : lang }),
       });
       const body = (await res.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
       const message = body?.message ? serverReply(lang, body.message) : t.failed;

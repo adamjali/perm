@@ -24,6 +24,8 @@ import * as React from "react";
 
 import { LEGAL_NAME, POSTAL_ADDRESS } from "../../lib/constants/about";
 import { SITE_URL } from "../../../convex/lib/links";
+import { MAIL_LANG_TAG, type MailLang } from "../../lib/i18n/mailLang";
+import { LAYOUT_TEXT } from "../i18n/layout";
 
 export interface EmailLayoutProps {
   /** Preview text shown in email clients */
@@ -47,6 +49,8 @@ export interface EmailLayoutProps {
    * `List-Unsubscribe` header.
    */
   footerExtra?: React.ReactNode;
+  /** The language the email is written in (src/lib/i18n/mailLang.ts). English when not given. */
+  lang?: MailLang;
 }
 
 /**
@@ -246,13 +250,15 @@ export function EmailLayout({
   previewText,
   children,
   settingsUrl = `${SITE_URL}/settings`,
-  settingsLabel = "Manage notification settings",
+  settingsLabel,
   footerText,
   hideSettingsLink = false,
   footerExtra,
+  lang = "en",
 }: EmailLayoutProps) {
+  const t = LAYOUT_TEXT[lang];
   return (
-    <Html>
+    <Html lang={MAIL_LANG_TAG[lang]}>
       <Head>
         <meta name="color-scheme" content="light dark" />
         <meta name="supported-color-schemes" content="light dark" />
@@ -276,27 +282,27 @@ export function EmailLayout({
           {/* Footer */}
           <Section style={styles.footer}>
             <Text className="em-text-secondary" style={styles.footerText}>
-              {footerText || "You\u0027re receiving this email because you have notifications enabled for your PERM Tracker account."}
+              {footerText || t.defaultFooter}
             </Text>
             <Text className="em-text-secondary" style={styles.footerLinks}>
               {!hideSettingsLink && (
                 <>
                   <Link href={settingsUrl} className="em-link" style={styles.footerLink}>
-                    {settingsLabel}
+                    {settingsLabel ?? t.settings}
                   </Link>
                   {" "}
                 </>
               )}
               <Link href={SITE_URL} className="em-link" style={styles.footerLink}>
-                Open PERM Tracker
+                {t.open}
               </Link>
               {" "}
               <Link href={`${SITE_URL}/privacy`} className="em-link" style={styles.footerLink}>
-                Privacy
+                {t.privacy}
               </Link>
               {" "}
               <Link href={`${SITE_URL}/terms`} className="em-link" style={styles.footerLink}>
-                Terms
+                {t.terms}
               </Link>
             </Text>
             {footerExtra}
@@ -304,8 +310,7 @@ export function EmailLayout({
               {`${LEGAL_NAME}, ${POSTAL_ADDRESS}`}
             </Text>
             <Text className="em-footer-muted" style={styles.copyright}>
-              &copy; {`${new Date().getFullYear()} ${LEGAL_NAME}`}. All rights
-              reserved.
+              &copy; {`${new Date().getFullYear()} ${LEGAL_NAME}. ${t.rights}`}
             </Text>
           </Section>
         </Container>
