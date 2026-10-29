@@ -256,6 +256,12 @@ jobs:
               --note "after the LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             exit 1
           }
+          # The employers whose wage requests say ACWIA covers them (/h1b-cap-exempt-employers).
+          timeout 20m python3 scripts/build_cap_exempt.py || {
+            python3 scripts/record_ingest_failure.py --script build_cap_exempt.py \
+              --note "after the LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
 
       # When DOL usually decides an H-2A, H-2B or CW-1 application, measured
       # from every certification in seasonal_cases (the case page's timing
@@ -274,6 +280,18 @@ jobs:
           timeout 20m python3 scripts/build_pwd_links.py || {
             python3 scripts/record_ingest_failure.py --script build_pwd_links.py \
               --note "PERM to wage-request timing: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
+
+      # The employers whose wage requests say ACWIA covers them, after a wage-request load
+      # (the LCA load runs it too). A detail backfill fills the ACWIA answers, so it runs then too.
+      - name: Rebuild the cap-exempt employers
+        if: success() && matrix.program == 'pw' && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
+        working-directory: v2
+        run: |
+          timeout 20m python3 scripts/build_cap_exempt.py || {
+            python3 scripts/record_ingest_failure.py --script build_cap_exempt.py \
+              --note "cap-exempt employers: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             exit 1
           }
 
