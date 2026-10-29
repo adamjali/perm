@@ -51,8 +51,11 @@ export function BulletinAlertForm({
   initialCategory = "EB2",
   initialCountry = "india",
   priorityDate = null,
+  headingLevel = "h2",
 }: {
   source: string;
+  /** "h3" where the form sits under a section heading of its own (the alerts page). */
+  headingLevel?: "h2" | "h3";
   initialCategory?: Category;
   initialCountry?: Country;
   /**
@@ -130,6 +133,7 @@ export function BulletinAlertForm({
     );
   }
 
+  const Heading = headingLevel;
   return (
     <form
       ref={observe}
@@ -137,7 +141,7 @@ export function BulletinAlertForm({
       onSubmit={handleSubmit}
       className="object p-5 sm:p-6 print:hidden"
     >
-      <h2 className="font-heading text-xl font-bold">Email me when my cutoff moves</h2>{" "}
+      <Heading className="font-heading text-xl font-bold">Email me when my cutoff moves</Heading>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         When a new bulletin changes the final-action cutoff for your category and country, one email with the
         change. Nothing in the months it doesn&apos;t move.

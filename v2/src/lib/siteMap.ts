@@ -62,6 +62,7 @@ export type DataSection =
   | "h1b-employers"
   | "firm-rankings"
   | "cap-exempt"
+  | "case-alerts"
   | "opt-employers"
   | "employers-under-review"
   | "layoffs"
@@ -138,6 +139,7 @@ export const CALCULATORS = s("calculators", "Calculators", "Calculators", "/calc
 export const SECTIONS: DataNavSection[] = [
   // Named for the phrase people search (Search Console, Oct 28 2026: "perm case status" found the homepage first).
   s("case-status", "Your case", "PERM case status", "/perm-case-status"),
+  s("case-alerts", "Your case", "Email alerts", "/perm-case-alerts"),
   s("all-cases", "Your case", "Find a case", "/case-search"),
   t("green-card-timeline", "Your case", "Green card timeline and planner", "/tools/green-card-timeline", "Every step dated from your own dates, with the fees."),
   t("which-green-card", "Your case", "Which green card fits", "/tools/which-green-card", "The categories your job points to."),
@@ -365,7 +367,7 @@ const named = (...hrefs: string[]): SitePage[] =>
 export const FOOTER_COLUMNS: readonly FooterColumn[] = [
   {
     title: "Cases and data",
-    pages: named("/perm-case-status", "/case-search", "/perm-processing-times", "/visa-bulletin", "/perm-employers", "/perm-attorneys", "/tools", "/calculators"),
+    pages: named("/perm-case-status", "/perm-case-alerts", "/case-search", "/perm-processing-times", "/visa-bulletin", "/perm-employers", "/perm-attorneys", "/tools", "/calculators"),
   },
   {
     title: "Learn",

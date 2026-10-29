@@ -7,6 +7,8 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FaqList } from "@/components/tools/FaqList";
+import { queueSentence, dolNow } from "@/lib/dolNow";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { CASE_STATUS_FRAME, CaseStatusHead, CheckAnother, LookupSkeleton } from "./CaseStatusShell";
@@ -108,30 +110,49 @@ export async function generateMetadata({
   }, "perm-case-status");
 }
 
+/** Stands in for DOL's current queue and average in an answer, filled at render (lib/dolNow.ts). */
+const DOL_NOW = "{{dolNow}}";
+
+/**
+ * The questions in the words people search (Search Console, 3 months to Oct 28 2026: "perm tracking",
+ * "track perm", "perm status check" and "how long does perm take" all reached this site, rarely this page).
+ */
 const FAQS = [
+  {
+    q: "How do I track my PERM case?",
+    a: "Enter its case number above. The page shows DOL's status for it in plain English, how many cases filed before it are still waiting, and when DOL is likely to decide it. To hear the moment it changes, add your email under the answer. It's free and needs no account.",
+  },
+  {
+    q: "Can I get an email when my PERM case status changes?",
+    a: "Yes, free and with no account. A watched case is checked against DOL's record every 5 minutes on weekdays from 7 AM to 9 PM Eastern, and every half hour otherwise, and a status change is emailed at once. The watch carries on for a year after DOL decides, in case of an appeal or a reversal, and every email has a one-click way to stop. Wage requests and H-1B LCAs work the same way.",
+  },
+  {
+    q: "How long does PERM take right now?",
+    a: `${DOL_NOW} Your own case's estimate, from its filing day and the cases still waiting ahead of it, shows once you enter its number.`,
+  },
   {
     q: "Where do I find my PERM case number?",
     a: "On the ETA-9089 filing receipt, and on any status notice DOL sent the employer. Current ones look like G-100-26125-868956; cases filed in 2022 and 2023 use a shorter form like A-23043-00641, and both work here. The employer's attorney has it if you don't.",
   },
   {
     q: "Is this DOL's official status?",
-    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we sweep against every pending case twice a day and against the full corpus daily, and every 5 minutes on weekdays (every half hour otherwise) for a case someone has an alert on. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
+    a: "It's DOL's own record, read from its case-status search: every pending case several times a day, every case at least once a day, and a case someone has an alert on every 5 minutes on weekdays. DOL publishes no documented API for it, so this is the same endpoint its search page uses. Between checks, a newly decided case shows at DOL first, and DOL is the authority for any single case.",
   },
   {
-    q: "Is the decision date on this page a prediction for my case?",
-    a: "It's an estimate, labeled as one, and the label is doing real work. The window comes from a named model over this case's own filing month, read at the percentile its current stage implies: a case at RFI reads its month's p90, not the median, because the audited tail is measured. It is checkable arithmetic over DOL's decided cases, and it is not a promise about any single case.",
+    q: "Is the estimated decision date a prediction for my case?",
+    a: "It's an estimate, labeled as one. It counts the cases filed before yours that are still waiting and divides by how many DOL has been deciding a day, and its range comes from how far recent estimates landed from the real decisions. It's checkable arithmetic over DOL's own record, and it isn't a promise about any single case.",
   },
   {
     q: "Why won't you tell me my odds of being certified?",
-    a: "A single odds figure would read as precision the data cannot support. The measured denial factors are not independent, so blending them into one score hides which one is doing the work. The denial-rate pages publish the measured rates separately and refuse the blend on purpose. What is real, and shown, is the employer's published record across its own decided cases.",
+    a: "A single odds figure would read as precision the data can't support. The measured denial factors aren't independent, so blending them into one score hides which one is doing the work. The denial-rate pages publish the measured rates separately and refuse the blend on purpose. What's real, and shown, is the employer's published record across its own decided cases.",
   },
   {
     q: "My case isn't here. Is something wrong?",
-    a: "Almost certainly not. If we do not already hold your number, we ask DOL's case system for it and record what comes back, so a recent filing usually turns up. A wrong digit is worth ruling out first, because it still makes a well-formed number. Cases filed before mid-2023 are not in the per-case data. DOL's published decision files start at fiscal year 2024. A wrong digit in the serial is also worth ruling out, since it still makes a well-formed case number.",
+    a: "Almost certainly not. If we don't already hold your number, we ask DOL's case system for it and record what comes back, so a recent filing usually turns up. A wrong digit still makes a well-formed number, so check that first. DOL's published files reach back to fiscal year 2016; a case older than that, and no longer in DOL's live search, may not be found.",
   },
   {
     q: "What does my case number actually mean?",
-    a: "The current format encodes its own filing date. In G-100-26125-868956, the 26 is the year and the 125 is the day of that year, so it decodes to May 5, 2026. Measured against 20,000 cases in DOL's records, that decoded date matches exactly 89% of the time and is a day or two off otherwise. The older three-part format, like A-23043-00641, does not: the same reading lands 13% of the time, so this page refuses to decode one rather than guess a filing month.",
+    a: "The current format encodes its own filing date. In G-100-26125-868956, the 26 is the year and the 125 is the day of that year, so it decodes to May 5, 2026. Measured against 20,000 cases in DOL's records, that decoded date matches exactly 89% of the time and is a day or two off otherwise. The older three-part format, like A-23043-00641, doesn't: the same reading lands 13% of the time, so the lookup won't decode one rather than guess a filing month.",
   },
   {
     q: "Do you store the case number I type in?",
@@ -208,11 +229,14 @@ export default async function PermCaseStatusPage({
     redirect(caseSearchHref({ q: typed }));
   }
   const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
+  // DOL's queue month and average, dated, in the "how long" answer; read on render, never typed.
+  const dolLine = queueSentence(dolNow(await getProcessingTimes().catch(() => null)));
+  const faqs = FAQS.map((f) => ({ ...f, a: f.a.replace(DOL_NOW, dolLine) }));
 
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
-    mainEntity: FAQS.map((f) => ({
+    mainEntity: faqs.map((f) => ({
       "@type": "Question" as const,
       name: f.q,
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
@@ -283,7 +307,7 @@ export default async function PermCaseStatusPage({
 
       <section className="mt-12 border-t border-border pt-8 sm:mt-16">
         <h2 className="font-heading text-2xl font-bold">FAQs</h2>{" "}
-        <FaqList items={FAQS} />
+        <FaqList items={faqs} />
       </section>
 
       <DataProvenance
@@ -319,7 +343,7 @@ export default async function PermCaseStatusPage({
           {
             href: "/tools/perm-timeline-calculator",
             label: "How long the wait runs",
-            note: "This page counts what is in front of a case. That one gives the envelope, from cases DOL has actually decided.",
+            note: "The lookup counts what's in front of a case. The calculator gives the whole range, from cases DOL has decided.",
           },
           {
             href: "/perm-queue",

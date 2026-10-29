@@ -17,7 +17,7 @@ vi.mock("next/navigation", () => ({
 const { DataShell } = await import("../DataShell");
 const { SECTIONS, CALCULATOR_PAGES } = await import("@/lib/siteMap");
 
-const OWN_BOX = ["/perm-case-status", "/case-search"];
+const OWN_BOX = ["/perm-case-status", "/perm-case-alerts", "/case-search"];
 const endsWithCaseBlock = (path: string) => {
   nav.path = path;
   const { unmount } = render(<DataShell><p>page</p></DataShell>);

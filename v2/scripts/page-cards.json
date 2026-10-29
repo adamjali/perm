@@ -1430,9 +1430,23 @@
   "css": "#work li[data-tip] > span.font-mono{visibility:hidden!important} #work li[data-tip]:nth-of-type(n+4){display:none!important} #work > div > ul > li:nth-of-type(n+3){display:none!important}"
  },
  {
+  "slug": "perm-case-alerts",
+  "path": "/perm-case-alerts",
+  "title": "Free PERM case alerts",
+  "label": "An email the moment DOL changes your PERM case, reaches your filing month, or the visa bulletin moves.",
+  "shot": "perm-case-alerts.png",
+  "from": "Get an email when your PERM case changes",
+  "crop": [
+   0,
+   0,
+   1504,
+   998
+  ]
+ },
+ {
   "slug": "h1b-cap-exempt-employers",
   "path": "/h1b-cap-exempt-employers",
-  "title": "H-1B cap\u2011exempt employers",
+  "title": "H-1B cap‑exempt employers",
   "label": "The colleges, affiliated nonprofits and research organizations that hire H-1B workers outside the lottery.",
   "shot": "h1b-cap-exempt-employers.png",
   "from": "When they file",

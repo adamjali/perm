@@ -354,6 +354,7 @@ export async function pagesEntries(): Promise<Entry[]> {
       lastModified: at("/h1b-employers/[state]"),
     })),
     { url: `${base}/law-firm-rankings`, lastModified: at("/law-firm-rankings"), images: [`${base}/og/law-firm-rankings.jpg`] },
+    { url: `${base}/perm-case-alerts`, lastModified: at("/perm-case-alerts"), images: [`${base}/og/perm-case-alerts.jpg`] },
     { url: `${base}/h1b-cap-exempt-employers`, lastModified: at("/h1b-cap-exempt-employers"), images: [`${base}/og/h1b-cap-exempt-employers.jpg`] },
     ...firmStates.map((code) => ({
       url: `${base}/law-firm-rankings/${stateSlug(code)}`,

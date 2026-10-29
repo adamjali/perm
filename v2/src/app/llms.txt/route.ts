@@ -207,6 +207,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "The 100 busiest H-1B employers each fiscal year, nationally and in each state, ranked two ways: certified LCAs from DOL's disclosure files (FY2020 on, by worksite) and approvals from USCIS's H-1B Employer Data Hub (FY2009 on, by the petitioner's address), with positions, median yearly wage and each employer's full record.",
   },
   {
+    path: "/perm-case-alerts",
+    label: "Free PERM case status email alerts",
+    blurb:
+      "Free email alerts with no account: a PERM, wage request, LCA, H-2A, H-2B or CW-1 case number (checked against DOL's record every 5 minutes on weekdays, a status change emailed at once), a filing month DOL reaches, a visa bulletin line that moves, or an employer whose cases DOL moves as a group.",
+  },
+  {
     path: "/h1b-cap-exempt-employers",
     label: "H-1B cap-exempt employers",
     blurb:
