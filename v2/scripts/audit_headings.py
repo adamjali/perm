@@ -42,7 +42,7 @@ HEADERS = {
 TEMPLATED = ("/perm-employers/", "/perm-attorneys/", "/perm-wages/",
              "/perm-queue/", "/perm-rfi-audit/", "/blog/", "/guides/",
              "/changelog/", "/perm-cities/", "/perm-industries/", "/perm-countries/",
-             "/visa-bulletin/categories/", "/embed/")
+             "/visa-bulletin/categories/", "/embed/", "/soc-codes/")
 # Families whose pages share a prefix with static pages, told apart by shape.
 TEMPLATED_RE = ((re.compile(r"^/visa-bulletin/\d{4}-\d{2}$"), "/visa-bulletin/<month>"),)
 SAMPLE_PER_TEMPLATE = 2

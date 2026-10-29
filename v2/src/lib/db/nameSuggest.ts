@@ -6,7 +6,10 @@ import { SEARCH_TEXT_MIN, SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 import { rows } from "./client";
 import { getBySlug } from "./entities";
 import { socGroup } from "@/lib/socCode";
+import { mergeJobChoices } from "@/lib/socFinder";
+import { titleKey } from "@/lib/socTitleKey";
 import { ENTITY_BASE } from "@/lib/entityPayload";
+import { getSocTitle } from "./socTitles";
 
 export type { NameSuggestion, SuggestKind };
 
@@ -204,7 +207,12 @@ export interface OccupationChoice {
  * page whose code isn't a SOC code can't be searched by job and is left out.
  */
 export async function occupationChoices(text: string, limit: number): Promise<OccupationChoice[]> {
-  const candidates = await nameCandidates("occupation", text, limit * 2);
+  const [candidates, byTitle] = await Promise.all([
+    nameCandidates("occupation", text, limit * 2),
+    // The codes employers filed the words under as a job title (the job code finder's table), so
+    // "software engineer" reaches Software Developers. A failed read leaves the names alone.
+    titleCodeChoices(text).catch(() => [] as OccupationChoice[]),
+  ]);
   const rows = await Promise.all(candidates.map((c) => getBySlug("occupation", c.slug)));
   const seen = new Set<string>();
   const out: OccupationChoice[] = [];
@@ -215,5 +223,16 @@ export async function occupationChoices(text: string, limit: number): Promise<Oc
     seen.add(soc);
     out.push({ slug: c.slug, name: c.name, cases: c.cases, code, soc });
   }
-  return out.slice(0, limit);
+  return mergeJobChoices(text, out, byTitle).slice(0, limit);
+}
+
+/** The occupation pages of the codes employers filed the words under, when they're a known job title. */
+async function titleCodeChoices(text: string): Promise<OccupationChoice[]> {
+  const key = titleKey(text);
+  if (key.length < SEARCH_TEXT_MIN) return [];
+  const answer = await getSocTitle(key);
+  if (!answer) return [];
+  return answer.codes
+    .filter((c) => c.filings > 0 && c.slug && !c.becameCodes.length)
+    .map((c) => ({ slug: c.slug!, name: c.codeTitle, cases: c.filings, code: c.soc, soc: c.soc }));
 }

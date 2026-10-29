@@ -843,7 +843,7 @@
   ],
   "fill": [
    [
-    "SOC code",
+    "Job title or SOC code",
     "15-1252"
    ],
    [
@@ -1492,5 +1492,20 @@
    1008
   ],
   "css": "#perm .shadow-hard-sm{display:none!important} #perm li[data-tip] > span.font-mono, #perm li[data-tip] p.text-sm{display:none!important} #perm ol > li:nth-of-type(n+7){display:none!important} #perm ul.flex-wrap span.font-mono, #perm ul.flex-wrap span.text-muted-foreground{display:none!important} #perm > p{display:none!important} #perm h2 [data-fy]{display:none!important}"
+ },
+ {
+  "slug": "soc-codes",
+  "path": "/soc-codes",
+  "title": "Find a job's SOC code",
+  "label": "A job title in, the occupation codes employers filed it under in DOL's files out, with how often.",
+  "shot": "soc-codes.png",
+  "from": "The most filed job titles",
+  "crop": [
+   0,
+   0,
+   1504,
+   1020
+  ],
+  "mask": "figures"
  }
 ]

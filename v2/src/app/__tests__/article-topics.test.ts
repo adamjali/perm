@@ -41,7 +41,7 @@ describe("article topics", () => {
   it("titles every article in sentence case, like every other heading on the site", () => {
     // A capital after the first word is allowed only on a word that is always
     // capitalised: an acronym, a form number, a proper name.
-    const allowed = /^(PERM|PERMs|DOL|DOL's|USCIS|USCIS's|I-\d+J?|EB-\d|NIW|RFI|NORD|BALCA|LCA|LCAs|H-1B|H-2A|H-2B|CW-1|EAD|PWD|FLAG|OFLC|India|Emma|Supplement|J|Other|Workers|Tracker|API|US|January|February|March|April|May|June|July|August|September|October|November|December|2\.0|\d.*)$/;
+    const allowed = /^(PERM|PERMs|DOL|DOL's|USCIS|USCIS's|I-\d+J?|EB-\d|NIW|RFI|NORD|BALCA|LCA|LCAs|H-1B|H-2A|H-2B|CW-1|EAD|PWD|SOC|FLAG|OFLC|India|Emma|Supplement|J|Other|Workers|Tracker|API|US|January|February|March|April|May|June|July|August|September|October|November|December|2\.0|\d.*)$/;
     const offenders: string[] = [];
     for (const p of getAllPosts()) {
       // A new sentence after "?" or "." starts with a capital.

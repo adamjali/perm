@@ -129,6 +129,15 @@ export const ENDPOINTS: EndpointDoc[] = [
     keyless: true,
   },
   {
+    path: "/lookup/soc",
+    summary:
+      "The SOC codes employers filed a job title under in DOL's PERM, prevailing wage and LCA files, with each code's share of the title's filings; or, for a code, its title, and for a 2010 code the 2018 codes it became. No key, under the same shared limits as the employer lookup.",
+    example: "/lookup/soc?q=data%20scientist",
+    params: [{ name: "q", in: "query", required: true, description: "A job title or a SOC code (15-1252, 15-1252.00 or 151252), 2 to 80 characters." }],
+    counted: false,
+    keyless: true,
+  },
+  {
     path: "/exports/{kind}",
     summary:
       "A search's whole answer, past one page, as CSV (format=csv) or JSON: cases (the case search's parameters, such as q, firm, state, occupation, from, to, outcome), employers, law-firms or occupations (q). Needs the export scope; Plus exports up to 1,000 rows. Counted as one call.",
@@ -308,6 +317,7 @@ export const MCP_TOOLS: { name: string; summary: string }[] = [
   { name: "visa_bulletin", summary: "A visa bulletin's charts, the newest by default." },
   { name: "search_sponsors", summary: "Find an employer, law firm or occupation by name." },
   { name: "employer_profile", summary: "One employer's, law firm's or occupation's PERM record, and its cases pending at DOL now." },
+  { name: "find_soc_code", summary: "The SOC codes employers filed a job title under, with their shares, or a code's title." },
 ];
 
 export const MCP_URL = "https://permtracker.app/mcp";

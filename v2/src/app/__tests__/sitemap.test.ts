@@ -94,6 +94,15 @@ vi.mock("@/lib/db/firmRanks", () => ({
     },
   })),
 }));
+vi.mock("@/lib/db/socTitles", () => ({
+  getSocTitlePages: vi.fn(async () => ({
+    pageMin: 50,
+    pages: [
+      { slug: "software-engineer", title: "Software Engineer", filings: 207778, topSoc: "15-1252", topFilings: 187752 },
+      { slug: "data-scientist", title: "Data Scientist", filings: 24660, topSoc: "15-2051", topFilings: 21247 },
+    ],
+  })),
+}));
 vi.mock("@/lib/db/groups", () => ({
   GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
   listGroups: vi.fn(async (kind: string) => [
@@ -326,6 +335,17 @@ describe("sitemap.ts", () => {
     expect(first[1]!.lastModified).toBe("2099-08-11");
     expect(first[2]!.lastModified).toBe(template > "2026-09-15" ? template : "2026-09-15");
     expect(new Set(first.map((e) => e.lastModified)).size).toBeGreaterThan(2);
+  });
+
+  it("lists the job code finder and every title with a page, and none of them when the read fails", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const { getSocTitlePages } = await import("@/lib/db/socTitles");
+    const paths = (await sitemap()).map((e) => new URL(e.url).pathname);
+    expect(paths).toEqual(expect.arrayContaining(["/soc-codes", "/soc-codes/software-engineer", "/soc-codes/data-scientist"]));
+    vi.mocked(getSocTitlePages).mockRejectedValueOnce(new Error("deadline"));
+    const after = (await sitemap()).map((e) => new URL(e.url).pathname);
+    expect(after.filter((p) => p.startsWith("/soc-codes/"))).toEqual([]);
+    expect(after).toContain("/soc-codes");
   });
 
   it("lists NO live-only children when the nightly table cannot be read, and keeps the other families", async () => {
