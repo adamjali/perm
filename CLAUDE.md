@@ -1582,7 +1582,7 @@ Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pum
   `/<lang>/perm-case-status` (a `[lang]` segment, typed messages that fail the typecheck when a language is missing,
   `Intl` for dates and numbers, hreflang both ways). It ships only on the owner's yes after review.
 
-## Oct 28 2026 (night), in seven lines
+## Oct 28 2026 (night), in ten lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 
@@ -1594,3 +1594,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 - **"How long does PERM take" is answered from today's readings** (`howLongSentence`), the same on two pages.
 - **A share card never carries a live figure**: a card over a live page masks its figures (`"mask": "figures"`).
 - **The privacy page says what the chat's free-tier AI providers may do with what's sent** (corrected Oct 29).
+- **The wage-level tool reaches July 2016**: DOL's old tables came from the Internet Archive's copies of the retired
+  FLC Data Center files, and a job's years before 2022-23 read under BLS's 2010 codes, never blended.
+- **The database RAM lock is retired** (owner's call, Oct 29): CPU alone keeps Oracle's idle rule clear.
+- **`/compare` carries ten trackers**, each quote re-read on the rival's own page before it shipped.

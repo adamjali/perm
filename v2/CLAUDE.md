@@ -10707,9 +10707,16 @@ live with the Oct 29 2 AM run. Ledger: `~/.claude/plans/cozy-sniffing-pumpkin.md
   2021-22 shows as 15-1132 and 15-1133. BLS's crosswalk is `scripts/data/soc_2010_to_2018.json`
   (`build_soc_crosswalk.py`), read through `src/lib/socCrosswalk.ts`; the history route sends the note
   (`codeNote`) so the 35 KB file never ships to the browser. `SocCodeText` keeps a code from breaking at its hyphen.
-- **DOL's wage tables before 2021-22 are found and not loaded**: the retired FLC Data Center's
-  `OWL_<June that closes the year>_TEXT.zip`, kept by the Internet Archive, in the format the loader reads
-  (`wage_year_of`; `OWL_2022` matched the stored 2021 table row for row). Five years add about 360 MB to the main
-  database, which waits on the owner's RAM-lock call. Files and manifest: `~/.claude/explanations/20261029_owl_wage_history/`.
+- **DOL's wage tables reach July 2016** (loaded Oct 29 2026, 5:36 to 6:20 AM EDT, at the history pace; 15-1252 in San Jose now reads back to 2016-17 under 15-1132 and 15-1133): the
+  retired FLC Data Center's `OWL_<June that closes the year>_TEXT.zip`, kept by the Internet Archive, in the format
+  the loader reads (`wage_year_of`; `OWL_2022` matched the stored 2021 table row for row). A history year never moves
+  the freshness stamp (`is_newest`). Files and manifest: `~/.claude/explanations/20261029_owl_wage_history/`.
+- **The database RAM lock is retired** (owner's call, Oct 29 2026, `e1e438aa`): `permtracker-dbcache` held the whole
+  4.2 GB main file while swap sat at 3.5 of 4 GB, and CPU alone keeps Oracle's idle rule clear (p95 47%, Oct 22 to
+  28). Reads come from the system's file cache; the morning report still fails if memory and CPU both fall under 20%.
+- **/compare carries ten trackers** (`5501da84`, `490bdf30`; the owner saw the screenshots first): H1BGrader and three
+  green card sites (GreenCardClock, Lawfully, Immigration Road), each dated by its own reading, in two lists. Every
+  quote was re-read on the rival's page before shipping; Lawfully's QR-code line was gone, so its quote is its own
+  Download App button.
 - **A full-page capture that scrolls 800 px every 50 ms leaves reveal-on-scroll sections blank**: scroll 400 px every
   200 ms (`node_modules/.cache/qa/slow-shot.mjs`) before believing an empty band.
