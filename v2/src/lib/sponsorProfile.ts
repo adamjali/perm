@@ -35,7 +35,7 @@ export type SponsorFact =
   | { id: "warn"; notices: number; workers: number; since: string }
   | { id: "dependent"; as_of: string }
   | { id: "willful"; lcas: number }
-  | { id: "cap_exempt" };
+  | { id: "cap_exempt"; basis?: "acwia" | "naics" };
 
 const int = (n: number) => formatInt(Math.round(n));
 
@@ -109,7 +109,10 @@ export function factSentence(f: SponsorFact): string {
     case "willful":
       return `It declared itself a willful violator on ${int(f.lcas)} ${f.lcas === 1 ? "LCA" : "LCAs"}.`;
     case "cap_exempt":
-      return "Likely cap-exempt: most of its PERM filings carry a college or university's industry code.";
+      // A fact written before Oct 29 2026 carries no basis: it was the industry code then.
+      return f.basis === "acwia"
+        ? "Likely cap-exempt: most of its wage requests tell DOL that ACWIA covers it."
+        : "Likely cap-exempt: most of its PERM filings carry a college or university's industry code.";
   }
 }
 

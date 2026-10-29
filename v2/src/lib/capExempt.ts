@@ -100,3 +100,10 @@ export function busiestQuarter(shares: readonly number[]): { start: number; shar
   }
   return best;
 }
+
+/** One listed employer's answer: the kind it named most, the requests saying yes and those answered. */
+export interface AcwiaAnswer {
+  kind: CapExemptKind | null;
+  requests: number;
+  answered: number;
+}

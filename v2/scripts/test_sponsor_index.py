@@ -46,6 +46,7 @@ def seed() -> SqliteTurso:
         "CREATE TABLE perm_live_recent (case_number TEXT PRIMARY KEY, employer_slug TEXT, filing_date TEXT, is_final INTEGER)",
         "CREATE TABLE perm_live_only_index (slug TEXT PRIMARY KEY, name TEXT)",
         "CREATE TABLE warn_notices (employer_slug TEXT, notice_date TEXT, employees INTEGER)",
+        "CREATE TABLE cap_exempt_employers (slug TEXT PRIMARY KEY, kind TEXT, requests INTEGER, answered INTEGER)",
     ])
     # Three sponsors with 20+ decided cases (ranked), one with 5 (not ranked on the rate).
     for slug, total, cert, den, recent, state in [
@@ -106,6 +107,7 @@ def seed() -> SqliteTurso:
     db.execute("INSERT INTO debarments VALUES ('beta','PERM','2020-01-01','2021-01-01')")
     db.execute("INSERT INTO warn_notices VALUES ('beta','2026-05-01',120)")
     db.execute("INSERT INTO warn_notices VALUES ('beta','2020-05-01',999)")
+    db.execute("INSERT INTO cap_exempt_employers VALUES ('alpha','research',3,4)")
     return db
 
 
@@ -115,6 +117,7 @@ def main() -> int:
     by = {r[0]: dict(zip(bsi.COLS, r)) for r in rows}
     parts = {s: {p["id"]: p for p in json.loads(by[s]["parts"])} for s in by}
     facts = {s: [f["id"] for f in json.loads(by[s]["facts"])] for s in by}
+    fact_of = {s: {f["id"]: f for f in json.loads(by[s]["facts"])} for s in by}
 
     check("approval rates", [by[s]["perm_rate"] for s in ("alpha", "beta", "gamma")], [0.9, 0.98, 0.5])
     check("a sponsor under 20 decided cases isn't ranked on the rate", "perm_rate" in parts["tiny"], False)
@@ -132,6 +135,10 @@ def main() -> int:
     check("an expired debarment isn't a fact", "debarred" in facts["beta"], False)
     check("an active debarment is", ("debarred" in facts["gamma"], by["gamma"]["debarred"]), (True, 1))
     check("mostly a college's industry code: likely cap-exempt", (by["gamma"]["cap_exempt"], "cap_exempt" in facts["gamma"]), (1, True))
+    check("its own ACWIA answer makes it likely cap-exempt too, and says so",
+          (by["alpha"]["cap_exempt"], fact_of["alpha"].get("cap_exempt", {}).get("basis")), (1, "acwia"))
+    check("an industry-code inference says its basis", fact_of["gamma"]["cap_exempt"].get("basis"), "naics")
+    check("neither: not cap-exempt", by["beta"]["cap_exempt"], 0)
     check("state is the one most of its PERM filings name", by["alpha"]["state"], "CA")
     check("with no state facet, the state its cases name most", by["tiny"]["state"], "OR")
     check("the shares say which window they cover", (parts["alpha"]["transfer_share"]["from"], parts["alpha"]["transfer_share"]["to"]),

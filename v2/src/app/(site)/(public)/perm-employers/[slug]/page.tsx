@@ -86,6 +86,7 @@ import { SeasonalFilings } from "@/components/entities/SeasonalFilings";
 import { getLcaProfile } from "@/lib/db/lcaProfile";
 import { LcaProfile } from "@/components/entities/LcaProfile";
 import { getUscisH1bRecord } from "@/lib/db/uscisH1b";
+import { getAcwiaAnswer } from "@/lib/db/capExempt";
 import { UscisH1bRecord } from "@/components/entities/UscisH1bRecord";
 import { getEmployerLottery } from "@/lib/db/h1bLotteryFoia";
 import { H1bLotteryHistory } from "@/components/entities/H1bLotteryHistory";
@@ -664,7 +665,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -722,6 +723,8 @@ export default async function EmployerPage({
       getPwdLinks("employer", canonicalSlug),
       // What it put on its newest application: headcount and founding year. A failure only drops the fact.
       getEmployerSize(canonicalSlug).catch(() => null),
+      // Its own answer to DOL on ACWIA (cap_exempt_employers): the cap-exempt note. A failure only drops the note's basis.
+      getAcwiaAnswer(canonicalSlug).catch(() => null),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -986,7 +989,7 @@ export default async function EmployerPage({
             check: the wage request and, for H-1B holders, the LCA. Five each,
             newest first; every number links to its live status. */}
         <WageAndLcaFilings name={row.name} wageReqs={wageReqs} lcas={lcas} heading="Its newest wage requests and LCAs" />{" "}
-        <CapExemptNote industry={facets.industry} />{" "}
+        <CapExemptNote industry={facets.industry} acwia={acwia} />{" "}
         <LcaProfile name={row.name} profile={lcaProfile} />{" "}
         <UscisH1bRecord record={uscisH1b} through={freshness["uscis-h1b-hub"]?.asOf ?? null} />{" "}
         <H1bLotteryHistory years={lottery} />{" "}
