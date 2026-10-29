@@ -2144,8 +2144,17 @@ http.route({
     await ctx.scheduler.runAfter(0, internal.caseAlerts.sweepCaseChanges, {});
     await ctx.scheduler.runAfter(30_000, internal.casePushAlertsSweep.sweep, {});
     await ctx.scheduler.runAfter(0, internal.webhookSweeps.sweepCaseWatches, {});
+    await ctx.scheduler.runAfter(0, internal.appCaseWatch.sweepAppCaseStatuses, {});
     return serverJson(
-      { ok: true, scheduled: ["caseAlerts.sweepCaseChanges", "casePushAlertsSweep.sweep", "webhookSweeps.sweepCaseWatches"] },
+      {
+        ok: true,
+        scheduled: [
+          "caseAlerts.sweepCaseChanges",
+          "casePushAlertsSweep.sweep",
+          "webhookSweeps.sweepCaseWatches",
+          "appCaseWatch.sweepAppCaseStatuses",
+        ],
+      },
       202,
     );
   }),

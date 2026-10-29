@@ -118,6 +118,10 @@ export default defineSchema({
     emailStatusUpdates: v.boolean(),
     emailRfeAlerts: v.boolean(),
     emailWeeklyDigest: v.optional(v.boolean()), // Weekly case summary email (Mondays 9 AM EST) - defaults to false
+    // Global switch for the DOL live-status watch on saved cases
+    // (convex/appCaseWatch.ts). Absent means on; false turns every saved
+    // case's automatic watch off for this account.
+    watchSavedCases: v.optional(v.boolean()),
     // DEPRECATED: No longer used — emails always go to signup email.
     // Kept as optional for backwards compat with existing documents.
     preferredNotificationEmail: v.optional(v.union(
@@ -308,6 +312,19 @@ export default defineSchema({
 
     // Sample case flag (for onboarding demo data)
     isSample: v.optional(v.boolean()),
+
+    // DOL's live status, watched automatically for a saved case that has a DOL
+    // number (convex/appCaseWatch.ts). This is NEVER the attorney's own stage:
+    // the 5-minute sweep writes liveStatus and never touches caseStatus or
+    // progressStatus, so DOL's record sits BESIDE the firm's bookkeeping and a
+    // mismatch between the two is itself a useful signal.
+    liveStatus: v.optional(v.string()),
+    liveStatusSeenAt: v.optional(v.number()), // ms; when the sweep first saw this status
+    liveStatusIsFinal: v.optional(v.boolean()),
+    // The per-case watch toggle. Absent means on: a case with a DOL number
+    // watches itself unless this is false or the account's global switch
+    // (userProfiles.watchSavedCases) is off.
+    watchEnabled: v.optional(v.boolean()),
 
     // PWD phase
     pwdFilingDate: v.optional(v.string()), // ISO date YYYY-MM-DD
@@ -579,6 +596,11 @@ export default defineSchema({
     .index("by_user_and_priority", ["userId", "priorityLevel"])
     .index("by_user_and_updated_at", ["userId", "updatedAt"]) // ISS-009: Sorting index
     .index("by_deleted_at", ["deletedAt"])
+    // Collect every watchable saved case across all accounts for the 5-minute
+    // DOL sweep (convex/appCaseWatch.ts): a range q.gte("caseNumber", "")
+    // returns exactly the cases that carry a DOL number, since undefined sorts
+    // before "". The cases without a number are skipped by the range, not read.
+    .index("by_case_number", ["caseNumber"])
     // Chatbot-ready indexes for deadline queries
     .index("by_user_and_filing_deadline", ["userId", "filingWindowCloses"])
     .index("by_user_and_pwd_expiration", ["userId", "pwdExpirationDate"])

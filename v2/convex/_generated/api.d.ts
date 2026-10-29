@@ -24,6 +24,7 @@ import type * as alertRatings from "../alertRatings.js";
 import type * as analytics from "../analytics.js";
 import type * as apiKeys from "../apiKeys.js";
 import type * as apiUsage from "../apiUsage.js";
+import type * as appCaseWatch from "../appCaseWatch.js";
 import type * as auth from "../auth.js";
 import type * as authMail from "../authMail.js";
 import type * as authRateLimit from "../authRateLimit.js";
@@ -275,6 +276,7 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   apiKeys: typeof apiKeys;
   apiUsage: typeof apiUsage;
+  appCaseWatch: typeof appCaseWatch;
   auth: typeof auth;
   authMail: typeof authMail;
   authRateLimit: typeof authRateLimit;

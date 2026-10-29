@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { internalQuery } from "./_generated/server";
 import { entitlement } from "./lib/apiPlans";
+import { collectWatchableCases } from "./appCaseWatch";
 
 /**
  * Every case number someone is waiting to hear about, for the 5-minute check.
@@ -74,6 +75,17 @@ export const watchedCaseNumbers = internalQuery({
       out.add(row.target);
       if (out.size >= WATCHED_CAP) return { caseNumbers: [...out].sort(), capped: true };
     }
+
+    // Saved cases in the signed-in app watch themselves (convex/appCaseWatch.ts).
+    // The account is the consent, so no double opt-in; a number already added
+    // by an email subscription coalesces here, so an overlap costs one DOL
+    // request, not two.
+    const { rows, capped: appCapped } = await collectWatchableCases(ctx);
+    for (const r of rows) {
+      out.add(r.caseNumber.trim().toUpperCase());
+      if (out.size >= WATCHED_CAP) return { caseNumbers: [...out].sort(), capped: true };
+    }
+    if (appCapped) return { caseNumbers: [...out].sort(), capped: true };
 
     return { caseNumbers: [...out].sort(), capped: false };
   },

@@ -71,13 +71,14 @@ describe("the watched-case routes", () => {
     expect(body, "no address ever leaves Convex").not.toContain("@");
   });
 
-  it("schedule the email, push and webhook sweeps on a sweep request", async () => {
+  it("schedule the email, push, webhook and saved-case sweeps on a sweep request", async () => {
     vi.stubEnv("WATCHED_CASES_SECRET", SECRET);
     const t = createTestContext();
     const res = await t.fetch("/watched-cases/sweep", { method: "POST", headers: { "x-watched-secret": SECRET } });
     expect(res.status).toBe(202);
     const jobs = await t.run(async (ctx) => await ctx.db.system.query("_scheduled_functions").collect());
     expect(jobs.map((j) => j.name).sort()).toEqual([
+      "appCaseWatch:sweepAppCaseStatuses",
       "caseAlerts:sweepCaseChanges",
       "casePushAlertsSweep:sweep",
       "webhookSweeps:sweepCaseWatches",
