@@ -642,6 +642,7 @@ export const sweep = internalAction({
           subject: alertText(lang).subject.bulletinMoved(label, monthLabel(latest.month)),
           html,
           listUnsubscribe: unsubUrl,
+          lang,
           summary: {
             title: label,
             line: `${fromWords} to ${toWords} in the ${monthLabel(latest.month)} bulletin`,

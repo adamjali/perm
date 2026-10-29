@@ -2578,6 +2578,8 @@ export default defineSchema({
       v.literal("dropped"),
       v.literal("failed"),
     ),
+    /** The reader's language, so a bundle's frame is written in it (src/lib/i18n/mailLang.ts). */
+    lang: v.optional(v.string()),
     subject: v.string(),
     /** The single-item email. Cleared once sent; a bundle renders its own. */
     html: v.optional(v.string()),

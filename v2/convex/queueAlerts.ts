@@ -868,6 +868,7 @@ export const notifyQueueReached = internalAction({
           subject: alertText(lang).subject.queueReached(perm, frontierLabel),
           html,
           listUnsubscribe: unsubUrl,
+          lang,
           summary: {
             title: label.charAt(0).toUpperCase() + label.slice(1),
             line: `DOL has reached ${frontierLabel}. You asked about ${filingLabel}`,

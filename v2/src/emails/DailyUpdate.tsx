@@ -16,6 +16,9 @@
 import { Link, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
+import type { MailLang } from "../lib/i18n/mailLang";
+import { DAILY_TEXT } from "./i18n/alerts";
+import { LAYOUT_TEXT } from "./i18n/layout";
 
 export interface DailyUpdateItem {
   kind: "case" | "queue" | "bulletin" | "employer" | "match";
@@ -33,35 +36,32 @@ export interface DailyUpdateProps {
   stopUrl: string;
   /** More items wait than one email carries; they come tomorrow. */
   moreWaiting?: boolean;
+  /** The reader's language (src/lib/i18n/mailLang.ts). English when not given. */
+  lang?: MailLang;
 }
 
-const KIND_LABEL: Record<DailyUpdateItem["kind"], string> = {
-  case: "Case status",
-  queue: "DOL queue",
-  bulletin: "Visa bulletin",
-  employer: "Employer you follow",
-  match: "A PERM that may be yours",
-};
-
-export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: DailyUpdateProps) {
+export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false, lang = "en" }: DailyUpdateProps) {
+  const t = DAILY_TEXT[lang];
+  const L = LAYOUT_TEXT[lang];
   const n = items.length;
   return (
     <EmailLayout
       previewText={items.map((i) => `${i.title}: ${i.line}`).join(" · ").slice(0, 140)}
       settingsUrl={prefsUrl}
-      settingsLabel="Email preferences"
-      footerText="A change to a case comes at once; other alerts from one day come together, in one email like this. Each row links to the full picture."
+      settingsLabel={L.preferences}
+      lang={lang}
+      footerText={t.footerText}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>
           <Link href={stopUrl} className="em-link" style={styles.footerLink}>
-            Stop all of these alerts
+            {t.stopAll}
           </Link>
         </Text>
       }
     >
       <Section style={styles.stamp}>
-        <Text className="em-text-secondary" style={styles.eyebrow}>Since we last wrote</Text>
-        <Text className="em-text" style={styles.count}>{`${n} things you follow moved`}</Text>
+        <Text className="em-text-secondary" style={styles.eyebrow}>{t.eyebrow}</Text>
+        <Text className="em-text" style={styles.count}>{t.count(n)}</Text>
       </Section>
 
       {items.map((item, i) => {
@@ -79,14 +79,14 @@ export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: D
                   </td>
                   <td style={styles.body}>
                     <Text className="em-text-secondary" style={styles.kind}>
-                      {`${KIND_LABEL[item.kind]} `}
+                      {`${t.kind[item.kind]} `}
                     </Text>
                     <Text className="em-text" style={styles.title}>{`${item.title} `}</Text>
                     <Text className="em-text-body" style={styles.line}>
                       {`${item.line} `}
                     </Text>
                     <Link href={item.url} className="em-link" style={styles.open}>
-                      {`Open ${item.title}`}
+                      {t.open(item.title)}
                     </Link>
                   </td>
                 </tr>
@@ -98,15 +98,12 @@ export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: D
 
       {moreWaiting ? (
         <Text className="em-text-body" style={styles.line}>
-          More updates are waiting than one email carries. They come in
-          tomorrow&rsquo;s email.
+          {t.moreWaiting}
         </Text>
       ) : null}
 
       <Text className="em-text-secondary" style={styles.note}>
-        Every figure here is the Department of Labor&rsquo;s or the State
-        Department&rsquo;s own published record. None of it is a prediction of
-        your case.
+        {t.note}
       </Text>
     </EmailLayout>
   );

@@ -390,3 +390,124 @@ export const BULLETIN_ALERT_TEXT: MailMessages<BulletinAlertText> = {
     note: "Toàn bộ bảng và mọi bản tin kể từ tháng 10 năm 2014:",
   },
 };
+
+/**
+ * The chrome of the daily bundle (DailyUpdate), in the five languages: the frame around the per-row summaries.
+ * Each row's own "what happened" line is built by its producer and left as it stands (DOL status words and the
+ * short phrase stay English, as the single-item case alert does); the frame, the kind labels and the "Open"
+ * link follow the reader's language. English is exactly today's wording.
+ */
+export interface DailyText {
+  footerText: string;
+  stopAll: string;
+  eyebrow: string;
+  count: (n: number) => string;
+  kind: Record<"case" | "queue" | "bulletin" | "employer" | "match", string>;
+  open: (title: string) => string;
+  moreWaiting: string;
+  note: string;
+}
+
+export const DAILY_TEXT: MailMessages<DailyText> = {
+  en: {
+    footerText:
+      "A change to a case comes at once; other alerts from one day come together, in one email like this. Each row links to the full picture.",
+    stopAll: "Stop all of these alerts",
+    eyebrow: "Since we last wrote",
+    count: (n) => `${n} things you follow moved`,
+    kind: {
+      case: "Case status",
+      queue: "DOL queue",
+      bulletin: "Visa bulletin",
+      employer: "Employer you follow",
+      match: "A PERM that may be yours",
+    },
+    open: (title) => `Open ${title}`,
+    moreWaiting: "More updates are waiting than one email carries. They come in tomorrow’s email.",
+    note: "Every figure here is the Department of Labor’s or the State Department’s own published record. None of it is a prediction of your case.",
+  },
+  es: {
+    footerText:
+      "Un cambio en un caso llega de inmediato; otras alertas de un mismo día llegan juntas, en un correo como este. Cada fila enlaza al detalle completo.",
+    stopAll: "Dejar de recibir todas estas alertas",
+    eyebrow: "Desde la última vez que le escribimos",
+    count: (n) => `${n} cosas que sigue se movieron`,
+    kind: {
+      case: "Estado del caso",
+      queue: "Fila del DOL",
+      bulletin: "Boletín de visas",
+      employer: "Empleador que sigue",
+      match: "Un PERM que podría ser el suyo",
+    },
+    open: (title) => `Abrir ${title}`,
+    moreWaiting: "Hay más novedades de las que cabe un correo. Llegan en el correo de mañana.",
+    note: "Cada cifra aquí es el registro publicado por el propio Departamento de Trabajo o el Departamento de Estado. Nada de esto es una predicción de su caso.",
+  },
+  zh: {
+    footerText: "案件的变化会立即发送；同一天的其他提醒会合并到一封这样的邮件里。每一行都链接到完整内容。",
+    stopAll: "停止接收所有这些提醒",
+    eyebrow: "自上次给您发信以来",
+    count: (n) => `您关注的 ${n} 项有变动`,
+    kind: {
+      case: "案件状态",
+      queue: "劳工部排队",
+      bulletin: "签证公告",
+      employer: "您关注的雇主",
+      match: "可能是您的 PERM",
+    },
+    open: (title) => `打开 ${title}`,
+    moreWaiting: "等待发送的更新比一封邮件能装下的还多。它们会在明天的邮件里送出。",
+    note: "这里的每个数字都是劳工部或美国国务院自己公布的记录。其中没有任何内容是对您案件的预测。",
+  },
+  "pt-br": {
+    footerText:
+      "Uma mudança num caso chega na hora; outros alertas de um mesmo dia chegam juntos, num e-mail como este. Cada linha leva ao detalhe completo.",
+    stopAll: "Parar todos estes alertas",
+    eyebrow: "Desde a última vez que escrevemos",
+    count: (n) => `${n} coisas que você acompanha se moveram`,
+    kind: {
+      case: "Status do caso",
+      queue: "Fila do DOL",
+      bulletin: "Boletim de vistos",
+      employer: "Empregador que você acompanha",
+      match: "Um PERM que pode ser o seu",
+    },
+    open: (title) => `Abrir ${title}`,
+    moreWaiting: "Há mais novidades do que um e-mail comporta. Elas chegam no e-mail de amanhã.",
+    note: "Cada número aqui é o registro publicado pelo próprio Departamento do Trabalho ou Departamento de Estado. Nada disto é uma previsão do seu caso.",
+  },
+  ko: {
+    footerText:
+      "케이스 변화는 바로 전해 드리고, 같은 날의 다른 알림은 이렇게 한 통의 이메일로 모아 보내 드립니다. 각 줄은 전체 내용으로 연결됩니다.",
+    stopAll: "이 알림 모두 그만 받기",
+    eyebrow: "지난번 연락 이후",
+    count: (n) => `귀하가 지켜보는 항목 ${n}건이 움직였습니다`,
+    kind: {
+      case: "케이스 상태",
+      queue: "노동부 대기열",
+      bulletin: "비자 공보",
+      employer: "귀하가 팔로우하는 고용주",
+      match: "귀하의 것일 수 있는 PERM",
+    },
+    open: (title) => `${title} 열기`,
+    moreWaiting: "이메일 한 통에 담기는 것보다 많은 업데이트가 대기 중입니다. 내일 이메일로 전해 드립니다.",
+    note: "여기의 모든 수치는 노동부나 국무부가 직접 공개한 기록입니다. 그중 어느 것도 귀하의 케이스에 대한 예측이 아닙니다.",
+  },
+  vi: {
+    footerText:
+      "Thay đổi về một hồ sơ được gửi ngay; các thông báo khác trong cùng một ngày gộp lại, trong một email như thế này. Mỗi dòng liên kết tới nội dung đầy đủ.",
+    stopAll: "Ngừng nhận tất cả các thông báo này",
+    eyebrow: "Kể từ lần gần nhất chúng tôi viết",
+    count: (n) => `${n} mục bạn theo dõi đã thay đổi`,
+    kind: {
+      case: "Tình trạng hồ sơ",
+      queue: "Hàng chờ DOL",
+      bulletin: "Bản tin thị thực",
+      employer: "Chủ lao động bạn theo dõi",
+      match: "Một PERM có thể là của bạn",
+    },
+    open: (title) => `Mở ${title}`,
+    moreWaiting: "Có nhiều cập nhật hơn một email có thể chứa. Chúng sẽ đến trong email ngày mai.",
+    note: "Mọi con số ở đây là hồ sơ do chính Bộ Lao động hoặc Bộ Ngoại giao công bố. Không điều nào trong đó là dự đoán về hồ sơ của bạn.",
+  },
+};

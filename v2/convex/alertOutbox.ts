@@ -26,6 +26,8 @@ import { recordError } from "./lib/errorRecording";
 import { createLogger } from "./lib/logging";
 import { easternDay, MS_PER_DAY } from "./lib/time";
 import { SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
+import { mailLang, type MailLang } from "../src/lib/i18n/mailLang";
+import { alertText } from "./lib/alertEmailText";
 
 const log = createLogger("AlertOutbox");
 
@@ -127,6 +129,7 @@ export const enqueue = internalMutation({
     text: v.string(),
     listUnsubscribe: v.string(),
     summary: summaryValidator,
+    lang: v.optional(v.string()),
   },
   returns: v.id("alertOutbox"),
   handler: async (ctx, args) => {
@@ -238,6 +241,7 @@ const itemValidator = v.object({
   listUnsubscribe: v.optional(v.string()),
   summary: summaryValidator,
   createdAt: v.number(),
+  lang: v.optional(v.string()),
 });
 
 /**
@@ -272,6 +276,7 @@ export const waitingFor = internalQuery({
         listUnsubscribe: r.listUnsubscribe,
         summary: r.summary,
         createdAt: r.createdAt,
+        lang: r.lang,
       }));
     return { items, more };
   },
@@ -326,10 +331,22 @@ type Waiting = {
   text?: string;
   listUnsubscribe?: string;
   summary: Doc<"alertOutbox">["summary"];
+  lang?: string;
 };
 
-/** "G-100-... is now CERTIFIED, and 2 more updates", kept inside an inbox line. */
-export function bundleSubject(items: { summary: { title: string; line: string } }[]): string {
+/**
+ * "G-100-... is now CERTIFIED, and 2 more updates", kept inside an inbox line.
+ *
+ * The lead-and-tail form is an English nicety; a non-English bundle takes the
+ * clean "N PERM Tracker updates" subject (alertText), because the lead is a
+ * summary line left in its producer's wording and a tail stitched onto it
+ * reads badly across languages.
+ */
+export function bundleSubject(
+  items: { summary: { title: string; line: string } }[],
+  lang: MailLang = "en",
+): string {
+  if (lang !== "en") return alertText(lang).subject.daily(items.length);
   const [first] = items;
   if (!first) return "Your PERM Tracker updates";
   const more = items.length - 1;
@@ -414,7 +431,11 @@ export const sendBundles = internalAction({
           const token = await makeUnsubscribeToken(email, unsubscribeSecret(), "prefs");
           stopUrl = oneClickUnsubscribeUrl(token, "alerts");
           const prefsUrl = await prefsLink(email, unsubscribeSecret());
-          subject = bundleSubject(items);
+          // One address, but items can carry different languages if it signed
+          // up on pages in different ones; the bundle frame takes the first
+          // non-English one, else English.
+          const bundleLang = mailLang(items.find((i) => i.lang && i.lang !== "en")?.lang ?? items[0]?.lang);
+          subject = bundleSubject(items, bundleLang);
           text = bundleText(items, prefsUrl, stopUrl, waiting.more);
           html = await renderOrUndefined(ctx, async () => {
             const { DailyUpdate } = await import("../src/emails/DailyUpdate");
@@ -423,6 +444,7 @@ export const sendBundles = internalAction({
               prefsUrl,
               stopUrl,
               moreWaiting: waiting.more,
+              lang: bundleLang,
             });
           });
         }

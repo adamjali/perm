@@ -1873,6 +1873,7 @@ export const sweepCaseChanges = internalAction({
           subject: at.subject.caseChanged(programNounIn(program, lang), status),
           html,
           listUnsubscribe: unsubUrl,
+          lang,
           summary: {
             title: sub.caseNumber,
             line: `${sub.lastSeenStatus} to ${status}`,
