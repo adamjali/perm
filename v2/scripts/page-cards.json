@@ -554,9 +554,10 @@
  },
  {
   "slug": "perm-timeline-calculator",
-  "path": "/tools/perm-timeline-calculator?date=2026-01-15",
-  "title": "Processing time calculator",
-  "label": "Where a filing month stands in DOL's queue, and an estimate that's checked as it goes.",
+  "path": "/tools/perm-timeline-calculator",
+  "title": "PERM timeline calculator",
+  "css": "main header > p{display:none!important} p:has(> time[datetime]){visibility:hidden!important}",
+  "label": "The day DOL will likely decide a case, from its filing date and the cases still ahead of it.",
   "shot": "perm-timeline-calculator.png",
   "crop": [
    0,

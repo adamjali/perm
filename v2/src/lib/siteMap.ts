@@ -158,7 +158,7 @@ export const SECTIONS: DataNavSection[] = [
 
   s("cases", "PERM", "PERM cases", "/perm-cases"),
   s("processing-times", "PERM", "PERM processing times", "/perm-processing-times"),
-  t("timeline-calculator", "PERM", "Processing time calculator", "/tools/perm-timeline-calculator", "The likely decision day and its range."),
+  t("timeline-calculator", "PERM", "Timeline calculator", "/tools/perm-timeline-calculator", "The likely decision day and its range."),
   s("queue", "PERM", "Queue backlog", "/perm-queue"),
   s("activity", "PERM", "Daily decisions", "/perm-decision-activity"),
   s("risk", "PERM", "Denial rates", "/perm-denial-risk"),
