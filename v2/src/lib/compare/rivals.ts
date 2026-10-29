@@ -1,15 +1,26 @@
-import { CHECKED_ON, type Tracker } from "./trackers";
+import type { Tracker } from "./trackers";
 
 /**
- * The other PERM trackers, read on their own pages and answers on Tuesday,
- * October 27, 2026 (`~/.claude/explanations/20261027_perm_vs_landscape/`,
- * saved captures under raw/). Every quote is verbatim from a saved capture.
- * A "no" rests on what was checked, said in its note; nothing is guessed.
+ * The other trackers, each read on its own pages and answers on the day in
+ * its `checkedOn`. Every quote is verbatim from a saved capture
+ * (`~/.claude/explanations/20261027_perm_vs_landscape/raw/` for October 27,
+ * `~/.claude/explanations/20261028_h1bgrader/raw/` for October 28). A "no"
+ * rests on what was checked, said in its note; nothing is guessed.
  *
- * The trackers people search for by name (Ahrefs and Search Console, Oct 27
- * 2026), the ones a Reddit comparison thread names, and H1BPerm, the newest
+ * October 27: the PERM trackers people search for by name (Ahrefs and Search
+ * Console), the ones a Reddit comparison thread names, and H1BPerm, the newest
  * (registered Oct 5 2026; owner's call to include it). eb3.work was checked
  * and left out: it's a paid job-placement agency, not a case tracker.
+ *
+ * October 28: H1BGrader, whose PERM tracker went live in October, and the
+ * three green card sites a search-visibility tool lists beside this one
+ * (GreenCardClock, Lawfully, Immigration Road). Each was read in a person's
+ * own browser, robots.txt first; Cloudflare's check on H1BGrader passed by
+ * itself and stopped the reading partway, so a few of its marks rest on fewer
+ * pages and say so. Nothing was submitted and no form was filled. A site
+ * signing itself "PERM Analytics" (permupdate.us) was checked and left off:
+ * its case list and month table are written into its page's code, not read
+ * from DOL.
  *
  * h1bperm.com's robots.txt closes the site to AI crawlers, so its pages were
  * read with an honestly named request under its rules for every other client,
@@ -23,6 +34,11 @@ const PK = "https://permtrack.app";
 const IL = "https://immilane.com";
 const PQ = "https://permqueue.com";
 const HP = "https://h1bperm.com";
+const HG = "https://h1bgrader.com";
+const VG = "https://visagrader.com";
+const GCC = "https://greencardclock.com";
+const LW = "https://www.lawfully.com";
+const IR = "https://www.immigrationroad.com";
 
 export const RIVALS: readonly Tracker[] = [
   {
@@ -31,7 +47,8 @@ export const RIVALS: readonly Tracker[] = [
     url: PU,
     operator: null,
     price: "Free, with ads",
-    checkedOn: CHECKED_ON,
+    group: "perm",
+    checkedOn: "2026-10-27",
     newestData: {
       day: "2026-10-26",
       note: "Its data through October 26",
@@ -61,7 +78,8 @@ export const RIVALS: readonly Tracker[] = [
     url: PT,
     operator: null,
     price: "Free",
-    checkedOn: CHECKED_ON,
+    group: "perm",
+    checkedOn: "2026-10-27",
     newestData: {
       day: "2026-06-30",
       note: "Decided cases only, from DOL's file through June 30",
@@ -94,7 +112,8 @@ export const RIVALS: readonly Tracker[] = [
     url: PK,
     operator: "Permtrack LLC (California)",
     price: "Free to browse; alerts $9.99 a month",
-    checkedOn: CHECKED_ON,
+    group: "perm",
+    checkedOn: "2026-10-27",
     newestData: {
       day: "2026-10-27",
       note: "DOL checked the same day",
@@ -127,7 +146,8 @@ export const RIVALS: readonly Tracker[] = [
     url: IL,
     operator: null,
     price: "Free, with ads; paid case emails planned",
-    checkedOn: CHECKED_ON,
+    group: "perm",
+    checkedOn: "2026-10-27",
     newestData: {
       day: "2026-10-27",
       note: "Updated the same day",
@@ -160,7 +180,8 @@ export const RIVALS: readonly Tracker[] = [
     url: PQ,
     operator: null,
     price: "Free, with ads",
-    checkedOn: CHECKED_ON,
+    group: "perm",
+    checkedOn: "2026-10-27",
     newestData: {
       day: "2026-10-27",
       note: "Measured to the same day",
@@ -193,7 +214,8 @@ export const RIVALS: readonly Tracker[] = [
     url: HP,
     operator: null,
     price: "Free",
-    checkedOn: CHECKED_ON,
+    group: "perm",
+    checkedOn: "2026-10-27",
     newestData: {
       day: "2026-10-27",
       note: "Updated the same day",
@@ -221,6 +243,150 @@ export const RIVALS: readonly Tracker[] = [
       "Every page in six languages",
       "A list of every case filed on a given day",
       "Each law firm's days from the end of recruitment to filing",
+    ],
+  },
+  {
+    slug: "h1bgrader",
+    name: "H1BGrader",
+    url: HG,
+    operator: null,
+    price: "Free, with ads",
+    group: "perm",
+    checkedOn: "2026-10-28",
+    newestData: {
+      day: "2026-10-28",
+      note: "Updated the same day",
+      evidence: { url: `${HG}/green-card/perm-tracker`, quote: "Data refreshed 6 minutes ago" },
+    },
+    cells: {
+      lookup: { mark: "yes", note: "PERM case numbers only, each with its own page", evidence: { url: `${HG}/green-card/perm-tracker`, quote: "Enter a PERM case number for live status, or a filing date to estimate processing time." } },
+      pending: { mark: "yes", note: "PERM cases it tracks, filed from about August 2025", evidence: { url: `${HG}/green-card/perm-tracker`, quote: "85,294 cases still pending in our PERM tracker" } },
+      source: { mark: "yes", note: "DOL's case-status system for PERM", evidence: { url: HG, quote: "Live status for pending PERM cases from DOL FLAG" } },
+      wage: { mark: "partial", note: "DOL's published wage-request month and an estimate from a filing date; a request's status is left to DOL", evidence: { url: `${HG}/green-card/pwd-processing-time`, quote: "If you know the case number, you can check the status at US DOL FLAG website" } },
+      lca: { mark: "yes", note: "Every LCA in DOL's files since FY2011, by employer, job and city; no live status", evidence: { url: `${HG}/h1b-sponsors`, quote: "LCA data since 2011 · latest FY 2026 Q3" } },
+      seasonal: { mark: "no", note: "Not found on the pages read; its own data line names LCA and PERM only", evidence: { url: HG, quote: "more than 6 million records from FY 2011 through FY 2026 LCA/PERM" } },
+      alerts: { mark: "yes", note: "PERM cases only: a weekly digest, a status change, or both", evidence: { url: `${HG}/green-card/perm-tracker/subscribe`, quote: "Enter a PERM Labor Certification case number and email for a weekly update and status-change alerts." } },
+      employers: { mark: "yes", note: "A page per H-1B sponsor and a green card page per PERM sponsor; spellings not merged", evidence: { url: `${HG}/h1b-sponsors`, quote: "Showing 1 to 100 of 508016 entries" } },
+      bulletin: { mark: "partial", note: "On its sister site, VisaGrader.com, matching State's November 2026 chart", evidence: { url: `${VG}/green-card/visa-bulletin`, quote: "Latest bulletin: November 2026" } },
+      attorney: { mark: "no", note: "No case or deadline tool on the pages read; its attorney pages list law firms by filing counts", evidence: { url: `${HG}/green-card/perm-tracker` } },
+      noAccount: { mark: "yes", note: "Its PERM tracker works signed out; some H-1B features ask for a free login", evidence: { url: `${HG}/green-card/perm-tracker`, quote: "No account needed. Confirm via email before we send anything." } },
+      free: { mark: "yes", note: "No price on any page read", evidence: { url: HG, quote: "Free Ultimate H1B Sponsor Checker Chrome Extension" } },
+      noAds: { mark: "no", note: "Display ads through Raptive, and Google AdSense", evidence: { url: `${HG}/compare`, quote: "adsbygoogle.js" } },
+      openData: { mark: "no", note: "No download or documented API on the pages read", evidence: { url: `${HG}/h1b-sponsors` } },
+    },
+    strengths: [
+      "Free emails for a PERM case, weekly or on a status change, with no account",
+      "A page for every H-1B sponsor since FY2011, with ten years of LCA and USCIS decisions",
+      "A free Chrome extension on LinkedIn, Indeed, Glassdoor, Dice and Google Jobs",
+      "Each PERM case's status history, dated by when it was first seen",
+    ],
+  },
+  {
+    slug: "greencardclock",
+    name: "GreenCardClock",
+    url: GCC,
+    operator: null,
+    price: "Free, with paid estimate extras from $0.99 a day or $5.99 a month",
+    group: "greenCard",
+    checkedOn: "2026-10-28",
+    newestData: {
+      day: "2026-10-27",
+      note: "USCIS's I-485 inventory written up Oct 27; its DOL queue reads as of October 5",
+      evidence: { url: GCC, quote: "Oct 27, 2026 · 11 min read" },
+    },
+    cells: {
+      lookup: { mark: "partial", note: "Decided cases only, from DOL's quarterly files", evidence: { url: `${GCC}/perm-tracker`, quote: "Pending cases are not in that data." } },
+      pending: { mark: "no", note: "DOL's published queue months; no pending cases", evidence: { url: `${GCC}/perm-tracker`, quote: "Searches decided cases (certified, denied or withdrawn) in DOL's public disclosure data, decisions through June 30, 2026." } },
+      source: { mark: "partial", note: "DOL's processing-times page and its quarterly files; no case-status reads", evidence: { url: `${GCC}/perm-tracker`, quote: "As of October 5, 2026, from DOL's FLAG processing times page." } },
+      wage: { mark: "no", note: "No wage-request lookup or queue on the pages read", evidence: { url: `${GCC}/perm-tracker` } },
+      lca: { mark: "yes", note: "Certified LCAs from DOL's quarterly files, by employer, title, SOC, state and date; no live status", evidence: { url: `${GCC}/salary-explorer`, quote: "Powered by DOL OFLC quarterly disclosure files." } },
+      seasonal: { mark: "no", note: "Not found on the pages read", evidence: { url: GCC } },
+      alerts: { mark: "no", note: "Visa bulletin emails and push only; its USCIS case list stays in the browser", evidence: { url: GCC, quote: "Get each new visa bulletin's Final Action Dates and Dates for Filing by email." } },
+      employers: { mark: "partial", note: "200 employer pages in its sitemap, and a search across more", evidence: { url: GCC, quote: "132K+ Employers Tracked" } },
+      bulletin: { mark: "yes", evidence: { url: GCC, quote: "November 2026 Visa Bulletin is live" } },
+      attorney: { mark: "no", note: "An attorney directory; no case or deadline tool", evidence: { url: GCC, quote: "Find immigration attorneys who specialize in employment-based green cards, H-1B visas, and PERM labor certifications." } },
+      noAccount: { mark: "yes", evidence: { url: `${GCC}/case-tracker`, quote: "nothing is sent to a server and no account is required" } },
+      free: { mark: "partial", note: "Most tools free; the estimate's scenarios and place in line are paid", evidence: { url: `${GCC}/pricing`, quote: "MONTHLY $5.99 / month" } },
+      noAds: { mark: "partial", note: "No ads yet; labelled ad placements start with the December 2026 bulletin", evidence: { url: `${GCC}/advertise`, quote: "Placements start with the December 2026 visa bulletin" } },
+      openData: { mark: "no", note: "No download or API offered; its robots.txt closes /api/", evidence: { url: `${GCC}/robots.txt`, quote: "Disallow: /api/" } },
+    },
+    strengths: [
+      "A priority-date estimate built on USCIS's I-485 inventory and the visa bulletin, with three scenarios",
+      "An email and a browser alert for each new visa bulletin, by country and category",
+      "Write-ups the week USCIS's I-485 inventory or a new bulletin lands",
+      "Community green card timelines and a consular appointment tracker",
+    ],
+  },
+  {
+    slug: "lawfully",
+    name: "Lawfully",
+    url: LW,
+    operator: "Lawfully Inc.",
+    price: "Free app with paid features; a business plan with a 14-day trial",
+    group: "greenCard",
+    checkedOn: "2026-10-28",
+    newestData: {
+      day: "2026-10-27",
+      note: "Its USCIS processing trends, updated daily",
+      evidence: { url: `${LW}/data/trends`, quote: "Last updated: 2026-10-27 (updated daily)" },
+    },
+    cells: {
+      lookup: { mark: "partial", note: "USCIS, NVC and EOIR cases in its phone app; it names DOL too, but PERM isn't in its list of forms", evidence: { url: LW, quote: "Track all USCIS, NVC, DOL, and EOIR case statuses with a detailed update history and visa trends visualizations" } },
+      pending: { mark: "partial", note: "USCIS cases its users track, by filing month and step; nothing on PERM", evidence: { url: `${LW}/data/trends`, quote: "Cases in each step by filing month" } },
+      source: { mark: "partial", note: "USCIS case status; DOL updates named only for its business plan", evidence: { url: `${LW}/pro`, quote: "Real-time USCIS, NVC, DOL, and EOIR update" } },
+      wage: { mark: "no", note: "Not found on the pages read", evidence: { url: `${LW}/case-tracker` } },
+      lca: { mark: "no", note: "It tracks USCIS's H-1B petitions, not DOL's LCAs", evidence: { url: `${LW}/case-tracker`, quote: "H-1B, H-1C, H-2A, H-2B, H-3, TN" } },
+      seasonal: { mark: "partial", note: "USCIS's H-2A and H-2B petitions in its app; not DOL's applications", evidence: { url: `${LW}/case-tracker`, quote: "H-1B, H-1C, H-2A, H-2B, H-3, TN" } },
+      alerts: { mark: "partial", note: "Phone alerts for USCIS cases in its app; email alerts on the business plan; nothing on PERM", evidence: { url: `${LW}/case-tracker`, quote: "push notification whenever there is an update to your USCIS case status" } },
+      employers: { mark: "no", note: "No employer pages found", evidence: { url: LW } },
+      bulletin: { mark: "partial", note: "Bulletin history in its app; the website's bulletin page is a picture", evidence: { url: `${LW}/case-tracker`, quote: "Browse customized history of final action dates and dates for filing for your visa type." } },
+      attorney: { mark: "partial", note: "A paid case-tracking portal for law firms; no PERM deadlines seen", evidence: { url: `${LW}/pro`, quote: "Stay ahead of every case you handle for your clients and employees" } },
+      noAccount: { mark: "unknown", note: "Lookups are in its phone app; whether the app needs an account wasn't checked", evidence: { url: `${LW}/case-tracker`, quote: "Scan the QR code and download the app on your phone." } },
+      free: { mark: "partial", note: "Free basics; paid one-time, monthly or quarterly services", evidence: { url: `${LW}/terms-of-service`, quote: "In addition to the basic, free of charge features, Lawfully also offers services subject to one-time payment, monthly, or tri-monthly" } },
+      noAds: { mark: "no", note: "Google Ad Manager ad slots on its processing-time pages", evidence: { url: `${LW}/data/trends`, quote: "securepubads.g.doubleclick.net/tag/js/gpt.js" } },
+      openData: { mark: "no", note: "No download or API offered on the pages read", evidence: { url: LW } },
+    },
+    strengths: [
+      "Phone alerts for USCIS, NVC and EOIR cases",
+      "Daily USCIS processing trends by form and service center, from the cases its users track",
+      "A client portal for law firms that track many USCIS cases",
+      "Video consultations with immigration attorneys and mock interviews",
+    ],
+  },
+  {
+    slug: "immigrationroad",
+    name: "Immigration Road",
+    url: IR,
+    operator: null,
+    price: "Free, with ads",
+    group: "greenCard",
+    checkedOn: "2026-10-28",
+    newestData: {
+      day: null,
+      note: "Shows the November 2026 bulletin; no dated stamp found",
+      evidence: { url: `${IR}/visa-bulletin.php`, quote: "October 2026 Visa Bulletin November 2026 Visa Bulletin" },
+    },
+    cells: {
+      lookup: { mark: "no", note: "Explains how to check USCIS status; no lookup of its own", evidence: { url: IR, quote: "Learn how to check your USCIS case status online, by phone, by email or in person through InfoPass." } },
+      pending: { mark: "partial", note: "USCIS's pending I-485 inventory and State's consular counts by priority date; no PERM cases", evidence: { url: `${IR}/green-card-tracker.php`, quote: "USCIS pending I-485 inventory" } },
+      source: { mark: "no", note: "Its PERM page is a guide that points elsewhere for times", evidence: { url: `${IR}/green-card/perm.php`, quote: "Please see Current PERM Processing Times" } },
+      wage: { mark: "no", note: "Only a guide, which still says wage requests go to the State workforce agency", evidence: { url: `${IR}/green-card/perm.php`, quote: "Request a prevailing wage determination from SWA." } },
+      lca: { mark: "partial", note: "An LCA case search in its menu; not opened, because its robots.txt asks robots to stay off that page", evidence: { url: IR, quote: "LCA Case Search" } },
+      seasonal: { mark: "no", note: "Not found on the pages read", evidence: { url: IR } },
+      alerts: { mark: "no", note: "Visa bulletin emails only", evidence: { url: `${IR}/visa-bulletin.php`, quote: "Sign up for Visa Bulletin Alerts" } },
+      employers: { mark: "no", note: "No employer pages in its 608-URL sitemap", evidence: { url: "https://immigrationroad.com/sitemap.xml" } },
+      bulletin: { mark: "yes", note: "Every bulletin back to 2002", evidence: { url: `${IR}/visa-bulletin.php`, quote: "October 2026 Visa Bulletin November 2026 Visa Bulletin" } },
+      attorney: { mark: "no", note: "No case or deadline tool", evidence: { url: IR } },
+      noAccount: { mark: "yes", evidence: { url: `${IR}/green-card-tracker.php`, quote: "To calculate your own position in the green card queue, select your case information and click “Track Green Card”." } },
+      free: { mark: "yes", evidence: { url: `${IR}/visa-bulletin.php`, quote: "subscribing to our free Visa Bulletin Alert" } },
+      noAds: { mark: "no", note: "Ezoic and Amazon display ads", evidence: { url: IR, quote: "g.ezoic.net" } },
+      openData: { mark: "no", note: "No download offered", evidence: { url: IR } },
+    },
+    strengths: [
+      "Every visa bulletin back to 2002, with charts per category",
+      "A place-in-line count from USCIS's I-485 inventory plus State's consular cases",
+      "A one-page immigration flowchart the site says media, the U.S. Navy and the American Bar Association have used",
+      "The site in Chinese as well as English",
     ],
   },
 ];

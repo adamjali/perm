@@ -754,13 +754,13 @@
   "slug": "compare",
   "path": "/compare",
   "title": "PERM trackers compared",
-  "label": "Seven PERM case trackers checked side by side on their own pages: what each looks up, its data, how fresh it is and what it costs.",
+  "label": "PERM case trackers and green card sites, each checked on its own pages: what it looks up, its data, how fresh it is and what it costs.",
   "shot": "compare.png",
   "crop": [
    0,
    0,
-   2432,
-   1186
+   2672,
+   1326
   ],
   "viewport": 1440,
   "maxWidth": 1408,

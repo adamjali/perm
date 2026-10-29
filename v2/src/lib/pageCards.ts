@@ -65,7 +65,7 @@ export const PAGE_CARD_ALT = {
   "wage-levels": "Prevailing wage levels by occupation and area. DOL's four wage levels for an occupation in a metro or non-metro area, read live from the OFLC wage search.",
   "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney.",
   "today": "Where every step stands today. A card each for the wage request, PERM, the I-140 and the visa bulletin, each with the day being worked and whether its line is growing.",
-  "compare": "PERM trackers compared. A grid of seven PERM case trackers against fourteen questions, checked on each site's own pages on October 27, 2026.",
+  "compare": "PERM trackers compared. A grid of PERM case trackers and green card sites against fourteen questions, checked on each site's own pages on October 27 and 28, 2026.",
   "press": "Press and data for journalists. What DOL's records can tell a reporter, and how to credit PERM Tracker.",
   "reviews": "Leave a review of PERM Tracker. Five stars to rate it, above a row of review cards from the people who use it.",
   "blog": "PERM Tracker blog. What DOL's own files show about processing times, denials, wages and the queue.",

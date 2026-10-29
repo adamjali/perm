@@ -1,6 +1,7 @@
 /**
- * PERM trackers compared: every other site that tracks PERM cases, checked on
- * its own pages, beside this one.
+ * PERM trackers compared: every other site that tracks PERM cases, and the
+ * green card sites people weigh beside them, each checked on its own pages,
+ * beside this one.
  *
  * The one page that names other trackers (owner's call, Oct 27 2026). Search
  * Console showed people looking for them by name ("perm update tracker",
@@ -13,6 +14,7 @@
 
 import type { Metadata } from "next";
 import Image from "next/image";
+import { Fragment } from "react";
 import Link from "next/link";
 
 import { TrackerMatrix, MARK_WORD, MarkIcon } from "@/components/compare/TrackerMatrix";
@@ -20,14 +22,14 @@ import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { HOME_SHOTS } from "@/lib/compare/homeShots";
 import { RIVALS } from "@/lib/compare/rivals";
-import { CHECKED_ON, PERM_TRACKER, ROWS, type Tracker } from "@/lib/compare/trackers";
+import { checkedPhrase, GROUPS, PERM_TRACKER, ROWS, type Tracker } from "@/lib/compare/trackers";
 import { longDate as formatLongDate } from "@convex/lib/months";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "PERM Trackers Compared: PERM Update, PERM Timeline and More";
 const DESCRIPTION =
-  "Seven PERM case trackers checked side by side on their own pages: what each looks up, where its data comes from, how fresh it is and what it costs.";
+  "PERM case trackers and green card sites, each checked on its own pages: what it looks up, where its data comes from, how fresh it is and what it costs.";
 
 export const metadata: Metadata = withSocialCard(
   {
@@ -42,7 +44,8 @@ export const metadata: Metadata = withSocialCard(
 
 export const dynamic = "force-static";
 
-const checked = formatLongDate(CHECKED_ON) ?? CHECKED_ON;
+/** Every day a rival's marks were read, in words ("October 27 and 28, 2026"). */
+const checked = checkedPhrase(RIVALS.map((t) => t.checkedOn));
 
 /** Whole days between two Eastern days. */
 function daysBetween(from: string, to: string): number {
@@ -53,7 +56,9 @@ function freshnessRows(trackers: readonly Tracker[]): BarRow[] {
   return trackers
     .filter((t) => t.newestData.day || t.slug === PERM_TRACKER.slug)
     .map((t) => {
-      const age = t.newestData.day ? Math.max(0, daysBetween(t.newestData.day, CHECKED_ON)) : 0;
+      // Measured against the day the site was read, not today: a site read a day later
+      // isn't a day staler.
+      const age = t.newestData.day ? Math.max(0, daysBetween(t.newestData.day, t.checkedOn)) : 0;
       return {
         key: t.slug,
         label: t.name,
@@ -66,16 +71,35 @@ function freshnessRows(trackers: readonly Tracker[]): BarRow[] {
     .sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
 }
 
+/**
+ * Which sites were read on which day, in words, for the pictures' caption:
+ * "October 27, 2026 for PERM Update, ...; October 28, 2026 for H1BGrader, ...".
+ * One day reads simply as that day.
+ */
+function shotDays(rivals: readonly Tracker[]): string {
+  const days = [...new Set(rivals.map((t) => t.checkedOn))].sort();
+  if (days.length === 1) return formatLongDate(days[0]!) ?? days[0]!;
+  return days
+    .map((d) => {
+      const names = rivals.filter((t) => t.checkedOn === d).map((t) => t.name);
+      const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      return `${formatLongDate(d) ?? d} for ${list}`;
+    })
+    .join("; ");
+}
+
 export default function ComparePage() {
   const trackers: Tracker[] = [PERM_TRACKER, ...RIVALS];
   const fresh = freshnessRows(trackers);
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
+    // Wider than most pages: the grid is the page's picture, and every site needs its column.
+    <div className="mx-auto w-full max-w-[1320px] px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
       <header className="max-w-3xl">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">PERM trackers compared</h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-soft">
-          The PERM trackers people search for by name, and the newest, each checked on its own pages on {checked}:
-          what it can look up, where its data comes from, and what it costs.
+          The PERM trackers people search for by name, the newest, and the green card sites people weigh beside
+          them, each checked on its own pages on {checked}: what it can look up, where its data comes from, and what
+          it costs.
         </p>
       </header>{" "}
       <section aria-label="The comparison" className="mt-8">
@@ -86,7 +110,9 @@ export default function ComparePage() {
           <h2 id="fresh" className="font-heading text-2xl font-bold">
             How old each site&apos;s newest data was
           </h2>{" "}
-          <p className="mt-2 text-base text-soft">On {checked}, by each site&apos;s own date stamp. Shorter is fresher.</p>{" "}
+          <p className="mt-2 text-base text-soft">
+            On the day each was read, by each site&apos;s own date stamp. Shorter is fresher.
+          </p>{" "}
           {/* One line a site, across the page's whole width, like the grid above
               and the cards below (owner, Oct 27 2026: every block had its own
               narrower width and sat at the left edge). */}
@@ -100,56 +126,74 @@ export default function ComparePage() {
         {/* Each card opens with the site's own homepage, as it looked the day
             it was read. Rows line up on the pictures, and each card is its own
             height: stretched to the tallest, the short ones were half empty. */}
-        <ul className="mt-6 grid grid-cols-1 items-start gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
-          {RIVALS.map((t) => {
-            const shot = HOME_SHOTS[t.slug];
-            return (
-              <li key={t.slug} className="object flex flex-col">
-                {shot ? (
-                  <a
-                    href={t.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${t.name}'s homepage (opens in a new tab)`}
-                    className="block border-b-2 border-foreground"
-                  >
-                    <Image
-                      src={shot.src}
-                      width={shot.width}
-                      height={shot.height}
-                      alt={shot.alt}
-                      sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                      className="block h-auto w-full"
-                    />
-                  </a>
-                ) : null}{" "}
-                <div className="flex flex-col gap-3 p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-                    <div className="min-w-0">
-                      <p className="font-heading text-xl font-bold">{t.name}</p>{" "}
-                      <p className="text-sm text-soft">
-                        {t.url.replace(/^https?:\/\//, "")}
-                        {t.operator ? <>, run by {t.operator}</> : null}{" "}
-                      </p>
-                    </div>{" "}
-                    <p className="bg-tint px-2.5 py-1 text-sm font-semibold">{t.price}</p>
-                  </div>{" "}
-                  {t.strengths.length ? (
-                    <ul aria-label="What it does well" className="space-y-2 text-base">
-                      {t.strengths.map((s) => (
-                        <li key={s} className="flex items-start gap-2.5">
-                          <MarkIcon mark="yes" className="mt-0.5 size-5 shrink-0 [&_svg]:size-3" />
-                          <span>{s}{" "}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="mt-4 text-sm text-soft">Each site&apos;s homepage as it opened on {checked}.</p>
+        {GROUPS.map((g) => {
+          const rivals = RIVALS.filter((t) => t.group === g.key);
+          if (!rivals.length) return null;
+          return (
+            <Fragment key={g.key}>
+              <h3 className="mt-8 font-heading text-lg font-bold">
+                {g.label}{" "}
+              </h3>{" "}
+              <ul
+                aria-label={g.label}
+                // Rows of three that wrap, the last row centred: a card left alone sits in the
+                // middle, never at the left edge with empty slots beside it.
+                className="mt-4 flex flex-wrap items-start justify-center gap-6 [&>li]:w-full sm:[&>li]:w-[calc(50%-0.75rem)] lg:[&>li]:w-[calc((100%-3rem)/3)]"
+              >
+                {rivals.map((t) => {
+                  const shot = HOME_SHOTS[t.slug];
+                  return (
+                    <li key={t.slug} className="object flex flex-col">
+                      {shot ? (
+                        <a
+                          href={t.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${t.name}'s homepage (opens in a new tab)`}
+                          className="block border-b-2 border-foreground"
+                        >
+                          <Image
+                            src={shot.src}
+                            width={shot.width}
+                            height={shot.height}
+                            alt={shot.alt}
+                            sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+                            className="block h-auto w-full"
+                          />
+                        </a>
+                      ) : null}{" "}
+                      <div className="flex flex-col gap-3 p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                          <div className="min-w-0">
+                            <p className="font-heading text-xl font-bold">{t.name}</p>{" "}
+                            <p className="text-sm text-soft">
+                              {t.url.replace(/^https?:\/\//, "")}
+                              {t.operator ? <>, run by {t.operator}</> : null}{" "}
+                            </p>
+                          </div>{" "}
+                          <p className="bg-tint px-2.5 py-1 text-sm font-semibold">{t.price}</p>
+                        </div>{" "}
+                        {t.strengths.length ? (
+                          <ul aria-label="What it does well" className="space-y-2 text-base">
+                            {t.strengths.map((s) => (
+                              <li key={s} className="flex items-start gap-2.5">
+                                <MarkIcon mark="yes" className="mt-0.5 size-5 shrink-0 [&_svg]:size-3" />
+                                <span>{s}{" "}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Fragment>
+          );
+        })}
+        <p className="mt-4 text-sm text-soft">
+          Each site&apos;s homepage as it opened the day its marks were read: {shotDays(RIVALS)}.
+        </p>
       </section>{" "}
       <section
         aria-labelledby="check"

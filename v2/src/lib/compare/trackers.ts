@@ -3,7 +3,7 @@
  *
  * The one page on the site that names other trackers (owner's call, Oct 27
  * 2026; every other surface says "a third party"). Every mark on a rival is
- * something read on that site's own pages or answers on the day in
+ * something read on that site's own pages or answers on the day in its own
  * `checkedOn`, with the address and a short quote, so a reader can check it
  * and so can the site it's about. A feature we looked for and couldn't find
  * is "no" with what we checked; one we couldn't check (behind a sign-up, an
@@ -12,6 +12,8 @@
  * Our own column links our own pages. Estimates aren't a row: they're the
  * owner's tool, never listed as something the site offers.
  */
+
+import { longDate, MONTH_NAMES } from "@convex/lib/months";
 
 export type Mark = "yes" | "partial" | "no" | "unknown";
 
@@ -57,6 +59,8 @@ export interface Tracker {
   operator: string | null;
   /** What it costs, in its own terms. */
   price: string;
+  /** Which list it sits in: the trackers built around PERM, or the wider green card sites people weigh beside them. */
+  group: GroupKey;
   /** "YYYY-MM-DD", the Eastern day every mark below was read. */
   checkedOn: string;
   /**
@@ -69,7 +73,30 @@ export interface Tracker {
   strengths: string[];
 }
 
-export const CHECKED_ON = "2026-10-27";
+/** The two lists, in the order the page shows them. */
+export const GROUPS = [
+  { key: "perm", label: "PERM trackers" },
+  { key: "greenCard", label: "Green card sites" },
+] as const;
+
+export type GroupKey = (typeof GROUPS)[number]["key"];
+
+/**
+ * The days the sites were read, in words: "October 27 and 28, 2026" when they
+ * share a month, else each day in full. The page states it once, so it has to
+ * name every day a mark rests on.
+ */
+export function checkedPhrase(days: readonly string[]): string {
+  const sorted = [...new Set(days)].sort();
+  if (sorted.length === 0) return "";
+  const join = (xs: string[]) => (xs.length === 1 ? xs[0]! : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+  const month = sorted[0]!.slice(0, 7);
+  if (sorted.every((d) => d.startsWith(month))) {
+    const name = MONTH_NAMES[Number(month.slice(5, 7)) - 1];
+    return `${name} ${join(sorted.map((d) => String(Number(d.slice(8, 10)))))}, ${month.slice(0, 4)}`;
+  }
+  return join(sorted.map((d) => longDate(d) ?? d));
+}
 
 const OURS = "https://permtracker.app";
 
@@ -79,7 +106,8 @@ export const PERM_TRACKER: Tracker = {
   url: OURS,
   operator: "PERM Tracker LLC (Florida)",
   price: "Free",
-  checkedOn: CHECKED_ON,
+  group: "perm",
+  checkedOn: "2026-10-28",
   newestData: { day: null, note: "Read from DOL each night, and every 5 minutes on weekdays for watched cases" },
   cells: {
     lookup: { mark: "yes", note: "Any PERM, wage request, LCA, H-2A, H-2B or CW-1 number", evidence: { url: `${OURS}/perm-case-status` } },
