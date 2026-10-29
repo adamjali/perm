@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -23,6 +23,10 @@ case "$job" in
   # DOL's own notice on FLAG (a maintenance window), read every 15 minutes so
   # the site can say why statuses are late (Oct 27 2026). It writes its own run row.
   flag-notice) timeout 2m python3 scripts/ingest_flag_notice.py || { rc=1; fail ingest_flag_notice.py "exited non-zero or ran past 2m"; } ;;
+  # Every AI model the chat and summarizer use, asked once a day (Oct 29 2026): free models retire and get
+  # refused without notice. It reads the four keys from the app's own env file by name and writes its own run
+  # row; it exits non-zero only when no chat model answered, which the alarm emails.
+  chat-models) timeout 8m python3 scripts/check_chat_models.py || { rc=1; fail check_chat_models.py "no chat model answered, or the check couldn't run"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

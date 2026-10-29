@@ -1069,10 +1069,23 @@ export default function PrivacyPage() {
               AI Provider Retention
             </h3>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
-              <li>Google Gemini: Up to 55 days (abuse monitoring), then deleted</li>{" "}
-              <li>OpenRouter: Not stored (Zero Data Retention)</li>{" "}
-              <li>Mistral AI: Per their data processing terms</li>{" "}
-              <li>Groq: Not stored when ZDR is enabled</li>
+              <li>
+                Google Gemini: under Google&apos;s terms for unpaid use, Google
+                may keep what is sent and use it to improve its products (see AI
+                Service Providers above)
+              </li>{" "}
+              <li>
+                Groq: not kept by default; it may be logged for up to 30 days to
+                fix errors or investigate abuse
+              </li>{" "}
+              <li>
+                OpenRouter: decided by the policy of the model&apos;s own
+                provider, which may keep a request or use it for training
+              </li>{" "}
+              <li>
+                Mistral AI: per its terms, which allow it to use API requests to
+                improve its services unless the account opts out
+              </li>
             </ul>{" "}
 
             <p className="text-soft leading-relaxed mt-4">

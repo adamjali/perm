@@ -573,6 +573,9 @@ NIGHTLY_BUILDERS = {
     "build_straggler_rates.py": 3,
     "build_census_days.py": 3,
     "sync_published_live.py": 3,
+    # The server's daily check of the chat's AI models (permtracker-uscis chat-models, Oct 29 2026). Its doc is
+    # read only by the morning report, so this is the second clock that says the check stopped.
+    "check_chat_models.py": 3,
 }
 
 
@@ -596,8 +599,8 @@ def check_nightly_builders(db) -> int:
         if age is None or age > budget:
             late.append(f"{script} ({shown}, budget {budget}d)")
     if late:
-        print(f"\nNIGHTLY REBUILD HAS STOPPED for: {', '.join(late)}. The pages these "
-              "tables feed keep serving their last figures without saying so.")
+        print(f"\nNIGHTLY REBUILD HAS STOPPED for: {', '.join(late)}. The pages and checks these "
+              "jobs feed keep their last figures without saying so.")
         return 1
     return 0
 

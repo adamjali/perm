@@ -1564,6 +1564,45 @@ def perf_section(now_ms: int) -> dict:
     return perf_verdict(with_computed_at(read_doc(db, "server_perf"), rows[0][0] if rows else None), now_ms)
 
 
+# ── the chat's AI models (scripts/check_chat_models.py) ───────────────────
+
+# The server asks every model the chat and summarizer use once a day at 6:40 AM
+# Eastern (permtracker-uscis chat-models). Older than this, the check stopped.
+CHAT_MODELS_STALE_MS = 30 * HOUR_MS
+CHAT_BAD = ("gone", "refused", "unfit")
+
+
+def chat_models_verdict(doc: dict | None, now_ms: int) -> dict:
+    """Judge perm_docs['chat_models']. A model gone or refused with others still
+    answering is a warning: the chat works, the chain needs a swap. No chat model
+    answering, or no check for a day, fails."""
+    key, title = "chat", "The chat's AI models"
+    if not doc:
+        return section(key, title, "warn", "No model check yet: permtracker-uscis chat-models hasn't written one.")
+    age = now_ms - int(doc.get("checkedAt") or 0)
+    models = doc.get("models") or []
+    chat = [m for m in models if m.get("role") == "chat"]
+    ok = [m for m in chat if m.get("verdict") == "ok"]
+    bad = [m for m in models if m.get("verdict") in CHAT_BAD]
+    lines = [f"{m.get('name')}: {m.get('verdict')}, {m.get('reason')}." for m in models]
+    if age > CHAT_MODELS_STALE_MS:
+        return section(key, title, "fail", f"The model check is {age // HOUR_MS} hours old: the daily job has "
+                       "stopped (systemctl status permtracker-uscis@chat-models on the server).", lines)
+    if not ok:
+        return section(key, title, "fail", f"None of the chat's {len(chat)} models answered: every reply fails.",
+                       lines)
+    if bad:
+        return section(key, title, "warn", f"{len(ok)} of {len(chat)} chat models answered. " + " ".join(
+            f"{m.get('name')} is {m.get('verdict')}: {m.get('reason')}." for m in bad), lines)
+    return section(key, title, "ok", f"{len(ok)} of {len(chat)} chat models answered.", lines)
+
+
+def chat_models_section(now_ms: int) -> dict:
+    from lib_db import Database, read_doc  # noqa: PLC0415 - only needed here
+
+    return chat_models_verdict(read_doc(Database(), "chat_models"), now_ms)
+
+
 # ── the live pages, checked (scripts/page_checks.py) ──────────────────────
 
 # The browser flows are what a reader does (look a case up, run a calculator):
@@ -1651,6 +1690,7 @@ def build(now: dt.datetime) -> dict:
         guarded("browser", "Errors in visitors' browsers", browser_errors_section),
         guarded("server", "The server (Oracle)", server_section, now_ms),
         guarded("perf", "Page speed (the server's own readings)", perf_section, now_ms),
+        guarded("chat", "The chat's AI models", chat_models_section, now_ms),
     ]
     return {"day": now.astimezone(ET).date().isoformat(), "generatedAt": now_ms, "sections": sections}
 
