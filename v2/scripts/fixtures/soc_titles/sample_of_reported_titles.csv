@@ -1,0 +1,61 @@
+O*NET-SOC Code,Title,Reported Job Title,Shown in My Next Move
+15-1252.00,Software Developers,Application Developer,N
+15-1252.00,Software Developers,Application Integration Engineer,N
+15-1252.00,Software Developers,Developer,Y
+15-1252.00,Software Developers,DevOps Engineer (Development Operations Engineer),N
+15-1252.00,Software Developers,Infrastructure Engineer,N
+15-1252.00,Software Developers,Software Architect,Y
+15-1252.00,Software Developers,Software Developer,Y
+15-1252.00,Software Developers,Software Development Engineer,N
+15-1252.00,Software Developers,Software Engineer,Y
+15-1252.00,Software Developers,Systems Engineer,N
+15-2051.01,Business Intelligence Analysts,Business Analyst,N
+15-2051.01,Business Intelligence Analysts,Business Intelligence Analyst (BI Analyst),Y
+15-2051.01,Business Intelligence Analysts,Business Intelligence Consultant (BI Consultant),N
+15-2051.01,Business Intelligence Analysts,Business Intelligence Coordinator (BI Coordinator),N
+15-2051.01,Business Intelligence Analysts,Business Intelligence Specialist (BI Specialist),N
+15-2051.01,Business Intelligence Analysts,Competitive Intelligence Analyst,Y
+15-2051.01,Business Intelligence Analysts,Intelligence Analyst,Y
+15-2051.01,Business Intelligence Analysts,Market Intelligence Analyst,N
+15-2051.01,Business Intelligence Analysts,Market Intelligence Consultant,Y
+15-2051.01,Business Intelligence Analysts,Strategic Business and Technology Intelligence Consultant,N
+25-1011.00,"Business Teachers, Postsecondary",Accounting Instructor,N
+25-1011.00,"Business Teachers, Postsecondary",Accounting Professor,N
+25-1011.00,"Business Teachers, Postsecondary",Associate Professor,N
+25-1011.00,"Business Teachers, Postsecondary",Business Administration Professor,N
+25-1011.00,"Business Teachers, Postsecondary",Business Instructor,Y
+25-1011.00,"Business Teachers, Postsecondary",Business Professor,Y
+25-1011.00,"Business Teachers, Postsecondary",Instructor,Y
+25-1011.00,"Business Teachers, Postsecondary",Management Professor,N
+25-1011.00,"Business Teachers, Postsecondary",Marketing Professor,N
+25-1011.00,"Business Teachers, Postsecondary",Professor,Y
+29-1141.00,Registered Nurses,Certified Operating Room Nurse (CNOR),N
+29-1141.00,Registered Nurses,Charge Nurse,Y
+29-1141.00,Registered Nurses,Emergency Department RN (Emergency Department Registered Nurse),Y
+29-1141.00,Registered Nurses,Oncology RN (Oncology Registered Nurse),N
+29-1141.00,Registered Nurses,Operating Room Registered Nurse (OR RN),Y
+29-1141.00,Registered Nurses,Psychiatric RN (Psychiatric Registered Nurse),N
+29-1141.00,Registered Nurses,Relief Charge Nurse,N
+29-1141.00,Registered Nurses,School Nurse,N
+29-1141.00,Registered Nurses,Staff Nurse,Y
+29-1141.00,Registered Nurses,Staff RN (Staff Registered Nurse),N
+29-1141.01,Acute Care Nurses,Acute Care Nurse,N
+29-1141.01,Acute Care Nurses,Cardiac Interventional Care Nurse,N
+29-1141.01,Acute Care Nurses,Cardiovascular ICU Nurse (Cardiovascular Intense Care Unit Nurse),Y
+29-1141.01,Acute Care Nurses,Cardiovascular Surgery Acute Care Nurse Practitioner (Cardiovascular Surgery ACNP),Y
+29-1141.01,Acute Care Nurses,Charge Nurse,Y
+29-1141.01,Acute Care Nurses,DSU Nurse (Day Surgery Unit Nurse),N
+29-1141.01,Acute Care Nurses,MSN (Medical Surgical Nurse),N
+29-1141.01,Acute Care Nurses,PCU RN (Progressive Care Unit Registered Nurse),N
+29-1141.01,Acute Care Nurses,Staff Nurse,Y
+29-1141.01,Acute Care Nurses,Vascular Access Registered Nurse (Vascular Access RN),N
+35-2014.00,"Cooks, Restaurant",Back Line Cook,N
+35-2014.00,"Cooks, Restaurant",Banquet Cook,Y
+35-2014.00,"Cooks, Restaurant",Breakfast Cook,N
+35-2014.00,"Cooks, Restaurant",Cook,N
+35-2014.00,"Cooks, Restaurant",Fry Cook,N
+35-2014.00,"Cooks, Restaurant",Grill Cook,Y
+35-2014.00,"Cooks, Restaurant",Line Cook,Y
+35-2014.00,"Cooks, Restaurant",Prep Cook (Preparation Cook),Y
+35-2014.00,"Cooks, Restaurant",Prep Person (Preparation Person),N
+35-2014.00,"Cooks, Restaurant",Saucier,N
