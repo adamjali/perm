@@ -854,11 +854,12 @@
   "title": "About PERM Tracker",
   "label": "An independent site on DOL's own data, run by an immigration attorney.",
   "shot": "about.png",
+  "css": "[data-about-hero] dl{display:none!important}",
   "crop": [
    0,
    0,
    2048,
-   1092
+   992
   ]
  },
  {
