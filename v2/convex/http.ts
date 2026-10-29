@@ -23,7 +23,7 @@ import { reviewLinkFor, THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
 import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
 import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
 import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
-import { mailLang, withLang, type MailLang } from "../src/lib/i18n/mailLang";
+import { mailLang, withLang } from "../src/lib/i18n/mailLang";
 import { mailPageText } from "./lib/mailPageText";
 
 const isPrefsKind = (k: string): k is PrefsKind => (PREFS_KINDS as readonly string[]).includes(k);
@@ -340,7 +340,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, filingMonth, role, source, queue, news } = body as Record<string, unknown>;
+    const { email, filingMonth, role, source, queue, news, lang } = body as Record<string, unknown>;
     if (typeof email !== "string" || typeof filingMonth !== "string") {
       return json({ ok: false, message: "Email and filing month are both required." }, 400);
     }
@@ -375,6 +375,7 @@ http.route({
       // returned raced that send, and it also staged on every `ok` reply
       // including the ones that mail nothing. See convex/emailPrefs.ts.
       news: news === true,
+      lang: typeof lang === "string" ? lang : undefined,
       ip,
     });
 
@@ -396,15 +397,20 @@ http.route({
   path: "/queue-alert/confirm",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Confirm your queue alert",
-      "We'll email you once, on the day the Department of Labor's PERM analyst-review queue reaches your filing month. That's the only message you'll get.",
+      t.queueConfirmGet.title,
+      t.queueConfirmGet.body,
       {
-        post: `/queue-alert/confirm?token=${encodeURIComponent(token)}`,
-        label: "Confirm",
+        post: withLang(`/queue-alert/confirm?token=${encodeURIComponent(token)}`, lang),
+        label: t.confirmLabel,
       },
+      [],
+      lang,
     );
   }),
 });
@@ -413,25 +419,19 @@ http.route({
   path: "/queue-alert/confirm",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
 
-    const result = await ctx.runMutation(internal.queueAlerts.confirmByToken, { token });
+    const result = await ctx.runMutation(internal.queueAlerts.confirmByToken, { token, lang });
     if (!result) {
-      // Also the answer for a valid token belonging to someone who has since
-      // unsubscribed. Deliberately not distinguished: re-subscribing is a
-      // fresh signup, not a link click.
-      return badLinkPage("This confirmation link is no longer valid.");
+      return badLinkPage(mailPageText(lang).linkNoLongerValid, undefined, lang);
     }
 
-    return messagePage(
-      "You're on the list",
-      result.alreadyReached
-        ? `DOL's PERM analyst-review queue has already reached ${result.filingMonth}. Your alert is on its way now, and that's the only message you'll get. Current figures are always on permtracker.app/perm-processing-times.`
-        : `We'll email you once, when the Department of Labor's PERM analyst-review queue reaches ${result.filingMonth}. That's the only message you'll get, and DOL's current figures are always on permtracker.app/perm-processing-times.`,
-      undefined,
-      confirmOffers("queue"),
-    );
+    const t = mailPageText(lang);
+    const page = result.alreadyReached ? t.queueAlreadyReached(result.filingMonth) : t.queueConfirmed(result.filingMonth);
+    return messagePage(page.title, page.body, undefined, lang === "en" ? confirmOffers("queue") : [], lang);
   }),
 });
 
@@ -440,11 +440,14 @@ http.route({
   path: "/queue-alert/unsubscribe",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
     const ok = await ctx.runMutation(internal.queueAlerts.unsubscribeByToken, { token });
-    if (!ok) return badLinkPage("This link has expired or was changed.");
-    return messagePage("You're unsubscribed", "You won't receive a queue alert from us.");
+    const t = mailPageText(lang);
+    if (!ok) return badLinkPage(t.linkExpired, undefined, lang);
+    return messagePage(t.queueUnsubDone.title, t.queueUnsubDone.body, undefined, [], lang);
   }),
 });
 
@@ -454,12 +457,17 @@ http.route({
   path: "/queue-alert/unsubscribe",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Cancel your queue alert?",
-      "You'll stop receiving the one-time alert about the PERM queue reaching your filing month.",
-      { post: `/queue-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      t.queueUnsubGet.title,
+      t.queueUnsubGet.body,
+      { post: withLang(`/queue-alert/unsubscribe?token=${encodeURIComponent(token)}`, lang), label: t.unsubscribeLabel },
+      [],
+      lang,
     );
   }),
 });
@@ -1005,7 +1013,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, category, country, source, news, newsletter } = body as Record<string, unknown>;
+    const { email, category, country, source, news, newsletter, lang } = body as Record<string, unknown>;
     if (
       typeof email !== "string" ||
       typeof category !== "string" ||
@@ -1028,6 +1036,7 @@ http.route({
       // confirm click completes both, and the confirmation email says so.
       news: news === true,
       newsletter: newsletter === true,
+      lang: typeof lang === "string" ? lang : undefined,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
 
@@ -1039,15 +1048,17 @@ http.route({
   path: "/bulletin-alert/confirm",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Confirm your visa bulletin alert",
-      "We'll email you when a new visa bulletin moves the final-action cutoff you're watching. Nothing else will be sent.",
-      {
-        post: `/bulletin-alert/confirm?token=${encodeURIComponent(token)}`,
-        label: "Confirm",
-      },
+      t.bulletinConfirmGet.title,
+      t.bulletinConfirmGet.body,
+      { post: withLang(`/bulletin-alert/confirm?token=${encodeURIComponent(token)}`, lang), label: t.confirmLabel },
+      [],
+      lang,
     );
   }),
 });
@@ -1056,18 +1067,16 @@ http.route({
   path: "/bulletin-alert/confirm",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
-    const result = await ctx.runMutation(internal.bulletinAlerts.confirmByToken, { token });
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const result = await ctx.runMutation(internal.bulletinAlerts.confirmByToken, { token, lang });
     if (!result) {
-      return badLinkPage("This confirmation link is no longer valid.");
+      return badLinkPage(mailPageText(lang).linkNoLongerValid, undefined, lang);
     }
-    return messagePage(
-      "You're on the list",
-      `We'll email you when the State Department moves the final-action cutoff for ${result.series
-        .map(escapeHtml)
-        .join(", ")}. The full board is always on permtracker.app/tools/priority-date-calculator.`,
-    );
+    const page = mailPageText(lang).bulletinConfirmed(result.series.map(escapeHtml).join(", "));
+    return messagePage(page.title, page.body, undefined, [], lang);
   }),
 });
 
@@ -1094,11 +1103,12 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
     if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
-    const { email, source } = body as Record<string, unknown>;
+    const { email, source, lang } = body as Record<string, unknown>;
     if (typeof email !== "string") return json({ ok: false, message: "An email address is required." }, 400);
     const result = await ctx.runMutation(internal.digestSignup.subscribe, {
       email: email.slice(0, 320),
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      lang: typeof lang === "string" ? lang : undefined,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
@@ -1109,12 +1119,17 @@ http.route({
   path: "/digest/confirm",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Confirm the weekly digest",
-      "Every Tuesday: where DOL's queue stands, what the visa bulletin moved, USCIS's processing times and the rules on their way.",
-      { post: `/digest/confirm?token=${encodeURIComponent(token)}`, label: "Confirm" },
+      t.digestConfirmGet.title,
+      t.digestConfirmGet.body,
+      { post: withLang(`/digest/confirm?token=${encodeURIComponent(token)}`, lang), label: t.confirmLabel },
+      [],
+      lang,
     );
   }),
 });
@@ -1124,13 +1139,12 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
-    const result = await ctx.runMutation(internal.digestSignup.confirmByToken, { token });
-    if (!result) return badLinkPage("This confirmation link is no longer valid.");
-    return messagePage(
-      "You're on the list",
-      "The weekly digest comes to this address on Tuesdays. Every issue has a one-click link to stop it.",
-    );
+    const lang = mailLang(new URL(req.url).searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const result = await ctx.runMutation(internal.digestSignup.confirmByToken, { token, lang });
+    if (!result) return badLinkPage(mailPageText(lang).linkNoLongerValid, undefined, lang);
+    const page = mailPageText(lang).digestConfirmed;
+    return messagePage(page.title, page.body, undefined, [], lang);
   }),
 });
 
@@ -1138,14 +1152,14 @@ http.route({
   path: "/bulletin-alert/unsubscribe",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
     const ok = await ctx.runMutation(internal.bulletinAlerts.unsubscribeByToken, { token });
-    if (!ok) return badLinkPage("This link has expired or was changed.");
-    return messagePage(
-      "You're unsubscribed",
-      "You won't receive visa bulletin alerts from us.",
-    );
+    const t = mailPageText(lang);
+    if (!ok) return badLinkPage(t.linkExpired, undefined, lang);
+    return messagePage(t.bulletinUnsubDone.title, t.bulletinUnsubDone.body, undefined, [], lang);
   }),
 });
 
@@ -1153,12 +1167,17 @@ http.route({
   path: "/bulletin-alert/unsubscribe",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return badLinkPage();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
+    const lang = mailLang(url.searchParams.get("lang"));
+    if (!token) return badLinkPage(undefined, undefined, lang);
+    const t = mailPageText(lang);
     return messagePage(
-      "Stop your visa bulletin alerts?",
-      "You'll stop receiving emails when the cutoffs you watch move.",
-      { post: `/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      t.bulletinUnsubGet.title,
+      t.bulletinUnsubGet.body,
+      { post: withLang(`/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}`, lang), label: t.unsubscribeLabel },
+      [],
+      lang,
     );
   }),
 });

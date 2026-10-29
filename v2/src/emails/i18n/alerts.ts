@@ -3,7 +3,7 @@
  * template writes itself, around the data the Convex function passes in. The status meaning comes in already
  * translated (getStatusMeaning(status, lang) from permStatus); the figure-table row labels and the rating
  * question come from convex/lib/alertEmailText.ts; the "what comes next" guidance is passed in and stays in
- * English for now (it's generated server-side). English is exactly today's wording.
+ * English for now (it’s generated server-side). English is exactly today’s wording.
  *
  * DOL and its status words stay as printed. A final status IS the decision, so the "not a decision" caveat is
  * for the non-final statuses only, as in the English.
@@ -44,7 +44,7 @@ export const CASE_ALERT_TEXT: MailMessages<CaseAlertText> = {
     rfiHeading: "RFIs that have since resolved",
     rfiCaption: "That’s a count of other cases and the population it came from. It says nothing about how yours resolves.",
     whereHeading: "Where this sits",
-    employerHeading: "This employer in DOL's decided record",
+    employerHeading: "This employer in DOL’s decided record",
     openCase: "Open this case",
     nextHeading: "What comes next",
     timelineAsk:

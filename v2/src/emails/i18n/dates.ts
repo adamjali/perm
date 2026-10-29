@@ -5,9 +5,10 @@
  */
 
 import type { MailLang } from "../../lib/i18n/mailLang";
+import { MONTH_NAMES } from "../../../convex/lib/months";
 
-const MONTHS: Record<"en" | "es" | "pt-br", readonly string[]> = {
-  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+// English month names come from the one source (convex/lib/months.ts); only the other languages are spelled here.
+const MONTHS: Record<"es" | "pt-br", readonly string[]> = {
   es: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
   "pt-br": ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"],
 };
@@ -28,7 +29,7 @@ export function mailDay(iso: string | null | undefined, lang: MailLang): string 
   if (!p) return null;
   switch (lang) {
     case "en":
-      return `${MONTHS.en[p.m - 1]} ${p.d}, ${p.y}`;
+      return `${MONTH_NAMES[p.m - 1]} ${p.d}, ${p.y}`;
     case "es":
     case "pt-br":
       return `${p.d} de ${MONTHS[lang][p.m - 1]} de ${p.y}`;
@@ -47,7 +48,7 @@ export function mailMonth(ym: string | null | undefined, lang: MailLang): string
   if (!p) return null;
   switch (lang) {
     case "en":
-      return `${MONTHS.en[p.m - 1]} ${p.y}`;
+      return `${MONTH_NAMES[p.m - 1]} ${p.y}`;
     case "es":
     case "pt-br":
       return `${MONTHS[lang][p.m - 1]} de ${p.y}`;
@@ -62,9 +63,12 @@ export function mailMonth(ym: string | null | undefined, lang: MailLang): string
 
 /** A whole number with the reader's digit grouping: 12,345 in English, 12.345 in Spanish and Portuguese. */
 export function mailInt(n: number, lang: MailLang): string {
-  const whole = Math.round(n).toString();
+  const neg = n < 0;
+  const whole = Math.abs(Math.round(n)).toString();
   const sep = lang === "es" || lang === "pt-br" || lang === "vi" ? "." : ",";
   // Spanish style leaves four-digit numbers ungrouped (RAE); every other language here groups from four digits.
-  if (lang === "es" && whole.replace("-", "").length <= 4) return whole;
-  return whole.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+  if (lang === "es" && whole.length <= 4) return (neg ? "-" : "") + whole;
+  const parts: string[] = [];
+  for (let i = whole.length; i > 0; i -= 3) parts.unshift(whole.slice(Math.max(0, i - 3), i));
+  return (neg ? "-" : "") + parts.join(sep);
 }

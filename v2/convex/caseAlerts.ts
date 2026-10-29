@@ -749,7 +749,6 @@ export const sendConfirmation = internalAction({
       const includesNewsletter = args.includesNewsletter === true;
       const program = programOf(args.caseNumber);
       const lang = mailLang(args.lang);
-      const noun = programNoun(program);
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),

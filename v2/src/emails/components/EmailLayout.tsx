@@ -310,7 +310,7 @@ export function EmailLayout({
               {`${LEGAL_NAME}, ${POSTAL_ADDRESS}`}
             </Text>
             <Text className="em-footer-muted" style={styles.copyright}>
-              &copy; {`${new Date().getFullYear()} ${LEGAL_NAME}. ${t.rights}`}
+              &copy; {`${new Date().getFullYear()} ${LEGAL_NAME}`}. {t.rights}
             </Text>
           </Section>
         </Container>

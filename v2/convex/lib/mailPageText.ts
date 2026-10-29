@@ -30,6 +30,7 @@ export interface MailPageText {
   caseConfirmed: (list: string) => { title: string; body: string };
   caseAlready: (list: string) => { title: string; body: string };
   queueConfirmed: (month: string) => { title: string; body: string };
+  queueAlreadyReached: (month: string) => { title: string; body: string };
   bulletinConfirmed: (series: string) => { title: string; body: string };
   employerConfirmed: (employer: string) => { title: string; body: string };
   digestConfirmed: { title: string; body: string };
@@ -89,6 +90,10 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
     queueConfirmed: (month) => ({
       title: "You're on the list",
       body: `We'll email you once, on the day the Department of Labor reaches ${month}.`,
+    }),
+    queueAlreadyReached: (month) => ({
+      title: "You're on the list",
+      body: `DOL has already reached ${month}. Your alert is on its way now, and that's the only message you'll get.`,
     }),
     bulletinConfirmed: (series) => ({
       title: "You're on the list",
@@ -182,6 +187,10 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       title: "Está en la lista",
       body: `Le escribiremos una vez, el día en que el Departamento de Trabajo (DOL) llegue a ${month}.`,
     }),
+    queueAlreadyReached: (month) => ({
+      title: "Está en la lista",
+      body: `El DOL ya llegó a ${month}. Su alerta va en camino ahora, y ese es el único mensaje que recibirá.`,
+    }),
     bulletinConfirmed: (series) => ({
       title: "Está en la lista",
       body: `Le escribiremos cuando un boletín de visas nuevo mueva la fecha de acción final de ${series}.`,
@@ -273,6 +282,10 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
     queueConfirmed: (month) => ({
       title: "已加入列表",
       body: `当劳工部（DOL）处理到 ${month} 时，我们会发一封邮件通知您。`,
+    }),
+    queueAlreadyReached: (month) => ({
+      title: "已为您加入",
+      body: `劳工部已经处理到 ${month}。您的提醒正在发送，您只会收到这一封。`,
     }),
     bulletinConfirmed: (series) => ({
       title: "已加入列表",
@@ -366,6 +379,10 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       title: "Você está na lista",
       body: `Vamos avisar uma vez, no dia em que o Departamento do Trabalho (DOL) chegar a ${month}.`,
     }),
+    queueAlreadyReached: (month) => ({
+      title: "Você está na lista",
+      body: `O DOL já chegou a ${month}. Seu alerta está a caminho agora, e essa é a única mensagem que você receberá.`,
+    }),
     bulletinConfirmed: (series) => ({
       title: "Você está na lista",
       body: `Vamos avisar quando um boletim de vistos novo mover a data de ação final de ${series}.`,
@@ -458,6 +475,10 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
       title: "목록에 추가되었습니다",
       body: `노동부(DOL)가 ${month}에 도달하는 날 이메일 한 통을 보내 드립니다.`,
     }),
+    queueAlreadyReached: (month) => ({
+      title: "등록되었습니다",
+      body: `노동부는 이미 ${month}에 도달했습니다. 알림이 지금 발송 중이며, 받으실 메일은 그 한 통뿐입니다.`,
+    }),
     bulletinConfirmed: (series) => ({
       title: "목록에 추가되었습니다",
       body: `새 비자 공보가 ${series}의 최종 조치 날짜를 바꾸면 이메일로 알려 드립니다.`,
@@ -549,6 +570,10 @@ export const MAIL_PAGE_TEXT: MailMessages<MailPageText> = {
     queueConfirmed: (month) => ({
       title: "Bạn đã có trong danh sách",
       body: `Chúng tôi sẽ gửi một email, vào ngày Bộ Lao động (DOL) xét đến ${month}.`,
+    }),
+    queueAlreadyReached: (month) => ({
+      title: "Bạn đã có trong danh sách",
+      body: `DOL đã xét đến ${month}. Thông báo của bạn đang được gửi, và đó là email duy nhất bạn nhận.`,
     }),
     bulletinConfirmed: (series) => ({
       title: "Bạn đã có trong danh sách",
