@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
+import { SocCodeText } from "@/components/data/SocCodeText";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { formatDollars, formatInt } from "@/lib/format";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/db/reference";
 
 import { socGroup } from "@/lib/socCode";
+import { predecessorNote } from "@/lib/socCrosswalk";
 import { PayBands, type PayBand } from "./PayBands";
 import { entityHref } from "@/lib/entityPayload";
 
@@ -195,9 +197,12 @@ export async function OccupationReference({
                 </tr>
               </thead>
               <tbody>
-                {[...history].reverse().map((y, i) => (
-                  <tr key={y.wageYear} className={i === 0 ? "border-b border-border/60 font-bold" : "border-b border-border/60"}>
-                    <td className="py-2 pr-4 tabular-nums">{wageYearLabel(y.wageYear)}{" "}</td>
+                {[...history].sort((a, b) => b.wageYear - a.wageYear || (a.asCode ?? "").localeCompare(b.asCode ?? "")).map((y, i) => (
+                  <tr key={`${y.wageYear}-${y.asCode ?? ""}`} className={i === 0 ? "border-b border-border/60 font-bold" : "border-b border-border/60"}>
+                    <td className="py-2 pr-4 tabular-nums">
+                      {wageYearLabel(y.wageYear)}
+                      {y.asCode ? <span className="block text-sm font-normal text-muted-foreground">as {y.asCode}, {y.asTitle}</span> : null}{" "}
+                    </td>
                     {y.yearly.map((v, j) => (
                       <td key={j} className="py-2 pr-4 text-right tabular-nums">
                         {v != null ? formatDollars(v) : j === 0 && y.label ? y.label : "—"}{" "}
@@ -208,6 +213,11 @@ export async function OccupationReference({
               </tbody>
             </table>
           </ScrollBox>
+          {history.some((y) => y.asCode) ? (
+            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+              <SocCodeText text={predecessorNote(soc) ?? ""} />
+            </p>
+          ) : null}
           <p className="mt-3 text-sm text-muted-foreground">
             <Link href={`/tools/wage-levels?soc=${soc}`} className="link">
               Every area and both wage tables in the wage-level tool

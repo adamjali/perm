@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { AREA_RE } from "@/lib/wageLevels";
 import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 import { marketPayIn, wageLevelHistory } from "@/lib/db/reference";
+import { predecessorNote } from "@/lib/socCrosswalk";
 
 /**
  * GET /api/wage-levels/history?soc=15-1252&area=41940
@@ -31,7 +32,16 @@ export async function GET(req: Request) {
       marketPayIn(soc, [area]),
     ]);
     return NextResponse.json(
-      { ok: true, soc: socGroup(soc), area, alc, edc, market: market[0] ?? null },
+      {
+        ok: true,
+        soc: socGroup(soc),
+        area,
+        alc,
+        edc,
+        market: market[0] ?? null,
+        // Why some years carry a 2010 code, built here so BLS's crosswalk never ships to the browser.
+        codeNote: [...alc, ...edc].some((y) => y.asCode) ? predecessorNote(soc) : null,
+      },
       { headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400" } },
     );
   } catch {

@@ -102,6 +102,27 @@ describe("reference reads", () => {
     expect(got[0]).toEqual({ wageYear: 2026, levels: [null, null, null, null], annual: false, yearly: [null, null, null, null], label: "High Wage" });
   });
 
+  it("reads a job's years before 2022-23 under each 2010 code BLS maps to it, each row tagged with its code", async () => {
+    const level = (soc: string, year: string, l2: number) => ({ soc7: soc, wage_year: year, l1: l2 - 10, l2, l3: l2 + 10, l4: l2 + 20, label: null });
+    rows.mockResolvedValueOnce([
+      level("15-1132", "2021", 57.97),
+      level("15-1133", "2021", 61.1),
+      // A 2010 code in a 2018-coded year can't be this job's: dropped.
+      level("15-1132", "2022", 1),
+      level("15-1252", "2022", 62.93),
+    ]);
+    const got = await ref.wageLevelHistory("15-1252", "41940");
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toContain("soc7 IN (?, ?, ?)");
+    expect(args).toEqual(["41940", "alc", "15-1252", "15-1132", "15-1133"]);
+    expect(got.map((y) => [y.wageYear, y.asCode ?? null, y.levels[1]])).toEqual([
+      [2021, "15-1132", 57.97],
+      [2021, "15-1133", 61.1],
+      [2022, null, 62.93],
+    ]);
+    expect(got[0]).toMatchObject({ asTitle: "Software Developers, Applications" });
+  });
+
   it("throws on a failed wage-history read, so the route can say it couldn't read", async () => {
     rows.mockRejectedValueOnce(new Error("database query deadline"));
     await expect(ref.wageLevelHistory("29-1216", "14460")).rejects.toThrow("database query deadline");

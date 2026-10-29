@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { one, rows } from "./client";
 import { socGroup } from "@/lib/socCode";
+import { predecessorsOf, SOC_2018_FIRST_WAGE_YEAR } from "@/lib/socCrosswalk";
 import { HOURS_PER_YEAR } from "@/lib/wageFormat";
 
 /**
@@ -288,19 +289,34 @@ function levelYear(r: Record<string, unknown>): WageLevelYear {
   return { wageYear: Number(r.wage_year), levels, annual: isAnnual(levels, label), yearly: toYearly(levels, label), label };
 }
 
+/** One wage year of a job's history; `asCode` marks a year read under a 2010 code BLS maps to the job. */
+export interface WageHistoryYear extends WageLevelYear {
+  asCode?: string;
+  asTitle?: string;
+}
+
 /**
- * One occupation's four levels in one area, every wage year held, oldest
- * first. A failed read throws: caught here, the history route's "couldn't be
- * read" answer could never fire and an empty history was cached for a day.
+ * One occupation's four levels in one area, every wage year held, oldest first. Years before DOL's tables switched
+ * to the 2018 codes are also read under each 2010 code BLS maps to the job (socCrosswalk.ts), one tagged row per
+ * code, so 15-1252's 2021-22 shows as 15-1132 and 15-1133. A failed read throws: caught here, the history route's
+ * "couldn't be read" answer could never fire and an empty history was cached for a day.
  */
-export async function wageLevelHistory(code: string, area: string, collection: "alc" | "edc" = "alc"): Promise<WageLevelYear[]> {
+export async function wageLevelHistory(code: string, area: string, collection: "alc" | "edc" = "alc"): Promise<WageHistoryYear[]> {
   const soc = socGroup(code);
   if (!soc || !/^\d{2,7}$/.test(area)) return [];
+  const preds = new Map(predecessorsOf(soc).filter((p) => p.code !== soc).map((p) => [p.code, p.title]));
+  const codes = [soc, ...preds.keys()];
   const got = await rows<Record<string, unknown>>(
-    "SELECT wage_year, l1, l2, l3, l4, label FROM oflc_wage_levels WHERE soc7 = ? AND area = ? AND collection = ? ORDER BY wage_year",
-    [soc, area, collection],
+    `SELECT soc7, wage_year, l1, l2, l3, l4, label FROM oflc_wage_levels
+     WHERE area = ? AND collection = ? AND soc7 IN (${codes.map(() => "?").join(", ")}) ORDER BY wage_year, soc7`,
+    [area, collection, ...codes],
   );
-  return got.map(levelYear);
+  return got.flatMap((r) => {
+    const from = r.soc7 == null ? soc : String(r.soc7);
+    if (from === soc) return [levelYear(r)];
+    if (Number(r.wage_year) >= SOC_2018_FIRST_WAGE_YEAR) return [];
+    return [{ ...levelYear(r), asCode: from, asTitle: preds.get(from) }];
+  });
 }
 
 /** The newest wage year's four levels for each of `codes` in one area. */

@@ -10690,5 +10690,18 @@ live with the Oct 29 2 AM run. Ledger: `~/.claude/plans/cozy-sniffing-pumpkin.md
 - **A card carries no live figure**: About's counts and the timeline calculator's average and date were hidden in
   their captures (`css` in `scripts/page-cards.json`). About a dozen other cards still show live headline counts; the
   owner decides whether they're hidden too.
+- **Where a wage reaches each level** (`5b42ee6f`): the wage tool's every-area view, from `wageLevelsInState`
+  (`/api/wage-levels/areas`), `levelReached` in `src/lib/wageLevels.ts` the one rule (a level is reached at its own
+  wage; one DOL didn't publish can't be). It says where a wage sits, never a case's level.
+- **A job's wage history reaches back past the 2018 codes** (Oct 29 2026): DOL's tables used BLS's 2010 codes
+  through 2021-22 and the 2018 codes from 2022-23 (`SOC_2018_FIRST_WAGE_YEAR`), so `wageLevelHistory` also reads each
+  2010 code BLS maps to the job for the years before, one tagged row per code (`asCode`), never blended: 15-1252's
+  2021-22 shows as 15-1132 and 15-1133. BLS's crosswalk is `scripts/data/soc_2010_to_2018.json`
+  (`build_soc_crosswalk.py`), read through `src/lib/socCrosswalk.ts`; the history route sends the note
+  (`codeNote`) so the 35 KB file never ships to the browser. `SocCodeText` keeps a code from breaking at its hyphen.
+- **DOL's wage tables before 2021-22 are found and not loaded**: the retired FLC Data Center's
+  `OWL_<June that closes the year>_TEXT.zip`, kept by the Internet Archive, in the format the loader reads
+  (`wage_year_of`; `OWL_2022` matched the stored 2021 table row for row). Five years add about 360 MB to the main
+  database, which waits on the owner's RAM-lock call. Files and manifest: `~/.claude/explanations/20261029_owl_wage_history/`.
 - **A full-page capture that scrolls 800 px every 50 ms leaves reveal-on-scroll sections blank**: scroll 400 px every
   200 ms (`node_modules/.cache/qa/slow-shot.mjs`) before believing an empty band.
