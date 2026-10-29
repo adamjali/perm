@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Resend } from "resend";
 import { sendOwnerMail, textFromHtml, workerCanSend } from "../ownerMail";
+import { WORKER_TIMEOUT_MS } from "../ownerWorker";
 import { sendOrQueue } from "../email";
 
 const OWNER = "owner@example.com";
@@ -51,6 +52,40 @@ describe("sendOwnerMail", () => {
     const b = fakeResend();
     await sendOwnerMail(fakeCtx(), "alert", b.resend, msg);
     expect(b.send).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for a Worker that sends but answers slowly, so the owner gets one copy", async () => {
+    vi.useFakeTimers();
+    try {
+      // A Worker that answers after `ms`, and gives up when the caller stops waiting.
+      const slow = (ms: number) =>
+        vi.fn(
+          (_url: string, init: RequestInit) =>
+            new Promise<Response>((resolve, reject) => {
+              const t = setTimeout(() => resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })), ms);
+              init.signal?.addEventListener("abort", () => {
+                clearTimeout(t);
+                reject(new DOMException("aborted", "AbortError"));
+              });
+            }),
+        );
+      // Oct 28 2026: delivered, then answered after more than 10 seconds.
+      vi.stubGlobal("fetch", slow(15_000));
+      const a = fakeResend();
+      const late = sendOwnerMail(fakeCtx(), "alert", a.resend, msg);
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect((await late).data?.id).toBe("worker");
+      expect(a.send).not.toHaveBeenCalled();
+      // A Worker that never answers still hands the message to Resend.
+      vi.stubGlobal("fetch", slow(WORKER_TIMEOUT_MS + 60_000));
+      const b = fakeResend();
+      const stuck = sendOwnerMail(fakeCtx(), "alert", b.resend, msg);
+      await vi.advanceTimersByTimeAsync(WORKER_TIMEOUT_MS + 1);
+      await stuck;
+      expect(b.send).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("uses Resend for anyone but the owner, and when the Worker isn't configured", async () => {

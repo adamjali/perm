@@ -13,8 +13,14 @@ import { createLogger } from "./logging";
 
 const log = createLogger("ownerMail");
 
-/** How long the Worker gets before Resend takes the message. */
-const WORKER_TIMEOUT_MS = 10_000;
+/**
+ * How long the Worker gets before Resend takes the message. Cloudflare's send
+ * can deliver and still answer late: on Oct 28 2026 at 6:40 PM EDT a notice
+ * reached the inbox through the Worker, the answer missed a 10-second wait, and
+ * Resend sent it again 10 seconds later (the owner got two, and Resend's
+ * allowance paid for one). Mail to the owner can wait half a minute.
+ */
+export const WORKER_TIMEOUT_MS = 30_000;
 
 export interface WorkerMessage {
   to: string;
@@ -103,6 +109,13 @@ export async function viaWorker(msg: WorkerMessage): Promise<boolean> {
     );
     return false;
   } catch (e) {
+    if (controller.signal.aborted) {
+      // The Worker may have sent it already: Cloudflare can deliver and answer late.
+      log.warn("owner mail Worker didn't answer in time; falling back to Resend, which can mean the owner gets it twice", {
+        waitedMs: WORKER_TIMEOUT_MS,
+      });
+      return false;
+    }
     log.warn("owner mail Worker unreachable; falling back to Resend", { error: e instanceof Error ? e.message : String(e) });
     return false;
   } finally {
