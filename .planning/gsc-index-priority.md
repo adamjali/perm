@@ -1672,7 +1672,7 @@ and `/editorial-standards` (both unknown to Google), `/visa-bulletin` (Oct 25), 
 Refused: `/` (crawled Oct 28, 2:49 PM, before the release). Next round, about 5 PM Thu Oct 29: `/`, then item 9's
 `/perm-queue/2026-01`, then items 11 onward.
 
-**Live Thu Oct 29, 1:0x AM EDT (166de6b8, the 1:01 AM push shipped inside the night window).** Ahead of the Oct 28
+**Live Thu Oct 29, by 1:13 AM EDT (166de6b8, the 1:01 AM push shipped inside the night window).** Ahead of the Oct 28
 leftovers in the next round (about 5 PM Thu Oct 29), in this order, request each one Google's copy predates Oct 29:
 1. `/perm-case-alerts` (new: every free alert; searches for alerts or email reached no page before it)
 2. `/` (title now "Track PERM Case Status and Processing Times"; refused Oct 28 as crawled that day)
