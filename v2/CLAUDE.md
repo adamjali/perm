@@ -10720,3 +10720,18 @@ live with the Oct 29 2 AM run. Ledger: `~/.claude/plans/cozy-sniffing-pumpkin.md
   Download App button.
 - **A full-page capture that scrolls 800 px every 50 ms leaves reveal-on-scroll sections blank**: scroll 400 px every
   200 ms (`node_modules/.cache/qa/slow-shot.mjs`) before believing an empty band.
+- **Recurring alert bodies in the subscriber's language** (Oct 29 2026 afternoon, `a369612b` + `1ed022a4`;
+  needs the same Convex deploy as the base i18n feature, since the templates render inside Convex, not the
+  site): QueueReached and BulletinMoved render fully in the row's stored `lang` (chrome dicts
+  `QUEUE_ALERT_TEXT` / `BULLETIN_ALERT_TEXT` in `src/emails/i18n/alerts.ts`; `paceSentence(pace, lang)`; the
+  sweeps read `row.lang`, translate the subject via `alertText` and `withLang` the unsubscribe page;
+  `dueForAlert` and `liveSubscriptions` return `lang`). QueueReached takes an explicit `perm` boolean, never
+  parsing the queue name. The daily bundle (DailyUpdate) renders its frame, kind labels, "Open" link and
+  subject fallback in the reader's language: a `lang` is stored on the `alertOutbox` row (schema + `enqueue`
+  + `AlertItem`), the case/queue/bulletin producers pass it, and `sendBundles` picks the bundle's language
+  (first non-English item, else English) for `DAILY_TEXT`. English is byte-for-byte unchanged (196 email
+  tests; `bundleSubject`'s English lead-and-tail form untouched). **What stays English:** DOL's status words
+  and month/as-of dates (embedded in the localized sentence, as the case alert does), each bundle row's short
+  "what happened" line, the `EmployerMoved` body and employer alerts (the employer page isn't translated, so
+  no `lang` is stored), the status-meaning sentence (behind an `@/` module Convex can't import), and the
+  plaintext parts.

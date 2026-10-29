@@ -1618,11 +1618,15 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 - **The data rail's scrollbar is hidden** (868280a5): the scroll box is 24px wider than the rail so the current
   tab can bleed past the edge, which parked the native scrollbar out in the gap, detached and wonky; the list
   still scrolls by wheel and trackpad.
-- **Alert emails go out in the subscriber's language** (merged 3fde6505): case alerts fully (confirmation,
-  recurring status alert, confirm/unsubscribe pages), queue/bulletin/digest confirmations, the language stored
-  on the confirm click, DOL's own terms kept as printed. English byte-for-byte unchanged. Needs a Convex deploy
-  with the site. The recurring queue/bulletin/daily bodies, the status-meaning sentence (behind an `@/` module
-  Convex can't import) and plaintext parts stay English for now.
+- **Alert emails go out in the subscriber's language** (merged 3fde6505, then a369612b + 1ed022a4): case
+  alerts, queue and bulletin alerts (confirmation AND the recurring body), the daily bundle's frame, all
+  confirm/unsubscribe pages; the language is stored on the confirm click and read off the row by the sweeps.
+  English byte-for-byte unchanged (196 email tests). Needs a Convex deploy with the batch (the templates
+  render inside Convex, not the site). What stays English: DOL's status words and month/as-of dates (embedded
+  in the localized sentence), each bundle row's short "what happened" line, the `EmployerMoved` body and
+  employer alerts (the employer page isn't translated), the status-meaning sentence (behind an `@/` module
+  Convex can't import), and the plaintext parts. Detail and the "what stays English" list: v2/CLAUDE.md,
+  "Oct 29 2026".
 - **We registered permtracker.app before permtrack.app** (RDAP: ours Nov 25 2025, the #1 rival Mar 22 2026; only
   permupdate.com, ~Mar 2025, is older). So the ranking gap for "track my perm case" is link quality and
   brand-entity confusion (both are "PERM Tracker"), not age, and it's catchable.
