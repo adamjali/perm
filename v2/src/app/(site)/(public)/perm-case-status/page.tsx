@@ -7,7 +7,8 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FaqList } from "@/components/tools/FaqList";
-import { queueSentence, dolNow } from "@/lib/dolNow";
+import { howLongSentence } from "@/lib/dolNow";
+import { getPermBoard } from "@/lib/db/board";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -110,7 +111,7 @@ export async function generateMetadata({
   }, "perm-case-status");
 }
 
-/** Stands in for DOL's current queue and average in an answer, filled at render (lib/dolNow.ts). */
+/** Stands in for the live answer to "how long", filled at render (`howLongSentence`, lib/dolNow.ts). */
 const DOL_NOW = "{{dolNow}}";
 
 /**
@@ -230,7 +231,8 @@ export default async function PermCaseStatusPage({
   }
   const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
   // DOL's queue month and average, dated, in the "how long" answer; read on render, never typed.
-  const dolLine = queueSentence(dolNow(await getProcessingTimes().catch(() => null)));
+  const [times, permBoard] = await Promise.all([getProcessingTimes().catch(() => null), getPermBoard().catch(() => null)]);
+  const dolLine = howLongSentence(permBoard, times);
   const faqs = FAQS.map((f) => ({ ...f, a: f.a.replace(DOL_NOW, dolLine) }));
 
   const faqSchema = {

@@ -30,6 +30,8 @@ export const SWEEP_PAGES = [
   // Opens with today's holds, from the same document as the page above.
   "/press",
   "/tools/perm-timeline-calculator",
+  // Its "how long" answer quotes what the cases DOL decided on its last working day had waited (/today's board).
+  "/perm-processing-times",
   "/estimate-scorecard",
   // The wage-request, LCA and H-2A/H-2B summaries, written by
   // pwd-status-direct.yml, which calls this endpoint too.

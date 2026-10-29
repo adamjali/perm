@@ -51,7 +51,8 @@ import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/db/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/db/processingTimes";
-import { dolNow, queueLine } from "@/lib/dolNow";
+import { dolNow, howLongSentence, queueLine } from "@/lib/dolNow";
+import { getPermBoard } from "@/lib/db/board";
 import { StageMedians } from "@/components/community/TimelineBoard";
 import { api } from "@convex/_generated/api";
 import { getEstimatorData } from "@/lib/db/estimate";
@@ -94,17 +95,19 @@ export const metadata: Metadata = withSocialCard({
     ...openGraphBase,
     title: "PERM Processing Times 2026, Tracked Daily | PERM Tracker",
     description:
-      "DOL's published PERM and prevailing-wage queue positions, refreshed weekly and cited with DOL's own as-of date.",
+      "DOL's published PERM and prevailing-wage queue positions, read from DOL every weekday hour and cited with DOL's own as-of date.",
     url: "/perm-processing-times",
   },
 }, "perm-processing-times");
 
+/** Stands in for the live answer to "how long", filled at render (`howLongSentence`, lib/dolNow.ts). */
+const HOW_LONG_NOW = "{{howLong}}";
+
 /** Questions taken from Google's own People Also Ask for this query set. */
 const FAQ = [
   {
-    question: "How long is PERM processing taking right now?",
-    answer:
-      "DOL publishes an average number of calendar days to a determination each month, alongside the filing month its analysts are currently working. Both carry the date DOL attached to them. The average describes cases DOL finished recently, so it describes the past rather than forecasting your case.",
+    question: "How long does PERM take right now?",
+    answer: `${HOW_LONG_NOW} DOL's average describes cases it finished recently, so it describes the past rather than forecasting your case. The case lookup dates your own case from the cases still waiting ahead of it.`,
   },
   {
     question: "What does the analyst review priority date mean?",
@@ -129,7 +132,7 @@ const FAQ = [
 ];
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history, disclosure, estimator, board] = await Promise.all([
+  const [snapshot, history, disclosure, estimator, board, permBoard] = await Promise.all([
     getProcessingTimes(),
     getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
@@ -142,7 +145,11 @@ export default async function PermProcessingTimesPage() {
     // After PERM: the community timelines' stage medians (PERM dates checked
     // against DOL, the rest self-reported). Null leaves the section out.
     queryStatic(api.communityTimelines.board, {}, revalidate).catch(() => null),
+    // What the cases DOL decided on its last working day had waited: the live answer to "how long".
+    getPermBoard().catch(() => null),
   ]);
+  const howLong = howLongSentence(permBoard, snapshot);
+  const faq = FAQ.map((f) => ({ ...f, answer: f.answer.replace(HOW_LONG_NOW, howLong) }));
   const afterPerm = board?.metrics.filter((m) => m.median !== null) ?? [];
 
   const decisionsByMonth = disclosure?.clearanceByMonth ?? [];
@@ -288,7 +295,7 @@ export default async function PermProcessingTimesPage() {
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQ.map((f) => ({
+    mainEntity: faq.map((f) => ({
       "@type": "Question",
       name: f.question,
       acceptedAnswer: { "@type": "Answer", text: f.answer },
@@ -635,7 +642,7 @@ export default async function PermProcessingTimesPage() {
       {/* Where the numbers come from is one of the questions (round 3, Oct 15
           2026: it had a section of its own). */}
       <Chapter id="questions" title="FAQs">
-        <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
+        <FaqList items={faq.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
 
       <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h3 className="font-heading text-2xl font-bold">
