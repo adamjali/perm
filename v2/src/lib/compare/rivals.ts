@@ -71,6 +71,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", note: "Google AdSense on its home, case search and updated-cases pages", evidence: { url: PU, quote: "adsbygoogle.js" } },
       openData: { mark: "no", note: "No download offered", evidence: { url: `${PU}/sitemap.xml` } },
     },
+    bestFor: "A quick look at DOL's PERM queue, on one free dashboard",
+    dataFrom: "DOL's performance page, plus figures gathered by hand",
+    beatsUs: [],
     strengths: ["Everything on one free dashboard, with no sign-in at all", "A date estimate from a case number"],
   },
   {
@@ -102,6 +105,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", note: "Its privacy policy says it uses Google AdSense", evidence: { url: `${PT}/privacy-policy/`, quote: "We use Google AdSense to serve ads on our site." } },
       openData: { mark: "no", note: "No download on 11 pages", evidence: { url: `${PT}/law-firms-attorneys/` } },
     },
+    bestFor: "DOL's four queue figures, and one page walking the whole timeline",
+    dataFrom: "DOL's processing-times page and quarterly files",
+    beatsUs: [],
     strengths: [
       "DOL's four queue figures in one dated block on the homepage, matching DOL's own",
       "One long page that walks the whole PERM and green card timeline",
@@ -136,6 +142,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "yes", note: "No ad network in its code; a donation link", evidence: { url: PK } },
       openData: { mark: "partial", note: "Its JSON answers anyone, undocumented; no download", evidence: { url: `${PK}/api/stats/summary` } },
     },
+    bestFor: "A daily read on whether DOL's queue is gaining ground",
+    dataFrom: "DOL's case-status service and quarterly files",
+    beatsUs: ["A path to request a recheck after an appeal"],
     strengths: [
       "A plain gaining-or-losing-ground counter for DOL's queue on its homepage",
       "A path to request a recheck after an appeal",
@@ -170,6 +179,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", note: "Display ads, with a wall for ad blockers", evidence: { url: `${IL}/privacy`, quote: "This Site is affiliated with Monumetric" } },
       openData: { mark: "no", note: "Its terms forbid extracting the data", evidence: { url: `${IL}/terms`, quote: "Systematically scrape, harvest, or extract data from the site using automated tools without prior written" } },
     },
+    bestFor: "An employer's PERM history, back to FY2008",
+    dataFrom: "DOL's quarterly files and its case-status service",
+    beatsUs: [],
     strengths: [
       "Employer pages back to FY2008, with filing-to-decision days by year",
       "A clear refund and cancellation policy for its paid emails",
@@ -204,6 +216,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", evidence: { url: `${PQ}/privacy`, quote: "Advertising on the site is served by Google AdSense" } },
       openData: { mark: "partial", note: "An embeddable calculator; no download", evidence: { url: `${PQ}/embed/calculator` } },
     },
+    bestFor: "Reading about PERM in Portuguese, Spanish or Mandarin",
+    dataFrom: "DOL's quarterly files and its own checks of DOL's service",
+    beatsUs: ["The site and its articles in English, Portuguese, Spanish and Mandarin; we translate one guide and the case lookup"],
     strengths: [
       "The site and its articles in English, Portuguese, Spanish and Mandarin",
       "A wait calculator for EB-3 Other Workers",
@@ -238,6 +253,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "yes", evidence: { url: `${HP}/privacy`, quote: "We do not show ads at the moment." } },
       openData: { mark: "no", note: "No download; its robots.txt closes /api/ to every client", evidence: { url: `${HP}/robots.txt`, quote: "Disallow: /api/" } },
     },
+    bestFor: "Seeing the exact filing day DOL is on, in six languages",
+    dataFrom: "DOL's case-status service",
+    beatsUs: ["Every page in six languages; we translate one guide and the case lookup"],
     strengths: [
       "The exact filing day DOL is on, worked out from case statuses, for PERM and wage requests",
       "Each wage request linked to its PERM case, with the median days between them",
@@ -275,6 +293,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", note: "Display ads through Raptive, and Google AdSense", evidence: { url: `${HG}/compare`, quote: "adsbygoogle.js" } },
       openData: { mark: "no", note: "No download or documented API on the pages read", evidence: { url: `${HG}/h1b-sponsors` } },
     },
+    bestFor: "Researching H-1B sponsors while job hunting",
+    dataFrom: "DOL's case-status service for PERM, and DOL's and USCIS's H-1B files",
+    beatsUs: ["A free Chrome extension on LinkedIn, Indeed, Glassdoor, Dice and Google Jobs; ours isn't in the store yet"],
     strengths: [
       "Free emails for a PERM case, weekly or on a status change, with no account",
       "A page for every H-1B sponsor since FY2011, with ten years of LCA and USCIS decisions",
@@ -311,6 +332,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "partial", note: "No ads yet; labelled ad placements start with the December 2026 bulletin", evidence: { url: `${GCC}/advertise`, quote: "Placements start with the December 2026 visa bulletin" } },
       openData: { mark: "no", note: "No download or API offered; its robots.txt closes /api/", evidence: { url: `${GCC}/robots.txt`, quote: "Disallow: /api/" } },
     },
+    bestFor: "Priority-date forecasts and visa bulletin alerts",
+    dataFrom: "DOL's published figures, USCIS's I-485 inventory and the bulletin",
+    beatsUs: ["A consular appointment tracker"],
     strengths: [
       "A priority-date estimate built on USCIS's I-485 inventory and the visa bulletin, with three scenarios",
       "An email and a browser alert for each new visa bulletin, by country and category",
@@ -347,6 +371,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", note: "Google Ad Manager ad slots on its processing-time pages", evidence: { url: `${LW}/data/trends`, quote: "securepubads.g.doubleclick.net/tag/js/gpt.js" } },
       openData: { mark: "no", note: "No download or API offered on the pages read", evidence: { url: LW } },
     },
+    bestFor: "Tracking USCIS, NVC and immigration court cases in a phone app",
+    dataFrom: "USCIS's case status and its users' own cases",
+    beatsUs: ["Phone alerts for USCIS, NVC and immigration court (EOIR) cases", "Video consultations with immigration attorneys, and mock interviews"],
     strengths: [
       "Phone alerts for USCIS, NVC and EOIR cases",
       "Daily USCIS processing trends by form and service center, from the cases its users track",
@@ -383,6 +410,9 @@ export const RIVALS: readonly Tracker[] = [
       noAds: { mark: "no", note: "Ezoic and Amazon display ads", evidence: { url: IR, quote: "g.ezoic.net" } },
       openData: { mark: "no", note: "No download offered", evidence: { url: IR } },
     },
+    bestFor: "Visa bulletin history back to 2002, and a place-in-line count",
+    dataFrom: "State's bulletins and USCIS's I-485 inventory",
+    beatsUs: ["Every visa bulletin back to 2002, with charts per category; ours starts in 2005"],
     strengths: [
       "Every visa bulletin back to 2002, with charts per category",
       "A place-in-line count from USCIS's I-485 inventory plus State's consular cases",

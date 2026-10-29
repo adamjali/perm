@@ -71,6 +71,12 @@ export interface Tracker {
   cells: Record<RowKey, Cell>;
   /** What it does well, honestly; a reader picking a tracker should know. */
   strengths: string[];
+  /** Who it suits best, in one line, from its strengths and marks. Never an overall winner. */
+  bestFor: string;
+  /** Where its data comes from, in a few words, from its `source` mark. */
+  dataFrom: string;
+  /** What it does that PERM Tracker doesn't, each from its strengths. Empty when we found nothing. */
+  beatsUs: string[];
 }
 
 /** The two lists, in the order the page shows them. */
@@ -126,4 +132,60 @@ export const PERM_TRACKER: Tracker = {
     openData: { mark: "yes", note: "A free API and CC BY 4.0 files", evidence: { url: `${OURS}/open-data` } },
   },
   strengths: [],
+  bestFor: "Following one case's DOL status, in any DOL program, with a free email when it changes",
+  dataFrom: "DOL's case-status service and its quarterly files",
+  beatsUs: [],
 };
+
+/** Names in a sentence: "A", "A and B", "A, B and C". */
+export function nameList(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/** The sites whose mark on a row is one of `marks`, alphabetically, so no site leads by our choice. */
+export function namesWhere(trackers: readonly Tracker[], row: RowKey, marks: readonly Mark[]): string[] {
+  return trackers
+    .filter((t) => marks.includes(t.cells[row].mark))
+    .map((t) => t.name)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * The questions people ask when choosing a tracker, each answered from the
+ * marks themselves, so an answer can't drift from the grid above it. A list
+ * that comes out empty says so plainly rather than leaving a blank.
+ */
+export function compareFaq(trackers: readonly Tracker[]): { q: string; a: string }[] {
+  const list = (row: RowKey, marks: readonly Mark[]) => nameList(namesWhere(trackers, row, marks)) || "none of them";
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const freeNoAds = trackers.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark === "yes").map((t) => t.name).sort((a, b) => a.localeCompare(b));
+  const freeAds = trackers.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark !== "yes").map((t) => t.name).sort((a, b) => a.localeCompare(b));
+  const paid = trackers.filter((t) => t.cells.free.mark !== "yes").map((t) => `${t.name} (${t.price.charAt(0).toLowerCase()}${t.price.slice(1)})`);
+  return [
+    {
+      q: "Which trackers read each case's status from DOL itself?",
+      a: `${cap(list("source", ["yes"]))} read DOL's own records for each case. ${cap(list("source", ["partial"]))} build on DOL's published figures or files, or on other sources, and the grid says which. A tracker that doesn't read DOL's case-status service can't show a case DOL hasn't published yet.`,
+    },
+    {
+      q: "Which are free, with no ads?",
+      a: [
+        freeNoAds.length ? `Free with no ads: ${nameList(freeNoAds)}.` : "",
+        freeAds.length ? `Free with ads: ${nameList(freeAds)}.` : "",
+        paid.length ? `With paid parts: ${nameList(paid)}.` : "",
+      ].filter(Boolean).join(" "),
+    },
+    {
+      q: "Which let me look up a case without an account?",
+      a: `${cap(list("noAccount", ["yes"]))}. Some of the others show figures without an account but need one, or an app, to follow a case.`,
+    },
+    {
+      q: "Which cover prevailing wage requests, H-1B LCAs, and H-2A and H-2B?",
+      a: `Prevailing wage requests: ${list("wage", ["yes", "partial"])}. H-1B labor condition applications: ${list("lca", ["yes", "partial"])}. H-2A and H-2B: ${list("seasonal", ["yes", "partial"])}.`,
+    },
+    {
+      q: "Which email me when my case changes?",
+      a: `${cap(list("alerts", ["yes"]))}${namesWhere(trackers, "alerts", ["partial"]).length ? `, and in part ${list("alerts", ["partial"])}` : ""}. Each one's note in the grid says what it sends and what it costs.`,
+    },
+  ];
+}

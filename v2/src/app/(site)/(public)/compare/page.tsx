@@ -22,14 +22,16 @@ import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { HOME_SHOTS } from "@/lib/compare/homeShots";
 import { RIVALS } from "@/lib/compare/rivals";
-import { checkedPhrase, GROUPS, PERM_TRACKER, ROWS, type Tracker } from "@/lib/compare/trackers";
+import { checkedPhrase, compareFaq, GROUPS, PERM_TRACKER, ROWS, type Tracker } from "@/lib/compare/trackers";
+import { FaqList } from "@/components/tools/FaqList";
+import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { longDate as formatLongDate } from "@convex/lib/months";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "PERM Trackers Compared: PERM Update, PERM Timeline and More";
 const DESCRIPTION =
-  "PERM case trackers and green card sites, each checked on its own pages: what it looks up, where its data comes from, how fresh it is and what it costs.";
+  "PERM case trackers and green card sites, each checked on its own pages: who each suits, where its data comes from, how fresh it is and what it costs.";
 
 export const metadata: Metadata = withSocialCard(
   {
@@ -50,6 +52,11 @@ const checked = checkedPhrase(RIVALS.map((t) => t.checkedOn));
 /** Whole days between two Eastern days. */
 function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000);
+}
+
+/** A site's strengths, less any its "does that we don't" list already says (it opens with the same words). */
+function ownStrengths(t: Tracker): string[] {
+  return t.strengths.filter((s) => !t.beatsUs.some((b) => b.startsWith(s.slice(0, 25))));
 }
 
 function freshnessRows(trackers: readonly Tracker[]): BarRow[] {
@@ -91,19 +98,78 @@ function shotDays(rivals: readonly Tracker[]): string {
 export default function ComparePage() {
   const trackers: Tracker[] = [PERM_TRACKER, ...RIVALS];
   const fresh = freshnessRows(trackers);
+  const faq = compareFaq(trackers);
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+  };
   return (
     // Wider than most pages: the grid is the page's picture, and every site needs its column.
     <div className="mx-auto w-full max-w-[1320px] px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
-      <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">PERM trackers compared</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-soft">
-          The PERM trackers people search for by name, the newest, and the green card sites people weigh beside
-          them, each checked on its own pages on {checked}: what it can look up, where its data comes from, and what
-          it costs.
-        </p>
+      <JsonLdScript schema={faqSchema} />
+      <header className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end [&>*]:min-w-0">
+        <div>
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">PERM trackers compared</h1>{" "}
+          {/* The answer first (Google: say which suits which use; Ahrefs: never crown yourself). */}
+          <p className="mt-4 text-lg leading-relaxed">
+            The {trackers.length} sites here track PERM cases or the green card steps around them. They differ most in
+            where their data comes from and which DOL programs they cover, so the best one depends on what you need: the
+            table below says who each one suits.
+          </p>{" "}
+          <p className="mt-3 text-base leading-relaxed text-soft">
+            PERM Tracker made this page and is one of the sites on it. We chose the questions. Every mark on another
+            site rests on that site&apos;s own page, quoted at the end, as read on {checked}. Where another site does
+            something we don&apos;t, its entry says so.
+          </p>
+        </div>{" "}
+        <div className="object p-5">
+          <p className="font-heading text-lg font-bold">Check your case here</p>{" "}
+          <CaseLookupForm compact label="Case number or employer" names help={null} source="compare-top" />
+        </div>
       </header>{" "}
-      <section aria-label="The comparison" className="mt-8">
-        <TrackerMatrix trackers={trackers} />
+      <section aria-labelledby="fit" className="mt-12">
+        <h2 id="fit" className="font-heading text-2xl font-bold">
+          Who each one suits
+        </h2>{" "}
+        <div className="mt-5 overflow-hidden border-2 border-border">
+          <table className="w-full border-collapse text-left text-base">
+            <thead className="bg-tint">
+              <tr>
+                <th scope="col" className="px-4 py-3 font-heading font-bold">Site{" "}</th>
+                <th scope="col" className="px-4 py-3 font-heading font-bold">Best for{" "}</th>
+                <th scope="col" className="hidden px-4 py-3 font-heading font-bold md:table-cell">Data from{" "}</th>
+                <th scope="col" className="hidden px-4 py-3 font-heading font-bold lg:table-cell">Cost{" "}</th>
+              </tr>
+            </thead>{" "}
+            <tbody>
+              {trackers.map((t) => (
+                <tr key={t.slug} className={t.slug === PERM_TRACKER.slug ? "border-t-2 border-border bg-sage" : "border-t border-border/25"}>
+                  <th scope="row" className="px-4 py-3 align-top font-semibold">
+                    {t.slug === PERM_TRACKER.slug ? (
+                      <>{t.name}{" "}<span className="block text-sm font-normal text-soft">this site</span></>
+                    ) : (
+                      <a href={`#site-${t.slug}`} className="link">
+                        {t.name}
+                      </a>
+                    )}{" "}
+                  </th>
+                  <td className="px-4 py-3 align-top">{t.bestFor}{" "}</td>
+                  <td className="hidden px-4 py-3 align-top text-soft md:table-cell">{t.dataFrom}{" "}</td>
+                  <td className="hidden px-4 py-3 align-top text-soft lg:table-cell">{t.price}{" "}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>{" "}
+      <section aria-labelledby="grid" className="mt-14">
+        <h2 id="grid" className="font-heading text-2xl font-bold">
+          Side by side
+        </h2>{" "}
+        <div className="mt-5">
+          <TrackerMatrix trackers={trackers} />
+        </div>
       </section>{" "}
       {fresh.length > 1 ? (
         <section aria-labelledby="fresh" className="mt-14">
@@ -113,19 +179,16 @@ export default function ComparePage() {
           <p className="mt-2 text-base text-soft">
             On the day each was read, by each site&apos;s own date stamp. Shorter is fresher.
           </p>{" "}
-          {/* One line a site, across the page's whole width, like the grid above
-              and the cards below (owner, Oct 27 2026: every block had its own
-              narrower width and sat at the left edge). */}
           <BarRows rows={fresh} label="How old each site's newest data was" className="mt-6" inline />
         </section>
       ) : null}{" "}
       <section aria-labelledby="each" className="mt-14">
         <h2 id="each" className="font-heading text-2xl font-bold">
-          Each one, in short
+          Each site
         </h2>{" "}
-        {/* Each card opens with the site's own homepage, as it looked the day
-            it was read. Rows line up on the pictures, and each card is its own
-            height: stretched to the tallest, the short ones were half empty. */}
+        {/* One site a row, picture beside its words: every entry the same shape, so no
+            card sits alone on a row (owner, Oct 29 2026: the three-across cards left one
+            card by itself and ran to uneven heights). */}
         {GROUPS.map((g) => {
           const rivals = RIVALS.filter((t) => t.group === g.key);
           if (!rivals.length) return null;
@@ -134,36 +197,35 @@ export default function ComparePage() {
               <h3 className="mt-8 font-heading text-lg font-bold">
                 {g.label}{" "}
               </h3>{" "}
-              <ul
-                aria-label={g.label}
-                // Rows of three that wrap, the last row centred: a card left alone sits in the
-                // middle, never at the left edge with empty slots beside it.
-                className="mt-4 flex flex-wrap items-start justify-center gap-6 [&>li]:w-full sm:[&>li]:w-[calc(50%-0.75rem)] lg:[&>li]:w-[calc((100%-3rem)/3)]"
-              >
+              <ul aria-label={g.label} className="mt-4 space-y-6">
                 {rivals.map((t) => {
                   const shot = HOME_SHOTS[t.slug];
                   return (
-                    <li key={t.slug} className="object flex flex-col">
+                    <li
+                      key={t.slug}
+                      id={`site-${t.slug}`}
+                      className="object grid scroll-mt-24 grid-cols-1 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)] [&>*]:min-w-0"
+                    >
                       {shot ? (
                         <a
                           href={t.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={`${t.name}'s homepage (opens in a new tab)`}
-                          className="block border-b-2 border-foreground"
+                          className="block border-b-2 border-foreground md:border-b-0 md:border-r-2"
                         >
                           <Image
                             src={shot.src}
                             width={shot.width}
                             height={shot.height}
                             alt={shot.alt}
-                            sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                            className="block h-auto w-full"
+                            sizes="(min-width: 768px) 320px, 100vw"
+                            className="block aspect-[16/10] h-auto w-full object-cover object-left-top md:aspect-auto md:h-full"
                           />
                         </a>
                       ) : null}{" "}
-                      <div className="flex flex-col gap-3 p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                      <div className="flex flex-col gap-4 p-5 sm:p-6">
+                        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
                           <div className="min-w-0">
                             <p className="font-heading text-xl font-bold">{t.name}</p>{" "}
                             <p className="text-sm text-soft">
@@ -173,16 +235,34 @@ export default function ComparePage() {
                           </div>{" "}
                           <p className="bg-tint px-2.5 py-1 text-sm font-semibold">{t.price}</p>
                         </div>{" "}
-                        {t.strengths.length ? (
-                          <ul aria-label="What it does well" className="space-y-2 text-base">
-                            {t.strengths.map((s) => (
-                              <li key={s} className="flex items-start gap-2.5">
-                                <MarkIcon mark="yes" className="mt-0.5 size-5 shrink-0 [&_svg]:size-3" />
-                                <span>{s}{" "}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
+                        <p className="text-base">
+                          <span className="font-semibold">Best for:</span> {t.bestFor}{" "}
+                        </p>{" "}
+                        <div className={t.beatsUs.length ? "grid grid-cols-1 gap-4 lg:grid-cols-2 [&>*]:min-w-0" : undefined}>
+                          {t.strengths.length ? (
+                            <div>
+                              <p className="text-sm font-semibold text-soft">What it does well</p>{" "}
+                              <ul className="mt-2 space-y-2 text-base">
+                                {ownStrengths(t).map((s) => (
+                                  <li key={s} className="flex items-start gap-2.5">
+                                    <MarkIcon mark="yes" className="mt-0.5 size-5 shrink-0 [&_svg]:size-3" />
+                                    <span>{s}{" "}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}{" "}
+                          {t.beatsUs.length ? (
+                            <div className="border-l-4 border-chart-blue pl-4">
+                              <p className="text-sm font-semibold text-soft">What it does that we don&apos;t</p>{" "}
+                              <ul className="mt-2 space-y-2 text-base">
+                                {t.beatsUs.map((s) => (
+                                  <li key={s}>{s}{" "}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </li>
                   );
@@ -194,6 +274,12 @@ export default function ComparePage() {
         <p className="mt-4 text-sm text-soft">
           Each site&apos;s homepage as it opened the day its marks were read: {shotDays(RIVALS)}.
         </p>
+      </section>{" "}
+      <section aria-labelledby="faq" className="mt-14">
+        <h2 id="faq" className="font-heading text-2xl font-bold">
+          Choosing a tracker
+        </h2>{" "}
+        <FaqList items={faq} openFirst={false} />
       </section>{" "}
       <section
         aria-labelledby="check"
