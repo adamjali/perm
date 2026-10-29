@@ -1671,3 +1671,14 @@ Oct 26), `/perm-case-statuses` (Oct 27), `/today` (Oct 28 1:37 AM), `/perm-proce
 and `/editorial-standards` (both unknown to Google), `/visa-bulletin` (Oct 25), `/perm-queue` (Oct 24).
 Refused: `/` (crawled Oct 28, 2:49 PM, before the release). Next round, about 5 PM Thu Oct 29: `/`, then item 9's
 `/perm-queue/2026-01`, then items 11 onward.
+
+**Live Thu Oct 29, 1:0x AM EDT (166de6b8, the 1:01 AM push shipped inside the night window).** Ahead of the Oct 28
+leftovers in the next round (about 5 PM Thu Oct 29), in this order, request each one Google's copy predates Oct 29:
+1. `/perm-case-alerts` (new: every free alert; searches for alerts or email reached no page before it)
+2. `/` (title now "Track PERM Case Status and Processing Times"; refused Oct 28 as crawled that day)
+3. `/perm-case-status` (heading "Check and track", the tracking and how-long questions; requested Oct 28 before this)
+4. `/perm-processing-times` (the live "how long" answer; requested Oct 28 before this)
+5. `/h1b-cap-exempt-employers`, `/law-firm-rankings`, `/visa-wait-times`, `/blog/dol-perm-file-fy2026-q3` (new)
+6. `/tools/perm-timeline-calculator` (one name, "timeline"), `/tools/wage-levels` (where a wage reaches each level)
+Then the rest of `gsc_queue.mjs --since abce2f44`. Recheck the intent table (plan ledger, "SEO for people who are
+lost") about Nov 12 to 19.
