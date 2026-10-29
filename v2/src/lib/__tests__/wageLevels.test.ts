@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_RE, dolSearchYear, parseAreaOptions, parseWageRates, seriesYearFor, wageSearchBody } from "../wageLevels";
+import { AREA_RE, dolSearchYear, levelName, levelReached, parseAreaOptions, parseWageRates, seriesYearFor, wageSearchBody } from "../wageLevels";
 import { SOC_CODE_RE } from "../socCode";
 
 // DOL's answer for 15-1252 in Los Angeles, series 2025, as probed on Sep 8 2026.
@@ -51,5 +51,36 @@ describe("wageLevels", () => {
     expect(SOC_CODE_RE.test("15-1252; DROP")).toBe(false);
     expect(AREA_RE.test("31080")).toBe(true);
     expect(AREA_RE.test("31080abc")).toBe(false);
+  });
+});
+
+describe("the level a yearly wage reaches", () => {
+  // Software developers in Austin, July 2026 series, yearly at 2,080 hours.
+  const AUSTIN = [95_888, 119_642, 143_395, 167_149];
+
+  it("is the highest level whose wage it meets or passes", () => {
+    expect(levelReached(AUSTIN, 150_000)).toBe(3);
+    expect(levelReached(AUSTIN, 167_149)).toBe(4);
+    expect(levelReached(AUSTIN, 119_641)).toBe(1);
+    expect(levelReached(AUSTIN, 119_642)).toBe(2);
+  });
+
+  it("is 0 below Level I", () => {
+    expect(levelReached(AUSTIN, 95_887)).toBe(0);
+  });
+
+  it("never claims a level DOL didn't publish, nor one above it", () => {
+    expect(levelReached([95_888, 119_642, null, 167_149], 200_000)).toBe(2);
+    expect(levelReached([null, null, null, null], 200_000)).toBe(0);
+  });
+
+  it("names each answer in words", () => {
+    expect([0, 1, 2, 3, 4].map((n) => levelName(n as 0 | 1 | 2 | 3 | 4))).toEqual([
+      "Below Level I",
+      "Level I",
+      "Level II",
+      "Level III",
+      "Level IV",
+    ]);
   });
 });

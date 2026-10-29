@@ -316,6 +316,42 @@ export async function wageLevelsForArea(area: string, codes: string[]): Promise<
   return got.map((r) => ({ soc: String(r.soc7), ...levelYear(r) }));
 }
 
+/** One area's four levels for a job, yearly, in the newest wage year. */
+export interface AreaLevels {
+  area: string;
+  /** DOL's own name for the area, "Austin-Round Rock-San Marcos, TX". */
+  name: string;
+  yearly: (number | null)[];
+  label: string | null;
+}
+
+/**
+ * One occupation's four levels in every DOL wage area of a state, all industries, the newest wage year held,
+ * read from our copy of DOL's tables. An area spanning states (Texarkana, TX-AR) is in each. A failed read
+ * throws, so the route answers "couldn't be read" instead of an empty state. Keyed reads: the year's county
+ * list for the state, then each area's row by its primary key (0.2 s for Texas's 32 areas, Oct 29 2026).
+ */
+export async function wageLevelsInState(code: string, stateAb: string): Promise<{ wageYear: number; areas: AreaLevels[] } | null> {
+  const soc = socGroup(code);
+  if (!soc || !/^[A-Z]{2}$/.test(stateAb)) return null;
+  const year = await rows<{ y: unknown }>("SELECT max(wage_year) AS y FROM oflc_wage_levels");
+  const wageYear = Number(year[0]?.y);
+  if (!Number.isFinite(wageYear)) return null;
+  const got = await rows<Record<string, unknown>>(
+    `SELECT l.area, g.area_name, l.l1, l.l2, l.l3, l.l4, l.label FROM oflc_wage_levels l
+     JOIN (SELECT DISTINCT area, area_name FROM oflc_wage_geography WHERE wage_year = ? AND state_ab = ?) g ON g.area = l.area
+     WHERE l.wage_year = ? AND l.collection = 'alc' AND l.soc7 = ?`,
+    [wageYear, stateAb, wageYear, soc],
+  );
+  const areas = got
+    .map((r) => {
+      const y = levelYear({ ...r, wage_year: wageYear });
+      return { area: String(r.area), name: String(r.area_name ?? r.area), yearly: y.yearly, label: y.label };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return { wageYear, areas };
+}
+
 /* ------------------------------------------------------------ Census, BEA */
 
 export interface CityGeo {

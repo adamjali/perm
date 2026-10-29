@@ -11,6 +11,7 @@ import { seriesYearFor, type AreaOption, type WageLevel } from "@/lib/wageLevels
 import { SOC_CODE_RE } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { WageAcrossAreas } from "@/components/tools/WageAcrossAreas";
 
 /**
  * The four prevailing wage levels for one occupation in one area, read live
@@ -333,6 +334,18 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </details>
           ) : null}
         </div>
+      ) : null}
+
+      {/* The state's every area comes after the looked-up area's own figures, its ladder and its years. */}
+      {result.kind === "levels" && state ? (
+        <WageAcrossAreas
+          key={`${result.soc}-${state}`}
+          soc={result.soc}
+          state={state}
+          stateName={stateName}
+          startWage={result.levels.find((l) => l.level === "II")?.yearly ?? null}
+          currentArea={area}
+        />
       ) : null}
     </div>
   );
