@@ -71,6 +71,8 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   "/perm-rfi-audit/[stage]": "2026-10-17",
   "/perm-wages/[slug]": "2026-10-16",
   "/perm-wages/browse/[letter]": "2026-10-15",
+  // Oct 28 2026: the form pages are new.
+  "/uscis-processing-times/[form]": "2026-10-28",
   "/visa-bulletin/[month]": "2026-10-17",
   "/visa-bulletin/categories/[line]": "2026-10-16",
 };
