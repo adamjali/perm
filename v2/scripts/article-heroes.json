@@ -661,6 +661,14 @@
   "credit": "Screenshot of permtracker.app, October 28, 2026",
   "alt": "Rules on their way, each with its steps from White House review to the Federal Register, on permtracker.app"
  },
+ "changelog/uscis-forms-firm-rankings-and-visa-waits": {
+  "capture": {
+   "url": "/uscis-processing-times/i-140",
+   "clip": "fromm:Median months, quarter by quarter"
+  },
+  "credit": "Screenshot of permtracker.app, October 29, 2026",
+  "alt": "USCIS's median months for the I-140 quarter by quarter, and what it received, decided and had waiting, as columns, on permtracker.app"
+ },
  "changelog/the-whole-green-card-plan": {
   "capture": {
    "url": "/tools/green-card-timeline?where=perm-certified&pd=2025-03-14&cat=EB2&country=worldwide",
