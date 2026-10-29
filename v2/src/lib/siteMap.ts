@@ -60,6 +60,7 @@ export type DataSection =
   | "recruitment"
   | "compare-employers"
   | "h1b-employers"
+  | "firm-rankings"
   | "opt-employers"
   | "employers-under-review"
   | "layoffs"
@@ -179,6 +180,7 @@ export const SECTIONS: DataNavSection[] = [
 
   s("employers", "Employers and firms", "Employers", "/perm-employers"),
   s("attorneys", "Employers and firms", "Law firms", "/perm-attorneys"),
+  s("firm-rankings", "Employers and firms", "Law firm rankings", "/law-firm-rankings"),
   s("sponsor-finder", "Employers and firms", "Find a sponsor", "/sponsor-finder"),
   s("compare-employers", "Employers and firms", "Compare employers", "/perm-employers/compare"),
   s("employers-under-review", "Employers and firms", "Employers under review", "/perm-employers/under-review"),

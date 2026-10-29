@@ -207,6 +207,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "The 100 busiest H-1B employers each fiscal year, nationally and in each state, ranked two ways: certified LCAs from DOL's disclosure files (FY2020 on, by worksite) and approvals from USCIS's H-1B Employer Data Hub (FY2009 on, by the petitioner's address), with positions, median yearly wage and each employer's full record.",
   },
   {
+    path: "/law-firm-rankings",
+    label: "Top immigration law firms by year and state",
+    blurb:
+      "The 100 busiest immigration law firms each fiscal year, nationally and in each state: PERM decisions from DOL's disclosure files (FY2016 on) with the certified share and median days to certify, and certified H-1B LCAs (FY2020 on) with positions, each counted where the job is. Firms only, never individual attorneys; volume and outcomes, never a rating.",
+  },
+  {
     path: "/policy-changes",
     label: "Policy changes on the record",
     blurb:

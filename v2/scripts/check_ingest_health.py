@@ -397,6 +397,8 @@ PRECOMPUTED_DOCS = {
     "lca_wage_sources": (7, "the H-1B prevailing wage sources page"),
     # Rebuilt after each LCA load (monthly) and each Data Hub read (monthly).
     "h1b_ranks_summary": (45, "the top H-1B employer pages' ranks and totals"),
+    # Rebuilt after each LCA load and each PERM load, like the H-1B ranks.
+    "firm_ranks_summary": (45, "the law firm ranking pages' years and totals"),
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),

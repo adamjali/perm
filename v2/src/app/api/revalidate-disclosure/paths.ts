@@ -43,6 +43,7 @@ export const DISCLOSURE_PAGES = [
   "/tools/salary-explorer",
   "/lca-wages",
   "/h1b-employers",
+  "/law-firm-rankings",
   "/tools/compare-my-offer",
   "/tools/i140-trends",
   "/perm-recruitment",

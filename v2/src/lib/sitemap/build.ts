@@ -18,6 +18,8 @@ import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/db/groups";
 import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/db/otherEmployers";
 import { lcaOnlyCities } from "@/lib/db/lcaCities";
 import { getH1bSummary } from "@/lib/db/h1bRanks";
+import { getFirmRanksSummary } from "@/lib/db/firmRanks";
+import { firmRanksAsOf, rankedStates as firmRankedStates } from "@/lib/firmRanks";
 import { getSiteReviews } from "@/lib/reviews/read";
 import { newestReviewDay } from "@/lib/reviews/senjaParse";
 import { rankedStates, stateSlug } from "@/lib/h1bRanks";
@@ -189,6 +191,19 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     h1bStates = [];
   }
+  // The law firm ranking state pages: the same summary the route's
+  // generateStaticParams reads, dated by the newest decision its years hold.
+  let firmStates: string[] = [];
+  let firmsAsOf: string | null = null;
+  try {
+    const summary = await getFirmRanksSummary();
+    if (summary) {
+      firmStates = firmRankedStates(summary);
+      firmsAsOf = firmRanksAsOf(summary);
+    }
+  } catch {
+    firmStates = [];
+  }
   // The reviews page is dated by its newest review, from the same read the page makes (never throws).
   const reviewsAsOf = newestReviewDay((await getSiteReviews()).reviews);
   const allPosts = getAllPosts();
@@ -231,6 +246,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     posts: allPosts.length > 0 ? latest : null,
     sweep: queueAsOf,
     h1b: h1bAsOf,
+    firms: firmsAsOf,
     corpus: await corpusAsOf(),
     reviews: reviewsAsOf,
   };
@@ -331,6 +347,11 @@ export async function pagesEntries(): Promise<Entry[]> {
     ...h1bStates.map((code) => ({
       url: `${base}/h1b-employers/${stateSlug(code)}`,
       lastModified: at("/h1b-employers/[state]"),
+    })),
+    { url: `${base}/law-firm-rankings`, lastModified: at("/law-firm-rankings"), images: [`${base}/og/law-firm-rankings.jpg`] },
+    ...firmStates.map((code) => ({
+      url: `${base}/law-firm-rankings/${stateSlug(code)}`,
+      lastModified: at("/law-firm-rankings/[state]"),
     })),
     { url: `${base}/tools/compare-my-offer`, lastModified: at("/tools/compare-my-offer"), images: [`${base}/og/compare-my-offer.jpg`] },
     { url: `${base}/tools/rfi-deadline`, lastModified: at("/tools/rfi-deadline"), images: [`${base}/og/rfi-deadline.jpg`] },

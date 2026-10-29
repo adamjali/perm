@@ -1428,5 +1428,20 @@
    1004
   ],
   "css": "#work li[data-tip] > span.font-mono{visibility:hidden!important} #work li[data-tip]:nth-of-type(n+4){display:none!important} #work > div > ul > li:nth-of-type(n+3){display:none!important}"
+ },
+ {
+  "slug": "law-firm-rankings",
+  "path": "/law-firm-rankings",
+  "title": "Top immigration law firms",
+  "label": "The busiest immigration law firms each fiscal year, by PERM decisions and H-1B LCAs, from DOL's own files.",
+  "shot": "law-firm-rankings.png",
+  "from": "PERM labor certifications",
+  "crop": [
+   0,
+   0,
+   1504,
+   1008
+  ],
+  "css": "#perm .shadow-hard-sm{display:none!important} #perm li[data-tip] > span.font-mono, #perm li[data-tip] p.text-sm{display:none!important} #perm ol > li:nth-of-type(n+7){display:none!important} #perm ul.flex-wrap span.font-mono, #perm ul.flex-wrap span.text-muted-foreground{display:none!important} #perm > p{display:none!important} #perm h2 [data-fy]{display:none!important}"
  }
 ]

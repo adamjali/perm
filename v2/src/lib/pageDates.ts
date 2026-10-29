@@ -28,6 +28,8 @@ export type DateSource =
   | "sweep"
   /** The newest day the H-1B employer rankings cover. */
   | "h1b"
+  /** The newest decision day the law firm rankings' shown years hold. */
+  | "firms"
   /** The last decision day in DOL's published PERM files. */
   | "corpus"
   /** The day the newest shown review was left (Eastern). */
@@ -58,6 +60,7 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   "/changelog/[slug]": "2026-10-01",
   "/guides/[slug]": "2026-09-26",
   "/h1b-employers/[state]": "2026-10-17",
+  "/law-firm-rankings/[state]": "2026-10-28",
   "/perm-attorneys/[slug]": "2026-10-16",
   "/perm-attorneys/browse/[letter]": "2026-10-15",
   "/perm-cities/[slug]": "2026-10-16",
@@ -135,6 +138,8 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
 
   "/h1b-employers": "h1b",
   "/h1b-employers/[state]": "h1b",
+  "/law-firm-rankings": "firms",
+  "/law-firm-rankings/[state]": "firms",
 
   "/perm-employers/[slug]": "corpus",
   "/perm-attorneys/[slug]": "corpus",
@@ -160,6 +165,8 @@ export const OWN_DATE: ReadonlySet<string> = new Set([
   "/visa-bulletin/[month]",
   "/h1b-employers",
   "/h1b-employers/[state]",
+  "/law-firm-rankings",
+  "/law-firm-rankings/[state]",
   "/reviews",
 ]);
 

@@ -57,6 +57,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/today": "today now everything board dashboard overview summary all steps wage request pwd perm i-140 i140 visa bulletin cutoff where line stands growing shrinking moved forward back retrogression status",
   "/perm-by-the-numbers": "numbers statistics stats totals counts data pending waiting on hold holds decisions per day new filings jobs crew member new employers sponsors rfi wage requests visa bulletin archive press",
   "/perm-recruitment": "recruitment sunday ad ads advertisement newspaper newspapers job order notice of filing additional steps professional journal timing",
+  "/law-firm-rankings": "law firm rankings top immigration lawyers attorneys biggest busiest firms perm h-1b h1b lca by state fiscal year fragomen",
   "/h1b-employers": "h-1b h1b top employers sponsors biggest largest busiest companies ranking lca uscis data hub approvals by state",
   "/lca-wage-sources": "prevailing wage source survey oes radford aon mercer willis towers watson cba union h-1b lca",
   "/uscis-rfe-rates": "rfe request for evidence rate rates h-1b h1b l-1 l1 o-1 tn h-2a h-2b i-129 uscis denial",
