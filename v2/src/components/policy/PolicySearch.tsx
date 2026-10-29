@@ -1,25 +1,36 @@
 "use client";
 
-import { useId, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
 
 import { rankFuzzy } from "@/lib/fuzzy";
+import type { PolicyFacets, PolicyItem } from "@/lib/policySearch";
 import { shortDate } from "@convex/lib/months";
 
-/**
- * One document for the search: prepared on the server, so the browser gets
- * strings and a flag rather than the Register's whole record.
- */
-export interface PolicyItem {
-  id: string;
-  date: string;
-  /** "Final rule", "Proposed rule", "Notice", "OFLC". */
-  kind: string;
-  title: string;
-  url: string;
-  agencies: string;
-  /** Title, abstract, agencies and citation, lower-cased once. */
-  text: string;
-  commentsOpen: boolean;
+export type { PolicyItem } from "@/lib/policySearch";
+
+let pending: Promise<PolicyItem[]> | null = null;
+
+/** The page's documents, fetched at most once a visit; a failed fetch is forgotten, so the next try asks again. */
+export function loadPolicyItems(): Promise<PolicyItem[]> {
+  pending ??= fetch("/policy-changes/search.json")
+    .then((r) => {
+      if (!r.ok) throw new Error(`search.json answered ${r.status}`);
+      return r.json();
+    })
+    .then((list: unknown) => {
+      if (!Array.isArray(list)) throw new Error("search.json is not a list");
+      return list as PolicyItem[];
+    })
+    .catch((e: unknown) => {
+      pending = null;
+      throw e;
+    });
+  return pending;
+}
+
+/** For tests: forget the fetched list. */
+export function resetPolicyItems(): void {
+  pending = null;
 }
 
 export interface PolicyQuery {
@@ -56,26 +67,56 @@ const day = (iso: string) => shortDate(iso) ?? iso;
  * the page renders as it always has; a search replaces the lists with the
  * matches, every one linking to where it was published.
  */
-export function PolicySearch({ items, children }: { items: PolicyItem[]; children: ReactNode }) {
+export function PolicySearch({
+  facets,
+  load = loadPolicyItems,
+  children,
+}: {
+  facets: PolicyFacets;
+  /** Where the documents come from; tests pass their own. */
+  load?: () => Promise<PolicyItem[]>;
+  children: ReactNode;
+}) {
   const id = useId();
   const [q, setQ] = useState<PolicyQuery>({ text: "", kind: "", year: "", openOnly: false });
-  const kinds = useMemo(() => [...new Set(items.map((i) => i.kind))].sort(), [items]);
-  const years = useMemo(() => [...new Set(items.map((i) => i.date.slice(0, 4)))].sort().reverse(), [items]);
-  const anyOpen = items.some((i) => i.commentsOpen);
+  const [wanted, setWanted] = useState(false);
+  const [loaded, setLoaded] = useState<{ items: PolicyItem[] | null; failed: boolean }>({ items: null, failed: false });
+  const { kinds, years, anyOpen } = facets;
   const active = q.text.trim() !== "" || q.kind !== "" || q.year !== "" || q.openOnly;
-  const hits = useMemo(() => (active ? filterPolicy(items, q) : []), [items, q, active]);
+  // Asked for at the first sign of use (a pointer over the box, a focus, a change), so the
+  // documents are usually here by the time a word is typed.
+  const want = useCallback(() => setWanted(true), []);
+  useEffect(() => {
+    if (!wanted || loaded.items || loaded.failed) return;
+    let live = true;
+    load().then(
+      (items) => live && setLoaded({ items, failed: false }),
+      () => live && setLoaded({ items: null, failed: true }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [wanted, loaded.items, loaded.failed, load]);
+  const items = useMemo(() => loaded.items ?? [], [loaded.items]);
+  const ready = loaded.items !== null;
+  const hits = useMemo(() => (active && ready ? filterPolicy(items, q) : []), [items, q, active, ready]);
   // No document holds every word: the closest titles instead, within the kind
   // and year chosen, so a misspelt word still finds the rule.
   const near = useMemo(() => {
-    if (!active || hits.length > 0 || q.text.trim().length < 3) return [];
+    if (!active || !ready || hits.length > 0 || q.text.trim().length < 3) return [];
     const pool = filterPolicy(items, { ...q, text: "" });
     return rankFuzzy(q.text, pool, (i) => [i.title, i.agencies], { limit: 8 }).map((r) => r.item);
-  }, [items, q, active, hits.length]);
+  }, [items, q, active, ready, hits.length]);
   const list = hits.length > 0 ? hits : near;
 
   return (
     <>
-      <section className="mt-12 object p-4 sm:p-5" aria-label="Search the documents">
+      <section
+        className="mt-12 object p-4 sm:p-5"
+        aria-label="Search the documents"
+        onPointerEnter={want}
+        onFocusCapture={want}
+      >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <label className="block lg:col-span-2" htmlFor={`${id}-q`}>
             <span className={LABEL}>Search every document</span>{" "}
@@ -86,7 +127,10 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
               maxLength={120}
               autoComplete="off"
               placeholder="e.g. prevailing wage"
-              onChange={(e) => setQ({ ...q, text: e.target.value })}
+              onChange={(e) => {
+                want();
+                setQ({ ...q, text: e.target.value });
+              }}
               className={CONTROL}
             />
           </label>{" "}
@@ -128,7 +172,20 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
       {active ? (
         <section className="mt-6">
           <p className="text-base text-soft" role="status">
-            {hits.length > 0
+            {loaded.failed ? (
+              <>
+                The documents couldn&apos;t be loaded just now.{" "}
+                <button
+                  type="button"
+                  className="link min-h-[44px]"
+                  onClick={() => setLoaded({ items: null, failed: false })}
+                >
+                  Try again
+                </button>
+              </>
+            ) : !ready
+              ? `Searching ${facets.count.toLocaleString("en-US")} documents\u2026`
+              : hits.length > 0
               ? `${hits.length.toLocaleString("en-US")} of ${items.length.toLocaleString("en-US")} documents match, newest first.`
               : near.length > 0
                 ? `No document holds \u201c${q.text.trim()}\u201d exactly. These are the closest.`

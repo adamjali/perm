@@ -8,7 +8,7 @@ User=permtracker
 Group=permtracker
 # The H-1B LCA filings (`lca_cases`, about 2.75 GB with its indexes) in a file
 # of their own since Oct 19 2026, so the main file fits the 6 GB RAM lock
-# (permtracker-dbcache) again. The same build, signing key and caps as
+# (permtracker-dbcache, retired Oct 29 2026) again. The same build, signing key and caps as
 # permtracker-db.service, whose comments explain each flag; the clients send a
 # statement naming lca_cases here (DATABASE_LCA_URL, src/lib/db/lcaRoute.ts).
 # Writes land once a month, with DOL's quarterly LCA file.

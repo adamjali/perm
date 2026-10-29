@@ -28,6 +28,13 @@ pause between requests so the site's reads go first (a back-catalogue load
 stalled the database for 38 minutes on Oct 3 2026). Each year's files are
 skipped when their bytes match the last load.
 
+HISTORY BEFORE 2021-22. DOL's downloads page starts at 2021-22. The years before it were on the retired FLC
+Data Center as `OWL_<June that closes the year>_TEXT.zip`, in the same format, and the Internet Archive keeps
+them; the five for 2016-17 to 2020-21, checked, are kept outside the repo
+(~/.claude/explanations/20261029_owl_wage_history/README.md). `--local OWL_2020_TEXT.zip` loads one as 2019-20 at
+the history pace, never moving the freshness stamp. 2020-21's second half (`OWL_2021_2_TEXT.zip`, DOL's Oct 8
+2020 interim rule, vacated Dec 1 2020) is left out.
+
 Usage:
     python3 scripts/ingest_oflc_wages.py                 # discover; load new or changed years
     python3 scripts/ingest_oflc_wages.py --year 2024     # one wage year (2024 = 2024-25)
@@ -94,7 +101,13 @@ class Refusal(Exception):
 
 
 def wage_year_of(name: str) -> int | None:
-    """`OFLC_Wages_2024-25.zip` is the year that opened in July 2024."""
+    """`OFLC_Wages_2024-25.zip` is the year that opened in July 2024. The retired FLC Data Center named a year
+    by the June that closes it: `OWL_2022_TEXT.zip` ("2022 Program Year") is July 2021 to June 2022, and it
+    matched our stored 2021 table row for row (437,593 rows, Oct 29 2026). A split year's halves
+    (`OWL_2021_1_TEXT.zip`) name no year: which half stands for the year is a reading, given with --year."""
+    owl = re.fullmatch(r"OWL_(20\d\d)_TEXT\.zip", name, re.I)
+    if owl:
+        return int(owl.group(1)) - 1
     m = re.search(r"(20\d\d)-(\d\d)", name)
     if not m or (int(m.group(1)) + 1) % 100 != int(m.group(2)):
         return None
@@ -238,6 +251,12 @@ def load_year(db: Database, year: int, zip_bytes: bytes, *, newest: bool, force:
     return out
 
 
+def is_newest(year: int, held_before: list[int]) -> bool:
+    """Whether loading `year` loads the newest wage year held. Only then does a load use the quick pace and move
+    the dataset's freshness stamp; a history year (the FLC Data Center's 2016-17 to 2020-21) never moves it back."""
+    return not held_before or year >= max(held_before)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int)
@@ -272,11 +291,13 @@ def main() -> int:
 
     db = Database()
     db.script(DDL)
+    held_before = [r["year"] for r in query_years(db)]
     results, failed = [], []
     # Newest first, so the year the site reads most is current before history.
     for year in sorted(sources, reverse=True):
         try:
-            results.append(load_year(db, year, sources[year](), newest=year == newest, force=args.force))
+            results.append(load_year(db, year, sources[year](), newest=year == newest and is_newest(year, held_before),
+                                     force=args.force))
         except Refusal as exc:
             log(f"REFUSED {year}: {exc}")
             failed.append(f"{year}: {exc}")
@@ -287,7 +308,7 @@ def main() -> int:
     if failed:
         record_run(db, SCRIPT, status="failed", rows_written=written, note="; ".join(failed), started_at=started)
         return 1
-    if newest in held:
+    if newest in held and is_newest(newest, held_before):
         stamp_freshness(db, "oflc-wage-levels", as_of=f"{newest}-07-01", source=SOURCE, cadence="yearly, each July",
                         note=f"wage years {min(held)}-{max(held) + 1} held", max_age_days=400)
     record_run(db, SCRIPT, status="ok", rows_written=written,

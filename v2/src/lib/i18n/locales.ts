@@ -29,6 +29,12 @@ export interface LocaleDef {
   tag: string;
   /** The locale `Intl` formats dates and numbers in. */
   intl: string;
+  /**
+   * Open Graph's form, language_TERRITORY (ogp.me: "Format language_TERRITORY"): `zh_Hans`, `es` and `ko` had been
+   * written from the BCP 47 tag, which isn't that form (found Oct 28 2026). Spanish takes es_LA, the code for Latin
+   * America, where most of these readers are.
+   */
+  ogLocale: string;
   /** The language's own name for itself, shown in the switcher. */
   endonym: string;
   englishName: string;
@@ -41,15 +47,20 @@ export interface LocaleDef {
 }
 
 export const LOCALES: readonly LocaleDef[] = [
-  { code: "zh", path: "/zh", tag: "zh-Hans", intl: "zh-CN", endonym: "简体中文", englishName: "Simplified Chinese", countries: ["china", "worldwide"] },
-  { code: "es", path: "/es", tag: "es", intl: "es", endonym: "Español", englishName: "Spanish", countries: ["mexico", "worldwide"] },
-  { code: "pt-br", path: "/pt-br", tag: "pt-BR", intl: "pt-BR", endonym: "Português (Brasil)", englishName: "Brazilian Portuguese", countries: ["worldwide"] },
-  { code: "ko", path: "/ko", tag: "ko", intl: "ko-KR", endonym: "한국어", englishName: "Korean", countries: ["worldwide"] },
-  { code: "vi", path: "/vi", tag: "vi", intl: "vi-VN", endonym: "Tiếng Việt", englishName: "Vietnamese", countries: ["worldwide"] },
+  { code: "zh", path: "/zh", tag: "zh-Hans", intl: "zh-CN", ogLocale: "zh_CN", endonym: "简体中文", englishName: "Simplified Chinese", countries: ["china", "worldwide"] },
+  { code: "es", path: "/es", tag: "es", intl: "es", ogLocale: "es_LA", endonym: "Español", englishName: "Spanish", countries: ["mexico", "worldwide"] },
+  { code: "pt-br", path: "/pt-br", tag: "pt-BR", intl: "pt-BR", ogLocale: "pt_BR", endonym: "Português (Brasil)", englishName: "Brazilian Portuguese", countries: ["worldwide"] },
+  { code: "ko", path: "/ko", tag: "ko", intl: "ko-KR", ogLocale: "ko_KR", endonym: "한국어", englishName: "Korean", countries: ["worldwide"] },
+  { code: "vi", path: "/vi", tag: "vi", intl: "vi-VN", ogLocale: "vi_VN", endonym: "Tiếng Việt", englishName: "Vietnamese", countries: ["worldwide"] },
 ];
 
 /** The English page every localized guide is a version of. */
 export const ENGLISH_GUIDE = "/guides/waiting-on-your-green-card";
+
+/** The translated set a path belongs to (`/zh` and everything under it), or null for an English page. */
+export function localeOfPath(path: string): LocaleDef | null {
+  return LOCALES.find((l) => path === l.path || path.startsWith(`${l.path}/`)) ?? null;
+}
 
 export function localeByCode(code: LocaleCode): LocaleDef {
   const def = LOCALES.find((l) => l.code === code);
@@ -67,6 +78,9 @@ export function languageAlternates(path: string): Record<string, string> | null 
   return {
     en: ENGLISH_GUIDE,
     ...Object.fromEntries(LOCALES.map((l) => [l.tag, l.path])),
+    // Google's catch-all for a language with no region (localized-versions doc, Sep 21 2026): a reader set to plain
+    // Portuguese, in Portugal or anywhere, gets the Brazilian page rather than none.
+    pt: "/pt-br",
     "x-default": ENGLISH_GUIDE,
   };
 }

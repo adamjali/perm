@@ -3,8 +3,11 @@
  * screen at 1440 by 810, scaled to 960 by 540 (owner, Oct 27 2026: "need a pic
  * of all competitors"). One page load each, the homepage only, every site's
  * robots.txt allowing it; H1BPerm's is the capture taken in a person's own
- * browser that day, since its site asks scripts not to read it. Nothing was
- * clicked or dismissed, so a site's own ad bar shows as it did.
+ * browser that day, since its site asks scripts not to read it. H1BGrader's
+ * was taken in a person's own browser on Oct 28, after Cloudflare's check
+ * passed by itself, from two screens of that 1440-wide, 756-tall window joined
+ * at the same page row (the top 656 rows, then rows 656 to 810). Nothing was
+ * clicked or dismissed, so a site's own ad bar or cookie notice shows as it did.
  *
  * Re-take with `node node_modules/.cache/qa/rival-shots.mjs <dir>` when the
  * marks are re-read, and change the date in the caption with them.
@@ -47,6 +50,30 @@ export const HOME_SHOTS: Record<string, HomeShot> = {
     width: 960,
     height: 540,
     alt: "PermQueue's homepage: a dark page headed PERM Tracker, your real place in the PERM queue, beside a panel of 602 cases decided that day.",
+  },
+  h1bgrader: {
+    src: "/images/compare/h1bgrader.webp",
+    width: 960,
+    height: 540,
+    alt: "H1BGrader's homepage: a teal menu bar, a search for H-1B sponsors by company, job title or city, a strip announcing its new PERM tracker, and its top H-1B sponsors, job titles and cities for FY 2026 Q3.",
+  },
+  greencardclock: {
+    src: "/images/compare/greencardclock.webp",
+    width: 960,
+    height: 540,
+    alt: "GreenCardClock's homepage: a pale green page headed Your Green Card Clock Is Already Ticking, a banner that the November 2026 visa bulletin is live, buttons to check a priority date and explore salary data, and a cookie notice along the bottom.",
+  },
+  lawfully: {
+    src: "/images/compare/lawfully.webp",
+    width: 960,
+    height: 540,
+    alt: "Lawfully's homepage: a white page headed Lawfully, your immigration journey starts here, with two cards, one for its case tracker and one for its business plan.",
+  },
+  immigrationroad: {
+    src: "/images/compare/immigrationroad.webp",
+    width: 960,
+    height: 540,
+    alt: "Immigration Road's homepage: a green road-sign logo, buttons for the October and November 2026 visa bulletins, a chart of EB-2 cutoff dates, and its green card calculator.",
   },
   h1bperm: {
     src: "/images/compare/h1bperm.webp",

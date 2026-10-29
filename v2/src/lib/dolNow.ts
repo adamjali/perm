@@ -1,6 +1,8 @@
 import { analystReviewAverage, analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { formatAsOf, formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
+import { aboutMonths, rulerOf, type DecidedSpan } from "@/lib/board";
+import { longDate } from "@convex/lib/months";
 
 /**
  * DOL's two headline figures, worded for prose: how long its published average
@@ -149,4 +151,55 @@ export function pwdSentence(n: DolPwdNow): string {
   const wait = n.wait ? `, ${n.wait} after they were filed` : "";
   const body = `DOL is issuing PERM wage determinations on requests filed in ${n.frontier}${wait}`;
   return n.asOf ? `As of ${n.asOf}, ${body}.` : `${body}.`;
+}
+
+/** One working day's PERM decisions, as /today's board saves them: the day and where their filing days fell. */
+export interface DecidedReading {
+  day: string;
+  span: DecidedSpan | null;
+}
+
+/** The figures behind `howLongSentence`, unworded, so a translated page can say them in its own language. */
+export interface HowLongFigures {
+  /** DOL's last working day with decisions (ISO), when its cases' wait could be read. */
+  decidedOn: string | null;
+  waitedDays: number | null;
+  /** The filing month analyst review is working ("2025-12"). */
+  frontier: string | null;
+  /** DOL's published average, calendar days, and the month of decisions it was measured on. */
+  days: number | null;
+  decidedIn: string | null;
+  /** The day DOL published these figures (ISO). */
+  asOf: string | null;
+}
+
+export function howLongFigures(reading: DecidedReading | null, t: ProcessingTimesSnapshot | null): HowLongFigures {
+  const ruler = reading?.span ? rulerOf(reading.span, reading.day) : null;
+  const waited = ruler && ruler.waitedDays > 0 ? ruler.waitedDays : null;
+  const avg = t ? analystReviewAverage(t.permAverageDays ?? []) : null;
+  const queue = t ? analystReviewQueue(t.permQueues ?? []) : null;
+  return {
+    decidedOn: waited !== null && reading ? reading.day : null,
+    waitedDays: waited,
+    frontier: queue?.priorityDate ?? null,
+    days: avg?.calendarDays ?? null,
+    decidedIn: avg?.month ?? null,
+    asOf: t?.permAsOf ?? null,
+  };
+}
+
+/**
+ * The answer to "how long does PERM take right now": what the cases DOL decided on its last working day had
+ * waited (/today's board, the homepage's figure), then DOL's own month and average, dated. A part whose reading
+ * is missing is left out, never typed. The lookup and the processing-times page answer the question with it.
+ */
+export function howLongSentence(reading: DecidedReading | null, t: ProcessingTimesSnapshot | null): string {
+  const ruler = reading?.span ? rulerOf(reading.span, reading.day) : null;
+  const day = reading ? longDate(reading.day) : null;
+  const waited =
+    ruler && ruler.waitedDays > 0 && day ? `The PERM cases DOL decided on ${day} had waited ${aboutMonths(ruler.waitedDays)} from filing.` : null;
+  const n = dolNow(t);
+  const dol = n.days === null && n.frontier === null ? null : queueSentence(n);
+  const parts = [waited, dol].filter((p): p is string => p !== null);
+  return parts.length ? parts.join(" ") : "DOL's figures couldn't be read just now; DOL's own page, flag.dol.gov/processingtimes, has them.";
 }

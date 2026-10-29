@@ -105,3 +105,28 @@ export function parseAreaOptions(json: unknown): AreaOption[] {
   }
   return out;
 }
+
+/** How far a wage reaches up DOL's four levels: 0 below Level I, 4 at Level IV. */
+export type LevelReached = 0 | 1 | 2 | 3 | 4;
+
+/**
+ * The highest of DOL's four levels a yearly wage meets or passes. A level is
+ * reached at its own wage, as DOL sets a determination; a level DOL didn't
+ * publish (a "High Wage" row's top levels) can't be reached, nor any above it.
+ */
+export function levelReached(yearly: readonly (number | null)[], wage: number): LevelReached {
+  let reached = 0;
+  for (let i = 0; i < 4; i++) {
+    const v = yearly[i];
+    if (v == null || wage < v) break;
+    reached = i + 1;
+  }
+  return reached as LevelReached;
+}
+
+const LEVEL_NAMES = ["Below Level I", "Level I", "Level II", "Level III", "Level IV"] as const;
+
+/** "Level III", or "Below Level I". */
+export function levelName(n: LevelReached): (typeof LEVEL_NAMES)[number] {
+  return LEVEL_NAMES[n];
+}

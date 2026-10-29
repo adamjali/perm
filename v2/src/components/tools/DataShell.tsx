@@ -25,6 +25,7 @@ import { DataRail } from "./DataRail";
 /** Pages that carry their own case box, so the closing one would repeat it. */
 const OWN_LOOKUP: readonly RegExp[] = [
   /^\/perm-case-status/,
+  /^\/perm-case-alerts$/,
   /^\/case-search/,
   /^\/perm-employers\/(?!compare$|under-review$|browse$)[^/]+$/,
   /^\/perm-attorneys\/(?!browse$)[^/]+$/,

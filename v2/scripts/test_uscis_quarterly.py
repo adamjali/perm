@@ -328,13 +328,36 @@ def main() -> int:
     for raw, want in (("N/A", None), ("D", None), ("-", 0), ("", None), (None, None), ("62932", 62932),
                       ("1,234", 1234), ("3.0", 3), (" 7 ", 7)):
         check(f"cell_int({raw!r}) -> {want!r}", q.cell_int(raw) == want)
-    refuses("cell_int refuses a fraction where a count belongs", lambda: q.cell_int("3.9"), "whole number")
+    # USCIS's FY2024 workbooks store apportioned counts in `#,##0` cells: read as the sheet shows them.
+    check("cell_int reads a stored fraction as the sheet displays it",
+          (q.cell_int("82565.239934126628"), q.cell_int("2475577.752151262"), q.cell_int("27.775671406003159"),
+           q.cell_int("31.224328593996841"), q.cell_int("17105.5")) == (82565, 2475578, 28, 31, 17106),
+          str((q.cell_int("82565.239934126628"), q.cell_int("27.775671406003159"), q.cell_int("17105.5"))))
     check("cell_float reads a median and N/A", q.cell_float("3.9") == 3.9 and q.cell_float("N/A") is None)
+    check("cell_float shows an unrounded median to one place, as its `#,##0.0` cell does",
+          q.cell_float("8.5479357999999994") == 8.5 and q.cell_float("11.572590099999999") == 11.6
+          and q.cell_float("13.5451906") == 13.5, str(q.cell_float("8.5479357999999994")))
+    check("cell_float leaves a two-place median alone (that's footnote glue, handled elsewhere)",
+          q.cell_float("9.16") == 9.16)
     check("quarter_bounds parses USCIS's date range",
           q.quarter_bounds("April 1, 2026 - June 30, 2026") == ("2026-04-01", "2026-06-30"))
     check("sheet_country strips FY26 and a bare year",
           (q.sheet_country("India FY26"), q.sheet_country("Vietnam 2026"), q.sheet_country("All Countries FY26"))
           == ("India", "Vietnam", "All Countries"))
+
+    # -- a history load never moves the freshness stamp back ---------------
+    check("freshness: a first stamp is written", q.stamp_moves_forward(None, "2025-09-30"))
+    check("freshness: a newer quarter moves the stamp", q.stamp_moves_forward("2026-03-31", "2026-06-30"))
+    check("freshness: the same quarter again is stamped", q.stamp_moves_forward("2026-06-30", "2026-06-30"))
+    check("freshness: older quarters from the Archive leave the stamp alone",
+          not q.stamp_moves_forward("2026-06-30", "2025-09-30"))
+    fdb = FakeDb()
+    check("freshness: nothing held reads as None", q.held_as_of(fdb, "uscis-forms") is None)
+    fdb.execute("CREATE TABLE data_freshness (dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER, "
+                "source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)")
+    fdb.execute("INSERT INTO data_freshness VALUES ('uscis-forms', '2026-06-30', 0, 's', 'c', 'n', 1)")
+    check("freshness: the held stamp is read", q.held_as_of(fdb, "uscis-forms") == "2026-06-30",
+          str(q.held_as_of(fdb, "uscis-forms")))
 
     if not FIXTURES.is_dir():
         check("fixtures exist (run --make-fixtures)", False)
@@ -370,6 +393,15 @@ def main() -> int:
                 r["pending"] = 10
         q.reconcile_all_forms(bad)
     refuses("all_forms: a shifted pending column is refused", shifted, "column has shifted")
+
+    def counts_as_medians():
+        bad = q.Parsed(af.kind, af.fy, af.quarter, af.name, af.quarter_start, af.quarter_end,
+                       rows=[dict(r) for r in af.rows])
+        for r in bad.rows:
+            r["median_months"] = r["pending"]
+        q.reconcile_all_forms(bad)
+    # Stored fractions are rounded as the sheet shows them, so a misplaced column must fail here instead.
+    refuses("all_forms: counts read where the medians belong are refused", counts_as_medians, "implausible")
 
     def dup():
         bad = q.Parsed(af.kind, af.fy, af.quarter, af.name, af.quarter_start, af.quarter_end,

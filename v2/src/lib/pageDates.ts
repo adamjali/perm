@@ -28,6 +28,10 @@ export type DateSource =
   | "sweep"
   /** The newest day the H-1B employer rankings cover. */
   | "h1b"
+  /** The newest decision day the law firm rankings' shown years hold. */
+  | "firms"
+  /** The newest day the cap-exempt employer page's figures cover. */
+  | "capExempt"
   /** The last decision day in DOL's published PERM files. */
   | "corpus"
   /** The day the newest shown review was left (Eastern). */
@@ -58,6 +62,7 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   "/changelog/[slug]": "2026-10-01",
   "/guides/[slug]": "2026-09-26",
   "/h1b-employers/[state]": "2026-10-17",
+  "/law-firm-rankings/[state]": "2026-10-28",
   "/perm-attorneys/[slug]": "2026-10-16",
   "/perm-attorneys/browse/[letter]": "2026-10-15",
   "/perm-cities/[slug]": "2026-10-16",
@@ -71,6 +76,8 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   "/perm-rfi-audit/[stage]": "2026-10-17",
   "/perm-wages/[slug]": "2026-10-16",
   "/perm-wages/browse/[letter]": "2026-10-15",
+  // Oct 28 2026: the form pages are new.
+  "/uscis-processing-times/[form]": "2026-10-28",
   "/visa-bulletin/[month]": "2026-10-17",
   "/visa-bulletin/categories/[line]": "2026-10-16",
 };
@@ -133,6 +140,9 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
 
   "/h1b-employers": "h1b",
   "/h1b-employers/[state]": "h1b",
+  "/law-firm-rankings": "firms",
+  "/law-firm-rankings/[state]": "firms",
+  "/h1b-cap-exempt-employers": "capExempt",
 
   "/perm-employers/[slug]": "corpus",
   "/perm-attorneys/[slug]": "corpus",
@@ -158,6 +168,9 @@ export const OWN_DATE: ReadonlySet<string> = new Set([
   "/visa-bulletin/[month]",
   "/h1b-employers",
   "/h1b-employers/[state]",
+  "/law-firm-rankings",
+  "/law-firm-rankings/[state]",
+  "/h1b-cap-exempt-employers",
   "/reviews",
 ]);
 

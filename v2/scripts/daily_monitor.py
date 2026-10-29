@@ -1107,23 +1107,7 @@ def repo_timers() -> list[str]:
     return sorted(p.name for p in d.glob("*.timer"))
 
 
-# permtracker-dbcache locks the database file in memory only up to this size
-# (scripts/oracle/bin/permtracker-dbcache, held equal by test_daily_monitor.py).
-DBCACHE_CAP_BYTES = 6 * 1024 ** 3
 HOUR_MS = 3_600_000
-
-
-def ram_lock_line(svc: dict, n: dict) -> str | None:
-    """Say so when the database is no longer locked in memory because it grew
-    past the lock's cap: the service still runs, so nothing else shows it (it
-    stopped locking on Oct 9 2026 at 6.46 GB, unnoticed for ten days)."""
-    data, locked = n.get("dbDataBytes"), n.get("lockedMb")
-    if svc.get("permtracker-dbcache") != "active" or not data or locked is None:
-        return None
-    if data > DBCACHE_CAP_BYTES and locked < 512:
-        return (f"Database not locked in memory: its data file ({data / 1e9:.1f} GB) is over the lock's "
-                f"{DBCACHE_CAP_BYTES / 1024 ** 3:.0f} GB cap, so reads come from the system's file cache")
-    return None
 
 
 def busy_line(doc: dict, now_ms: int, warns: list, lines: list, switches: list[int] | None = None) -> None:
@@ -1301,8 +1285,6 @@ def server_verdict(doc: dict | None, now_ms: int, switches: list[int] | None = N
     second = f"permtracker-web@{slot}2" if slot else None
     if second and second in svc and svc.get(second) != "active":
         warns.append(f"the site is running on one copy: {second} is {svc.get(second)}")
-    if svc.get("permtracker-dbcache") != "active":
-        warns.append("the database is no longer held in memory (permtracker-dbcache)")
     if doc.get("failedUnits"):
         warns.append("failed units: " + ", ".join(doc["failedUnits"][:5]))
     if doc.get("repairCount24h"):
@@ -1486,9 +1468,6 @@ def server_verdict(doc: dict | None, now_ms: int, switches: list[int] | None = N
     lines.extend(lca_lines)
     if slot:
         lines.append(f"Live copy: {slot} ({(doc.get('slot') or {}).get('release')})")
-    lock = ram_lock_line(svc, n)
-    if lock:
-        lines.append(lock)
     busy_line(doc, now_ms, warns, lines, switches)
     status = "fail" if fails else "warn" if warns else "ok"
     summary = (fails + warns)[0] if fails or warns else f"all services up, memory {n.get('memPct')}%"

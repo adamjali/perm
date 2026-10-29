@@ -12,6 +12,7 @@ import {
   SECTIONS,
   type SitePage,
 } from "@/lib/siteMap";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 export interface SiteIndexEntry {
   label: string;
@@ -56,9 +57,13 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/today": "today now everything board dashboard overview summary all steps wage request pwd perm i-140 i140 visa bulletin cutoff where line stands growing shrinking moved forward back retrogression status",
   "/perm-by-the-numbers": "numbers statistics stats totals counts data pending waiting on hold holds decisions per day new filings jobs crew member new employers sponsors rfi wage requests visa bulletin archive press",
   "/perm-recruitment": "recruitment sunday ad ads advertisement newspaper newspapers job order notice of filing additional steps professional journal timing",
+  "/perm-case-alerts": "email alerts notification notify me track perm case status updates changes watch my case filing month visa bulletin employer follow free",
+  "/h1b-cap-exempt-employers": "h-1b h1b cap exempt cap-exempt employers universities colleges nonprofit research no lottery acwia year round hire",
+  "/law-firm-rankings": "law firm rankings top immigration lawyers attorneys biggest busiest firms perm h-1b h1b lca by state fiscal year fragomen",
   "/h1b-employers": "h-1b h1b top employers sponsors biggest largest busiest companies ranking lca uscis data hub approvals by state",
   "/lca-wage-sources": "prevailing wage source survey oes radford aon mercer willis towers watson cba union h-1b lca",
   "/uscis-rfe-rates": "rfe request for evidence rate rates h-1b h1b l-1 l1 o-1 tn h-2a h-2b i-129 uscis denial",
+  "/visa-wait-times": "visa appointment interview wait time times consulate embassy stamping h-1b h1b l-1 f-1 b1 b2 visitor student india hyderabad chennai mumbai new delhi kolkata",
   "/uscis-processing-times": "uscis processing time times median wait form i-140 i-485 i-765 i-131 ead advance parole daca deferred action i-821d",
   "/tools/h1b-lottery-odds-calculator": "h-1b h1b lottery registration cap selection odds chance wage level weighted",
   "/perm-employers/under-review": "on hold rfi audit appeals census",
@@ -132,6 +137,10 @@ export function staticIndex(): SiteIndexEntry[] {
   // tabs), so search reaches every page that has a name.
   for (const [href, name] of PAGE_NAMES) {
     if (href !== "/" && href !== "/login" && href !== "/signup") add({ href, name }, "Go to");
+  }
+  // One page per USCIS form, under the name people search for ("i-485 processing time").
+  for (const f of FORM_PAGES) {
+    add({ href: `/uscis-processing-times/${f.slug}`, name: `${f.form} processing time` }, "USCIS processing times", f.terms);
   }
   // One row per page: a page in two lists keeps its first, most specific group.
   const seen = new Set<string>();

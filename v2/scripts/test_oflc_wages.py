@@ -64,6 +64,14 @@ def year_zip(with_appendix: bool, geo_bytes: bytes | None = None) -> bytes:
 def main() -> int:
     check("the year is the July that opened it", ow.wage_year_of("OFLC_Wages_2024-25.zip"), 2024)
     check("a pair that isn't consecutive is no year", ow.wage_year_of("OFLC_Wages_2024-26.zip"), None)
+    # The retired FLC Data Center named a year by the June that closes it ("2022 Program Year" is July 2021 to
+    # June 2022): OWL_2022_TEXT.zip matched the stored 2021 table row for row (437,593 rows, Oct 29 2026).
+    check("an FLC Data Center file is the year before its name", ow.wage_year_of("OWL_2020_TEXT.zip"), 2019)
+    check("a split year's halves need --year and a reading", ow.wage_year_of("OWL_2021_1_TEXT.zip"), None)
+    check("a year older than one held is history", ow.is_newest(2019, [2021, 2026]), False)
+    check("the newest held, loaded again, is the newest", ow.is_newest(2026, [2021, 2026]), True)
+    check("a year past every one held is the newest", ow.is_newest(2027, [2021, 2026]), True)
+    check("with nothing held, the first year is the newest", ow.is_newest(2019, []), True)
 
     saved = (ow.MIN_ALC_ROWS, ow.MIN_COUNTIES)
     ow.MIN_ALC_ROWS, ow.MIN_COUNTIES = 1, 1

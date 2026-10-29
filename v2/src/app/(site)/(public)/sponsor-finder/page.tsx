@@ -440,9 +440,13 @@ export default async function SponsorFinderPage({
           spelling of the employer&apos;s name. &quot;Transfers&quot; is the share of certified H-1B positions that were a
           change of employer, and &quot;senior&quot; the share of LCAs at wage level III or IV (
           {Math.round(SENIOR_SHARE * 100)}% or more), each over the most recent 24 months of LCAs this site holds that
-          detail for. &quot;Likely cap-exempt&quot; is an inference from the industry code a college or university files
-          under; USCIS decides who&apos;s exempt. With every state chosen, State is the one most of an employer&apos;s
-          cases name.
+          detail for. &quot;Likely cap-exempt&quot; means most of the employer&apos;s wage requests tell DOL that ACWIA
+          covers it (the{" "}
+          <Link href="/h1b-cap-exempt-employers" className="link">
+            cap-exempt list
+          </Link>
+          ), or else most of its PERM filings carry a college or university&apos;s industry code; USCIS decides who&apos;s
+          exempt. With every state chosen, State is the one most of an employer&apos;s cases name.
         </p>
       </FinePrint>{" "}
       <DataProvenance datasets={["perm-cases", "perm-case-status", "entities", "lca-disclosure"]} />

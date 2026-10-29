@@ -495,6 +495,16 @@
   "source": "https://commons.wikimedia.org/wiki/File:Frances_Perkins_Building_-_Department_of_Labor_(53839145147).jpg",
   "alt": "The Frances Perkins Building, the Department of Labor's headquarters, seen across the lawn"
  },
+ "blog/dol-perm-file-fy2026-q3": {
+  "capture": {
+   "url": "/blog/dol-perm-file-fy2026-q3",
+   "clip": "fromm:How many PERM cases did DOL decide?",
+   "maxHeight": 440,
+   "css": "aside.lg\\:block{display:none!important}"
+  },
+  "credit": "Chart from DOL's PERM disclosure file, permtracker.app",
+  "alt": "PERM decisions in April to June 2026 against the quarter before and a year before, as bars"
+ },
  "blog/eb2-vs-eb3-by-the-numbers": {
   "capture": {
    "url": "/visa-bulletin/categories"
@@ -650,6 +660,14 @@
   },
   "credit": "Screenshot of permtracker.app, October 28, 2026",
   "alt": "Rules on their way, each with its steps from White House review to the Federal Register, on permtracker.app"
+ },
+ "changelog/uscis-forms-firm-rankings-and-visa-waits": {
+  "capture": {
+   "url": "/uscis-processing-times/i-140",
+   "clip": "fromm:Median months, quarter by quarter"
+  },
+  "credit": "Screenshot of permtracker.app, October 29, 2026",
+  "alt": "USCIS's median months for the I-140 quarter by quarter, and what it received, decided and had waiting, as columns, on permtracker.app"
  },
  "changelog/the-whole-green-card-plan": {
   "capture": {

@@ -51,6 +51,7 @@ import {
 import { formatAsOf } from "@/lib/dolFormat";
 import { SITE_URL } from "@/lib/constants/site";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 const TITLE = "USCIS Processing Times by Form (Median)";
 const DESCRIPTION =
@@ -328,7 +329,25 @@ export default async function UscisProcessingTimesPage() {
               source={<>USCIS, {quarter.sourceFile}, received to completion, cases decided in the quarter.</>}
             >
               <BarRows label="Median months to a decision, by form" rows={barRows} />
-            </FigurePlate>
+            </FigurePlate>{" "}
+            {/* Each form's own page draws its quarters one by one, and its history. */}
+            <nav aria-label="Each form, quarter by quarter" className="mt-6">
+              <p className="text-sm font-bold">Each form, quarter by quarter</p>{" "}
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {FORM_PAGES.map((f) => (
+                  <Fragment key={f.slug}>
+                    <li>
+                      <Link
+                        href={`/uscis-processing-times/${f.slug}`}
+                        className="inline-flex min-h-[44px] items-center border-2 border-border px-3 text-sm font-semibold hover:border-foreground"
+                      >
+                        {f.form}
+                      </Link>{" "}
+                    </li>
+                  </Fragment>
+                ))}
+              </ul>
+            </nav>
           </section>
 
           {i140 && i140.medianMonths !== null ? (

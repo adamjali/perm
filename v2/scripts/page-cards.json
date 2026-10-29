@@ -66,7 +66,8 @@
    0,
    2048,
    1382
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "developers",
@@ -223,7 +224,8 @@
    1504,
    1028
   ],
-  "from": "Where the backlog sits"
+  "from": "Where the backlog sits",
+  "mask": "figures"
  },
  {
   "slug": "i140-trends",
@@ -250,7 +252,8 @@
    1504,
    1004
   ],
-  "from": "The whole pending inventory"
+  "from": "The whole pending inventory",
+  "mask": "figures"
  },
  {
   "slug": "green-card-line",
@@ -266,7 +269,8 @@
   ],
   "from": "Who is ahead of you?",
   "viewport": 1440,
-  "maxWidth": 1100
+  "maxWidth": 1100,
+  "mask": "figures"
  },
  {
   "slug": "eb2-vs-eb3",
@@ -292,7 +296,8 @@
   ],
   "from": "Compare the two lines",
   "viewport": 1440,
-  "maxWidth": 1100
+  "maxWidth": 1100,
+  "mask": "figures"
  },
  {
   "slug": "which-green-card",
@@ -432,7 +437,8 @@
    0,
    1504,
    1028
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "layoffs",
@@ -445,7 +451,8 @@
    0,
    1504,
    818
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "perm-attorneys-browse",
@@ -488,7 +495,8 @@
    2016,
    1236
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "perm-deadline-calculator",
@@ -550,13 +558,15 @@
    1504,
    974
   ],
-  "from": "On hold right now"
+  "from": "On hold right now",
+  "mask": "figures"
  },
  {
   "slug": "perm-timeline-calculator",
-  "path": "/tools/perm-timeline-calculator?date=2026-01-15",
-  "title": "Processing time calculator",
-  "label": "Where a filing month stands in DOL's queue, and an estimate that's checked as it goes.",
+  "path": "/tools/perm-timeline-calculator",
+  "title": "PERM timeline calculator",
+  "css": "main header > p{display:none!important} p:has(> time[datetime]){visibility:hidden!important}",
+  "label": "The day DOL will likely decide a case, from its filing date and the cases still ahead of it.",
   "shot": "perm-timeline-calculator.png",
   "crop": [
    0,
@@ -691,7 +701,8 @@
    1504,
    1000
   ],
-  "from": "Where the wages land"
+  "from": "Where the wages land",
+  "mask": "figures"
  },
  {
   "slug": "visa-bulletin-family",
@@ -754,13 +765,13 @@
   "slug": "compare",
   "path": "/compare",
   "title": "PERM trackers compared",
-  "label": "Seven PERM case trackers checked side by side on their own pages: what each looks up, its data, how fresh it is and what it costs.",
+  "label": "PERM case trackers and green card sites, each checked on its own pages: what it looks up, its data, how fresh it is and what it costs.",
   "shot": "compare.png",
   "crop": [
    0,
    0,
-   2432,
-   1186
+   2672,
+   1326
   ],
   "viewport": 1440,
   "maxWidth": 1408,
@@ -854,11 +865,12 @@
   "title": "About PERM Tracker",
   "label": "An independent site on DOL's own data, run by an immigration attorney.",
   "shot": "about.png",
+  "css": "[data-about-hero] dl{display:none!important}",
   "crop": [
    0,
    0,
    2048,
-   1092
+   992
   ]
  },
  {
@@ -872,7 +884,8 @@
    0,
    2048,
    1178
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "reviews",
@@ -931,7 +944,8 @@
    2016,
    1380
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "changelog",
@@ -1036,7 +1050,8 @@
    2016,
    1146
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "methodology",
@@ -1076,7 +1091,8 @@
    2016,
    1356
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "perm-by-state",
@@ -1132,7 +1148,8 @@
    1534
   ],
   "from": "Which wage bands hold the denials",
-  "viewport": 1440
+  "viewport": 1440,
+  "mask": "figures"
  },
  {
   "slug": "perm-employers",
@@ -1174,7 +1191,8 @@
    1504,
    1028
   ],
-  "from": "The wall, by filing month"
+  "from": "The wall, by filing month",
+  "mask": "figures"
  },
  {
   "slug": "perm-rfi-audit",
@@ -1228,7 +1246,8 @@
    1504,
    1000
   ],
-  "from": "Where the wages land"
+  "from": "Where the wages land",
+  "mask": "figures"
  },
  {
   "slug": "h1b-employers",
@@ -1314,7 +1333,8 @@
    0,
    1504,
    908
-  ]
+  ],
+  "mask": "figures"
  },
  {
   "slug": "pwd-cases",
@@ -1328,7 +1348,8 @@
    2016,
    1236
   ],
-  "viewport": 1280
+  "viewport": 1280,
+  "mask": "figures"
  },
  {
   "slug": "security",
@@ -1412,5 +1433,64 @@
    1008
   ],
   "from": "The queue, oldest first"
+ },
+ {
+  "slug": "visa-wait-times",
+  "path": "/visa-wait-times",
+  "title": "Visa interview wait times",
+  "label": "The next work-visa interview at each U.S. consulate, country by country, from the State Department's own monthly table.",
+  "shot": "visa-wait-times.png",
+  "from": "The next work-visa interview, country by country",
+  "crop": [
+   0,
+   0,
+   1504,
+   1004
+  ],
+  "css": "#work li[data-tip] > span.font-mono{visibility:hidden!important} #work li[data-tip]:nth-of-type(n+4){display:none!important} #work > div > ul > li:nth-of-type(n+3){display:none!important}"
+ },
+ {
+  "slug": "perm-case-alerts",
+  "path": "/perm-case-alerts",
+  "title": "Free PERM case alerts",
+  "label": "An email the moment DOL changes your PERM case, reaches your filing month, or the visa bulletin moves.",
+  "shot": "perm-case-alerts.png",
+  "from": "Get an email when your PERM case changes",
+  "crop": [
+   0,
+   0,
+   1504,
+   998
+  ]
+ },
+ {
+  "slug": "h1b-cap-exempt-employers",
+  "path": "/h1b-cap-exempt-employers",
+  "title": "H-1B cap‑exempt employers",
+  "label": "The colleges, affiliated nonprofits and research organizations that hire H-1B workers outside the lottery.",
+  "shot": "h1b-cap-exempt-employers.png",
+  "from": "When they file",
+  "crop": [
+   0,
+   0,
+   1504,
+   640
+  ],
+  "css": "#months > div > p{display:none!important} #months h2 [data-fy]{display:none!important} #months li[data-tip] > span.font-mono{display:none!important} #months > p{display:none!important}"
+ },
+ {
+  "slug": "law-firm-rankings",
+  "path": "/law-firm-rankings",
+  "title": "Top immigration law firms",
+  "label": "The busiest immigration law firms each fiscal year, by PERM decisions and H-1B LCAs, from DOL's own files.",
+  "shot": "law-firm-rankings.png",
+  "from": "PERM labor certifications",
+  "crop": [
+   0,
+   0,
+   1504,
+   1008
+  ],
+  "css": "#perm .shadow-hard-sm{display:none!important} #perm li[data-tip] > span.font-mono, #perm li[data-tip] p.text-sm{display:none!important} #perm ol > li:nth-of-type(n+7){display:none!important} #perm ul.flex-wrap span.font-mono, #perm ul.flex-wrap span.text-muted-foreground{display:none!important} #perm > p{display:none!important} #perm h2 [data-fy]{display:none!important}"
  }
 ]

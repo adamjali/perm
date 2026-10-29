@@ -10654,3 +10654,69 @@ the old slot's second copy. `green2` held a long-lived connection (likely an MCP
 30-second stop and was killed, and systemd marked it failed; the alarm emailed "a job or service failed". Traffic had
 already moved, and nothing reached a visitor. `stop_copy` in `permtracker-deploy` now logs such a kill and clears the
 failed mark (`systemctl reset-failed`); `test_deploy_guard.py` holds both cases, and was probed by removing the reset.
+
+## Oct 28 2026 (night): what a rival showed, built from our own records, and the words people search
+
+The h1bgrader catch-up (owner, Oct 28, 7:37 PM EDT: "plz do all") and the search-word pass after it, all on `main`,
+live with the Oct 29 2 AM run. Ledger: `~/.claude/plans/cozy-sniffing-pumpkin.md`.
+
+- **A case's status history** (`62434ba5`): every status DOL has shown, the DOL day it changed and how long it held,
+  from `perm_case_events` (DOL's own rows only). A change seen by Aug 29 says where the case stood, not when it moved:
+  the record's first full sweeps caught up through then.
+- **USCIS form pages** (`b7c5a69b`, `a39f26e9`): `/uscis-processing-times/<form>`, 15 forms, every quarter held. The
+  Archive's FY2024 workbooks store fractions and unrounded medians under integer formats; the loader reads each cell
+  as its sheet shows it, and a history load never moves the freshness stamp backwards.
+- **Visa interview waits** (`9511ce46`, `494e7a40`): State's Global Visa Wait Times from adoption.state.gov (travel
+  refuses scripts), `scripts/ingest_visa_wait_times.py`, every cell kept as printed with what it reads as (NA is "No
+  figure", never 0), one reading per State date. `/visa-wait-times`, India and China first.
+- **Law firm rankings** (`04096837`, `83b6ec41`): `build_firm_ranks.py` writes `firm_ranks` (100 firms per program,
+  fiscal year and place, through `firm_page_map`) and `perm_docs['firm_ranks_summary']`, each year with its last
+  decision day; a year shows once it reaches Sep 24 (`shownYear`). `/law-firm-rankings` and a page per state. Firms
+  only, statistics only.
+- **Cap-exempt employers, from the employer's own answer** (`9b08e394`, `b83bc407`, `97efb393`, `5194b77d`): DOL's
+  wage-request file asks whether ACWIA covers the employer (Section E); `pwd_cases.acwia` and `acwia_kind` hold it, and
+  `build_cap_exempt.py` lists an employer when most of its answered requests say yes (`qualifies`). 2,252 employers on
+  `/h1b-cap-exempt-employers`, worded as likely (USCIS decides). Employer pages and the sponsor finder read the same
+  table; the industry-code guess is the fallback.
+- **The quarterly post** (`7ca66aa5`, `00e5fbae`): `build_quarter_report.py` writes one doc per quarter
+  (`quarter_report_<fy>q<n>`, and `quarter_report` names the newest), `<QuarterNow part=... />` reads it, so a post
+  types no figure and keeps its own quarter's numbers. `scripts/new_quarter_post.py --fy --q` writes each quarter's
+  post; it runs after the quarterly PERM load.
+- **Search words** (`ef8d169e`, `97e4e20d`, `05f10783`): Search Console showed searches naming an alert, an email or a
+  notification reaching no page, so `/perm-case-alerts` holds every free alert. The homepage title says "Track", the
+  lookup's heading "Check and track". "How long does PERM take right now?" is answered by `howLongSentence`
+  (lib/dolNow.ts) on the lookup and the processing-times page: the wait of DOL's last working day's cases, then
+  DOL's own month and average. The timeline calculator has one name where it had three.
+- **A card carries no live figure** (Oct 29 2026, 3:47 AM EDT, `0ac7d065`): a card whose page shows moving figures says
+  `"mask": "figures"` in `scripts/page-cards.json`, and the capture draws each count, share, dollar amount and date
+  as a grey bar of its own width (the reviews card's treatment) and hides a chart's own labels, so the card keeps the
+  page's shape. The rule is `scripts/lib_card_mask.mjs` (tested): codes and fixed wording stay (G-100-..., ETA-9089,
+  "60 days' notice"), and text that is only a number is masked whole. 19 cards carry it. A new card whose page shows
+  a live figure gets the flag; look at the rendered card, since a page can split a figure across text pieces.
+- **The privacy page says what the chat's AI providers may do** (Oct 29 2026, 3:18 AM EDT, `2f054ae5`): the chat runs
+  on Gemini's unpaid quota, whose terms let Google use what's sent to improve its products and let human reviewers
+  read it, and ask that no personal information be sent; the page had said the opposite. Mistral, OpenRouter and
+  Groq lines say what their own pages allow. The owner decides the change email the policy promises (§19, draft in
+  `~/Documents/permtracker-outreach/privacy-change-notice-2026-10-29.txt`) and whether to pay for Gemini's paid tier.
+- **Where a wage reaches each level** (`5b42ee6f`): the wage tool's every-area view, from `wageLevelsInState`
+  (`/api/wage-levels/areas`), `levelReached` in `src/lib/wageLevels.ts` the one rule (a level is reached at its own
+  wage; one DOL didn't publish can't be). It says where a wage sits, never a case's level.
+- **A job's wage history reaches back past the 2018 codes** (Oct 29 2026): DOL's tables used BLS's 2010 codes
+  through 2021-22 and the 2018 codes from 2022-23 (`SOC_2018_FIRST_WAGE_YEAR`), so `wageLevelHistory` also reads each
+  2010 code BLS maps to the job for the years before, one tagged row per code (`asCode`), never blended: 15-1252's
+  2021-22 shows as 15-1132 and 15-1133. BLS's crosswalk is `scripts/data/soc_2010_to_2018.json`
+  (`build_soc_crosswalk.py`), read through `src/lib/socCrosswalk.ts`; the history route sends the note
+  (`codeNote`) so the 35 KB file never ships to the browser. `SocCodeText` keeps a code from breaking at its hyphen.
+- **DOL's wage tables reach July 2016** (loaded Oct 29 2026, 5:36 to 6:20 AM EDT, at the history pace; 15-1252 in San Jose now reads back to 2016-17 under 15-1132 and 15-1133): the
+  retired FLC Data Center's `OWL_<June that closes the year>_TEXT.zip`, kept by the Internet Archive, in the format
+  the loader reads (`wage_year_of`; `OWL_2022` matched the stored 2021 table row for row). A history year never moves
+  the freshness stamp (`is_newest`). Files and manifest: `~/.claude/explanations/20261029_owl_wage_history/`.
+- **The database RAM lock is retired** (owner's call, Oct 29 2026, `e1e438aa`): `permtracker-dbcache` held the whole
+  4.2 GB main file while swap sat at 3.5 of 4 GB, and CPU alone keeps Oracle's idle rule clear (p95 47%, Oct 22 to
+  28). Reads come from the system's file cache; the morning report still fails if memory and CPU both fall under 20%.
+- **/compare carries ten trackers** (`5501da84`, `490bdf30`; the owner saw the screenshots first): H1BGrader and three
+  green card sites (GreenCardClock, Lawfully, Immigration Road), each dated by its own reading, in two lists. Every
+  quote was re-read on the rival's page before shipping; Lawfully's QR-code line was gone, so its quote is its own
+  Download App button.
+- **A full-page capture that scrolls 800 px every 50 ms leaves reveal-on-scroll sections blank**: scroll 400 px every
+  200 ms (`node_modules/.cache/qa/slow-shot.mjs`) before believing an empty band.

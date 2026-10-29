@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { averagePhrase, dolNow, dolPwdNow, pwdLine, pwdSentence, pwdWaitPhrase, queueLine, queueSentence } from "@/lib/dolNow";
+import { averagePhrase, dolNow, dolPwdNow, howLongSentence, pwdLine, pwdSentence, pwdWaitPhrase, queueLine, queueSentence } from "@/lib/dolNow";
 import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
 
 // DOL's snapshot as stored on Oct 9 2026 (perm_as_of 2026-10-05), the fields this reads.
@@ -103,5 +103,29 @@ describe("DOL's wage-request queue in prose", () => {
     expect(pwdWaitPhrase(empty)).toBe("a few months");
     expect(pwdSentence(empty)).toMatch(/processing times page/);
     expect(pwdSentence(empty)).not.toMatch(/\d/);
+  });
+});
+
+describe("how long PERM takes right now (Oct 29 2026)", () => {
+  // /today's reading for Oct 27 2026: the middle case DOL decided that day was filed Jan 13 2026.
+  const OCT_27 = { day: "2026-10-27", span: { n: 812, middle: "2026-01-13", from: "2025-12-02", to: "2026-02-20" } };
+
+  it("leads with what the cases DOL decided last had waited, then DOL's own month and average", () => {
+    const s = howLongSentence(OCT_27, OCT_5);
+    expect(s).toMatch(/^The PERM cases DOL decided on October 27, 2026 had waited about 9½ months from filing\. /);
+    expect(s).toContain("As of October 5, 2026, DOL's analyst review is working cases filed in December 2025");
+  });
+
+  it("leaves out a reading it doesn't have, never typing one", () => {
+    expect(howLongSentence(null, OCT_5)).toMatch(/^As of October 5, 2026/);
+    expect(howLongSentence({ ...OCT_27, span: null }, OCT_5)).toMatch(/^As of October 5, 2026/);
+    expect(howLongSentence(OCT_27, null)).toBe("The PERM cases DOL decided on October 27, 2026 had waited about 9½ months from filing.");
+    // A day whose middle case was filed that same day says nothing about a wait.
+    const sameDay = { day: "2026-10-27", span: { n: 60, middle: "2026-10-27", from: "2026-10-20", to: "2026-10-27" } };
+    expect(howLongSentence(sameDay, OCT_5)).toMatch(/^As of October 5, 2026/);
+  });
+
+  it("says where DOL's figures are when it has neither reading", () => {
+    expect(howLongSentence(null, null)).toBe("DOL's figures couldn't be read just now; DOL's own page, flag.dol.gov/processingtimes, has them.");
   });
 });

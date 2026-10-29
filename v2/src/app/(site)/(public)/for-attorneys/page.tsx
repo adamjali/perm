@@ -10,7 +10,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
  * The practitioner pitch, on its own page: the app itself, page by page, then
- * the stakes and the security table, addressed to attorneys and their teams.
+ * the stakes and the security table, addressed to attorneys and paralegals.
  * The homepage leads with the person waiting on a case and links here.
  *
  * Fully static: every section is presentational, so this prerenders and
@@ -20,7 +20,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 export const metadata: Metadata = withSocialCard({
   title: "Free PERM Case Management App for Attorneys",
   description:
-    "Enter a case's dates once and every PERM deadline, filing window and wage expiration is worked out, with reminders. Free for attorneys and their teams.",
+    "Enter a case's dates once and every PERM deadline, filing window and wage expiration is worked out, with reminders. Free for attorneys and paralegals.",
   alternates: {
     canonical: "/for-attorneys",
   },

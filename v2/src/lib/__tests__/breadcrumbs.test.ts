@@ -20,7 +20,7 @@ describe("breadcrumbTrail", () => {
     ["/perm-rfi-audit/rfi-issued", ["Home", "Data", "RFI and audits", "RFI issued"]],
     ["/perm-processing-times", ["Home", "Data", "PERM processing times"]],
     ["/uscis-processing-times", ["Home", "Data", "USCIS processing times"]],
-    ["/tools/perm-timeline-calculator", ["Home", "Data", "Processing time calculator"]],
+    ["/tools/perm-timeline-calculator", ["Home", "Data", "Timeline calculator"]],
     ["/tools/rfi-deadline", ["Home", "Data", "RFI deadline"]],
     // A calculator nothing files under a step still has the calculators index above it.
     ["/tools/not-a-real-calculator", ["Home", "Data", "Calculators"]],

@@ -11,6 +11,8 @@ import { seriesYearFor, type AreaOption, type WageLevel } from "@/lib/wageLevels
 import { SOC_CODE_RE } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { WageAcrossAreas } from "@/components/tools/WageAcrossAreas";
+import { SocCodeText } from "@/components/data/SocCodeText";
 
 /**
  * The four prevailing wage levels for one occupation in one area, read live
@@ -36,12 +38,17 @@ interface StoredYear {
   /** Yearly, whichever way DOL published the row (src/lib/db/reference.ts). */
   yearly: (number | null)[];
   label: string | null;
+  /** A year read under a 2010 code BLS maps to this job (lib/socCrosswalk.ts). */
+  asCode?: string;
+  asTitle?: string;
 }
 
 interface History {
   alc: StoredYear[];
   edc: StoredYear[];
   market: { series: string; median: number | null; p25: number | null; p75: number | null; employment: number | null } | null;
+  /** Why some years carry a 2010 code; null when none do. */
+  codeNote?: string | null;
 }
 
 /** DOL's guidance names each level by the experience it describes. */
@@ -107,9 +114,12 @@ function YearTable({ years, caption }: { years: StoredYear[]; caption: string })
           </tr>
         </thead>
         <tbody>
-          {[...years].reverse().map((y) => (
-            <tr key={y.wageYear} className="border-b border-border/60">
-              <td className="py-2 pr-4 tabular-nums">{yearLabel(y.wageYear)}{" "}</td>
+          {[...years].sort((a, b) => b.wageYear - a.wageYear || (a.asCode ?? "").localeCompare(b.asCode ?? "")).map((y) => (
+            <tr key={`${y.wageYear}-${y.asCode ?? ""}`} className="border-b border-border/60">
+              <td className="py-2 pr-4 tabular-nums">
+                {yearLabel(y.wageYear)}
+                {y.asCode ? <span className="block text-sm text-muted-foreground">as {y.asCode}, {y.asTitle}</span> : null}{" "}
+              </td>
               {y.yearly.map((v, i) => (
                 <td key={i} className="py-2 pr-4 text-right tabular-nums">
                   {v != null ? usd(v) : i === 0 && y.label ? y.label : "—"}{" "}
@@ -316,6 +326,11 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
               <div className="mt-3">
                 <YearTable years={history.alc} caption="DOL wage levels by wage year, all industries" />
               </div>
+              {history.codeNote ? (
+                <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+                  <SocCodeText text={history.codeNote} />
+                </p>
+              ) : null}
             </div>
           ) : null}
           {history.edc.some((y) => y.levels.some((v) => v != null)) ? (
@@ -333,6 +348,18 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </details>
           ) : null}
         </div>
+      ) : null}
+
+      {/* The state's every area comes after the looked-up area's own figures, its ladder and its years. */}
+      {result.kind === "levels" && state ? (
+        <WageAcrossAreas
+          key={`${result.soc}-${state}`}
+          soc={result.soc}
+          state={state}
+          stateName={stateName}
+          startWage={result.levels.find((l) => l.level === "II")?.yearly ?? null}
+          currentArea={area}
+        />
       ) : null}
     </div>
   );

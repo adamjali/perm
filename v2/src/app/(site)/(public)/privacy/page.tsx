@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 25, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 29, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -393,26 +393,32 @@ export default function PrivacyPage() {
             </h3>{" "}
             <p className="text-soft leading-relaxed">
               Your AI chat data is processed by the following third-party
-              providers via their APIs. We use a multi-provider fallback system
-              for reliability:
+              providers through their APIs, each tried in turn when another is
+              unavailable. Your case data reaches them only when you use the
+              chat. The assistant uses these providers&apos; free tiers, under
+              their own terms:
             </p>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
-                <strong>Google Gemini</strong> (Google LLC): Primary AI provider.
-                Retains data for up to 55 days for abuse monitoring only. Does{" "}
-                <strong>not</strong> use API data to train models.
+                <strong>Google Gemini</strong> (Google LLC): the primary
+                provider. Under Google&apos;s terms for unpaid use, Google may
+                use what is sent, and the responses, to provide, improve and
+                develop its products, and human reviewers may read it after
+                Google separates it from our account.
               </li>{" "}
               <li>
-                <strong>OpenRouter</strong>: AI model routing. Zero Data
-                Retention (ZDR) by default; prompts aren’t stored.
+                <strong>Groq</strong>: doesn&apos;t keep requests by default.
+                It may log them for up to 30 days to fix errors or investigate
+                abuse.
               </li>{" "}
               <li>
-                <strong>Mistral AI</strong>: Fallback AI provider. API data is
-                not used for model training.
+                <strong>OpenRouter</strong>: routes a request to a
+                model&apos;s own provider, whose policy decides whether the
+                request is kept or used for training.
               </li>{" "}
               <li>
-                <strong>Groq</strong>: Fast AI inference on US-based Google Cloud
-                servers. Doesn’t use API data for training when ZDR is enabled.
+                <strong>Mistral AI</strong>: may use API requests to improve
+                its services unless the account opts out.
               </li>
             </ul>{" "}
 
@@ -456,7 +462,9 @@ export default function PrivacyPage() {
                 passport numbers, financial account information, or other highly
                 sensitive personal data in AI chat messages. The AI assistant is
                 designed to help with case management, not to process sensitive
-                identity documents.
+                identity documents. Because it runs on the providers&apos; free
+                tiers, don&apos;t put anything in a chat message you wouldn&apos;t
+                want a provider to read.
               </p>
             </div>
           </details>{" "}

@@ -294,6 +294,15 @@ def read(db: Database, today: dt.date) -> dict:
     except Exception as e:  # noqa: BLE001
         if "no such table" not in str(e):
             raise
+    # Its own answer to DOL: most of its wage requests say ACWIA covers it (build_cap_exempt.py).
+    try:
+        for (slug,) in rows_of(db.execute("SELECT slug FROM cap_exempt_employers")):
+            s = sponsors.get(str(slug))
+            if s is not None:
+                s["acwia"] = 1
+    except Exception as e:  # noqa: BLE001
+        if "no such table" not in str(e):
+            raise
     return {"sponsors": sponsors, "since": d24, "detail_from": detail_from if detail_to else None, "detail_to": detail_to}
 
 
@@ -305,7 +314,7 @@ def blank_sponsor(slug: str, name: str) -> dict:
         "lca": 0, "positions": 0, "transfers": 0, "leveled": 0, "senior": 0,
         "dep_yes": None, "dep_no": None, "willful": 0, "uscis_appr": 0, "uscis_den": 0,
         "debarred": [], "warn": 0, "warn_workers": 0, "industry": defaultdict(int),
-        "live_only": 1, "pending_now": 0, "latest_filed": None,
+        "live_only": 1, "pending_now": 0, "latest_filed": None, "acwia": 0,
     }
 
 
@@ -380,7 +389,10 @@ def plan(data: dict, today: dt.date) -> list[list]:
         s["uscis_rate"] = s["uscis_appr"] / s["uscis_n"] if s["uscis_n"] else None
         coded = sum(s["industry"].values())
         hi_ed = sum(n for k, n in s["industry"].items() if k.startswith(HIGHER_ED_NAICS))
-        s["cap_exempt"] = 1 if coded and hi_ed / coded >= CAP_EXEMPT_SHARE else 0
+        by_naics = bool(coded and hi_ed / coded >= CAP_EXEMPT_SHARE)
+        # The employer's own ACWIA answer comes first, as on its page and /h1b-cap-exempt-employers.
+        s["cap_exempt_basis"] = "acwia" if s["acwia"] else "naics" if by_naics else None
+        s["cap_exempt"] = 1 if s["cap_exempt_basis"] else 0
         top = max(s["industry"].items(), key=lambda kv: (kv[1], kv[0]))[0] if s["industry"] else None
         sector = sector_of(top)
         s["sector"], s["sector_label"] = sector if sector else (None, None)
@@ -428,7 +440,7 @@ def plan(data: dict, today: dt.date) -> list[list]:
         if s["willful"]:
             facts.append({"id": "willful", "lcas": s["willful"]})
         if s["cap_exempt"]:
-            facts.append({"id": "cap_exempt"})
+            facts.append({"id": "cap_exempt", "basis": s["cap_exempt_basis"]})
         r4 = lambda x: None if x is None else round(float(x), 4)  # noqa: E731
         rows.append([
             s["slug"], s["name"], s["state"], s["sector"], s["sector_label"], s["cap_exempt"], s["perm_recent"],

@@ -23,8 +23,10 @@ export interface BarRow {
   label: ReactNode;
   /** A second, quieter line under the label. */
   sub?: ReactNode;
-  /** The bar's length; null draws no bar and prints "withheld". */
+  /** The bar's length; null draws no bar and prints "withheld", or `nullText`. */
   value: number | null;
+  /** What a row without a value says, where "withheld" isn't true ("No figure" for State's NA). */
+  nullText?: string;
   /** The figure as printed beside the bar. */
   text: string;
   /**
@@ -45,7 +47,7 @@ export interface BarRow {
 export function barRowTip(r: BarRow): string {
   if (r.tip) return r.tip;
   const sub = plainText(r.sub).trim();
-  return [plainText(r.label).trim(), r.value === null ? "withheld" : r.text, sub].filter(Boolean).join("\n");
+  return [plainText(r.label).trim(), r.value === null ? (r.nullText ?? "withheld") : r.text, sub].filter(Boolean).join("\n");
 }
 
 const BAR_TONE: Record<NonNullable<BarRow["tone"]>, string> = {
@@ -99,7 +101,7 @@ export function BarRows({
                 ) : null}
               </div>{" "}
               <span className="min-w-[6rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums">
-                {r.value === null ? "withheld" : r.text}
+                {r.value === null ? (r.nullText ?? "withheld") : r.text}
               </span>
             </li>
           ) : (
@@ -118,7 +120,7 @@ export function BarRows({
             </div>
             {/* One width for every row's figure, so every bar's track is the same length and the bars compare. */}
             <span className="min-w-[7rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums">
-              {r.value === null ? "withheld" : r.text}
+              {r.value === null ? (r.nullText ?? "withheld") : r.text}
             </span>
           </li>
           )}

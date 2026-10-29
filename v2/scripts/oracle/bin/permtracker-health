@@ -6,8 +6,9 @@ perm_docs['server_health']. Seven days of samples are kept on disk in
 /srv/permtracker/health/samples.jsonl because that is the window Oracle's
 idle rule is measured over: an Always Free A1 instance whose CPU (95th
 percentile), network and memory all stay under 20% for 7 days can be
-reclaimed. The database locked in RAM (permtracker-dbcache) is what keeps
-memory above that line; this is how anyone finds out if it stops.
+reclaimed. The site's CPU keeps it clear of that (95th percentile 47% over Oct 22 to 28 2026, when the
+database RAM lock, permtracker-dbcache, was retired by the owner's call); this is how anyone finds out if
+that changes.
 
 CPU and network are averages since the previous sample (about 10 minutes),
 read from the kernel's own counters. Oracle averages per minute, so its
@@ -29,7 +30,7 @@ SAMPLES = HERE / "samples.jsonl"
 STATE = HERE / "counters.json"
 WEEK_S = 7 * 86_400
 NIC_MBPS = 2_000  # A1.Flex gets 1 Gbps per OCPU; this shape has 2
-SERVICES = ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
+SERVICES = ["permtracker-db", "permtracker-web@blue",
             "permtracker-web@green", "nginx", "cloudflared"]
 
 

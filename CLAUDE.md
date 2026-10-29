@@ -1565,3 +1565,36 @@ Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pum
 - **The dev server's watcher can go stale**: when served output doesn't match the source, restart it before debugging.
   `pnpm check` bails at the first failure locally, and GitHub runs no pull_request workflow while a PR conflicts with main.
 - **The "Claude Code Review" workflow fails on every PR**: the Claude GitHub App isn't installed on the repo. Not a gate.
+
+## Oct 28 2026 (evening): the catch-up release is live, and what followed it
+
+- **Live at 4:43 PM EDT** (abce2f44, `-f when=now` on the owner's "Live right now"); Convex deployed after; PR #69 merged.
+  Read back on build 331: 12 pages, glued text, hidden content, headings, links, trust, axe and flows all passed.
+- **Fixed after, on main for the 2 AM run:** an article byline at 20px (now 44, `min-h-11`); the memory alarm alarms on
+  swap that's moving (pages a second) and holds until clear, not on idle swap (installed by hand that evening);
+  /compare's quotes are `<q>` and the em-dash check skips quoted words.
+- **The homepage's wait is /today's** (`liveWait` in the homepage, `HeroWait`): it said "A PERM case takes 13 months"
+  from DOL's June file while /today said about 9½. `waitTrend.ts` is gone. Found by the h1bgrader comparison
+  (`~/.claude/explanations/20261028_h1bgrader/`), which also lists ten things it does that we don't, ranked.
+- **The pre-push hook finds its identity check through `--git-common-dir`**, so a push from a worktree runs it too
+  (`--git-dir` points at the worktree's own folder, which has no hooks, and the push failed).
+- **Translated data pages are on branch `i18n/data-pages`**, not live: the case status page in five languages under
+  `/<lang>/perm-case-status` (a `[lang]` segment, typed messages that fail the typecheck when a language is missing,
+  `Intl` for dates and numbers, hreflang both ways). It ships only on the owner's yes after review.
+
+## Oct 28 2026 (night), in ten lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
+
+- **A case page lists every status DOL has shown**, dated by DOL's day, from our own record.
+- **`/uscis-processing-times/<form>`** (15 forms), **`/visa-wait-times`** (State's table, from adoption.state.gov),
+  **`/law-firm-rankings`** (firms only) and **`/h1b-cap-exempt-employers`** (the employer's own ACWIA answer to DOL).
+- **Each quarterly PERM file gets a post** whose figures come from that quarter's own doc (`QuarterNow`).
+- **`/perm-case-alerts`** holds every free alert: searches naming an alert or an email reached no page before it.
+- **"How long does PERM take" is answered from today's readings** (`howLongSentence`), the same on two pages.
+- **A share card never carries a live figure**: a card over a live page masks its figures (`"mask": "figures"`).
+- **The privacy page says what the chat's free-tier AI providers may do with what's sent** (corrected Oct 29).
+- **The wage-level tool reaches July 2016**: DOL's old tables came from the Internet Archive's copies of the retired
+  FLC Data Center files, and a job's years before 2022-23 read under BLS's 2010 codes, never blended.
+- **The database RAM lock is retired** (owner's call, Oct 29): CPU alone keeps Oracle's idle rule clear.
+- **`/compare` carries ten trackers**, each quote re-read on the rival's own page before it shipped.

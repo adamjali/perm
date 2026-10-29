@@ -4,7 +4,7 @@
 #
 # Why: the LCA filings moved to their own server on Oct 19 2026
 # (permtracker-db-lca) so the main file fits the 6 GB RAM lock
-# (permtracker-dbcache) again. Dropping a table leaves its pages free inside the
+# (permtracker-dbcache, retired Oct 29 2026) again. Dropping a table leaves its pages free inside the
 # file; only VACUUM gives them back, and a VACUUM through sqld would push the
 # whole file through its replication log (the Oct 3 2026 outage class). So it
 # runs offline: sqld stopped, plain SQLite on the file, sqld started again,
@@ -93,12 +93,12 @@ rollback() {
     rm -rf "${D:?}/wallog" "${D:?}/to_compact" "${D:?}/snapshots"
     chown -R permtracker:permtracker "$D"
   fi
-  systemctl start permtracker-db permtracker-dbcache permtracker-watchdog.timer
+  systemctl start permtracker-db permtracker-watchdog.timer
   LOG "original restored and started"
   exit 1
 }
 trap rollback ERR
-systemctl stop permtracker-watchdog.timer permtracker-dbcache
+systemctl stop permtracker-watchdog.timer
 systemctl stop permtracker-db
 LOG "database stopped"
 rm -rf "$KEEP"; mkdir -p "$KEEP"
@@ -137,7 +137,7 @@ for _ in $(seq 1 120); do [ "$(q 8080 'SELECT 1')" = 1 ] && break; sleep 5; done
 after=$(q 8080 "$SAMPLE")
 [ "$after" = "$before" ] || { LOG "sample differs after: $after (before $before)"; false; }
 trap - ERR
-systemctl start permtracker-dbcache permtracker-watchdog.timer
+systemctl start permtracker-watchdog.timer
 LOG "back: database answered after $(( $(date +%s) - t0 )) s offline; sample $after; original still in $KEEP"
 # The full integrity check reads the whole file (644 s for 3.8 GB in the
 # rehearsal), so it runs with the site back up, read-only beside sqld, as the

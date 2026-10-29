@@ -60,6 +60,9 @@ export type DataSection =
   | "recruitment"
   | "compare-employers"
   | "h1b-employers"
+  | "firm-rankings"
+  | "cap-exempt"
+  | "case-alerts"
   | "opt-employers"
   | "employers-under-review"
   | "layoffs"
@@ -77,6 +80,7 @@ export type DataSection =
   | "i485-offices"
   | "nvc-waiting-list"
   | "visa-issuances"
+  | "visa-wait-times"
   | "risk"
   | "rfi-audit"
   | "uscis-rfe"
@@ -135,6 +139,7 @@ export const CALCULATORS = s("calculators", "Calculators", "Calculators", "/calc
 export const SECTIONS: DataNavSection[] = [
   // Named for the phrase people search (Search Console, Oct 28 2026: "perm case status" found the homepage first).
   s("case-status", "Your case", "PERM case status", "/perm-case-status"),
+  s("case-alerts", "Your case", "Email alerts", "/perm-case-alerts"),
   s("all-cases", "Your case", "Find a case", "/case-search"),
   t("green-card-timeline", "Your case", "Green card timeline and planner", "/tools/green-card-timeline", "Every step dated from your own dates, with the fees."),
   t("which-green-card", "Your case", "Which green card fits", "/tools/which-green-card", "The categories your job points to."),
@@ -153,7 +158,7 @@ export const SECTIONS: DataNavSection[] = [
 
   s("cases", "PERM", "PERM cases", "/perm-cases"),
   s("processing-times", "PERM", "PERM processing times", "/perm-processing-times"),
-  t("timeline-calculator", "PERM", "Processing time calculator", "/tools/perm-timeline-calculator", "The likely decision day and its range."),
+  t("timeline-calculator", "PERM", "Timeline calculator", "/tools/perm-timeline-calculator", "The likely decision day and its range."),
   s("queue", "PERM", "Queue backlog", "/perm-queue"),
   s("activity", "PERM", "Daily decisions", "/perm-decision-activity"),
   s("risk", "PERM", "Denial rates", "/perm-denial-risk"),
@@ -178,11 +183,11 @@ export const SECTIONS: DataNavSection[] = [
 
   s("employers", "Employers and firms", "Employers", "/perm-employers"),
   s("attorneys", "Employers and firms", "Law firms", "/perm-attorneys"),
+  s("firm-rankings", "Employers and firms", "Law firm rankings", "/law-firm-rankings"),
   s("sponsor-finder", "Employers and firms", "Find a sponsor", "/sponsor-finder"),
   s("compare-employers", "Employers and firms", "Compare employers", "/perm-employers/compare"),
   s("employers-under-review", "Employers and firms", "Employers under review", "/perm-employers/under-review"),
   s("h1b-employers", "Employers and firms", "Top H-1B employers", "/h1b-employers"),
-  s("opt-employers", "Employers and firms", "OPT and CPT employers", "/opt-employers"),
   s("layoffs", "Employers and firms", "Layoff notices", "/layoffs"),
   s("debarments", "Employers and firms", "Debarments", "/debarments"),
 
@@ -202,6 +207,9 @@ export const SECTIONS: DataNavSection[] = [
   t("lottery-calculator", "Other visas", "H-1B lottery calculator", "/tools/h1b-lottery-odds-calculator", "An offer's wage level and its chance in the draw."),
   t("six-year-limit", "Other visas", "H-1B six-year limit", "/tools/h1b-six-year-limit", "The end of six years and the 365-day rule."),
   s("seasonal-cases", "Other visas", "H-2A, H-2B and CW-1", "/seasonal-cases"),
+  s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
+  s("opt-employers", "Other visas", "OPT and CPT employers", "/opt-employers"),
+  s("cap-exempt", "Other visas", "H-1B cap-exempt employers", "/h1b-cap-exempt-employers"),
 ];
 
 export const GROUPS: DataGroup[] = [
@@ -359,7 +367,7 @@ const named = (...hrefs: string[]): SitePage[] =>
 export const FOOTER_COLUMNS: readonly FooterColumn[] = [
   {
     title: "Cases and data",
-    pages: named("/perm-case-status", "/case-search", "/perm-processing-times", "/visa-bulletin", "/perm-employers", "/perm-attorneys", "/tools", "/calculators"),
+    pages: named("/perm-case-status", "/perm-case-alerts", "/case-search", "/perm-processing-times", "/visa-bulletin", "/perm-employers", "/perm-attorneys", "/tools", "/calculators"),
   },
   {
     title: "Learn",

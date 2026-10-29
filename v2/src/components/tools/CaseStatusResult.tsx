@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { DecidedTimeline } from "@/components/tools/DecidedTimeline";
+import { StatusHistory } from "@/components/tools/StatusHistory";
+import type { StatusEvent } from "@/lib/statusHistory";
 import type { DecidedTimelineRead } from "@/lib/db/decidedTimeline";
 import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
@@ -116,6 +118,8 @@ const MIN_RATE_SAMPLE = 20;
 export interface CaseStatusResultProps {
   /** A decided case's own dates, wage request to decision (perm_cases joined to pwd_cases). */
   timeline?: DecidedTimelineRead | null;
+  /** Every status change our checks saw for this case (perm_case_events). */
+  history?: StatusEvent[] | null;
   result: CaseLookupResult;
   backlog: readonly CohortMonth[];
   cohortStatuses: readonly StatusCount[];
@@ -195,6 +199,7 @@ export function CaseStatusResult({
   rfi = null,
   sameDay,
   timeline = null,
+  history = null,
   today,
   lang = "en",
 }: CaseStatusResultProps) {
@@ -343,7 +348,8 @@ export function CaseStatusResult({
       ) : null}
 
       {decided ? <TheDecision decided={decided} duration={duration} cohort={cohort} wage={wage} w={w} /> : null}{" "}
-      {decided ? <DecidedTimeline read={timeline} lang={lang} /> : null}
+      {decided ? <DecidedTimeline read={timeline} lang={lang} /> : null}{" "}
+      <StatusHistory events={history} filedOn={filingDate} lang={lang} />
 
       {meaning && actionStage ? (
         <PageSection title={t.means(meaning.label)}>

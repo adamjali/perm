@@ -31,7 +31,7 @@ export const CALCULATOR_SHOTS: Record<CalculatorShot, { shots: WindowShots; alt:
       light: { src: "/images/calculators/decision-light.webp", width: 1800, height: 1725 },
       dark: { src: "/images/calculators/decision-dark.webp", width: 1800, height: 1725 },
     },
-    alt: "The PERM processing time calculator for a case DOL received on January 15, 2026: most likely decided around Monday, November 2, 2026, in a window from October 29 to November 11, with DOL deciding 644 cases a working day and its queue at January 2026.",
+    alt: "The PERM timeline calculator for a case DOL received on January 15, 2026: most likely decided around Monday, November 2, 2026, in a window from October 29 to November 11, with DOL deciding 644 cases a working day and its queue at January 2026.",
     captured: "2026-10-28",
   },
   "i140": {

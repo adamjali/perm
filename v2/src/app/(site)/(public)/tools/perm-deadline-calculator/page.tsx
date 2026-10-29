@@ -65,7 +65,7 @@ const FAQS = [
   },
   {
     q: "Can I get reminders before each deadline?",
-    a: "Save the dates as a case in PERM Tracker, free for attorneys and their teams, and it reminds you 30, 14, 7, 3 and 1 day before each deadline, by email and in the app. The calendar file carries its own reminder a week before each date.",
+    a: "Save the dates as a case in PERM Tracker, free for attorneys and paralegals, and it reminds you 30, 14, 7, 3 and 1 day before each deadline, by email and in the app. The calendar file carries its own reminder a week before each date.",
   },
   {
     q: "Does this cover professional occupations?",

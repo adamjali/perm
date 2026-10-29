@@ -70,6 +70,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   // --- other federal sources ----------------------------------------------
   "visa-bulletin":
     "Cutoff dates as the State Department published them each month. Nothing here is forecast.",
+  "visa-wait-times":
+    "The wait for a NONIMMIGRANT visa interview at each U.S. embassy and consulate, as State's Global Visa Wait Times table prints it each month: the next appointment for visitors, students, petition-based workers (H, L, O, P, Q) and crew, and visitors' average wait. Interview waivers aren't in it, and neither is the immigrant visa (green card) interview.",
   "nvc-waiting-list":
     "State's yearly count of applicants waiting for an immigrant visa at the National Visa Center, each November 1 since 2016, by category, spouses and children included; consular cases only, not adjustments at USCIS.",
   "visa-annual-limits":
@@ -259,6 +261,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "rfi-funnel": "RFI and audit outcomes",
   "processing-times": "Processing times",
   "visa-bulletin": "Visa bulletin",
+  "visa-wait-times": "State visa wait times",
   "nvc-waiting-list": "NVC waiting list",
   "visa-annual-limits": "Annual visa limits",
   "uscis-case-status": "USCIS case statuses",

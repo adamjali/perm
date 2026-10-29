@@ -28,6 +28,9 @@ import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, LIVE_SINCE, NOT_LEGAL_SERVICES,
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
 import { longDate, MONTH_NAMES, monthYear } from "@convex/lib/months";
+import { RIVALS } from "@/lib/compare/rivals";
+import { checkedPhrase } from "@/lib/compare/trackers";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 const BASE_URL = SITE_URL;
 
@@ -204,6 +207,24 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     label: "Top H-1B employers by year and state",
     blurb:
       "The 100 busiest H-1B employers each fiscal year, nationally and in each state, ranked two ways: certified LCAs from DOL's disclosure files (FY2020 on, by worksite) and approvals from USCIS's H-1B Employer Data Hub (FY2009 on, by the petitioner's address), with positions, median yearly wage and each employer's full record.",
+  },
+  {
+    path: "/perm-case-alerts",
+    label: "Free PERM case status email alerts",
+    blurb:
+      "Free email alerts with no account: a PERM, wage request, LCA, H-2A, H-2B or CW-1 case number (checked against DOL's record every 5 minutes on weekdays, a status change emailed at once), a filing month DOL reaches, a visa bulletin line that moves, or an employer whose cases DOL moves as a group.",
+  },
+  {
+    path: "/h1b-cap-exempt-employers",
+    label: "H-1B cap-exempt employers",
+    blurb:
+      "The colleges and universities, affiliated nonprofits and research organizations whose wage requests tell DOL that ACWIA covers them, the kinds of employer the H-1B cap leaves out (8 CFR 214.2(h)(8)(iii)(F)): each employer's kind, state, certified H-1B LCAs and USCIS approvals, and their LCAs month by month against everyone else's, from DOL's and USCIS's own files.",
+  },
+  {
+    path: "/law-firm-rankings",
+    label: "Top immigration law firms by year and state",
+    blurb:
+      "The 100 busiest immigration law firms each fiscal year, nationally and in each state: PERM decisions from DOL's disclosure files (FY2016 on) with the certified share and median days to certify, and certified H-1B LCAs (FY2020 on) with positions, each counted where the job is. Firms only, never individual attorneys; volume and outcomes, never a rating.",
   },
   {
     path: "/policy-changes",
@@ -416,6 +437,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Every immigrant visa State's consulates issued each month since March 2017, by employment and family category, by country of chargeability and by consulate, from State's own tables, each month checked against State's grand total. Consular issuances only: a green card granted inside the US isn't in it.",
   },
   {
+    path: "/visa-wait-times",
+    label: "Visa interview wait times by consulate",
+    blurb:
+      "The State Department's Global Visa Wait Times table, read each month: the next interview for work visas (H-1B, L, O, P, Q), students, visitors and crew at every U.S. embassy and consulate, with each Indian consulate's work-visa wait month by month since November 2025. Nonimmigrant visas only; State's NA is kept as no figure.",
+  },
+  {
     path: "/green-card-timelines",
     label: "Green card timelines",
     blurb:
@@ -426,6 +453,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     label: "USCIS processing times, the median, by form",
     blurb:
       "The median months USCIS took to decide every form last quarter, from its quarterly performance workbook, beside receipts, completions and pending, and the historical medians back to FY2016. A different number from USCIS's processing-times page, and both are shown. DACA is Form I-821D there; its pending count, and its work permit's, include first-time requests USCIS accepts but doesn't process.",
+  },
+  {
+    path: "/uscis-processing-times/i-485",
+    label: "One page per USCIS form",
+    blurb:
+      `A page for each of the ${FORM_PAGES.map((f) => f.form).join(", ")} at /uscis-processing-times/<form>: USCIS's median months quarter by quarter for each kind of case, how many it received, decided and had waiting, and its FY2016 to FY2024 medians where it published them.`,
   },
   {
     path: "/i485-by-field-office",
@@ -586,7 +619,7 @@ export async function GET() {
     `- [About](${BASE_URL}/about): Who runs PERM Tracker (an immigration attorney), since when, and what it is not`,
     `- [Press](${BASE_URL}/press): What DOL's records on this site can tell a reporter, how to credit PERM Tracker, and the press contact`,
     `- [Reviews](${BASE_URL}/reviews): Every review left by someone outside the team, newest first, with the average rating`,
-    `- [PERM trackers compared](${BASE_URL}/compare): Seven PERM case trackers checked side by side on their own pages (Oct 27 2026): what it looks up, where its data comes from, how fresh it is and what it costs, each mark quoted and linked`,
+    `- [PERM trackers compared](${BASE_URL}/compare): ${RIVALS.length} other PERM case trackers and green card sites checked beside this one on their own pages (${checkedPhrase(RIVALS.map((t) => t.checkedOn))}): what each looks up, where its data comes from, how fresh it is and what it costs, each mark quoted and linked`,
     `- [For professionals](${BASE_URL}/for-attorneys): The case-management side for attorneys, paralegals and HR teams - every deadline computed per case, reminders, calendar sync`,
     `- [FAQ](${BASE_URL}/faq): Questions about PERM and about this site`,
     `- [Email preferences](${BASE_URL}/email-preferences): See and stop everything the site emails an address`,

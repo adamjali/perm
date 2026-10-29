@@ -66,7 +66,7 @@ export function AttorneyHero() {
           </h1>{" "}
           <div className="lg:col-span-5 lg:pb-2">
             <p className="max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl dark:text-soft">
-              Free case management for immigration attorneys and their teams. Enter a case&apos;s dates once; the
+              Free case management for immigration attorneys and paralegals. Enter a case&apos;s dates once; the
               deadlines, reminders and calendar follow.
             </p>{" "}
             <div className="mt-6 flex flex-wrap gap-4">

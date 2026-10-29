@@ -86,6 +86,14 @@ vi.mock("@/lib/db/h1bRanks", () => ({
     ],
   })),
 }));
+vi.mock("@/lib/db/firmRanks", () => ({
+  getFirmRanksSummary: vi.fn(async () => ({
+    programs: {
+      perm: { years: { "2025": { through: "2025-09-30", places: { US: { filings: 10, firms: 2, top10: 10, unnamed: 1 }, TX: { filings: 4, firms: 1, top10: 4, unnamed: 0 } } } } },
+      lca: { years: {} },
+    },
+  })),
+}));
 vi.mock("@/lib/db/groups", () => ({
   GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
   listGroups: vi.fn(async (kind: string) => [

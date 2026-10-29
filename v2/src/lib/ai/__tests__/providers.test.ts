@@ -64,10 +64,11 @@ describe('AI Providers', { timeout: 15_000 }, () => {
     expect([...providers].sort()).toEqual(['Google', 'Groq', 'Mistral', 'OpenRouter']);
   });
 
-  it('names none of the models retired on Oct 12 2026', async () => {
+  it('names none of the retired models', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
     const ids = SUPPORTED_MODELS.map(m => m.id as string);
-    for (const gone of ['gemini-2.0-flash', 'llama-3.3-70b-versatile', 'z-ai/glm-4.5-air:free']) {
+    // Oct 12 2026, then OpenRouter's free Nemotron 3 Super on Oct 29 ("unavailable for free").
+    for (const gone of ['gemini-2.0-flash', 'llama-3.3-70b-versatile', 'z-ai/glm-4.5-air:free', 'nvidia/nemotron-3-super-120b-a12b:free']) {
       expect(ids).not.toContain(gone);
     }
   });

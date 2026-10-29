@@ -1,0 +1,1827 @@
+{
+ "codes": {
+  "11-2032": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-2033",
+      "title": "Fundraising Managers"
+     }
+    ],
+    "code": "11-2031",
+    "title": "Public Relations and Fundraising Managers"
+   }
+  ],
+  "11-2033": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-2032",
+      "title": "Public Relations Managers"
+     }
+    ],
+    "code": "11-2031",
+    "title": "Public Relations and Fundraising Managers"
+   }
+  ],
+  "11-3012": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-3013",
+      "title": "Facilities Managers"
+     }
+    ],
+    "code": "11-3011",
+    "title": "Administrative Services Managers"
+   }
+  ],
+  "11-3013": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-3012",
+      "title": "Administrative Services Managers"
+     }
+    ],
+    "code": "11-3011",
+    "title": "Administrative Services Managers"
+   }
+  ],
+  "11-9072": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-9179",
+      "title": "Personal Service Managers, All Other"
+     },
+     {
+      "code": "11-9199",
+      "title": "Managers, All Other"
+     },
+     {
+      "code": "13-1082",
+      "title": "Project Management Specialists"
+     }
+    ],
+    "code": "11-9199",
+    "title": "Managers, All Other"
+   }
+  ],
+  "11-9171": [
+   {
+    "alsoTo": [],
+    "code": "11-9061",
+    "title": "Funeral Service Managers"
+   }
+  ],
+  "11-9179": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-9072",
+      "title": "Entertainment and Recreation Managers, Except Gambling"
+     },
+     {
+      "code": "11-9199",
+      "title": "Managers, All Other"
+     },
+     {
+      "code": "13-1082",
+      "title": "Project Management Specialists"
+     }
+    ],
+    "code": "11-9199",
+    "title": "Managers, All Other"
+   }
+  ],
+  "13-1082": [
+   {
+    "alsoTo": [
+     {
+      "code": "11-9072",
+      "title": "Entertainment and Recreation Managers, Except Gambling"
+     },
+     {
+      "code": "11-9179",
+      "title": "Personal Service Managers, All Other"
+     },
+     {
+      "code": "11-9199",
+      "title": "Managers, All Other"
+     }
+    ],
+    "code": "11-9199",
+    "title": "Managers, All Other"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "13-1199",
+      "title": "Business Operations Specialists, All Other"
+     }
+    ],
+    "code": "13-1199",
+    "title": "Business Operations Specialists, All Other"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "15-1243",
+      "title": "Database Architects"
+     },
+     {
+      "code": "15-1253",
+      "title": "Software Quality Assurance Analysts and Testers"
+     },
+     {
+      "code": "15-1255",
+      "title": "Web and Digital Interface Designers"
+     },
+     {
+      "code": "15-1299",
+      "title": "Computer Occupations, All Other"
+     }
+    ],
+    "code": "15-1199",
+    "title": "Computer Occupations, All Other"
+   }
+  ],
+  "13-2022": [
+   {
+    "alsoTo": [
+     {
+      "code": "13-2023",
+      "title": "Appraisers and Assessors of Real Estate"
+     }
+    ],
+    "code": "13-2021",
+    "title": "Appraisers and Assessors of Real Estate"
+   }
+  ],
+  "13-2023": [
+   {
+    "alsoTo": [
+     {
+      "code": "13-2022",
+      "title": "Appraisers of Personal and Business Property"
+     }
+    ],
+    "code": "13-2021",
+    "title": "Appraisers and Assessors of Real Estate"
+   }
+  ],
+  "13-2054": [
+   {
+    "alsoTo": [
+     {
+      "code": "13-2051",
+      "title": "Financial and Investment Analysts"
+     }
+    ],
+    "code": "13-2051",
+    "title": "Financial Analysts"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "13-2099",
+      "title": "Financial Specialists, All Other"
+     }
+    ],
+    "code": "13-2099",
+    "title": "Financial Specialists, All Other"
+   }
+  ],
+  "15-1211": [
+   {
+    "alsoTo": [],
+    "code": "15-1121",
+    "title": "Computer Systems Analysts"
+   }
+  ],
+  "15-1212": [
+   {
+    "alsoTo": [],
+    "code": "15-1122",
+    "title": "Information Security Analysts"
+   }
+  ],
+  "15-1221": [
+   {
+    "alsoTo": [],
+    "code": "15-1111",
+    "title": "Computer and Information Research Scientists"
+   }
+  ],
+  "15-1231": [
+   {
+    "alsoTo": [],
+    "code": "15-1152",
+    "title": "Computer Network Support Specialists"
+   }
+  ],
+  "15-1232": [
+   {
+    "alsoTo": [],
+    "code": "15-1151",
+    "title": "Computer User Support Specialists"
+   }
+  ],
+  "15-1241": [
+   {
+    "alsoTo": [],
+    "code": "15-1143",
+    "title": "Computer Network Architects"
+   }
+  ],
+  "15-1242": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-1243",
+      "title": "Database Architects"
+     }
+    ],
+    "code": "15-1141",
+    "title": "Database Administrators"
+   }
+  ],
+  "15-1243": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-1242",
+      "title": "Database Administrators"
+     }
+    ],
+    "code": "15-1141",
+    "title": "Database Administrators"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "13-1082",
+      "title": "Project Management Specialists"
+     },
+     {
+      "code": "15-1253",
+      "title": "Software Quality Assurance Analysts and Testers"
+     },
+     {
+      "code": "15-1255",
+      "title": "Web and Digital Interface Designers"
+     },
+     {
+      "code": "15-1299",
+      "title": "Computer Occupations, All Other"
+     }
+    ],
+    "code": "15-1199",
+    "title": "Computer Occupations, All Other"
+   }
+  ],
+  "15-1244": [
+   {
+    "alsoTo": [],
+    "code": "15-1142",
+    "title": "Network and Computer Systems Administrators"
+   }
+  ],
+  "15-1251": [
+   {
+    "alsoTo": [],
+    "code": "15-1131",
+    "title": "Computer Programmers"
+   }
+  ],
+  "15-1252": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-1253",
+      "title": "Software Quality Assurance Analysts and Testers"
+     }
+    ],
+    "code": "15-1132",
+    "title": "Software Developers, Applications"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "15-1253",
+      "title": "Software Quality Assurance Analysts and Testers"
+     }
+    ],
+    "code": "15-1133",
+    "title": "Software Developers, Systems Software"
+   }
+  ],
+  "15-1253": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-1252",
+      "title": "Software Developers"
+     }
+    ],
+    "code": "15-1132",
+    "title": "Software Developers, Applications"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "15-1252",
+      "title": "Software Developers"
+     }
+    ],
+    "code": "15-1133",
+    "title": "Software Developers, Systems Software"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "13-1082",
+      "title": "Project Management Specialists"
+     },
+     {
+      "code": "15-1243",
+      "title": "Database Architects"
+     },
+     {
+      "code": "15-1255",
+      "title": "Web and Digital Interface Designers"
+     },
+     {
+      "code": "15-1299",
+      "title": "Computer Occupations, All Other"
+     }
+    ],
+    "code": "15-1199",
+    "title": "Computer Occupations, All Other"
+   }
+  ],
+  "15-1254": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-1255",
+      "title": "Web and Digital Interface Designers"
+     }
+    ],
+    "code": "15-1134",
+    "title": "Web Developers"
+   }
+  ],
+  "15-1255": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-1254",
+      "title": "Web Developers"
+     }
+    ],
+    "code": "15-1134",
+    "title": "Web Developers"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "13-1082",
+      "title": "Project Management Specialists"
+     },
+     {
+      "code": "15-1243",
+      "title": "Database Architects"
+     },
+     {
+      "code": "15-1253",
+      "title": "Software Quality Assurance Analysts and Testers"
+     },
+     {
+      "code": "15-1299",
+      "title": "Computer Occupations, All Other"
+     }
+    ],
+    "code": "15-1199",
+    "title": "Computer Occupations, All Other"
+   }
+  ],
+  "15-1299": [
+   {
+    "alsoTo": [
+     {
+      "code": "13-1082",
+      "title": "Project Management Specialists"
+     },
+     {
+      "code": "15-1243",
+      "title": "Database Architects"
+     },
+     {
+      "code": "15-1253",
+      "title": "Software Quality Assurance Analysts and Testers"
+     },
+     {
+      "code": "15-1255",
+      "title": "Web and Digital Interface Designers"
+     }
+    ],
+    "code": "15-1199",
+    "title": "Computer Occupations, All Other"
+   },
+   {
+    "alsoTo": [],
+    "code": "43-9011",
+    "title": "Computer Operators"
+   }
+  ],
+  "15-2051": [
+   {
+    "alsoTo": [
+     {
+      "code": "15-2099",
+      "title": "Mathematical Science Occupations, All Other"
+     }
+    ],
+    "code": "15-2099",
+    "title": "Mathematical Science Occupations, All Other"
+   }
+  ],
+  "15-2099": [
+   {
+    "alsoTo": [],
+    "code": "15-2091",
+    "title": "Mathematical Technicians"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "15-2051",
+      "title": "Data Scientists"
+     }
+    ],
+    "code": "15-2099",
+    "title": "Mathematical Science Occupations, All Other"
+   }
+  ],
+  "17-3028": [
+   {
+    "alsoTo": [
+     {
+      "code": "17-3029",
+      "title": "Engineering Technologists and Technicians, Except Drafters, All Other"
+     }
+    ],
+    "code": "17-3029",
+    "title": "Engineering Technicians, Except Drafters, All Other"
+   }
+  ],
+  "17-3029": [
+   {
+    "alsoTo": [
+     {
+      "code": "17-3028",
+      "title": "Calibration Technologists and Technicians"
+     }
+    ],
+    "code": "17-3029",
+    "title": "Engineering Technicians, Except Drafters, All Other"
+   },
+   {
+    "alsoTo": [],
+    "code": "55-3017",
+    "title": "Radar and Sonar Technicians"
+   }
+  ],
+  "19-3033": [
+   {
+    "alsoTo": [
+     {
+      "code": "19-3034",
+      "title": "School Psychologists"
+     }
+    ],
+    "code": "19-3031",
+    "title": "Clinical, Counseling, and School Psychologists"
+   }
+  ],
+  "19-3034": [
+   {
+    "alsoTo": [
+     {
+      "code": "19-3033",
+      "title": "Clinical and Counseling Psychologists"
+     }
+    ],
+    "code": "19-3031",
+    "title": "Clinical, Counseling, and School Psychologists"
+   }
+  ],
+  "19-4012": [
+   {
+    "alsoTo": [
+     {
+      "code": "19-4013",
+      "title": "Food Science Technicians"
+     }
+    ],
+    "code": "19-4011",
+    "title": "Agricultural and Food Science Technicians"
+   }
+  ],
+  "19-4013": [
+   {
+    "alsoTo": [
+     {
+      "code": "19-4012",
+      "title": "Agricultural Technicians"
+     }
+    ],
+    "code": "19-4011",
+    "title": "Agricultural and Food Science Technicians"
+   }
+  ],
+  "19-4042": [
+   {
+    "alsoTo": [],
+    "code": "19-4091",
+    "title": "Environmental Science and Protection Technicians, Including Health"
+   }
+  ],
+  "19-4043": [
+   {
+    "alsoTo": [
+     {
+      "code": "19-4044",
+      "title": "Hydrologic Technicians"
+     }
+    ],
+    "code": "19-4041",
+    "title": "Geological and Petroleum Technicians"
+   }
+  ],
+  "19-4044": [
+   {
+    "alsoTo": [
+     {
+      "code": "19-4043",
+      "title": "Geological Technicians, Except Hydrologic Technicians"
+     }
+    ],
+    "code": "19-4041",
+    "title": "Geological and Petroleum Technicians"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "19-4099",
+      "title": "Life, Physical, and Social Science Technicians, All Other"
+     }
+    ],
+    "code": "19-4099",
+    "title": "Life, Physical, and Social Science Technicians, All Other"
+   }
+  ],
+  "19-4071": [
+   {
+    "alsoTo": [],
+    "code": "19-4093",
+    "title": "Forest and Conservation Technicians"
+   }
+  ],
+  "19-5011": [
+   {
+    "alsoTo": [],
+    "code": "29-9011",
+    "title": "Occupational Health and Safety Specialists"
+   }
+  ],
+  "19-5012": [
+   {
+    "alsoTo": [],
+    "code": "29-9012",
+    "title": "Occupational Health and Safety Technicians"
+   }
+  ],
+  "25-2055": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-2056",
+      "title": "Special Education Teachers, Elementary School"
+     }
+    ],
+    "code": "25-2052",
+    "title": "Special Education Teachers, Kindergarten and Elementary School"
+   }
+  ],
+  "25-2056": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-2055",
+      "title": "Special Education Teachers, Kindergarten"
+     }
+    ],
+    "code": "25-2052",
+    "title": "Special Education Teachers, Kindergarten and Elementary School"
+   }
+  ],
+  "25-2057": [
+   {
+    "alsoTo": [],
+    "code": "25-2053",
+    "title": "Special Education Teachers, Middle School"
+   }
+  ],
+  "25-2058": [
+   {
+    "alsoTo": [],
+    "code": "25-2054",
+    "title": "Special Education Teachers, Secondary School"
+   }
+  ],
+  "25-3031": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-3041",
+      "title": "Tutors"
+     },
+     {
+      "code": "25-3099",
+      "title": "Teachers and Instructors, All Other"
+     }
+    ],
+    "code": "25-3099",
+    "title": "Teachers and Instructors, All Other"
+   }
+  ],
+  "25-3041": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-3031",
+      "title": "Substitute Teachers, Short-Term"
+     },
+     {
+      "code": "25-3099",
+      "title": "Teachers and Instructors, All Other"
+     }
+    ],
+    "code": "25-3099",
+    "title": "Teachers and Instructors, All Other"
+   }
+  ],
+  "25-4022": [
+   {
+    "alsoTo": [],
+    "code": "25-4021",
+    "title": "Librarians"
+   },
+   {
+    "alsoTo": [],
+    "code": "25-9011",
+    "title": "Audio-Visual and Multimedia Collections Specialists"
+   }
+  ],
+  "25-9042": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-9043",
+      "title": "Teaching Assistants, Special Education"
+     },
+     {
+      "code": "25-9049",
+      "title": "Teaching Assistants, All Other"
+     }
+    ],
+    "code": "25-9041",
+    "title": "Teacher Assistants"
+   }
+  ],
+  "25-9043": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-9042",
+      "title": "Teaching Assistants, Preschool, Elementary, Middle, and Secondary School, Except Special Education"
+     },
+     {
+      "code": "25-9049",
+      "title": "Teaching Assistants, All Other"
+     }
+    ],
+    "code": "25-9041",
+    "title": "Teacher Assistants"
+   }
+  ],
+  "25-9044": [
+   {
+    "alsoTo": [],
+    "code": "25-1191",
+    "title": "Graduate Teaching Assistants"
+   }
+  ],
+  "25-9049": [
+   {
+    "alsoTo": [
+     {
+      "code": "25-9042",
+      "title": "Teaching Assistants, Preschool, Elementary, Middle, and Secondary School, Except Special Education"
+     },
+     {
+      "code": "25-9043",
+      "title": "Teaching Assistants, Special Education"
+     }
+    ],
+    "code": "25-9041",
+    "title": "Teacher Assistants"
+   }
+  ],
+  "27-2091": [
+   {
+    "alsoTo": [
+     {
+      "code": "27-2099",
+      "title": "Entertainers and Performers, Sports and Related Workers, All Other"
+     }
+    ],
+    "code": "27-2099",
+    "title": "Entertainers and Performers, Sports and Related Workers, All Other"
+   }
+  ],
+  "27-3023": [
+   {
+    "alsoTo": [],
+    "code": "27-3021",
+    "title": "Broadcast News Analysts"
+   },
+   {
+    "alsoTo": [],
+    "code": "27-3022",
+    "title": "Reporters and Correspondents"
+   }
+  ],
+  "27-3092": [
+   {
+    "alsoTo": [],
+    "code": "23-2091",
+    "title": "Court Reporters"
+   }
+  ],
+  "27-3099": [
+   {
+    "alsoTo": [],
+    "code": "27-3012",
+    "title": "Public Address System and Other Announcers"
+   },
+   {
+    "alsoTo": [],
+    "code": "27-3099",
+    "title": "Media and Communication Workers, All Other"
+   }
+  ],
+  "27-4015": [
+   {
+    "alsoTo": [
+     {
+      "code": "27-4099",
+      "title": "Media and Communication Equipment Workers, All Other"
+     }
+    ],
+    "code": "27-4099",
+    "title": "Media and Communication Equipment Workers, All Other"
+   }
+  ],
+  "29-1211": [
+   {
+    "alsoTo": [],
+    "code": "29-1061",
+    "title": "Anesthesiologists"
+   }
+  ],
+  "29-1212": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1213": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1214": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1215": [
+   {
+    "alsoTo": [],
+    "code": "29-1062",
+    "title": "Family and General Practitioners"
+   }
+  ],
+  "29-1216": [
+   {
+    "alsoTo": [],
+    "code": "29-1063",
+    "title": "Internists, General"
+   }
+  ],
+  "29-1217": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1218": [
+   {
+    "alsoTo": [],
+    "code": "29-1064",
+    "title": "Obstetricians and Gynecologists"
+   }
+  ],
+  "29-1221": [
+   {
+    "alsoTo": [],
+    "code": "29-1065",
+    "title": "Pediatricians, General"
+   }
+  ],
+  "29-1222": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1223": [
+   {
+    "alsoTo": [],
+    "code": "29-1066",
+    "title": "Psychiatrists"
+   }
+  ],
+  "29-1224": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1229": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1241",
+      "title": "Ophthalmologists, Except Pediatric"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1241": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1212",
+      "title": "Cardiologists"
+     },
+     {
+      "code": "29-1213",
+      "title": "Dermatologists"
+     },
+     {
+      "code": "29-1214",
+      "title": "Emergency Medicine Physicians"
+     },
+     {
+      "code": "29-1217",
+      "title": "Neurologists"
+     },
+     {
+      "code": "29-1222",
+      "title": "Physicians, Pathologists"
+     },
+     {
+      "code": "29-1224",
+      "title": "Radiologists"
+     },
+     {
+      "code": "29-1229",
+      "title": "Physicians, All Other"
+     }
+    ],
+    "code": "29-1069",
+    "title": "Physicians and Surgeons, All Other"
+   }
+  ],
+  "29-1242": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1243",
+      "title": "Pediatric Surgeons"
+     },
+     {
+      "code": "29-1249",
+      "title": "Surgeons, All Other"
+     }
+    ],
+    "code": "29-1067",
+    "title": "Surgeons"
+   }
+  ],
+  "29-1243": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1242",
+      "title": "Orthopedic Surgeons, Except Pediatric"
+     },
+     {
+      "code": "29-1249",
+      "title": "Surgeons, All Other"
+     }
+    ],
+    "code": "29-1067",
+    "title": "Surgeons"
+   }
+  ],
+  "29-1249": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1242",
+      "title": "Orthopedic Surgeons, Except Pediatric"
+     },
+     {
+      "code": "29-1243",
+      "title": "Pediatric Surgeons"
+     }
+    ],
+    "code": "29-1067",
+    "title": "Surgeons"
+   }
+  ],
+  "29-1291": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1299",
+      "title": "Healthcare Diagnosing or Treating Practitioners, All Other"
+     }
+    ],
+    "code": "29-1199",
+    "title": "Health Diagnosing and Treating Practitioners, All Other"
+   }
+  ],
+  "29-1292": [
+   {
+    "alsoTo": [],
+    "code": "29-2021",
+    "title": "Dental Hygienists"
+   }
+  ],
+  "29-1299": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-1291",
+      "title": "Acupuncturists"
+     }
+    ],
+    "code": "29-1199",
+    "title": "Health Diagnosing and Treating Practitioners, All Other"
+   }
+  ],
+  "29-2036": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-2099",
+      "title": "Health Technologists and Technicians, All Other"
+     }
+    ],
+    "code": "29-2099",
+    "title": "Health Technologists and Technicians, All Other"
+   }
+  ],
+  "29-2042": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-2043",
+      "title": "Paramedics"
+     }
+    ],
+    "code": "29-2041",
+    "title": "Emergency Medical Technicians and Paramedics"
+   }
+  ],
+  "29-2043": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-2042",
+      "title": "Emergency Medical Technicians"
+     }
+    ],
+    "code": "29-2041",
+    "title": "Emergency Medical Technicians and Paramedics"
+   }
+  ],
+  "29-2072": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-9021",
+      "title": "Health Information Technologists and Medical Registrars"
+     }
+    ],
+    "code": "29-2071",
+    "title": "Medical Records and Health Information Technicians"
+   }
+  ],
+  "29-2099": [
+   {
+    "alsoTo": [],
+    "code": "29-2054",
+    "title": "Respiratory Therapy Technicians"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "29-2036",
+      "title": "Medical Dosimetrists"
+     }
+    ],
+    "code": "29-2099",
+    "title": "Health Technologists and Technicians, All Other"
+   }
+  ],
+  "29-9021": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-2072",
+      "title": "Medical Records Specialists"
+     }
+    ],
+    "code": "29-2071",
+    "title": "Medical Records and Health Information Technicians"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "29-9093",
+      "title": "Surgical Assistants"
+     },
+     {
+      "code": "29-9099",
+      "title": "Healthcare Practitioners and Technical Workers, All Other"
+     }
+    ],
+    "code": "29-9099",
+    "title": "Healthcare Practitioners and Technical Workers, All Other"
+   }
+  ],
+  "29-9093": [
+   {
+    "alsoTo": [
+     {
+      "code": "29-9021",
+      "title": "Health Information Technologists and Medical Registrars"
+     },
+     {
+      "code": "29-9099",
+      "title": "Healthcare Practitioners and Technical Workers, All Other"
+     }
+    ],
+    "code": "29-9099",
+    "title": "Healthcare Practitioners and Technical Workers, All Other"
+   }
+  ],
+  "31-1121": [
+   {
+    "alsoTo": [],
+    "code": "31-1011",
+    "title": "Home Health Aides"
+   }
+  ],
+  "31-1122": [
+   {
+    "alsoTo": [],
+    "code": "39-9021",
+    "title": "Personal Care Aides"
+   }
+  ],
+  "31-1131": [
+   {
+    "alsoTo": [],
+    "code": "31-1014",
+    "title": "Nursing Assistants"
+   }
+  ],
+  "31-1132": [
+   {
+    "alsoTo": [],
+    "code": "31-1015",
+    "title": "Orderlies"
+   }
+  ],
+  "31-1133": [
+   {
+    "alsoTo": [],
+    "code": "31-1013",
+    "title": "Psychiatric Aides"
+   }
+  ],
+  "33-1091": [
+   {
+    "alsoTo": [
+     {
+      "code": "33-1099",
+      "title": "First-Line Supervisors of Protective Service Workers, All Other"
+     }
+    ],
+    "code": "33-1099",
+    "title": "First-Line Supervisors of Protective Service Workers, All Other"
+   }
+  ],
+  "33-9094": [
+   {
+    "alsoTo": [
+     {
+      "code": "33-9099",
+      "title": "Protective Service Workers, All Other"
+     }
+    ],
+    "code": "33-9099",
+    "title": "Protective Service Workers, All Other"
+   }
+  ],
+  "35-3023": [
+   {
+    "alsoTo": [],
+    "code": "35-3021",
+    "title": "Combined Food Preparation and Serving Workers, Including Fast Food"
+   },
+   {
+    "alsoTo": [],
+    "code": "35-3022",
+    "title": "Counter Attendants, Cafeteria, Food Concession, and Coffee Shop"
+   }
+  ],
+  "39-1013": [
+   {
+    "alsoTo": [],
+    "code": "39-1011",
+    "title": "Gaming Supervisors"
+   },
+   {
+    "alsoTo": [],
+    "code": "39-1012",
+    "title": "Slot Supervisors"
+   }
+  ],
+  "39-1014": [
+   {
+    "alsoTo": [
+     {
+      "code": "39-1022",
+      "title": "First-Line Supervisors of Personal Service Workers"
+     },
+     {
+      "code": "53-1044",
+      "title": "First-line Supervisors of Passenger Attendants"
+     }
+    ],
+    "code": "39-1021",
+    "title": "First-Line Supervisors of Personal Service Workers"
+   }
+  ],
+  "39-1022": [
+   {
+    "alsoTo": [
+     {
+      "code": "39-1014",
+      "title": "First-line Supervisors of Entertainment and Recreation Workers, Except Gambling Services"
+     },
+     {
+      "code": "53-1044",
+      "title": "First-line Supervisors of Passenger Attendants"
+     }
+    ],
+    "code": "39-1021",
+    "title": "First-Line Supervisors of Personal Service Workers"
+   }
+  ],
+  "39-4012": [
+   {
+    "alsoTo": [
+     {
+      "code": "39-9099",
+      "title": "Personal Care and Service Workers, All Other"
+     }
+    ],
+    "code": "39-9099",
+    "title": "Personal Care and Service Workers, All Other"
+   }
+  ],
+  "41-3091": [
+   {
+    "alsoTo": [],
+    "code": "41-3099",
+    "title": "Sales Representatives, Services, All Other"
+   }
+  ],
+  "43-2099": [
+   {
+    "alsoTo": [],
+    "code": "27-4013",
+    "title": "Radio Operators"
+   },
+   {
+    "alsoTo": [],
+    "code": "43-2099",
+    "title": "Communications Equipment Operators, All Other"
+   }
+  ],
+  "45-3031": [
+   {
+    "alsoTo": [],
+    "code": "45-3011",
+    "title": "Fishers and Related Fishing Workers"
+   },
+   {
+    "alsoTo": [],
+    "code": "45-3021",
+    "title": "Hunters and Trappers"
+   }
+  ],
+  "47-5022": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-7199",
+      "title": "Material Moving Workers, All Other"
+     }
+    ],
+    "code": "53-7032",
+    "title": "Excavating and Loading Machine and Dragline Operators"
+   }
+  ],
+  "47-5023": [
+   {
+    "alsoTo": [
+     {
+      "code": "47-5032",
+      "title": "Explosives Workers, Ordnance Handling Experts, and Blasters"
+     }
+    ],
+    "code": "47-5021",
+    "title": "Earth Drillers, Except Oil and Gas"
+   }
+  ],
+  "47-5032": [
+   {
+    "alsoTo": [
+     {
+      "code": "47-5023",
+      "title": "Earth Drillers, Except Oil and Gas"
+     }
+    ],
+    "code": "47-5021",
+    "title": "Earth Drillers, Except Oil and Gas"
+   },
+   {
+    "alsoTo": [],
+    "code": "47-5031",
+    "title": "Explosives Workers, Ordnance Handling Experts, and Blasters"
+   }
+  ],
+  "47-5043": [
+   {
+    "alsoTo": [],
+    "code": "47-5061",
+    "title": "Roof Bolters, Mining"
+   }
+  ],
+  "47-5044": [
+   {
+    "alsoTo": [],
+    "code": "53-7033",
+    "title": "Loading Machine Operators, Underground Mining"
+   },
+   {
+    "alsoTo": [],
+    "code": "53-7111",
+    "title": "Mine Shuttle Car Operators"
+   }
+  ],
+  "47-5049": [
+   {
+    "alsoTo": [],
+    "code": "47-5042",
+    "title": "Mine Cutting and Channeling Machine Operators"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "47-5099",
+      "title": "Extraction Workers, All Other"
+     }
+    ],
+    "code": "47-5049",
+    "title": "Mining Machine Operators, All Other"
+   }
+  ],
+  "47-5099": [
+   {
+    "alsoTo": [
+     {
+      "code": "47-5049",
+      "title": "Underground Mining Machine Operators, All Other"
+     }
+    ],
+    "code": "47-5049",
+    "title": "Mining Machine Operators, All Other"
+   },
+   {
+    "alsoTo": [],
+    "code": "47-5099",
+    "title": "Extraction Workers, All Other"
+   }
+  ],
+  "49-9099": [
+   {
+    "alsoTo": [],
+    "code": "49-9093",
+    "title": "Fabric Menders, Except Garment"
+   },
+   {
+    "alsoTo": [],
+    "code": "49-9099",
+    "title": "Installation, Maintenance, and Repair Workers, All Other"
+   }
+  ],
+  "51-2051": [
+   {
+    "alsoTo": [],
+    "code": "51-2091",
+    "title": "Fiberglass Laminators and Fabricators"
+   }
+  ],
+  "51-2061": [
+   {
+    "alsoTo": [],
+    "code": "51-2093",
+    "title": "Timing Device Assemblers and Adjusters"
+   }
+  ],
+  "51-9124": [
+   {
+    "alsoTo": [],
+    "code": "51-9121",
+    "title": "Coating, Painting, and Spraying Machine Setters, Operators, and Tenders"
+   },
+   {
+    "alsoTo": [],
+    "code": "51-9122",
+    "title": "Painters, Transportation Equipment"
+   }
+  ],
+  "51-9161": [
+   {
+    "alsoTo": [],
+    "code": "51-4011",
+    "title": "Computer-Controlled Machine Tool Operators, Metal and Plastic"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "51-9162",
+      "title": "Computer Numerically Controlled Tool Programmers"
+     },
+     {
+      "code": "51-9199",
+      "title": "Production Workers, All Other"
+     }
+    ],
+    "code": "51-9199",
+    "title": "Production Workers, All Other"
+   }
+  ],
+  "51-9162": [
+   {
+    "alsoTo": [],
+    "code": "51-4012",
+    "title": "Computer Numerically Controlled Machine Tool Programmers, Metal and Plastic"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "51-9161",
+      "title": "Computer Numerically Controlled Tool Operators"
+     },
+     {
+      "code": "51-9199",
+      "title": "Production Workers, All Other"
+     }
+    ],
+    "code": "51-9199",
+    "title": "Production Workers, All Other"
+   }
+  ],
+  "53-1041": [
+   {
+    "alsoTo": [],
+    "code": "53-1011",
+    "title": "Aircraft Cargo Handling Supervisors"
+   }
+  ],
+  "53-1042": [
+   {
+    "alsoTo": [],
+    "code": "53-1021",
+    "title": "First-Line Supervisors of Helpers, Laborers, and Material Movers, Hand"
+   }
+  ],
+  "53-1043": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-1044",
+      "title": "First-line Supervisors of Passenger Attendants"
+     },
+     {
+      "code": "53-1049",
+      "title": "First Line Supervisors of Transportation Workers, All Other"
+     }
+    ],
+    "code": "53-1031",
+    "title": "First-Line Supervisors of Transportation and Material-Moving Machine and Vehicle Operators"
+   }
+  ],
+  "53-1044": [
+   {
+    "alsoTo": [
+     {
+      "code": "39-1014",
+      "title": "First-line Supervisors of Entertainment and Recreation Workers, Except Gambling Services"
+     },
+     {
+      "code": "39-1022",
+      "title": "First-Line Supervisors of Personal Service Workers"
+     }
+    ],
+    "code": "39-1021",
+    "title": "First-Line Supervisors of Personal Service Workers"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "53-1043",
+      "title": "First-Line Supervisors of Material-Moving Machine and Vehicle Operators"
+     },
+     {
+      "code": "53-1049",
+      "title": "First Line Supervisors of Transportation Workers, All Other"
+     }
+    ],
+    "code": "53-1031",
+    "title": "First-Line Supervisors of Transportation and Material-Moving Machine and Vehicle Operators"
+   }
+  ],
+  "53-1049": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-1043",
+      "title": "First-Line Supervisors of Material-Moving Machine and Vehicle Operators"
+     },
+     {
+      "code": "53-1044",
+      "title": "First-line Supervisors of Passenger Attendants"
+     }
+    ],
+    "code": "53-1031",
+    "title": "First-Line Supervisors of Transportation and Material-Moving Machine and Vehicle Operators"
+   }
+  ],
+  "53-3051": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-3053",
+      "title": "Shuttle Drivers and Chauffeurs"
+     }
+    ],
+    "code": "53-3022",
+    "title": "Bus Drivers, School or Special Client"
+   }
+  ],
+  "53-3052": [
+   {
+    "alsoTo": [],
+    "code": "53-3021",
+    "title": "Bus Drivers, Transit and Intercity"
+   }
+  ],
+  "53-3053": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-3051",
+      "title": "Bus Drivers, School"
+     }
+    ],
+    "code": "53-3022",
+    "title": "Bus Drivers, School or Special Client"
+   },
+   {
+    "alsoTo": [
+     {
+      "code": "53-3054",
+      "title": "Taxi Drivers"
+     }
+    ],
+    "code": "53-3041",
+    "title": "Taxi Drivers and Chauffeurs"
+   }
+  ],
+  "53-3054": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-3053",
+      "title": "Shuttle Drivers and Chauffeurs"
+     }
+    ],
+    "code": "53-3041",
+    "title": "Taxi Drivers and Chauffeurs"
+   }
+  ],
+  "53-4022": [
+   {
+    "alsoTo": [],
+    "code": "53-4012",
+    "title": "Locomotive Firers"
+   },
+   {
+    "alsoTo": [],
+    "code": "53-4021",
+    "title": "Railroad Brake, Signal, and Switch Operators"
+   }
+  ],
+  "53-6032": [
+   {
+    "alsoTo": [
+     {
+      "code": "53-6099",
+      "title": "Transportation Workers, All Other"
+     }
+    ],
+    "code": "53-6099",
+    "title": "Transportation Workers, All Other"
+   }
+  ],
+  "53-7065": [
+   {
+    "alsoTo": [],
+    "code": "43-5081",
+    "title": "Stock Clerks and Order Fillers"
+   }
+  ],
+  "53-7199": [
+   {
+    "alsoTo": [
+     {
+      "code": "47-5022",
+      "title": "Excavating and Loading Machine and Dragline Operators, Surface Mining"
+     }
+    ],
+    "code": "53-7032",
+    "title": "Excavating and Loading Machine and Dragline Operators"
+   },
+   {
+    "alsoTo": [],
+    "code": "53-7199",
+    "title": "Material Moving Workers, All Other"
+   }
+  ]
+ },
+ "source": "BLS, SOC 2010 to 2018 crosswalk (November 2017)",
+ "url": "https://www.bls.gov/soc/2018/soc_2010_to_2018_crosswalk.xlsx"
+}

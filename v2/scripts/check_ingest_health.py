@@ -397,6 +397,12 @@ PRECOMPUTED_DOCS = {
     "lca_wage_sources": (7, "the H-1B prevailing wage sources page"),
     # Rebuilt after each LCA load (monthly) and each Data Hub read (monthly).
     "h1b_ranks_summary": (45, "the top H-1B employer pages' ranks and totals"),
+    # Rebuilt after each LCA load and each PERM load, like the H-1B ranks.
+    "firm_ranks_summary": (45, "the law firm ranking pages' years and totals"),
+    # Rebuilt after each wage-request and LCA load, with the rankings.
+    "cap_exempt": (45, "the H-1B cap-exempt employer page"),
+    # Rebuilt after each quarterly PERM load: the pointer to the newest quarter's report.
+    "quarter_report": (100, "the quarterly PERM file posts"),
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),
@@ -423,6 +429,15 @@ PRECOMPUTED_DOCS = {
     # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).
     "seasonal_timing": (45, "the seasonal case page's decision-timing panel"),
 }
+
+# A doc under this many bytes carries nothing ("{}", "null", a bare stamp).
+MIN_DOC_BYTES = 100
+# Docs small by design say their own floor, still above "{}". The EB split is five
+# counts and two dates (93 bytes); the quarter report is a pointer (47 bytes).
+DOC_FLOORS = {"eb_split": 40, "quarter_report": 30}
+# A pointer doc names, in this field, the doc that holds its figures. A pointer to a
+# missing or empty doc is the same slow page as a missing doc.
+POINTER_DOCS = {"quarter_report": "key"}
 
 
 def check_precomputed_docs(db) -> int:
@@ -453,7 +468,7 @@ def check_precomputed_docs(db) -> int:
             bad = 1
             continue
         computed_at, size = got
-        if not computed_at or size < 100:
+        if not computed_at or size < DOC_FLOORS.get(key, MIN_DOC_BYTES):
             print(f"  {key:22s} EMPTY ({size} bytes) - {what}")
             bad = 1
             continue
@@ -462,6 +477,25 @@ def check_precomputed_docs(db) -> int:
         if age > budget:
             bad = 1
         print(f"  {key:22s} {age:5.1f}d / {budget}d  {size:>9,}B  {verdict}")
+
+    for key, field in sorted(POINTER_DOCS.items()):
+        if key not in rows:
+            continue
+        try:
+            raw = query_rows(db, "SELECT json FROM perm_docs WHERE key = ?", [key])
+            target = json.loads(raw[0][0]).get(field) if raw and raw[0][0] else None
+            hit = query_rows(db, "SELECT length(json) FROM perm_docs WHERE key = ?",
+                             [target]) if isinstance(target, str) else []
+        except Exception as e:  # noqa: BLE001 - a probe failing is itself a finding
+            print(f"  {key:22s} FAIL: could not follow it: {e}")
+            bad = 1
+            continue
+        size = int(hit[0][0] or 0) if hit else 0
+        if size < MIN_DOC_BYTES:
+            print(f"  {key:22s} POINTS AT {target or 'nothing'} ({size} bytes)")
+            bad = 1
+        else:
+            print(f"  {key:22s} -> {target}  {size:,}B  ok")
 
     if bad:
         print("  A doc missing or stale means its page is running the query the "

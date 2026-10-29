@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { one, rows } from "./client";
 import type { AwaitingCell, ClassCountryCell, OfficeRow } from "@/lib/uscisQuarterlyShape";
+import type { FormQuarterRow } from "@/lib/uscisForms";
 
 /**
  * USCIS's quarterly performance workbooks, as `scripts/ingest_uscis_quarterly.py`
@@ -122,6 +123,32 @@ export const getUscisFormHistory = cache(async (form: string): Promise<UscisForm
     pending: num(r.pending),
     received: num(r.received),
     completed: num(r.completed),
+  }));
+});
+
+/**
+ * Every quarterly row USCIS printed for one form, every title, oldest first:
+ * what a form's own page draws. Unlike the readers above this one throws on a
+ * failed read, so the page keeps its last good render instead of drawing a
+ * form USCIS reports on as one with no record.
+ */
+export const getUscisFormRows = cache(async (form: string): Promise<FormQuarterRow[]> => {
+  const list = await rows<Record<string, unknown>>(
+    `SELECT fy, quarter, quarter_end, title, received, approved, denied, completed, pending, median_months
+       FROM uscis_form_quarters WHERE form = ? ORDER BY fy, quarter, rowid`,
+    [form],
+  );
+  return list.map((r) => ({
+    fy: Number(r.fy),
+    quarter: Number(r.quarter),
+    quarterEnd: String(r.quarter_end),
+    title: String(r.title),
+    received: num(r.received),
+    approved: num(r.approved),
+    denied: num(r.denied),
+    completed: num(r.completed),
+    pending: num(r.pending),
+    medianMonths: num(r.median_months),
   }));
 });
 

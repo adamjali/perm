@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { RIVALS } from "../rivals";
-import { CHECKED_ON, PERM_TRACKER, ROWS } from "../trackers";
+import { checkedPhrase, GROUPS, PERM_TRACKER, ROWS } from "../trackers";
 
 /**
  * The comparison names other sites, so every mark on one of them has to be
@@ -18,8 +18,36 @@ describe("the PERM tracker comparison", () => {
     }
   });
 
-  it("dates every site to the day the page names", () => {
-    for (const t of [PERM_TRACKER, ...RIVALS]) expect(t.checkedOn).toBe(CHECKED_ON);
+  it("dates every site to a real day, which the page names", () => {
+    const phrase = checkedPhrase(RIVALS.map((t) => t.checkedOn));
+    for (const t of [PERM_TRACKER, ...RIVALS]) {
+      expect(t.checkedOn, t.slug).toMatch(/^2\d{3}-\d{2}-\d{2}$/);
+      expect(Number.isNaN(Date.parse(`${t.checkedOn}T12:00:00Z`)), t.slug).toBe(false);
+    }
+    for (const day of new Set(RIVALS.map((t) => t.checkedOn))) {
+      expect(phrase, day).toContain(String(Number(day.slice(8, 10))));
+    }
+  });
+
+  it("words the reading days plainly", () => {
+    expect(checkedPhrase(["2026-10-27"])).toBe("October 27, 2026");
+    expect(checkedPhrase(["2026-10-28", "2026-10-27", "2026-10-27"])).toBe("October 27 and 28, 2026");
+    expect(checkedPhrase(["2026-10-27", "2026-10-28", "2026-10-30"])).toBe("October 27, 28 and 30, 2026");
+    expect(checkedPhrase(["2026-10-31", "2026-11-02"])).toBe("October 31, 2026 and November 2, 2026");
+  });
+
+  it("puts every site in one of the page's lists, this one among the PERM trackers", () => {
+    const keys = GROUPS.map((g) => g.key) as string[];
+    for (const t of [PERM_TRACKER, ...RIVALS]) expect(keys, t.slug).toContain(t.group);
+    expect(PERM_TRACKER.group).toBe("perm");
+    // A list's columns sit together, so the grid's header over each list is one span.
+    const order = RIVALS.map((t) => t.group);
+    expect(order.filter((g, i) => i > 0 && g !== order[i - 1]).length, order.join(",")).toBeLessThan(GROUPS.length);
+  });
+
+  it("names each site once", () => {
+    const slugs = [PERM_TRACKER, ...RIVALS].map((t) => t.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   it("rests every mark on a rival on a page, with its words or what was checked", () => {
@@ -47,7 +75,7 @@ describe("the PERM tracker comparison", () => {
   it("dates each rival's newest data from its own stamp", () => {
     for (const t of RIVALS) {
       if (!t.newestData.day) continue;
-      expect(t.newestData.day <= CHECKED_ON, t.slug).toBe(true);
+      expect(t.newestData.day <= t.checkedOn, t.slug).toBe(true);
       expect(t.newestData.evidence?.quote, t.slug).toBeTruthy();
     }
   });

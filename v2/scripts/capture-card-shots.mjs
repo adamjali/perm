@@ -19,6 +19,7 @@
 import { chromium } from "playwright-core";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { BARE_SOURCE, FIGURE_SOURCE, MASK_STYLE } from "./lib_card_mask.mjs";
 
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 /** The page's width when captured. The narrowest desktop layout (lg, 1024)
@@ -85,6 +86,48 @@ try {
         for (let n = walk.nextNode(); n; n = walk.nextNode()) if (n.nodeValue.search(own) >= 0) n.nodeValue = n.nodeValue.replace(own, origin);
         for (const f of document.querySelectorAll("input, textarea")) if (f.value.search(own) >= 0) f.value = f.value.replace(own, origin);
       }, "https://permtracker.app");
+      // `mask: "figures"`: a page whose figures move (counts, shares, dates) keeps its shape on the card with each
+      // figure drawn as a grey bar, so a shared card never shows a stale number (lib_card_mask.mjs). A chart's own
+      // labels are hidden: a bar can't sit inside an SVG text element.
+      if (card.mask === "figures") {
+        await page.evaluate(([src, bareSrc, style]) => {
+          const re = new RegExp(src, "g");
+          const bare = new RegExp(bareSrc);
+          const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          const hits = [];
+          for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+            if (n.parentElement?.closest("header[data-site-header], footer, script, style")) continue;
+            re.lastIndex = 0;
+            if (bare.test(n.nodeValue) || re.test(n.nodeValue)) hits.push(n);
+          }
+          for (const n of hits) {
+            if (n.parentElement?.closest("svg")) {
+              n.parentElement.style.fill = "transparent";
+              continue;
+            }
+            const v = n.nodeValue;
+            if (bare.test(v)) {
+              const bar = document.createElement("span");
+              bar.setAttribute("style", style);
+              bar.textContent = v;
+              n.replaceWith(bar);
+              continue;
+            }
+            const frag = document.createDocumentFragment();
+            let last = 0;
+            for (const m of v.matchAll(new RegExp(src, "g"))) {
+              frag.append(v.slice(last, m.index));
+              const bar = document.createElement("span");
+              bar.setAttribute("style", style);
+              bar.textContent = m[0];
+              frag.append(bar);
+              last = m.index + m[0].length;
+            }
+            frag.append(v.slice(last));
+            n.replaceWith(frag);
+          }
+        }, [FIGURE_SOURCE, BARE_SOURCE, MASK_STYLE]);
+      }
       const box = await page.evaluate(([from, fromEl, viewW]) => {
         const start = fromEl
           ? document.querySelector(fromEl)

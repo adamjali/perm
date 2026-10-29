@@ -61,7 +61,7 @@ DB_SETTINGS = {
 }
 
 # THE H-1B LCA FILINGS LIVE IN A DATABASE FILE OF THEIR OWN (Oct 19 2026). The
-# main file is held in memory whole (`permtracker-dbcache`), and its lock stops
+# main file was held in memory whole (`permtracker-dbcache`, retired Oct 29 2026), and its lock stopped
 # at 6 GB; the LCA table and its indexes were 2.75 GB of 6.69. A statement that
 # names `lca_cases` goes to DATABASE_LCA_URL, every other statement to
 # DATABASE_URL, with the same tokens (both servers trust one signing key). Left

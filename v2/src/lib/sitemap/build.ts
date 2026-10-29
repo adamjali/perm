@@ -18,6 +18,10 @@ import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/db/groups";
 import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/db/otherEmployers";
 import { lcaOnlyCities } from "@/lib/db/lcaCities";
 import { getH1bSummary } from "@/lib/db/h1bRanks";
+import { getFirmRanksSummary } from "@/lib/db/firmRanks";
+import { getCapExempt } from "@/lib/db/capExempt";
+import { capExemptAsOf } from "@/lib/capExempt";
+import { firmRanksAsOf, rankedStates as firmRankedStates } from "@/lib/firmRanks";
 import { getSiteReviews } from "@/lib/reviews/read";
 import { newestReviewDay } from "@/lib/reviews/senjaParse";
 import { rankedStates, stateSlug } from "@/lib/h1bRanks";
@@ -38,6 +42,7 @@ import { bulletinMonthDate, employerOwnDate, pageDate, type DateSources } from "
 import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
 import { LOCALES } from "@/lib/i18n/locales";
 import { pageAlternates, type TranslatedPath } from "@/lib/i18n/lang";
+import { FORM_PAGES } from "@/lib/uscisForms";
 
 /**
  * The sitemap, split into an index and per-kind children.
@@ -198,6 +203,21 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     h1bStates = [];
   }
+  // The law firm ranking state pages: the same summary the route's
+  // generateStaticParams reads, dated by the newest decision its years hold.
+  let firmStates: string[] = [];
+  let firmsAsOf: string | null = null;
+  try {
+    const summary = await getFirmRanksSummary();
+    if (summary) {
+      firmStates = firmRankedStates(summary);
+      firmsAsOf = firmRanksAsOf(summary);
+    }
+  } catch {
+    firmStates = [];
+  }
+  // The cap-exempt employer page, dated by the newest day its figures cover.
+  const capExemptDay = capExemptAsOf(await getCapExempt().catch(() => null));
   // The reviews page is dated by its newest review, from the same read the page makes (never throws).
   const reviewsAsOf = newestReviewDay((await getSiteReviews()).reviews);
   const allPosts = getAllPosts();
@@ -240,6 +260,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     posts: allPosts.length > 0 ? latest : null,
     sweep: queueAsOf,
     h1b: h1bAsOf,
+    firms: firmsAsOf,
+    capExempt: capExemptDay,
     corpus: await corpusAsOf(),
     reviews: reviewsAsOf,
   };
@@ -268,6 +290,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/h1b-lottery-odds`, lastModified: at("/h1b-lottery-odds"), images: [`${base}/og/h1b-lottery-odds.jpg`] },
     { url: `${base}/nvc-waiting-list`, lastModified: at("/nvc-waiting-list"), images: [`${base}/og/nvc-waiting-list.jpg`] },
     { url: `${base}/visa-issuances`, lastModified: at("/visa-issuances"), images: [`${base}/og/visa-issuances.jpg`] },
+    { url: `${base}/visa-wait-times`, lastModified: at("/visa-wait-times"), images: [`${base}/og/visa-wait-times.jpg`] },
     { url: `${base}/perm-cities`, lastModified: at("/perm-cities"), images: [`${base}/og/perm-cities.jpg`] },
     { url: `${base}/perm-industries`, lastModified: at("/perm-industries"), images: [`${base}/og/perm-industries.jpg`] },
     { url: `${base}/perm-countries`, lastModified: at("/perm-countries"), images: [`${base}/og/perm-countries.jpg`] },
@@ -282,6 +305,11 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/salary-explorer`, lastModified: at("/tools/salary-explorer"), images: [`${base}/og/salary-explorer.jpg`] },
     { url: `${base}/tools/i140-trends`, lastModified: at("/tools/i140-trends"), images: [`${base}/og/i140-trends.jpg`] },
     { url: `${base}/uscis-processing-times`, lastModified: at("/uscis-processing-times"), images: [`${base}/og/uscis-processing-times.jpg`] },
+    // One page per form, a fixed list (`FORM_PAGES`), each dated by the template.
+    ...FORM_PAGES.map((f) => ({
+      url: `${base}/uscis-processing-times/${f.slug}`,
+      lastModified: at("/uscis-processing-times/[form]"),
+    })),
     { url: `${base}/i485-by-field-office`, lastModified: at("/i485-by-field-office"), images: [`${base}/og/i485-by-field-office.jpg`] },
     { url: `${base}/i140-awaiting-visa`, lastModified: at("/i140-awaiting-visa"), images: [`${base}/og/i140-awaiting-visa.jpg`] },
     // No card of its own yet, so no image entry: the sitemap names a card only once its file exists.
@@ -334,6 +362,13 @@ export async function pagesEntries(): Promise<Entry[]> {
     ...h1bStates.map((code) => ({
       url: `${base}/h1b-employers/${stateSlug(code)}`,
       lastModified: at("/h1b-employers/[state]"),
+    })),
+    { url: `${base}/law-firm-rankings`, lastModified: at("/law-firm-rankings"), images: [`${base}/og/law-firm-rankings.jpg`] },
+    { url: `${base}/perm-case-alerts`, lastModified: at("/perm-case-alerts"), images: [`${base}/og/perm-case-alerts.jpg`] },
+    { url: `${base}/h1b-cap-exempt-employers`, lastModified: at("/h1b-cap-exempt-employers"), images: [`${base}/og/h1b-cap-exempt-employers.jpg`] },
+    ...firmStates.map((code) => ({
+      url: `${base}/law-firm-rankings/${stateSlug(code)}`,
+      lastModified: at("/law-firm-rankings/[state]"),
     })),
     { url: `${base}/tools/compare-my-offer`, lastModified: at("/tools/compare-my-offer"), images: [`${base}/og/compare-my-offer.jpg`] },
     { url: `${base}/tools/rfi-deadline`, lastModified: at("/tools/rfi-deadline"), images: [`${base}/og/rfi-deadline.jpg`] },

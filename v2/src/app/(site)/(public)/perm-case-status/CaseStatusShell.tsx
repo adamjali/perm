@@ -22,8 +22,8 @@ export const CASE_STATUS_FRAME = "mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm
  */
 export function headingFor(typed: string, lang: Lang = "en"): string {
   const program = normaliseFlagCaseNumber(typed)?.program ?? "perm";
-  // A PERM case's heading carries the phrase people search for it, "PERM case status" (Search Console, Oct 28 2026:
-  // the homepage outranked this page for it).
+  // A PERM case's heading carries the phrases people search for it, "PERM case status" and "track" (Search Console,
+  // 3 months to Oct 28 2026: the homepage outranked this page for both). Each language's words are in its messages.
   return CASE_STATUS[lang].heading[program];
 }
 

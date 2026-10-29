@@ -76,9 +76,11 @@ export const metadata: Metadata = withSocialCard({
   // LEADS WITH THE NAME, THEN THE PHRASES PEOPLE SEARCH: "perm tracker" is
   // the largest query in Search Console (58k appearances in the 3 months to
   // Oct 5 2026), and "case status" and "processing times" are the two largest
-  // non-brand clusters. "Free" is what the page offers first. 56 characters.
+  // non-brand clusters. "Track" since Oct 28 2026: searches containing it held 105,000
+  // appearances in the 3 months before, the homepage ranked 7 to 10 for most and they
+  // clicked 1 to 3% of the time. "Free" moved to the description. 57 characters.
   // The Nov 7 2026 freeze on this title was lifted by the owner on Oct 6 2026.
-  title: { absolute: "PERM Tracker: Free PERM Case Status and Processing Times" },
+  title: { absolute: "PERM Tracker: Track PERM Case Status and Processing Times" },
   // LEADS WITH THE PHRASE THIS PAGE ACTUALLY RANKS FOR: "perm tracker" brings
   // close to half the site's clicks in Search Console. A description that
   // never contains the query is one Google ignores, assembling a snippet
@@ -93,9 +95,10 @@ export const metadata: Metadata = withSocialCard({
   // Says what each side does here, with the name as its subject (the gate in
   // brand-signals.test.ts: without the name, Google printed scraped page text).
   // Both halves, like the definition under the H1 (owner, Oct 16 2026: the
-  // snippet named only the case lookup). No figure, so it can't go stale. 149 characters.
+  // snippet named only the case lookup). No figure, so it can't go stale. Since Oct 28 2026 tracking
+  // and the email alert lead, the two things "track" searches want. 155 characters.
   description:
-    "PERM Tracker looks up any PERM case and estimates when DOL will decide it, and tracks every PWD, recruitment and filing deadline for attorneys. Free.",
+    "PERM Tracker tracks any PERM case for free: its status, when DOL will likely decide it, and an email the moment it changes. Attorneys track every deadline.",
   alternates: {
     canonical: "/",
   },
@@ -103,7 +106,7 @@ export const metadata: Metadata = withSocialCard({
     // Spread openGraphBase to preserve siteName / locale / type / images that
     // Next.js's shallow merge would otherwise drop from the parent layout.
     ...openGraphBase,
-    title: "PERM Tracker: Free PERM Case Status and Processing Times",
+    title: "PERM Tracker: Track PERM Case Status and Processing Times",
     // THE SOCIAL DESCRIPTION DRIFTED FROM THE META ONE. The `description` above
     // was rewritten to lead with the free case lookup; this one still opened
     // with "Every PERM filing window, PWD expiration and audit deadline,
@@ -111,7 +114,7 @@ export const metadata: Metadata = withSocialCard({
     // thing and every shared link said another, and the shared link is the one
     // a person waiting on a case actually receives.
     description:
-      "PERM Tracker looks up any PERM case and estimates when DOL will decide it, and tracks every PWD, recruitment and filing deadline for attorneys. Free.",
+      "PERM Tracker tracks any PERM case for free: its status, when DOL will likely decide it, and an email the moment it changes. Attorneys track every deadline.",
     url: "/",
   },
 }, "home");

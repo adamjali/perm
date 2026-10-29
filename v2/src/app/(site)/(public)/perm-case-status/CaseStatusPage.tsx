@@ -10,8 +10,13 @@ import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { CASE_STATUS_FRAME, CaseStatusHead, CheckAnother, LookupSkeleton } from "./CaseStatusShell";
-import { CASE_STATUS } from "./caseStatus.messages";
-import { localizedPath, pageAlternates, type Lang } from "@/lib/i18n/lang";
+import { CASE_STATUS, waitFigure } from "./caseStatus.messages";
+import { intlLocale, localizedPath, pageAlternates, type Lang } from "@/lib/i18n/lang";
+import { dayLabel, intLabel, monthLabel } from "@/lib/i18n/format";
+import { howLongFigures, howLongSentence } from "@/lib/dolNow";
+import { getPermBoard } from "@/lib/db/board";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getStatusHistory } from "@/lib/db/statusHistory";
 import { CaseNotFound, CaseStatusEmpty } from "@/components/tools/CaseNotFound";
 import { CaseStatusResult } from "@/components/tools/CaseStatusResult";
 import { PwdLookup } from "@/components/tools/PwdStatusResult";
@@ -107,6 +112,25 @@ export async function caseStatusMetadata(lang: Lang, raw: string | undefined): P
   }, "perm-case-status");
 }
 
+/** Stands in for the live answer to "how long" in each language's FAQ, filled at render. */
+const HOW_LONG = "{{howLong}}";
+
+/** The "how long right now" answer: English in the processing-times page's own sentence, other languages in theirs. */
+function howLongAnswer(lang: Lang, board: Parameters<typeof howLongSentence>[0], times: Parameters<typeof howLongSentence>[1]): string {
+  if (lang === "en") return howLongSentence(board, times);
+  const t = CASE_STATUS[lang];
+  const f = howLongFigures(board, times);
+  const nf = new Intl.NumberFormat(intlLocale(lang), { maximumFractionDigits: 1 });
+  return t.howLong({
+    day: dayLabel(f.decidedOn, lang),
+    wait: f.waitedDays === null ? null : t.waitWords(waitFigure(f.waitedDays), (n) => nf.format(n)),
+    frontier: monthLabel(f.frontier, lang),
+    avgDays: f.days === null ? null : intLabel(f.days, lang),
+    decidedIn: monthLabel(f.decidedIn, lang),
+    asOf: dayLabel(f.asOf, lang),
+  });
+}
+
 /**
  * UTC, deliberately, and shared by every elapsed figure on the page.
  *
@@ -176,11 +200,15 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
     redirect(caseSearchHref({ q: typed }));
   }
   const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
+  // DOL's queue month and average, dated, in the "how long" answer; read on render, never typed.
+  const [times, permBoard] = await Promise.all([getProcessingTimes().catch(() => null), getPermBoard().catch(() => null)]);
+  const howLong = howLongAnswer(lang, permBoard, times);
+  const faqs = t.faqs.map((f) => ({ ...f, a: f.a.replace(HOW_LONG, howLong) }));
 
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
-    mainEntity: t.faqs.map((f) => ({
+    mainEntity: faqs.map((f) => ({
       "@type": "Question" as const,
       name: f.q,
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
@@ -255,7 +283,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
 
       <section className="mt-12 border-t border-border pt-8 sm:mt-16">
         <h2 className="font-heading text-2xl font-bold">{t.faqTitle}</h2>{" "}
-        <FaqList items={t.faqs} />
+        <FaqList items={faqs} />
       </section>
 
       <DataProvenance datasets={["perm-case-status", "perm-cases", "processing-times"]} lang={lang} />
@@ -379,7 +407,7 @@ async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) 
   }
 
   const isDecided = result.decided !== null;
-  const [monthBacklog, wage, duration, stageStats, sameDay, timeline] = await Promise.all([
+  const [monthBacklog, wage, duration, stageStats, sameDay, timeline, history] = await Promise.all([
     month ? getMonthBacklog(month).catch(() => null) : Promise.resolve(null),
     // Only for a decided case: a pending one has no wage in DOL's files, and
     // asking for one is a round trip that can only ever return null.
@@ -397,6 +425,8 @@ async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) 
     // A decided case's own dates: one primary-key read joined to its wage request. A failure
     // only drops the section, like the wage ladder above.
     isDecided ? getDecidedTimeline(result.caseNumber).catch(() => null) : Promise.resolve(null),
+    // Every status change our checks saw: one primary-key read. A failure only drops the section.
+    getStatusHistory(result.caseNumber).catch(() => null),
   ]);
 
   return (
@@ -423,6 +453,7 @@ async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) 
       stageDuration={stageDurationFor(stageStats, result.live?.status ?? "")}
       sameDay={sameDay}
       timeline={timeline}
+      history={history}
       today={today}
       lang={lang}
     />

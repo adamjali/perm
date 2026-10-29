@@ -19,6 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CONF_PATH = HERE / "nginx" / "permtracker.conf"
+LOCALES_TS = HERE.parent.parent / "src" / "lib" / "i18n" / "locales.ts"
 ERRORS_DIR = HERE / "nginx" / "errors"
 
 failures: list[str] = []
@@ -125,6 +126,8 @@ def run(conf_text: str) -> None:
     server_start = conf.index("server {")
     head, server = conf[:server_start], conf[server_start:]
     locs = locations(server)
+    # The case lookup's location: one pattern for every language (Oct 29 2026).
+    LOOKUP = next((s for s in locs if "perm-case-status" in s), "")
 
     # Every zone a location uses is declared, and every declared zone is used.
     declared_req = set(re.findall(r"limit_req_zone\s+\S+\s+zone=(\w+):", head))
@@ -180,12 +183,12 @@ def run(conf_text: str) -> None:
     check("assets go to the assets host", ph_map is not None and "us-assets.i.posthog.com" in ph_map.group(1))
 
     # Lookups from everyone together hold at most a share of the app's slots.
-    for sel in ("= /perm-case-status", "= /embed/case-status"):
+    for sel in (LOOKUP, "= /embed/case-status"):
         m = re.search(r"limit_conn\s+pt_lookup_conn\s+(\d+);", locs.get(sel, ""))
         check(f"{sel}: lookups-together cap below the whole-app cap", m is not None and int(m.group(1)) < 64)
     # The frozen Chrome 151 label that walked case numbers on Oct 6 2026 gets a
     # small allowance of lookups together, on both lookup pages.
-    for sel in ("= /perm-case-status", "= /embed/case-status"):
+    for sel in (LOOKUP, "= /embed/case-status"):
         check(f"{sel}: the frozen label's lookups are limited together",
               "pt_stale_label" in zones_in(locs.get(sel, ""), "limit_req"))
     stale = re.search(r"\$pt_stale_label\s*\{([^}]*)\}", head)
@@ -261,10 +264,10 @@ def run(conf_text: str) -> None:
 
     # Case lookups carry the lookup limit, pages carry the page and pre-load
     # limits, and the API its own.
-    for sel in ("= /perm-case-status", "= /embed/case-status"):
+    for sel in (LOOKUP, "= /embed/case-status"):
         b = locs.get(sel, "")
         check(f"{sel}: lookup limit", "pt_lookup" in zones_in(b, "limit_req"))
-    for sel in ("/", "= /perm-case-status", "= /embed/case-status"):
+    for sel in ("/", LOOKUP, "= /embed/case-status"):
         req = zones_in(locs.get(sel, ""), "limit_req")
         check(f"{sel}: page and pre-load limits", {"pt_page", "pt_prefetch"} <= set(req))
         m = re.search(r"limit_conn\s+pt_prefetch_conn\s+(\d+);", locs.get(sel, ""))
@@ -433,6 +436,51 @@ def run(conf_text: str) -> None:
     check("defense log records whether a request is a pre-load",
           fmt is not None and fmt.group(1).endswith('"$http_user_agent" $http_next_router_prefetch'))
 
+    # Every language's case lookup carries the lookup limits (Oct 29 2026): a translated lookup asks DOL
+    # live too. The pattern is read from the selector, the languages from the app's own list.
+    codes = re.findall(r'code: "([a-z-]+)", path: "/[a-z-]+"', LOCALES_TS.read_text())
+    lookup_rx = re.compile(LOOKUP.split(None, 1)[1].strip()) if LOOKUP.startswith("~ ") else None
+    check("lookup: one regex location", lookup_rx is not None, LOOKUP)
+    takes = ["/perm-case-status"] + [f"/{c}/perm-case-status" for c in codes]
+    leaves = ["/perm-case-statuses", "/es/perm-case-statuses", "/fr/perm-case-status", "/perm-case-status/x",
+              "/es/perm-case-status/x", "/xes/perm-case-status", "/embed/case-status", "/es"]
+    check("lookup: the app's five languages were read", len(codes) == 5, str(codes))
+    check("lookup: every language's lookup carries the limits",
+          lookup_rx is not None and all(lookup_rx.search(p) for p in takes),
+          str([p for p in takes if not (lookup_rx and lookup_rx.search(p))]))
+    check("lookup: no other page does",
+          lookup_rx is not None and not any(lookup_rx.search(p) for p in leaves),
+          str([p for p in leaves if lookup_rx and lookup_rx.search(p)]))
+    earlier = [s for s in locs if s.startswith("~") and s != LOOKUP]
+    earlier = earlier[: list(locs).index(LOOKUP)] if LOOKUP in locs else earlier
+    check("lookup: no earlier regex location takes a lookup first",
+          not any(re.search(s.split(None, 1)[1].strip(), p, re.I if s.startswith("~*") else 0)
+                  for s in earlier for p in takes))
+
+    # A translated page says its own language in the HTML (Oct 28 2026). The tags
+    # are the app's own; an English page keeps its tag and its compression.
+    tags = dict(re.findall(r'code: "([a-z-]+)", path: "/[a-z-]+", tag: "([A-Za-z-]+)"', LOCALES_TS.read_text()))
+    check("html lang: the app's five languages were read", len(tags) == 5, str(tags))
+    for code, tag in tags.items():
+        for path in (f"/{code}", f"/{code}/perm-case-status"):
+            got = eval_map(head, "pt_html_lang", {"uri": path})
+            check(f"html lang: {path} is {tag}", got == tag, got)
+            check(f"html lang: {path} asks the app for plain HTML",
+                  eval_map(head, "pt_upstream_ae", {"uri": path, "http_accept_encoding": "gzip, br"}) == "")
+    for path in ("/", "/perm-case-status", "/zhaw", "/escape-plan", "/visa-bulletin", "/perm-employers/vi-jon-inc"):
+        check(f"html lang: {path} stays en", eval_map(head, "pt_html_lang", {"uri": path}) == "en")
+        # nginx passes the browser's own header on; the evaluator names the variable rather than reading it.
+        check(f"html lang: {path} keeps the browser's compression",
+              eval_map(head, "pt_upstream_ae", {"uri": path}) == "$http_accept_encoding")
+    layout = (HERE.parent.parent / "src" / "app" / "layout.tsx").read_text()
+    html_at = layout.find("<html ")
+    check("html lang: the root layout's <html> says lang=\"en\", the page's first lang",
+          html_at >= 0 and 'lang="en"' in layout[html_at: layout.find(">", html_at)] and "lang=" not in layout[:html_at].split("return (")[-1])
+    check("html lang: the tag is written at server level, once",
+          "sub_filter ' lang=\"en\"' ' lang=\"$pt_html_lang\"';" in server_level
+          and "sub_filter_once on;" in server_level
+          and "proxy_set_header Accept-Encoding $pt_upstream_ae;" in server_level)
+
 
 def probe() -> None:
     """The checks must fail on the drifts they exist for."""
@@ -441,7 +489,7 @@ def probe() -> None:
         "lookup limit counts pre-loads": good.replace('    "1:1"   "";\n', ""),
         "whole-app cap missing from /api/": re.sub(r"(location /api/ \{[^}]*?)\n\s*limit_conn pt_app 64;", r"\1", good, count=1),
         "crawler limits missing from lookups": re.sub(
-            r"(location = /perm-case-status \{[^}]*?)\n\s*limit_conn pt_search_conn \d+;\n\s*limit_conn pt_bots_conn \d+;",
+            r"(location ~ \^/\(\(zh\|es\|pt-br\|ko\|vi\)/\)\?perm-case-status\$ \{[^}]*?)\n\s*limit_conn pt_search_conn \d+;\n\s*limit_conn pt_bots_conn \d+;",
             r"\1", good, count=1),
         "people refused instead of slowed": good.replace("zone=pt_page burst=300 delay=150", "zone=pt_page burst=300 nodelay", 1),
         "search engines refused instead of paced": good.replace("zone=pt_search burst=120 delay=8", "zone=pt_search burst=120 nodelay", 1),
@@ -451,6 +499,8 @@ def probe() -> None:
             "proxy_set_header X-Forwarded-For $remote_addr;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie",
             "proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie", 1),
         "lookups-together cap removed": good.replace("        limit_conn pt_lookup_conn 24;\n", "", 1),
+        "a language's lookup left on page limits": good.replace("(zh|es|pt-br|ko|vi)/)?perm-case-status$", "(zh|es|pt-br|vi)/)?perm-case-status$", 1),
+        "lookup pattern takes the status meanings page": good.replace("(zh|es|pt-br|ko|vi)/)?perm-case-status$", "(zh|es|pt-br|ko|vi)/)?perm-case-status", 1),
         "frozen-label limit dropped from a lookup page": good.replace(
             "        limit_req zone=pt_stale_label burst=10 nodelay;\n", "", 1),
         "frozen-label limit catches every page": good.replace('    "~^lookups:Mozilla', '    "~:Mozilla', 1),
@@ -501,6 +551,12 @@ def probe() -> None:
         "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
         "php probes sent to the app": good.replace("        return 404;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
         "WordPress folders matched anywhere in the path": good.replace("|^/(wp-admin|", "|/(wp-admin|", 1),
+        "an English page's tag rewritten to nothing": good.replace("    default         en;\n}", "    default         \"\";\n}", 1),
+        "every page loses its compression": good.replace("{ en $http_accept_encoding; default \"\"; }", "{ default \"\"; }", 1),
+        "a language prefix matches a longer word": good.replace('"~^/zh(/|$)"', '"~^/zh"', 1),
+        "the tag no longer written": good.replace("    sub_filter ' lang=\"en\"' ' lang=\"$pt_html_lang\"';\n", "", 1),
+        "matched on the tag's opening, which the deployment id breaks": good.replace(
+            "sub_filter ' lang=\"en\"' ' lang=\"$pt_html_lang\"';", "sub_filter '<html lang=\"en\"' '<html lang=\"$pt_html_lang\"';", 1),
     }
     global failures
     for name, text in mutations.items():
