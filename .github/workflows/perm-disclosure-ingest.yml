@@ -165,6 +165,8 @@ jobs:
           # What the newest quarterly file says, against the quarter before and a year before
           # (the quarter's blog post reads it; scripts/new_quarter_post.py writes the post).
           python3 scripts/build_quarter_report.py
+          # Job titles and the SOC codes employers filed them under (/soc-codes).
+          python3 scripts/build_soc_titles.py
 
       # The pages built from this corpus sit on a week-long window, which is
       # only right if a load expires them. `success()` so a failed load never

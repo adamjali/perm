@@ -262,6 +262,12 @@ jobs:
               --note "after the LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             exit 1
           }
+          # Job titles and the SOC codes employers filed them under (/soc-codes).
+          timeout 20m python3 scripts/build_soc_titles.py || {
+            python3 scripts/record_ingest_failure.py --script build_soc_titles.py \
+              --note "after the LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
 
       # When DOL usually decides an H-2A, H-2B or CW-1 application, measured
       # from every certification in seasonal_cases (the case page's timing
@@ -292,6 +298,12 @@ jobs:
           timeout 20m python3 scripts/build_cap_exempt.py || {
             python3 scripts/record_ingest_failure.py --script build_cap_exempt.py \
               --note "cap-exempt employers: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
+          # Job titles and the SOC codes employers filed them under (/soc-codes); the LCA load runs it too.
+          timeout 20m python3 scripts/build_soc_titles.py || {
+            python3 scripts/record_ingest_failure.py --script build_soc_titles.py \
+              --note "job titles and SOC codes: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             exit 1
           }
 
