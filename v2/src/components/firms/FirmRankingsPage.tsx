@@ -8,6 +8,7 @@ import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageSection } from "@/components/data/PageSection";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
+import { ROW_LINK } from "@/components/entities/caseRows";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
 import { buttonVariants } from "@/components/ui/button";
@@ -116,9 +117,15 @@ export async function firmRanksMetadata(state: string): Promise<Metadata> {
   };
 }
 
-function firmName(r: FirmRankRow) {
+/**
+ * A firm's name as its link. Inline, so a long name wraps beside its rank; the
+ * vertical padding makes each line a 44px target on a phone without moving the text.
+ */
+const FIRM_LINK = "link py-[10px] sm:py-0";
+
+function firmName(r: FirmRankRow, className: string = FIRM_LINK) {
   return r.linked ? (
-    <Link href={`/perm-attorneys/${r.slug}`} className="link">
+    <Link href={`/perm-attorneys/${r.slug}`} className={className}>
       {r.name}
     </Link>
   ) : (
@@ -268,7 +275,7 @@ async function Ranking({ program, state, summary }: { program: FirmProgram; stat
                   <tr key={r.slug} className="border-b border-border/40 last:border-b-0">
                     <td className="p-2.5 text-right font-mono tabular-nums">{r.rank}{" "}</td>
                     <th scope="row" className="p-2.5 font-semibold">
-                      {firmName(r)}{" "}
+                      {firmName(r, ROW_LINK)}{" "}
                     </th>
                     <td className="p-2.5 text-right font-mono tabular-nums">{formatInt(r.filings)}{" "}</td>
                     <td className="p-2.5 text-right font-mono tabular-nums">{formatInt(r.employers)}{" "}</td>

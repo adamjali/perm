@@ -185,7 +185,6 @@ export const SECTIONS: DataNavSection[] = [
   s("compare-employers", "Employers and firms", "Compare employers", "/perm-employers/compare"),
   s("employers-under-review", "Employers and firms", "Employers under review", "/perm-employers/under-review"),
   s("h1b-employers", "Employers and firms", "Top H-1B employers", "/h1b-employers"),
-  s("opt-employers", "Employers and firms", "OPT and CPT employers", "/opt-employers"),
   s("layoffs", "Employers and firms", "Layoff notices", "/layoffs"),
   s("debarments", "Employers and firms", "Debarments", "/debarments"),
 
@@ -206,6 +205,7 @@ export const SECTIONS: DataNavSection[] = [
   t("six-year-limit", "Other visas", "H-1B six-year limit", "/tools/h1b-six-year-limit", "The end of six years and the 365-day rule."),
   s("seasonal-cases", "Other visas", "H-2A, H-2B and CW-1", "/seasonal-cases"),
   s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
+  s("opt-employers", "Other visas", "OPT and CPT employers", "/opt-employers"),
 ];
 
 export const GROUPS: DataGroup[] = [
