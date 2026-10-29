@@ -102,6 +102,7 @@ export function CaseAlertForm({
           source: SOURCE[program],
           news: news || undefined,
           newsletter: newsletter || undefined,
+          lang: lang === "en" ? undefined : lang,
         }),
       });
       const body = (await res.json().catch(() => null)) as

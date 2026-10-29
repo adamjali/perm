@@ -136,6 +136,8 @@ import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
+import { mailLang, storedLang, withLang } from "../src/lib/i18n/mailLang";
+import { alertText, programNounIn } from "./lib/alertEmailText";
 import { formatAsOf } from "../src/lib/dolFormat";
 import {
   canonicalStatus,
@@ -367,6 +369,8 @@ export const subscribe = internalMutation({
     news: v.optional(v.boolean()),
     /** The weekly digest, staged the same way as news. */
     newsletter: v.optional(v.boolean()),
+    /** The language the sign-up form was in (src/lib/i18n/mailLang.ts); carried to the confirmation email. */
+    lang: v.optional(v.string()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
     /**
@@ -538,6 +542,7 @@ export const subscribe = internalMutation({
       caseNumber,
       includesNews,
       includesNewsletter,
+      lang: args.lang,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -734,6 +739,8 @@ export const sendConfirmation = internalAction({
      */
     includesNews: v.optional(v.boolean()),
     includesNewsletter: v.optional(v.boolean()),
+    /** The reader's language, from the sign-up form. */
+    lang: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -741,13 +748,13 @@ export const sendConfirmation = internalAction({
       const includesNews = args.includesNews === true;
       const includesNewsletter = args.includesNewsletter === true;
       const program = programOf(args.caseNumber);
-      const noun = programNoun(program);
+      const lang = mailLang(args.lang);
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
         "case-confirm",
       );
-      const confirmUrl = actionUrl("/case-alert/confirm", token);
+      const confirmUrl = withLang(actionUrl("/case-alert/confirm", token), lang);
 
       // Echo the case back so a typo is caught here rather than a year later.
       // A mirror outage must not block the confirmation, so this degrades to
@@ -796,6 +803,7 @@ export const sendConfirmation = internalAction({
             includesNews,
             includesNewsletter,
             nounWithArticle: programNounWithArticle(program),
+            lang,
           });
         },
       );
@@ -803,7 +811,7 @@ export const sendConfirmation = internalAction({
       const result = await sendOrQueue(ctx, "case-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject: `Confirm alerts for ${noun} ${args.caseNumber}`,
+        subject: alertText(lang).subject.caseConfirm(programNounIn(program, lang), args.caseNumber),
         html,
         text: [
           `You asked to be told when the Department of Labor's status for ${programNounWithArticle(program)} changes.`,
@@ -902,7 +910,7 @@ async function rowsForToken(
 }
 
 export const confirmByToken = internalMutation({
-  args: { token: v.string() },
+  args: { token: v.string(), lang: v.optional(v.string()) },
   returns: v.union(
     v.object({
       email: v.string(),
@@ -921,6 +929,10 @@ export const confirmByToken = internalMutation({
     const now = Date.now();
     const confirmed: string[] = [];
     const active: string[] = [];
+    // The confirm click proves the inbox, so it's the moment to store the reader's language. Only when the link
+    // carries one, so an old (language-less) link never clears a subscriber's stored language; an English link
+    // (lang "en") correctly clears it back to English.
+    const langPatch = args.lang !== undefined ? { lang: storedLang(mailLang(args.lang)) } : {};
 
     for (const row of all) {
       if (
@@ -947,6 +959,7 @@ export const confirmByToken = internalMutation({
         caseNumber,
         pendingCaseNumber: undefined,
         unsubscribedAt: undefined,
+        ...langPatch,
         // Reopen a retired subscription only when the case number actually
         // MOVED. An explicit comparison, not a truthiness check: `subscribe`
         // stages a pending value on every request including a resubmit of the
@@ -1023,6 +1036,7 @@ export const dueForCheck = internalQuery({
       lastSeenStatus: v.optional(v.string()),
       lastAlertSentAt: v.optional(v.number()),
       decidedAt: v.optional(v.number()),
+      lang: v.optional(v.string()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -1033,6 +1047,7 @@ export const dueForCheck = internalQuery({
       lastSeenStatus?: string;
       lastAlertSentAt?: number;
       decidedAt?: number;
+      lang?: string;
     }[] = [];
 
     for await (const row of ctx.db
@@ -1051,6 +1066,7 @@ export const dueForCheck = internalQuery({
         lastSeenStatus: row.lastSeenStatus,
         lastAlertSentAt: row.lastAlertSentAt,
         decidedAt: row.decidedAt,
+        lang: row.lang,
       });
       if (out.length >= args.limit) break;
     }
@@ -1712,9 +1728,13 @@ export const sweepCaseChanges = internalAction({
           unsubscribeSecret(),
           "case-unsubscribe",
         );
-        const unsubUrl = actionUrl("/case-alert/unsubscribe", token);
+        const lang = mailLang(sub.lang);
+        const at = alertText(lang);
+        const unsubUrl = withLang(actionUrl("/case-alert/unsubscribe", token), lang);
         const prefsUrl = await prefsLink(sub.email, unsubscribeSecret(), `case:${sub._id}`);
-        const caseUrl = casePageUrl(sub.caseNumber);
+        // The case page is translated, so its link goes to the reader's version; the preferences magic link
+        // and the onward data-page links stay English, because those pages are English.
+        const caseUrl = withLang(casePageUrl(sub.caseNumber), lang);
         // The last alert asks how useful the alerts were (convex/alertRatings.ts),
         // once the owner has switched the row on.
         const ratingUrl =
@@ -1734,6 +1754,9 @@ export const sweepCaseChanges = internalAction({
         // government status is worse than none, because the reader cannot tell
         // them apart and will act on it. Non-PERM programs get no sentence
         // until one can be sourced; the template already renders nothing.
+        // The status explanation stays English: it cites DOL regulations and links to English pages, and its
+        // translated copy lives behind an `@/`-aliased module Convex can't import. The rest of the alert is in
+        // the reader's language.
         const meaning = program === "perm" ? statusMeaning(status) : null;
         const approved = isProgramApproval(program, status);
         const tone = !isFinal || approved ? "live" : "closed";
@@ -1760,21 +1783,12 @@ export const sweepCaseChanges = internalAction({
         const alsoLinks = alsoLinksFor({ program, status, isFinal });
 
         const contextRows = [
-          { label: "Cases now at this status", value: formatInt(context.nowInStatus) },
+          { label: at.caseRows.nowInStatus, value: formatInt(context.nowInStatus) },
           ...(context.cohortTotal > 0
             ? [
-                {
-                  label: "Filed the same month as yours",
-                  value: formatInt(context.cohortTotal),
-                },
-                {
-                  label: "Of those, still pending",
-                  value: formatInt(context.cohortPending),
-                },
-                {
-                  label: "Pending cases filed earlier",
-                  value: formatInt(context.pendingAhead),
-                },
+                { label: at.caseRows.cohortTotal, value: formatInt(context.cohortTotal) },
+                { label: at.caseRows.cohortPending, value: formatInt(context.cohortPending) },
+                { label: at.caseRows.pendingAhead, value: formatInt(context.pendingAhead) },
               ]
             : []),
         ];
@@ -1783,35 +1797,21 @@ export const sweepCaseChanges = internalAction({
           program === "perm" && showsRfiFunnel(status) && funnel !== null;
         const rfiRows = showFunnel
           ? [
-              { label: "Resolved RFIs observed", value: formatInt(funnel.resolved) },
-              {
-                label: "Of those, ended certified",
-                value: formatInt(funnel.certified),
-              },
-              { label: "Ended denied", value: formatInt(funnel.denied) },
-              { label: "Withdrawn", value: formatInt(funnel.withdrawn) },
+              { label: at.rfiRows.resolved, value: formatInt(funnel.resolved) },
+              { label: at.rfiRows.certified, value: formatInt(funnel.certified) },
+              { label: at.rfiRows.denied, value: formatInt(funnel.denied) },
+              { label: at.rfiRows.withdrawn, value: formatInt(funnel.withdrawn) },
             ]
           : null;
 
         const employerRows =
           context.employer && context.employer.total > 0
             ? [
-                {
-                  label: "Decisions DOL has published",
-                  value: formatInt(context.employer.total),
-                },
-                {
-                  label: "Of those, certified",
-                  value: formatInt(context.employer.certified),
-                },
-                { label: "Denied", value: formatInt(context.employer.denied) },
+                { label: at.employerRows.total, value: formatInt(context.employer.total) },
+                { label: at.employerRows.certified, value: formatInt(context.employer.certified) },
+                { label: at.employerRows.denied, value: formatInt(context.employer.denied) },
                 ...(context.employer.medianDays !== null
-                  ? [
-                      {
-                        label: "Median days to a decision",
-                        value: formatInt(context.employer.medianDays),
-                      },
-                    ]
+                  ? [{ label: at.employerRows.medianDays, value: formatInt(context.employer.medianDays) }]
                   : []),
               ]
             : null;
@@ -1851,6 +1851,7 @@ export const sweepCaseChanges = internalAction({
               ratingUrl,
               next,
               alsoLinks,
+              lang,
               // The ask for post-PERM dates goes with a PERM case's
               // certification only: an expiry, a denial or another program's
               // approval has nothing after it to report here.
@@ -1869,7 +1870,7 @@ export const sweepCaseChanges = internalAction({
           email: sub.email,
           kind: "case",
           ref: `case:${sub._id}`,
-          subject: `Your ${noun} is now ${status}`,
+          subject: at.subject.caseChanged(programNounIn(program, lang), status),
           html,
           listUnsubscribe: unsubUrl,
           summary: {

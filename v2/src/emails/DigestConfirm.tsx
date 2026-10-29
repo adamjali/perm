@@ -5,39 +5,44 @@
  * onward links: everything on it is subordinate to the confirm button.
  */
 import { Section, Text } from "@react-email/components";
+import type { MailLang } from "../lib/i18n/mailLang";
+import { DIGEST_CONFIRM_TEXT } from "./i18n/confirm";
 import { EmailButton, EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
 
 export interface DigestConfirmProps {
   /** Absolute, purpose-scoped confirmation URL. */
   confirmUrl: string;
+  /** The reader’s language. English when not given. */
+  lang?: MailLang;
 }
 
-export function DigestConfirm({ confirmUrl }: DigestConfirmProps) {
+export function DigestConfirm({ confirmUrl, lang = "en" }: DigestConfirmProps) {
+  const t = DIGEST_CONFIRM_TEXT[lang];
   return (
     <EmailLayout
-      previewText="Confirm and the weekly digest comes to this address on Tuesdays."
+      lang={lang}
+      previewText={t.preview}
       hideSettingsLink
-      footerText="This address was entered for PERM Tracker’s weekly digest. It isn’t confirmed yet, so nothing else will be sent."
+      footerText={t.footer}
     >
       <Section style={styles.stamp}>
-        <Text className="em-text-secondary" style={styles.stampEyebrow}>You asked for</Text>
-        <Text className="em-text" style={styles.stampValue}>The weekly digest</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>{t.eyebrow}</Text>
+        <Text className="em-text" style={styles.stampValue}>{t.what}</Text>
       </Section>
 
       <Text className="em-text-body" style={styles.body}>
-        Every Tuesday: where DOL&rsquo;s queue stands, what the visa bulletin moved, USCIS&rsquo;s processing times
-        and the rules on their way. Confirm and the next issue comes to this address.
+        {t.body}
       </Text>
 
       <Section style={styles.cta}>
         <EmailButton href={confirmUrl} variant="primary">
-          Confirm the digest
+          {t.button}
         </EmailButton>
       </Section>
 
       <Text className="em-text-secondary" style={styles.note}>
-        If you didn&rsquo;t ask for this, ignore it. Nothing will be sent.
+        {t.ignore}
       </Text>
     </EmailLayout>
   );

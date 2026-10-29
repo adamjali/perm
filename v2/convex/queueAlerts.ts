@@ -70,6 +70,9 @@ import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
+import { mailLang, storedLang, withLang } from "../src/lib/i18n/mailLang";
+import { alertText } from "./lib/alertEmailText";
+import { mailMonth } from "../src/emails/i18n/dates";
 import { type DolQueue, queueLabel } from "./lib/mailKinds";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
 import { measureQueuePace, paceSentence } from "../src/lib/queuePace";
@@ -205,6 +208,8 @@ export const subscribe = internalMutation({
      * confirmation so the email can say so. See convex/emailPrefs.ts.
      */
     news: v.optional(v.boolean()),
+    /** The language the sign-up form was in; carried to the confirmation. */
+    lang: v.optional(v.string()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
     /**
@@ -340,6 +345,7 @@ export const subscribe = internalMutation({
       filingMonth: args.filingMonth,
       queue,
       includesNews,
+      lang: args.lang,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -417,25 +423,27 @@ export const sendConfirmation = internalAction({
      * render, and absent means "say nothing", which is the safe direction.
      */
     includesNews: v.optional(v.boolean()),
+    lang: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
       const queue: DolQueue = args.queue ?? "perm";
+      const lang = mailLang(args.lang);
       const includesNews = args.includesNews === true;
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
         "queue-confirm",
       );
-      const confirmUrl = actionUrl("/queue-alert/confirm", token);
+      const confirmUrl = withLang(actionUrl("/queue-alert/confirm", token), lang);
 
       // Presentation only. `formatMonth` returns null rather than a plausible
       // wrong month, and the raw "YYYY-MM" is still the true value, so an
       // unparseable input degrades the label instead of inventing a date.
       // Formatted ONCE here, then used by the HTML, the text part and the
       // subject alike, so no reader can be shown "2025-09" by one of them.
-      const filingLabel = formatMonth(args.filingMonth) ?? args.filingMonth;
+      const filingLabel = (lang === "en" ? formatMonth(args.filingMonth) : mailMonth(args.filingMonth, lang)) ?? args.filingMonth;
       const label = queueLabel(queue);
       const monthNoun = queue === "perm" ? "filing month" : "submission month";
 
@@ -452,6 +460,8 @@ export const sendConfirmation = internalAction({
             queueName: label,
             monthNoun,
             includesNews,
+            perm: queue === "perm",
+            lang,
           });
         },
       );
@@ -459,10 +469,7 @@ export const sendConfirmation = internalAction({
       const result = await sendOrQueue(ctx, "queue-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject:
-          queue === "perm"
-            ? "Confirm your PERM queue alert"
-            : "Confirm your prevailing-wage queue alert",
+        subject: alertText(lang).subject.queueConfirm(queue === "perm"),
         html,
         text: [
           `You asked to be told when the Department of Labor's ${label} reaches your ${monthNoun}.`,
@@ -541,7 +548,7 @@ async function rowsForToken(
 }
 
 export const confirmByToken = internalMutation({
-  args: { token: v.string() },
+  args: { token: v.string(), lang: v.optional(v.string()) },
   returns: v.union(
     v.object({
       email: v.string(),
@@ -567,6 +574,8 @@ export const confirmByToken = internalMutation({
     let primary: { email: string; filingMonth: string; alreadyReached: boolean } | null =
       null;
     const queuesToNotify = new Set<DolQueue>();
+    // The confirm click stores the reader's language; only when the link carries one.
+    const langPatch = args.lang !== undefined ? { lang: storedLang(mailLang(args.lang)) } : {};
 
     for (const row of rows) {
       // A confirm token never expires and is replayable by anyone who can
@@ -595,6 +604,7 @@ export const confirmByToken = internalMutation({
         pendingFilingMonth: undefined,
         unsubscribedAt: undefined,
         ...(monthChanged ? { notifiedAt: undefined } : {}),
+        ...langPatch,
       });
 
       // Most signups name a month the queue has ALREADY passed: the form

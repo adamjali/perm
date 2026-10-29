@@ -20,6 +20,8 @@
 import { Section, Text } from "@react-email/components";
 import { EmailButton, EmailLayout, QueueStamp } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
+import type { MailLang } from "../lib/i18n/mailLang";
+import { QUEUE_CONFIRM_TEXT } from "./i18n/confirm";
 
 export interface QueueAlertConfirmProps {
   /** Filing month, formatted for display (e.g. "September 2024"). */
@@ -44,44 +46,50 @@ export interface QueueAlertConfirmProps {
    * consent for the second if the email said so.
    */
   includesNews?: boolean;
+  /** Whether this is the PERM queue (filing month) or a wage queue (submission month). */
+  perm?: boolean;
+  /** The reader’s language. English when not given. */
+  lang?: MailLang;
 }
 
 export function QueueAlertConfirm({
   filingMonth,
   confirmUrl,
   queueName = "PERM queue",
-  monthNoun = "filing month",
+  monthNoun,
   includesNews = false,
+  perm = true,
+  lang = "en",
 }: QueueAlertConfirmProps) {
+  const t = QUEUE_CONFIRM_TEXT[lang];
+  const noun = monthNoun ?? t.monthNoun(perm);
   return (
     <EmailLayout
-      previewText={`Confirm and we’ll email you once, on the day DOL reaches ${filingMonth}.`}
+      lang={lang}
+      previewText={t.preview(filingMonth)}
       hideSettingsLink
-      footerText={`This address was entered to be told when the Department of Labor’s ${queueName} reaches a ${monthNoun}. It isn’t confirmed yet, so nothing else will be sent.`}
+      footerText={t.footer(queueName, noun)}
     >
-      <QueueStamp eyebrow={`Your ${monthNoun}`} month={filingMonth} />
+      <QueueStamp eyebrow={t.eyebrow(perm)} month={filingMonth} />
 
       <Text className="em-text-body" style={styles.body}>
-        You asked to be told when the Department of Labor&rsquo;s {queueName}{" "}
-        reaches this month. Confirm the alert and we&rsquo;ll email you once, on
-        the day it happens.
+        {t.body(queueName)}
       </Text>
 
       {includesNews ? (
         <Text className="em-text-secondary" style={styles.newsNote}>
-          You also asked for occasional product news. The same click confirms
-          that.
+          {t.news}
         </Text>
       ) : null}
 
       <Section style={styles.cta}>
         <EmailButton href={confirmUrl} variant="primary">
-          Confirm the alert
+          {t.button}
         </EmailButton>
       </Section>
 
       <Text className="em-text-secondary" style={styles.note}>
-        If you didn&rsquo;t ask for this, ignore it. Nothing will be sent.
+        {t.ignore}
       </Text>
     </EmailLayout>
   );

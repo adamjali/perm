@@ -26,6 +26,8 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT } from "./lib/alertBudgets";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { makeUnsubscribeToken, verifyUnsubscribeToken } from "./lib/unsubscribeToken";
+import { mailLang, storedLang, withLang } from "../src/lib/i18n/mailLang";
+import { alertText } from "./lib/alertEmailText";
 import { recordError } from "./lib/errorRecording";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsletterFor } from "./lib/newsConsent";
@@ -50,6 +52,7 @@ export const subscribe = internalMutation({
     email: v.string(),
     source: v.optional(v.string()),
     ip: v.optional(v.string()),
+    lang: v.optional(v.string()),
     /** Set only by the confirmation queue's drain when it replays a request a full pool held back. */
     fromQueue: v.optional(v.boolean()),
   },
@@ -111,7 +114,7 @@ export const subscribe = internalMutation({
       .first();
     if (row) await ctx.db.patch(row._id, { lastConfirmationSentAt: now });
 
-    await ctx.scheduler.runAfter(0, internal.digestSignup.sendConfirmation, { email });
+    await ctx.scheduler.runAfter(0, internal.digestSignup.sendConfirmation, { email, lang: args.lang });
     return { ok: true, message: NEUTRAL_REPLY };
   },
 });
@@ -145,20 +148,21 @@ async function renderOrTextOnly(
 }
 
 export const sendConfirmation = internalAction({
-  args: { email: v.string() },
+  args: { email: v.string(), lang: v.optional(v.string()) },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      const lang = mailLang(args.lang);
       const token = await makeUnsubscribeToken(args.email, unsubscribeSecret(), "digest-confirm");
-      const confirmUrl = actionUrl("/digest/confirm", token);
+      const confirmUrl = withLang(actionUrl("/digest/confirm", token), lang);
       const html = await renderOrTextOnly(ctx, async () => {
         const { DigestConfirm } = await import("../src/emails/DigestConfirm");
-        return DigestConfirm({ confirmUrl });
+        return DigestConfirm({ confirmUrl, lang });
       });
       const result = await sendOrQueue(ctx, "digest-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject: "Confirm the weekly PERM Tracker digest",
+        subject: alertText(lang).subject.digestConfirm,
         html,
         text: [
           "You asked for PERM Tracker's weekly digest: DOL's queue, visa bulletin moves, USCIS times and new rules, on Tuesdays.",
@@ -191,7 +195,7 @@ export const sendConfirmation = internalAction({
 
 /** The confirm click: signed for this purpose only, and it never resurrects an opt-out from a replayed link. */
 export const confirmByToken = internalMutation({
-  args: { token: v.string() },
+  args: { token: v.string(), lang: v.optional(v.string()) },
   returns: v.union(v.object({ email: v.string() }), v.null()),
   handler: async (ctx, args) => {
     const email = await verifyUnsubscribeToken(args.token, unsubscribeSecret(), "digest-confirm");
@@ -201,6 +205,7 @@ export const confirmByToken = internalMutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .first();
     if (!row) return null;
+    if (args.lang !== undefined) await ctx.db.patch(row._id, { lang: storedLang(mailLang(args.lang)) });
     await ctx.runMutation(internal.emailPrefs.confirmNewsletterForEmail, { email });
     const after = await ctx.db.get(row._id);
     if (!after || after.confirmedAt === undefined || after.unsubscribedAt !== undefined) return null;
