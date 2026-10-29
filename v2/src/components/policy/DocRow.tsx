@@ -146,7 +146,7 @@ export function DocRow({
 
   return (
     <details id={`doc-${doc.documentNumber}`} className="group border-b-2 border-border last:border-b-0">
-      <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-sage-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
+      <summary className="doc-sum">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <Badge variant="outline" className={badgeFill(doc.type)}>
@@ -174,7 +174,7 @@ export function DocRow({
           {posted ? <span className="mt-1 block font-mono text-sm tabular-nums text-soft">{posted}</span> : null}
         </span>{" "}
         <CaretDownIcon
-          className="mt-1 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+          className="doc-caret mt-1"
           aria-hidden="true"
         />
       </summary>{" "}

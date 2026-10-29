@@ -230,6 +230,8 @@ def main() -> int:
         log("no case links to a wage request: refusing to write an empty table")
         record_run(db, "build_pwd_links.py", status="failed", note="no linked cases", started_at=started)
         return 1
+    # DDL is built from this module's constants, never input.
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     db.execute(DDL)
     got = sync_rows(db, TABLE, ["kind", "slug"], COLS, rows, pause_s=0.2)
     if not args.no_stamp:

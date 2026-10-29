@@ -2278,6 +2278,25 @@ input[type="week"] {
   @apply flex min-h-11 items-center justify-center border border-dashed border-foreground/20 font-mono text-sm text-muted-foreground;
 }
 
+/* The policy page's rows: about 1,150 documents and archive lines, so each
+   look is one class here rather than a long class string in every row, twice
+   (Oct 29 2026: the page was 2.2 MB, past the 2 MB Googlebot reads). */
+.doc-sum {
+  @apply flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-sage-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden;
+}
+.doc-caret {
+  @apply h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none;
+}
+.doc-line {
+  @apply flex flex-wrap items-center gap-x-3;
+}
+.doc-day {
+  @apply shrink-0 font-mono text-sm text-muted-foreground;
+}
+.doc-a {
+  @apply inline-flex min-h-11 items-center py-1;
+}
+
 /* A list of bulletin moves in one cell: each move kept on one line (the
    history tables, 800 a page). Colour is inherited, never set here: in dark
    mode these tables sit on a light panel with dark ink. */

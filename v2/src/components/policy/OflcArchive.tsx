@@ -2,6 +2,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import type { PolicyNotice } from "@/lib/db/policyNotices";
 
+import { ArchiveLines } from "./ArchiveLines";
 import { DocRow, typeLabel } from "./DocRow";
 import { dayLabel } from "./format";
 
@@ -41,28 +42,11 @@ export function OflcArchive({ items, today, lead = 8 }: { items: readonly Policy
                     {list.length} {list.length === 1 ? "announcement" : "announcements"}
                   </span>
                 </span>{" "}
-                <CaretDownIcon
-                  className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
-                  aria-hidden="true"
-                />
+                <CaretDownIcon className="doc-caret" aria-hidden="true" />
               </summary>{" "}
-              <ul className="border-t-2 border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed sm:px-6">
-                {list.map((n) => (
-                  <li key={n.documentNumber} id={`doc-${n.documentNumber}`} className="flex flex-wrap items-center gap-x-3">
-                    <span className="shrink-0 font-mono text-sm text-muted-foreground">
-                      {dayLabel(n.publicationDate)}, {typeLabel(n.type)}
-                    </span>{" "}
-                    <a
-                      href={n.url}
-                      rel="noopener"
-                      target="_blank"
-                      className="link inline-flex min-h-11 items-center py-1"
-                    >
-                      {n.title}
-                    </a>{" "}
-                  </li>
-                ))}
-              </ul>
+              <ArchiveLines
+                lines={list.map((n) => [n.documentNumber, `${dayLabel(n.publicationDate)}, ${typeLabel(n.type)}`, n.url, n.title] as const)}
+              />
             </details>
           ))}
         </div>

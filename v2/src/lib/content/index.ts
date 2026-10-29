@@ -263,6 +263,8 @@ export function extractVideoRefs(content: string): { src: string; alt: string }[
  * finds the articles that show its data, read from the articles themselves rather than kept by hand.
  */
 export function postsUsing(tags: readonly string[]): string[] {
+  // The tags are our own component names from the figure tables, never input.
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
   const uses = tags.map((t) => new RegExp(`<${t}\\b`));
   const out: string[] = [];
   for (const type of Object.keys(CONTENT_TYPE_CONFIG) as ContentType[]) {

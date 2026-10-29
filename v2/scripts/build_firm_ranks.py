@@ -292,6 +292,8 @@ def write_diff(db: Database, want: list[list]) -> tuple[int, int]:
     for stmt in DDL:
         db.execute(stmt)
     stored = {}
+    # COLS and TABLE are this module's constants, never input.
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     for r in rows_of(db.execute(f"SELECT {','.join(COLS)} FROM {TABLE}")):
         n = norm(list(r))
         stored[n[:KEY]] = n

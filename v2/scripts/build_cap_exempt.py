@@ -248,6 +248,8 @@ def write_diff(db: Database, want: list[list]) -> tuple[int, int]:
     """Write only the rows that changed and delete the ones gone, so the table is never empty."""
     for stmt in DDL:
         db.execute(stmt)
+    # COLS and TABLE are this module's constants, never input.
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     stored = {norm(r)[0]: norm(r) for r in rows_of(db.execute(f"SELECT {','.join(COLS)} FROM {TABLE}"))}
     changed = [w for w in want if stored.get(w[0]) != norm(w)]
     wanted = {w[0] for w in want}
@@ -296,6 +298,8 @@ def main() -> int:
     changed, gone = write_diff(db, want)
     write_doc(db, DOC_KEY, doc)
     back = read_doc(db, DOC_KEY)
+    # TABLE is this module's constant, never input.
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     held = int(rows_of(db.execute(f"SELECT count(*) FROM {TABLE}"))[0][0] or 0)
     ok = bool(back and back.get("employers") == doc["employers"]) and held == len(want)
     log(f"  {'ok ' if ok else 'MISMATCH'} {TABLE} {held:,} of {len(want):,} ({changed:,} written, {gone:,} removed)")

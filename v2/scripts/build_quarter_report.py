@@ -172,6 +172,8 @@ def first_decisions(db: Database, emp_page: dict) -> dict[str, str]:
     """Each employer page's first decided case in DOL's files, history included."""
     first: dict[str, str] = {}
     for table in (HISTORY_TABLE, "perm_cases"):
+        # The table name is one of this module's two constants, never input.
+        # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
         for slug, d in rows_of(db.execute(
                 f"SELECT employer_slug, MIN(decision_date) FROM {table} WHERE employer_slug IS NOT NULL GROUP BY 1")):
             if not d:
