@@ -108,7 +108,7 @@ export function SocFinder({ examples }: { examples: { slug: string; title: strin
             onChange={(e) => onChange(e.target.value)}
             maxLength={MAX}
             autoComplete="off"
-            placeholder="Software engineer, or 15-1252"
+            placeholder="Data scientist"
             className="h-12 min-w-0 flex-1 border-2 border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />{" "}
           <button type="submit" className={buttonVariants({ size: "lg" })}>
@@ -121,13 +121,13 @@ export function SocFinder({ examples }: { examples: { slug: string; title: strin
           </p>
         ) : null}{" "}
         {!text.trim() && examples.length ? (
-          <p className="mt-3 text-sm text-soft">
-            Try{" "}
-            {examples.map((x, i) => (
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-soft">Try</span>{" "}
+            {examples.map((x) => (
               <Fragment key={x.slug}>
                 <button
                   type="button"
-                  className="link min-h-11 font-semibold"
+                  className="inline-flex min-h-11 items-center border-2 border-input bg-card px-3 font-semibold hover:bg-sage focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={() => {
                     setText(x.title);
                     asked.current = "";
@@ -135,11 +135,10 @@ export function SocFinder({ examples }: { examples: { slug: string; title: strin
                   }}
                 >
                   {x.title}
-                </button>
-                {i < examples.length - 2 ? ", " : i === examples.length - 2 ? " or " : "."}{" "}
+                </button>{" "}
               </Fragment>
             ))}
-          </p>
+          </div>
         ) : null}
       </form>{" "}
       <div aria-live="polite" className={state.kind === "loading" ? "opacity-60 transition-opacity" : undefined}>
@@ -179,7 +178,7 @@ function Results({ found }: { found: Found }) {
             {found.codes.map((c) => (
               <li key={c.soc}>
                 <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center">
-                  <span className="font-mono">{c.soc}</span>&nbsp;{c.title}
+                  <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.title}
                 </Link>{" "}
               </li>
             ))}
@@ -220,7 +219,7 @@ function TitleResult({ title }: { title: TitleAnswer }) {
             <li key={c.soc} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
               <div className="min-w-0">
                 <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center text-base font-semibold">
-                  <span className="font-mono">{c.soc}</span>&nbsp;{c.codeTitle}
+                  <span className="whitespace-nowrap font-mono">{c.soc}</span>&nbsp;{c.codeTitle}
                 </Link>{" "}
                 {c.becameCodes.length ? (
                   <p className="text-sm text-soft">
@@ -260,7 +259,7 @@ function CodeResult({ code }: { code: CodeAnswer }) {
   if (!code.known && !code.became.length) {
     return (
       <p className="mt-6 text-base text-soft">
-        <span className="font-mono">{code.soc}</span> isn&apos;t a code in DOL&apos;s files or O*NET&apos;s list. Check the
+        <span className="whitespace-nowrap font-mono">{code.soc}</span> isn&apos;t a code in DOL&apos;s files or O*NET&apos;s list. Check the
         digits, or search by the job&apos;s title.
       </p>
     );
@@ -269,7 +268,7 @@ function CodeResult({ code }: { code: CodeAnswer }) {
   return (
     <section className="mt-8 border-2 border-border bg-card p-5 sm:p-6">
       <h3 className="font-heading text-xl font-bold">
-        <span className="font-mono">{code.soc}</span> {code.title !== code.soc ? code.title : ""}
+        <span className="whitespace-nowrap font-mono">{code.soc}</span> {code.title !== code.soc ? code.title : ""}
       </h3>{" "}
       <p className="mt-2 text-base text-soft">
         {retired ? "A 2010 code: BLS replaced it in 2018. " : ""}
@@ -287,7 +286,7 @@ function CodeResult({ code }: { code: CodeAnswer }) {
             {code.became.map((b) => (
               <li key={b.soc}>
                 <Link href={codeHref(b.soc, b.slug)} className="link inline-flex min-h-11 items-center font-semibold">
-                  <span className="font-mono">{b.soc}</span>&nbsp;{b.title}
+                  <span className="whitespace-nowrap font-mono">{b.soc}</span>&nbsp;{b.title}
                 </Link>{" "}
               </li>
             ))}

@@ -11,6 +11,7 @@ import { Fragment } from "react";
 
 import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
+import { SocCodeText } from "@/components/data/SocCodeText";
 import { PageSection } from "@/components/data/PageSection";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { SocSources } from "@/components/soc/SocSources";
@@ -66,7 +67,8 @@ export async function generateMetadata({ params }: { params: Promise<{ title: st
   ].filter(Boolean));
   return withSocialCard(
     {
-      title,
+      // The title is the searched phrase: past 60 characters with the brand, the brand gives way.
+      title: title.length + " | PERM Tracker".length > 60 ? { absolute: title } : title,
       description,
       alternates: { canonical: path },
       openGraph: { ...openGraphBase, title: `${title} | PERM Tracker`, description, url: path },
@@ -90,7 +92,7 @@ function codeRow(c: TitleCode, total: number, pay: number | null): BarRow {
     key: c.soc,
     label: (
       <Link href={codeHref(c.soc, c.slug)} className="link">
-        <span className="font-mono">{c.soc}</span> {c.codeTitle}
+        <span className="whitespace-nowrap font-mono">{c.soc}</span> {c.codeTitle}
       </Link>
     ),
     sub: [programs.join(", "), notes.join(". ")].filter(Boolean).join(". "),
@@ -129,7 +131,9 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
       <JsonLdScript schema={faqSchema} />
       <header className="max-w-3xl">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">SOC code for {a.title}</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-soft">{describe(a)}</p>
+        <p className="mt-4 text-lg leading-relaxed text-soft">
+          <SocCodeText text={describe(a)} />
+        </p>
       </header>{" "}
       {top ? (
         <FigureRow className="mt-8">

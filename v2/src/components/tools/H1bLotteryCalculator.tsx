@@ -24,6 +24,7 @@ import { seriesYearFor, WAGE_SEARCH_PAGE, type AreaOption, type WageLevel } from
 import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { SocPicker } from "@/components/soc/SocPicker";
 
 /**
  * The weighted H-1B lottery for one job: the OEWS level an offer meets in
@@ -219,17 +220,9 @@ export function H1bLotteryCalculator() {
       <form onSubmit={calculate} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <div>
-            <Label htmlFor={socId}>SOC code</Label>{" "}
-            <input
-              id={socId}
-              value={soc}
-              onChange={(e) => setSoc(e.target.value)}
-              placeholder="15-1252"
-              inputMode="numeric"
-              pattern="\d{2}-\d{4}(\.\d{2})?"
-              className={FIELD}
-            />{" "}
-            <p className="mt-1 text-sm text-muted-foreground">The occupation code on the LCA.</p>
+            <Label htmlFor={socId}>Job title or SOC code</Label>{" "}
+            <SocPicker id={socId} value={soc} onChange={setSoc} className={FIELD} />{" "}
+            <p className="mt-1 text-sm text-muted-foreground">Type a job title and pick its code, or the code on the LCA.</p>
           </div>{" "}
           <div>
             <Label htmlFor={offerId}>Offered wage</Label>{" "}

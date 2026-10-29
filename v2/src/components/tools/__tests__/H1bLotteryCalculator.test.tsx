@@ -34,7 +34,7 @@ function stub(levels: typeof LEVELS | null) {
 }
 
 async function fill() {
-  fireEvent.change(screen.getByLabelText("SOC code"), { target: { value: "15-1252" } });
+  fireEvent.change(screen.getByLabelText("Job title or SOC code"), { target: { value: "15-1252" } });
   fireEvent.change(screen.getByLabelText("Offered wage"), { target: { value: "130,000" } });
   fireEvent.change(screen.getByLabelText("Work state"), { target: { value: "CA" } });
   await waitFor(() => expect(screen.getByLabelText("Area")).not.toBeDisabled());

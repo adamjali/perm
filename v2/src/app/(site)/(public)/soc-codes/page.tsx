@@ -69,7 +69,9 @@ export default async function SocCodesPage() {
   const groups = codes ? majorGroups(codes.codes) : [];
   const allFilings = groups.reduce((n, g) => n + g.filings, 0);
   const busiest = Math.max(0, ...groups.map((g) => g.filings));
-  const top = (pages?.pages ?? []).slice(0, 24);
+  // The showcase skips titles carrying an employer's own job code ("Manager JC50 ..."): they keep
+  // their pages, but a reader browsing doesn't search for them.
+  const top = (pages?.pages ?? []).filter((p) => !/\d/.test(p.slug)).slice(0, 24);
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -93,14 +95,14 @@ export default async function SocCodesPage() {
       {top.length ? (
         <PageSection id="titles" title="The most filed job titles" lede="Each with the code employers used most for it, and a page of its own.">
           <ul className="grid grid-cols-1 gap-[2px] border-2 border-border bg-border sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
-            {top.map((p) => (
-              <li key={p.slug} className="bg-card">
+            {top.map((p, i) => (
+              <li key={p.slug} className={i >= 10 ? "hidden bg-card sm:block" : "bg-card"}>
                 <Link href={`/soc-codes/${p.slug}`} className="flex min-h-[44px] flex-col gap-0.5 p-4 hover:bg-sage">
                   <span className="font-heading text-lg font-bold leading-snug">{p.title}</span>{" "}
                   <span className="text-sm text-soft">
                     {p.topSoc ? (
                       <>
-                        <span className="font-mono">{p.topSoc}</span> {codes?.codes.get(p.topSoc)?.title ?? ""},{" "}
+                        <span className="whitespace-nowrap font-mono">{p.topSoc}</span> {codes?.codes.get(p.topSoc)?.title ?? ""},{" "}
                         {p.filings > 0 ? formatShareOf(p.topFilings, p.filings) : null}
                       </>
                     ) : null}
@@ -128,14 +130,15 @@ export default async function SocCodesPage() {
                     <span className="block h-full bg-primary" style={{ width: `${busiest > 0 ? Math.max(1, (g.filings / busiest) * 100) : 0}%` }} />
                   </span>{" "}
                   <span className="min-w-[7rem] text-right font-mono text-sm tabular-nums">
-                    {g.codes.length} {g.codes.length === 1 ? "code" : "codes"}, {allFilings > 0 ? formatShareOf(g.filings, allFilings) : null}
+                    {g.codes.length} {g.codes.length === 1 ? "code" : "codes"},{" "}
+                    {g.filings > 0 && allFilings > 0 ? formatShareOf(g.filings, allFilings) : "no filings"}
                   </span>
                 </summary>{" "}
                 <ul className="grid grid-cols-1 gap-x-6 border-t-2 border-border/40 px-5 py-3 sm:grid-cols-2 sm:px-6">
                   {g.codes.map((c) => (
                     <li key={c.soc}>
                       <Link href={codeHref(c.soc, c.slug)} className="link inline-flex min-h-11 items-center gap-2">
-                        <span className="font-mono text-sm">{c.soc}</span> {c.title}
+                        <span className="whitespace-nowrap font-mono text-sm">{c.soc}</span> {c.title}
                       </Link>{" "}
                     </li>
                   ))}
