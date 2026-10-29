@@ -157,6 +157,14 @@ PROGRAMS: dict[str, dict] = {
             "req_experience_months": ["REQUIRED_EXPERIENCE_MONTHS"],
             "alt_education": ["ALT_EDUCATION_LEVEL"],
             "alt_experience_months": ["ALT_EXPERIENCE_MONTHS"],
+            # Section E (header dumped Oct 28 2026): whether the employer said
+            # ACWIA covers it, and as which kind of employer. ACWIA's three
+            # groups (20 CFR 656.40(e)) are the employers the H-1B cap leaves
+            # out (8 CFR 214.2(h)(8)(iii)(F)).
+            "acwia": ["COVERED_BY_ACWIA"],
+            "acwia_higher_ed": ["ACWIA_INST_HIGHER_EDUCATION"],
+            "acwia_affiliated": ["ACWIA_AFFILIATED_NON_PROFIT"],
+            "acwia_research": ["ACWIA_RESEARCH_ORG"],
         },
         # DETERMINATION_DATE is the decision, which the later events below fold
         # into; the first determination is kept on its own as `determined_on`.
@@ -335,8 +343,19 @@ LCA_COUNT_COLUMNS = (
 # The wage request's own detail (PW only), and the level, in file order.
 PW_DETAIL_COLUMNS = (
     "determined_on", "pw_expires", "req_education", "req_experience_months",
-    "alt_education", "alt_experience_months",
+    "alt_education", "alt_experience_months", "acwia", "acwia_kind",
 )
+
+# ACWIA's three kinds of employer, in the form's order; the first one marked wins.
+ACWIA_KINDS = (("acwia_higher_ed", "higher-ed"), ("acwia_affiliated", "affiliated"), ("acwia_research", "research"))
+
+
+def acwia_kind(rec: dict) -> str | None:
+    """"higher-ed", "affiliated" or "research": the first of ACWIA's groups the request marks."""
+    for field, kind in ACWIA_KINDS:
+        if parse_flag(rec.get(field)) == 1:
+            return kind
+    return None
 
 # The LCA's prevailing wage and its source (Section F), in file order.
 LCA_PW_COLUMNS = (
@@ -370,7 +389,7 @@ COLUMNS = (
 )
 INTEGER_COLUMNS = frozenset({"fiscal_year", "workers", *LCA_COUNT_COLUMNS, "h1b_dependent",
                              "willful_violator", "workers_certified", "req_experience_months",
-                             "alt_experience_months"})
+                             "alt_experience_months", "acwia"})
 
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
@@ -448,7 +467,9 @@ def table_ddl(table: str) -> list[str]:
              req_education              TEXT,
              req_experience_months      INTEGER,
              alt_education              TEXT,
-             alt_experience_months      INTEGER)""",
+             alt_experience_months      INTEGER,
+             acwia                      INTEGER,
+             acwia_kind                 TEXT)""",
     ]
 
 
@@ -845,6 +866,8 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "req_experience_months": parse_count(rec.get("req_experience_months")),
         "alt_education": clean_text(rec.get("alt_education"), 60),
         "alt_experience_months": parse_count(rec.get("alt_experience_months")),
+        "acwia": parse_flag(rec.get("acwia")),
+        "acwia_kind": acwia_kind(rec),
     }
 
 

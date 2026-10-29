@@ -190,6 +190,8 @@ PW_HEADER = [
     # FY2026 Q3 file's own header (dumped Oct 28 2026).
     "PWD_OES_WAGE_LEVEL", "PWD_WAGE_EXPIRATION_DATE", "REQUIRED_EDUCATION_LEVEL",
     "REQUIRED_EXPERIENCE_MONTHS", "ALT_EDUCATION_LEVEL", "ALT_EXPERIENCE_MONTHS",
+    # Section E's ACWIA questions, verbatim from the same header.
+    "COVERED_BY_ACWIA", "ACWIA_INST_HIGHER_EDUCATION", "ACWIA_AFFILIATED_NON_PROFIT", "ACWIA_RESEARCH_ORG",
 ]
 # Column J (index 9) on sheet row 3 is the empty-cell probe.
 PROBE_COL = PW_HEADER.index("JOB_TITLE")
@@ -200,32 +202,32 @@ PW_ROWS = [
     ["P-100-25300-123456", "Determination Issued", D(2025, 10, 27), D(2026, 3, 2), None, None,
      "PERM", "Acme Robotics, Inc.", "poc@example.com", "Software Engineer", "CA",
      "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511,
-     "Level II", D(2027, 6, 30), "Master's", 24, "Bachelor's", 60],
+     "Level II", D(2027, 6, 30), "Master's", 24, "Bachelor's", 60, "N", "N", "N", "N"],
     # THE PROBE: job title blank, so its cell is absent from the XML.
     ["P-100-25301-000002", "Determination Issued", "2025-11-03", "2026-04-15", None, None,
      "H-1B", "Globex Corporation", "poc@example.com", None, "California",
      "13-2011", "Accountants and Auditors", "$38.50", "Hour", "  Los   Angeles ", "541211.0",
-     "N/A", "2027-06-30", "Bachelor's", "", "", ""],
+     "N/A", "2027-06-30", "Bachelor's", "", "", "", "Y", "N", "Y", "N"],
     # Withdrawn before determination: the date is in WITHDRAWAL_DATE only.
     ["P-100-25302-000003", "Withdrawn", D(2025, 12, 1), None, None, D(2026, 1, 20),
      "PERM", "  Initech   LLC ", "", "Analyst", "New York",
      "13-1111", "Management Analysts", "", "", "", "",
-     "", "", "", "", "", ""],
+     "", "", "", "", "", "", "", "", "", ""],
     # A duplicate case number: first occurrence wins, this one is counted.
     ["P-100-25300-123456", "Redetermination Affirmed", D(2025, 10, 27), D(2026, 6, 1), D(2026, 6, 1), None,
      "PERM", "Acme Robotics, Inc.", "poc@example.com", "Software Engineer", "CA",
      "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511,
-     "Level II", D(2027, 6, 30), "Master's", 24, "Bachelor's", 60],
+     "Level II", D(2027, 6, 30), "Master's", 24, "Bachelor's", 60, "N", "N", "N", "N"],
     # No case number: skipped and counted.
     ["", "Determination Issued", D(2025, 10, 1), D(2026, 1, 1), None, None,
      "PERM", "Nobody Corp", "", "Clerk", "TX", "43-9061", "Office Clerks", 40000, "Year", "Austin", 1,
-     "I", "", "None", "", "", ""],
+     "I", "", "None", "", "", "", "", "", "", ""],
     # A redetermination later than the determination; a foreign worksite;
     # an unparseable wage; an unmapped unit.
     ["P-100-25303-000006", "Redetermination Modified", D(2025, 12, 15), D(2026, 2, 1), D(2026, 5, 5), None,
      "H-2B", "Wayne Enterprises", "", "Welder", "Ontario",
      "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight", "Toronto", "junk",
-     "Level IV", "2026-11-30", "None", "0", "None", "0"],
+     "Level IV", "2026-11-30", "None", "0", "None", "0", "Yes", "Yes", "Yes", "No"],
 ]
 
 # Seasonal-only columns (H-2A, H-2B, CW-1): a PW or LCA row carries every one as None.
@@ -233,7 +235,8 @@ NO_SEASONAL = {"workers_certified": None, "begin_date": None, "end_date": None, 
 
 # Wage-request-only columns: an LCA's or a seasonal row carries every one as None.
 NO_PW_DETAIL = {"determined_on": None, "pw_expires": None, "req_education": None,
-                "req_experience_months": None, "alt_education": None, "alt_experience_months": None}
+                "req_experience_months": None, "alt_education": None, "alt_experience_months": None,
+                "acwia": None, "acwia_kind": None}
 
 # LCA-only columns: a wage request's row carries every one as None.
 NO_LCA_DETAIL = {
@@ -256,7 +259,8 @@ PW_EXPECTED = [
      "source_file": PW_FILE, "fiscal_year": 2026,
      "worksite_city": "San Jose", "naics": "541511", **NO_LCA_DETAIL,
      "wage_level": "II", "determined_on": "2026-03-02", "pw_expires": "2027-06-30", "req_education": "Master's",
-     "req_experience_months": 24, "alt_education": "Bachelor's", "alt_experience_months": 60},
+     "req_experience_months": 24, "alt_education": "Bachelor's", "alt_experience_months": 60,
+     "acwia": 0, "acwia_kind": None},
     {"case_number": "P-100-25301-000002", "case_status": "DETERMINATION ISSUED",
      "received_date": "2025-11-03", "decision_date": "2026-04-15",
      "employer_name": "Globex Corporation", "employer_slug": "globex-corporation",
@@ -266,7 +270,8 @@ PW_EXPECTED = [
      "source_file": PW_FILE, "fiscal_year": 2026,
      "worksite_city": "Los Angeles", "naics": "541211", **NO_LCA_DETAIL,
      "determined_on": "2026-04-15", "pw_expires": "2027-06-30", "req_education": "Bachelor's",
-     "req_experience_months": None, "alt_education": None, "alt_experience_months": None},
+     "req_experience_months": None, "alt_education": None, "alt_experience_months": None,
+     "acwia": 1, "acwia_kind": "affiliated"},
     {"case_number": "P-100-25302-000003", "case_status": "WITHDRAWN",
      "received_date": "2025-12-01", "decision_date": "2026-01-20",
      "employer_name": "Initech LLC", "employer_slug": "initech-llc",
@@ -287,7 +292,8 @@ PW_EXPECTED = [
      # The first determination stays apart from the later redetermination the
      # decision date folds in.
      "wage_level": "IV", "determined_on": "2026-02-01", "pw_expires": "2026-11-30", "req_education": "None",
-     "req_experience_months": 0, "alt_education": "None", "alt_experience_months": 0},
+     "req_experience_months": 0, "alt_education": "None", "alt_experience_months": 0,
+     "acwia": 1, "acwia_kind": "higher-ed"},
 ]
 
 LCA_FILE = "LCA_Disclosure_Data_FY2026_Q3.xlsx"
@@ -772,7 +778,9 @@ def check_seasonal(tmp: str, write) -> None:
 def check_backfill_pw_detail() -> None:
     """The wage-request detail backfill writes exactly what the wage-request map fills."""
     pw = PROGRAMS["pw"]
-    filled = set(pw["columns"]) | {pw["first_decision_column"]}
+    # acwia_kind is worked out from the file's three ACWIA columns, which the map reads.
+    filled = set(pw["columns"]) | {pw["first_decision_column"]} | (
+        {"acwia_kind"} if all(f in pw["columns"] for f, _ in fd.ACWIA_KINDS) else set())
     group = set(fd.BACKFILL_GROUPS["pw-detail"])
     check("pw-detail backfills the level and every wage-request detail column",
           group, {"wage_level", *fd.PW_DETAIL_COLUMNS})
