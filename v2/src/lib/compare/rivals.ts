@@ -4,7 +4,8 @@ import type { Tracker } from "./trackers";
  * The other trackers, each read on its own pages and answers on the day in
  * its `checkedOn`. Every quote is verbatim from a saved capture
  * (`~/.claude/explanations/20261027_perm_vs_landscape/raw/` for October 27,
- * `~/.claude/explanations/20261028_h1bgrader/raw/` for October 28). A "no"
+ * `~/.claude/explanations/20261028_h1bgrader/raw/` for October 28, and its
+ * `lawfully-2026-10-29/` for Lawfully's October 29 re-read). A "no"
  * rests on what was checked, said in its note; nothing is guessed.
  *
  * October 27: the PERM trackers people search for by name (Ahrefs and Search
@@ -324,11 +325,11 @@ export const RIVALS: readonly Tracker[] = [
     operator: "Lawfully Inc.",
     price: "Free app with paid features; a business plan with a 14-day trial",
     group: "greenCard",
-    checkedOn: "2026-10-28",
+    checkedOn: "2026-10-29",
     newestData: {
-      day: "2026-10-27",
+      day: "2026-10-28",
       note: "Its USCIS processing trends, updated daily",
-      evidence: { url: `${LW}/data/trends`, quote: "Last updated: 2026-10-27 (updated daily)" },
+      evidence: { url: `${LW}/data/trends`, quote: "Last updated: 2026-10-28 (updated daily)" },
     },
     cells: {
       lookup: { mark: "partial", note: "USCIS, NVC and EOIR cases in its phone app; it names DOL too, but PERM isn't in its list of forms", evidence: { url: LW, quote: "Track all USCIS, NVC, DOL, and EOIR case statuses with a detailed update history and visa trends visualizations" } },
@@ -341,7 +342,7 @@ export const RIVALS: readonly Tracker[] = [
       employers: { mark: "no", note: "No employer pages found", evidence: { url: LW } },
       bulletin: { mark: "partial", note: "Bulletin history in its app; the website's bulletin page is a picture", evidence: { url: `${LW}/case-tracker`, quote: "Browse customized history of final action dates and dates for filing for your visa type." } },
       attorney: { mark: "partial", note: "A paid case-tracking portal for law firms; no PERM deadlines seen", evidence: { url: `${LW}/pro`, quote: "Stay ahead of every case you handle for your clients and employees" } },
-      noAccount: { mark: "unknown", note: "Lookups are in its phone app; whether the app needs an account wasn't checked", evidence: { url: `${LW}/case-tracker`, quote: "Scan the QR code and download the app on your phone." } },
+      noAccount: { mark: "unknown", note: "Lookups are in its phone app; whether the app needs an account wasn't checked", evidence: { url: `${LW}/case-tracker`, quote: "Download App" } },
       free: { mark: "partial", note: "Free basics; paid one-time, monthly or quarterly services", evidence: { url: `${LW}/terms-of-service`, quote: "In addition to the basic, free of charge features, Lawfully also offers services subject to one-time payment, monthly, or tri-monthly" } },
       noAds: { mark: "no", note: "Google Ad Manager ad slots on its processing-time pages", evidence: { url: `${LW}/data/trends`, quote: "securepubads.g.doubleclick.net/tag/js/gpt.js" } },
       openData: { mark: "no", note: "No download or API offered on the pages read", evidence: { url: LW } },
