@@ -49,7 +49,7 @@ imageAlt: "PERM decisions in {span} against the quarter before and a year before
 imageCredit: "Chart from DOL's PERM disclosure file, permtracker.app"
 tags: ["data-note", "perm", "dol-data", "quarterly"]
 category: "data-notes"
-seoTitle: "DOL PERM Data, {span}: What It Shows"
+seoTitle: "DOL PERM Data for {span}"
 seoDescription: "DOL's PERM file for {span}, read case by case: decisions, the certified share, the wait, and who filed the most, against the quarter before."
 featured: false
 published: true
