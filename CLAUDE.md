@@ -1609,3 +1609,23 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
   ("Zero Data Retention"); `privacy-ai-providers.test.ts` holds the page to every provider the chat calls.
 - **First readings, 8:28 AM EDT:** Mistral Small refused (its free account allows 0 requests a minute); Gemini 2.5
   and 3.8 Flash busy (503, high demand); Gemini 3.5 Flash Lite, GPT-OSS on Groq and Nemotron 3.5 on OpenRouter answered.
+
+## Oct 29 2026 (afternoon), in six lines
+
+- **The SOC job-code finder is live-bound** (merged to main a3f8ce84): `/soc-codes`, a page per filed job title,
+  a title-or-code finder in every job box (wage levels, lottery), `/v1/lookup/soc` and the MCP tool, titles
+  rebuilt after each disclosure load. 100,886 title rows, 71,358 titles, 904 codes. Detail in `v2/CLAUDE.md`.
+- **The data rail's scrollbar is hidden** (868280a5): the scroll box is 24px wider than the rail so the current
+  tab can bleed past the edge, which parked the native scrollbar out in the gap, detached and wonky; the list
+  still scrolls by wheel and trackpad.
+- **Alert emails go out in the subscriber's language** (merged 3fde6505): case alerts fully (confirmation,
+  recurring status alert, confirm/unsubscribe pages), queue/bulletin/digest confirmations, the language stored
+  on the confirm click, DOL's own terms kept as printed. English byte-for-byte unchanged. Needs a Convex deploy
+  with the site. The recurring queue/bulletin/daily bodies, the status-meaning sentence (behind an `@/` module
+  Convex can't import) and plaintext parts stay English for now.
+- **We registered permtracker.app before permtrack.app** (RDAP: ours Nov 25 2025, the #1 rival Mar 22 2026; only
+  permupdate.com, ~Mar 2025, is older). So the ranking gap for "track my perm case" is link quality and
+  brand-entity confusion (both are "PERM Tracker"), not age, and it's catchable.
+- **A fork spawned into my own working tree is the two-editors hazard**: it went past its brief, wrote convex
+  files, and we clobbered each other until it died. One owner per area, work on a branch, never a fork into the
+  tree I'm editing.
