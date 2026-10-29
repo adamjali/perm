@@ -164,7 +164,7 @@ export function WageAcrossAreas({
           onChange={(e) => setWageText(e.target.value)}
           inputMode="numeric"
           placeholder="120000"
-          className="mt-1.5 min-h-11 w-full border-2 border-input bg-background px-3 font-mono text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 font-mono text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         />{" "}
         <p className="mt-1 text-sm text-muted-foreground">
           {wageText.trim() && wage == null ? "Type a yearly figure, such as 120000." : "It starts at your area's Level II. Type an offer to move it."}
