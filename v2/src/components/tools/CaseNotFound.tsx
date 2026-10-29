@@ -134,7 +134,7 @@ export function CaseNotFound({
           // decided, so they get nothing.
           isLegacy ? undefined : (
             <div className="mt-6 border-t border-foreground/10 pt-6">
-              <WatchThisNumber caseNumber={caseNumber} program="perm" variant="inline" />
+              <WatchThisNumber caseNumber={caseNumber} program="perm" variant="inline" lang={lang} />
             </div>
           )
         }

@@ -66,6 +66,8 @@ export interface CaseStatusText {
   howLong: (f: HowLongWords) => string;
   /** Translated pages only: DOL's terms stay in English, and the English page is the original. */
   termsNote: string;
+  /** Translated pages only: a wage request, LCA or H-2A, H-2B and CW-1 result is shown in English. */
+  otherProgramEnglish: string;
   readInEnglish: string;
 }
 
@@ -141,6 +143,7 @@ export const CASE_STATUS = {
     waitWords: () => "",
     howLong: () => "",
     termsNote: "",
+    otherProgramEnglish: "",
     readInEnglish: "",
   },
   es: {
@@ -230,6 +233,7 @@ export const CASE_STATUS = {
     },
     termsNote:
       "Los términos del DOL quedan en inglés, como los publica el DOL. La versión en inglés es la que vale.",
+    otherProgramEnglish: "Los resultados de solicitudes de salario prevaleciente, LCA y solicitudes H-2A, H-2B y CW-1 se muestran en inglés.",
     readInEnglish: "Ver en inglés",
   },
   zh: {
@@ -314,6 +318,7 @@ export const CASE_STATUS = {
       );
     },
     termsNote: "劳工部的用语保留英文原文。以英文版本为准。",
+    otherProgramEnglish: "现行工资申请、LCA 以及 H-2A、H-2B 和 CW-1 申请的查询结果以英文显示。",
     readInEnglish: "查看英文版",
   },
   "pt-br": {
@@ -403,6 +408,7 @@ export const CASE_STATUS = {
     },
     termsNote:
       "Os termos do DOL ficam em inglês, como o DOL os publica. A versão em inglês é a que vale.",
+    otherProgramEnglish: "Os resultados de pedidos de salário prevalecente, LCAs e pedidos H-2A, H-2B e CW-1 aparecem em inglês.",
     readInEnglish: "Ver em inglês",
   },
   ko: {
@@ -490,6 +496,7 @@ export const CASE_STATUS = {
     },
     termsNote:
       "노동부의 용어는 노동부가 쓰는 대로 영어로 둡니다. 영어 페이지가 기준입니다.",
+    otherProgramEnglish: "적정 임금 신청, LCA, H-2A·H-2B·CW-1 신청의 조회 결과는 영어로 표시됩니다.",
     readInEnglish: "영어로 보기",
   },
   vi: {
@@ -578,6 +585,7 @@ export const CASE_STATUS = {
     },
     termsNote:
       "Các thuật ngữ của DOL được giữ bằng tiếng Anh như DOL công bố. Bản tiếng Anh là bản có giá trị.",
+    otherProgramEnglish: "Kết quả của đơn xin mức lương hiện hành, LCA và đơn H-2A, H-2B, CW-1 được hiển thị bằng tiếng Anh.",
     readInEnglish: "Xem bằng tiếng Anh",
   },
 } satisfies Messages<CaseStatusText>;

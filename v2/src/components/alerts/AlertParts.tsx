@@ -1,5 +1,7 @@
 import { CaretRightIcon, CheckCircleIcon } from "@phosphor-icons/react/ssr";
 
+import { ALERT_TEXT } from "@/components/alerts/alerts.messages";
+import type { Lang } from "@/lib/i18n/lang";
 import { MAIL_KINDS } from "@/lib/mailKinds";
 import { cn } from "@/lib/utils";
 
@@ -53,10 +55,13 @@ export function EmailField({
  * bundled alerts, one confirmation every 10 minutes) are said once the form
  * has been sent, which is when they apply.
  */
-export function AlertNote({ limit, id, className }: { limit?: string; id?: string; className?: string }) {
+export function AlertNote({ limit, id, className, lang = "en" }: { limit?: string; id?: string; className?: string; lang?: Lang }) {
+  const t = ALERT_TEXT[lang];
   return (
     <p id={id} className={cn("text-sm leading-relaxed text-muted-foreground", className)}>
-      No account needed. You confirm by email first, and one click turns it off.{limit ? ` ${limit}` : ""}
+      {t.note}
+      {limit ? ` ${limit}` : ""}
+      {t.emailLanguage ? ` ${t.emailLanguage}` : ""}
     </p>
   );
 }
@@ -65,24 +70,38 @@ export function AlertNote({ limit, id, className }: { limit?: string; id?: strin
  * What replaces a form once it's sent: the server's own words, verbatim (they
  * are the same for every address on purpose), then the fixed rules.
  */
-export function AlertDone({ message, queued, className }: { message: string; queued?: boolean; className?: string }) {
+export function AlertDone({
+  message,
+  queued,
+  className,
+  lang = "en",
+}: {
+  message: string;
+  queued?: boolean;
+  className?: string;
+  lang?: Lang;
+}) {
+  const t = ALERT_TEXT[lang];
   return (
     <p role="status" aria-live="polite" className={cn("flex items-start gap-2 text-base leading-relaxed text-soft", className)}>
       <CheckCircleIcon className="mt-1 size-5 shrink-0 text-data-good-ink" weight="fill" aria-hidden="true" />{" "}
       <span>
         <b className="font-semibold text-foreground">{message}</b>{" "}
-        {queued ? "Confirm it when it arrives; nothing is sent until you do." : "Nothing is sent until you confirm."} No
-        email within 10 minutes? Try again then. A change to a case is emailed at once; other alerts from one day come
-        together in one email.
+        {queued ? t.doneQueued : t.doneSent} {t.doneRules}
       </span>
     </p>
   );
 }
 
+/** English opt-in lines, named from the shared email list; a translation's own lines are in ALERT_TEXT. */
 const OPT_IN_TEXT = {
   newsletter: `The ${MAIL_KINDS.newsletter.name.toLowerCase()}, ${MAIL_KINDS.newsletter.when}: DOL's queue, visa bulletin moves, USCIS times and new rules.`,
   news: `${MAIL_KINDS.news.name}, now and then.`,
 } as const;
+
+function optInText(kind: "newsletter" | "news", lang: Lang): string {
+  return lang === "en" ? OPT_IN_TEXT[kind] : ALERT_TEXT[lang][kind];
+}
 
 /** A tick drawn into the checked box, so its state never rests on colour alone. */
 const TICK =
@@ -94,12 +113,14 @@ export function OptInBox({
   checked,
   onChange,
   className,
+  lang = "en",
 }: {
   id: string;
   kind: "newsletter" | "news";
   checked: boolean;
   onChange: (checked: boolean) => void;
   className?: string;
+  lang?: Lang;
 }) {
   // The whole row is the label and at least 44px tall: a one-line row on a
   // 390px phone had been a 23px target. No negative margin: two boxes sit 12px
@@ -116,7 +137,7 @@ export function OptInBox({
           TICK,
         )}
       />{" "}
-      <span className="text-sm leading-relaxed text-soft">{OPT_IN_TEXT[kind]}</span>
+      <span className="text-sm leading-relaxed text-soft">{optInText(kind, lang)}</span>
     </label>
   );
 }
@@ -133,6 +154,7 @@ export function OptInFold({
   onNews,
   onNewsletter,
   className,
+  lang = "en",
 }: {
   id: string;
   news: boolean;
@@ -140,18 +162,21 @@ export function OptInFold({
   onNews: (checked: boolean) => void;
   onNewsletter: (checked: boolean) => void;
   className?: string;
+  lang?: Lang;
 }) {
+  const t = ALERT_TEXT[lang];
   const ticked = (news ? 1 : 0) + (newsletter ? 1 : 0);
   return (
     <details className={cn("group", className)}>
       <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         <CaretRightIcon className="size-3.5 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
-        Other emails{ticked > 0 ? ` (${ticked} added)` : ""}
+        {t.otherEmails}
+        {ticked > 0 ? t.added(ticked) : ""}
       </summary>{" "}
       <div className="space-y-3 pb-1 pl-5">
-        <OptInBox id={`${id}-newsletter`} kind="newsletter" checked={newsletter} onChange={onNewsletter} />{" "}
-        <OptInBox id={`${id}-news`} kind="news" checked={news} onChange={onNews} />{" "}
-        <p className="text-sm text-muted-foreground">Off unless you tick them; the same confirmation covers them.</p>
+        <OptInBox id={`${id}-newsletter`} kind="newsletter" checked={newsletter} onChange={onNewsletter} lang={lang} />{" "}
+        <OptInBox id={`${id}-news`} kind="news" checked={news} onChange={onNews} lang={lang} />{" "}
+        <p className="text-sm text-muted-foreground">{t.optInNote}</p>
       </div>
     </details>
   );

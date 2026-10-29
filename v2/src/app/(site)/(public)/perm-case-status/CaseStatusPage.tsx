@@ -255,7 +255,12 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
           </p>
         </div>
       ) : null}
-      <div className="mt-8">
+      {/* A wage request, LCA or H-2A, H-2B and CW-1 result is English on every page for now: a translated page
+          says so in its own language, and marks the block as English for screen readers (WCAG 3.1.2). */}
+      {lang !== "en" && (pwdNumber || seasonalNumber || lcaNumber) ? (
+        <p className="mt-6 max-w-2xl text-base leading-relaxed text-soft">{t.otherProgramEnglish}</p>
+      ) : null}{" "}
+      <div className="mt-8" lang={lang !== "en" && (pwdNumber || seasonalNumber || lcaNumber) ? "en" : undefined}>
         {pwdNumber ? (
           <Suspense key={pwdNumber} fallback={<LookupSkeleton />}>
             <PwdLookup caseNumber={pwdNumber} />

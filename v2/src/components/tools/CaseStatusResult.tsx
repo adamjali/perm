@@ -555,6 +555,7 @@ function Answer({
           <AnswerNext
             caseNumber={caseNumber}
             program="perm"
+            lang={lang}
             dateLabel={t.estimatedDecision}
             date={estimate?.kind === "date" ? t.around(w.day(estimate.estimatedDate) ?? estimate.estimatedDate) : null}
             note={

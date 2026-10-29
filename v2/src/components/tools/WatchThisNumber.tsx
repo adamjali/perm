@@ -1,6 +1,7 @@
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { CasePushAlert } from "@/components/tools/CasePushAlert";
 import type { FlagProgram } from "@/lib/flagCaseNumber";
+import type { Lang } from "@/lib/i18n/lang";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,16 +19,18 @@ export function WatchThisNumber({
   program,
   variant = "card",
   className,
+  lang = "en",
 }: {
   caseNumber: string;
   program: FlagProgram;
   variant?: "inline" | "card";
   className?: string;
+  lang?: Lang;
 }) {
   return (
     <div className={cn(variant === "card" && "object p-5 sm:p-6", className)}>
-      <CaseAlertForm caseNumber={caseNumber} program={program} />{" "}
-      <CasePushAlert caseNumber={caseNumber} />
+      <CaseAlertForm caseNumber={caseNumber} program={program} lang={lang} />{" "}
+      <CasePushAlert caseNumber={caseNumber} lang={lang} />
     </div>
   );
 }

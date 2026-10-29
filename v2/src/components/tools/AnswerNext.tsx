@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
 import type { FlagProgram } from "@/lib/flagCaseNumber";
+import type { Lang } from "@/lib/i18n/lang";
 
 /** Where a pending result's email box is, for a link that lands on it. */
 export const WATCH_ANCHOR = "watch";
@@ -17,6 +18,7 @@ export function AnswerNext({
   note,
   caseNumber,
   program,
+  lang = "en",
 }: {
   dateLabel?: string;
   /** "Around October 26, 2026", or null when no date can be given. */
@@ -25,6 +27,8 @@ export function AnswerNext({
   note?: ReactNode;
   caseNumber: string;
   program: FlagProgram;
+  /** The page's language, for the alert boxes. */
+  lang?: Lang;
 }) {
   return (
     <div className="mt-6 grid grid-cols-1 gap-6 border-t border-foreground/10 pt-6 lg:grid-cols-2 lg:gap-10">
@@ -38,7 +42,7 @@ export function AnswerNext({
         {note ? <div className={date ? "mt-1 text-sm" : "text-base leading-relaxed text-soft"}>{note}</div> : null}
       </div>{" "}
       <div id={WATCH_ANCHOR}>
-        <WatchThisNumber caseNumber={caseNumber} program={program} variant="inline" />
+        <WatchThisNumber caseNumber={caseNumber} program={program} variant="inline" lang={lang} />
       </div>
     </div>
   );
