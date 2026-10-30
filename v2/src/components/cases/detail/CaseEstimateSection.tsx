@@ -1,24 +1,20 @@
 "use client";
 
 /**
- * DOL's live status for a saved case, and the estimated decision date, drawn
- * with the public site's own estimate visual.
+ * The DOL decision estimate for a saved case, folded into the case Overview
+ * beside the deadlines (right under "Next up"). It shows the estimated decision
+ * date and window, the line ahead when the case is in analyst review, and one
+ * compact line for DOL's live status plus the per-case watch toggle.
  *
- * ## What it shows and where each piece comes from
+ * The estimate is the shared corpus (useCaseCorpus) plus the case's DOL filing
+ * date (decoded from its number) run through the SAME `buildCaseEstimate` the
+ * public case page uses, so the app and the public site can never name
+ * different days. DOL's live word is shown here and as a chip in the case
+ * header; it never overwrites the attorney's own stage (that stays the case's
+ * `progressStatus`).
  *
- * - DOL's live status and the day our sweep saw it: the case's own
- *   `liveStatus` / `liveStatusSeenAt`, written by the 5-minute watch
- *   (convex/appCaseWatch.ts). This is INDEPENDENT of the shared corpus, so it
- *   renders even when the corpus failed to load.
- * - The firm's own stage beside it: a mismatch between the two is a signal
- *   worth seeing, never hidden, and DOL's word never overwrites the stage.
- * - The estimated decision date, window and basis: the shared corpus
- *   (useCaseCorpus) plus the case's DOL filing date (decoded from its number)
- *   run through the SAME `buildCaseEstimate` the public case page uses, so the
- *   app and the public site can never name different days.
- *
- * Everything is labelled an estimate and dated; nothing reads as a promise on a
- * case an attorney is managing.
+ * Renders nothing for a case with no DOL case number, and nothing when there is
+ * no estimate, no live status, and the watch is off.
  *
  * @module
  */
@@ -35,18 +31,8 @@ import { appCaseEstimate } from "@/lib/appCaseEstimate";
 import { CaseEstimatePanel } from "@/components/tools/CaseEstimate";
 import { LineAhead } from "@/components/tools/LineAhead";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
-import { canonicalStatus, statusMeaning } from "@/lib/caseStatusVocabulary";
+import { canonicalStatus } from "@/lib/caseStatusVocabulary";
 import { formatAsOf } from "@/lib/dolFormat";
-import { liveStatusTone, LIVE_DOT } from "@/components/cases/LiveStatusChip";
-
-/** The 5 case stages, labelled for the "your stage" line (client-safe, no convex import). */
-const STAGE_LABEL: Record<string, string> = {
-  pwd: "Prevailing wage",
-  recruitment: "Recruitment",
-  eta9089: "ETA-9089",
-  i140: "I-140",
-  closed: "Closed",
-};
 
 export interface CaseEstimateSectionCase {
   _id: Id<"cases">;
@@ -58,7 +44,7 @@ export interface CaseEstimateSectionCase {
   watchEnabled?: boolean | null;
 }
 
-/** The per-case watch switch. Absent `watchEnabled` means on. */
+/** The per-case DOL watch switch. Absent `watchEnabled` means on. */
 function WatchToggle({ caseId, enabled }: { caseId: Id<"cases">; enabled: boolean }) {
   const [on, setOn] = useState(enabled);
   const [busy, setBusy] = useState(false);
@@ -93,28 +79,17 @@ function WatchToggle({ caseId, enabled }: { caseId: Id<"cases">; enabled: boolea
 export function CaseEstimateSection({ caseData }: { caseData: CaseEstimateSectionCase }) {
   const corpus = useCaseCorpus();
   const parsed = caseData.caseNumber ? parseCaseNumber(caseData.caseNumber) : null;
+
+  // No DOL number: nothing to estimate or watch. Keep the Overview clean.
+  if (!parsed) return null;
+
   const watchOff = caseData.watchEnabled === false;
-
-  // No DOL number: nothing to watch or estimate. Invite one, quietly.
-  if (!parsed) {
-    return (
-      <section aria-labelledby="dol-live-h" className="border-t-2 border-[var(--object-border)] pt-4">
-        <h2 id="dol-live-h" className="font-heading text-lg font-bold">
-          DOL&rsquo;s live status
-        </h2>{" "}
-        <p className="mt-2 text-sm text-muted-foreground">
-          Add this case&rsquo;s DOL number to watch its live status and see an estimated decision date.
-        </p>
-      </section>
-    );
-  }
-
   const liveStatus = caseData.liveStatus ?? null;
   const live = liveStatus ? canonicalStatus(liveStatus) : null;
-  const tone = live ? liveStatusTone(live) : "neutral";
-  const meaning = live ? statusMeaning(live) : null;
-  const seen = typeof caseData.liveStatusSeenAt === "number" ? formatAsOf(new Date(caseData.liveStatusSeenAt).toISOString().slice(0, 10)) : null;
-  const stageLabel = caseData.caseStatus ? (STAGE_LABEL[caseData.caseStatus] ?? caseData.caseStatus) : null;
+  const seen =
+    typeof caseData.liveStatusSeenAt === "number"
+      ? formatAsOf(new Date(caseData.liveStatusSeenAt).toISOString().slice(0, 10))
+      : null;
 
   const today = new Date().toISOString().slice(0, 10);
   const est = corpus
@@ -127,57 +102,33 @@ export function CaseEstimateSection({ caseData }: { caseData: CaseEstimateSectio
       })
     : null;
 
-  return (
-    <section aria-labelledby="dol-live-h" className="border-t-2 border-[var(--object-border)] pt-4">
-      <h2 id="dol-live-h" className="font-heading text-lg font-bold">
-        DOL&rsquo;s live status
-      </h2>{" "}
+  // Nothing worth a block: no estimate, no live status, and not watching.
+  if (!est?.estimate && !live && watchOff) return null;
 
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        {/* DOL's live status, from the case's own record. */}
-        <div className="border border-border p-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold text-muted-foreground">From DOL</p>{" "}
-            <WatchToggle caseId={caseData._id} enabled={!watchOff} />
-          </div>
+  return (
+    <section aria-label="DOL decision estimate" className="space-y-3">
+      {/* DOL's live status and the per-case watch, one compact line. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <p className="text-sm text-muted-foreground">
           {live ? (
             <>
-              <p className="mt-1 flex items-center gap-2 font-heading text-base font-bold">
-                <span className={`inline-block h-2.5 w-2.5 shrink-0 ${LIVE_DOT[tone]}`} aria-hidden="true" />
-                {live}
-              </p>
-              {meaning ? <p className="mt-1 text-sm text-muted-foreground">{meaning}</p> : null}
-              {seen ? <p className="mt-1 text-xs text-muted-foreground">DOL&rsquo;s record, seen {seen}</p> : null}
+              DOL&rsquo;s live status:{" "}
+              <span className="font-semibold text-foreground">{live}</span>
+              {seen ? <> &middot; seen {seen}</> : null}
             </>
           ) : watchOff ? (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Watching is off for this case. Turn it on to hear when DOL moves it.
-            </p>
+            "DOL watch is off for this case."
           ) : (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Not seen yet. We check DOL on weekdays and will record its status here.
-            </p>
+            "Not seen on DOL yet. We check on weekdays."
           )}
-        </div>
-
-        {/* The firm's own stage, for comparison. DOL never overwrites it. */}
-        <div className="border border-border p-4">
-          <p className="text-xs font-semibold text-muted-foreground">Your stage</p>{" "}
-          <p className="mt-1 font-heading text-base font-bold">{stageLabel ?? "Not set"}</p>{" "}
-          <p className="mt-1 text-xs text-muted-foreground">You keep this; DOL&rsquo;s word above never changes it.</p>
-        </div>
+        </p>{" "}
+        <WatchToggle caseId={caseData._id} enabled={!watchOff} />
       </div>
 
-      {est?.estimate ? (
-        <div className="mt-4">
-          <CaseEstimatePanel est={est.estimate} />
-        </div>
-      ) : null}
+      {est?.estimate ? <CaseEstimatePanel est={est.estimate} /> : null}
 
       {est?.lineAhead && live === "ANALYST REVIEW" && est.lineAhead.length > 0 ? (
-        <div className="mt-4">
-          <LineAhead rows={est.lineAhead} perDay={corpus?.decisionPace?.pace ?? null} />
-        </div>
+        <LineAhead rows={est.lineAhead} perDay={corpus?.decisionPace?.pace ?? null} />
       ) : null}
     </section>
   );

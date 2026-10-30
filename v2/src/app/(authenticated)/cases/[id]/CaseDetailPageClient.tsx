@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
-import { CaseEstimateSection } from "@/components/cases/detail/CaseEstimateSection";
+import { LiveStatusChip } from "@/components/cases/LiveStatusChip";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { getStageIndex } from "@/components/cases/detail/next-up-section.utils";
 import {
@@ -629,6 +629,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           ) : null}
           <CaseStageBadge stage={caseData.caseStatus} />
           <ProgressStatusBadge status={caseData.progressStatus} />
+          {caseData.liveStatus ? <LiveStatusChip status={caseData.liveStatus} /> : null}
           {isProfessionalOccupation ? (
             <Badge className="font-normal" title="Professional occupation: the extra recruitment steps apply">
               Professional
@@ -643,8 +644,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
         {!isClosed ? <StageProgress index={currentStage} /> : null}
       </header>
-
-      <CaseEstimateSection caseData={caseData} />
 
       <CaseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}>
         <TabPanel id="overview" activeTab={activeTab}>

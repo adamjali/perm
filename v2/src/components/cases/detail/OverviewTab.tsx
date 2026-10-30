@@ -11,6 +11,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
 import { QuickEditFields, isEditableAction, isComplexAction } from "./quick-edit";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";
+import { CaseEstimateSection } from "./CaseEstimateSection";
 import { QuickStatsPanel } from "./QuickStatsPanel";
 import { VerticalTimeline } from "./VerticalTimeline";
 import { RecruitmentResultsCard } from "./RecruitmentResultsCard";
@@ -283,6 +284,9 @@ export function OverviewTab({
           </section>
         );
       })()}
+
+      {/* DOL decision estimate, folded in beside the deadlines. */}
+      <CaseEstimateSection caseData={caseData} />
 
       {/* 2-Column Layout: Timeline Sidebar + Main (matching mockup) */}
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">

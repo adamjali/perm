@@ -82,7 +82,7 @@ export const WatchOff: Story = {
   args: { caseData: { ...BASE, liveStatus: null, watchEnabled: false } },
 };
 
-/** No DOL case number: a quiet prompt, nothing to watch or estimate. */
+/** No DOL case number: the block renders nothing (the header shows no DOL chip either). */
 export const NoCaseNumber: Story = {
   args: { caseData: { ...BASE, caseNumber: null, liveStatus: null } },
 };
