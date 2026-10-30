@@ -852,6 +852,27 @@ def http_get(url: str, accept: str = "*/*", retries: int = 3, limit: int = AGEND
     raise RuntimeError(f"{urllib.parse.urlsplit(url).netloc} did not answer: {last}")
 
 
+class OiraUnreachable(RuntimeError):
+    """reginfo refused or didn't answer for OIRA's lists (a 502, a timeout, a
+    maintenance page): a warning, read again next run. The rule watch's own
+    freshness row still ages as the alarm when the outage lasts."""
+
+
+def oira_list(get, url: str):
+    """One of OIRA's lists, or OiraUnreachable when reginfo is down. A file
+    that answers but isn't OIRA's list still raises ValueError: that is a
+    change at OIRA, and the run fails on it."""
+    try:
+        blob = get(url, "application/xml")
+    except RobotsDisallowed:
+        raise
+    except RuntimeError as exc:  # http_get: refused, or no answer after its retries
+        raise OiraUnreachable(f"OIRA's list unread ({exc})") from exc
+    if re.match(rb"\s*(<!doctype\s+html|<html)", blob[:300], re.I):
+        raise OiraUnreachable("reginfo answered with a web page, not OIRA's list")
+    return parse_oira(blob)
+
+
 @dataclass
 class Read:
     facts: dict[str, list[dict]]
@@ -864,7 +885,8 @@ def collect(get, stored: dict[str, dict], today: str, follow: tuple[str, ...] = 
     """Every fact the sources hold today about the rules this site follows.
 
     `get(url, accept)` returns bytes; tests pass one that serves fixtures.
-    OIRA is required: without its lists the run fails. Public inspection and
+    OIRA is required: without its lists nothing is read (OiraUnreachable when
+    reginfo is down, ValueError when its file changed). Public inspection and
     the Register are read after it, and a failure there is a note, because the
     rows they would have added are still right without them. `agenda` is an
     edition `read_agenda` read this run, or None when the last read stands:
@@ -874,8 +896,8 @@ def collect(get, stored: dict[str, dict], today: str, follow: tuple[str, ...] = 
     """
     facts: dict[str, list[dict]] = {}
     notes: list[str] = []
-    under = parse_oira(get(OIRA_UNDER_REVIEW, "application/xml"))
-    done = parse_oira(get(OIRA_COMPLETED, "application/xml"))
+    under = oira_list(get, OIRA_UNDER_REVIEW)
+    done = oira_list(get, OIRA_COMPLETED)
     if not under.reviews:
         raise ValueError("OIRA's under-review list holds no reviews")
     for r in under.reviews + done.reviews:
@@ -953,7 +975,25 @@ def run(db, get, today: str, follow: tuple[str, ...] = (), force_agenda: bool = 
         agenda_error = f"Unified Agenda refused: {exc}"
 
     ask_quiet = db is None or (read_doc(db, QUIET_DOC) or {}).get("day") != today
-    read = collect(get, stored, today, follow, agenda=agenda, sleep=sleep, ask_quiet=ask_quiet)
+    try:
+        read = collect(get, stored, today, follow, agenda=agenda, sleep=sleep, ask_quiet=ask_quiet)
+    except OiraUnreachable as exc:
+        # reginfo down (owner, Oct 30 2026: a warning, not a red health email).
+        # Nothing is written or stamped: OIRA's lists come first, and the rule
+        # watch's freshness row ages into the health check's warning, then its
+        # failure, if the outage outlasts its budget.
+        note = f"OIRA unread, read again next run: {exc}"
+        print(f"::warning::{note}", flush=True)
+        if agenda_error:
+            print(f"::error::{agenda_error}", flush=True)
+        if db is not None:
+            record_run(db, SCRIPT, status="partial" if agenda_error else "ok", rows_written=0,
+                       note=note + (f"; {agenda_error}" if agenda_error else ""), started_at=started)
+        out = os.environ.get("GITHUB_OUTPUT")
+        if out:
+            with open(out, "a") as fh:
+                fh.write("rules_changed=false\n")
+        return 1 if agenda_error else 0
     now_ms = int(time.time() * 1000)
     p = plan(stored, read.facts, now_ms)
     for rin, row, is_new in p.writes:

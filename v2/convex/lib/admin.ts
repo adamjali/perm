@@ -113,6 +113,7 @@ export type UserSummaryRow = {
 export interface AdminDashboardData {
   generatedAt: number;
   totalUsers: number;
+  /** Accounts the person used in the last 30 days: a sign-in or the app's heartbeat. */
   activeUsers: number;
   deletedUsers: number;
   pendingDeletion: number;
@@ -120,6 +121,8 @@ export interface AdminDashboardData {
   /** Active accounts whose role is practice work, and those tracking their own case. */
   practiceUsers: number;
   ownCaseUsers: number;
+  /** Practice accounts used in the last 30 days: the attorneys and staff really using the app. */
+  activePracticeUsers: number;
   totalCasesInSystem: number;
   users: UserSummaryRow[];
   totalCount: number;
@@ -162,6 +165,9 @@ function compareUserField(
   return order === "asc" ? cmp : -cmp;
 }
 
+/** How recent use must be for an account to count as active (owner, Oct 30 2026). */
+export const ACTIVE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
 /** The most rows the admin dashboard loads from each table. */
 const DASHBOARD_READ = {
   users: 2000,
@@ -180,6 +186,8 @@ export async function getAdminDashboardDataHelper(
   const sortBy = opts.sortBy ?? "lastActivity";
   const sortOrder = opts.sortOrder ?? "desc";
   const search = opts.search?.toLowerCase().trim();
+  const generatedAt = Date.now();
+  const activeSince = generatedAt - ACTIVE_WINDOW_MS;
 
   // Bulk-load all 5 tables, each under its read cap
   const [users, authAccounts, authSessions, userProfiles, cases] = await Promise.all([
@@ -225,6 +233,7 @@ export async function getAdminDashboardDataHelper(
   let usersWithCases = 0;
   let practiceUsers = 0;
   let ownCaseUsers = 0;
+  let activePracticeUsers = 0;
 
   // Assemble per-user summary
   const userSummaries = users.map((user) => {
@@ -294,7 +303,14 @@ export async function getAdminDashboardDataHelper(
 
     // Aggregate counters
     totalUsers++;
-    if (accountStatus === "active") activeUsers++;
+    // Active means used lately, not merely undeleted: every account but the
+    // deleted ones had counted (266 of 267 on Oct 30 2026).
+    // Read from the person's own use only: a sign-in, or the app's 5-minute
+    // heartbeat (lastActiveAt). lastActivity also moves on background writes
+    // (calendar tokens, push clean-up, email links), so it can't say this.
+    const lastUse = Math.max(lastLoginTime ?? 0, profile?.lastActiveAt ?? 0);
+    const recent = accountStatus === "active" && lastUse >= activeSince;
+    if (recent) activeUsers++;
     if (accountStatus === "deleted") deletedUsers++;
     if (accountStatus === "pending_deletion") pendingDeletion++;
     if (totalCasesCount > 0) usersWithCases++;
@@ -302,6 +318,7 @@ export async function getAdminDashboardDataHelper(
     const audience = audienceOf(role);
     if (accountStatus === "active" && audience === "practice") practiceUsers++;
     if (accountStatus === "active" && audience === "own-case") ownCaseUsers++;
+    if (recent && audience === "practice") activePracticeUsers++;
 
     return {
       userId: user._id,
@@ -352,7 +369,7 @@ export async function getAdminDashboardDataHelper(
   const pageUsers = filtered.slice(start, start + pageSize);
 
   return {
-    generatedAt: Date.now(),
+    generatedAt,
     totalUsers,
     activeUsers,
     deletedUsers,
@@ -360,6 +377,7 @@ export async function getAdminDashboardDataHelper(
     usersWithCases,
     practiceUsers,
     ownCaseUsers,
+    activePracticeUsers,
     totalCasesInSystem: cases.length,
     users: pageUsers,
     totalCount,

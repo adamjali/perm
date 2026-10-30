@@ -370,7 +370,12 @@ def agenda_checks() -> None:
         with contextlib.redirect_stdout(out):
             code = rp.run(db, fixture_get(overrides), "2026-10-27", force_agenda=force, sleep=lambda _s: None)
         last = rp.query_dicts(db, "SELECT status, note FROM ingest_runs ORDER BY id DESC LIMIT 1")[0]
-        fresh = {r["dataset"]: r for r in rp.query_dicts(db, "SELECT dataset, as_of, max_age_days FROM data_freshness")}
+        try:
+            fresh = {r["dataset"]: r for r in rp.query_dicts(db, "SELECT dataset, as_of, max_age_days FROM data_freshness")}
+        except Exception as exc:  # a run that stamped nothing never made the table
+            if "no such table" not in str(exc):
+                raise
+            fresh = {}
         return code, last, fresh, out.getvalue()
 
     run_db = FakeDb()
@@ -405,6 +410,17 @@ def agenda_checks() -> None:
           code == 1 and last["status"] == "partial" and "Employment and Training Administration" in last["note"]
           and "::error::" in out and "1205-AC29" in rp.stored_rows(fresh_db) and "rule-pipeline-agenda" not in fresh,
           f"{code} {last} {sorted(fresh)}")
+    # OIRA down (Oct 30 2026): a warning, never a red run, and nothing written.
+    down_db = FakeDb()
+    code, last, fresh, out = whole_run(down_db, overrides={rp.OIRA_UNDER_REVIEW: RuntimeError("www.reginfo.gov did not answer: HTTP Error 502")})
+    check("OIRA down is a warning: the run stays ok, says why, and writes nothing",
+          code == 0 and last["status"] == "ok" and "::warning::OIRA unread" in out and "502" in last["note"]
+          and not rp.stored_rows(down_db) and "rule-pipeline" not in fresh, f"{code} {last} {sorted(fresh)}")
+    code, last, fresh, out = whole_run(FakeDb(), overrides={rp.OIRA_COMPLETED: b"<!DOCTYPE html><html><body>Site maintenance</body></html>"})
+    check("so is a maintenance page in place of OIRA's list", code == 0 and last["status"] == "ok" and "web page" in last["note"],
+          f"{code} {last}")
+    check("but a file that answers and isn't OIRA's list still fails the run",
+          raises(lambda: whole_run(FakeDb(), overrides={rp.OIRA_UNDER_REVIEW: b"<?xml version='1.0'?><OTHER/>"}), ValueError) is not None)
     check("a defect while reading the agenda crashes the run",
           raises(lambda: whole_run(FakeDb(), overrides={rp.AGENDA_REPORTS: TypeError("bug")}), TypeError) is not None)
 

@@ -13,6 +13,7 @@ interface AdminStatsGridProps {
     /** Absent from a dashboard built before the audience mark existed. */
     practiceUsers?: number;
     ownCaseUsers?: number;
+    activePracticeUsers?: number;
     totalCasesInSystem: number;
   };
 }
@@ -27,17 +28,20 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       bgColor: "bg-data-info/10",
     },
     {
-      label: "Active users",
-      value: data.activeUsers,
-      icon: UserCheckIcon,
+      // Attorneys, paralegals, HR and employers who used the app lately: the
+      // people the app is for, and the figure that says whether it's working.
+      label: "In practice, active in 30 days",
+      value: data.activePracticeUsers ?? 0,
+      note: `of ${(data.practiceUsers ?? 0).toLocaleString()} in practice`,
+      icon: BriefcaseIcon,
       color: "text-primary",
       bgColor: "bg-tint",
     },
     {
-      // Attorneys, paralegals, HR and employers: the people the app is for.
-      label: "In practice",
-      value: data.practiceUsers ?? 0,
-      icon: BriefcaseIcon,
+      label: "Active in 30 days",
+      value: data.activeUsers,
+      note: "signed in or used the app",
+      icon: UserCheckIcon,
       color: "text-primary",
       bgColor: "bg-tint",
     },
@@ -95,7 +99,8 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
           <CardContent>
             <div className={`text-3xl font-heading font-bold ${stat.color}`}>
               {stat.value.toLocaleString()}
-            </div>
+            </div>{" "}
+            {"note" in stat && stat.note ? <p className="mt-1 text-sm text-muted-foreground">{stat.note}</p> : null}
           </CardContent>
         </Card>
       ))}
