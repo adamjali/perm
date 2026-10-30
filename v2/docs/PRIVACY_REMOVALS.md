@@ -46,16 +46,28 @@ So a request isn't a legal obligation today. The owner has chosen to honor them 
    Cloudflare's 403 where it expects a 404; check from the server instead:
    `ssh permtracker 'curl -s -o /dev/null -w "%{http_code}" -H "Host: permtracker.app" http://127.0.0.1:8081/perm-employers/<slug>'`.
    The name-suggestion index loads a few minutes after a deploy (`"warming"`); it's built from the same filtered rows.
-4. **By hand in Search Console** (no API exists): Removals > New request > Temporarily remove URL for the employer
-   page; then Clear snippet for any other page the person named. **And in Bing Webmaster Tools** (it serves Yahoo, DuckDuckGo
-   and Ecosia too): Configuration > Block URLs (`bing.com/webmasters/searchconfig/blockurl?siteUrl=https://permtracker.app/`)
-   > Add URL to block, the employer page, URL type Page, Block type **URL & Cache** (the default is Cache only),
-   90 days; read it back in the list. IndexNow, in step 3, already told Yandex, Seznam, Naver and the other IndexNow
-   engines. Crawlers with no removal tool (Apple, the AI crawlers) drop the page when they next fetch it and get 404. Check the Internet Archive too:
+4. **In Search Console and Bing** (no API exists; done in Claude-in-Chrome on the owner's go). **Google Search
+   Console** (the `sc-domain:permtracker.app` property): Removals > New request > Temporarily remove URL, choose
+   **"Remove all URLs with this prefix"** on `https://permtracker.app/perm-employers/<slug>` (the prefix also covers
+   the page's `/opengraph-image` card route), submit; it reads "Processing request" and is cancellable. Clear snippet
+   for any other page the person named. **And in Bing Webmaster Tools** (it serves Yahoo, DuckDuckGo and Ecosia too):
+   Configuration > Block URLs (`bing.com/webmasters/searchconfig/blockurl?siteUrl=https://permtracker.app/`) > Add URL
+   to block, the employer page, URL type Page, Block type **URL & Cache** (the default is Cache only), 90 days; read it
+   back in the list. **The account matters in Bing:** the browser's default Bing session may be a different account
+   that does not own permtracker.app, so the page reads "User is unauthorized to access the site"; have the owner
+   switch Bing to the account that owns the permtracker.app property first (never sign in yourself). **Before calling
+   it done, cross-check EVERY withheld slug (`withhold.py status --show`) against BOTH consoles** — a prior removal had
+   its Google removal done but its Bing block missed. IndexNow, in step 3, already told Yandex, Seznam, Naver and the
+   other IndexNow engines. Crawlers with no removal tool (Apple, the AI crawlers) drop the page when they next fetch it
+   and get 404. Check the Internet Archive too:
    `https://web.archive.org/cdx/search/cdx?url=permtracker.app/perm-employers/<slug>&output=json`. If it holds a
    copy, write to the Archive only with the owner's yes: that's an outward-facing message.
 5. **Reply** from support@ (`supportEmail:replyToEmail`, threaded), on the owner's yes for that message. Pass the
-   three paragraphs only: the email adds "Hi <first name>," and the sign-off itself.
+   three paragraphs only: the email adds "Hi <first name>," and the sign-off itself. **A support-flow reply sends via
+   Resend and does NOT land in the Gmail thread**, so to check whether a requester was already replied to, read the
+   Convex `supportEmails` row (`repliedAt` / `replyBody` / `resendEmailId`), not just Gmail. Keep the wording soft:
+   say the data is public and anyone can access it; do NOT claim a right to publish it ("we're allowed to publish" is
+   too strong).
 
    > Hi <first name>,
    >
