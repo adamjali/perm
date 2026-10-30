@@ -61,7 +61,7 @@ function Frame({ children }: { children: ReactNode }) {
   return (
     <TourConvex>
       <CaseCorpusProvider corpus={CORPUS}>
-        <div className="mx-auto max-w-3xl p-6">{children}</div>
+        <div className="mx-auto max-w-[1300px] bg-tint p-6">{children}</div>
       </CaseCorpusProvider>
     </TourConvex>
   );

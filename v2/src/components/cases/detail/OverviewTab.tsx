@@ -285,9 +285,6 @@ export function OverviewTab({
         );
       })()}
 
-      {/* DOL decision estimate, folded in beside the deadlines. */}
-      <CaseEstimateSection caseData={caseData} />
-
       {/* 2-Column Layout: Timeline Sidebar + Main (matching mockup) */}
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
         {/* Sidebar: Vertical Timeline */}
@@ -578,6 +575,9 @@ export function OverviewTab({
           <InlineCaseTimeline caseData={caseData} />
         </div>
       </div>
+
+      {/* DOL decision card, at the foot of the Overview (owner, Oct 30 2026: "move this to the bottom"). */}
+      <CaseEstimateSection caseData={caseData} />
 
       {/* Confirmation dialog when server finds existing template */}
       <Dialog open={!!pendingTemplateUpdate} onOpenChange={(open) => { if (!open) setPendingTemplateUpdate(null); }}>
