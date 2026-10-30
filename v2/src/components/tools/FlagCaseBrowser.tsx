@@ -766,7 +766,10 @@ export function FlagCaseBrowser({
             {formatInt(summary.decided)} {program.decidedLabel.toLowerCase()}.
           </p>
         ) : null}{" "}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        {/* The which-requests buttons on their own row (their counts arrive
+            with the data), then a fixed grid for order and month, so nothing's
+            width depends on the data (Oct 30 2026). */}
+        <div className="mt-4 flex flex-col gap-3">
           <div role="group" aria-label="Which requests" className="flex flex-wrap gap-2">
             {(["all", "pending", "decided"] as const).map((k) => (
               <Fragment key={k}>{" "}
@@ -785,38 +788,40 @@ export function FlagCaseBrowser({
               </Fragment>
             ))}
           </div>{" "}
-          <label className="ml-auto flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
-            <span>Order</span>{" "}
-            <select
-              value={order}
-              onChange={(e) => {
-                setOrder(e.target.value === "oldest" ? "oldest" : "newest");
-                setCursors([]);
-              }}
-              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <option value="newest">{"Newest filing first "}</option>
-              <option value="oldest">{"Oldest filing first "}</option>
-            </select>
-          </label>{" "}
-          <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
-            <span>Filed in</span>{" "}
-            <select
-              value={month}
-              onChange={(e) => {
-                setMonth(e.target.value);
-                setCursors([]);
-              }}
-              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <option value="">Any month</option>
-              {months.map((m) => (
-                <option key={m.month} value={m.month}>
-                  {formatMonth(m.month) ?? m.month} ({formatInt(m.total)})
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-2 lg:max-w-3xl [&>*]:min-w-0">
+            <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold">
+              <span className="shrink-0">Order</span>{" "}
+              <select
+                value={order}
+                onChange={(e) => {
+                  setOrder(e.target.value === "oldest" ? "oldest" : "newest");
+                  setCursors([]);
+                }}
+                className="min-h-[44px] w-full min-w-0 flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="newest">{"Newest filing first "}</option>
+                <option value="oldest">{"Oldest filing first "}</option>
+              </select>
+            </label>{" "}
+            <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold">
+              <span className="shrink-0">Filed in</span>{" "}
+              <select
+                value={month}
+                onChange={(e) => {
+                  setMonth(e.target.value);
+                  setCursors([]);
+                }}
+                className="min-h-[44px] w-full min-w-0 flex-1 truncate border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="">Any month</option>
+                {months.map((m) => (
+                  <option key={m.month} value={m.month}>
+                    {formatMonth(m.month) ?? m.month} ({formatInt(m.total)})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>{" "}
         {listFailed ? (
           <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 bg-tint p-4 border-2 border-border" />

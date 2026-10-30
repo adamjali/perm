@@ -88,6 +88,16 @@ export interface FilterableStatTableProps<T> {
   totalCount?: number;
   /** Fetches the whole corpus. Called at most once. */
   loadAll?: () => Promise<T[]>;
+  /**
+   * The filing floor of what `loadAll` returns, when it isn't the whole corpus.
+   *
+   * The entity indexes count every entity with a page (`totalCount`, floor 1)
+   * but the bulk download carries only those with this many filings or more
+   * (`MIN_TOTAL_FOR_BULK`). Without saying so the table promised "Load all
+   * 5,571" law firms and then read "All 2,882" (owner, Oct 30 2026). With it,
+   * every count names the list it is counting.
+   */
+  fullListFloor?: number;
   facets?: Facet<T>[];
   csv?: CsvSpec<T>;
   pageSize?: number;
@@ -149,6 +159,7 @@ export function FilterableStatTable<T>({
   noun,
   totalCount,
   loadAll,
+  fullListFloor,
   facets = [],
   csv,
   pageSize: initialPageSize = 50,
@@ -177,6 +188,9 @@ export function FilterableStatTable<T>({
 
   const corpusSize = totalCount ?? rows.length;
   const partial = allRows === null && corpusSize > rows.length;
+  /** The loaded list is the floored one and holds fewer than the corpus. */
+  const floored = allRows !== null && fullListFloor !== undefined && allRows.length < corpusSize;
+  const floorWords = fullListFloor !== undefined ? `with ${fullListFloor} or more filings` : "";
 
   /** Fetch the whole corpus, once, on the first interaction of any kind. */
   const ensureAll = useCallback(() => {
@@ -350,10 +364,15 @@ export function FilterableStatTable<T>({
 
   return (
     <div ref={tableTop} className="scroll-mt-28">
-      {/* Controls */}
+      {/* Controls. A fixed grid, so no control's width depends on the data:
+          a flex row sized each select to its longest option, which changed
+          when the full list loaded, and the whole row rewrapped on the first
+          tap (owner's iPhone, Oct 30 2026: "Search F" squeezed beside State,
+          fixed only after a tap). One column on a phone, two from 640px with
+          Search across the top, three from 1280px. */}
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary sm:max-w-sm shadow-hard-sm">
+        <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+          <label className="flex min-h-[44px] w-full items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm sm:col-span-2 xl:col-span-1">
             <span className="text-sm font-bold text-muted-foreground">
               Search
             </span>{" "}
@@ -373,7 +392,7 @@ export function FilterableStatTable<T>({
 
           {facets.map((f) => (
             <Fragment key={f.key}>{" "}
-            <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm">
+            <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm">
               <span className="text-sm font-bold text-muted-foreground">
                 {f.label}
               </span>{" "}
@@ -406,7 +425,7 @@ export function FilterableStatTable<T>({
             <button
               type="button"
               onClick={downloadCsv}
-              className={buttonVariants({ variant: "outline", size: "default" })}
+              className={buttonVariants({ variant: "outline", size: "default", className: "justify-self-start" })}
             >
               Download CSV
             </button>
@@ -418,7 +437,11 @@ export function FilterableStatTable<T>({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
             {loading ? (
-              <>Loading all {corpusSize.toLocaleString("en-US")} {noun}…</>
+              fullListFloor !== undefined ? (
+                <>Loading every one of the {noun} {floorWords}…</>
+              ) : (
+                <>Loading all {corpusSize.toLocaleString("en-US")} {noun}…</>
+              )
             ) : loadError ? (
               <span className="font-bold text-data-bad-ink">
                 That list didn’t load. Showing the top{" "}
@@ -427,8 +450,10 @@ export function FilterableStatTable<T>({
             ) : partial ? (
               <>
                 Showing the top {rows.length.toLocaleString("en-US")} of{" "}
-                {corpusSize.toLocaleString("en-US")} {noun}. Search or sort to
-                read all of them.
+                {corpusSize.toLocaleString("en-US")} {noun}.{" "}
+                {fullListFloor !== undefined
+                  ? `Search or sort to load every one ${floorWords}.`
+                  : "Search or sort to read all of them."}
               </>
             ) : usingRemote && remote?.more ? (
               <>
@@ -452,7 +477,17 @@ export function FilterableStatTable<T>({
                 <strong className="font-bold">
                   {visible.length.toLocaleString("en-US")}
                 </strong>{" "}
-                of {working.length.toLocaleString("en-US")} {noun} match
+                of {working.length.toLocaleString("en-US")} {noun}
+                {floored ? ` ${floorWords}` : ""} match
+              </>
+            ) : floored ? (
+              <>
+                The{" "}
+                <strong className="font-bold">
+                  {working.length.toLocaleString("en-US")}
+                </strong>{" "}
+                {noun} {floorWords}, of {corpusSize.toLocaleString("en-US")}. A name not listed
+                here is looked up across all of them.
               </>
             ) : (
               <>
@@ -473,7 +508,9 @@ export function FilterableStatTable<T>({
                 onClick={ensureAll}
                 className={buttonVariants({ variant: "outline", size: "lg" })}
               >
-                Load all {corpusSize.toLocaleString("en-US")}
+                {fullListFloor !== undefined
+                  ? `Load all with ${fullListFloor}+ filings`
+                  : `Load all ${corpusSize.toLocaleString("en-US")}`}
               </button>
             ) : null}{" "}
             <label className="flex min-h-[44px] items-center gap-2 text-sm text-muted-foreground">
@@ -486,7 +523,7 @@ export function FilterableStatTable<T>({
                   setPageSize(Number(e.target.value));
                   setPage(0);
                 }}
-                className="min-h-11 border-2 border-input bg-card px-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="min-h-11 w-24 border-2 border-input bg-card px-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {PAGE_SIZES.map((n) => (
                   <option key={n} value={n}>{`${n === 0 ? "All" : n} `}</option>

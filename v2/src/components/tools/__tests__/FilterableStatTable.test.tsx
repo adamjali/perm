@@ -133,6 +133,38 @@ describe("FilterableStatTable", () => {
     expect(screen.getByRole("button", { name: /Load all 12,240/ })).toBeInTheDocument();
   });
 
+  it("names the floored list it loads, never promising every row (Oct 30 2026)", async () => {
+    // The firm index counts every firm with a page (5,571) but the bulk list
+    // holds only firms with 5+ filings (2,882). It promised "Load all 5,571"
+    // and then read "All 2,882 law firms".
+    const loaded: Row[] = [...ROWS, { name: "Zynga", total: 10, state: "CA", days: 500 }];
+    render(
+      <FilterableStatTable
+        rows={ROWS}
+        {...base()}
+        totalCount={12}
+        loadAll={async () => loaded}
+        fullListFloor={5}
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toMatch(
+      /Showing the top 3 of 12 employers\. Search or sort to load every one with 5 or more filings\./,
+    );
+    expect(screen.getByRole("button", { name: "Load all with 5+ filings" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Load all 12/ })).toBeNull();
+
+    fireEvent.focus(screen.getByRole("searchbox"));
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toMatch(
+        /The 4 employers with 5 or more filings, of 12\. A name not listed here is looked up across all of them\./,
+      ),
+    );
+    expect(screen.getByRole("status").textContent).not.toMatch(/^All 4/);
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "amaz" } });
+    expect(screen.getByRole("status").textContent).toMatch(/1 of 4 employers with 5 or more filings match/);
+  });
+
   it("fetches the whole corpus on the first interaction, and only once", async () => {
     const all: Row[] = [
       ...ROWS,

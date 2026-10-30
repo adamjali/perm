@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import type { EntityKind, EntityRow } from "@/lib/entityPayload";
+import { MIN_TOTAL_FOR_BULK, type EntityKind, type EntityRow } from "@/lib/entityPayload";
 import { fetchAllEntities, searchEntities } from "@/lib/fetchEntities";
 import { LiveOnlyEmployerResults } from "@/components/entities/LiveOnlyEmployerResults";
 
@@ -125,6 +125,7 @@ export function EntityExplorer({
       noun={cfg.noun}
       totalCount={total}
       loadAll={loadAll}
+      fullListFloor={MIN_TOTAL_FOR_BULK}
       searchRemote={searchRemote}
       queryFromUrl
       suggestKind={kind}

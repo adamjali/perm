@@ -190,70 +190,84 @@ export function LiveCaseBrowser({
           Wage, law firm, state and decision date arrive when DOL publishes the case.
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <div role="group" aria-label="Which live cases" className="flex flex-wrap gap-2">
-            {(["all", "pending", "decided"] as const).map((k) => (
-              <Fragment key={k}>{" "}
+        {/* Two rows, so nothing's width depends on the data: the which-cases
+            buttons (their counts arrive with the data) and the letter chip on
+            one, then a fixed grid for search, sort and month. In one wrapping
+            row the counts and the month list arriving reflowed everything, and
+            on a phone the search box rendered 7px wide (Oct 30 2026). */}
+        <div className="mt-5 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div role="group" aria-label="Which live cases" className="flex flex-wrap gap-2">
+              {(["all", "pending", "decided"] as const).map((k) => (
+                <Fragment key={k}>{" "}
+                <button
+                  type="button"
+                  aria-pressed={kind === k}
+                  onClick={() => pickKind(k)}
+                  className={choiceVariants({ on: kind === k })}
+                >
+                  {KIND_LABEL[k]}
+                  {counts && k !== "all" ? ` · ${formatInt(counts[k])}` : ""}
+                </button>
+                </Fragment>
+              ))}
+            </div>{" "}
+            {letter ? (
               <button
                 type="button"
-                aria-pressed={kind === k}
-                onClick={() => pickKind(k)}
-                className={choiceVariants({ on: kind === k })}
+                onClick={() => setLetter("")}
+                className={choiceVariants({ on: true })}
+                aria-label={`Showing employers from ${letter === OTHER_INITIAL ? "a number or symbol" : letter}; show every employer`}
               >
-                {KIND_LABEL[k]}
-                {counts && k !== "all" ? ` · ${formatInt(counts[k])}` : ""}
+                {`Employers from ${letter === OTHER_INITIAL ? "0-9 and symbols" : letter}`} <span aria-hidden="true">×</span>
               </button>
-              </Fragment>
-            ))}
+            ) : null}
           </div>{" "}
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-input bg-card px-3 text-sm font-bold sm:max-w-md">
-            <span className="text-sm text-muted-foreground">Search</span>{" "}
-            <input
-              type="search"
-              value={qInput}
-              onChange={(e) => setQInput(e.target.value)}
-              placeholder="Case number or employer"
-              aria-label="Search the live cases"
-              className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
-            />
-          </label>{" "}
-          {letter ? (
-            <button
-              type="button"
-              onClick={() => setLetter("")}
-              className={choiceVariants({ on: true })}
-              aria-label={`Showing employers from ${letter === OTHER_INITIAL ? "a number or symbol" : letter}; show every employer`}
-            >
-              {`Employers from ${letter === OTHER_INITIAL ? "0-9 and symbols" : letter}`} <span aria-hidden="true">×</span>
-            </button>
-          ) : null}{" "}
-          <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
-            <span>Sort by</span>{" "}
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as LiveSort)}
-              className="min-h-[44px] min-w-0 max-w-full border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <option value="filed">Filing date</option>
-              <option value="employer">Employer</option>
-              <option value="status">Status</option>
-            </select>
-          </label>{" "}
-          <label className={`ml-auto flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold${fixedMonth ? " hidden" : ""}`}>
-            <span>Filed in</span>{" "}
-            <select
-              value={month}
-              onChange={(e) => pickMonth(e.target.value)}
-              className="min-h-[44px] min-w-0 max-w-full border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <option value="">Any month</option>
-              {months.map((m) => (
-                <option key={m.month} value={m.month}>
-                  {formatMonth(m.month) ?? m.month} ({formatInt(m.total)})
-                </option>
-              ))}
-            </select>
-          </label>
+          <div
+            className={cn(
+              "grid grid-cols-1 items-center gap-2 [&>*]:min-w-0",
+              fixedMonth ? "sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]",
+            )}
+          >
+            <label className="flex min-h-[44px] w-full items-center gap-2 border-2 border-input bg-card px-3 text-sm font-bold">
+              <span className="text-sm text-muted-foreground">Search</span>{" "}
+              <input
+                type="search"
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                placeholder="Case number or employer"
+                aria-label="Search the live cases"
+                className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
+              />
+            </label>{" "}
+            <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold">
+              <span className="shrink-0">Sort by</span>{" "}
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as LiveSort)}
+                className="min-h-[44px] w-full min-w-0 flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="filed">Filing date</option>
+                <option value="employer">Employer</option>
+                <option value="status">Status</option>
+              </select>
+            </label>{" "}
+            <label className={cn("flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold", fixedMonth && "hidden")}>
+              <span className="shrink-0">Filed in</span>{" "}
+              <select
+                value={month}
+                onChange={(e) => pickMonth(e.target.value)}
+                className="min-h-[44px] w-full min-w-0 flex-1 truncate border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="">Any month</option>
+                {months.map((m) => (
+                  <option key={m.month} value={m.month}>
+                    {formatMonth(m.month) ?? m.month} ({formatInt(m.total)})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
 
