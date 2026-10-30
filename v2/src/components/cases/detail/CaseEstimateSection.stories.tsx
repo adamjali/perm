@@ -32,6 +32,19 @@ const CORPUS: AppCaseCorpus = {
   rfiClock: null,
   byDay: null,
   stageStats: null,
+  pwdDay: {
+    queue: {
+      asOf: "2026-10-28",
+      byDay: [
+        ["2026-09-01", 500],
+        ["2026-09-15", 400],
+        ["2026-10-01", 300],
+      ],
+      pace: { perWorkday: 250, fast: 300, slow: 200, workdaysUsed: 20 },
+    },
+    measuredRange: [],
+    tested: null,
+  },
 };
 
 const BASE: CaseEstimateSectionCase = {
@@ -82,7 +95,36 @@ export const WatchOff: Story = {
   args: { caseData: { ...BASE, liveStatus: null, watchEnabled: false } },
 };
 
-/** No DOL case number: the block renders nothing (the header shows no DOL chip either). */
+/** No DOL case number, but a PERM filing date: the estimate still works, off the date. */
+export const FromDatesNoNumber: Story = {
+  args: {
+    caseData: {
+      ...BASE,
+      caseNumber: null,
+      liveStatus: null,
+      liveStatusSeenAt: null,
+      liveStatusIsFinal: null,
+      eta9089FilingDate: "2026-01-20",
+    },
+  },
+};
+
+/** At the PWD step with only a wage-request filing date: the determination estimate. */
+export const PwdStep: Story = {
+  args: {
+    caseData: {
+      ...BASE,
+      caseNumber: null,
+      caseStatus: "pwd",
+      liveStatus: null,
+      liveStatusSeenAt: null,
+      liveStatusIsFinal: null,
+      pwdFilingDate: "2026-10-10",
+    },
+  },
+};
+
+/** No DOL case number and no filing dates: the block renders nothing. */
 export const NoCaseNumber: Story = {
   args: { caseData: { ...BASE, caseNumber: null, liveStatus: null } },
 };

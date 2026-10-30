@@ -8,9 +8,11 @@ import { getStragglerRates } from "./stragglers";
 import { getRangeCoverage } from "./rangeCoverage";
 import { getRfiClock } from "./rfiClock";
 import { getPermDayQueue } from "./permDayQueue";
+import { getPwdDayData } from "./pwdDayQueue";
 import { getStageStats } from "./stageStats";
 import type { StageStats } from "@/lib/stageStatsShape";
 import type { MeasuredPace, RangeCoverage, RfiClock } from "@/lib/perm";
+import type { PwdDayData } from "@/lib/pwdDay";
 import type { StragglerRates } from "@/lib/stragglerRates";
 import type { DayCounts } from "@/lib/queueAhead";
 
@@ -48,11 +50,13 @@ export interface AppCaseCorpus {
   rfiClock: RfiClock | null;
   byDay: DayCounts | null;
   stageStats: StageStats | null;
+  /** The wage-request day queue + its backtest, for estimating a case still at the PWD step. */
+  pwdDay: PwdDayData | null;
 }
 
 /** Load the case-independent estimate corpus. Server-only; call it in a server component. */
 export async function getAppCaseCorpus(): Promise<AppCaseCorpus> {
-  const [backlog, estimator, decisionPace, sweep, stragglers, rangeCoverage, rfiClock, byDay, stageStats] =
+  const [backlog, estimator, decisionPace, sweep, stragglers, rangeCoverage, rfiClock, byDay, stageStats, pwdDay] =
     await Promise.all([
       getLiveBacklog().catch((): LiveCohortMonth[] => []),
       getEstimatorData().catch(() => null),
@@ -63,6 +67,7 @@ export async function getAppCaseCorpus(): Promise<AppCaseCorpus> {
       getRfiClock().catch(() => null),
       getPermDayQueue().catch(() => null),
       getStageStats().catch(() => null),
+      getPwdDayData().catch(() => null),
     ]);
   return {
     backlog,
@@ -74,5 +79,6 @@ export async function getAppCaseCorpus(): Promise<AppCaseCorpus> {
     rfiClock,
     byDay,
     stageStats,
+    pwdDay,
   };
 }
