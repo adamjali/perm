@@ -36,6 +36,7 @@ import { useCaseCorpus } from "@/components/app/CaseCorpusProvider";
 import { caseStepEstimate } from "@/lib/caseStepEstimate";
 import { CaseEstimatePanel } from "@/components/tools/CaseEstimate";
 import { LineAhead } from "@/components/tools/LineAhead";
+import { CaseNumberSuggestion } from "./CaseNumberSuggestion";
 import { canonicalStatus } from "@/lib/caseStatusVocabulary";
 import { formatAsOf } from "@/lib/dolFormat";
 import type { PwdDayEstimate } from "@/lib/perm";
@@ -44,6 +45,7 @@ export interface CaseEstimateSectionCase {
   _id: Id<"cases">;
   caseNumber?: string | null;
   caseStatus?: string | null;
+  employerName?: string | null;
   liveStatus?: string | null;
   liveStatusSeenAt?: number | null;
   liveStatusIsFinal?: boolean | null;
@@ -57,6 +59,19 @@ export interface CaseEstimateSectionCase {
   eta9089CertificationDate?: string | null;
   eta9089DenialDate?: string | null;
   eta9089CaseNumber?: string | null;
+}
+
+/** The employer, filing date and program to look a missing DOL number up by, or null. */
+function suggestionParams(
+  c: CaseEstimateSectionCase,
+): { employerName: string; filingDate: string; program: "perm" | "pwd" } | null {
+  const employer = c.employerName?.trim();
+  if (!employer) return null;
+  const perm = c.eta9089FilingDate?.trim();
+  if (perm) return { employerName: employer, filingDate: perm, program: "perm" };
+  const pwd = c.pwdFilingDate?.trim();
+  if (pwd) return { employerName: employer, filingDate: pwd, program: "pwd" };
+  return null;
 }
 
 /** The per-case DOL watch switch. Absent `watchEnabled` means on. */
@@ -142,13 +157,16 @@ export function CaseEstimateSection({ caseData }: { caseData: CaseEstimateSectio
     today,
   });
 
-  // Nothing to watch and nothing to estimate: render nothing.
-  if (!watched && result.step === null) return null;
+  // With no DOL number, offer to find it from the employer + filing date.
+  const suggest = !watched ? suggestionParams(caseData) : null;
+
+  // Nothing to watch, estimate, or suggest: render nothing.
+  if (!watched && result.step === null && !suggest) return null;
 
   return (
     <section aria-label="DOL decision estimate" className="space-y-3">
-      {/* DOL's live status and the per-case watch, only when there's a number to watch. */}
       {watched ? (
+        // DOL's live status and the per-case watch, when there's a number to watch.
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <p className="text-sm text-muted-foreground">
             {live ? (
@@ -165,6 +183,13 @@ export function CaseEstimateSection({ caseData }: { caseData: CaseEstimateSectio
           </p>{" "}
           <WatchToggle caseId={caseData._id} enabled={!watchOff} />
         </div>
+      ) : suggest ? (
+        <CaseNumberSuggestion
+          caseId={caseData._id}
+          employerName={suggest.employerName}
+          filingDate={suggest.filingDate}
+          program={suggest.program}
+        />
       ) : null}
 
       {result.step === "perm" && result.perm.estimate ? (
