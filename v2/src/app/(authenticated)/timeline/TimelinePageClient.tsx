@@ -162,10 +162,9 @@ export function TimelinePageClient() {
     );
   }, [preferences]);
 
-  // Total available case count for selection (all non-closed cases)
-  const totalCaseCount = useMemo(() => {
-    return allCasesForSelection.filter((c) => c.caseStatus !== "closed").length;
-  }, [allCasesForSelection]);
+  // Every case the picker offers, closed ones included: the picker can select a
+  // closed case, so counting only open ones read "Cases 36/35" (Oct 30 2026).
+  const totalCaseCount = allCasesForSelection.length;
 
   // Filter cases to single case if in preview mode
   const displayedCases = useMemo(() => {

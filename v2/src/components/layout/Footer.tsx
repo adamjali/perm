@@ -37,7 +37,9 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
   if (audience === "app") {
     return (
       <footer className="border-t border-border bg-muted print:hidden">
-        <nav aria-label="Footer" className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 px-4 py-4 text-sm sm:px-6">
+        {/* The right padding keeps the theme switch and the copyright clear of the
+            chat button fixed in the corner (it covered both, Oct 30 2026). */}
+        <nav aria-label="Footer" className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 py-4 pl-4 pr-20 text-sm sm:pl-6 md:pr-24">
           {APP_FOOTER.map((p) => (
             <Fragment key={p.href}>
               <IntentLink href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
@@ -51,7 +53,7 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
           </span>
         </nav>
         {/* Every page, every audience: see NOT_LEGAL_SERVICES for why. */}
-        <p className="mx-auto max-w-[1440px] px-4 pb-4 text-sm text-muted-foreground sm:px-6">{NOT_LEGAL_SERVICES}</p>
+        <p className="mx-auto max-w-[1440px] pb-4 pl-4 pr-20 text-sm text-muted-foreground sm:pl-6 md:pr-24">{NOT_LEGAL_SERVICES}</p>
       </footer>
     );
   }

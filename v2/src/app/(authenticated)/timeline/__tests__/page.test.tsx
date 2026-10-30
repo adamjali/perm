@@ -385,6 +385,21 @@ describe("TimelinePage - Select Cases Button", () => {
     expect(screen.getByText("All")).toBeInTheDocument();
   });
 
+  it("counts a chosen closed case against every case the picker offers (Oct 30 2026)", () => {
+    const open = createMockTimelineCase();
+    const closed = createMockTimelineCase({ caseStatus: "closed" });
+    setupMocks({
+      preferences: { timeRange: 6, selectedCaseIds: [open._id, closed._id] },
+      cases: [open, closed],
+      allCases: [open, closed],
+    });
+
+    renderWithProviders(<TimelinePage />);
+
+    // "2/1" before: the closed case was shown but left out of the total.
+    expect(screen.getByTestId("case-count-badge")).toHaveTextContent("2/2");
+  });
+
   it("sets caseSelectorOpen state when button is clicked (placeholder test)", async () => {
     setupMocks({
       preferences: { timeRange: 6 },

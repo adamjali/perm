@@ -4,7 +4,8 @@
  * CaseListRow
  *
  * One case in the list view: the stage's dot, employer and role, the next
- * deadline and how long until it, and the progress chip. The employer's name
+ * deadline and how long until it, and the progress chip (a closed case says
+ * when and why it closed instead). The employer's name
  * is the row's link and covers it; in selection mode the row selects.
  *
  * @module components/cases/CaseListRow
@@ -17,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
-import { formatDeadlineDate } from "./case-card.utils";
+import { formatClosureReasonLabel, formatCompactDate, formatDeadlineDate } from "./case-card.utils";
 import { CountdownChip } from "./DeadlineCountdown";
 import type { CaseCardData } from "@convex/lib/caseListTypes";
 
@@ -35,7 +36,14 @@ export const CaseListRow = memo(function CaseListRow({
   selectionMode = false,
 }: CaseListRowProps) {
   const stage = STAGE_VISUALS[c.caseStatus];
-  const open = c.caseStatus !== "closed" && c.nextDeadline;
+  const isClosed = c.caseStatus === "closed";
+  const open = !isClosed && c.nextDeadline;
+  // A closed case says when and why, as its card does: its progress chip is
+  // the stage it stopped at ("Working on it"), which reads as still open.
+  const why = isClosed ? formatClosureReasonLabel(c.closedReason) : "";
+  const closedLine = isClosed
+    ? `Closed${c.closedAt ? ` ${formatCompactDate(c.closedAt)}` : ""}${why ? `: ${why}` : ""}`
+    : null;
 
   return (
     <div
@@ -82,7 +90,13 @@ export const CaseListRow = memo(function CaseListRow({
         </div>
       ) : null}
       <div className="hidden shrink-0 md:block">
-        <ProgressStatusBadge status={c.progressStatus} />
+        {closedLine ? (
+          <p className="max-w-72 truncate text-sm text-muted-foreground" title={closedLine}>
+            {closedLine}
+          </p>
+        ) : (
+          <ProgressStatusBadge status={c.progressStatus} />
+        )}
       </div>
     </div>
   );

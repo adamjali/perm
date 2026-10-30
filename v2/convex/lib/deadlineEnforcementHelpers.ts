@@ -24,6 +24,10 @@ import {
   getTodayISO,
 } from "./dateValidation";
 import { MS_PER_DAY } from "./time";
+import { longDate } from "./months";
+
+/** A date in a closure reason, written the way every notice writes one ("October 10, 2026"). */
+const day = (iso: string): string => longDate(iso) ?? iso;
 import {
   ENFORCEMENT_TIMEZONE_RULES,
   getTodayInTimezone,
@@ -306,7 +310,7 @@ function checkPwdExpiration(
     if (caseData.pwdBearing === "determination-unknown") {
       return {
         type: "pwd_expired",
-        reason: `PWD expired on ${caseData.pwdExpirationDate} and the ETA 9089 isn't filed. If recruitment began on or after the determination date the case can still be filed, so add that date to check.`,
+        reason: `PWD expired on ${day(caseData.pwdExpirationDate)} and the ETA 9089 isn't filed. If recruitment began on or after the determination date the case can still be filed, so add that date to check.`,
         suggestedAction: "review",
         canRestart: false,
       };
@@ -319,7 +323,7 @@ function checkPwdExpiration(
           : "";
     return {
       type: "pwd_expired",
-      reason: `PWD expired on ${caseData.pwdExpirationDate}. ETA 9089 was not filed before expiration.${why}`,
+      reason: `PWD expired on ${day(caseData.pwdExpirationDate)}. ETA 9089 was not filed before expiration.${why}`,
       suggestedAction: "close",
       canRestart: false, // PWD expired = must start entirely new PERM process
     };
@@ -391,8 +395,8 @@ function checkRecruitmentWindow(
     // obligation and a different regulation — reporting it as the 180-day
     // recruitment rule sent people to re-check dates that were never at fault.
     const reason = useDolDate
-      ? `Recruitment was not completed before the ETA 9089 filing window closed on ${windowCloses}.`
-      : `Recruitment window closed on ${windowCloses}. Recruitment was not completed by the deadline.`;
+      ? `Recruitment was not completed before the ETA 9089 filing window closed on ${day(windowCloses)}.`
+      : `Recruitment window closed on ${day(windowCloses)}. Recruitment was not completed by the deadline.`;
 
     return {
       type: "recruitment_window_missed",
@@ -436,7 +440,7 @@ function checkFilingWindow(
 
     return {
       type: "filing_window_missed",
-      reason: `ETA 9089 filing window closed on ${caseData.filingWindowCloses}. ETA 9089 was not filed in time.`,
+      reason: `ETA 9089 filing window closed on ${day(caseData.filingWindowCloses)}. ETA 9089 was not filed in time.`,
       suggestedAction: actionForViability(viability),
       canRestart: viability === "viable",
     };
@@ -511,7 +515,7 @@ function checkEta9089Expiration(
 
     return {
       type: "eta9089_expired",
-      reason: `ETA 9089 certification expired on ${expirationDate}. I-140 was not filed within 180 days of certification.`,
+      reason: `ETA 9089 certification expired on ${day(expirationDate)}. I-140 was not filed within 180 days of certification.`,
       suggestedAction,
       canRestart,
     };
@@ -601,7 +605,7 @@ export function checkDeadlineViolations(
  * @example
  * generateClosureMessage({
  *   type: "pwd_expired",
- *   reason: "PWD expired on 2024-06-01",
+ *   reason: "PWD expired on June 1, 2024",
  *   suggestedAction: "close",
  *   canRestart: false,
  * }, "Acme Corp", "John D.");

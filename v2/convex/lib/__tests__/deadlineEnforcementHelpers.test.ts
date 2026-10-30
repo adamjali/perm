@@ -266,6 +266,15 @@ describe("checkDeadlineViolations - PWD Expiration", () => {
     expect(violation!.reason).toMatch(/before the determination/);
   });
 
+  it("writes its date the way every notice does, never as ISO (Oct 30 2026)", () => {
+    const violation = checkDeadlineViolations(
+      createMinimalCase({ caseStatus: "recruitment", pwdExpirationDate: "2026-10-10", pwdBearing: "began-before" }),
+      "2026-10-30",
+    );
+    expect(violation!.reason).toContain("PWD expired on October 10, 2026.");
+    expect(violation!.reason).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
   it("asks for review, never closes, with no determination date on file", () => {
     const violation = checkDeadlineViolations(
       createMinimalCase({ caseStatus: "recruitment", pwdExpirationDate: daysFromToday(-10), pwdBearing: "determination-unknown" }),

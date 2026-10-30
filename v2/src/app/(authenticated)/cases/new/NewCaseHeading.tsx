@@ -11,7 +11,7 @@ export function NewCaseHeading() {
       <AppBreadcrumb steps={[{ href: "/cases", label: "Cases" }]} current="Add new case" />
       <PageHeading
         title="Add new case"
-        lede="Enter case details below. All fields are optional except employer, beneficiary, and position."
+        lede="Enter case details below. Only the employer and the position are required."
       />
     </>
   );
