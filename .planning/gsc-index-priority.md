@@ -1682,3 +1682,46 @@ leftovers in the next round (about 5 PM Thu Oct 29), in this order, request each
 6. `/tools/perm-timeline-calculator` (one name, "timeline"), `/tools/wage-levels` (where a wage reaches each level)
 Then the rest of `gsc_queue.mjs --since abce2f44`. Recheck the intent table (plan ledger, "SEO for people who are
 lost") about Nov 12 to 19.
+
+**LIVE Thu Oct 29, ~3:30 PM EDT (go-live on the owner's word; site run 40939549579 + `npx convex deploy`).** This
+shipped the recurring-alert email translations (Convex-activated) and today's merges. Next GSC round (quota resets
+~4:52 PM Thu Oct 29), request each whose Google copy predates its change, in this order ahead of the Oct 28/29
+leftovers above:
+1. `/soc-codes` (new this week: SOC job-code finder; verify Google has it at all)
+2. `/es/perm-case-status`, `/zh/perm-case-status`, `/pt-br/perm-case-status`, `/ko/perm-case-status`,
+   `/vi/perm-case-status` (translated case-status pages, now live with correct hreflang/`<html lang>`; request the
+   `es`/`zh` first, the languages with the most real readers)
+3. then the Oct 29 "Live by 1:13 AM" queue above (`/perm-case-alerts`, `/`, `/perm-case-status`, ...)
+The deploy already ran `gsc_queue.mjs --purge` (Cloudflare) and the IndexNow changed-pages send, so Bing has the
+list; this queue is the Google manual inspect+request side only.
+
+## Round of 2026-10-30, ~1:25 to 1:30 AM EDT: 4 accepted, no refusal (the queue ran dry of high-value work first)
+
+Tonight's overnight run. The authoritative change list came from `node scripts/gsc_queue.mjs` (since `db23d342`):
+3 genuinely new pages, the rest "changed" only through shared components (`ChartTips`, `DataProvenance`,
+`ToolPageFooter`, `CaseLookupForm`, `CiteThis`), which the ledger leaves to the sitemap's lastmod. **The
+translated `[lang]` pages queued in the Oct 29 edit above were NOT requested: the i18n layer is slated to be cut
+(English-only plan), so reindexing pages that will be 301'd away is wasted.**
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/changelog/uscis-forms-firm-rankings-and-visa-waits` | not on Google, Discovered-never-crawled (new) | 1:24 AM |
+| 2 | `/soc-codes/software-engineer` | not on Google, Discovered-never-crawled (new family sample) | 1:25 AM |
+| 3 | `/soc-codes/data-scientist` | not on Google, Discovered-never-crawled (new family sample) | 1:26 AM |
+| 4 | `/compare` | indexed, last crawled **Oct 28 1:37 AM** (before the Oct 29 change `gsc_queue` flagged; high value, names the ten rivals) | 1:28 AM |
+
+**`/compare` took two clicks.** The first REQUEST INDEXING click ran the live test but the top-right label stayed
+"REQUEST INDEXING" (not "Indexing requested / REQUEST AGAIN"), so no slot was spent; a second click landed it.
+Read the durable label, never assume the first click registered (the automation-tab paint lag again).
+
+**Inspected only, already indexed and FRESH (no slot, Google is keeping up within a day):** `/soc-codes` and
+`/guides/how-to-find-your-soc-code` (both new this week, already indexed), `/` (crawled Oct 29 11:44 AM),
+`/perm-case-alerts` and `/h1b-cap-exempt-employers` (indexed earlier tonight), `/perm-by-the-numbers` (crawled
+Oct 29 10:01 PM, valid Dataset).
+
+**The lesson of this round: the hand-request lever is low-value right now.** Googlebot crawls this site
+~25,000-45,000 pages/day and recrawls high-value content within a day (the homepage, `/perm-by-the-numbers` and
+`/compare` were all crawled Oct 28-29). The only stale/unindexed pages left are genuinely new ones (all requested
+above) and `/compare` (a competitor-comparison page crawled less often). I stopped at 4 rather than spend the
+remaining ~7 slots on pages Google already holds current. Next round: run `gsc_queue.mjs` again, request only the
+genuinely-new or verifiably-stale pages, and leave the shared-component "changed" list to the sitemap.
