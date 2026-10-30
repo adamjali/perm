@@ -73,9 +73,24 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
 /**
  * The legal entity behind the site, a Florida LLC. The Terms bind this name,
  * so every surface that names the operator reads it from here.
+ *
+ * Formed Sep 23 2026 as PERM Tracker LLC and renamed Asolys LLC by Articles of
+ * Amendment filed Oct 8 2026 (Sunbiz document L26000495521, read Oct 30 2026:
+ * "ASOLYS LLC", last event "LC NAME CHANGE"). PERM Tracker is the name it
+ * trades under (TRADE_NAME_NOTE).
  */
-export const LEGAL_NAME = "PERM Tracker LLC";
+export const LEGAL_NAME = "Asolys LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
+
+/** The brand the LLC trades under. */
+export const TRADE_NAME = "PERM Tracker";
+
+/**
+ * The one sentence that ties the brand to the company, on the About page and
+ * in the public footer (owner's yes, Oct 18 2026, for the day the rename
+ * landed). The manager's name comes from SABRINA, never typed twice.
+ */
+export const TRADE_NAME_NOTE = `${TRADE_NAME} is a trade name of ${LEGAL_NAME}, a Florida company managed by immigration attorney ${SABRINA.name}.`;
 
 /**
  * Where reporters write. Printed on /press. Inbound mail to any permtracker.app

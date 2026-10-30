@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
-import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
+import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS, TRADE_NAME } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -60,7 +60,7 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 29, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 30, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -74,13 +74,13 @@ export default function TermsPage() {
             </summary>{" "}
             <p className="text-soft leading-relaxed">
               By accessing or using PERM Tracker (&quot;the Service&quot;), operated by
-              PERM Tracker LLC (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by
+              {LEGAL_NAME}, doing business as {TRADE_NAME} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by
               these Terms of Service (&quot;Terms&quot;). If you don’t agree to these Terms, please don’t use the
               Service.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">
-              These Terms constitute a legally binding agreement between you and PERM
-              Tracker LLC regarding your use of the Service.
+              These Terms constitute a legally binding agreement between you and{" "}
+              {LEGAL_NAME} regarding your use of the Service.
             </p>
           </details>{" "}
 

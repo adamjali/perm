@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, PEOPLE, POSTAL_ADDRESS } from "@/lib/constants/about";
+import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, PEOPLE, POSTAL_ADDRESS, SABRINA, TRADE_NAME, TRADE_NAME_NOTE } from "@/lib/constants/about";
 import { getOrganizationSchema } from "@/lib/structuredData";
 
 /**
@@ -20,6 +20,11 @@ import { getOrganizationSchema } from "@/lib/structuredData";
  * filed 09/23/2026), the Terms and the Privacy Policy still named the
  * operator "PERM Tracker, Washington, DC 20001", and the policy never named
  * the entity at all. USCIS reads that policy before it grants API access.
+ *
+ * On 2026-10-08 the LLC was renamed ASOLYS LLC (Articles of Amendment; Sunbiz
+ * read Oct 30). The Terms had the old name typed twice, once split across two
+ * lines where a search for it found nothing; the binding surfaces now read the
+ * constant, and "PERM Tracker" is the trade name (TRADE_NAME_NOTE).
  */
 const PUBLIC = join(__dirname, "..", "(site)", "(public)");
 const terms = readFileSync(join(PUBLIC, "terms", "page.tsx"), "utf8");
@@ -27,22 +32,40 @@ const about = readFileSync(join(PUBLIC, "about", "page.tsx"), "utf8");
 const privacy = readFileSync(join(PUBLIC, "privacy", "page.tsx"), "utf8");
 const llms = readFileSync(join(__dirname, "..", "llms.txt", "route.ts"), "utf8");
 const emailLayout = readFileSync(join(__dirname, "..", "..", "emails", "components", "EmailLayout.tsx"), "utf8");
+const footer = readFileSync(join(__dirname, "..", "..", "components", "layout", "Footer.tsx"), "utf8");
+const methodology = readFileSync(join(PUBLIC, "methodology", "page.tsx"), "utf8");
+const trackers = readFileSync(join(__dirname, "..", "..", "lib", "compare", "trackers.ts"), "utf8");
 
 describe("the legal entity", () => {
   it("is a Florida LLC under one name", () => {
-    expect(LEGAL_NAME).toBe("PERM Tracker LLC");
+    expect(LEGAL_NAME).toBe("Asolys LLC");
     expect(LEGAL_FORM).toMatch(/Florida/);
   });
 
+  it("trades as PERM Tracker, said in one sentence on About and in the footer", () => {
+    expect(TRADE_NAME).toBe("PERM Tracker");
+    expect(TRADE_NAME_NOTE).toBe(
+      `PERM Tracker is a trade name of Asolys LLC, a Florida company managed by immigration attorney ${SABRINA.name}.`,
+    );
+    expect(about).toContain("{TRADE_NAME_NOTE}");
+    expect(footer).toContain("{TRADE_NAME_NOTE}");
+  });
+
+  it("never names the old entity on a binding or public surface, not even split across lines", () => {
+    for (const [name, src] of Object.entries({ terms, privacy, about, methodology, trackers, emailLayout, footer })) {
+      expect(src.replace(/\s+/g, " "), name).not.toMatch(/PERM Tracker LLC/);
+    }
+  });
+
   it("is the party the Terms bind, under Florida law", () => {
-    expect(terms).toContain(LEGAL_NAME);
+    expect(terms).toMatch(/\{LEGAL_NAME\}, doing business as \{TRADE_NAME\}/);
     expect(terms).toContain("State of Florida");
     expect(terms).toMatch(/courts located in Florida/);
     expect(terms).not.toContain("District of Columbia");
   });
 
   it("is named on the About page from the constant, not retyped", () => {
-    expect(about).toMatch(/Operated by \{LEGAL_NAME\}, \{LEGAL_FORM\}/);
+    expect(about).toMatch(/\{LEGAL_NAME\} is \{LEGAL_FORM\} and the party named in the/);
   });
 
   it("is the Organization node's legalName", () => {

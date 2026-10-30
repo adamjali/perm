@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 29, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 30, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -1258,7 +1258,7 @@ export default function PrivacyPage() {
             <p className="text-soft leading-relaxed">
               The USCIS case status lookup lets you enter a receipt number and see what
               USCIS says about that case. It runs on USCIS&apos;s Case Status API under
-              credentials issued to PERM Tracker LLC, and it&apos;s available only once
+              credentials issued to {LEGAL_NAME}, and it&apos;s available only once
               USCIS has granted that access; until then the page says so and looks
               nothing up.
             </p>{" "}

@@ -11,7 +11,7 @@
 /** Reviews by people who run PERM Tracker. The FTC's rule (16 CFR 465.5) wants an insider's review disclosed as
  * one; by the owner's call (Oct 23 2026) the site counts only outside reviews instead. Senja review ids. */
 export const INSIDER_REVIEW_IDS: ReadonlySet<string> = new Set([
-  "280adac2-2922-4717-921f-d39c4f779c21", // the attorney who manages PERM Tracker LLC (Feb 7 2026)
+  "280adac2-2922-4717-921f-d39c4f779c21", // the attorney who manages the LLC (Feb 7 2026)
   "c8412498-c3c1-4b6a-91fe-4508e6354de1", // the other launch-day review (Feb 7 2026), left out by the same call
 ]);
 

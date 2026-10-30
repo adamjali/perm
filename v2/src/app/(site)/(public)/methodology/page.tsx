@@ -8,6 +8,7 @@
  */
 
 import type { Metadata } from "next";
+import { LEGAL_NAME } from "@/lib/constants/about";
 import { BarRows } from "@/components/data/BarRows";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
@@ -236,7 +237,7 @@ const SOURCES = [
     every: "Per lookup",
     seal: "/agency/dhs-seal.png",
     sealAlt: "Seal of the US Department of Homeland Security",
-    what: "USCIS's own status text and dated history for one receipt number, read at lookup time under credentials issued to PERM Tracker LLC. Off until USCIS grants access; the lookup page says so.",
+    what: `USCIS's own status text and dated history for one receipt number, read at lookup time under credentials issued to ${LEGAL_NAME}. Off until USCIS grants access; the lookup page says so.`,
     cadence: "On demand, per lookup.",
     href: "https://developer.uscis.gov/api/case-status",
   },

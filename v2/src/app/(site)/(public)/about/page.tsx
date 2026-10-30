@@ -49,6 +49,7 @@ import {
   FOUNDED,
   LEGAL_FORM,
   LEGAL_NAME,
+  TRADE_NAME_NOTE,
   LIVE_SINCE,
   SABRINA,
 } from "@/lib/constants/about";
@@ -458,7 +459,7 @@ export default async function AboutPage() {
           ))}
         </ul>{" "}
         <p className="mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          Operated by {LEGAL_NAME}, {LEGAL_FORM}, the party named in the{" "}
+          {TRADE_NAME_NOTE} {LEGAL_NAME} is {LEGAL_FORM} and the party named in the{" "}
           <Link href="/terms" className="link">
             terms
           </Link>
