@@ -1633,3 +1633,20 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 - **A fork spawned into my own working tree is the two-editors hazard**: it went past its brief, wrote convex
   files, and we clobbered each other until it died. One owner per area, work on a branch, never a fork into the
   tree I'm editing.
+
+## Oct 30 2026, in five lines
+
+- **Filter bars sit on a fixed grid** (`FilterableStatTable` and its 10 callers, `LiveCaseBrowser`, `FlagCaseBrowser`): a select is as
+  wide as its longest option, so in a wrapping row the full list loading reflowed everything (owner's iPhone: "Search F" beside
+  State until the first tap; /perm-cases' search box 7px wide). Headless Chrome (Blink) didn't reproduce the iPhone (WebKit), so
+  `node_modules/.cache/qa/shift-on-first-tap.mjs` forces the change instead: it appends a long option to every select and reports any
+  control that moves. 8 of 15 filter pages on production, 0 of 8 after.
+- **A count names the list it counts**: the entity indexes total every entity with a page, while the bulk list holds those with
+  5+ filings (`fullListFloor` = `MIN_TOTAL_FOR_BULK`); the table had promised "Load all 5,571" and then read "All 2,882".
+- **The DOL decision card sits at the foot of a case's Overview**, one compact `detail-card` (866px became about 375px): the past a
+  fixed third, the coming weeks to scale with a tick a week, the line ahead as one labelled queue, the rest folded.
+- **The LLC is ASOLYS LLC** (rename filed Oct 8 2026, Sunbiz read Oct 30): `LEGAL_NAME`, `TRADE_NAME_NOTE` on About and the public
+  footer, the Terms "Asolys LLC, doing business as PERM Tracker" (Gate R in `.planning/llc-and-uscis-plan.md`). The fictitious-name
+  filing and the EIN are the owner's next steps.
+- **A dev server can serve a stale shared module** (the new pages with the old `@/lib/constants/about`): restart it before reading a
+  render that contradicts the source.
