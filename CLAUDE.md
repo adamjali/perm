@@ -1701,5 +1701,13 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
 - **The RFI page sets RFI cases' certified share beside every PERM case's** over the same weeks (`RfiJourney`,
   `getObservedDays`): 89% of 711 against 94% of 34,838 on Oct 31. The pulse says how the last 7 days compare with the 7
   before (`prior7`).
+- **USCIS's chart for an I-485 this month** shows on the bulletin hub, the month page, every line page and the family
+  page (`UscisChartNote`, `src/lib/uscisCharts.ts`, fetched once a day by `getUscisCharts`). USCIS writes "use
+  the&nbsp; Dates for Filing chart": read raw, that matched nothing, and the priority-date calculator had gone without
+  USCIS's answer. Entities are decoded first now, and a page that loads with no chart is logged.
+- **Each line page says how far it sits behind its bulletin** (`cutoffGap`, `gapLabel`: EB-2 India, 13 years on the
+  November 2026 bulletin), one square a year.
+- **A failed bulletin read throws on the hub, the categories index and the line pages**: caught as an empty archive,
+  a refresh during a database blip stored "not found" or "not available" for a day.
 - **Not built on purpose:** a shareable estimate image (a card never carries a live figure, and estimates are never
   pitched).
