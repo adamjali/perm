@@ -33,8 +33,8 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { analytics } from "@/lib/analytics";
 import { captureError } from "@/lib/sentry";
+import { LAST_LOGIN_KEY } from "@/components/error/auth-error";
 
-const LAST_LOGIN_KEY = "perm_last_login_at";
 const DEBOUNCE_MS = 30 * 1000; // 30 seconds — avoid double-counting
 
 export function LoginTracker() {

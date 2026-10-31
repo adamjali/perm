@@ -19,6 +19,16 @@ describe("isLikelySessionTimeout", () => {
     expect(isLikelySessionTimeout()).toBe(true);
   });
 
+  it("counts a sign-in as activity: an old session's stamp right after signing in isn't a timeout", () => {
+    localStorage.setItem(KEY, String(Date.now() - 5 * 60 * 60_000));
+    localStorage.setItem("perm_last_login_at", String(Date.now() - 10_000));
+    try {
+      expect(isLikelySessionTimeout()).toBe(false);
+    } finally {
+      localStorage.removeItem("perm_last_login_at");
+    }
+  });
+
   it("is false with no recorded activity", () => {
     expect(isLikelySessionTimeout()).toBe(false);
   });

@@ -30,14 +30,22 @@ export function isAuthError(message: string): boolean {
  */
 export function isLikelySessionTimeout(): boolean {
   try {
-    const stored = localStorage.getItem("perm-tracker-last-activity");
+    const stored = localStorage.getItem(TIMEOUT_CONFIG.STORAGE_KEY);
     if (!stored) return false;
-    const elapsed = Date.now() - parseInt(stored, 10);
-    return elapsed >= TIMEOUT_CONFIG.INACTIVITY_TIMEOUT;
+    // A sign-in is activity too. The last-activity stamp is the previous
+    // session's until the idle timer's first run, so a page that failed on its
+    // first render after signing in read as hours idle and was sent back to the
+    // sign-in page (Oct 31 2026).
+    const signedIn = Number(localStorage.getItem(LAST_LOGIN_KEY)) || 0;
+    const last = Math.max(parseInt(stored, 10) || 0, signedIn);
+    return Date.now() - last >= TIMEOUT_CONFIG.INACTIVITY_TIMEOUT;
   } catch {
     return false;
   }
 }
+
+/** Where the sign-in pages and LoginTracker record the last sign-in. */
+export const LAST_LOGIN_KEY = "perm_last_login_at";
 
 /** Check if an error is from a stale deployment (Server Action hash mismatch) */
 export function isStaleDeploymentError(error: unknown): boolean {
