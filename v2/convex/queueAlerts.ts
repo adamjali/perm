@@ -87,6 +87,7 @@ import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmation
 import { CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
 import { scaled } from "./lib/emailAllowance";
 import { isPlausibleEmail } from "./lib/emailShape";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("QueueAlerts");
 
@@ -485,6 +486,7 @@ export const sendConfirmation = internalAction({
           "",
           "PERM Tracker",
           `${SITE_URL}/perm-processing-times`,
+          TEXT_LEGAL_LINE,
         ].join("\n"),
       });
 
@@ -882,6 +884,7 @@ export const notifyQueueReached = internalAction({
             `Opt out entirely: ${unsubUrl}`,
             "",
             "PERM Tracker",
+            TEXT_LEGAL_LINE,
           ].join("\n"),
         });
 

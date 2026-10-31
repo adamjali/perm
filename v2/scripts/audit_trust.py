@@ -31,7 +31,10 @@ import sys
 from audit_headings import fetch, page_paths
 
 FOOTER_LINKS = ("/about", "/methodology", "/editorial-standards", "/changelog/corrections", "/contact", "/privacy")
-LEGAL_NAME = "PERM Tracker LLC"
+# The company behind the brand, as `LEGAL_NAME` in src/lib/constants/about.ts says it.
+# Python can't read that file, so it is typed here and legal-name.test.ts holds the two equal:
+# the old "PERM Tracker LLC" failed every page from the Oct 30 2026 rename until Oct 31.
+LEGAL_NAME = "Asolys LLC"
 ARTICLE = re.compile(r"^/(guides|blog|changelog)/[^/]+$")
 # Pages that legitimately lack one of the signals, with the reason.
 EXEMPT: dict[str, set[str]] = {

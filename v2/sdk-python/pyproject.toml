@@ -8,6 +8,7 @@ version = "0.2.0"
 description = "The PERM Tracker API from Python and the command line: DOL case status, decision estimates, the PERM queue, visa bulletins, employer, law firm and occupation records, exports, live DOL lookups and signed webhooks."
 readme = "README.md"
 license = { text = "MIT" }
+authors = [{ name = "Asolys LLC, doing business as PERM Tracker", email = "support@permtracker.app" }]
 requires-python = ">=3.9"
 keywords = ["perm", "dol", "immigration", "green card", "visa bulletin", "h-1b"]
 dependencies = []

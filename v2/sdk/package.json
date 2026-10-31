@@ -10,6 +10,7 @@
   "files": ["dist", "README.md", "LICENSE"],
   "engines": { "node": ">=18" },
   "keywords": ["perm", "dol", "immigration", "green card", "visa bulletin", "h-1b", "lca", "prevailing wage"],
+  "author": "Asolys LLC, doing business as PERM Tracker <support@permtracker.app> (https://permtracker.app)",
   "homepage": "https://permtracker.app/developers",
   "license": "MIT",
   "scripts": { "build": "node ../scripts/build_sdk.mjs" }

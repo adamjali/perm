@@ -118,6 +118,6 @@ Certifications (all true):
 
 1. A Chrome Web Store developer account: https://chrome.google.com/webstore/devconsole, a one-time US$5 registration fee, signed in with the Google account that should own the listing.
 2. Publisher name: **PERM Tracker**, never a person's name.
-3. The trader question (EU Digital Services Act): PERM Tracker LLC offers this free, but the form asks whether you act as a trader; that answer, and the contact details a trader must show, are yours to give.
+3. The trader question (EU Digital Services Act): Asolys LLC, doing business as PERM Tracker, offers this free, but the form asks whether you act as a trader; that answer, and the contact details a trader must show, are yours to give.
 4. Upload the zip, paste the fields above, add the screenshots, submit for review.
 5. Once it's published, put the listing's URL in `CHROME_STORE_URL` in `src/app/(site)/(public)/extension/page.tsx`.

@@ -111,6 +111,7 @@ import {
 } from "./confirmationQueue";
 import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import { isPlausibleEmail } from "./lib/emailShape";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("EmailPrefs");
 
@@ -327,6 +328,7 @@ export const sendLink = internalAction({
           "",
           "PERM Tracker",
           SITE_URL,
+          TEXT_LEGAL_LINE,
         ].join("\n"),
       });
       if (result.error) {

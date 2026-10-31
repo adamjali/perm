@@ -57,6 +57,7 @@ import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { isPlausibleEmail } from "./lib/emailShape";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("BulletinAlerts");
 
@@ -341,6 +342,7 @@ export const sendConfirmation = internalAction({
           "",
           "PERM Tracker",
           `${SITE_URL}/tools/priority-date-calculator`,
+          TEXT_LEGAL_LINE,
         ].join("\n"),
       });
 
@@ -646,6 +648,7 @@ export const sweep = internalAction({
             `Stop these alerts: ${unsubUrl}`,
             "",
             "PERM Tracker",
+            TEXT_LEGAL_LINE,
           ].join("\n"),
         });
 

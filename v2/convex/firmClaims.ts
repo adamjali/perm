@@ -93,6 +93,7 @@ import {
   type FirmProfile,
   type ProfileField,
 } from "../src/lib/firmProfile";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("FirmClaims");
 
@@ -412,6 +413,7 @@ async function sendFirmEmail(
       "",
       "PERM Tracker",
       SITE_URL,
+      TEXT_LEGAL_LINE,
     ].join("\n"),
   });
   if (result.error) {

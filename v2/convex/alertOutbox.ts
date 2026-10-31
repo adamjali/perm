@@ -26,6 +26,7 @@ import { recordError } from "./lib/errorRecording";
 import { createLogger } from "./lib/logging";
 import { easternDay, MS_PER_DAY } from "./lib/time";
 import { SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("AlertOutbox");
 
@@ -353,6 +354,7 @@ export function bundleText(items: Waiting[], prefsUrl: string, stopUrl: string, 
     "",
     "PERM Tracker",
     SITE_URL,
+    TEXT_LEGAL_LINE,
   ].join("\n");
 }
 

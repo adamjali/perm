@@ -86,6 +86,7 @@ import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { easternDay } from "./lib/time";
 import { isPlausibleEmail } from "./lib/emailShape";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("EmployerAlerts");
 
@@ -339,6 +340,7 @@ export const sendConfirmation = internalAction({
           "",
           "PERM Tracker",
           employerUrl(args.slug),
+          TEXT_LEGAL_LINE,
         ].join("\n"),
       });
       if (result.error) {
@@ -715,6 +717,7 @@ export const sweep = internalAction({
             `Stop employer alerts: ${unsubUrl}`,
             "",
             "PERM Tracker",
+            TEXT_LEGAL_LINE,
           ].join("\n"),
           listUnsubscribe: unsubUrl,
           summary: {

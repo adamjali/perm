@@ -195,6 +195,7 @@ import {
   nextStepsFor,
   nextStepsText,
 } from "./lib/alertNextSteps";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("CaseAlerts");
 
@@ -841,6 +842,7 @@ export const sendConfirmation = internalAction({
           "",
           "PERM Tracker",
           `${SITE_URL}/perm-case-status`,
+          TEXT_LEGAL_LINE,
         ].join("\n"),
       });
 
@@ -1918,6 +1920,7 @@ export const sweepCaseChanges = internalAction({
             `Stop these alerts: ${unsubUrl}`,
             "",
             "PERM Tracker",
+            TEXT_LEGAL_LINE,
           ].join("\n"),
         });
 

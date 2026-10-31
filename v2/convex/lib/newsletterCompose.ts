@@ -15,6 +15,7 @@ import { SITE_URL } from "./links";
 import { formatInt } from "./format";
 import { MONTH_NAMES, shortDate } from "./months";
 import type { RuleStepKind } from "./ruleSteps";
+import { TEXT_LEGAL_LINE } from "./textFooter";
 
 export interface DigestNotice {
   title: string;
@@ -367,5 +368,6 @@ export function composeText(d: DigestData): string {
     lines.push(`Manage or stop this email: ${d.prefsUrl}`);
   }
   lines.push(`PERM Tracker, ${SITE_URL}`);
+  lines.push(TEXT_LEGAL_LINE);
   return lines.join("\n");
 }

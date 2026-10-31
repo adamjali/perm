@@ -3794,8 +3794,8 @@ page wrong:
 | our code, prose, design | ordinary copyright, `LICENSE` at the repo root, all rights reserved |
 
 So `/terms` §6 states the two layers separately, §4 names bulk extraction of
-the compilation as the thing not permitted, and the Organization is **PERM
-Tracker LLC** in the agreement and binding clauses. `structuredData.ts` points
+the compilation as the thing not permitted, and the Organization is **Asolys LLC,
+doing business as PERM Tracker** (renamed from PERM Tracker LLC Oct 8 2026) in the agreement and binding clauses. `structuredData.ts` points
 every Dataset's `license` at that anchor.
 
 **GitHub showing "other" for the licence means nothing legally.** Their

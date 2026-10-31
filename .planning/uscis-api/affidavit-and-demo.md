@@ -11,7 +11,7 @@ improvised.
 
 Each line names where it is true in the code, so a reviewer can check it.
 
-- **Entity.** PERM Tracker LLC, a Florida limited liability company, operates
+- **Entity.** Asolys LLC, doing business as PERM Tracker, a Florida limited liability company, operates
   permtracker.app. (Sunbiz filing; the About page names the site's public
   face.)
 - **Purpose.** A receipt-number lookup for members of the public waiting on an

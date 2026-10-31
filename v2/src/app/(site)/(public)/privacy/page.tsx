@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
-import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
+import { LEGAL_DBA, LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS, TRADE_NAME } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 30, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 31, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -76,8 +76,8 @@ export default function PrivacyPage() {
             </summary>{" "}
             <p className="text-soft leading-relaxed">
               Welcome to PERM Tracker. PERM Tracker is operated by {LEGAL_NAME},{" "}
-              {LEGAL_FORM} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), which
-              runs permtracker.app. This Privacy Policy explains
+              {LEGAL_FORM} doing business as {TRADE_NAME} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), which
+              runs permtracker.app and is the controller of the personal information this policy describes. This Privacy Policy explains
               how we collect, use,
               disclose, and safeguard your information when you use our web
               application for tracking Permanent Labor Certification (PERM)
@@ -1321,7 +1321,7 @@ export default function PrivacyPage() {
                 <strong>Application:</strong> PERM Tracker
               </li>{" "}
               <li>
-                <strong>Operator:</strong> {`${LEGAL_NAME}, ${LEGAL_FORM}`}
+                <strong>Operator:</strong> {`${LEGAL_DBA}, ${LEGAL_FORM}`}
               </li>{" "}
               <li>
                 <strong>Mailing address:</strong> {POSTAL_ADDRESS}

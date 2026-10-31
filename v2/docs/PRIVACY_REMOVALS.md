@@ -12,7 +12,7 @@ The site shows the Department of Labor's own disclosure records. As read from th
   "Information that is lawfully made available from federal, state, or local government records." The act also
   reaches only a "business" over its thresholds (§1798.140(d)): more than $25 million a year in revenue
   (inflation-adjusted), buying, selling or sharing 100,000 or more people's personal information, or half its
-  revenue from selling it. PERM Tracker LLC meets none.
+  revenue from selling it. Asolys LLC (doing business as PERM Tracker) meets none.
 - **EU and UK GDPR.** Article 3(2) reaches a company outside the EU or UK only when it offers goods or services to
   people there or monitors their behaviour there. Even where it applies, the erasure right gives way to "the right
   of freedom of expression and information" (Article 17(3)(a)).

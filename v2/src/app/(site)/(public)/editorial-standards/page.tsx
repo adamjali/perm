@@ -23,7 +23,7 @@ import {
 } from "@phosphor-icons/react/ssr";
 
 import { SourcePages } from "@/components/about/SourcePages";
-import { LEGAL_NAME, NOT_LEGAL_SERVICES, SABRINA } from "@/lib/constants/about";
+import { LEGAL_DBA, NOT_LEGAL_SERVICES, SABRINA } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -80,7 +80,7 @@ const STANDARDS = [
     title: "Who writes it",
     body: (
       <>
-        The PERM Tracker team writes the guides and builds the data pages. {LEGAL_NAME} runs the site, and the person
+        The PERM Tracker team writes the guides and builds the data pages. {LEGAL_DBA}, runs the site, and the person
         named on it is {SABRINA.name}, an {SABRINA.jobTitle.toLowerCase()} (
         <Link href="/about" className="link">
           about

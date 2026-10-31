@@ -4,6 +4,7 @@
  * one thing. A test holds every path here to a route file under src/app/v1
  * and every route file to a path here.
  */
+import { LEGAL_DBA } from "@/lib/constants/about";
 import { API_PLANS } from "@convex/lib/apiPlans";
 import { WEBHOOK_EVENTS } from "@convex/lib/webhookSign";
 
@@ -298,7 +299,7 @@ export function openApiDocument(): Record<string, unknown> {
         `Federal PERM, prevailing wage, H-1B and visa bulletin records, as JSON. Free plan: ${free.perMinute} calls a minute, ` +
         `${free.perDay} a day, ${free.perMonth.toLocaleString("en-US")} a month. Terms: https://permtracker.app/api-terms`,
       termsOfService: "https://permtracker.app/api-terms",
-      contact: { email: "support@permtracker.app", url: "https://permtracker.app/developers" },
+      contact: { name: LEGAL_DBA, email: "support@permtracker.app", url: "https://permtracker.app/developers" },
     },
     servers: [{ url: API_BASE }],
     security: [{ bearer: [] }],

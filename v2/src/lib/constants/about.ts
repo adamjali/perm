@@ -86,6 +86,13 @@ export const LEGAL_FORM = "a Florida limited liability company";
 export const TRADE_NAME = "PERM Tracker";
 
 /**
+ * The operator wherever a party or publisher is named: the Terms, the Privacy
+ * Policy, the API terms, email footers, llms.txt. PERM Tracker is the trade name;
+ * the company is Asolys LLC.
+ */
+export const LEGAL_DBA = `${LEGAL_NAME}, doing business as ${TRADE_NAME}`;
+
+/**
  * The one sentence that ties the brand to the company, on the About page and
  * in the public footer (owner's yes, Oct 18 2026, for the day the rename
  * landed). The manager's name comes from SABRINA, never typed twice.

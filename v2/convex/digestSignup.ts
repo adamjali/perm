@@ -33,6 +33,7 @@ import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { isPlausibleEmail } from "./lib/emailShape";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("DigestSignup");
 
@@ -170,6 +171,7 @@ export const sendConfirmation = internalAction({
           "",
           "PERM Tracker",
           SITE_URL,
+          TEXT_LEGAL_LINE,
         ].join("\n"),
       });
       if (result.error) {

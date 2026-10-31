@@ -23,6 +23,7 @@ import { SITE_URL } from "./lib/links";
 import { replyGreetingName } from "./lib/replyName";
 import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = loggers.email;
 
@@ -313,7 +314,7 @@ export const replyToEmail = internalAction({
 
     // The template adds the greeting and sign-off, so the body is the message alone.
     const recipientName = args.recipientName?.trim() || replyGreetingName(original.fromName, original.fromEmail);
-    const text = `Hi ${recipientName},\n\n${args.replyBody.trim()}\n\nBest regards,\nThe PERM Tracker team`;
+    const text = `Hi ${recipientName},\n\n${args.replyBody.trim()}\n\nBest regards,\nThe PERM Tracker team\n\n${TEXT_LEGAL_LINE}`;
 
     const html = await render(
       AdminEmail({

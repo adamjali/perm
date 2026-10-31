@@ -12,7 +12,7 @@ import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { API_PLANS } from "@convex/lib/apiPlans";
 import { SectionIndex, type LegalSection } from "@/components/legal/SectionIndex";
-import { LEGAL_FORM, LEGAL_NAME } from "@/lib/constants/about";
+import { LEGAL_DBA, LEGAL_FORM, POSTAL_ADDRESS } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -73,7 +73,7 @@ export default function ApiTermsPage() {
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">API terms</h1>{" "}
-        <p className="mb-8 mt-4 text-lg text-muted-foreground">Effective Date: October 9, 2026</p>{" "}
+        <p className="mb-8 mt-4 text-lg text-muted-foreground">Effective Date: October 31, 2026</p>{" "}
 
         <SectionIndex sections={SECTIONS} />{" "}
 
@@ -83,7 +83,7 @@ export default function ApiTermsPage() {
           <p>
             These API Terms govern your use of the PERM Tracker application programming interface at
             permtracker.app/v1 and the Model Context Protocol server at permtracker.app/mcp (together, the
-            &ldquo;API&rdquo;), provided by {LEGAL_NAME}, {LEGAL_FORM} (&ldquo;we&rdquo; or &ldquo;us&rdquo;). They
+            &ldquo;API&rdquo;), provided by {LEGAL_DBA}, {LEGAL_FORM} (&ldquo;we&rdquo; or &ldquo;us&rdquo;). They
             supplement the{" "}
             <Link href="/terms" className="link">
               Terms of Service
@@ -237,7 +237,9 @@ export default function ApiTermsPage() {
               support@permtracker.app
             </a>
             .
-          </p>
+          </p>{" "}
+          <p>Operator: {`${LEGAL_DBA}, ${LEGAL_FORM}`}.</p>{" "}
+          <p>Mailing address: {POSTAL_ADDRESS}.</p>
         </Section>
         </div>
       </div>

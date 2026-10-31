@@ -112,7 +112,11 @@ ASSIST_CASES = [
     ("ClaudeBot", "true", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
      "ClaudeBot", ""),
     ("OpenAI's search crawler", "true",
-     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot", "OAI-SearchBot", ""),
+     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot", "", ""),
+    ("a look-alike OAI-SearchBot", "false",
+     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot", "", ""),
+    ("OpenAI's training crawler", "true",
+     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.3; +https://openai.com/gptbot", "GPTBot", ""),
     ("Ahrefs' site audit", "true",
      "Mozilla/5.0 (Linux; Android 13) Mobile Safari/537.36 (compatible; AhrefsSiteAudit/6.1; +http://ahrefs.com/robot/site-audit)",
      "robot", ""),
@@ -251,7 +255,7 @@ def run(conf_text: str) -> None:
 
     # People and crawlers are limited everywhere a page or API answers.
     crawler_req = {"pt_search", "pt_bot", "pt_bots", "pt_meta", "pt_perplexity", "pt_slowcrawl"}
-    crawler_conn = {"pt_search_conn", "pt_bots_conn"}
+    crawler_conn = {"pt_search_conn", "pt_oai_conn", "pt_bots_conn"}
     for sel, b in public.items():
         req = set(zones_in(b, "limit_req"))
         conn = set(zones_in(b, "limit_conn"))
@@ -291,7 +295,7 @@ def run(conf_text: str) -> None:
     # People are SLOWED before they are refused; crawlers are refused at once.
     # Search engines too (Oct 21 2026): Googlebot's bursts ran past the 12 in
     # flight and got 503s while its average stayed under the rate.
-    for zone, conn in (("pt_search", "pt_search_conn"), ("pt_assist", "pt_assist_conn")):
+    for zone, conn in (("pt_search", "pt_search_conn"), ("pt_search", "pt_oai_conn"), ("pt_assist", "pt_assist_conn")):
         delays = [int(d) for d in re.findall(rf"limit_req\s+zone={zone}\s+burst=\d+\s+delay=(\d+);", server)]
         caps = [int(c) for c in re.findall(rf"limit_conn\s+{conn}\s+(\d+);", server)]
         check(f"{zone}: the part of a burst let through at once fits its in-flight cap",
@@ -331,6 +335,18 @@ def run(conf_text: str) -> None:
     for name, verified, ua, want_bot, want_assist in ASSIST_CASES:
         bot, assist = crawler_keys(head, verified, ua)
         check(f"pools for {name}", (bot, assist) == (want_bot, want_assist), f"bot={bot!r} assist={assist!r}")
+    oai_ua = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot"
+    for verified, want_lane, want_slots in (("true", "openai", "openai"), ("false", "", "")):
+        env = {"http_x_pt_verified_bot": verified, "http_user_agent": oai_ua}
+        lane = eval_map(head, "pt_search_key", env)
+        slots = eval_map(head, "pt_oai_all", {"pt_search_key": lane})
+        shared = eval_map(head, "pt_search_all", {"pt_search_key": lane})
+        check(f"OAI-SearchBot (verified {verified}) in its own lane, never in Google's slots",
+              (lane, slots, shared) == (want_lane, want_slots, ""), f"lane={lane!r} slots={slots!r} shared={shared!r}")
+    g_env = {"http_x_pt_verified_bot": "true", "http_user_agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"}
+    g_lane = eval_map(head, "pt_search_key", g_env)
+    check("Googlebot keeps the search engines' shared slots",
+          (g_lane, eval_map(head, "pt_search_all", {"pt_search_key": g_lane}), eval_map(head, "pt_oai_all", {"pt_search_key": g_lane})) == ("google", "search", ""))
     check("search engines kept out of the shared crawler pool",
           bot_map is not None and bot_map.group(1).lstrip().startswith('"~^true:[a-z]+:"  "";'))
 
@@ -445,8 +461,13 @@ def probe() -> None:
         "lookup limit counts pre-loads": good.replace('    "1:1"   "";\n', ""),
         "whole-app cap missing from /api/": re.sub(r"(location /api/ \{[^}]*?)\n\s*limit_conn pt_app 64;", r"\1", good, count=1),
         "crawler limits missing from lookups": re.sub(
-            r"(location = /perm-case-status \{[^}]*?)\n\s*limit_conn pt_search_conn \d+;\n\s*limit_conn pt_bots_conn \d+;",
+            r"(location = /perm-case-status \{[^}]*?)\n\s*limit_conn pt_search_conn \d+;\n\s*limit_conn pt_oai_conn \d+;\n\s*limit_conn pt_bots_conn \d+;",
             r"\1", good, count=1),
+        "OpenAI's crawler back in the search engines' shared slots": good.replace(
+            'map $pt_search_key $pt_search_all { "" ""; openai ""; default search; }',
+            'map $pt_search_key $pt_search_all { "" ""; default search; }', 1),
+        "OpenAI's lane missing from a page location": good.replace("        limit_conn pt_oai_conn 10;\n", "", 1),
+        "OpenAI's slots too few for its burst": good.replace("limit_conn pt_oai_conn 10;", "limit_conn pt_oai_conn 6;"),
         "people refused instead of slowed": good.replace("zone=pt_page burst=300 delay=150", "zone=pt_page burst=300 nodelay", 1),
         "search engines refused instead of paced": good.replace("zone=pt_search burst=120 delay=8", "zone=pt_search burst=120 nodelay", 1),
         "refusal page drops its status": good.replace("error_page 429 @pt_slow_down;", "error_page 429 = @pt_slow_down;"),

@@ -22,7 +22,7 @@ import { IntentLink } from "@/components/ui/intent-link";
 import { LinkedinLogoIcon, XLogoIcon } from "@phosphor-icons/react";
 import ThemeToggle from "./ThemeToggle";
 import { AnalyticsSwitch } from "./AnalyticsSwitch";
-import { NOT_LEGAL_SERVICES, LEGAL_NAME, TRADE_NAME_NOTE } from "@/lib/constants/about";
+import { NOT_LEGAL_SERVICES, LEGAL_DBA, LEGAL_NAME, TRADE_NAME_NOTE } from "@/lib/constants/about";
 import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
 import { APP_FOOTER, FOOTER_COLUMNS, FOOTER_LEGAL } from "@/lib/siteMap";
 
@@ -47,7 +47,7 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
             </Fragment>
           ))}
           <span className="ml-auto flex items-center gap-3 text-muted-foreground">
-            &copy; {year} {LEGAL_NAME}
+            &copy; {year} {LEGAL_DBA}
             <ThemeToggle />
           </span>
         </nav>

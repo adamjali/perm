@@ -52,6 +52,7 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { MS_PER_DAY, MS_PER_MINUTE } from "./lib/time";
 import { RETRY_WINDOW_MS, nextAttemptAt, webhookHeaders } from "./lib/webhookSign";
 import type { HostVerdict } from "./webhookResolve";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("WebhookDelivery");
 
@@ -411,6 +412,7 @@ export function pauseEmailText(url: string, reason: string, settings: string): s
     settings,
     "",
     "PERM Tracker",
+    TEXT_LEGAL_LINE,
   ].join("\n");
 }
 

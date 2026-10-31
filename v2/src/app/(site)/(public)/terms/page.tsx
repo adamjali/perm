@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
-import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS, TRADE_NAME } from "@/lib/constants/about";
+import { LEGAL_DBA, LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -60,7 +60,7 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 30, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 31, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -73,8 +73,8 @@ export default function TermsPage() {
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
-              By accessing or using PERM Tracker (&quot;the Service&quot;), operated by
-              {LEGAL_NAME}, doing business as {TRADE_NAME} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by
+              By accessing or using PERM Tracker (&quot;the Service&quot;), operated by{" "}
+              {LEGAL_DBA} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by
               these Terms of Service (&quot;Terms&quot;). If you don’t agree to these Terms, please don’t use the
               Service.
             </p>{" "}
@@ -604,8 +604,8 @@ export default function TermsPage() {
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
-              You agree to indemnify, defend, and hold harmless PERM Tracker and
-              its operators from any claims, damages, losses, or expenses
+              You agree to indemnify, defend, and hold harmless {LEGAL_DBA}, and
+              its operators, from any claims, damages, losses, or expenses
               (including reasonable attorney&apos;s fees) arising from:
             </p>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
@@ -738,7 +738,7 @@ export default function TermsPage() {
             </summary>{" "}
             <p className="text-soft leading-relaxed">
               These Terms, together with our Privacy Policy, constitute the entire
-              agreement between you and PERM Tracker regarding the Service and
+              agreement between you and {LEGAL_NAME} regarding the Service and
               supersede any prior agreements.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">
@@ -865,7 +865,7 @@ export default function TermsPage() {
                 <strong>Application:</strong> PERM Tracker
               </li>{" "}
               <li>
-                <strong>Operator:</strong> {`${LEGAL_NAME}, ${LEGAL_FORM}`}
+                <strong>Operator:</strong> {`${LEGAL_DBA}, ${LEGAL_FORM}`}
               </li>{" "}
               <li>
                 <strong>Mailing address:</strong> {POSTAL_ADDRESS}

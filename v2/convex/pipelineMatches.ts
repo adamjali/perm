@@ -54,6 +54,7 @@ import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
 import { MATCH_CAP, pickCandidates, type PermCandidate } from "./lib/pipelineMatch";
 import { MAX_CASES_PER_ADDRESS } from "./caseAlerts";
 import { isProgramApproval } from "../src/lib/flagCaseNumber";
+import { TEXT_LEGAL_LINE } from "./lib/textFooter";
 
 const log = createLogger("PipelineMatches");
 
@@ -380,6 +381,7 @@ export const sweep = internalAction({
             `Stop these alerts: ${unsubscribeUrl}`,
             "",
             "PERM Tracker",
+            TEXT_LEGAL_LINE,
           ].join("\n"),
         });
         if (result.status === "failed") {

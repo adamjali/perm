@@ -14,7 +14,7 @@ and Sandbox pages), not from memory.
 
 | Field | Answer |
 |---|---|
-| Organization name | PERM Tracker LLC |
+| Organization name | Asolys LLC, doing business as PERM Tracker (renamed from PERM Tracker LLC Oct 8 2026) |
 | Organization type | Software development organization, incorporated in the United States |
 | State of incorporation | Florida |
 | Website | https://permtracker.app |

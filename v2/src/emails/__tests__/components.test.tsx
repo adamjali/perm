@@ -63,7 +63,7 @@ describe("EmailLayout", () => {
     // it counts as commercial. Also asserted for auth mail, which hides the
     // settings link: the address is not tied to that switch.
     it("prints the company's postal address in the footer, on every kind of email", async () => {
-      const { LEGAL_NAME, POSTAL_ADDRESS } = await import("../../lib/constants/about");
+      const { LEGAL_DBA, POSTAL_ADDRESS } = await import("../../lib/constants/about");
       for (const hideSettingsLink of [false, true]) {
         const html = await render(
           EmailLayout({
@@ -72,7 +72,7 @@ describe("EmailLayout", () => {
             children: React.createElement(Text, null, "Body"),
           })
         );
-        expect(html).toContain(`${LEGAL_NAME}, ${POSTAL_ADDRESS}`);
+        expect(html).toContain(`${LEGAL_DBA}, ${POSTAL_ADDRESS}`);
       }
       expect(POSTAL_ADDRESS).toMatch(/\b[A-Z]{2} \d{5}$/);
     });

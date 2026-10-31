@@ -75,7 +75,7 @@ been shown.
 
 ## The VPAT-style statement, if the portal wants one paragraph
 
-PERM Tracker LLC attests that the USCIS receipt lookup at
+Asolys LLC, doing business as PERM Tracker, attests that the USCIS receipt lookup at
 permtracker.app/uscis-case-status is built to WCAG 2.0 Level AA practices as
 required by Section 508: semantic HTML with a single H1 and a skip-free
 heading outline, a labelled form control with visible focus and text error
