@@ -33,6 +33,14 @@ case "$job" in
   # live, one big firm's page build took 21 s on the LCA database. Here, with no tunnel, every firm takes under a
   # minute. It runs after the 4:10 AM sweep has rebuilt the firm map, and writes its own run row.
   firm-programs) timeout 15m nice -n 5 python3 scripts/build_firm_programs.py || { rc=1; fail build_firm_programs.py "exited non-zero or ran past 15m"; } ;;
+  # DOL's Wage and Hour cases (Oct 31 2026): one 200 MB file from data.dol.gov, which answers the server where
+  # www.dol.gov doesn't. DOL updates it quarterly; read weekly, and a week with nothing new writes nothing.
+  # The employer pages whose cases moved are rebuilt through nginx, which sends the call to both web copies.
+  whd)
+    export REVALIDATE_BASE=http://127.0.0.1:8081
+    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+    export REVALIDATE_SECRET
+    timeout 30m nice -n 10 python3 scripts/ingest_whd.py || { rc=1; fail ingest_whd.py "exited non-zero or ran past 30m"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

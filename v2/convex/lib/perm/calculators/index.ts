@@ -173,3 +173,14 @@ export {
   type FeeResult,
   type PetitionerKind,
 } from './greenCardFees';
+export {
+  ageBetween,
+  calculateCspa,
+  CSPA_AGE_LIMIT_YEARS,
+  CSPA_FINAL_ACTION_POLICY_FROM,
+  type Age,
+  type CspaInput,
+  type CspaResult,
+  type CspaStatus,
+  type CspaWindow,
+} from './cspa';

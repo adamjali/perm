@@ -1743,3 +1743,26 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
 - **The Gmail janitor files alarms and Sentry issue alerts instead of trashing them** (`~/gmail-janitor/memory/rules.md`).
 - **Parked for the owner:** the offline compaction of the main database file never ran (about 2.7 GB back, about 16
   minutes offline at night; its first reason, the RAM lock, was retired Oct 29).
+
+## Oct 31 2026 (evening): the child age-out calculator, and DOL's wage cases
+
+- **`/tools/cspa-age-calculator`** ("Will my child age out?"): INA 203(h)(1) and USCIS's Policy Manual (Vol 7, Part A,
+  Ch 7, current as of Oct 27 2026) as `calculateCspa` (`convex/lib/perm/calculators/cspa.ts`): pending time is
+  approval less filing; the visa is available on the later of the approval and the first of the Final Action month (the
+  chart USCIS named for filing, for an I-485 filed before Aug 15 2025); retrogression before filing fixes nothing; a
+  full continuous year with nothing filed loses the protection. Every Policy Manual example is a test.
+- **The calculator reads one bulletin line, not the archive** (`/api/bulletin-line?set=&category=&country=`,
+  `src/lib/bulletinLineHistory.ts`): the whole archive would have cost the page about 150 KB.
+- **DOL's Wage and Hour cases** (`scripts/ingest_whd.py`, table `whd_cases`, dataset `whd-cases`): one 200 MB file from
+  data.dol.gov (found from DOL's catalog record), read by the server Mondays (`permtracker-uscis@whd`). Kept: every
+  H-1B, H-2A and H-2B case, and every case joined to an employer page. 16,345 of 370,964 on the first load.
+- **A case joins a page only on strict rules, because a wrong link names the wrong company**: the legal name (a
+  franchisee's trade name is the brand); a one-word name only to a sponsor with 50+ PERM filings; a non-visa case only
+  to a PERM sponsor in a state its own filings name; a visa case to a no-PERM page only when that page files the same
+  program. Each rule is a case found in DOL's file and checked by hand (`scripts/test_whd.py`).
+- **Employer pages show the cases** (`WageHourCases`, beside the layoff notices on all three kinds of page) and
+  **`/wage-violations`** counts H-1B, H-2A and H-2B cases by fiscal year with the largest back wages. DOL's cautions go
+  with every figure: back wages are agreed, not paid; findings dates aren't the case's dates; counts loaded after
+  Oct 1 2025 aren't directly comparable.
+- **A reload refreshes only the employer pages whose cases moved** (`moved_pages`, through nginx to both web copies).
+- **`getFamilyBulletinSeries` throws on a failed read** (it had read as an empty list).

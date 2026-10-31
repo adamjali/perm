@@ -102,7 +102,9 @@ export type DataSection =
   | "fees"
   | "ead-extension"
   | "lottery-calculator"
-  | "six-year-limit";
+  | "six-year-limit"
+  | "cspa-age"
+  | "wage-violations";
 
 export interface DataNavSection extends SitePage {
   key: DataSection;
@@ -175,6 +177,7 @@ export const SECTIONS: DataNavSection[] = [
   t("priority-dates", "Green card line", "Priority date calculator", "/tools/priority-date-calculator", "Your date against every bulletin."),
   t("green-card-line", "Green card line", "Your place in line", "/tools/green-card-line", "Everyone ahead of your priority date."),
   t("eb2-vs-eb3", "Green card line", "EB-2 or EB-3", "/tools/eb2-vs-eb3", "Which line has fewer people ahead of your date."),
+  t("cspa-age", "Green card line", "Child age-out (CSPA)", "/tools/cspa-age-calculator", "Whether a child still counts as under 21."),
   s("i485-offices", "Green card line", "I-485 by office", "/i485-by-field-office"),
   t("i485-position", "Green card line", "I-485 queue position", "/tools/i485-queue-position", "Adjustment applications pending ahead of you."),
   s("nvc-waiting-list", "Green card line", "NVC waiting list", "/nvc-waiting-list"),
@@ -210,6 +213,7 @@ export const SECTIONS: DataNavSection[] = [
   s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
   s("opt-employers", "Other visas", "OPT and CPT employers", "/opt-employers"),
   s("cap-exempt", "Other visas", "H-1B cap-exempt employers", "/h1b-cap-exempt-employers"),
+  s("wage-violations", "Other visas", "Visa wage violations", "/wage-violations"),
 ];
 
 export const GROUPS: DataGroup[] = [

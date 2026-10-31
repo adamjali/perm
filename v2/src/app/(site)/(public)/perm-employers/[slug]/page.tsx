@@ -104,6 +104,8 @@ import { employerMoves } from "@/lib/employerStages";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
 import { debarmentsForSlug } from "@/lib/db/debarments";
 import { warnForSlug } from "@/lib/db/warn";
+import { whdForSlug } from "@/lib/db/whd";
+import { WageHourCases } from "@/components/entities/WageHourCases";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { OtherEmployer } from "@/components/entities/OtherEmployer";
@@ -270,7 +272,7 @@ async function loadLiveOnly(slug: string) {
 async function OtherEmployerPage({ slug, record }: { slug: string; record: OtherEmployerRecord }) {
   const match = await employerMatch(slug);
   const empty = { cases: [], more: false };
-  const [programs, fresh, wageLive, lcaLive, wageDets, lcaDets, seasonal, lcaProfile, uscisH1b, lottery, debarments, warn] =
+  const [programs, fresh, wageLive, lcaLive, wageDets, lcaDets, seasonal, lcaProfile, uscisH1b, lottery, debarments, warn, whd] =
     await Promise.all([
       getEmployerPrograms(slug).catch(() => null),
       getFreshness(),
@@ -288,6 +290,7 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
       // stays), not cache a month of "no debarment, no layoffs".
       debarmentsForSlug(slug),
       warnForSlug(slug),
+      whdForSlug(slug),
     ]);
   const lines = programs ? [programs.pwd, programs.lca, programs.seasonal] : [];
   const open = lines.filter((l) => l && l.pending !== null);
@@ -305,7 +308,8 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
         notices={
           <>
             <DebarmentNotice rows={debarments} pageName={record.name} today={new Date().toISOString().slice(0, 10)} />{" "}
-            <WarnNoticeBand rows={warn} pageName={record.name} />
+            <WarnNoticeBand rows={warn} pageName={record.name} />{" "}
+            <WageHourCases summary={whd} pageName={record.name} />
           </>
         }
         nextStep={
@@ -566,7 +570,7 @@ export default async function EmployerPage({
     // No catch: an unreadable map must fail the render (the last good page
     // stays), not cache a month of an employer with no other programs.
     const liveMatch = await employerMatch(slug);
-    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery, liveDebarments, liveWarn] =
+    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery, liveDebarments, liveWarn, liveWhd] =
       await Promise.all([
         getFreshness(),
         getEmployerStages().catch(() => null),
@@ -583,6 +587,7 @@ export default async function EmployerPage({
         getEmployerLottery(slug).catch(() => null),
         debarmentsForSlug(slug),
         warnForSlug(slug),
+        whdForSlug(slug),
       ]);
     const updated = employerOwnDate(await liveOnlyLastChanged(slug), await getDateSources());
     return (
@@ -595,7 +600,8 @@ export default async function EmployerPage({
           notices={
             <>
               <DebarmentNotice rows={liveDebarments} pageName={live.record.name} today={new Date().toISOString().slice(0, 10)} />{" "}
-              <WarnNoticeBand rows={liveWarn} pageName={live.record.name} />
+              <WarnNoticeBand rows={liveWarn} pageName={live.record.name} />{" "}
+              <WageHourCases summary={liveWhd} pageName={live.record.name} />
             </>
           }
           programs={
@@ -665,7 +671,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -725,6 +731,8 @@ export default async function EmployerPage({
       getEmployerSize(canonicalSlug).catch(() => null),
       // Its own answer to DOL on ACWIA (cap_exempt_employers): the cap-exempt note. A failure only drops the note's basis.
       getAcwiaAnswer(canonicalSlug).catch(() => null),
+      // DOL's Wage and Hour cases matched to this sponsor. No catch, as with debarments and layoffs.
+      whdForSlug(canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -795,6 +803,9 @@ export default async function EmployerPage({
   }
   if (warn.length > 0) {
     tags.push({ text: `${formatInt(warn.length)} layoff notice${warn.length === 1 ? "" : "s"}`, href: "#layoffs", tone: "ink" });
+  }
+  if (whd && whd.withViolations > 0) {
+    tags.push({ text: `${formatInt(whd.withViolations)} wage case${whd.withViolations === 1 ? "" : "s"} with violations`, href: "#wage-cases", tone: "ink" });
   }
 
   // What the sponsor is, in three cells: the job it files for most, where, and its industry.
@@ -955,7 +966,8 @@ export default async function EmployerPage({
             <FromDolLive />
           </section>
         ) : null}{" "}
-        <WarnNoticeBand rows={warn} pageName={row.name} />
+        <WarnNoticeBand rows={warn} pageName={row.name} />{" "}
+        <WageHourCases summary={whd} pageName={row.name} />
       </Chapter>
 
       <Chapter id="wait" title="How long it takes">

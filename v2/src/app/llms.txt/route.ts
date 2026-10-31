@@ -306,6 +306,16 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "When a prevailing wage determination expires under 20 CFR 656.40(c), including the OEWS wage-year rule, and the recruitment or filing that must start inside it.",
   },
   {
+    path: "/wage-violations",
+    label: "H-1B, H-2A and H-2B wage violations",
+    blurb: "Every Wage and Hour case DOL concluded under the H-1B, H-2A and H-2B programs since FY2005, from DOL's own compliance file: violations, back wages the employer agreed to pay and workers owed, by fiscal year and by employer.",
+  },
+  {
+    path: "/tools/cspa-age-calculator",
+    label: "CSPA age calculator (will my child age out?)",
+    blurb: "Whether a child on a parent's green card still counts as under 21 under the Child Status Protection Act: the CSPA age (INA 203(h)(1)), the day the visa counted as available from the bulletin archive, and the one-year deadline to file, by USCIS's Policy Manual.",
+  },
+  {
     path: "/tools/h1b-six-year-limit",
     label: "H-1B six-year limit and the 365-day rule",
     blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",

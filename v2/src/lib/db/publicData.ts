@@ -510,12 +510,15 @@ export const getVisaBulletins = cache(async function getVisaBulletins(): Promise
  * parser has read the family tables for; a month captured from a browser
  * before the parser learned them is absent here, not empty, and the archive
  * backfill refills it.
+ *
+ * A failed read throws, so a page keeps its last good render: caught as an empty list, a database blip would store
+ * a page saying no family chart exists.
  */
 export async function getFamilyBulletinSeries(): Promise<Array<BulletinMonth & { archivedAt: string; sourceUrl: string }>> {
   const r = await rows<Record<string, string | null>>(
     "SELECT bulletin_month, source_url, archived_at, family_final_action, family_dates_for_filing " +
       "FROM visa_bulletins WHERE family_final_action IS NOT NULL ORDER BY bulletin_month",
-  ).catch(() => [] as Record<string, string | null>[]);
+  );
   return r.map((x) => ({
     bulletinMonth: x.bulletin_month as string,
     sourceUrl: x.source_url ?? "",

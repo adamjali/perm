@@ -25,6 +25,8 @@ export const PAGE_CARD_ALT = {
   "glossary": "PERM and green card glossary. Every term this site uses, where it comes from, and where on the site it meets real data.",
   "green-card-fees": "Green card government fees. What USCIS charges for an employment-based green card, line by line from its own fee schedule.",
   "green-card-timeline": "Green card timeline and planner. Every step to an employment-based green card dated from the reader's own dates, with the government fees for the whole way.",
+  "wage-violations": "H-1B, H-2A and H-2B wage violations: DOL's Wage and Hour cases under the visa programs, by year and employer.",
+  "cspa-age-calculator": "Will my child age out? The CSPA age for a child on a parent's green card, and the last day to file.",
   "h1b-six-year-limit": "H-1B six-year limit and the PERM 365-day rule. The day H-1B status runs out, and the last day a PERM can be filed to keep the extensions open.",
   "i140-calculator": "I-140 processing time and queue calculator. USCIS's published times and its receipts by category, computed for your filing.",
   "i140-trends": "I-140 trends by category. Receipts, approvals and denials by category and quarter, from USCIS's own counts.",

@@ -113,6 +113,24 @@
   "from": "PERM (permanent labor certification)"
  },
  {
+  "slug": "wage-violations",
+  "path": "/wage-violations",
+  "title": "H-1B, H-2A and H-2B wage violations",
+  "label": "DOL's Wage and Hour cases under the visa programs, by year and employer.",
+  "shot": "wage-violations.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1598
+  ],
+  "viewport": 1440,
+  "maxWidth": 1180,
+  "mask": "figures",
+  "fromEl": "#h1b dl",
+  "css": "#h1b h3, #h1b ol, [data-shell-column] > section[aria-label='Check your case'] {display:none!important}"
+ },
+ {
   "slug": "email-preferences",
   "path": "/email-preferences",
   "title": "Email preferences",
@@ -211,6 +229,41 @@
   ],
   "viewport": 1440,
   "maxWidth": 1100
+ },
+ {
+  "slug": "cspa-age-calculator",
+  "path": "/tools/cspa-age-calculator",
+  "title": "Will my child age out?",
+  "label": "The CSPA age for a child on a parent's green card, and the last day to file.",
+  "shot": "cspa-age-calculator.png",
+  "crop": [
+   0,
+   0,
+   2200,
+   982
+  ],
+  "fill": [
+   [
+    "The child's date of birth",
+    "2008-04-12"
+   ],
+   [
+    "Priority date",
+    "2016-05-20"
+   ],
+   [
+    "The parent's I-140 receipt date",
+    "2017-01-10"
+   ],
+   [
+    "Its approval date",
+    "2017-06-30"
+   ]
+  ],
+  "viewport": 1440,
+  "maxWidth": 1100,
+  "fromEl": "main section[data-embed] figure",
+  "css": "main section[data-embed] figure > p:last-child, main section[data-embed] dl, main section[data-embed] details{display:none!important} main section[data-embed] .grid p{visibility:hidden!important} main section[data-embed] ~ *{display:none!important} [data-shell-column] > section[aria-label='Check your case'], footer{display:none!important}"
  },
  {
   "slug": "i140-calculator",

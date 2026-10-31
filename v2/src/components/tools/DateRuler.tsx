@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import { formatInt } from "@/lib/format";
 import { daysBetween } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
@@ -139,12 +140,12 @@ export function DateRuler({
         <p className="mt-4 border-t-2 border-border pt-3 text-base">
           {left >= 0 ? (
             <>
-              <span className="font-heading text-3xl font-bold tabular-nums">{left}</span>{" "}
-              {left === 1 ? "day" : "days"} {leftWord}, of {span} in all.
+              <span className="font-heading text-3xl font-bold tabular-nums">{formatInt(left)}</span>{" "}
+              {left === 1 ? "day" : "days"} {leftWord}, of {formatInt(span)} in all.
             </>
           ) : (
             <>
-              <span className="font-heading text-3xl font-bold tabular-nums">{Math.abs(left)}</span>{" "}
+              <span className="font-heading text-3xl font-bold tabular-nums">{formatInt(Math.abs(left))}</span>{" "}
               {Math.abs(left) === 1 ? "day" : "days"} past.
             </>
           )}

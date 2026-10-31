@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule for permtracker-uscis@whd
+# DOL's Wage and Hour cases (ingest_whd.py, Oct 31 2026). DOL updates the file
+# quarterly; Mondays after the morning sweep, when nothing else reads the
+# employer tables. Persistent: a Monday the server was down runs when it's back.
+[Timer]
+OnCalendar=Mon *-*-* 08:05:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@whd.service
+
+[Install]
+WantedBy=timers.target

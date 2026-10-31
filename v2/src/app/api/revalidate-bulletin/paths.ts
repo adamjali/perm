@@ -18,6 +18,8 @@ export const BULLETIN_PAGES = [
   "/tools/green-card-line",
   "/tools/i485-queue-position",
   "/tools/priority-date-calculator",
+  // Reads which categories the archive holds; its calculator asks /api/bulletin-line for one line.
+  "/tools/cspa-age-calculator",
   "/badges",
   // Draws every bulletin month held.
   "/perm-by-the-numbers",
