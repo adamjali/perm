@@ -1725,3 +1725,29 @@ Oct 29 10:01 PM, valid Dataset).
 above) and `/compare` (a competitor-comparison page crawled less often). I stopped at 4 rather than spend the
 remaining ~7 slots on pages Google already holds current. Next round: run `gsc_queue.mjs` again, request only the
 genuinely-new or verifiably-stale pages, and leave the shared-component "changed" list to the sitemap.
+
+### Round, Saturday Oct 31 2026 (about 11:20 to 11:26 AM EDT)
+
+What's live is d6e63ee7 (release 385); the legal-name change went live with release 384 at 2:10 AM EDT today. Since
+the last round's commit (ca7c7c13), only four public pages changed in what's live, all with the LLC's new name (Asolys
+LLC, doing business as PERM Tracker). The rest of `gsc_queue.mjs --since ca7c7c13` is either shared components the
+sitemap's lastmod carries or work on `main` that isn't live until the 2 AM run on Sun Nov 1.
+
+Requested (4, no quota stop), each with Google's last crawl:
+- `/terms`: Oct 29, 9:47 PM.
+- `/about`: Oct 25, 7:59 PM.
+- `/privacy`: Oct 30, 2:42 PM.
+- `/methodology`: Oct 30, 11:39 PM.
+
+Skipped: nothing else live changed. About 7 of the day's slots are left unused on purpose.
+
+Still to request, only after the 2 AM EST run on Sun Nov 1 ships c93dc295 or later (check
+`ssh permtracker 'sudo permtracker-deploy status'`), each whose Google copy predates that deploy:
+1. `/pwd-cases` (opens with the board: the date-in estimate, DOL keeping up by week, how requests end, the review months).
+2. `/perm-processing-times` (opens with the wait by decided month).
+3. `/visa-bulletin`, `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/family` (USCIS's chart for an I-485, how
+   far each line is behind).
+4. `/perm-rfi-audit` (RFI cases certified against every PERM case).
+5. `/perm-queue/2026-01` (the month's busiest employers).
+6. `/` and `/perm-decision-activity` (the pulse's week against the week before).
+Then `gsc_queue.mjs --since d6e63ee7` for anything else.
