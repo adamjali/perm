@@ -7,8 +7,6 @@ import { isPushSupported, subscribeToPush } from "@/lib/pushSubscription";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { convexSiteUrl } from "@/lib/convexSite";
-import type { Lang } from "@/lib/i18n/lang";
-import { ALERT_TEXT, serverReply } from "@/components/alerts/alerts.messages";
 
 /**
  * A browser notification when DOL's status changes, with no account and no
@@ -30,8 +28,7 @@ type State =
   | { kind: "off"; message: string }
   | { kind: "refused"; message: string };
 
-export function CasePushAlert({ caseNumber, className, lang = "en" }: { caseNumber: string; className?: string; lang?: Lang }) {
-  const t = ALERT_TEXT[lang].push;
+export function CasePushAlert({ caseNumber, className }: { caseNumber: string; className?: string }) {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [stored, setStored] = useState<string | null>(null);
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -74,22 +71,21 @@ export function CasePushAlert({ caseNumber, className, lang = "en" }: { caseNumb
         } catch {
           // Storage unavailable: the subscription still works, only the "stop" shortcut is lost.
         }
-        // Our own words on success: the server's are English, and say the same thing.
-        setState({ kind: "on", message: lang === "en" ? (body?.message ?? t.on) : t.on });
+        setState({ kind: "on", message: body?.message ?? "This browser will be notified when DOL's status changes." });
       } else {
-        setState({ kind: "refused", message: body?.message ? serverReply(lang, body.message) : t.failed });
+        setState({ kind: "refused", message: body?.message ?? "That didn't go through. Try again in a moment." });
       }
     } catch (e) {
       const m = e instanceof Error ? e.message : "";
       setState({
         kind: "refused",
         message: /denied/i.test(m)
-          ? t.blocked
+          ? "Notifications are blocked for this site in the browser's settings."
           : /not supported/i.test(m)
-            ? t.unsupported
+            ? "This browser cannot receive notifications. On an iPhone, add the site to the home screen first."
             : /timed out/i.test(m)
-              ? t.noAnswer
-              : t.failed,
+              ? "The browser didn't answer. Reload the page and try once more."
+              : "That didn't go through. Try again in a moment.",
       });
     }
   }
@@ -110,12 +106,12 @@ export function CasePushAlert({ caseNumber, className, lang = "en" }: { caseNumb
           // Nothing to do: the server side is what matters.
         }
         setStored(null);
-        setState({ kind: "off", message: t.off });
+        setState({ kind: "off", message: "This browser will not be notified any more." });
       } else {
-        setState({ kind: "refused", message: t.failed });
+        setState({ kind: "refused", message: "That didn't go through. Try again in a moment." });
       }
     } catch {
-      setState({ kind: "refused", message: t.dropped });
+      setState({ kind: "refused", message: "That didn't go through, which usually means the connection dropped." });
     }
   }
 
@@ -125,11 +121,12 @@ export function CasePushAlert({ caseNumber, className, lang = "en" }: { caseNumb
     <details className={cn("group print:hidden", className)}>
       <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         <CaretRightIcon className="size-3.5 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
-        {t.summary}
+        Or a browser notification
       </summary>{" "}
       <div className="pb-1 pl-5">
         <p className="max-w-2xl text-sm leading-relaxed text-soft">
-          {t.explain}
+          No email and no account. The browser gives this site an address for itself, not for you, and one
+          notification goes out minutes after the status changes. Turn it off here or in the browser&apos;s settings.
         </p>{" "}
         {state.kind === "on" || state.kind === "off" ? (
           <p role="status" className="mt-3 text-sm leading-relaxed text-soft">
@@ -138,11 +135,11 @@ export function CasePushAlert({ caseNumber, className, lang = "en" }: { caseNumb
         ) : (
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Button type="button" variant="outline" onClick={turnOn} loading={state.kind === "working"}>
-              {t.turnOn}
+              Notify this browser
             </Button>{" "}
             {stored ? (
               <Button type="button" variant="link" onClick={turnOff} disabled={state.kind === "working"}>
-                {t.turnOff}
+                Stop notifying this browser
               </Button>
             ) : null}{" "}
             {state.kind === "refused" ? (

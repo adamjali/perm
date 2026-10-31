@@ -38,26 +38,21 @@ import { cn } from "@/lib/utils";
  * and a dashed wait between them because nothing is sent while nothing
  * changes. HTML rather than SVG so the labels keep their size at any width.
  */
-export const ALERT_LANES = [
+const ALERT_LANES = [
   "A case's status changes",
   "DOL's queue reaches your month",
   "Your bulletin cutoff moves",
   "DOL moves an employer's cases",
 ] as const;
 
-export function AlertLanesFigure({
-  className,
-  lanes = ALERT_LANES,
-  label = "Four kinds of change on the federal record, each sending one email",
-}: {
-  className?: string;
-  /** The four lanes in the page's language; English by default. */
-  lanes?: readonly string[];
-  label?: string;
-}) {
+export function AlertLanesFigure({ className }: { className?: string }) {
   return (
-    <div role="img" aria-label={label} className={cn("grid gap-4", className)}>
-      {lanes.map((label) => (
+    <div
+      role="img"
+      aria-label="Four kinds of change on the federal record, each sending one email"
+      className={cn("grid gap-4", className)}
+    >
+      {ALERT_LANES.map((label) => (
         <div key={label} className="flex items-center gap-3">
           <span aria-hidden="true" className="size-3.5 shrink-0 bg-data-good-ink" />{" "}
           <span className="min-w-0 text-sm font-semibold">{label}</span>{" "}

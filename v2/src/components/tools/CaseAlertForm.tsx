@@ -3,9 +3,7 @@
 import { useId, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import type { FlagProgram } from "@/lib/flagCaseNumber";
-import type { Lang } from "@/lib/i18n/lang";
-import { ALERT_TEXT, serverReply } from "@/components/alerts/alerts.messages";
+import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
 import { isQueued } from "@/lib/alertReply";
 import { AlertDone, AlertNote, EmailField, OptInFold } from "@/components/alerts/AlertParts";
 import { Button } from "@/components/ui/button";
@@ -63,16 +61,13 @@ export function CaseAlertForm({
   caseNumber,
   program = "perm",
   className,
-  lang = "en",
 }: {
   caseNumber: string;
   program?: FlagProgram;
   className?: string;
-  /** The page's language: the form's own words and the server's fixed replies follow it. */
-  lang?: Lang;
 }) {
   const { observe, onFocusCapture } = useAlertFormTelemetry("case", program);
-  const t = ALERT_TEXT[lang];
+  const noun = programNoun(program);
   const inputId = useId();
   const noteId = useId();
   const newsId = useId();
@@ -102,7 +97,6 @@ export function CaseAlertForm({
           source: SOURCE[program],
           news: news || undefined,
           newsletter: newsletter || undefined,
-          lang: lang === "en" ? undefined : lang,
         }),
       });
       const body = (await res.json().catch(() => null)) as
@@ -110,20 +104,22 @@ export function CaseAlertForm({
         | null;
       // The server's own words, whatever the code. A generic fallback only
       // for the case where there is no body to read at all.
-      const message = body?.message ? serverReply(lang, body.message) : t.failed;
+      const message =
+        body?.message ??
+        "That didn't go through. Try again in a moment, or check the case on DOL's own status page.";
       setState(res.ok ? { kind: "done", message, queued: isQueued(body) } : { kind: "refused", message });
       trackAlertSignup("case", res.ok ? "accepted" : "refused", { program, status: res.status });
     } catch {
       trackAlertSignup("case", "error", { program });
       setState({
         kind: "refused",
-        message: t.dropped,
+        message: "That didn't go through, which usually means the connection dropped. Try again in a moment.",
       });
     }
   }
 
   if (state.kind === "done") {
-    return <AlertDone message={state.message} queued={state.queued} className={className} lang={lang} />;
+    return <AlertDone message={state.message} queued={state.queued} className={className} />;
   }
 
   return (
@@ -134,7 +130,7 @@ export function CaseAlertForm({
       className={cn("print:hidden", className)}
     >
       <label htmlFor={inputId} className="block text-base font-semibold text-foreground">
-        {t.label(program)}
+        Email me when DOL changes this {noun}&apos;s status
       </label>{" "}
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <EmailField
@@ -152,7 +148,7 @@ export function CaseAlertForm({
           data-ph-capture-attribute-cta="case-alert"
           className="sm:w-auto"
         >
-          {t.button}
+          Email me changes
         </Button>
       </div>{" "}
       {state.kind === "refused" ? (
@@ -160,7 +156,7 @@ export function CaseAlertForm({
           {state.message}
         </p>
       ) : (
-        <AlertNote id={noteId} className="mt-2" lang={lang} />
+        <AlertNote id={noteId} className="mt-2" />
       )}{" "}
       <OptInFold
         id={newsId}
@@ -169,7 +165,6 @@ export function CaseAlertForm({
         onNews={setNews}
         onNewsletter={setNewsletter}
         className="mt-1"
-        lang={lang}
       />
     </form>
   );
