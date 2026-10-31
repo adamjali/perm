@@ -80,11 +80,6 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/perm-employers/browse": "browse alphabetical index employers companies sponsors",
   "/perm-attorneys/browse": "browse alphabetical index attorneys law firms counsel",
   "/perm-wages/browse": "browse alphabetical index occupations job titles soc wages",
-  "/zh": "chinese 中文 绿卡 排期 劳工证 guide",
-  "/es": "spanish español green card guía",
-  "/pt-br": "portuguese português brasil guia",
-  "/ko": "korean 한국어 영주권 문호 안내",
-  "/vi": "vietnamese tiếng việt thẻ xanh hướng dẫn",
 };
 
 /** Pages reached by name that no menu group holds. */
@@ -103,11 +98,6 @@ const OTHER_GO_TO = [
   "/perm-employers/browse",
   "/perm-attorneys/browse",
   "/perm-wages/browse",
-  "/zh",
-  "/es",
-  "/pt-br",
-  "/ko",
-  "/vi",
 ];
 
 /** The browse hubs share one page name; search needs to tell them apart. */

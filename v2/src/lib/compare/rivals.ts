@@ -218,7 +218,7 @@ export const RIVALS: readonly Tracker[] = [
     },
     bestFor: "Reading about PERM in Portuguese, Spanish or Mandarin",
     dataFrom: "DOL's quarterly files and its own checks of DOL's service",
-    beatsUs: ["The site and its articles in English, Portuguese, Spanish and Mandarin; we translate one guide and the case lookup"],
+    beatsUs: ["The site and its articles in English, Portuguese, Spanish and Mandarin; ours is in English only"],
     strengths: [
       "The site and its articles in English, Portuguese, Spanish and Mandarin",
       "A wait calculator for EB-3 Other Workers",
@@ -255,7 +255,7 @@ export const RIVALS: readonly Tracker[] = [
     },
     bestFor: "Seeing the exact filing day DOL is on, in six languages",
     dataFrom: "DOL's case-status service",
-    beatsUs: ["Every page in six languages; we translate one guide and the case lookup"],
+    beatsUs: ["Every page in six languages; ours is in English only"],
     strengths: [
       "The exact filing day DOL is on, worked out from case statuses, for PERM and wage requests",
       "Each wage request linked to its PERM case, with the median days between them",

@@ -21,9 +21,9 @@ import { describe, expect, it } from "vitest";
 const ROOT = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 
-// The page's body lives in CaseStatusPage.tsx, shared by the English route and its five translations.
+// The page's body lives in CaseStatusPage.tsx beside its route.
 const DOL_PAGE = "(site)/(public)/perm-case-status/CaseStatusPage.tsx";
-const DOL_ROUTES = ["(site)/(public)/perm-case-status/page.tsx", "(site)/(public)/[lang]/perm-case-status/page.tsx"];
+const DOL_ROUTE = "(site)/(public)/perm-case-status/page.tsx";
 const USCIS_PAGE = "(site)/(public)/uscis-case-status/page.tsx";
 const PRIVACY = "(site)/(public)/privacy/page.tsx";
 const DOL_FORM = "../components/tools/CaseLookupForm.tsx";
@@ -66,8 +66,8 @@ describe("the DOL page routes a USCIS receipt away", () => {
     expect(read(DOL_FORM_WORDS)).toMatch(/USCIS receipt number/);
   });
 
-  it("both routes render the shared page, so a translation routes a receipt away too", () => {
-    for (const route of DOL_ROUTES) expect(read(route)).toMatch(/<CaseStatusPage lang=/);
+  it("the route renders that page, so the receipt check is the one a visitor meets", () => {
+    expect(read(DOL_ROUTE)).toMatch(/<CaseStatusPage /);
   });
 });
 

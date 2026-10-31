@@ -111,12 +111,8 @@ describe("loading.tsx files", () => {
     const publicLoading = loadingFiles
       .map((p) => relative(APP, p))
       .filter((p) => p.startsWith("(site)/"));
-    // The case lookup renders per request, in English and in each translation (the [lang] route re-exports the
-    // same loading state).
-    expect(publicLoading.sort()).toEqual([
-      "(site)/(public)/[lang]/perm-case-status/loading.tsx",
-      "(site)/(public)/perm-case-status/loading.tsx",
-    ]);
+    // The case lookup renders per request.
+    expect(publicLoading.sort()).toEqual(["(site)/(public)/perm-case-status/loading.tsx"]);
   });
 });
 

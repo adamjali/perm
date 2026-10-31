@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * The footer: three columns of links, then one line for the legal pages, the
- * guide's other languages and the colour theme (Oct 14 2026).
+ * The footer: three columns of links, then one line for the legal pages and
+ * the colour theme (Oct 14 2026).
  *
  * A quiet sunken band, the page's own text colours, columns that are always
  * open (two side by side on a phone). Every link comes from `lib/siteMap.ts`,
@@ -24,7 +24,6 @@ import ThemeToggle from "./ThemeToggle";
 import { AnalyticsSwitch } from "./AnalyticsSwitch";
 import { NOT_LEGAL_SERVICES, LEGAL_NAME, TRADE_NAME_NOTE } from "@/lib/constants/about";
 import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
-import { LOCALES } from "@/lib/i18n/locales";
 import { APP_FOOTER, FOOTER_COLUMNS, FOOTER_LEGAL } from "@/lib/siteMap";
 
 const SOCIAL_ICONS = { twitter: XLogoIcon, linkedin: LinkedinLogoIcon } as const;
@@ -117,18 +116,9 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
               </Fragment>
             ))}
           </nav>{" "}
-          {/* The guide for the person waiting, in five languages, each named
-              in its own language and marked so a screen reader reads it right. */}
-          <nav aria-label="The guide in other languages" className="flex flex-wrap items-center gap-x-4 text-sm">
-            {LOCALES.map((l) => (
-              <Fragment key={l.code}>
-                <a href={l.path} lang={l.tag} hrefLang={l.tag} className={`flex min-h-11 items-center ${LINK}`}>
-                  {l.endonym}
-                </a>{" "}
-              </Fragment>
-            ))}
+          <div className="flex items-center">
             <ThemeToggle />
-          </nav>
+          </div>
         </div>{" "}
         <AnalyticsSwitch />
 

@@ -45,7 +45,6 @@
   "/embed/salary-explorer": "2026-10-28",
   "/embed/visa-bulletin": "2026-10-28",
   "/embed/wage-levels": "2026-10-29",
-  "/es": "2026-10-28",
   "/estimate-scorecard": "2026-10-28",
   "/extension": "2026-10-27",
   "/faq": "2026-10-27",
@@ -60,7 +59,6 @@
   "/h1b-lottery-odds": "2026-10-27",
   "/i140-awaiting-visa": "2026-10-28",
   "/i485-by-field-office": "2026-10-28",
-  "/ko": "2026-10-28",
   "/law-firm-rankings": "2026-10-28",
   "/law-firm-rankings/[state]": "2026-10-28",
   "/layoffs": "2026-10-25",
@@ -111,7 +109,6 @@
   "/policy-changes": "2026-10-28",
   "/press": "2026-10-28",
   "/privacy": "2026-10-29",
-  "/pt-br": "2026-10-28",
   "/pwd-cases": "2026-10-28",
   "/reset-password": "2026-10-26",
   "/reviews": "2026-10-28",
@@ -151,13 +148,11 @@
   "/uscis-processing-times": "2026-10-28",
   "/uscis-processing-times/[form]": "2026-10-28",
   "/uscis-rfe-rates": "2026-10-28",
-  "/vi": "2026-10-28",
   "/visa-bulletin": "2026-10-28",
   "/visa-bulletin/[month]": "2026-10-28",
   "/visa-bulletin/categories": "2026-10-28",
   "/visa-bulletin/categories/[line]": "2026-10-28",
   "/visa-bulletin/family": "2026-10-15",
   "/visa-issuances": "2026-10-28",
-  "/visa-wait-times": "2026-10-28",
-  "/zh": "2026-10-28"
+  "/visa-wait-times": "2026-10-28"
 }

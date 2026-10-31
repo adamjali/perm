@@ -67,7 +67,7 @@ describe("page social cards", () => {
 
   /**
    * A page and the modules it imports from its own folder, read as one: /perm-case-status keeps its metadata in
-   * CaseStatusPage.tsx beside it, shared with its five translations under [lang] (Oct 28 2026).
+   * CaseStatusPage.tsx beside it.
    */
   const withSiblings = (page: string): string => {
     const src = readFileSync(page, "utf8");

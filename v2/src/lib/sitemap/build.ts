@@ -40,8 +40,6 @@ import type { BulletinMonth } from "@/lib/perm";
 import { SITE_URL } from "@/lib/constants/site";
 import { bulletinMonthDate, employerOwnDate, pageDate, type DateSources } from "@/lib/pageDates";
 import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
-import { LOCALES } from "@/lib/i18n/locales";
-import { pageAlternates, type TranslatedPath } from "@/lib/i18n/lang";
 import { FORM_PAGES } from "@/lib/uscisForms";
 import { getSocTitlePages } from "@/lib/db/socTitles";
 
@@ -77,19 +75,11 @@ import { getSocTitlePages } from "@/lib/db/socTitles";
  *     Console. These are hand-rolled Route Handlers instead.
  */
 
-
-/** A translated page's hreflang map with absolute addresses, as a sitemap needs them. */
-function absoluteAlternates(base: string, path: TranslatedPath): Record<string, string> {
-  return Object.fromEntries(Object.entries(pageAlternates(path)).map(([k, v]) => [k, `${base}${v}`]));
-}
-
 export interface Entry {
   url: string;
   lastModified: string;
   /** Absolute image URLs for the image sitemap extension. The page's social card, so image search knows the picture exists. */
   images?: string[];
-  /** A translated page's hreflang set (absolute), written as xhtml:link alternates. */
-  alternates?: { languages: Record<string, string> };
 }
 
 /** Children stay well under any limit in play: 5,000 URLs is ~550 KB. */
@@ -285,12 +275,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/changelog`, lastModified: at("/changelog"), images: [`${base}/og/changelog.jpg`] },
     { url: `${base}/faq`, lastModified: at("/faq"), images: [`${base}/og/faq.jpg`] },
     { url: `${base}/for-attorneys`, lastModified: at("/for-attorneys"), images: [`${base}/og/for-attorneys.jpg`] },
-    { url: `${base}/email-preferences`, lastModified: at("/email-preferences"), images: [`${base}/og/email-preferences.jpg`], alternates: { languages: absoluteAlternates(base, "/email-preferences") } },
-    ...LOCALES.map((l) => ({
-      url: `${base}/${l.code}/email-preferences`,
-      lastModified: at("/email-preferences"),
-      alternates: { languages: absoluteAlternates(base, "/email-preferences") },
-    })),
+    { url: `${base}/email-preferences`, lastModified: at("/email-preferences"), images: [`${base}/og/email-preferences.jpg`] },
     { url: `${base}/perm-processing-times`, lastModified: at("/perm-processing-times"), images: [`${base}/og/perm-processing-times.jpg`] },
     { url: `${base}/tools`, lastModified: at("/tools"), images: [`${base}/og/tools.jpg`] },
     { url: `${base}/tools/green-card-timeline`, lastModified: at("/tools/green-card-timeline"), images: [`${base}/og/green-card-timeline.jpg`] },
@@ -309,13 +294,6 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-industries`, lastModified: at("/perm-industries"), images: [`${base}/og/perm-industries.jpg`] },
     { url: `${base}/perm-countries`, lastModified: at("/perm-countries"), images: [`${base}/og/perm-countries.jpg`] },
     { url: `${base}/green-card-timelines`, lastModified: at("/green-card-timelines"), images: [`${base}/og/green-card-timelines.jpg`] },
-    // The guide for the person waiting, in five languages. Their hreflang
-    // alternates are in each page's own head (src/lib/i18n/locales.ts).
-    { url: `${base}/zh`, lastModified: at("/zh") },
-    { url: `${base}/es`, lastModified: at("/es") },
-    { url: `${base}/pt-br`, lastModified: at("/pt-br") },
-    { url: `${base}/ko`, lastModified: at("/ko") },
-    { url: `${base}/vi`, lastModified: at("/vi") },
     { url: `${base}/tools/salary-explorer`, lastModified: at("/tools/salary-explorer"), images: [`${base}/og/salary-explorer.jpg`] },
     { url: `${base}/tools/i140-trends`, lastModified: at("/tools/i140-trends"), images: [`${base}/og/i140-trends.jpg`] },
     { url: `${base}/uscis-processing-times`, lastModified: at("/uscis-processing-times"), images: [`${base}/og/uscis-processing-times.jpg`] },
@@ -378,12 +356,7 @@ export async function pagesEntries(): Promise<Entry[]> {
       lastModified: at("/h1b-employers/[state]"),
     })),
     { url: `${base}/law-firm-rankings`, lastModified: at("/law-firm-rankings"), images: [`${base}/og/law-firm-rankings.jpg`] },
-    { url: `${base}/perm-case-alerts`, lastModified: at("/perm-case-alerts"), images: [`${base}/og/perm-case-alerts.jpg`], alternates: { languages: absoluteAlternates(base, "/perm-case-alerts") } },
-    ...LOCALES.map((l) => ({
-      url: `${base}/${l.code}/perm-case-alerts`,
-      lastModified: at("/perm-case-alerts"),
-      alternates: { languages: absoluteAlternates(base, "/perm-case-alerts") },
-    })),
+    { url: `${base}/perm-case-alerts`, lastModified: at("/perm-case-alerts"), images: [`${base}/og/perm-case-alerts.jpg`] },
     { url: `${base}/h1b-cap-exempt-employers`, lastModified: at("/h1b-cap-exempt-employers"), images: [`${base}/og/h1b-cap-exempt-employers.jpg`] },
     ...firmStates.map((code) => ({
       url: `${base}/law-firm-rankings/${stateSlug(code)}`,
@@ -450,14 +423,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
     // own directive and open ~412,000 URLs of crawl space.
-    { url: `${base}/perm-case-status`, lastModified: at("/perm-case-status"), images: [`${base}/og/perm-case-status.jpg`], alternates: { languages: absoluteAlternates(base, "/perm-case-status") } },
-    // The same page in each translation: one template, so the English page's date, and every version names all six
-    // (hreflang in the sitemap as well as each page's head).
-    ...LOCALES.map((l) => ({
-      url: `${base}/${l.code}/perm-case-status`,
-      lastModified: at("/perm-case-status"),
-      alternates: { languages: absoluteAlternates(base, "/perm-case-status") },
-    })),
+    { url: `${base}/perm-case-status`, lastModified: at("/perm-case-status"), images: [`${base}/og/perm-case-status.jpg`] },
     { url: `${base}/uscis-case-status`, lastModified: at("/uscis-case-status"), images: [`${base}/og/uscis-case-status.jpg`] },
     { url: `${base}/perm-denial-risk`, lastModified: at("/perm-denial-risk"), images: [`${base}/og/perm-denial-risk.jpg`] },
     { url: `${base}/perm-rfi-audit`, lastModified: at("/perm-rfi-audit"), images: [`${base}/og/perm-rfi-audit.jpg`] },
@@ -766,15 +732,12 @@ const esc = (s: string) =>
 export function urlsetXml(entries: Entry[]): string {
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' +
     entries
       .map(
         (e) =>
           `<url><loc>${esc(e.url)}</loc><lastmod>${e.lastModified}</lastmod>${(e.images ?? [])
             .map((i) => `<image:image><image:loc>${esc(i)}</image:loc></image:image>`)
-            .join("")}${Object.entries(e.alternates?.languages ?? {})
-            // Google's sitemap form of hreflang: every version lists every version, itself included.
-            .map(([lang, href]) => `<xhtml:link rel="alternate" hreflang="${esc(lang)}" href="${esc(href)}"/>`)
             .join("")}</url>`,
       )
       .join("\n") +

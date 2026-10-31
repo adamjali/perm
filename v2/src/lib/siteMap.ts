@@ -17,8 +17,6 @@
  * the calculators index all read the same groups.
  */
 
-import { LOCALES } from "@/lib/i18n/locales";
-
 export interface SitePage {
   href: string;
   /** The page's one name: the menus, the trail, search and its H1 use it. */
@@ -292,8 +290,6 @@ const OTHER_PAGES: readonly SitePage[] = [
   { href: "/perm-employers/browse", name: "Browse A to Z" },
   { href: "/perm-attorneys/browse", name: "Browse A to Z" },
   { href: "/perm-wages/browse", name: "Browse A to Z" },
-  // Each language's guide, named in its own language.
-  ...LOCALES.map((l) => ({ href: l.path, name: l.endonym })),
 ];
 
 /** Every page's one name, by path. */

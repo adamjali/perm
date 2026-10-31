@@ -412,9 +412,9 @@ describe("sitemap.ts", () => {
       // keeps crawlers off them and the month pages carry the search value.
       "perm-queue/[month]/[day]": "filing-day pages",
     };
-    // Every public page whose route has a dynamic segment, as its pattern ("perm-employers/[slug]",
-    // "[lang]/perm-case-status"). Patterns, not the folder above a [param]: a [lang] segment at the root has the
-    // whole site above it, which every URL would "match" (Oct 28 2026).
+    // Every public page whose route has a dynamic segment, as its pattern ("perm-employers/[slug]"). Patterns,
+    // not the folder above a [param]: a [param] segment at the root would have the whole site above it, which
+    // every URL would "match" (Oct 28 2026).
     const families: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {

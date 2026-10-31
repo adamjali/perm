@@ -10,7 +10,6 @@ import { breadcrumbSchema, breadcrumbTrail, trailEndsAtPage, trailNamesPage } fr
 import { isDataPath } from "@/lib/siteMap";
 import { SITE_URL } from "@/lib/constants/site";
 import { SCHEMA_IDS } from "@/lib/structuredData";
-import { localeOfPath } from "@/lib/i18n/locales";
 import { OWN_DATE, pageDate, routeOf, type DateSources } from "@/lib/pageDates";
 import { cn } from "@/lib/utils";
 import { longDate } from "@convex/lib/months";
@@ -134,8 +133,7 @@ function PageDateSchema({ path, date }: { path: string; date: string }) {
         "@id": `${url}#webpage`,
         url,
         dateModified: date,
-        // A translated page is in its own language (Oct 28 2026: every one said en-US).
-        inLanguage: localeOfPath(path)?.tag ?? "en-US",
+        inLanguage: "en-US",
         isPartOf: { "@id": SCHEMA_IDS.website(SITE_URL) },
         publisher: { "@id": SCHEMA_IDS.organization(SITE_URL) },
       }}

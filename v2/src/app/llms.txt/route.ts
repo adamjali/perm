@@ -286,11 +286,6 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "Embeddable SVG badges of DOL's own published figures, and every calculator, estimate and chart plus the case lookup as an iframe for other sites, with the HTML to copy.",
   },
   {
-    path: "/zh",
-    label: "The guide for the person waiting, in Simplified Chinese, Spanish, Brazilian Portuguese, Korean and Vietnamese",
-    blurb: "Checking a case, where DOL's queue is, the steps after PERM, EB-3 Other Workers and this month's cutoffs, in five languages: /zh, /es, /pt-br, /ko and /vi. Figures and DOL's status words stay as DOL prints them.",
-  },
-  {
     path: "/estimate-scorecard",
     label: "Estimate scorecard",
     blurb: "How close the decision-date estimates land: a nightly backtest that rebuilds DOL's queue on a past day and grades thousands of real decisions, a random sample of pending cases recorded every morning before the outcome and graded after, and the hand-recorded worked examples. Never edited.",

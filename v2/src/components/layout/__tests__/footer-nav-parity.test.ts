@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
-import { LOCALES } from "@/lib/i18n/locales";
 import {
   CALCULATOR_PAGES,
   DATA_MENU_FOOTER,
@@ -56,7 +55,6 @@ describe("every page is reachable, under one name", () => {
     ...DATA_MENU_FOOTER.map((p) => p.href),
     ...FOOTER_COLUMNS.flatMap((c) => c.pages.map((p) => p.href)),
     ...FOOTER_LEGAL.map((p) => p.href),
-    ...LOCALES.map((l) => l.path),
     // Calculators are in the Calculators index, its section list and the menu foot.
     ...CALCULATOR_PAGES.map((p) => p.href),
     ...Object.keys(REACHED_FROM_PARENT),
