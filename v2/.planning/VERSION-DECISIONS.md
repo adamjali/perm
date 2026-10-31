@@ -178,6 +178,13 @@ nowhere else in its build), so the patch was renamed to
 `patches/@storybook__nextjs-vite@10.6.2.patch` with that upgrade. 10.6.3 was out
 the same day; check it the same way before moving on.
 
+**Checked Oct 31 2026: 10.6.3 (Oct 20), 10.6.4 and 10.6.5 carry the fix upstream**
+(`parentRenderTree: { data: { bfcacheId: 0 } }` in
+`dist/_browser-chunks/chunk-TCVY5TW2.js`, without our patch's `slots: new Map()`).
+The next Storybook upgrade (every `storybook` and `@storybook/*` package together, to
+10.6.3 or newer) drops the patch and its `patchedDependencies` line, after a story that
+renders `next/link` and the tour stories render in Storybook.
+
 ## `next` 16.4.0, patched for Google's extensionless font addresses (Oct 24 2026)
 
 Google Fonts sometimes answers the build with a font address that has no file

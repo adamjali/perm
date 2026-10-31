@@ -2,6 +2,7 @@ import { createMcpHandler } from "@modelcontextprotocol/server";
 
 import { authenticate } from "@/lib/api/auth";
 import { buildMcpServer, callerFromAuthInfo } from "@/lib/api/mcp";
+import { logMcpError } from "@/lib/api/mcpLog";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,9 @@ const handler = createMcpHandler(({ authInfo }) => buildMcpServer(callerFromAuth
   // A notification stream holds a connection open; nothing here ever changes
   // mid-session, so a few per copy is plenty (nginx caps /mcp at 48 at once).
   maxSubscriptions: 8,
-  onerror: (err) => console.error("[mcp]", err.message),
+  onerror: (err) => logMcpError(err.message),
 });
+
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
