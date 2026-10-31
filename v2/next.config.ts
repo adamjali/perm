@@ -3,6 +3,10 @@ import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
+/** The languages the site published pages in until Oct 31 2026, and the data pages each had a copy of. */
+const RETIRED_LANGUAGES = ["es", "zh", "pt-br", "ko", "vi"] as const;
+const RETIRED_LANGUAGE_PAGES = ["/perm-case-status", "/perm-case-alerts", "/email-preferences"] as const;
+
 // Create bundle analyzer wrapper
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -321,6 +325,16 @@ const nextConfig: NextConfig = {
       { source: "/terms.html", destination: "/terms", permanent: true },
       { source: "/privacy.html", destination: "/privacy", permanent: true },
       { source: "/contact.html", destination: "/contact", permanent: true },
+      // The site is English only since Oct 31 2026. The five language guides and the three translated data
+      // pages are in Google's index and in links people saved, so each goes to the English page it was a
+      // version of, never to a 404. A query string comes along (Next passes it through), so a translated
+      // case lookup lands on the same case.
+      ...RETIRED_LANGUAGES.map((lang) => ({ source: `/${lang}`, destination: "/guides/waiting-on-your-green-card", permanent: true })),
+      ...RETIRED_LANGUAGE_PAGES.map((page) => ({
+        source: `/:lang(${RETIRED_LANGUAGES.join("|")})${page}`,
+        destination: page,
+        permanent: true,
+      })),
     ];
   },
 
