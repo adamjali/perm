@@ -675,6 +675,15 @@ def texas_sheets(this_year: int | None = None) -> tuple[list[dict], list[str]]:
     """This year's and last year's agency spreadsheets, from the Archive's
     newest copies. A year with no usable copy, or the Archive being down, is
     logged and leaves the portal to cover it."""
+    from lib_warn import archive_optional
+
+    # A top-up the portal covers: its Archive reads never mark the Archive down
+    # for the states whose only source it is.
+    with archive_optional():
+        return _texas_sheets(this_year)
+
+
+def _texas_sheets(this_year: int | None) -> tuple[list[dict], list[str]]:
     from lib_warn import archive_copy, archive_index, is_xlsx, pause
 
     year = this_year or dt.date.today().year

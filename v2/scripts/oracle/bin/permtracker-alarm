@@ -13,8 +13,10 @@ only what the kernel and systemd report, and it emails through Resend's API
 directly. It runs as root (systemd: permtracker-alarm.timer).
 
 CHECKS. Each is one alarm: emailed when it starts, again every 6 hours while it
-lasts, and once when it clears. At most 12 alarm emails a day (Resend's 100 a
-day is shared with every subscriber's mail).
+lasts, and once when it clears. At most 12 alarm emails an Eastern day (the
+Worker's mail is free, but Resend, the fallback, shares its 100 a day with every
+subscriber's mail); over the cap, what's due waits for the first run after
+midnight Eastern and the journal says "not sent".
 
   disk        under 25 GB free, or full within 24 hours at the last two
               hours' rate (with at least an hour of readings), unless the
@@ -27,10 +29,14 @@ day is shared with every subscriber's mail).
               old pages costs nothing). Once on, it clears 256 MB above its
               lines and with swap under half its rate, so a reading sitting on
               a line can't switch it on and off every check
-  units       a PERM Tracker job or service, nginx, cloudflared or the
-              database is in systemd's "failed" state, or is switched on but
-              stopped after an error (a crash into systemd's start limit
-              leaves a unit "inactive", which --failed never lists)
+  unit:<name> one alarm per unit: a PERM Tracker job or service, nginx,
+              cloudflared or the database in systemd's "failed" state, or
+              switched on but stopped after an error (a crash into systemd's
+              start limit leaves a unit "inactive", which --failed never
+              lists). Once on, it clears only after the unit has stayed out of
+              the failed state for 45 minutes, so a job failing on every run
+              (it reads "activating" while it runs) is one alarm, not an email
+              a run
   sampler     the health sampler has written nothing for 30 minutes
   page-cache  the page-cache cap has not finished for 2.5 hours
   backup      the nightly backup's last success is over 30 hours old
@@ -56,7 +62,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 APP = pathlib.Path(os.environ.get("PT_APP_ROOT", "/srv/permtracker"))
@@ -101,6 +107,12 @@ UNCOUNTED_GB = 15
 BACKUP_STALE_S = 30 * 3600
 REMIND_S = 6 * 3600
 EMAILS_PER_DAY = 12
+# A job that fails on every run is "failed" between runs and "activating" while
+# it runs, so an alarm keyed on the failed state started and cleared on every
+# run: policy-watch's 30-minute and flag-notice's 15-minute runs sent 11 emails
+# in an hour on Oct 29 2026 and then held the day's cap. A unit's alarm stays on
+# until the unit has been out of the failed state this long.
+UNIT_CLEAR_S = 45 * 60
 # Units that are ours (or that the site cannot run without). Anything else
 # systemd lists as failed (fwupd, PCP's loggers) is the OS's business.
 OUR_UNITS = ("permtracker", "nginx", "cloudflared", "sqld")
@@ -187,13 +199,19 @@ def evaluate(snap: dict, rate: float | None, already_on=()) -> dict[str, str]:
         moving = "" if swapping is None else f", {swapping:g} pages a second moving"
         on["memory"] = (f"{avail} MB of memory available, "
                         f"{snap['swap_used_mb']} MB of swap in use{moving}")
-    down = []
-    if snap["failed_units"]:
-        down.append("failed: " + ", ".join(sorted(snap["failed_units"])))
-    if snap.get("stopped_units"):
-        down.append("stopped after an error: " + ", ".join(sorted(snap["stopped_units"])))
-    if down:
-        on["units"] = "; ".join(down)
+    # One alarm per unit, so a second unit failing while the first recovers is
+    # its own email and a clear names the unit that recovered.
+    for u in sorted(snap["failed_units"]):
+        on[unit_key(u)] = f"{u} failed"
+    for u in sorted(snap.get("stopped_units") or []):
+        on.setdefault(unit_key(u), f"{u} stopped after an error")
+    now = snap.get("now")
+    for u, last in (snap.get("units_seen") or {}).items():
+        key = unit_key(u)
+        if key in on or key not in already_on or now is None or now - last >= UNIT_CLEAR_S:
+            continue
+        prior = already_on.get(key, {}) if isinstance(already_on, dict) else {}
+        on[key] = (prior.get("reason") if isinstance(prior, dict) else None) or f"{u} failed"
     for key, age, limit, what in (
             ("sampler", snap.get("sampler_age_s"), SAMPLER_STALE_S, "the health sampler"),
             ("page-cache", snap.get("prune_age_s"), PRUNE_STALE_S, "the page-cache cap"),
@@ -205,6 +223,20 @@ def evaluate(snap: dict, rate: float | None, already_on=()) -> dict[str, str]:
         on["page-cache-blind"] = ("Next holds pages the page-cache cap doesn't count: "
                                   + "; ".join(snap["uncounted"]))
     return on
+
+
+def unit_key(unit: str) -> str:
+    """The alarm key for one systemd unit: "unit:" and its name without ".service"."""
+    return "unit:" + unit.removesuffix(".service")
+
+
+def units_seen(prev: dict | None, snap: dict, now: float) -> dict[str, float]:
+    """When each of our units was last seen failed or stopped after an error,
+    kept for UNIT_CLEAR_S (evaluate holds an alarm that long after a restart)."""
+    seen = {u: t for u, t in (prev or {}).items() if now - t < UNIT_CLEAR_S}
+    for u in [*snap.get("failed_units", []), *(snap.get("stopped_units") or [])]:
+        seen[u] = now
+    return seen
 
 
 def cache_headroom(report: dict) -> float | None:
@@ -249,13 +281,18 @@ def plan(on: dict[str, str], state: dict, now: float) -> tuple[list[tuple[str, s
     return out, {**state, "alarms": alarms}
 
 
+def email_day(now: float) -> str:
+    """The day the email cap counts in: Eastern, the day the owner reads in."""
+    return datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d")
+
+
 def under_cap(state: dict, now: float) -> bool:
-    day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
+    day = email_day(now)
     return state.get("emails", {}).get(day, 0) < EMAILS_PER_DAY
 
 
 def count_email(state: dict, now: float) -> dict:
-    day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
+    day = email_day(now)
     sent = {d: n for d, n in state.get("emails", {}).items() if d >= day}
     sent[day] = sent.get(day, 0) + 1
     return {**state, "emails": sent}
@@ -388,7 +425,7 @@ def heal(on: dict[str, str]) -> list[str]:
 
 TITLES = {
     "disk": "the disk is filling", "disk-crit": "the disk is nearly full",
-    "memory": "memory is low", "units": "a job or service failed",
+    "memory": "memory is low",
     "sampler": "the health sampler stopped", "page-cache": "the page-cache cap stopped",
     "backup": "the nightly backup is late",
     "page-cache-blind": "the page-cache cap can't see some pages",
@@ -398,11 +435,23 @@ TITLES = {
 # "full in about 12 hours" under CLEARED, which read as the disk still filling.
 CLEARED = {
     "disk": "the disk is no longer on course to fill", "disk-crit": "the disk has room again",
-    "memory": "memory has recovered", "units": "no job or service is down",
+    "memory": "memory has recovered",
     "sampler": "the health sampler is running again", "page-cache": "the page-cache cap is running again",
     "backup": "the nightly backup has run",
     "page-cache-blind": "the page-cache cap can see every page again",
 }
+
+
+def title_of(key: str) -> str:
+    if key.startswith("unit:"):
+        return f"{key[5:]} failed"
+    return TITLES.get(key, key)
+
+
+def cleared_of(key: str) -> str:
+    if key.startswith("unit:"):
+        return f"{key[5:]} has run cleanly for {UNIT_CLEAR_S // 60} minutes"
+    return CLEARED.get(key, key)
 
 
 def read_env(path: pathlib.Path) -> dict:
@@ -464,16 +513,16 @@ def compose(mail: list[tuple[str, str, str]], snap: dict, rate: float | None,
     stamp = datetime.fromtimestamp(now, ET).strftime("%A %b %-d, %-I:%M %p %Z")
     starts = [m for m in mail if m[1] != "clear"]
     if starts:
-        subject = "PERM Tracker server: " + "; ".join(TITLES.get(k, k) for k, _, _ in starts)
+        subject = "PERM Tracker server: " + "; ".join(title_of(k) for k, _, _ in starts)
     else:
-        subject = "PERM Tracker server: back to normal, " + "; ".join(CLEARED.get(k, k) for k, _, _ in mail)
+        subject = "PERM Tracker server: back to normal, " + "; ".join(cleared_of(k) for k, _, _ in mail)
     lines = [f"Checked {stamp}.", ""]
     for key, kind, reason in mail:
         if kind == "clear":
-            lines.append(f"CLEARED: {CLEARED.get(key, key)}. (It had said: {reason}.)")
+            lines.append(f"CLEARED: {cleared_of(key)}. (It had said: {reason}.)")
         else:
             word = {"start": "NEW", "still": "STILL"}[kind]
-            lines.append(f"{word}: {TITLES.get(key, key)}. {reason}.")
+            lines.append(f"{word}: {title_of(key)}. {reason}.")
     if actions:
         lines += ["", "Done automatically:"] + [f"- {a}." for a in actions]
     # rate is GB an hour the disk is LOSING; say it in that direction.
@@ -507,13 +556,18 @@ def main() -> int:
     points.append([now, round(snap["disk_free_gb"], 2)])
     state["disk"] = points
     rate = rate_gb_per_hour(points, now)
+    # The one alarm for every unit (before Oct 31 2026) gives way to one per unit
+    # without a misleading "no job or service is down" email.
+    state.setdefault("alarms", {}).pop("units", None)
+    state["units_seen"] = units_seen(state.get("units_seen"), snap, now)
+    snap["units_seen"], snap["now"] = state["units_seen"], now
     snap["swap_rate"] = swap_rate(state.get("swap"), now, snap.get("swap_pages"))
     if snap.get("swap_pages") is not None:
         state["swap"] = [now, snap["swap_pages"]]
-    on = evaluate(snap, rate, state.get("alarms", {}).keys())
+    on = evaluate(snap, rate, state.get("alarms", {}))
     actions = heal(on)
     mail, planned = plan(on, state, now)
-    undelivered = False
+    undelivered = capped = False
     if not mail:
         state = planned
     elif under_cap(state, now):
@@ -525,12 +579,17 @@ def main() -> int:
             # to the journal, so the unit never showed as failed and nothing
             # noticed that the last-line alarm couldn't email anyone.
             undelivered = True
-    # else: over the day's cap; nothing is marked sent, which is the cap working
+    else:
+        # Over the day's cap: nothing is marked sent, so what's due goes in the
+        # first email after midnight Eastern if it still holds.
+        capped = True
     if not DRY_RUN:
         STATE.write_text(json.dumps(state))
     print(f"free {snap['disk_free_gb']:.1f} GB, rate "
           f"{'n/a' if rate is None else f'{rate:+.2f} GB/h'}, alarms {sorted(on) or 'none'}"
-          + (f", emailed {[(k, kind) for k, kind, _ in mail]}" if mail and not undelivered else "")
+          + (f", emailed {[(k, kind) for k, kind, _ in mail]}" if mail and not (undelivered or capped) else "")
+          + (f", over today's {EMAILS_PER_DAY}-email cap, not sent: {[(k, kind) for k, kind, _ in mail]}"
+             if capped else "")
           + (", an email was due and could NOT be sent" if undelivered else ""))
     return 1 if undelivered else 0
 

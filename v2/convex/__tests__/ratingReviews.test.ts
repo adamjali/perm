@@ -175,6 +175,24 @@ describe("a rating from an alert email", () => {
     expect(JSON.stringify(shown)).not.toContain(EMAIL);
   });
 
+  it("tells the owner who rated and for which case, and no one else", async () => {
+    // Arrange
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 5);
+    // Act
+    const admin = await adminAuth(t);
+    const listed = await admin.query(api.siteReviews.listForAdmin, {});
+    await t.run(async (ctx) => {
+      const r = (await ctx.db.query("siteReviews").first())!;
+      await ctx.db.patch(r._id, { status: "approved" });
+    });
+    const shown = await t.query(api.siteReviews.listPublished, {});
+    // Assert
+    expect(listed.waiting[0]!.rater).toEqual({ email: EMAIL, caseNumber: CASE });
+    expect(JSON.stringify(shown)).not.toContain(CASE);
+  });
+
   it("queues chosen older ratings once, and says why it skips the rest", async () => {
     // Arrange: one rating with an address, one that went anonymous.
     const t = createTestContext();
@@ -189,6 +207,6 @@ describe("a rating from an alert email", () => {
     // Assert
     expect(dry.map((d) => d.result)).toEqual(["would queue 5 of 5", "anonymous: no address to count it once"]);
     expect(done[0]!.result).toBe("queued 5 of 5");
-    expect(await reviews(t)).toMatchObject([{ source: "alert", rating: 5, createdAt: 10 }]);
+    expect(await reviews(t)).toMatchObject([{ source: "alert", rating: 5, createdAt: 10, ratingId: named }]);
   });
 });

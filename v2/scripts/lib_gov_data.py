@@ -195,13 +195,15 @@ def robots_allowed(url: str) -> bool:
     return rules is None or rules_allow(rules, path)
 
 
-def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) -> bytes:
+def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS,
+          timeout: float = FETCH_TIMEOUT_S) -> bytes:
     """GET with the browser header set, backing off on a throttle.
 
     Raises after the final attempt rather than returning empty. A run that could
     not read the agency is not a run that found no data, and the two must never
     report the same way. Refuses, before any request, a path the host's
-    robots.txt disallows.
+    robots.txt disallows. A job with its own short time limit passes fewer
+    `attempts` and a shorter `timeout`, so its retries fit inside that limit.
     """
     if not robots_allowed(url):
         raise RobotsDisallowed(f"{url} is a path the host's robots.txt asks automated clients not to read")
@@ -213,7 +215,7 @@ def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) 
     for attempt in range(1, attempts + 1):
         try:
             request = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_S) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 return response.read()
         except urllib.error.HTTPError as exc:
             if exc.code not in RETRYABLE_STATUS or attempt == attempts:

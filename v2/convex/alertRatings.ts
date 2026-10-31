@@ -194,6 +194,7 @@ async function saveRating(
   const counted = !clicks[clicks.length - 1]!.scanner;
   const who = anonymous ? { email: undefined, caseNumber: undefined, anonymous: true } : { email, caseNumber };
 
+  let ratingId = existing?._id;
   if (existing) {
     await ctx.db.patch(existing._id, {
       ...who,
@@ -204,7 +205,7 @@ async function saveRating(
       updatedAt: now,
     });
   } else {
-    await ctx.db.insert("alertRatings", {
+    ratingId = await ctx.db.insert("alertRatings", {
       key,
       ...(anonymous ? { anonymous: true } : { email, caseNumber }),
       ...(score !== undefined ? { score } : {}),
@@ -215,7 +216,7 @@ async function saveRating(
     });
   }
   // A person's pick (never a scanner's) waits for the owner as a review with no words.
-  if (score !== undefined) await queueAlertRating(ctx, { email, score, at: now });
+  if (score !== undefined) await queueAlertRating(ctx, { email, score, at: now, ratingId });
   return answer(counted, note !== undefined || existing?.note !== undefined);
 }
 
@@ -441,7 +442,7 @@ export const queueExistingAsReviews = internalMutation({
       else if (!row.email) out.push({ id, result: "anonymous: no address to count it once" });
       else if (dryRun) out.push({ id, result: `would queue ${row.score} of 5` });
       else {
-        await queueAlertRating(ctx, { email: row.email, score: row.score, at: row.createdAt });
+        await queueAlertRating(ctx, { email: row.email, score: row.score, at: row.createdAt, ratingId: row._id });
         out.push({ id, result: `queued ${row.score} of 5` });
       }
     }

@@ -2376,6 +2376,11 @@ export default defineSchema({
      * gave an address: where the two meet, so one person counts once. No address is kept for it.
      */
     raterKey: v.optional(v.string()),
+    /**
+     * The rating behind an alert review, so the admin page can say who rated and for which case (owner, Oct 31
+     * 2026: "it doesn't say who at all?"). Read only by the admin list; never by a public query.
+     */
+    ratingId: v.optional(v.id("alertRatings")),
     /** Senja's id for a copied review: the copy is made once. */
     senjaId: v.optional(v.string()),
     /** Someone who runs PERM Tracker: kept, never shown or counted. */

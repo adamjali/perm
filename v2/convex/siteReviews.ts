@@ -220,7 +220,10 @@ export async function raterKeyFor(email: string): Promise<string> {
  * counts the same, 1 to 5. One per address: several cases share it, with the newest score, and an address that
  * already left a written review isn't queued at all, so one person counts once. A declined row stays declined.
  */
-export async function queueAlertRating(ctx: MutationCtx, args: { email: string; score: number; at: number }): Promise<void> {
+export async function queueAlertRating(
+  ctx: MutationCtx,
+  args: { email: string; score: number; at: number; ratingId?: Id<"alertRatings"> },
+): Promise<void> {
   if (!Number.isInteger(args.score) || args.score < 1 || args.score > 5) return;
   const raterKey = await raterKeyFor(args.email);
   const rows = await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", raterKey)).take(20);
@@ -234,12 +237,15 @@ export async function queueAlertRating(ctx: MutationCtx, args: { email: string; 
       status: "pending",
       source: "alert",
       raterKey,
+      ...(args.ratingId ? { ratingId: args.ratingId } : {}),
       createdAt: args.at,
     });
     log.info("alert rating queued as a review", { rating: args.score });
     await noteWaiting(ctx);
     return;
   }
+  // The newest rating is the one the admin page names.
+  if (args.ratingId && mine.ratingId !== args.ratingId) await ctx.db.patch(mine._id, { ratingId: args.ratingId });
   if (mine.rating === args.score || mine.status === "declined") return;
   await ctx.db.patch(mine._id, { rating: args.score });
   if (isShown(mine)) {
@@ -420,6 +426,8 @@ const adminReview = v.object({
   scrubbed: v.boolean(),
   /** What the reviewer said could be better, after a low rating; private, never shown with the review. */
   privateNote: v.optional(v.string()),
+  /** Who tapped an alert review's stars, from its rating: for the owner only, never shown publicly. */
+  rater: v.optional(v.object({ email: v.string(), caseNumber: v.string() })),
   createdAt: v.number(),
   reviewedAt: v.optional(v.number()),
 });
@@ -431,6 +439,7 @@ export const listForAdmin = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const shape = async (r: Doc<"siteReviews">) => {
+      const rating = r.source === "alert" && r.ratingId ? await ctx.db.get(r.ratingId) : null;
       const watcher = r.email
         ? await ctx.db
             .query("caseStatusAlerts")
@@ -452,6 +461,8 @@ export const listForAdmin = query({
         viaLink: r.viaLink === true,
         ...(r.declineReason ? { declineReason: r.declineReason } : {}),
         ...(r.privateNote ? { privateNote: r.privateNote } : {}),
+        // A rating whose reader later chose to leave their address off has none to show.
+        ...(rating?.email && rating.caseNumber ? { rater: { email: rating.email, caseNumber: rating.caseNumber } } : {}),
         scrubbed: r.scrubbedAt !== undefined,
         createdAt: r.createdAt,
         ...(r.reviewedAt !== undefined ? { reviewedAt: r.reviewedAt } : {}),

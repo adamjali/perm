@@ -22,7 +22,9 @@ case "$job" in
     timeout 30m python3 scripts/ingest_i485_inventory.py --archive || true ;;
   # DOL's own notice on FLAG (a maintenance window), read every 15 minutes so
   # the site can say why statuses are late (Oct 27 2026). It writes its own run row.
-  flag-notice) timeout 2m python3 scripts/ingest_flag_notice.py || { rc=1; fail ingest_flag_notice.py "exited non-zero or ran past 2m"; } ;;
+  # A FLAG that doesn't answer is a "partial" run row and exit 0 (the script
+  # asks twice, 2 minutes at most); a non-zero exit or the limit is a defect.
+  flag-notice) timeout 3m python3 scripts/ingest_flag_notice.py || { rc=1; fail ingest_flag_notice.py "exited non-zero or ran past 3m"; } ;;
   # Every AI model the chat and summarizer use, asked once a day (Oct 29 2026): free models retire and get
   # refused without notice. It reads the four keys from the app's own env file by name and writes its own run
   # row; it exits non-zero only when no chat model answered, which the alarm emails.
@@ -100,8 +102,15 @@ case "$job" in
     export REVALIDATE_BASE=http://127.0.0.1:8081
     REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
     export REVALIDATE_SECRET
-    step(){ limit="$1"; s="$2"; shift 2
-      timeout "$limit" nice -n 5 python3 "scripts/$s" "$@" || { rc=1; fail "$s" "exited non-zero or ran past $limit"; }; }
+    # One source down is that source's failure row (the health check and the
+    # morning report name it), not this unit's failure: reginfo.gov's 502s and
+    # a cut-off robots.txt failed the unit every 30 minutes on Oct 30 and 31
+    # 2026, and the alarm emailed for each. The unit fails only when every
+    # source failed in one run, which says the server, not a source, is broken.
+    ran=0; failed=0
+    step(){ limit="$1"; s="$2"; shift 2; ran=$((ran + 1))
+      timeout "$limit" nice -n 5 python3 "scripts/$s" "$@" \
+        || { failed=$((failed + 1)); fail "$s" "exited non-zero or ran past $limit"; echo "::warning::$s failed"; }; }
     # The rule watch says whether a rule moved through GitHub's output file, which
     # this server reads the same way the workflow does.
     out="$(mktemp)"
@@ -134,7 +143,9 @@ case "$job" in
     # Sundays at 3 AM Eastern, a five-page walk for opinions posted late.
     if [ "$(TZ=America/New_York date +%u)" = 7 ] && [ "$h" = 3 ] && [ "$m" -lt 30 ]; then
       step 20m ingest_court_opinions.py --pages 5
-    fi ;;
+    fi
+    echo "policy-watch: $failed of $ran sources failed"
+    if [ "$ran" -gt 0 ] && [ "$failed" -eq "$ran" ]; then rc=1; fi ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

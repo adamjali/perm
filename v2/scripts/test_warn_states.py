@@ -625,6 +625,24 @@ def main() -> int:
             check(False, "once the Archive is found down, the rest of the run doesn't ask it again", f)
         except urllib.error.URLError:
             check(True, "once the Archive is found down, the rest of the run doesn't ask it again", f)
+        # Oct 31 2026: Texas's optional top-up met a 429, marked the Archive down, and four states whose
+        # only source is the Archive were skipped. An optional read asks once and leaves the Archive up.
+        lw._archive.update(last=0.0, spent=0.0, down="")
+        asked = []
+        refuse = urllib.error.HTTPError("https://web.archive.org/cdx", 429, "Too Many Requests", {}, None)
+        lw.gov_fetch = lambda url, referer=None, attempts=1: (asked.append(url), (_ for _ in ()).throw(refuse))[1]
+        try:
+            with lw.archive_optional():
+                lw.archive_copy("https://www.twc.texas.gov/sites/default/files/oei/docs/warn-act-listings-2026-twc.xlsx")
+            check(False, "an optional Archive read that's refused raises", f)
+        except urllib.error.URLError:
+            check(len(asked) == 1 and lw._archive["down"] == "",
+                  "an optional Archive read asks once, and its refusal leaves the Archive up for the next state", f)
+        lw.gov_fetch = archive
+        calls.clear()
+        copy = lw.archive_copy("https://jobs.mo.gov/warn/2026", ws.has_mo_table)
+        check(copy.captured == "2026-09-17" and not lw._archive["optional"],
+              "...so a state whose only source is the Archive still reads it after", f)
     finally:
         lw.gov_fetch, lw.time.sleep = real_fetch, real_sleep
         lw._archive.clear()

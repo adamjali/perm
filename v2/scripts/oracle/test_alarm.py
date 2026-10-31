@@ -118,8 +118,10 @@ crit = alarm.evaluate(healthy(disk_free_gb=6), None)
 check("under 10 GB is critical too", "disk-crit" in crit and "disk" in crit, str(crit))
 
 # Our units only.
-check("a failed job of ours is an alarm",
-      "units" in alarm.evaluate(healthy(failed_units=["permtracker-cron@scorecard.service"]), None))
+check("a failed job of ours is its own alarm, named",
+      alarm.evaluate(healthy(failed_units=["permtracker-cron@scorecard.service"]), None)
+      == {"unit:permtracker-cron@scorecard": "permtracker-cron@scorecard.service failed"},
+      str(alarm.evaluate(healthy(failed_units=["permtracker-cron@scorecard.service"]), None)))
 check("the filter keeps ours and drops the OS's",
       [u for u in ["fwupd-refresh.service", "pmlogger_check.service", "permtracker-prune.service",
                    "nginx.service"] if u.startswith(alarm.OUR_UNITS)]
@@ -140,12 +142,63 @@ mail, st = alarm.plan({}, st, T0 + alarm.REMIND_S + 300)
 check("...and once when it clears", [(k, kind) for k, kind, _ in mail] == [("disk", "clear")], str(mail))
 check("...after which nothing is held", st.get("alarms") == {}, str(st))
 
+# A job failing on every run (Oct 29 2026: flag-notice every 15 minutes, then
+# policy-watch every 30) reads "failed" between runs and "activating" while it
+# runs. It must be one alarm, not a start and a clear every run.
+JOB = "permtracker-uscis@policy-watch.service"
+
+
+def run_checks(states: list[list[str]], step: float = 300.0) -> list[tuple[str, str]]:
+    """Feed evaluate and plan one check every `step` seconds, as main() does."""
+    st: dict = {}
+    sent: list[tuple[str, str]] = []
+    for i, failed in enumerate(states):
+        now = T0 + i * step
+        snap = healthy(failed_units=failed)
+        st["units_seen"] = alarm.units_seen(st.get("units_seen"), snap, now)
+        snap["units_seen"], snap["now"] = st["units_seen"], now
+        mail, st = alarm.plan(alarm.evaluate(snap, None, st.get("alarms", {})), st, now)
+        sent += [(k, kind) for k, kind, _ in mail]
+    return sent
+
+
+# Six 30-minute runs, failing each time: failed for 25 minutes, running for 5.
+flapping = ([[JOB]] * 5 + [[]]) * 6
+check("a job failing on every run is one alarm, not an email a run",
+      run_checks(flapping) == [("unit:permtracker-uscis@policy-watch", "start")], str(run_checks(flapping)))
+# Then it runs cleanly: the alarm clears once, 45 minutes after it was last failed.
+recovered = flapping + [[]] * 12
+sent = run_checks(recovered)
+check("...and clears once, after it has stayed up for 45 minutes",
+      sent == [("unit:permtracker-uscis@policy-watch", "start"), ("unit:permtracker-uscis@policy-watch", "clear")],
+      str(sent))
+clear_at = next(i for i in range(len(recovered)) if run_checks(recovered[: i + 1])[-1][1] == "clear")
+check("...not before", (clear_at - 34) * 300 >= alarm.UNIT_CLEAR_S, f"cleared at check {clear_at}")
+# Two units: the second's failure is its own email, and each clear names its unit.
+OTHER = "permtracker-uscis@flag-notice.service"
+sent = run_checks([[JOB]] * 2 + [[JOB, OTHER]] * 2 + [[OTHER]] * 12 + [[]] * 12)
+check("a second unit failing is its own alarm, and each clear names its unit",
+      sent == [("unit:permtracker-uscis@policy-watch", "start"), ("unit:permtracker-uscis@flag-notice", "start"),
+               ("unit:permtracker-uscis@policy-watch", "clear"), ("unit:permtracker-uscis@flag-notice", "clear")],
+      str(sent))
+subject, _ = alarm.compose([("unit:permtracker-uscis@flag-notice", "clear", "x failed")], healthy(), None, [], T0)
+check("a clear's subject names the unit that recovered", "permtracker-uscis@flag-notice has run cleanly" in subject,
+      subject)
+subject, _ = alarm.compose([("unit:permtracker-uscis@flag-notice", "start", "x failed")], healthy(), None, [], T0)
+check("a start's subject names the unit", "permtracker-uscis@flag-notice failed" in subject, subject)
+
 # The daily cap.
 st = {}
 for i in range(alarm.EMAILS_PER_DAY):
     st = alarm.count_email(st, T0 + i)
 check("the twelfth email of a day is the last", alarm.under_cap(st, T0 + 100) is False)
 check("a new day starts the count again", alarm.under_cap(st, T0 + 86_400) is True)
+# The cap counts Eastern days: 11:30 PM EDT and 12:30 AM EDT are two days, while
+# 8:30 PM and 11:30 PM EDT (00:30 and 03:30 UTC, two UTC days) are one.
+late = 1793331000.0  # Thu Oct 29 2026, 11:30 PM EDT
+check("the cap's day is Eastern", alarm.email_day(late) == "2026-10-29"
+      and alarm.email_day(late + 3600) == "2026-10-30"
+      and alarm.email_day(late - 3 * 3600) == alarm.email_day(late), alarm.email_day(late))
 
 subject, text = alarm.compose([("disk", "start", "20.0 GB free")], healthy(disk_free_gb=20.0), 3.5,
                               ["started the page-cache cap"], T0)
@@ -207,9 +260,9 @@ SHOW = ("Id=permtracker-web@blue2.service\nActiveState=inactive\nUnitFileState=e
         "Id=permtracker-cron@scorecard.service\nActiveState=inactive\nUnitFileState=static\nResult=exit-code\n")
 check("a switched-on unit left inactive after an error is caught",
       alarm.stopped_after_error(SHOW) == ["permtracker-web@blue2.service"], str(alarm.stopped_after_error(SHOW)))
-check("...and raises the units alarm, named as stopped",
-      "stopped after an error: permtracker-web@blue2.service"
-      in alarm.evaluate(healthy(stopped_units=["permtracker-web@blue2.service"]), None).get("units", ""))
+check("...and raises that unit's alarm, named as stopped",
+      alarm.evaluate(healthy(stopped_units=["permtracker-web@blue2.service"]), None).get("unit:permtracker-web@blue2")
+      == "permtracker-web@blue2.service stopped after an error")
 import importlib.machinery as _m, importlib.util as _u
 _l = _m.SourceFileLoader("pt_health_for_alarm", str(HERE / "bin" / "permtracker-health"))
 _h = _u.module_from_spec(_u.spec_from_loader("pt_health_for_alarm", _l)); _l.exec_module(_h)

@@ -107,10 +107,19 @@ function ReviewCard({ r }: { r: Row }) {
       ) : null}{" "}
       <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr] [&>*]:min-w-0">
         <dt className="font-bold">Left</dt> <dd>{`${when(r.createdAt)}${SOURCE_NOTE[r.source]}`}</dd>{" "}
-        <dt className="font-bold">Email</dt>{" "}
-        <dd className="break-all">
-          {r.email ? `${r.email}${r.watchesCase ? " (watches a case on the site)" : ""}` : "None given"}
-        </dd>{" "}
+        {r.rater ? (
+          <>
+            <dt className="font-bold">Rated by</dt>{" "}
+            <dd className="break-all">{`${r.rater.email}, watching ${r.rater.caseNumber} (only you see this)`}</dd>{" "}
+          </>
+        ) : (
+          <>
+            <dt className="font-bold">Email</dt>{" "}
+            <dd className="break-all">
+              {r.email ? `${r.email}${r.watchesCase ? " (watches a case on the site)" : ""}` : "None given"}
+            </dd>{" "}
+          </>
+        )}
         {r.reviewedAt ? (
           <>
             <dt className="font-bold">Decided</dt>{" "}

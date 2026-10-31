@@ -33,6 +33,13 @@ from lib_gov_data import fetch, log  # noqa: E402
 URL = "https://flag.dol.gov/"
 KEY = "flag_notice"
 SCRIPT = "ingest_flag_notice.py"
+# The job runs every 15 minutes under a 3-minute limit, so it asks twice at
+# most: robots.txt (30 s), the page (30 s), a 20-second wait, the page again
+# (30 s). The shared fetcher's four tries with waits of 20, 60 and 180 seconds
+# outlasted the old 2-minute limit while FLAG answered 503 (Oct 29 2026, 7 to
+# 9 PM EDT), so every run was killed and recorded as failed.
+ATTEMPTS = 2
+TIMEOUT_S = 30
 
 
 def _text(fragment: str) -> str:
@@ -73,7 +80,7 @@ def next_doc(previous: dict | None, notice: dict | None, now_ms: int) -> dict:
 def run(db: Database | None, *, from_file: str | None = None) -> int:
     started = time.time()
     try:
-        page = open(from_file, encoding="utf8", errors="ignore").read() if from_file else fetch(URL).decode("utf8", "ignore")
+        page = open(from_file, encoding="utf8", errors="ignore").read() if from_file else fetch(URL, attempts=ATTEMPTS, timeout=TIMEOUT_S).decode("utf8", "ignore")
     except Exception as exc:  # noqa: BLE001 - a refusal is recorded, never a crash
         log(f"::warning::couldn't read {URL}: {exc}")
         if db is not None:

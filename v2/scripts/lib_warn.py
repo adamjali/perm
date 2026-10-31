@@ -22,6 +22,7 @@ note names the capture's date.
 """
 from __future__ import annotations
 
+import contextlib
 import csv
 import datetime as dt
 import hashlib
@@ -397,7 +398,23 @@ ARCHIVE_OFFLINE = b"Internet Archive: Temporarily Offline"
 ARCHIVE_GAP_S = 4.0
 ARCHIVE_WAITS = (30, 90)
 ARCHIVE_BUDGET_S = 900
-_archive = {"last": 0.0, "spent": 0.0, "down": ""}
+_archive = {"last": 0.0, "spent": 0.0, "down": "", "optional": False}
+
+
+@contextlib.contextmanager
+def archive_optional():
+    """Archive reads inside this block are a top-up a source has another way
+    round: each is asked once, with no waits, and a refusal never marks the
+    Archive down for the run. On Oct 31 2026 Texas's spreadsheet top-up spent
+    463 s waiting on the Archive's 429s, marked it down, and Louisiana, New
+    Mexico, Missouri and Nevada, whose only source is the Archive, were skipped
+    (four states that had never loaded)."""
+    before = _archive.get("optional", False)
+    _archive["optional"] = True
+    try:
+        yield
+    finally:
+        _archive["optional"] = before
 
 
 class ArchiveCopy(NamedTuple):
@@ -422,8 +439,9 @@ def _archive_read(url: str) -> bytes:
         _archive["down"] = f"too slow ({ARCHIVE_BUDGET_S} s spent on it)"
         raise urllib.error.URLError(f"the Internet Archive has used this run's {ARCHIVE_BUDGET_S} s")
     started = time.monotonic()
+    optional = _archive.get("optional", False)
     try:
-        for attempt, wait in enumerate((*ARCHIVE_WAITS, None), start=1):
+        for attempt, wait in enumerate((*(() if optional else ARCHIVE_WAITS), None), start=1):
             idle = ARCHIVE_GAP_S - (time.monotonic() - _archive["last"])
             if idle > 0:
                 time.sleep(idle)
@@ -442,7 +460,8 @@ def _archive_read(url: str) -> bytes:
             except (urllib.error.URLError, ConnectionError, TimeoutError) as exc:
                 reason = f"unreachable ({type(exc).__name__})"
             if wait is None:
-                _archive["down"] = reason
+                if not optional:
+                    _archive["down"] = reason
                 raise urllib.error.URLError(f"the Internet Archive is {reason} ({url[:100]})")
             print(f"  the Internet Archive is {reason}; asking again in {wait}s", flush=True)
             time.sleep(wait)
