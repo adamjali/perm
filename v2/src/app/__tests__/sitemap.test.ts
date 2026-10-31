@@ -837,6 +837,12 @@ describe("sitemap index and chunking", () => {
     expect(xml).not.toContain("&c=2");
   });
 
+  it("escapes both quote marks, which close an attribute (CodeQL, Oct 29 2026)", () => {
+    const xml = urlsetXml([{ url: `https://x.test/a"b'c`, lastModified: "2026-01-01" }]);
+    expect(xml).toContain("a&quot;b&apos;c");
+    expect(xml).not.toMatch(/a"b/);
+  });
+
   it("does not emit changefreq or priority", async () => {
     // Google's docs: "Google ignores <priority> and <changefreq> values."
     // Bing said the same in July 2025. Measured at 115 bytes per URL, which is

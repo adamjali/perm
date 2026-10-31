@@ -263,15 +263,21 @@ export function extractVideoRefs(content: string): { src: string; alt: string }[
  * finds the articles that show its data, read from the articles themselves rather than kept by hand.
  */
 export function postsUsing(tags: readonly string[]): string[] {
-  // The tags are our own component names from the figure tables, never input.
-  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
-  const uses = tags.map((t) => new RegExp(`<${t}\\b`));
   const out: string[] = [];
   for (const type of Object.keys(CONTENT_TYPE_CONFIG) as ContentType[]) {
     for (const slug of getPostSlugs(type)) {
       const post = getPostBySlug(type, slug);
-      if (post && uses.some((u) => u.test(post.content))) out.push(`/${type}/${slug}`);
+      if (post && tags.some((t) => usesTag(post.content, t))) out.push(`/${type}/${slug}`);
     }
   }
   return out;
+}
+
+/** Whether MDX opens the component `<tag` (not a longer name that starts with it, like `<tagNow`). */
+export function usesTag(content: string, tag: string): boolean {
+  const open = `<${tag}`;
+  for (let at = content.indexOf(open); at !== -1; at = content.indexOf(open, at + 1)) {
+    if (!/\w/.test(content.charAt(at + open.length))) return true;
+  }
+  return false;
 }

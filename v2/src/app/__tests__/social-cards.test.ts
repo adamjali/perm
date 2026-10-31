@@ -62,7 +62,7 @@ describe("page social cards", () => {
       // the page: the methodology page names every dataset, including
       // "i140-trends", and wires its own card, so a bare substring test
       // counted it as a second page for the trends card.
-      return src.includes("withSocialCard(") && new RegExp(`\\}\\s*,\\s*"${slug}"\\s*\\)`).test(src);
+      return src.includes("withSocialCard(") && src.replace(/\s+/g, "").includes(`},"${slug}")`);
     });
 
   /**

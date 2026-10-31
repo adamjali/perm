@@ -50,8 +50,7 @@ const ASKED = { timeout: 2000 };
 
 const renderPlanner = () => render(<GreenCardPlanner reading={READING} check={null} today={TODAY} />);
 const tile = (label: string) => within(screen.getByRole("list", { name: "Your dates" })).getByText(label).closest("li")!;
-// A step name from this test's own list. nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
-const row = (step: string) => screen.getByRole("link", { name: new RegExp(`^${step}$`) }).closest("li")!;
+const row = (step: string) => screen.getByRole("link", { name: step }).closest("li")!;
 /** A step's figures, inside the "Change the figures" fold. */
 const figures = (step: string) =>
   screen.getAllByText(step, { selector: "p" }).find((el) => el.closest("#figures"))!.closest("li")!;

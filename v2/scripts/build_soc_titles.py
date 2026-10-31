@@ -229,6 +229,8 @@ def read_dol(db: Database, log=print) -> tuple[dict[str, Counter], dict[str, dic
     lo, hi = rows_of(db.execute("SELECT min(decision_date), max(decision_date) FROM perm_cases"))[0]
     spans["perm"] = {"from": lo, "to": hi}
     for program, table in (("pwd", "pwd_cases"), ("lca", "lca_cases")):
+        # The table is one of the two names in this loop, never input.
+        # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
         newest = int(rows_of(db.execute(f"SELECT max(fiscal_year) FROM {table}"))[0][0] or 0)
         first = newest - YEARS + 1
         spans[program] = {"fyFrom": first, "fyTo": newest}
@@ -404,6 +406,8 @@ def main(argv: list[str] | None = None) -> int:
             "codes": codes,
         })
         write_doc(db, DOC_PAGES, {"builtAt": built, "pageMin": PAGE_MIN, "pages": pages})
+        # TABLE is this module's constant, never input.
+        # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
         held = int(rows_of(db.execute(f"SELECT count(*) FROM {TABLE}"))[0][0] or 0)
         ok = held == len(rows)
         note = (f"{len(rows):,} rows ({got['written']:,} written, {got['deleted']:,} removed), "

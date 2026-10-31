@@ -753,8 +753,15 @@ export function parseChildName(
   return { kind, chunk };
 }
 
+// Both quote marks too: these values also go inside quoted attributes (CodeQL
+// js/incomplete-html-attribute-sanitization, Oct 29 2026).
 const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 
 export function urlsetXml(entries: Entry[]): string {
   return (
