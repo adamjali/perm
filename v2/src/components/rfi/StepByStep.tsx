@@ -1,3 +1,4 @@
+import type { ActivityDay } from "@/lib/activityStats";
 import { Fragment, type ReactNode } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
@@ -88,9 +89,30 @@ function MoveKey({ rows }: { rows: MoveRow[] }) {
   );
 }
 
-export function RfiJourney({ stats, clock }: { stats: StageStats | null; clock: RfiClock | null }) {
+export function RfiJourney({
+  stats,
+  clock,
+  observed = [],
+}: {
+  stats: StageStats | null;
+  clock: RfiClock | null;
+  /** Every PERM case our sweep saw end, a day each: the comparison for the RFI cases. */
+  observed?: readonly ActivityDay[];
+}) {
   const path = parseRfiPath(stats?.rfiPath);
   const decided = path ? sumOutcomes(path.decided) : 0;
+  // Every PERM case that ended over the same weeks, for the comparison.
+  const since = path?.since ?? null;
+  const all = since ? observed.filter((d) => d.date >= since) : [];
+  const allTotal = all.reduce((a, d) => a + d.total, 0);
+  const allCertified = all.reduce((a, d) => a + d.certified, 0);
+  const compare =
+    path && decided >= 30 && allTotal > 0
+      ? [
+          { label: "Cases DOL sent an RFI", share: path.decided.certified / decided, n: decided },
+          { label: "Every PERM case", share: allCertified / allTotal, n: allTotal },
+        ]
+      : null;
   const afterReply = path ? sumOutcomes(path.afterReply) : 0;
   if (!path && !clock) return null;
   const outcomeRows: MoveRow[] = path && decided > 0
@@ -146,6 +168,25 @@ export function RfiJourney({ stats, clock }: { stats: StageStats | null; clock: 
             <MoveBar rows={outcomeRows} label={`How ${int(decided)} decided RFIs ended`} />
             <MoveKey rows={outcomeRows} />
           </div>
+        </div>
+      ) : null}{" "}
+      {compare ? (
+        <div className="mt-6">
+          <p className="text-base font-semibold">How many were certified: RFI cases against every PERM case</p>{" "}
+          <dl className="mt-2 max-w-2xl space-y-3">
+            {compare.map((c) => (
+              <div key={c.label}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-base">{c.label}</dt>{" "}
+                  <dd className="font-heading text-2xl font-bold tabular-nums">{pct(c.share)}</dd>
+                </div>{" "}
+                <div className="mt-1 h-3 w-full bg-muted" aria-hidden="true">
+                  <div className="h-full border-r-2 border-data-good-ink bg-chart-green" style={{ width: `${c.share * 100}%` }} />
+                </div>{" "}
+                <p className="mt-1 text-sm text-muted-foreground">of the {int(c.n)} that ended{since ? ` since ${formatAsOf(since)}` : ""}</p>
+              </div>
+            ))}
+          </dl>
         </div>
       ) : null}{" "}
       <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">

@@ -47,6 +47,7 @@ import { StageLadder, StageLadderTable } from "@/components/rfi/StageLadder";
 import { isReviewStage, reviewStages, stageMeta } from "@/components/rfi/stageMeta";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getObservedDays } from "@/lib/db/pulse";
 import { getRfiClock } from "@/lib/db/rfiClock";
 import { getStageStats } from "@/lib/db/stageStats";
 import type { ReviewStage } from "@/lib/db/rfi";
@@ -87,7 +88,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function PermRfiAuditPage() {
-  const [stages, funnel, cohortsRaw, occupations, smallRecords, dol, stageStats, rfiClock] =
+  const [stages, funnel, cohortsRaw, occupations, smallRecords, dol, stageStats, rfiClock, observedDays] =
     await Promise.all([
       getReviewStages(),
       getBlendedRfiFunnel(),
@@ -97,6 +98,8 @@ export default async function PermRfiAuditPage() {
       getProcessingTimes().catch(() => null),
       getStageStats().catch(() => null),
       getRfiClock().catch(() => null),
+      // Every decision our sweep has seen, for the RFI cases' comparison.
+      getObservedDays(150).catch(() => []),
     ]);
 
   const pending = stages.reduce((n, s) => n + s.cases, 0);
@@ -338,7 +341,7 @@ export default async function PermRfiAuditPage() {
               </>
             }
           >
-            <RfiJourney stats={stageStats} clock={rfiClock} />
+            <RfiJourney stats={stageStats} clock={rfiClock} observed={observedDays} />
             <h3 className="mt-10 font-heading text-xl font-bold">Where each step leads</h3>{" "}
             <div className="mt-4">
               <StageMoves stats={stageStats} since={rfiClock?.watchedFrom ?? null} />
