@@ -152,6 +152,8 @@ export interface Facts {
   retries?: { waiting: number; oldestQueuedAt: number | null; retriedYesterday: number; lostYesterday: number };
   /** Law-firm claims and profile changes waiting for the admin (convex/firmClaims.ts), oldest first. */
   firmReview?: { waiting: Array<{ firmName: string; kind: "claim" | "edit"; since: number }> };
+  /** Reviews and alert-email ratings waiting for the owner (convex/siteReviews.ts), oldest first; absent in older reports. */
+  reviewQueue?: { waiting: Array<{ source: "site" | "senja" | "alert"; rating: number; since: number }> };
   /** Mail the spam filter held (convex/inboundFilter.ts): subjects and sender domains only; absent in older reports. */
   spamFilter?: { heldSince: number; waiting: number; newest: Array<{ subject: string; domain: string }> };
   /** Alert ratings given in the last 7 days (convex/alertRatings.ts); absent in older reports. */
@@ -267,6 +269,8 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
   const sections: ReportSection[] = [app, email];
   const firms = firmSection(f, now);
   if (firms) sections.push(firms);
+  const reviews = reviewSection(f, now);
+  if (reviews) sections.push(reviews);
   const spam = spamSection(f);
   if (spam) sections.push(spam);
   const ratings = ratingSection(f);
@@ -363,6 +367,33 @@ export function spamSection(f: Facts): ReportSection | null {
     lines: [
       ...s.newest.map((m) => `${m.subject}${m.domain ? ` (from ${m.domain})` : ""}`),
       `Held mail is deleted 30 days after it was held. Check the list at ${SITE_URL}/admin#alerts`,
+    ],
+  };
+}
+
+const REVIEW_SOURCE: Record<"site" | "senja" | "alert", string> = {
+  site: "A written review",
+  senja: "A review copied from Senja",
+  alert: "A rating tapped in an alert email (stars only)",
+};
+
+/**
+ * Reviews waiting for the owner, alert-email ratings among them (Oct 31 2026: one had sat unseen at the bottom of
+ * the admin page). Nothing shows on the site until the owner approves, so anything waiting is a thing to do.
+ */
+function reviewSection(f: Facts, now: number): ReportSection | null {
+  const waiting = f.reviewQueue?.waiting ?? [];
+  if (waiting.length === 0) return null;
+  const oldest = Math.min(...waiting.map((w) => w.since));
+  return {
+    key: "reviews",
+    title: "Reviews waiting for you",
+    status: "warn",
+    summary: `${waiting.length} waiting, the oldest for ${waited(now - oldest)}`,
+    lines: [
+      ...[...waiting].sort((a, b) => a.since - b.since).slice(0, 10).map((w) => `${REVIEW_SOURCE[w.source]}, ${w.rating} of 5, waiting ${waited(now - w.since)}`),
+      ...(waiting.length > 10 ? [`and ${waiting.length - 10} more`] : []),
+      `Approve or decline them at ${SITE_URL}/admin#reviews`,
     ],
   };
 }

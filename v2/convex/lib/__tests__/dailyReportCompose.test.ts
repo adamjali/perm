@@ -169,6 +169,36 @@ describe("law firms waiting for review", () => {
   });
 });
 
+describe("reviews waiting for the owner", () => {
+  it("adds no section when nothing waits", () => {
+    const keys = convexSections(facts({ reviewQueue: { waiting: [] } }), { sent: 1, bounced: 0, complained: 0 }, NOW).map((s) => s.key);
+    expect(keys).not.toContain("reviews");
+  });
+
+  it("lists each one by where it came from, its stars and its wait, never a name, and asks for a look", () => {
+    // Arrange
+    const day = 24 * 60 * 60 * 1000;
+    const f = facts({
+      reviewQueue: {
+        waiting: [
+          { source: "alert", rating: 5, since: NOW - 3 * day },
+          { source: "site", rating: 2, since: NOW - 2 * 60 * 60 * 1000 },
+        ],
+      },
+    });
+    // Act
+    const reviews = convexSections(f, { sent: 1, bounced: 0, complained: 0 }, NOW).find((s) => s.key === "reviews")!;
+    // Assert
+    expect(reviews.status).toBe("warn");
+    expect(reviews.summary).toBe("2 waiting, the oldest for 3 days");
+    expect(reviews.lines).toEqual([
+      "A rating tapped in an alert email (stars only), 5 of 5, waiting 3 days",
+      "A written review, 2 of 5, waiting 2 hours",
+      "Approve or decline them at https://permtracker.app/admin#reviews",
+    ]);
+  });
+});
+
 describe("the accounts line", () => {
   it("splits accounts and sign-ups by who they're for, when the counts exist", () => {
     const app = convexSections(

@@ -192,7 +192,10 @@ export default function PrivacyPage() {
                 kept with your address and the case, the time of each tap, and
                 the browser line your browser sends with it. We keep that line
                 so a mail scanner opening the links isn&apos;t counted as your
-                rating. A note you add can be kept without your address
+                rating. A note you add can be kept without your address. Once
+                we approve it, the rating can show on the reviews page as
+                &quot;Case alert reader&quot; with the month, never with your
+                name, address or case
               </li>
             </ul>{" "}
 

@@ -35,7 +35,7 @@ describe("the review rating", () => {
   it("shows the rating when the gate is open", () => {
     const html = render();
     expect(html).toContain(Number(APP_RATING.value).toFixed(1));
-    expect(html).toContain(`from ${APP_RATING.count} reviews`);
+    expect(html).toContain(`from ${APP_RATING.count} ratings`);
   });
 
   it("withholds the rating below the floor, and keeps the review link", () => {
@@ -58,7 +58,7 @@ describe("the review rating", () => {
       React.createElement(ReviewsLine, { rating: { value: "4.5", count: "2", best: "5", worst: "1" }, reviews }),
     );
     expect(html).toContain("4.5");
-    expect(html).toContain("from 2 reviews");
+    expect(html).toContain("from 2 ratings");
     expect(html).toContain("Alerts came fast.");
     expect(html).toMatch(/>Pat<\/span>/);
     expect(html).toContain("5 of 5");

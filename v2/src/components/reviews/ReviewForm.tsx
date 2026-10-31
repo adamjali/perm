@@ -10,6 +10,8 @@ import { useQueryParam } from "@/components/ui/pagination";
 import { analytics } from "@/lib/analytics";
 import { SUPPORT_EMAIL_ADDRESS } from "@/lib/constants/externalLinks";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { formText } from "@/lib/forms/formText";
+import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { cn } from "@/lib/utils";
 import { NOTE_MAX, REVIEW_NAME_MAX, REVIEW_TEXT_MAX, type ReviewField } from "@convex/lib/siteReview";
 
@@ -96,6 +98,8 @@ export function ReviewForm() {
   const hoverQuietUntil = useRef(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  // Chrome on iPhone can fill a box without the event React listens for: keep React's copy in step with the box.
+  const formRef = useFormDomSync({ name: setName, email: setEmail });
   const [prefilled, setPrefilled] = useState(false);
   const [sent, setSent] = useState<{ name: string; rating: number; reviewId: string | null } | null>(null);
   /** Bumped to replay the stars' wiggle when someone sends without picking one. */
@@ -195,8 +199,11 @@ export function ReviewForm() {
     if (phase === "sending") return;
     const data = new FormData(e.currentTarget);
     const stars = Number(data.get("rating"));
+    // The boxes themselves, read at the moment of sending, not only React's copy of them.
+    const theName = formText(e.currentTarget, "name", name).trim();
+    const theEmail = formText(e.currentTarget, "email", email).trim();
     if (!stars) return fail({ field: "rating", message: "Tap a star first" });
-    if (!name.trim()) return fail({ field: "name", message: "Add a name to show with your review. A first name is fine." });
+    if (!theName) return fail({ field: "name", message: "Add a name to show with your review. A first name is fine." });
     setPhase("sending");
     setError(null);
     const url = convexSiteUrl("/review/submit");
@@ -208,8 +215,8 @@ export function ReviewForm() {
         body: JSON.stringify({
           rating: stars,
           text: data.get("text"),
-          name: name.trim(),
-          email: email.trim(),
+          name: theName,
+          email: theEmail,
           website: data.get("website"),
           elapsed: shownAt.current ? Date.now() - shownAt.current : 0,
           ...(linkToken.current ? { t: linkToken.current } : {}),
@@ -222,7 +229,7 @@ export function ReviewForm() {
         reviewId?: string;
       } | null;
       if (body?.ok) {
-        setSent({ name: name.trim(), rating: stars, reviewId: typeof body.reviewId === "string" ? body.reviewId : null });
+        setSent({ name: theName, rating: stars, reviewId: typeof body.reviewId === "string" ? body.reviewId : null });
         setPhase("sent");
         analytics.capture("review_submitted", { rating: stars, prefilled, hasText: String(data.get("text") ?? "").trim().length > 0 });
         return;
@@ -297,7 +304,7 @@ export function ReviewForm() {
   };
 
   return (
-    <form method="post" noValidate onSubmit={onSubmit} className="relative mx-auto max-w-lg">
+    <form ref={formRef} method="post" noValidate onSubmit={onSubmit} aria-label="Leave a review" className="relative mx-auto max-w-lg">
       <fieldset disabled={sending} className="min-w-0">
         {/* Read out once, politely, whatever went wrong; the page itself stays calm. */}
         <p role="status" className="sr-only">

@@ -22,6 +22,8 @@ export interface SiteReview {
   name: string;
   /** ISO timestamp from Senja. */
   date: string;
+  /** A rating tapped in an alert email: no words, no name, the month alone. */
+  viaAlert?: boolean;
 }
 
 export interface ReviewRating {

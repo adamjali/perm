@@ -25,9 +25,9 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { pageDate } from "@/lib/pageDates";
 import { getSiteReviews } from "@/lib/reviews/read";
 import { IN_ROWS_MAX } from "@/lib/reviews/rows";
-import { newestReviewDay, reviewDay } from "@/lib/reviews/senjaParse";
+import { newestReviewDay } from "@/lib/reviews/senjaParse";
 import { withSocialCard } from "@/lib/socialCard";
-import { longDate } from "@convex/lib/months";
+import { cardDay } from "@/lib/reviews/cardDay";
 
 const TITLE = "PERM Tracker Reviews";
 const DESCRIPTION =
@@ -68,7 +68,8 @@ export default async function ReviewsPage() {
     rating: r.rating,
     text: r.text,
     name: r.name,
-    day: longDate(reviewDay(r.date)),
+    day: cardDay(r.date, r.viaAlert),
+    ...(r.viaAlert ? { viaAlert: true } : {}),
   }));
   const breakdown = [5, 4, 3, 2, 1].map((n) => ({ n, count: byStars[n - 1] ?? 0 }));
   const most = Math.max(1, ...breakdown.map((b) => b.count));

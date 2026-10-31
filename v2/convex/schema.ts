@@ -2369,7 +2369,13 @@ export default defineSchema({
     /** Private: never shown and never sent anywhere. Lets the owner follow up and see the reviewer watches a case. */
     email: v.optional(v.string()),
     status: v.union(v.literal("pending"), v.literal("approved"), v.literal("declined")),
-    source: v.union(v.literal("site"), v.literal("senja")),
+    /** "alert": a rating tapped in a case's last alert email, queued as a review with no words (Oct 31 2026). */
+    source: v.union(v.literal("site"), v.literal("senja"), v.literal("alert")),
+    /**
+     * sha256 of the reviewer's address (lowercased), on a rating from an alert email and on a written review that
+     * gave an address: where the two meet, so one person counts once. No address is kept for it.
+     */
+    raterKey: v.optional(v.string()),
     /** Senja's id for a copied review: the copy is made once. */
     senjaId: v.optional(v.string()),
     /** Someone who runs PERM Tracker: kept, never shown or counted. */
@@ -2397,7 +2403,8 @@ export default defineSchema({
     .index("by_status_created", ["status", "createdAt"])
     .index("by_created", ["createdAt"])
     .index("by_senja_id", ["senjaId"])
-    .index("by_note_at", ["privateNoteAt"]),
+    .index("by_note_at", ["privateNoteAt"])
+    .index("by_rater_key", ["raterKey"]),
 
   /**
    * How many reviews the site shows, by stars (index 0 is one star): kept as reviews are approved, declined and

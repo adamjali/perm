@@ -30,12 +30,13 @@
 import { v } from "convex/values";
 
 import { internalMutation, internalQuery, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { requireAdmin } from "./lib/admin";
 import { SITE_URL } from "./lib/links";
 import { makeUnsubscribeToken, verifyUnsubscribeToken } from "./lib/unsubscribeToken";
 import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
 import { MS_PER_DAY } from "./lib/time";
+import { queueAlertRating, raterKeyFor } from "./siteReviews";
 
 /** Whether the last alert carries the rating row: the owner's switch. */
 export function ratingsOn(): boolean {
@@ -213,6 +214,8 @@ async function saveRating(
       updatedAt: now,
     });
   }
+  // A person's pick (never a scanner's) waits for the owner as a review with no words.
+  if (score !== undefined) await queueAlertRating(ctx, { email, score, at: now });
   return answer(counted, note !== undefined || existing?.note !== undefined);
 }
 
@@ -387,7 +390,12 @@ export const forAdmin = query({
             name = profile?.fullName || user.name || null;
           }
         }
-        const review = email ? reviewFor.get(email) : undefined;
+        // A written review from the address first; otherwise the review this rating queued (Oct 31 2026).
+        let review = email ? reviewFor.get(email) : undefined;
+        if (!review && email) {
+          const key = await raterKeyFor(email);
+          review = (await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", key)).take(5))[0];
+        }
         return {
           id: r._id,
           email,
@@ -414,5 +422,29 @@ export const forAdmin = query({
         };
       }),
     );
+  },
+});
+
+/**
+ * One time (Oct 31 2026): queue chosen ratings left before ratings became reviews. Run with `dryRun: true` first.
+ * A rating whose address was dropped (anonymous) can't be matched to a person, so it is left out.
+ */
+export const queueExistingAsReviews = internalMutation({
+  args: { ids: v.array(v.id("alertRatings")), dryRun: v.boolean() },
+  returns: v.array(v.object({ id: v.id("alertRatings"), result: v.string() })),
+  handler: async (ctx, { ids, dryRun }) => {
+    const out: { id: Id<"alertRatings">; result: string }[] = [];
+    for (const id of ids) {
+      const row = await ctx.db.get(id);
+      if (!row) out.push({ id, result: "missing" });
+      else if (row.score === undefined) out.push({ id, result: "no score: only a scanner opened it" });
+      else if (!row.email) out.push({ id, result: "anonymous: no address to count it once" });
+      else if (dryRun) out.push({ id, result: `would queue ${row.score} of 5` });
+      else {
+        await queueAlertRating(ctx, { email: row.email, score: row.score, at: row.createdAt });
+        out.push({ id, result: `queued ${row.score} of 5` });
+      }
+    }
+    return out;
   },
 });

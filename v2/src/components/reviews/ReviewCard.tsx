@@ -19,8 +19,10 @@ export interface ReviewCardData {
   rating: number;
   text: string;
   name: string;
-  /** "October 23, 2026", or null when the date couldn't be read. */
+  /** "October 23, 2026" ("October 2026" for a rating from an alert email), or null when the date couldn't be read. */
   day: string | null;
+  /** A rating tapped in a case's alert email: the card says where it came from. */
+  viaAlert?: boolean;
 }
 
 const CLAMP: Record<number, string> = { 5: "line-clamp-5", 6: "line-clamp-6", 8: "line-clamp-[8]" };
@@ -89,6 +91,7 @@ export function ReviewCard({
       )}{" "}
       <figcaption className="mt-5 border-t-2 border-border pt-3">
         <span className="font-heading text-base font-bold">{r.name}</span>{" "}
+        {r.viaAlert ? <span className="block text-sm text-muted-foreground">Rated from an alert email</span> : null}{" "}
         {r.day ? <span className="block text-sm text-muted-foreground">{r.day}</span> : null}
       </figcaption>
     </figure>

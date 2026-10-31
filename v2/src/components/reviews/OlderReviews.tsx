@@ -7,8 +7,7 @@ import { ReviewCard, type ReviewCardData } from "@/components/reviews/ReviewCard
 import { buttonVariants } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { longDate } from "@convex/lib/months";
-import { reviewDay } from "@/lib/reviews/senjaParse";
+import { cardDay } from "@/lib/reviews/cardDay";
 
 /**
  * "Show older reviews": the way past the newest reviews the page was built with, a hundred at a time from
@@ -29,7 +28,7 @@ export function OlderReviews({ before: firstBefore }: { before: number }) {
     try {
       const res = await fetch(`/api/reviews/older?before=${before}`);
       const body = (await res.json().catch(() => null)) as {
-        reviews?: { id: string; rating: number; text: string; name: string; createdAt: number }[];
+        reviews?: { id: string; rating: number; text: string; name: string; createdAt: number; viaAlert?: boolean }[];
         more?: boolean;
         error?: string;
       } | null;
@@ -37,7 +36,7 @@ export function OlderReviews({ before: firstBefore }: { before: number }) {
       const page = body.reviews;
       setShown((s) => [
         ...s,
-        ...page.map((r) => ({ id: r.id, rating: r.rating, text: r.text, name: r.name, day: longDate(reviewDay(new Date(r.createdAt).toISOString())) })),
+        ...page.map((r) => ({ id: r.id, rating: r.rating, text: r.text, name: r.name, day: cardDay(new Date(r.createdAt).toISOString(), r.viaAlert), viaAlert: r.viaAlert })),
       ]);
       if (page.length) setBefore(page[page.length - 1]!.createdAt);
       setMore(body.more === true && page.length > 0);

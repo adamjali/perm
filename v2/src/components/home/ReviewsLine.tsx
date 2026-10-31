@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ChatDotsIcon, StarHalfIcon, StarIcon } from "@phosphor-icons/react/ssr";
 
 import { APP_RATING, shouldAdvertiseRating, type RatingFields } from "@/lib/structuredData";
-import { reviewDay, type SiteReview } from "@/lib/reviews/senjaParse";
+import type { SiteReview } from "@/lib/reviews/senjaParse";
 import { buttonVariants } from "@/components/ui/button";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
-import { longDate } from "@convex/lib/months";
+import { cardDay } from "@/lib/reviews/cardDay";
 
 /**
  * The site's review rating, the newest reviews, and the link to leave one.
@@ -67,7 +67,7 @@ export function ReviewsLine({
             <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
               <ReviewStars value={Number(rating.value)} />{" "}
               <span className="font-heading text-lg font-bold">{`${Number(rating.value).toFixed(1)} out of 5`}</span>{" "}
-              <span className="text-base text-muted-foreground">{`from ${rating.count} reviews`}</span>
+              <span className="text-base text-muted-foreground">{`from ${rating.count} ${rating.count === "1" ? "rating" : "ratings"}`}</span>
             </p>
           ) : null}
         </div>{" "}
@@ -88,7 +88,7 @@ export function ReviewsLine({
           {newest.map((r) => (
             <li key={r.id} className="flex">
               <ReviewCard
-                review={{ id: r.id, rating: r.rating, text: r.text, name: r.name, day: longDate(reviewDay(r.date)) }}
+                review={{ id: r.id, rating: r.rating, text: r.text, name: r.name, day: cardDay(r.date, r.viaAlert), viaAlert: r.viaAlert }}
                 lines={5}
                 compact
                 className="w-full"

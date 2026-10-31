@@ -114,6 +114,9 @@ export const facts = internalQuery({
     );
 
     const firmWaiting = await waitingForReview(ctx, 50);
+    const reviewsWaiting = (
+      await ctx.db.query("siteReviews").withIndex("by_status_created", (q) => q.eq("status", "pending")).take(50)
+    ).filter((r) => r.insider !== true);
 
     // Who each account is for, from its onboarding role, so the report's
     // attorney figure leaves out people tracking their own case.
@@ -151,6 +154,8 @@ export const facts = internalQuery({
       },
       // Firm names are public; no address or role reaches the report.
       firmReview: { waiting: firmWaiting.map((w) => ({ firmName: w.firmName, kind: w.kind, since: w.since })) },
+      // Reviews and alert ratings waiting for the owner: where each came from, its stars and age; never a name or address.
+      reviewQueue: { waiting: reviewsWaiting.map((r) => ({ source: r.source, rating: r.rating, since: r.createdAt })) },
       // Held mail: subjects and sender domains, never an address.
       spamFilter: await heldSummary(ctx, since),
       // What people said about their alerts, the last week: scores and notes only.

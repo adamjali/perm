@@ -222,7 +222,7 @@ describe("getHomepageRatingPartialSchema", () => {
     expect(partial.aggregateRating).toMatchObject({
       "@type": "AggregateRating",
       ratingValue: expect.any(String),
-      reviewCount: expect.any(String),
+      ratingCount: expect.any(String),
       bestRating: expect.any(String),
       worstRating: expect.any(String),
     });
@@ -231,7 +231,7 @@ describe("getHomepageRatingPartialSchema", () => {
   it("rating values are well-formed numerics (Google parses them as numbers)", () => {
     const r = partial.aggregateRating;
     expect(Number(r.ratingValue)).toBeGreaterThan(0);
-    expect(Number(r.reviewCount)).toBeGreaterThan(0);
+    expect(Number(r.ratingCount)).toBeGreaterThan(0);
     expect(Number(r.bestRating)).toBeGreaterThanOrEqual(Number(r.ratingValue));
     expect(Number(r.worstRating)).toBeLessThanOrEqual(Number(r.ratingValue));
   });

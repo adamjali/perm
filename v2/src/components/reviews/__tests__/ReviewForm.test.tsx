@@ -128,6 +128,20 @@ describe("the thanks, by the stars given", () => {
     expect(sent.find((s) => s.path === "/review/note")?.body).toEqual({ reviewId: "rev123", note: "Tell me about RFIs sooner." });
   });
 
+  it("sends a name Chrome on iPhone filled into the box without React hearing it", async () => {
+    // Arrange: the box shows "Pat", set the way a phone's autofill sets it, with no event React listens for.
+    const sent = routes();
+    render(<ReviewForm />);
+    fireEvent.click(screen.getByLabelText("5 stars"));
+    const box = screen.getByRole("textbox", { name: /Your name/ }) as HTMLInputElement;
+    box.value = "Pat";
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+    // Assert: sent with the name, not refused as empty.
+    await waitFor(() => expect(sent.find((s) => s.path === "/review/submit")?.body.name).toBe("Pat"));
+    expect(document.getElementById("review-error-name")).toBeNull();
+  });
+
   it("asks a 3 what would have made it a 5, and asks a 4 or 5 nothing", async () => {
     routes();
     await postWith(3);

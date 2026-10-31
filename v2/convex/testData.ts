@@ -19,6 +19,7 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { ratingKey } from "./alertRatings";
 import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
+import { raterKeyFor, removeReview } from "./siteReviews";
 
 /** The source a watch carries when the owner signs up for a test. */
 export const OWNER_TEST_SOURCE = "owner-test";
@@ -29,6 +30,7 @@ export const removeOwnerTest = internalMutation({
     dryRun: v.boolean(),
     watches: v.number(),
     ratings: v.number(),
+    reviews: v.number(),
     congratsNotes: v.number(),
     outbox: v.number(),
     refused: v.union(v.string(), v.null()),
@@ -36,7 +38,7 @@ export const removeOwnerTest = internalMutation({
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
     const parsed = normaliseFlagCaseNumber(args.caseNumber);
-    const none = { dryRun: args.dryRun, watches: 0, ratings: 0, congratsNotes: 0, outbox: 0 };
+    const none = { dryRun: args.dryRun, watches: 0, ratings: 0, reviews: 0, congratsNotes: 0, outbox: 0 };
     if (!parsed) return { ...none, refused: "That isn't a case number." };
     const caseNumber = parsed.caseNumber;
 
@@ -74,13 +76,28 @@ export const removeOwnerTest = internalMutation({
         .collect()
     ).filter((o) => refs.has(o.ref));
 
+    // The review a test rating queued (Oct 31 2026: a rating waits as a review), unless the address rates another case.
+    const others = await ctx.db
+      .query("caseStatusAlerts")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .collect();
+    const raterKey = await raterKeyFor(email);
+    const queued =
+      others.every((w) => w.caseNumber === caseNumber)
+        ? (await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", raterKey)).collect()).filter(
+            (r) => r.source === "alert",
+          )
+        : [];
+
     if (!args.dryRun) {
       for (const row of [...rated, ...notes, ...waiting, ...watches]) await ctx.db.delete(row._id);
+      for (const r of queued) await removeReview(ctx, r._id);
     }
     return {
       dryRun: args.dryRun,
       watches: watches.length,
       ratings: rated.length,
+      reviews: queued.length,
       congratsNotes: notes.length,
       outbox: waiting.length,
       refused: null,

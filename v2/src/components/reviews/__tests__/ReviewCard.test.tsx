@@ -41,4 +41,17 @@ describe("ReviewCard", () => {
     expect(screen.getByText("Rated without words.")).toBeTruthy();
     expect(container.querySelector("blockquote")).toBeNull();
   });
+
+  it("says a rating came from an alert email, under the reader's placeholder name", () => {
+    render(<ReviewCard review={{ id: "a", rating: 5, text: "", name: "Case alert reader", day: "October 2026", viaAlert: true }} />);
+    expect(screen.getByText("Case alert reader")).toBeTruthy();
+    expect(screen.getByText("Rated from an alert email")).toBeTruthy();
+    expect(screen.getByText("October 2026")).toBeTruthy();
+    expect(screen.getByText("Rated without words.")).toBeTruthy();
+  });
+
+  it("says nothing of the kind on a written review", () => {
+    render(<ReviewCard review={{ ...review, text: "Short." }} />);
+    expect(screen.queryByText("Rated from an alert email")).toBeNull();
+  });
 });

@@ -334,7 +334,8 @@ export function getHomepageRatingPartialSchema(baseUrl: string, rating: RatingFi
     aggregateRating: {
       '@type': 'AggregateRating' as const,
       ratingValue: rating.value,
-      reviewCount: rating.count,
+      // ratingCount, not reviewCount: a rating from an alert email counts, and it has no words (Oct 31 2026).
+      ratingCount: rating.count,
       bestRating: rating.best,
       worstRating: rating.worst,
     },

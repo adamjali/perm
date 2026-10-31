@@ -47,6 +47,7 @@ export async function getSiteReviews(): Promise<SiteReviews> {
       text: r.text,
       name: r.name,
       date: new Date(r.createdAt).toISOString(),
+      ...(r.viaAlert ? { viaAlert: true } : {}),
     }));
     if (tally && !tally.exact) console.warn("[reviews] no kept tally yet; counted from the table");
     const byStars = tally && tally.stars.length === 5 ? tally.stars : countByStars(reviews);

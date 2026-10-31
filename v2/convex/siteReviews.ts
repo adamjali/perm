@@ -101,10 +101,11 @@ export const submit = internalMutation({
     const now = Date.now();
     let today = 0;
     for await (const row of ctx.db.query("siteReviews").withIndex("by_created", (q) => q.gte("createdAt", now - MS_PER_DAY))) {
+      // The day's budget is the form's: ratings queued from alert emails and Senja copies don't use it up.
+      if (row.source !== "site") continue;
       // A double send (a second tap, a retry after a dropped reply) is one review.
       if (
         row.createdAt >= now - DUPLICATE_WINDOW_MS &&
-        row.source === "site" &&
         row.rating === args.rating &&
         row.name === args.name &&
         row.text === args.text
@@ -129,7 +130,7 @@ export const submit = internalMutation({
       rating: args.rating,
       text: args.text,
       name: args.name,
-      ...(email ? { email } : {}),
+      ...(email ? { email, raterKey: await raterKeyFor(email) } : {}),
       status: "pending",
       source: "site",
       createdAt: now,
@@ -198,6 +199,54 @@ async function adjustTally(ctx: MutationCtx, rating: number, delta: 1 | -1): Pro
 async function noteWaiting(ctx: MutationCtx): Promise<void> {
   const notice = await checkAndRecordRateLimit(ctx, "admin", "site_review_notice", NOTICE_LIMIT);
   if (notice.allowed) await ctx.scheduler.runAfter(0, internal.siteReviews.notifyOwner, {});
+}
+
+// ============================================================================
+// Ratings from the alert email
+// ============================================================================
+
+/** The name a rating from an alert email shows under: no person is named, ever. */
+export const ALERT_READER_NAME = "Case alert reader";
+
+/** One key per address, sha256 of it lowercased: where a rating and a written review from one person meet. */
+export async function raterKeyFor(email: string): Promise<string> {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(email.trim().toLowerCase()));
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * A rating tapped in a case's last alert becomes a review waiting for the owner (owner's call, Oct 31 2026): stars
+ * only, shown once approved as "Case alert reader" with the month, never a name, address or case. Every score
+ * counts the same, 1 to 5. One per address: several cases share it, with the newest score, and an address that
+ * already left a written review isn't queued at all, so one person counts once. A declined row stays declined.
+ */
+export async function queueAlertRating(ctx: MutationCtx, args: { email: string; score: number; at: number }): Promise<void> {
+  if (!Number.isInteger(args.score) || args.score < 1 || args.score > 5) return;
+  const raterKey = await raterKeyFor(args.email);
+  const rows = await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", raterKey)).take(20);
+  if (rows.some((r) => r.source === "site")) return;
+  const mine = rows.find((r) => r.source === "alert");
+  if (!mine) {
+    await ctx.db.insert("siteReviews", {
+      rating: args.score,
+      text: "",
+      name: ALERT_READER_NAME,
+      status: "pending",
+      source: "alert",
+      raterKey,
+      createdAt: args.at,
+    });
+    log.info("alert rating queued as a review", { rating: args.score });
+    await noteWaiting(ctx);
+    return;
+  }
+  if (mine.rating === args.score || mine.status === "declined") return;
+  await ctx.db.patch(mine._id, { rating: args.score });
+  if (isShown(mine)) {
+    await adjustTally(ctx, mine.rating, -1);
+    await adjustTally(ctx, args.score, 1);
+    await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
+  }
 }
 
 // ============================================================================
@@ -270,6 +319,17 @@ const publicReview = v.object({
   text: v.string(),
   name: v.string(),
   createdAt: v.number(),
+  /** A rating from an alert email: the card says so and shows the month alone. */
+  viaAlert: v.optional(v.boolean()),
+});
+
+const toPublic = (r: Doc<"siteReviews">) => ({
+  id: r._id as string,
+  rating: r.rating,
+  text: r.text,
+  name: r.name,
+  createdAt: r.createdAt,
+  ...(r.source === "alert" ? { viaAlert: true } : {}),
 });
 
 /** Approved reviews by people outside the team, newest first. No address ever leaves here. */
@@ -282,9 +342,7 @@ export const listPublished = query({
       .withIndex("by_status_created", (q) => q.eq("status", "approved"))
       .order("desc")
       .take(PUBLIC_READ);
-    return rows
-      .filter((r) => r.insider !== true)
-      .map((r) => ({ id: r._id as string, rating: r.rating, text: r.text, name: r.name, createdAt: r.createdAt }));
+    return rows.filter((r) => r.insider !== true).map(toPublic);
   },
 });
 
@@ -306,7 +364,7 @@ export const listOlder = query({
       .take(OLDER_PAGE + 1);
     const shown = rows.slice(0, OLDER_PAGE).filter((r) => r.insider !== true);
     return {
-      reviews: shown.map((r) => ({ id: r._id as string, rating: r.rating, text: r.text, name: r.name, createdAt: r.createdAt })),
+      reviews: shown.map(toPublic),
       more: rows.length > OLDER_PAGE,
     };
   },
@@ -352,7 +410,7 @@ const adminReview = v.object({
   name: v.string(),
   email: v.optional(v.string()),
   status,
-  source: v.union(v.literal("site"), v.literal("senja")),
+  source: v.union(v.literal("site"), v.literal("senja"), v.literal("alert")),
   insider: v.boolean(),
   /** The address watches a case on the site: a sign the reviewer is a real user, never shown publicly. */
   watchesCase: v.boolean(),
@@ -388,7 +446,8 @@ export const listForAdmin = query({
         status: r.status,
         source: r.source,
         insider: r.insider === true,
-        watchesCase: watcher !== null && watcher.confirmedAt !== undefined,
+        // A rating from an alert email can only come from an address that watched a case.
+        watchesCase: r.source === "alert" || (watcher !== null && watcher.confirmedAt !== undefined),
         quick: r.quick === true,
         viaLink: r.viaLink === true,
         ...(r.declineReason ? { declineReason: r.declineReason } : {}),
@@ -424,6 +483,12 @@ export const approve = mutation({
     if (row.scrubbedAt !== undefined) throw new Error("That review's words were deleted after it was declined, so it can't be shown.");
     await ctx.db.patch(id, { status: "approved", reviewedAt: Date.now(), declineReason: undefined });
     if (!isShown(row) && isShown({ status: "approved", insider: row.insider })) await adjustTally(ctx, row.rating, 1);
+    // One person counts once: a written review, once shown, takes the place of the same address's alert rating.
+    const raterKey = row.raterKey;
+    if (row.source === "site" && raterKey) {
+      const ratings = await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", raterKey)).take(20);
+      for (const r of ratings) if (r.source === "alert") await removeReview(ctx, r._id);
+    }
     log.info("review approved", { rating: row.rating });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
     return null;
@@ -447,7 +512,7 @@ export const decline = mutation({
 });
 
 /** Delete a review for good, and take it out of the count if it was shown. The one shared step of the two below. */
-async function removeReview(ctx: MutationCtx, id: Id<"siteReviews">): Promise<boolean> {
+export async function removeReview(ctx: MutationCtx, id: Id<"siteReviews">): Promise<boolean> {
   const row = await ctx.db.get(id);
   if (!row) return false;
   await ctx.db.delete(id);

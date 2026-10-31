@@ -15,6 +15,7 @@ import { useState } from "react";
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { choiceVariants } from "@/components/ui/choice";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export type ReviewsData = FunctionReturnType<typeof api.siteReviews.listForAdmin>;
@@ -44,6 +45,16 @@ const REASONS: { id: "spam" | "abusive" | "personal" | "unrelated" | "other"; la
   { id: "other", label: "Other lawful reason" },
 ];
 const REASON_LABEL = Object.fromEntries(REASONS.map((x) => [x.id, x.label])) as Record<string, string>;
+
+/** Where a review came from, after its date. An alert rating is stars only and shows as "Case alert reader". */
+const SOURCE_NOTE: Record<Row["source"], string> = {
+  site: "",
+  senja: ", on Senja",
+  alert: ", tapped in a case's alert email (stars only; shows as Case alert reader with the month)",
+};
+
+type Filter = "all" | "waiting" | "posted" | "declined";
+const isPosted = (r: Row) => r.status === "approved" && !r.insider;
 
 function ReviewCard({ r }: { r: Row }) {
   const [choosing, setChoosing] = useState(false);
@@ -95,7 +106,7 @@ function ReviewCard({ r }: { r: Row }) {
         </p>
       ) : null}{" "}
       <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr] [&>*]:min-w-0">
-        <dt className="font-bold">Left</dt> <dd>{`${when(r.createdAt)}${r.source === "senja" ? ", on Senja" : ""}`}</dd>{" "}
+        <dt className="font-bold">Left</dt> <dd>{`${when(r.createdAt)}${SOURCE_NOTE[r.source]}`}</dd>{" "}
         <dt className="font-bold">Email</dt>{" "}
         <dd className="break-all">
           {r.email ? `${r.email}${r.watchesCase ? " (watches a case on the site)" : ""}` : "None given"}
@@ -176,9 +187,33 @@ function ReviewCard({ r }: { r: Row }) {
 }
 
 export function ReviewsPanel({ data }: { data: ReviewsData | undefined }) {
+  const [filter, setFilter] = useState<Filter>("all");
   if (!data) return <Skeleton className="h-64" />;
+  const posted = data.decided.filter(isPosted);
+  const declined = data.decided.filter((r) => !isPosted(r));
+  const choices: { id: Filter; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "waiting", label: `Waiting (${data.waiting.length})` },
+    { id: "posted", label: `Posted (${posted.length})` },
+    { id: "declined", label: `Declined or kept off (${declined.length})` },
+  ];
+  const decidedShown = filter === "posted" ? posted : filter === "declined" ? declined : data.decided;
   return (
     <div className="space-y-8">
+      <div role="group" aria-label="Show reviews" className="flex flex-wrap gap-2">
+        {choices.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            aria-pressed={filter === c.id}
+            onClick={() => setFilter(c.id)}
+            className={choiceVariants({ on: filter === c.id })}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>{" "}
+      {filter === "posted" || filter === "declined" ? null : (
       <section aria-labelledby="reviews-waiting">
         <h2 id="reviews-waiting" className="font-heading text-xl font-bold">
           {data.waiting.length ? `Waiting for you: ${data.waiting.length}` : "Nothing waiting"}
@@ -194,21 +229,24 @@ export function ReviewsPanel({ data }: { data: ReviewsData | undefined }) {
             ))}
           </ul>
         ) : null}
-      </section>{" "}
+      </section>
+      )}{" "}
+      {filter === "waiting" ? null : (
       <section aria-labelledby="reviews-decided">
         <h2 id="reviews-decided" className="font-heading text-xl font-bold">
-          Decided
+          {filter === "posted" ? "Posted on the site" : filter === "declined" ? "Declined or kept off" : "Decided"}
         </h2>{" "}
-        {data.decided.length ? (
+        {decidedShown.length ? (
           <ul className="mt-4 space-y-4">
-            {data.decided.map((r) => (
+            {decidedShown.map((r) => (
               <ReviewCard key={r._id} r={r} />
             ))}
           </ul>
         ) : (
-          <p className="mt-1 text-sm text-muted-foreground">No reviews decided yet.</p>
+          <p className="mt-1 text-sm text-muted-foreground">None here yet.</p>
         )}
       </section>
+      )}
     </div>
   );
 }
