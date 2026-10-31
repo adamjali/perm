@@ -1667,3 +1667,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
   DKIM and DMARC, then forwarded to Yahoo, which rejected it under our `p=reject`. Keep `p=reject`.
 - **The morning page checks' "found problems. 17 passed" hid a failed flow**: one translated case page (`/es`) failed and
   four retried. The translated pages are being cut (English only).
+- **The site is English only** (owner, Oct 29 and Oct 31 2026): the translated pages answer 308 to their English pages
+  (`next.config.ts`, `retired-translations-redirect.test.ts`), the translation code is deleted, emails are English
+  again (196 email tests unchanged), the schema's `lang` fields stay inert, and nginx and Cloudflare match.
