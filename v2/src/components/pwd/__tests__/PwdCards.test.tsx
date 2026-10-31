@@ -74,6 +74,18 @@ describe("CatchingUp", () => {
     expect(screen.getByText("Gaining ground: 236 more left the line than joined it")).toBeTruthy();
   });
 
+  it("leads with the answer and draws the gap where the shorter bar ends", () => {
+    const { container } = render(<CatchingUp day={day} week={week} noun="requests" />);
+    const verdict = screen.getByText(/^Gaining ground/);
+    const firstBar = screen.getByText("Left the line");
+    // The answer comes before the bars in the reading order.
+    expect(verdict.compareDocumentPosition(firstBar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("+236")).toBeTruthy();
+    const gap = container.querySelector<HTMLElement>("[data-testid=flow-gap]")!;
+    expect(gap.style.left).toBe(`${(3041 / 3277) * 100}%`);
+    expect(gap.style.width).toBe(`${(236 / 3277) * 100}%`);
+  });
+
   it("switches to the day, and says a Friday runs light", () => {
     render(<CatchingUp day={day} week={week} noun="requests" />);
     fireEvent.click(screen.getByRole("button", { name: "Day" }));

@@ -34,6 +34,16 @@ export function WaitTrendChart({ trend, noun, label }: { trend: WaitTrend; noun:
       tip: `Decided in ${name}${m.partial ? " (so far)" : ""}\nmedian ${formatInt(m.p50)} days\nmiddle half ${formatInt(m.p25)} to ${formatInt(m.p75)} days\n${formatInt(m.n)} ${noun}\n${m.from === "sweep" ? "our check of DOL's case status" : "DOL's published files"}`,
     };
   });
+  // The key names only the reasons this chart has: the shutdown month, months not measured yet, or both.
+  const gaps = series.filter((m) => m.gap).map((m) => m.m);
+  const shutdown = gaps.includes("2025-10");
+  const unmeasured = gaps.some((m) => m !== "2025-10");
+  const gapKey =
+    shutdown && unmeasured
+      ? "No reading that month: the October 2025 shutdown, or not measured yet"
+      : shutdown
+        ? "No reading: October 2025, the federal shutdown"
+        : "No reading that month: not measured yet";
   return (
     <ColumnChart
       columns={columns}
@@ -41,6 +51,8 @@ export function WaitTrendChart({ trend, noun, label }: { trend: WaitTrend; noun:
       first={monthTick(`${series[0]!.m}-01`) ?? ""}
       last={monthTick(`${series[series.length - 1]!.m}-01`) ?? ""}
       unit="days"
+      gapKey={gapKey}
+      partialKey="This month so far"
     />
   );
 }

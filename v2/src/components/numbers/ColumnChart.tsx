@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
  * is still filling, so a week in progress never reads as a drop. A period no
  * record covers is a dashed outline the chart's full height: an empty frame
  * reads as "nothing to show here", where a zero-height column reads as "none".
+ * Either one, when a chart has it, is named in a key under the columns
+ * (Oct 31 2026: the wait charts drew both and said what neither meant).
  */
 
 export type ColumnTone = "yellow" | "blue" | "green";
@@ -68,6 +70,8 @@ export function ColumnChart({
   showMax = true,
   topsFrom,
   scaleMax,
+  gapKey = "No record for this period",
+  partialKey = "Still filling",
 }: {
   columns: readonly Column[];
   tone?: ColumnTone;
@@ -93,6 +97,10 @@ export function ColumnChart({
   topsFrom?: "sm" | "xl";
   /** The value a full-height column stands for, so two charts side by side share one scale. */
   scaleMax?: number;
+  /** The key's words for a dashed, empty column, shown only when the chart has one. */
+  gapKey?: string;
+  /** The key's words for a hatched column still filling, shown only when the chart has one. */
+  partialKey?: string;
 }) {
   if (columns.length === 0) return null;
   const max = Math.max(1, scaleMax ?? 0, ...columns.filter((c) => !c.gap).map((c) => c.value));
@@ -178,7 +186,23 @@ export function ColumnChart({
       <div className="mt-2 flex justify-between gap-4 text-sm tabular-nums text-muted-foreground">
         <span>{first}</span>{" "}
         <span>{last}</span>
-      </div>
+      </div>{" "}
+      {columns.some((c) => c.gap) || columns.some((c) => c.partial) ? (
+        <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground" aria-label="Key">
+          {columns.some((c) => c.gap) ? (
+            <li className="flex items-start gap-2">
+              <span aria-hidden="true" className="mt-1 inline-block size-3.5 shrink-0 border-2 border-dashed border-input" />
+              {gapKey}{" "}
+            </li>
+          ) : null}{" "}
+          {columns.some((c) => c.partial) ? (
+            <li className="flex items-start gap-2">
+              <span aria-hidden="true" className="mt-1 inline-block size-3.5 shrink-0 border-t-2 border-foreground bg-hatch text-input" />
+              {partialKey}{" "}
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
       {/* sr-only on a <table> can't shrink it below its content; a div can. */}
       <div className="sr-only">
         <table>

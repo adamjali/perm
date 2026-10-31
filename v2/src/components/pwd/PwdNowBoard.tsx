@@ -7,7 +7,7 @@ import { formatInt } from "@/lib/format";
 import type { PwdDayData } from "@/lib/pwdDay";
 import type { PwdLine } from "@/lib/pwdLine";
 import type { PwdReviewRow } from "@convex/lib/dolProcessingTimes";
-import { catchingUp, outcomeMix, yearOnYear, type PwdQueueDoc, type WaitTrend } from "@/lib/pwdNow";
+import { catchingUp, outcomeMix, speedVerdict, yearOnYear, type PwdQueueDoc, type WaitTrend } from "@/lib/pwdNow";
 import { longDate, monthDay, monthYear } from "@convex/lib/months";
 
 /**
@@ -128,7 +128,7 @@ export function PwdNowBoard({
             claim={`How long requests DOL decided in ${monthYear(newest.m)} waited`}
             sub={
               yoy
-                ? `The median, filing to determination. A year before, in ${monthYear(yoy.then.m)}: ${formatInt(yoy.then.p50)} days.`
+                ? `${speedVerdict(yoy).short}: the median, filing to determination, was ${formatInt(yoy.then.p50)} days in ${monthYear(yoy.then.m)}.`
                 : "The median, filing to determination."
             }
             foot={`DOL's published wage-request files, through ${longDate(trend.filesThrough)}.${

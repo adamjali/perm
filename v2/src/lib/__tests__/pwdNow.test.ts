@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catchingUp, flowVerdict, monthSeries, outcomeMix, parsePwdQueueDoc, parseWaitTrend, yearOnYear } from "../pwdNow";
+import { catchingUp, flowVerdict, monthSeries, outcomeMix, parsePwdQueueDoc, parseWaitTrend, speedVerdict, yearOnYear } from "../pwdNow";
 
 // Shaped like the PWD sweep's document of Oct 31 2026: the newest days, their
 // exits split by what DOL did, the filings each day, and the status mix.
@@ -98,6 +98,21 @@ describe("wait trends", () => {
     const y = yearOnYear(parseWaitTrend(TREND)!)!;
     expect(y.now.m).toBe("2026-06");
     expect(y.then.m).toBe("2025-06");
+  });
+  it("answers whether it's getting faster, within 5% reading as the same", () => {
+    const at = (p50: number, m: string) => ({ m, n: 1, p25: p50, p50, p75: p50, from: "files" as const });
+    expect(speedVerdict(yearOnYear(parseWaitTrend(TREND)!)!)).toMatchObject({
+      tone: "good",
+      answer: "Yes: 34 days faster than a year ago.",
+      short: "34 days faster than a year ago",
+    });
+    expect(speedVerdict({ now: at(130, "2026-06"), then: at(118, "2025-06") })).toMatchObject({
+      tone: "bad",
+      short: "12 days slower than a year ago",
+    });
+    expect(speedVerdict({ now: at(122, "2026-06"), then: at(118, "2025-06") }).tone).toBe("flat");
+    expect(speedVerdict({ now: at(113, "2026-06"), then: at(118, "2025-06") }).tone).toBe("flat");
+    expect(speedVerdict({ now: at(112, "2026-06"), then: at(118, "2025-06") }).tone).toBe("good");
   });
   it("needs two months", () => {
     expect(parseWaitTrend(JSON.stringify({ asOf: "x", filesThrough: "y", months: [{ m: "2026-01", n: 1, p25: 1, p50: 1, p75: 1 }] }))).toBeNull();

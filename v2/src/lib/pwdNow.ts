@@ -229,6 +229,26 @@ export function yearOnYear(t: WaitTrend): { now: WaitMonth; then: WaitMonth } | 
   return then ? { now, then } : null;
 }
 
+/**
+ * Is it getting faster? The newest whole month's median wait against the same month a year before. Within 5% of
+ * that median reads as about the same: a few days either way on a wait of months is not a trend a reader should
+ * act on. `answer` leads a "Is it getting faster?" heading; `short` stands alone.
+ */
+export function speedVerdict(yoy: { now: WaitMonth; then: WaitMonth }): {
+  tone: "good" | "bad" | "flat";
+  answer: string;
+  short: string;
+} {
+  const days = yoy.then.p50 - yoy.now.p50;
+  const n = Math.abs(days).toLocaleString("en-US");
+  if (Math.abs(days) <= yoy.then.p50 * 0.05) {
+    return { tone: "flat", answer: "About the same as a year ago.", short: "About the same as a year ago" };
+  }
+  return days > 0
+    ? { tone: "good", answer: `Yes: ${n} days faster than a year ago.`, short: `${n} days faster than a year ago` }
+    : { tone: "bad", answer: `No: ${n} days slower than a year ago.`, short: `${n} days slower than a year ago` };
+}
+
 /** Every month from the first to the last, a month with no reading marked as a gap (never drawn as zero). */
 export function monthSeries(t: WaitTrend): ({ m: string; gap: true } | (WaitMonth & { gap?: false }))[] {
   const by = new Map(t.months.map((m) => [m.m, m]));

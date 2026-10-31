@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon } from "@phosphor-icons/react";
 
 import { choiceVariants } from "@/components/ui/choice";
 import { formatInt } from "@/lib/format";
@@ -11,7 +12,9 @@ import { monthDay, weekdayName } from "@convex/lib/months";
 /**
  * Is DOL keeping up? The requests that left the line (decided, or withdrawn
  * by the employer) against the new ones filed, for the newest day DOL worked
- * or the newest seven days. Two bars on one scale, and the verdict in words.
+ * or the newest seven days. The answer first, then two bars on one scale and
+ * the gap between them drawn to the same scale, starting where the shorter
+ * bar ends, so "gaining ground" is a length a reader can see (Oct 31 2026).
  */
 export function CatchingUp({ day, week, noun }: { day: FlowSpan; week: FlowSpan; noun: string }) {
   // The week leads: DOL decides about half as many on a Friday (277 to 484 against 688 to 988 on
@@ -25,6 +28,9 @@ export function CatchingUp({ day, week, noun }: { day: FlowSpan; week: FlowSpan;
     { label: "Left the line", value: f.out, fill: "bg-chart-green border-data-good-ink" },
     { label: `New ${noun}`, value: f.filed, fill: "bg-chart-blue border-data-info-ink" },
   ];
+  const gap = Math.abs(f.out - f.filed);
+  const Mark = v.tone === "good" ? ArrowUpRightIcon : v.tone === "bad" ? ArrowDownRightIcon : MinusIcon;
+  const toneText = v.tone === "good" ? "text-data-good-ink" : v.tone === "bad" ? "text-data-bad-ink" : "text-foreground";
   return (
     <div>
       <div role="group" aria-label="Show one day or one week" className="flex gap-2">
@@ -37,8 +43,12 @@ export function CatchingUp({ day, week, noun }: { day: FlowSpan; week: FlowSpan;
           </Fragment>
         ))}
       </div>{" "}
-      <p className="mt-4 text-sm text-muted-foreground">{when}</p>{" "}
-      <dl className="mt-2 space-y-3">
+      <p className={cn("mt-4 flex items-start gap-2 text-lg font-semibold", toneText)}>
+        <Mark aria-hidden="true" weight="bold" className="mt-1 size-5 shrink-0" />
+        <span>{v.text}</span>
+      </p>{" "}
+      <p className="mt-1 text-sm text-muted-foreground">{when}</p>{" "}
+      <dl className="mt-3 space-y-3">
         {bars.map((b) => (
           <div key={b.label}>
             <div className="flex items-baseline justify-between gap-3">
@@ -50,15 +60,25 @@ export function CatchingUp({ day, week, noun }: { day: FlowSpan; week: FlowSpan;
             </div>
           </div>
         ))}
+        {gap > 0 ? (
+          <div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-base">The gap</dt>{" "}
+              <dd className={cn("font-heading text-2xl font-bold tabular-nums", toneText)}>
+                {v.tone === "good" ? "+" : "-"}
+                {formatInt(gap)}
+              </dd>
+            </div>{" "}
+            <div className="relative mt-1 h-3 w-full bg-muted" aria-hidden="true">
+              <div
+                data-testid="flow-gap"
+                className={cn("absolute inset-y-0 border-2", v.tone === "good" ? "border-data-good-ink" : "border-data-bad-ink")}
+                style={{ left: `${(Math.min(f.out, f.filed) / top) * 100}%`, width: `${(gap / top) * 100}%` }}
+              />
+            </div>
+          </div>
+        ) : null}
       </dl>{" "}
-      <p
-        className={cn(
-          "mt-4 text-base font-semibold",
-          v.tone === "good" ? "text-data-good-ink" : v.tone === "bad" ? "text-data-bad-ink" : "text-foreground",
-        )}
-      >
-        {v.text}
-      </p>{" "}
       {view === "day" && weekdayName(f.to) === "Friday" ? (
         <p className="mt-1 text-sm text-muted-foreground">DOL decides about half as many on a Friday as on its other days.</p>
       ) : null}{" "}

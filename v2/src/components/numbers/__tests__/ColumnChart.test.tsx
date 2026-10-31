@@ -44,3 +44,19 @@ describe("the column chart's value labels", () => {
     expect((shared.querySelector('[data-tip="Mar"]') as HTMLElement).style.height).toBe("25%");
   });
 });
+
+describe("the column chart's key", () => {
+  it("names an empty column and one still filling, and only what the chart draws", () => {
+    const partial: Column[] = [...cols, { key: "d", value: 5, label: "Q4", tip: "Q4 so far", partial: true }];
+    const { getByRole, rerender, queryByRole } = render(
+      <ColumnChart columns={partial} label="Medians" first="Q1" last="Q4" unit="months" gapKey="No reading that quarter" />,
+    );
+    const key = getByRole("list", { name: "Key" });
+    expect(key.textContent).toContain("No reading that quarter");
+    expect(key.textContent).toContain("Still filling");
+    rerender(<ColumnChart columns={cols} label="Medians" first="Q1" last="Q3" unit="months" />);
+    expect(getByRole("list", { name: "Key" }).textContent).not.toContain("Still filling");
+    rerender(<ColumnChart columns={[cols[0]!, cols[2]!]} label="Medians" first="Q1" last="Q3" unit="months" />);
+    expect(queryByRole("list", { name: "Key" })).toBeNull();
+  });
+});

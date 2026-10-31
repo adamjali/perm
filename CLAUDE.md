@@ -1711,3 +1711,35 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   a refresh during a database blip stored "not found" or "not available" for a day.
 - **Not built on purpose:** a shareable estimate image (a card never carries a live figure, and estimates are never
   pitched).
+
+## Oct 31 2026 (afternoon), in fourteen lines
+
+- **The forms post through the site's own address** (`/c/<route>`, `src/lib/convexSite.ts`): some work networks block the
+  `.convex.site` host, and six people's sign-ups failed there. nginx relays `/c/` to the backend ("FORMS" in
+  `scripts/oracle/nginx/permtracker.conf`) with the visitor's address in `X-PT-Client-IP`, which the backend believes only
+  from the relay's own address (`RELAY_FROM_IPS`, a Convex setting kept out of this repo); `convex/lib/callerIp.ts` logs
+  a warning when the header comes from anywhere else. Ships with the Nov 1 night deploy.
+- **An email rating waits as an anonymous review** ("Case alert reader", the month only, one per address, replaced by
+  the same person's written review once approved). Admin > Reviews names who rated, for the owner only, and filters
+  Waiting, Posted and Declined. The Oct 28 rating is queued; the Oct 13 one stays out (same person as the named Oct 23 review).
+- **The company is Asolys LLC, doing business as PERM Tracker** (`LEGAL_DBA`) on every legal page, email footer (HTML and
+  plain text, `convex/lib/textFooter.ts`), structured data, licence and package. The Florida fictitious-name filing is the owner's.
+- **USCIS's processing times are read through the owner's Chrome, weekly** (Mondays; timer `uscis-times` in
+  `~/.claude/timers/registry.py`; ledger `.planning/uscis-times-readings.md`): egov.uscis.gov refuses GitHub and the server.
+- **The server's timers run on Eastern time** (every `permtracker-cron@*.timer` but the UTC hourly one), and Convex's
+  morning alert jobs run at 12:00 to 12:30 UTC so they stay after the 4:10 AM sweep in winter.
+- **OpenAI's search crawler has its own lane**, like Google's and Bing's.
+- **The alarm keys each failing unit on its own** and holds it until the unit has stayed out of the failed state for
+  45 minutes (a job failing on every run had sent a start and a clear per run); its 12-a-day cap counts Eastern days.
+- **policy-watch fails only when every source failed**; one source down is its own failure row. flag-notice asks FLAG
+  twice inside a 3-minute limit.
+- **WARN: Texas's optional spreadsheet top-up never marks the Internet Archive down** (`archive_optional`), so the four
+  states read only from the Archive load.
+- **The LCA database's watchdog waits an hour of locked writes** before a restart: nothing on the site writes there,
+  and on Oct 26 a restart after 6 minutes killed a planned index build.
+- **The morning report names a failing browser flow and its error, and Sentry issues that came back**; the flows run
+  independently, from the live build's commit.
+- **The deploy's database check logs in and asks SELECT 1**; it had expected a 401, an ERROR line in the log per deploy.
+- **The Gmail janitor files alarms and Sentry issue alerts instead of trashing them** (`~/gmail-janitor/memory/rules.md`).
+- **Parked for the owner:** the offline compaction of the main database file never ran (about 2.7 GB back, about 16
+  minutes offline at night; its first reason, the RAM lock, was retired Oct 29).

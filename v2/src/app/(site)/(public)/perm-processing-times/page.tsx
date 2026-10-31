@@ -55,7 +55,7 @@ import { dolNow, howLongSentence, queueLine } from "@/lib/dolNow";
 import { getPermBoard } from "@/lib/db/board";
 import { getPermWaitTrend, getPwdLine } from "@/lib/db/pwdDayQueue";
 import { WaitTrendChart } from "@/components/numbers/WaitTrendChart";
-import { yearOnYear } from "@/lib/pwdNow";
+import { speedVerdict, yearOnYear } from "@/lib/pwdNow";
 import { longDate, monthYear } from "@convex/lib/months";
 import { StageMedians } from "@/components/community/TimelineBoard";
 import { api } from "@convex/_generated/api";
@@ -426,6 +426,11 @@ export default async function PermProcessingTimesPage() {
               title="Is PERM getting faster?"
               dek={
                 <>
+                  {waitYoy ? (
+                    <>
+                      <strong className="text-foreground">{speedVerdict(waitYoy).answer}</strong>{" "}
+                    </>
+                  ) : null}
                   Cases DOL decided in {monthYear(waitNewest.m)} waited a median of{" "}
                   <strong className="text-foreground">{waitNewest.p50.toLocaleString("en-US")} days</strong> from filing
                   {waitYoy
