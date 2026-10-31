@@ -2,7 +2,8 @@ import Link from "next/link";
 import { estimatePwdDay, estimatePwdQueue, monthInDolTable } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/db/estimate";
-import { getPwdDayData } from "@/lib/db/pwdDayQueue";
+import { getPwdDayData, getPwdLine } from "@/lib/db/pwdDayQueue";
+import { longDate } from "@convex/lib/months";
 import { easternDay } from "@/lib/time";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import {
@@ -136,7 +137,7 @@ function Determination({ d, perms = [] }: { d: PwdDisclosedRow; perms?: readonly
 }
 
 export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
-  const [{ row, dolMiss }, disclosed, est, dayData, perms] = await Promise.all([
+  const [{ row, dolMiss }, disclosed, est, dayData, perms, line] = await Promise.all([
     // A failure to read our own table is also "could not settle it", never "no record".
     lookupPwdCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupPwdDetermination(caseNumber).catch(() => null),
@@ -144,6 +145,8 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
     getPwdDayData().catch(() => null),
     // The PERM that followed, on its own index; a failure only drops the link.
     getPermsNamingPwd(caseNumber).catch((): PermNamingPwd[] => []),
+    // Where DOL really is in the line, by our own daily check; DOL's table trails it by weeks.
+    getPwdLine(),
   ]);
 
   if (!row && disclosed) {
@@ -299,9 +302,11 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           {prettyStatus(row.status)}
         </b>
         .{filed ? ` It was filed ${filed}.` : ""}
-        {pending && !notPerm && oews
-          ? ` DOL is working requests received in ${formatMonth(oews)} where the wage comes from the OEWS survey.`
-          : ""}
+        {pending && !notPerm && line
+          ? ` By our daily check of DOL's case status, DOL is deciding requests filed ${longDate(line.day)}.`
+          : pending && !notPerm && oews
+            ? ` DOL is working requests received in ${formatMonth(oews)} where the wage comes from the OEWS survey.`
+            : ""}
       </AnswerPanel>
 
       {notPerm ? (
@@ -315,9 +320,16 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
 
       {pending && !notPerm ? (
         <PageSection id="wage-queue" title="Where it sits in DOL's wage queue">
+          {line ? (
+            <p className="max-w-2xl text-base leading-relaxed text-soft">
+              By our daily check of DOL&apos;s case status on {longDate(line.asOf)}, DOL is deciding requests filed{" "}
+              {longDate(line.day)}: {sharePct(line.decidedShare)} of that day&apos;s {formatInt(line.filed)} are decided.
+            </p>
+          ) : null}{" "}
           {oews ? (
             <p className="max-w-2xl text-base leading-relaxed text-soft">
-              As of {formatAsOf(est?.asOf ?? null) ?? est?.asOf}, DOL is working requests received in{" "}
+              {line ? "DOL's own table, as of " : "As of "}
+              {formatAsOf(est?.asOf ?? null) ?? est?.asOf}, {line ? "is on" : "DOL is working"} requests received in{" "}
               {formatMonth(oews)} where the wage comes from the OEWS survey
               {est?.frontier?.nonOewsMonth ? `, and ${formatMonth(est.frontier.nonOewsMonth)} where it doesn't` : ""}
               . A case record doesn&apos;t say which line this one is in.

@@ -53,8 +53,10 @@ import { getDisclosureStats } from "@/lib/db/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/db/processingTimes";
 import { dolNow, howLongSentence, queueLine } from "@/lib/dolNow";
 import { getPermBoard } from "@/lib/db/board";
-import { getPwdLine } from "@/lib/db/pwdDayQueue";
-import { longDate } from "@convex/lib/months";
+import { getPermWaitTrend, getPwdLine } from "@/lib/db/pwdDayQueue";
+import { WaitTrendChart } from "@/components/numbers/WaitTrendChart";
+import { yearOnYear } from "@/lib/pwdNow";
+import { longDate, monthYear } from "@convex/lib/months";
 import { StageMedians } from "@/components/community/TimelineBoard";
 import { api } from "@convex/_generated/api";
 import { getEstimatorData } from "@/lib/db/estimate";
@@ -134,7 +136,7 @@ const FAQ = [
 ];
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history, disclosure, estimator, board, permBoard, pwdLine] = await Promise.all([
+  const [snapshot, history, disclosure, estimator, board, permBoard, pwdLine, waitTrend] = await Promise.all([
     getProcessingTimes(),
     getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
@@ -151,6 +153,8 @@ export default async function PermProcessingTimesPage() {
     getPermBoard().catch(() => null),
     // Where DOL really is in the wage-request line, by our own daily check: its table trails it by weeks.
     getPwdLine(),
+    // How long each month's decisions waited: DOL's files, then our own sweep (build_wait_trends.py).
+    getPermWaitTrend(),
   ]);
   const howLong = howLongSentence(permBoard, snapshot);
   const faq = FAQ.map((f) => ({ ...f, answer: f.answer.replace(HOW_LONG_NOW, howLong) }));
@@ -307,7 +311,11 @@ export default async function PermProcessingTimesPage() {
   };
 
   // The parts the bar jumps to, in page order; a part with nothing to draw is left off both.
+  // The newest whole month of decisions against the same month a year before.
+  const waitNewest = waitTrend ? [...waitTrend.months].reverse().find((m) => !m.partial) : undefined;
+  const waitYoy = waitTrend ? yearOnYear(waitTrend) : null;
   const chapters = [
+    ...(waitTrend && waitNewest ? [{ id: "wait", label: "Getting faster?" }] : []),
     ...(historyPoints.length >= 2 ? [{ id: "movement", label: "Movement" }] : []),
     ...(advance && reconstructedPoints.length >= 2 ? [{ id: "pace", label: "Pace" }] : []),
     ...(decisionsByMonth.length >= 2 ? [{ id: "decisions", label: "Decisions per month" }] : []),
@@ -411,6 +419,34 @@ export default async function PermProcessingTimesPage() {
 
 
           <ChapterNav items={chapters} className="mt-12" />{" "}
+
+          {waitTrend && waitNewest ? (
+            <Chapter
+              id="wait"
+              title="Is PERM getting faster?"
+              dek={
+                <>
+                  Cases DOL decided in {monthYear(waitNewest.m)} waited a median of{" "}
+                  <strong className="text-foreground">{waitNewest.p50.toLocaleString("en-US")} days</strong> from filing
+                  {waitYoy
+                    ? `, against ${waitYoy.then.p50.toLocaleString("en-US")} for the cases decided a year before.`
+                    : "."}{" "}
+                  Each column is a month of decisions, certified or denied.
+                </>
+              }
+            >
+              <WaitTrendChart
+                trend={waitTrend}
+                noun="cases"
+                label="Median days from filing to decision, by the month DOL decided"
+              />{" "}
+              <p className="mt-3 text-sm text-muted-foreground">
+                DOL&apos;s published PERM files through {longDate(waitTrend.filesThrough)}; from{" "}
+                {monthYear(waitTrend.months.find((m) => m.from === "sweep")?.m ?? null) ?? "September 2026"}, every case our
+                daily check saw DOL decide, dated by the day DOL worked.
+              </p>
+            </Chapter>
+          ) : null}
 
           {/* Measured movement goes in the dek only once two snapshots differ,
               because a velocity from a single observation would be invented. */}

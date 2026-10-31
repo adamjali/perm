@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -33,7 +33,10 @@ import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { DecisionsOverTime } from "@/components/pulse/DecisionsOverTime";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getPwdSummary } from "@/lib/db/pwdCases";
-import { getPwdLine } from "@/lib/db/pwdDayQueue";
+import { getPermWaitTrend, getPwdLine } from "@/lib/db/pwdDayQueue";
+import { WaitTrendChart } from "@/components/numbers/WaitTrendChart";
+import { yearOnYear } from "@/lib/pwdNow";
+import { Tile } from "@/components/numbers/Tile";
 import { getRfiClock } from "@/lib/db/rfiClock";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { HOLD_STATUS, heldRanking, holdSinceShort } from "@/lib/employerStages";
@@ -44,7 +47,6 @@ import { pulseHeadline, pulseSummary } from "@/lib/pulseStats";
 import { withSocialCard } from "@/lib/socialCard";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { checkedLabel } from "@/lib/time";
-import { cn } from "@/lib/utils";
 import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { longDate, monthDay, monthTick, monthYear, weekdayName } from "@convex/lib/months";
 
@@ -101,59 +103,8 @@ function weekColumns(weeks: readonly WeekCount[], noun: string, unitOne: string)
   });
 }
 
-/** One tile of the board: its claim as the heading (the figure first), then its picture. */
-function Tile({
-  id,
-  figure,
-  claim,
-  sub,
-  children,
-  foot,
-  more,
-  action,
-  object = false,
-  className,
-}: {
-  id: string;
-  figure?: ReactNode;
-  claim: ReactNode;
-  sub?: ReactNode;
-  children?: ReactNode;
-  foot?: ReactNode;
-  more?: { href: string; label: string };
-  /** The tile's one button, after everything else. */
-  action?: ReactNode;
-  object?: boolean;
-  className?: string;
-}) {
-  return (
-    <section
-      aria-labelledby={`${id}-h`}
-      className={cn("flex min-w-0 flex-col p-5 sm:p-6", object ? "object bg-card" : "bg-tint", className)}
-    >
-      <h2 id={`${id}-h`} className="font-heading">
-        {figure !== undefined ? (
-          <span className="block text-4xl font-bold leading-none tabular-nums">{figure}</span>
-        ) : null}{" "}
-        <span className={cn("block font-bold", figure !== undefined ? "mt-2 text-xl" : "text-2xl")}>{claim}</span>
-      </h2>{" "}
-      {sub ? <p className="mt-2 text-base text-soft">{sub}</p> : null}{" "}
-      {children ? <div className="mt-5 flex flex-1 flex-col">{children}</div> : null}{" "}
-      {foot ? <div className="mt-4 text-sm leading-relaxed text-muted-foreground">{foot}</div> : null}{" "}
-      {more ? (
-        <p className="mt-4">
-          <Link href={more.href} className="link inline-flex min-h-[44px] items-center text-base font-semibold">
-            {more.label}
-          </Link>
-        </p>
-      ) : null}{" "}
-      {action ? <div className="mt-5">{action}</div> : null}
-    </section>
-  );
-}
-
 export default async function PermByTheNumbersPage() {
-  const [census, observed, coverage, stages, filings, newEmployers, rfiWeeks, rfiClock, pwd, snapshot, readings, bulletins, decidedByMonth, pwdLine] =
+  const [census, observed, coverage, stages, filings, newEmployers, rfiWeeks, rfiClock, pwd, snapshot, readings, bulletins, decidedByMonth, pwdLine, waitTrend] =
     await Promise.all([
       getBacklogCensus(),
       getObservedDays(),
@@ -169,6 +120,7 @@ export default async function PermByTheNumbersPage() {
       getVisaBulletinsHeld(),
       getDecidedByMonth(),
       getPwdLine(),
+      getPermWaitTrend(),
     ]);
 
   // The waiting line, by DOL's own month.
@@ -196,6 +148,9 @@ export default async function PermByTheNumbersPage() {
   const lastStep = steps[steps.length - 1] ?? null;
   const firstStep = steps[0] ?? null;
   const moved = lastStep && firstStep ? monthIndex(lastStep.month) - monthIndex(firstStep.month) : 0;
+
+  const waitNewest = waitTrend ? [...waitTrend.months].reverse().find((m) => !m.partial) : undefined;
+  const waitYoy = waitTrend ? yearOnYear(waitTrend) : null;
 
   // Where DOL is in the wage-request line: our own daily check of its case
   // status first (src/lib/pwdLine.ts), DOL's published month when that can't say.
@@ -349,6 +304,19 @@ export default async function PermByTheNumbersPage() {
               </dl>
             ) : null}{" "}
             <DecisionsOverTime days={observed} spans={[30]} grow linkDays />
+          </Tile>
+        ) : null}{" "}
+
+        {waitTrend && waitNewest ? (
+          <Tile
+            id="wait"
+            className="lg:col-span-12"
+            figure={`${formatInt(waitNewest.p50)} days`}
+            claim={`from filing to decision, for the cases DOL decided in ${monthYear(waitNewest.m)}`}
+            sub={waitYoy ? `A year before, in ${monthYear(waitYoy.then.m)}: ${formatInt(waitYoy.then.p50)} days. Each column is a month of decisions.` : "Each column is a month of decisions."}
+            more={{ href: "/perm-processing-times#wait", label: "Is PERM getting faster?" }}
+          >
+            <WaitTrendChart trend={waitTrend} noun="cases" label="Median days from filing to decision, by the month DOL decided" />
           </Tile>
         ) : null}{" "}
 

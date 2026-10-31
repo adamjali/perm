@@ -724,7 +724,8 @@ FILED_DAYS = 200
 PERM_WAGE = "(visa_type IS NULL OR upper(visa_type) = 'PERM')"
 
 
-def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date, filed_rows: list = ()) -> dict:
+def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date, filed_rows: list = (),
+                  rfi_rows: list = (), mix_rows: list = ()) -> dict:
     """Pure: requests in process by filing day, and the requests that left IN
     PROCESS for a final status on each of the 28 complete days before today,
     each case once. Dated by the day DOL decided it (lib_holidays.decided_on):
@@ -732,25 +733,49 @@ def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date, file
     before noon belongs to the day before (`clock: "dol"`, since Oct 15 2026).
     `filedByDay` is every request filed each day of the last FILED_DAYS, so a
     page can read how much of each day DOL has decided: where DOL really is in
-    the line, which its own published month trails by weeks (Oct 31 2026)."""
+    the line, which its own published month trails by weeks (Oct 31 2026).
+    Each day also splits its exits by what DOL did (`issued`, `withdrawn`,
+    `other`) and counts the requests DOL asked for more information (`rfi`),
+    and `mix` is the status of every request filed in those FILED_DAYS: how
+    wage requests end. An exit row may carry its new status as a third value."""
     by_day = sorted([str(fd), int(n)] for fd, n in by_day_rows if fd)
     counts: dict[str, int] = {}
+    split: dict[str, dict[str, int]] = {}
     seen: set[str] = set()
-    for cn, at in sorted(exit_rows, key=lambda r: int(r[1])):
+    for row in sorted(exit_rows, key=lambda r: int(r[1])):
+        cn, at = row[0], row[1]
         if cn in seen:
             continue
         seen.add(cn)
         d = decided_on(int(at)).isoformat()
         counts[d] = counts.get(d, 0) + 1
+        to = str(row[2]).strip().upper() if len(row) > 2 and row[2] else ""
+        kind = "issued" if to == "DETERMINATION ISSUED" else "withdrawn" if to == "WITHDRAWN" else "other"
+        split.setdefault(d, {})[kind] = split.setdefault(d, {}).get(kind, 0) + 1
+    rfi: dict[str, int] = {}
+    rfi_seen: set[str] = set()
+    for cn, at in sorted(rfi_rows, key=lambda r: int(r[1])):
+        if cn in rfi_seen:
+            continue
+        rfi_seen.add(cn)
+        d = decided_on(int(at)).isoformat()
+        rfi[d] = rfi.get(d, 0) + 1
     first = min(counts) if counts else None
     days = []
     for i in range(DAY_QUEUE_PACE_DAYS, 0, -1):
         d = (today - datetime.timedelta(days=i)).isoformat()
         if first is not None and d >= first:
-            days.append({"date": d, "n": counts.get(d, 0)})
+            k = split.get(d, {})
+            days.append({"date": d, "n": counts.get(d, 0), "issued": k.get("issued", 0),
+                         "withdrawn": k.get("withdrawn", 0), "other": k.get("other", 0), "rfi": rfi.get(d, 0)})
     filed = sorted([str(fd), int(n)] for fd, n in filed_rows if fd)
-    return {"asOf": today.isoformat(), "clock": "dol", "byDay": by_day, "days": days,
-            "inProcess": sum(n for _, n in by_day), "filedByDay": filed}
+    mix = {str(st).strip().upper(): int(n) for st, n in mix_rows if st}
+    doc = {"asOf": today.isoformat(), "clock": "dol", "byDay": by_day, "days": days,
+           "inProcess": sum(n for _, n in by_day), "filedByDay": filed}
+    if mix:
+        doc["mix"] = {"filedSince": (today - datetime.timedelta(days=FILED_DAYS)).isoformat(),
+                      "byStatus": dict(sorted(mix.items(), key=lambda kv: -kv[1]))}
+    return doc
 
 
 def write_pwd_day_queue(db: Database) -> bool:
@@ -765,16 +790,27 @@ def write_pwd_day_queue(db: Database) -> bool:
         [lo, hi])
     exit_rows = query_rows(
         db,
-        "SELECT e.case_number, e.changed_at FROM pwd_case_events e JOIN pwd_case_status s "
+        "SELECT e.case_number, e.changed_at, e.to_status FROM pwd_case_events e JOIN pwd_case_status s "
         "ON s.case_number = e.case_number WHERE e.changed_at >= ? AND e.case_number >= ? "
         f"AND e.case_number < ? AND e.to_final = 1 AND e.from_status = 'IN PROCESS' AND {PERM_WAGE.replace('visa_type', 's.visa_type')}",
+        [since_ms, lo, hi])
+    rfi_rows = query_rows(
+        db,
+        "SELECT e.case_number, e.changed_at FROM pwd_case_events e JOIN pwd_case_status s "
+        "ON s.case_number = e.case_number WHERE e.changed_at >= ? AND e.case_number >= ? "
+        f"AND e.case_number < ? AND e.to_status = 'RFI ISSUED' AND {PERM_WAGE.replace('visa_type', 's.visa_type')}",
         [since_ms, lo, hi])
     filed_rows = query_rows(
         db,
         "SELECT filing_date, COUNT(*) FROM pwd_case_status WHERE case_number >= ? AND case_number < ? "
         f"AND filing_date >= ? AND {PERM_WAGE} GROUP BY filing_date",
         [lo, hi, (today - datetime.timedelta(days=FILED_DAYS)).isoformat()])
-    doc = day_queue_doc(by_day_rows, exit_rows, today, filed_rows)
+    mix_rows = query_rows(
+        db,
+        "SELECT current_status, COUNT(*) FROM pwd_case_status WHERE case_number >= ? AND case_number < ? "
+        f"AND filing_date >= ? AND {PERM_WAGE} GROUP BY current_status",
+        [lo, hi, (today - datetime.timedelta(days=FILED_DAYS)).isoformat()])
+    doc = day_queue_doc(by_day_rows, exit_rows, today, filed_rows, rfi_rows, mix_rows)
     if not doc["byDay"] or len(doc["days"]) < 14:
         log(f"  {DAY_QUEUE_KEY}: {len(doc['byDay'])} filing days, {len(doc['days'])} days of exits; not written")
         return False

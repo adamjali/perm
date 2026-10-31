@@ -171,6 +171,18 @@ jobs:
                  --script "build_census_days.py" \
                  --note "census days: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
+      # How long each month's decisions waited, PERM and wage requests: DOL's
+      # files, then our own sweep's months for PERM (build_wait_trends.py).
+      # The processing-times, wage-request and numbers pages draw it.
+      - name: Measure each month's wait
+        if: env.MODE == 'full'
+        working-directory: v2
+        run: |
+          timeout 10m python3 scripts/build_wait_trends.py \
+            || python3 scripts/record_ingest_failure.py \
+                 --script "build_wait_trends.py" \
+                 --note "wait trends: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       # The standing estimator backtest, every night on the full pass. It
       # scores the site's dates against what DOL decided since, re-measures
       # the range the case page prints for each distance, and writes the one

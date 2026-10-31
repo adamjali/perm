@@ -415,7 +415,10 @@ PRECOMPUTED_DOCS = {
     # Rebuilt after every sweep, daily and weekly respectively.
     "recent_decision_wait": (3, "the employer pages' wait section and the fastest/slowest view"),
     "scorecard_summary": (3, "the estimate scorecard's daily sample"),
-    "pwd_day_queue": (3, "the wage-request lookup's estimated day"),
+    "pwd_day_queue": (3, "the wage-request lookup's estimated day and the wage-request page's cards"),
+    # Rebuilt after every full sweep (build_wait_trends.py): how long each month's decisions waited.
+    "perm_wait_trend": (3, "the processing-times page's \"Is PERM getting faster?\" chart"),
+    "pwd_wait_trend": (3, "the wage-request page's monthly wait"),
     "h2b_group_timing": (3, "the H-2B lookup's assignment-group timing"),
     "estimator_backtest": (3, "the case page's measured range and the estimate scorecard's backtest, nightly"),
     # Rebuilt after every PERM sweep. Employer follows read it for their moves

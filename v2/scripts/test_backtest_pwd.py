@@ -113,6 +113,20 @@ check(dd.get("2026-10-06") == 1, "a case that left twice counts once, on the day
 check(dd.get("2026-10-05") == 1 and dd.get("2026-10-07") == 1, "each morning's reading is the day before's")
 check("2026-10-08" not in dd, "today, seen in the afternoon and still filling in, is left out")
 check(len(doc["days"]) <= DAY_QUEUE_PACE_DAYS and min(dd) >= "2026-09-10", "only the 28 complete days before today")
+# What DOL did each day, the RFIs it asked, and the status mix (Oct 31 2026).
+kexits = [("k1", ms(date(2026, 10, 7)), "DETERMINATION ISSUED"), ("k2", ms(date(2026, 10, 7)), "WITHDRAWN"),
+          ("k3", ms(date(2026, 10, 7)), "RETURNED UNPROCESSED"), ("k1", ms(date(2026, 10, 7), 9), "WITHDRAWN")]
+kdoc = day_queue_doc([("2026-07-01", 3)], kexits, today,
+                     rfi_rows=[("r1", ms(date(2026, 10, 7))), ("r1", ms(date(2026, 10, 7), 9)), ("r2", ms(date(2026, 10, 7)))],
+                     mix_rows=[("IN PROCESS", "7"), ("DETERMINATION ISSUED", 12), ("withdrawn", 1), (None, 3)])
+kd = {x["date"]: x for x in kdoc["days"]}["2026-10-06"]
+check(kd["n"] == 3 and kd["issued"] == 1 and kd["withdrawn"] == 1 and kd["other"] == 1,
+      "each day's exits split by what DOL did, a case counted once on its first exit")
+check(kd["rfi"] == 2, "RFIs a day: each request once")
+check(kdoc["mix"]["byStatus"] == {"DETERMINATION ISSUED": 12, "IN PROCESS": 7, "WITHDRAWN": 1},
+      "the status mix: upper-case words, numbers, biggest first, no blank status")
+check("mix" not in doc and all(x.get("issued", 0) == 0 or x["n"] for x in doc["days"]),
+      "two-value exit rows still work, and no mix without its rows")
 check(dd.get("2026-09-15") == 0, "a day with no exits is a zero, not a gap")
 
 print(f"\n{len(fails)} failure(s)")

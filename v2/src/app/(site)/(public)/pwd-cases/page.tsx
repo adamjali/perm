@@ -6,7 +6,8 @@ import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
 import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { dolPwdNow, pwdLine } from "@/lib/dolNow";
-import { getPwdLine } from "@/lib/db/pwdDayQueue";
+import { getPwdDayData, getPwdLine, getPwdNowDocs } from "@/lib/db/pwdDayQueue";
+import { PwdNowBoard } from "@/components/pwd/PwdNowBoard";
 import { waitPhrase } from "@/lib/pwdLine";
 import { formatInt } from "@/lib/format";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
@@ -52,16 +53,22 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function PwdCasesPage() {
-  const [summary, disclosure, times, line] = await Promise.all([
+  const [summary, disclosure, times, line, dayData, nowDocs] = await Promise.all([
     getPwdSummary(),
     getPwdDisclosureSummary(),
     getProcessingTimes().catch(() => null),
     getPwdLine(),
+    getPwdDayData().catch(() => null),
+    getPwdNowDocs(),
   ]);
   // DOL's own position in the PERM wage-request line: the month it is issuing
   // determinations on, from its processing-times page.
   const now = dolPwdNow(times);
   const frontier = (times?.pwdQueues ?? []).find((q) => q.program.toUpperCase() === "PERM")?.oewsReceiptDate ?? null;
+  // DOL's other wage queues, the month each is on (its own table).
+  const others = (times?.pwdQueues ?? [])
+    .filter((q) => q.program.toUpperCase() !== "PERM")
+    .map((q) => ({ program: q.program, month: q.oewsReceiptDate }));
   // Our own daily check of DOL's case status leads (src/lib/pwdLine.ts): DOL's
   // published month trails it by weeks, so it's the figure under it.
   const lineDay = line ? longDate(line.day) : null;
@@ -113,6 +120,15 @@ export default async function PwdCasesPage() {
         }
       />{" "}
 
+      <PwdNowBoard
+        line={line}
+        dayData={dayData}
+        queue={nowDocs.queue}
+        trend={nowDocs.trend}
+        dol={{ frontier: now.frontier, asOf: now.asOf }}
+        others={others}
+      />{" "}
+
       <div className="mt-10">
         <SearchParamsBoundary>
           <FlagCaseBrowser
@@ -136,7 +152,7 @@ export default async function PwdCasesPage() {
                   <FilingMonthBars
                     className="mt-5"
                     months={summary.byMonth}
-                    frontier={frontier}
+                    frontier={line ? line.day.slice(0, 7) : frontier}
                     nouns="wage requests"
                     label="Wage requests by filing month, decided and still waiting"
                   />
