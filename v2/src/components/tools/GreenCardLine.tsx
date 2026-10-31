@@ -7,7 +7,7 @@ import { ChartHit } from "@/components/data/ChartHit";
 import { ChartTips } from "@/components/data/ChartTips";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
-import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
+import { bulletinCheckSentence, waitMarks, type BulletinCheck } from "@/lib/bulletinCheck";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
   FAMILY_SIZE,
@@ -261,6 +261,8 @@ function LineAnswer({
   check: BulletinCheck | null;
 }) {
   const tested = reach ? bulletinCheckSentence(check, reach.gapDays) : null;
+  // The same wait three ways: how past readers this far behind actually fared against the pace.
+  const marks = reach && reach.months > 0 ? waitMarks(check, reach.gapDays, reach.months) : null;
   const { parts } = result;
   const segs = [
     { key: "current", label: "Current, not finished", note: "I-485s USCIS holds with a visa number available", value: (parts.currentUnfinished.low + parts.currentUnfinished.high) / 2, cls: "bg-chart-green" },
@@ -371,7 +373,28 @@ function LineAnswer({
             <b className="font-bold">{formatYears(reach.months / 12)} years</b>. That&apos;s the past pace, and the
             line behind the cutoff grew fastest in the last three years, so the count above is the better guide.
           </p>{" "}
-          {tested ? <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">{tested}</p> : null}
+          {tested ? <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">{tested}</p> : null}{" "}
+          {marks ? (
+            <figure className="mt-5" data-testid="wait-marks">
+              <figcaption className="text-sm font-bold">How the real wait ran for past readers this far behind</figcaption>{" "}
+              <dl className="mt-2 grid grid-cols-1 border-y-2 border-border sm:grid-cols-3 [&>*]:min-w-0">
+                {(
+                  [
+                    ["A quarter came current within", marks.fast],
+                    ["Half within", marks.typical],
+                    ["Three quarters within", marks.slow],
+                  ] as const
+                ).map(([label, months], i) => (
+                  <div key={label} className={i < 2 ? "border-b-2 border-border py-3 sm:border-b-0 sm:border-r-2 sm:pr-4 sm:[&:not(:first-child)]:pl-4" : "py-3 sm:pl-4"}>
+                    <dt className="text-sm text-soft">{label}</dt>{" "}
+                    <dd className="font-heading text-xl font-bold tabular-nums">
+                      {months === null ? "Longer than measured" : `${formatYears(months / 12)} years`}
+                    </dd>{" "}
+                  </div>
+                ))}
+              </dl>
+            </figure>
+          ) : null}
         </div>
       ) : null}
 

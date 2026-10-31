@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bulletinCheckSentence, nearestGap, parseBulletinCheck } from "../bulletinCheck";
+import { bulletinCheckSentence, nearestGap, parseBulletinCheck, waitMarks } from "../bulletinCheck";
 
 // The stored doc of Oct 7 2026, trimmed to what the reader uses.
 const DOC = JSON.stringify({
@@ -37,5 +37,22 @@ describe("bulletinCheck", () => {
     expect(bulletinCheckSentence(check, 80)).toContain("about three months past the cutoff, this pace was typically 2 months off, and within a quarter of the real wait 6 times in 10.");
     expect(bulletinCheckSentence(null, 380)).toBeNull();
     expect(bulletinCheckSentence(check, 0)).toBeNull();
+  });
+
+  it("gives the reader's own wait three ways from the measured marks, and nothing it can't place", () => {
+    // The Oct 31 2026 run: a year past the cutoff, fast 0.49, typical 1.18, slow 2.93; two years, no slow mark.
+    const marked = parseBulletinCheck(
+      JSON.stringify({
+        byGap: {
+          "365": { readers: 1853, reached: 1544, typicalMissMonths: 7.6, withinQuarterShare: 0.229, ratioMarks: { fast: 0.49, typical: 1.18, slow: 2.93 } },
+          "730": { readers: 1853, reached: 1218, typicalMissMonths: 13.4, withinQuarterShare: 0.141, ratioMarks: { fast: 0.44, typical: 1.43, slow: null } },
+        },
+      }),
+    )!;
+    expect(waitMarks(marked, 380, 20)).toEqual({ fast: 9.8, typical: 23.6, slow: 58.6 });
+    expect(waitMarks(marked, 900, 30)).toEqual({ fast: 13.2, typical: 42.9, slow: null });
+    // A doc written before the marks existed has none: nothing is said.
+    expect(waitMarks(check, 380, 20)).toBeNull();
+    expect(waitMarks(marked, 380, 0)).toBeNull();
   });
 });

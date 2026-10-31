@@ -111,6 +111,29 @@ def months_to_reach(series: list[tuple[str, tuple]], i: int, target: date) -> tu
     return months_between(origin, series[-1][0]), False
 
 
+# The marks of the real wait as a multiple of the pace's months: fast, typical, slow.
+RATIO_MARKS = (("fast", 0.25), ("typical", 0.5), ("slow", 0.75))
+
+
+def ratio_marks(pairs: list[tuple[float, int, bool]]) -> dict:
+    """How the real wait ran against the pace's months, at the quarter, half and three-quarter marks of readers.
+
+    A reader still waiting is slower than every mark it hasn't passed, so a mark counts only readers whose date came
+    current at or under it: with readers still waiting, a mark can only read slower than the truth, never faster.
+    A mark that fewer readers reached than it needs is None ("slower than any measured").
+    """
+    rows = [(a / e, r) for e, a, r in pairs if e > 0]
+    n = len(rows)
+    if n == 0:
+        return {name: None for name, _ in RATIO_MARKS}
+    reached = sorted(x for x, r in rows if r)
+    out = {}
+    for name, q in RATIO_MARKS:
+        need = max(1, -(-int(q * n * 1000) // 1000))   # ceil(q * n) without float drift
+        out[name] = round(reached[need - 1], 2) if len(reached) >= need else None
+    return out
+
+
 def score(pairs: list[tuple[float, int, bool]]) -> dict:
     """pairs: (estimated months, actual or waited months, reached)."""
     resolved = [(e, a) for e, a, r in pairs if r]
@@ -130,6 +153,7 @@ def score(pairs: list[tuple[float, int, bool]]) -> dict:
         if resolved else None,
         "missAtLeastMonths": round(statistics.median(abs(x) for x in floors), 1) if floors else None,
         "stillWaitingPastEstimate": sum(1 for e, a, r in pairs if not r and a > e),
+        "ratioMarks": ratio_marks(pairs),
     }
 
 

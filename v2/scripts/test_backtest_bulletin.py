@@ -53,6 +53,12 @@ def main() -> int:
     check("typical miss over the reached readers", s["typicalMissMonths"], 3.0)
     check("a reader still waiting past the estimate is a floor", s["stillWaitingPastEstimate"], 1)
     check("within a quarter (or three months) of the real wait", s["withinQuarterShare"], 0.5)
+    # Four readers, ratios 1.0 and 2.0 reached, two still waiting: the quarter mark is the first reached ratio, the
+    # half mark the second, and the three-quarter mark needs a third reader who never came current.
+    check("the measured marks count only readers who came current", s["ratioMarks"],
+          {"fast": 1.0, "typical": 2.0, "slow": None})
+    m = bt.ratio_marks([(10.0, 5, True), (10.0, 10, True), (10.0, 15, True), (10.0, 30, True)])
+    check("the marks on four readers who all came current", m, {"fast": 0.5, "typical": 1.0, "slow": 1.5})
 
     archive = [(m, {"EB2": {"india": c[0] == "date" and c[1].strftime("%d%b%y").upper() or "C"}}) for m, c in steady]
     out = bt.backtest(archive)

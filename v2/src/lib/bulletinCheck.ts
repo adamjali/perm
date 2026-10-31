@@ -16,6 +16,25 @@ export interface GapResult {
   reached: number;
   typicalMissMonths: number;
   withinQuarterShare: number;
+  /**
+   * The real wait as a multiple of the pace's months, at the quarter, half and three-quarter marks of past readers
+   * (scripts/backtest_bulletin.py `ratio_marks`). Null where too few readers came current to place the mark.
+   */
+  marks?: WaitMarks;
+}
+
+export interface WaitMarks {
+  fast: number | null;
+  typical: number | null;
+  slow: number | null;
+}
+
+function readMarks(v: unknown): WaitMarks | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const m = v as Record<string, unknown>;
+  const one = (x: unknown) => (typeof x === "number" && x > 0 && x < 100 ? x : null);
+  const out = { fast: one(m.fast), typical: one(m.typical), slow: one(m.slow) };
+  return out.fast === null && out.typical === null ? undefined : out;
 }
 
 /** Keyed by days past the cutoff, as tested: 90, 180, 365 and 730. */
@@ -41,7 +60,8 @@ export function parseBulletinCheck(json: string): BulletinCheck | null {
       typeof typicalMissMonths === "number" && typicalMissMonths >= 0 &&
       typeof withinQuarterShare === "number" && withinQuarterShare >= 0 && withinQuarterShare <= 1
     ) {
-      out[g] = { readers, reached, typicalMissMonths, withinQuarterShare };
+      const marks = readMarks(r.ratioMarks);
+      out[g] = { readers, reached, typicalMissMonths, withinQuarterShare, ...(marks ? { marks } : {}) };
     }
   }
   return Object.keys(out).length ? out : null;
@@ -84,4 +104,17 @@ export function bulletinCheckSentence(check: BulletinCheck | null, gapDays: numb
     `cutoff, this pace was typically ${miss} month${miss === 1 ? "" : "s"} off, and within a quarter of the real wait ` +
     `${timesIn(r.withinQuarterShare)}.`
   );
+}
+
+/**
+ * The reader's own wait, three ways, from how past readers this far behind fared: the pace's months times each
+ * measured mark. Null without marks for the nearest tested distance; `slow` null when too few came current to say.
+ */
+export function waitMarks(check: BulletinCheck | null, gapDays: number, paceMonths: number): WaitMarks | null {
+  if (!check || !(paceMonths > 0)) return null;
+  const g = nearestGap(check, gapDays);
+  const marks = g === null ? undefined : check[g]?.marks;
+  if (!marks) return null;
+  const times = (x: number | null) => (x === null ? null : Math.round(paceMonths * x * 10) / 10);
+  return { fast: times(marks.fast), typical: times(marks.typical), slow: times(marks.slow) };
 }

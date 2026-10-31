@@ -1775,3 +1775,8 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   nine. Its data tour picture is `data/students` in `scripts/page-pictures.json`.
 - **The priority-date tool answers "Can you file an I-485 for <month>?"** from the chart USCIS names that month and the
   archive's cell for it, and says nothing for a month the archive doesn't hold.
+- **The bulletin backtest records how the real wait ran against the pace** (`ratioMarks` per distance in
+  `perm_docs['bulletin_backtest']`: the quarter, half and three-quarter marks of the real wait over the pace's months,
+  counting only readers whose date came current, so a mark can only read slow). The green card line tool shows a
+  reader's wait three ways from them ("A quarter came current within", "Half within", "Three quarters within"), and
+  "Longer than measured" where too few came current. Oct 31 2026, a year past the cutoff: 0.49, 1.18 and 2.93 times the pace.
