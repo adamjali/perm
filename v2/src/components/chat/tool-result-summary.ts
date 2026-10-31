@@ -69,6 +69,18 @@ export function summarizeToolResult(tool: string, result?: string): string {
         return `${sourceCount} source${sourceCount !== 1 ? 's' : ''} found`;
       }
 
+      case 'lookupDolCase':
+      case 'estimateDecision':
+      case 'dolQueue':
+      case 'visaBulletin':
+      case 'searchSponsors':
+      case 'sponsorProfile':
+      case 'findSocCode': {
+        // The read's own words when it found nothing; otherwise its source and the date it's true for.
+        if (typeof parsed.error === 'string') return truncate(parsed.error, 60);
+        return parsed.asOf ? `From ${parsed.source ? String(parsed.source).split(',')[0] : 'the record'}, ${parsed.asOf}` : 'Read';
+      }
+
       case 'searchWeb': {
         const resultCount = parsed.results?.length ?? 0;
         if (resultCount === 0) return 'No results found';

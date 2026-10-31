@@ -9,7 +9,7 @@
  * - Colors follow semantic meaning
  */
 
-import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, ArrowDownIcon, ArrowsClockwiseIcon as CalendarSync, ArrowsClockwiseIcon as RefreshCw, BellIcon, BellSlashIcon as BellOff, BookOpenIcon, CalendarIcon, CalendarMinusIcon, CalendarPlusIcon, CheckIcon, ChecksIcon as CheckCheck, DatabaseIcon, EyeIcon, FileTextIcon, GearIcon as Settings, GlobeIcon, MagnifyingGlassIcon as Search, NavigationArrowIcon as Navigation2, PencilIcon, PlusIcon, SlidersHorizontalIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
+import { ArchiveIcon, BuildingsIcon, HourglassMediumIcon, ListNumbersIcon, TagIcon, ArrowCounterClockwiseIcon as RotateCcw, ArrowDownIcon, ArrowsClockwiseIcon as CalendarSync, ArrowsClockwiseIcon as RefreshCw, BellIcon, BellSlashIcon as BellOff, BookOpenIcon, CalendarIcon, CalendarMinusIcon, CalendarPlusIcon, CheckIcon, ChecksIcon as CheckCheck, DatabaseIcon, EyeIcon, FileTextIcon, GearIcon as Settings, GlobeIcon, MagnifyingGlassIcon as Search, NavigationArrowIcon as Navigation2, PencilIcon, PlusIcon, SlidersHorizontalIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 /**
@@ -21,6 +21,15 @@ export const TOOL_ICONS: Record<string, PhosphorIcon> = {
   queryCases: DatabaseIcon,
   searchKnowledge: BookOpenIcon,
   searchWeb: GlobeIcon,
+
+  // Public records
+  lookupDolCase: Search,
+  estimateDecision: HourglassMediumIcon,
+  dolQueue: ListNumbersIcon,
+  visaBulletin: CalendarIcon,
+  searchSponsors: Search,
+  sponsorProfile: BuildingsIcon,
+  findSocCode: TagIcon,
 
   // Case CRUD tools
   createCase: PlusIcon,
@@ -173,6 +182,15 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   searchKnowledge: 'Search knowledge',
   searchWeb: 'Web search',
 
+  // Public records
+  lookupDolCase: 'DOL case lookup',
+  estimateDecision: 'Decision estimate',
+  dolQueue: 'DOL processing times',
+  visaBulletin: 'Visa bulletin',
+  searchSponsors: 'Sponsor search',
+  sponsorProfile: 'Sponsor record',
+  findSocCode: 'SOC code',
+
   // Case CRUD tools
   createCase: 'Create case',
   updateCase: 'Update case',
@@ -221,6 +239,15 @@ export const TOOL_LOADING_MESSAGES: Record<string, string> = {
   queryCases: 'Searching cases...',
   searchKnowledge: 'Searching knowledge base...',
   searchWeb: 'Searching the web...',
+
+  // Public records
+  lookupDolCase: "Reading DOL's record...",
+  estimateDecision: 'Working out the estimate...',
+  dolQueue: "Reading DOL's processing times...",
+  visaBulletin: 'Reading the visa bulletin...',
+  searchSponsors: "Searching DOL's records...",
+  sponsorProfile: "Reading the sponsor's record...",
+  findSocCode: 'Finding the SOC code...',
 
   // Case CRUD tools
   createCase: 'Creating case...',

@@ -108,7 +108,15 @@ const TOOL_USAGE_GUIDELINES = `## Tool Selection
 
 - **queryCases**: User's specific cases (list, count, search, deadlines, RFI/RFE)
 - **searchKnowledge**: PERM regulations, deadline rules, app how-to
-- **searchWeb**: Current processing times, DOL/USCIS news
+- **searchWeb**: DOL/USCIS news and anything the records below don't hold
+- **lookupDolCase**: Any DOL case by number, in DOL's own record (not only the person's cases here)
+- **estimateDecision**: When a pending PERM case is likely to be decided (an estimate with a range, never a promise)
+- **dolQueue**: DOL's processing times today (use this, not searchWeb, for processing times)
+- **visaBulletin**: Priority date cutoffs, newest or any month since June 2005
+- **searchSponsors** then **sponsorProfile**: An employer's, law firm's or occupation's PERM record
+- **findSocCode**: The SOC code a job title is filed under
+
+Each public-record result carries its source, its date and the page that shows it: name the source and the date, and link the page.
 
 ### Key Query Patterns
 | User asks about... | Query with |

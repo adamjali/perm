@@ -1780,3 +1780,11 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   counting only readers whose date came current, so a mark can only read slow). The green card line tool shows a
   reader's wait three ways from them ("A quarter came current within", "Half within", "Three quarters within"), and
   "Longer than measured" where too few came current. Oct 31 2026, a year past the cutoff: 0.49, 1.18 and 2.93 times the pace.
+- **The chat reads the public records** through the same functions as the `/v1` API and the MCP server
+  (`PUBLIC_RECORD_TOOLS` in `src/app/api/chat/create-tools.ts`: `lookupDolCase`, `estimateDecision`, `dolQueue`,
+  `visaBulletin`, `searchSponsors`, `sponsorProfile`, `findSocCode`), read-only, offered on every page, each result
+  carrying its source, date and page to cite. A test holds the list to `MCP_TOOLS`.
+- **The chat is tested with the AI SDK's fake model** (`MockLanguageModelV4` from `ai/test`): a conversation through
+  the real tools (`src/app/api/chat/__tests__/public-records.test.ts`) and the long-conversation summarizer
+  (`src/lib/ai/__tests__/summarize.test.ts`: facts merged, Gemini's fallback, nothing saved and the lock let go when
+  every prose model fails). No model quota is spent.

@@ -2033,11 +2033,82 @@ export const deleteJobDescriptionTemplateTool = tool({
 /**
  * All chat tools bundled together for use in streamText
  */
+// =============================================================================
+// PUBLIC RECORDS (read-only): the same reads as the /v1 API and the MCP server
+// =============================================================================
+
+const SPONSOR_KINDS = ['employer', 'law firm', 'occupation'] as const;
+
+export const LookupDolCaseInputSchema = z.object({
+  caseNumber: z.string().max(40).describe('A DOL case number as printed: G-100-26045-123456 (PERM), P-100-... (wage request), I-200-... (H-1B LCA), H-300-... (H-2A).'),
+});
+export const EstimateDecisionInputSchema = z.object({
+  caseNumber: z.string().max(40).optional().describe('A PERM case number.'),
+  filed: z.string().max(10).optional().describe('A filing date, YYYY-MM-DD, when there is no case number.'),
+});
+export const DolQueueInputSchema = z.object({});
+export const VisaBulletinInputSchema = z.object({
+  month: z.string().max(7).optional().describe('YYYY-MM; leave out for the newest bulletin.'),
+});
+export const SearchSponsorsInputSchema = z.object({
+  kind: z.enum(SPONSOR_KINDS).describe('employer, law firm or occupation'),
+  name: z.string().min(2).max(120).describe('Part of the name.'),
+});
+export const SponsorProfileInputSchema = z.object({
+  kind: z.enum(SPONSOR_KINDS).describe('employer, law firm or occupation'),
+  slug: z.string().max(120).describe('The slug searchSponsors returned.'),
+});
+export const FindSocCodeInputSchema = z.object({
+  query: z.string().min(2).max(80).describe('A job title or a SOC code.'),
+});
+
+export const lookupDolCaseTool = tool({
+  description: `Look up any DOL case by its number in DOL's own record: status, filing date, employer, job, and DOL's decision once decided.
+Use for: a case number the person gives that isn't one of their own cases in this app, or to check DOL's live status.`,
+  inputSchema: LookupDolCaseInputSchema,
+});
+export const estimateDecisionTool = tool({
+  description: `When a pending PERM case is likely to be decided, with a range, the model used and its caveats. An estimate, not a promise.
+Use for: "when will my PERM be decided". Pass a PERM case number, or a filing date.`,
+  inputSchema: EstimateDecisionInputSchema,
+});
+export const dolQueueTool = tool({
+  description: `DOL's processing times today: the month each PERM and wage-request queue is working on, the average days, and pending PERM cases by filing month.
+Use for: current processing times. Prefer this over searchWeb.`,
+  inputSchema: DolQueueInputSchema,
+});
+export const visaBulletinTool = tool({
+  description: `A visa bulletin's employment and family charts (final action and dates for filing), as State printed them. The newest by default.
+Use for: priority date cutoffs, whether a date is current.`,
+  inputSchema: VisaBulletinInputSchema,
+});
+export const searchSponsorsTool = tool({
+  description: `Search DOL's PERM records for an employer, a law firm or an occupation by name. Returns the slug sponsorProfile takes.`,
+  inputSchema: SearchSponsorsInputSchema,
+});
+export const sponsorProfileTool = tool({
+  description: `An employer's, law firm's or occupation's PERM record: certified, denied, median days, recent filings, and its cases pending at DOL now. Find the slug with searchSponsors first.`,
+  inputSchema: SponsorProfileInputSchema,
+});
+export const findSocCodeTool = tool({
+  description: `The SOC codes employers filed a job title under in DOL's files, with each code's share; or a code's title.`,
+  inputSchema: FindSocCodeInputSchema,
+});
+
 export const chatTools = {
   // Query tools (autonomous)
   queryCases: queryCasesTool,
   searchKnowledge: searchKnowledgeTool,
   searchWeb: searchWebTool,
+
+  // Public records (autonomous): the API's and the MCP server's own reads
+  lookupDolCase: lookupDolCaseTool,
+  estimateDecision: estimateDecisionTool,
+  dolQueue: dolQueueTool,
+  visaBulletin: visaBulletinTool,
+  searchSponsors: searchSponsorsTool,
+  sponsorProfile: sponsorProfileTool,
+  findSocCode: findSocCodeTool,
 
   // Navigation tools (autonomous)
   navigate: navigateTool,

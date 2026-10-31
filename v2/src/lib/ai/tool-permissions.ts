@@ -46,6 +46,15 @@ export const TOOL_PERMISSIONS: Partial<Record<ChatToolName, PermissionLevel>> = 
   searchKnowledge: 'autonomous',
   searchWeb: 'autonomous',
 
+  // Public records (read-only): the /v1 API's and the MCP server's reads
+  lookupDolCase: 'autonomous',
+  estimateDecision: 'autonomous',
+  dolQueue: 'autonomous',
+  visaBulletin: 'autonomous',
+  searchSponsors: 'autonomous',
+  sponsorProfile: 'autonomous',
+  findSocCode: 'autonomous',
+
   // Navigation tools (non-destructive)
   navigate: 'autonomous',
   viewCase: 'autonomous',

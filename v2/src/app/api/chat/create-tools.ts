@@ -58,7 +58,16 @@ import {
   archiveCaseTool,
   reopenCaseTool,
   deleteCaseTool,
+  LookupDolCaseInputSchema,
+  EstimateDecisionInputSchema,
+  DolQueueInputSchema,
+  VisaBulletinInputSchema,
+  SearchSponsorsInputSchema,
+  SponsorProfileInputSchema,
+  FindSocCodeInputSchema,
 } from '@/lib/ai/tools';
+import { readBulletin, readCase, readEntity, readEstimate, readQueue, searchEntities, type ReadResult } from '@/lib/api/reads';
+import { lookupSoc } from '@/lib/api/socLookup';
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { executeWithCache, createCacheStats, type CacheableToolName } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
@@ -127,6 +136,41 @@ function sanitizeBigInts<T>(data: T): T {
     return result as T;
   }
   return data;
+}
+
+// =============================================================================
+// PUBLIC RECORDS: the /v1 API's and the MCP server's own reads
+// =============================================================================
+
+/** The chat's name for each MCP tool: one read behind both, so the chat and an outside assistant can't disagree. */
+export const PUBLIC_RECORD_TOOLS = {
+  lookup_case: 'lookupDolCase',
+  estimate_decision: 'estimateDecision',
+  queue_status: 'dolQueue',
+  visa_bulletin: 'visaBulletin',
+  search_sponsors: 'searchSponsors',
+  employer_profile: 'sponsorProfile',
+  find_soc_code: 'findSocCode',
+} as const;
+
+const SPONSOR_KIND = { employer: 'employer', 'law firm': 'attorney', occupation: 'occupation' } as const;
+
+/** A read's answer as a tool result: its source, date and page first, so the reply can cite them. */
+export async function publicRecord(read: () => Promise<ReadResult<unknown>>): Promise<Record<string, unknown>> {
+  try {
+    const r = await read();
+    if (!r.ok) {
+      return {
+        error: r.message,
+        ...(r.url ? { page: r.url } : {}),
+        suggestion: r.status === 404 ? 'Tell the person what was not found, and link the page.' : 'Tell the person and try again in a moment.',
+      };
+    }
+    return { source: r.meta.source, asOf: r.meta.asOf, page: r.meta.url, data: sanitizeBigInts(r.data) };
+  } catch (error) {
+    captureError(error);
+    return { error: "PERM Tracker's records couldn't be read just now.", suggestion: 'Tell the person and try again in a moment.' };
+  }
 }
 
 // =============================================================================
@@ -550,6 +594,55 @@ AUTONOMOUS: No confirmation needed.`,
     // NAVIGATION TOOLS (AUTONOMOUS)
     // =========================================================================
 
+    // =========================================================================
+    // PUBLIC RECORDS (AUTONOMOUS): DOL's and State's records, as the API reads them
+    // =========================================================================
+
+    lookupDolCase: {
+      description: 'Any DOL case by number, in DOL\'s own record: status, filing date, employer, job, and the decision once decided.',
+      inputSchema: LookupDolCaseInputSchema,
+      execute: async ({ caseNumber }: { caseNumber: string }) => publicRecord(() => readCase(caseNumber)),
+    },
+
+    estimateDecision: {
+      description: 'When a pending PERM case is likely to be decided, with a range and caveats. Pass a PERM case number, or a filing date.',
+      inputSchema: EstimateDecisionInputSchema,
+      execute: async ({ caseNumber, filed }: { caseNumber?: string; filed?: string }) =>
+        publicRecord(() => readEstimate({ caseNumber: caseNumber ?? null, filed: filed ?? null })),
+    },
+
+    dolQueue: {
+      description: "DOL's processing times today: each queue's month and average days, and pending PERM cases by filing month.",
+      inputSchema: DolQueueInputSchema,
+      execute: async () => publicRecord(() => readQueue()),
+    },
+
+    visaBulletin: {
+      description: "A visa bulletin's employment and family charts as State printed them. The newest by default.",
+      inputSchema: VisaBulletinInputSchema,
+      execute: async ({ month }: { month?: string }) => publicRecord(() => readBulletin(month ?? null)),
+    },
+
+    searchSponsors: {
+      description: "Search DOL's PERM records for an employer, law firm or occupation by name; returns the slug sponsorProfile takes.",
+      inputSchema: SearchSponsorsInputSchema,
+      execute: async ({ kind, name }: { kind: keyof typeof SPONSOR_KIND; name: string }) =>
+        publicRecord(() => searchEntities(SPONSOR_KIND[kind], name, 10)),
+    },
+
+    sponsorProfile: {
+      description: "An employer's, law firm's or occupation's PERM record and its cases pending at DOL now. Find the slug with searchSponsors.",
+      inputSchema: SponsorProfileInputSchema,
+      execute: async ({ kind, slug }: { kind: keyof typeof SPONSOR_KIND; slug: string }) =>
+        publicRecord(() => readEntity(SPONSOR_KIND[kind], slug)),
+    },
+
+    findSocCode: {
+      description: "The SOC codes a job title is filed under in DOL's files, with each code's share; or a code's title.",
+      inputSchema: FindSocCodeInputSchema,
+      execute: async ({ query }: { query: string }) => publicRecord(() => lookupSoc(query)),
+    },
+
     navigate: {
       description: NAVIGATE_DESCRIPTION,
       inputSchema: NavigateInputSchema,
@@ -774,8 +867,8 @@ function selectRelevantTools(
   pageContext?: PageContext,
   actionMode?: ActionMode,
 ): Record<string, Tool> {
-  // Core tools — always included
-  const coreNames = ['queryCases', 'searchKnowledge', 'searchWeb', 'getPageContext', 'navigate', 'viewCase'];
+  // Core tools — always included. The public records are read-only and answer on any page.
+  const coreNames = ['queryCases', 'searchKnowledge', 'searchWeb', 'getPageContext', 'navigate', 'viewCase', ...Object.values(PUBLIC_RECORD_TOOLS)];
 
   // CRUD tools — included when actions are enabled
   const crudNames = ['createCase', 'updateCase', 'archiveCase', 'reopenCase', 'deleteCase'];
