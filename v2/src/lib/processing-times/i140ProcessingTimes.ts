@@ -82,13 +82,15 @@ export interface ProcessingTimeRange {
 /**
  * The day the figures below were last read from USCIS's page. USCIS prints no
  * date beside them, so this is when they were read, not when USCIS set them.
- * Read again Oct 22 2026: all eight unchanged since Sep 26.
+ * Read again Oct 22 and Oct 31 2026: all eight unchanged since Sep 26. On Oct 31 the
+ * labels were matched to USCIS's own (E31 also covers E32 professionals; the nurse line
+ * is "Schedule A Nurses").
  *
  * A test asserts this stays current. The previous table sat untouched for
  * sixteen months while quietly reporting numbers a quarter of the real value,
  * because nothing in the codebase could tell that it had gone stale.
  */
-export const PROCESSING_TIMES_AS_OF = "2026-10-22";
+export const PROCESSING_TIMES_AS_OF = "2026-10-31";
 
 /** Where these came from, rendered next to the figures. */
 export const PROCESSING_TIMES_SOURCE_URL =
@@ -107,9 +109,9 @@ const SUBTYPES: Record<Exclude<I140Category, "">, I140Subtype[]> = {
     { code: "NIW", label: "National interest waiver", months80: 30, premiumBusinessDays: 45 },
   ],
   "EB-3": [
-    { code: "E31", label: "Skilled worker", months80: 4, premiumBusinessDays: 15 },
+    { code: "E31", label: "Skilled worker or professional", months80: 4, premiumBusinessDays: 15 },
     { code: "EW3", label: "Unskilled worker", months80: 9, premiumBusinessDays: 15 },
-    { code: "NUR", label: "Professional nurse or physical therapist", months80: 25.5, premiumBusinessDays: 15 },
+    { code: "NUR", label: "Schedule A nurse", months80: 25.5, premiumBusinessDays: 15 },
   ],
 };
 
