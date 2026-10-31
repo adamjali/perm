@@ -69,7 +69,7 @@ describe("validateTimeline", () => {
     expect(validateTimeline({ route: "consular", i140FiledOn: "2026-01-01", interviewOn: "2026-08-01" }, TODAY).ok).toBe(true);
   });
 
-  it("names each refusal with a code, so a translated page can word it", () => {
+  it("names each refusal with a code, so the page words it from the code", () => {
     const code = (input: Parameters<typeof validateTimeline>[0]) => {
       const r = validateTimeline(input, TODAY);
       return r.ok ? null : "field" in r ? `${r.code}:${r.field}` : r.code;

@@ -34,7 +34,6 @@ import { internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./email";
 import { easternDay } from "./time";
-import type { MailLang } from "../../src/lib/i18n/mailLang";
 
 export type AlertKind = "case" | "queue" | "bulletin" | "employer" | "match";
 /** `<kind>:<row id>`: the subscription an alert is about, its kind first. */
@@ -71,13 +70,6 @@ export interface AlertItem {
   /** The kind's own one-click opt-out, for the `List-Unsubscribe` header. */
   listUnsubscribe: string;
   summary: AlertSummary;
-  /**
-   * The reader's language. Stored on a queued row so the daily bundle's frame
-   * is written in it; the single-item email was already rendered in it by the
-   * producer. English when not given (employer and match alerts have no
-   * translated sign-up page, so they pass nothing).
-   */
-  lang?: MailLang;
 }
 
 export type DeliveryResult =
@@ -111,7 +103,6 @@ export async function deliverAlert(ctx: ActionCtx, item: AlertItem): Promise<Del
       text: item.text,
       listUnsubscribe: item.listUnsubscribe,
       summary: item.summary,
-      lang: item.lang,
     });
     return { status: "queued" };
   }

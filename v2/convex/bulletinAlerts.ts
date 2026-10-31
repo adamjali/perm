@@ -43,8 +43,6 @@ import { scaled } from "./lib/emailAllowance";
 import { monthLabel } from "./lib/newsletterCompose";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
-import { mailLang, storedLang, withLang } from "../src/lib/i18n/mailLang";
-import { alertText } from "./lib/alertEmailText";
 import { seriesLabel } from "./lib/mailKinds";
 import { one as mirrorOne } from "./lib/publicMirror";
 import {
@@ -109,7 +107,6 @@ export const subscribe = internalMutation({
      * confirmation so the email can say so. See convex/emailPrefs.ts.
      */
     news: v.optional(v.boolean()),
-    lang: v.optional(v.string()),
     /** The weekly digest, staged the same way as news. */
     newsletter: v.optional(v.boolean()),
     ip: v.optional(v.string()),
@@ -230,7 +227,6 @@ export const subscribe = internalMutation({
       country: args.country,
       includesNews,
       includesNewsletter,
-      lang: args.lang,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -285,7 +281,6 @@ export const sendConfirmation = internalAction({
      */
     includesNews: v.optional(v.boolean()),
     includesNewsletter: v.optional(v.boolean()),
-    lang: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -297,8 +292,7 @@ export const sendConfirmation = internalAction({
         unsubscribeSecret(),
         "bulletin-confirm",
       );
-      const lang = mailLang(args.lang);
-      const confirmUrl = withLang(actionUrl("/bulletin-alert/confirm", token), lang);
+      const confirmUrl = actionUrl("/bulletin-alert/confirm", token);
       const label = seriesLabel(args.category, args.country);
 
       const html = await renderOrTextOnly(
@@ -313,7 +307,6 @@ export const sendConfirmation = internalAction({
             confirmUrl,
             includesNews,
             includesNewsletter,
-            lang,
           });
         },
       );
@@ -321,7 +314,7 @@ export const sendConfirmation = internalAction({
       const result = await sendOrQueue(ctx, "bulletin-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject: alertText(lang).subject.bulletinConfirm(label),
+        subject: `Confirm your visa bulletin alert for ${label}`,
         html,
         text: [
           `You asked to be told when the State Department's final-action cutoff for ${label} moves.`,
@@ -397,7 +390,7 @@ async function rowsForToken(
 }
 
 export const confirmByToken = internalMutation({
-  args: { token: v.string(), lang: v.optional(v.string()) },
+  args: { token: v.string() },
   returns: v.union(
     v.object({ email: v.string(), series: v.array(v.string()) }),
     v.null(),
@@ -408,7 +401,6 @@ export const confirmByToken = internalMutation({
 
     const confirmed: string[] = [];
     let email: string | null = null;
-    const langPatch = args.lang !== undefined ? { lang: storedLang(mailLang(args.lang)) } : {};
 
     for (const row of rows) {
       // Replayed confirm links must not resurrect an opt-out; only a fresh
@@ -420,7 +412,6 @@ export const confirmByToken = internalMutation({
         confirmedAt: row.confirmedAt ?? Date.now(),
         pendingSeries: undefined,
         unsubscribedAt: undefined,
-        ...langPatch,
       });
       confirmed.push(seriesLabel(row.category, row.country));
       email = row.email;
@@ -467,7 +458,6 @@ export const liveSubscriptions = internalQuery({
       country: v.string(),
       lastSeenCutoff: v.optional(v.string()),
       lastSeenBulletin: v.optional(v.string()),
-      lang: v.optional(v.string()),
     }),
   ),
   handler: async (ctx) => {
@@ -478,7 +468,6 @@ export const liveSubscriptions = internalQuery({
       country: string;
       lastSeenCutoff?: string;
       lastSeenBulletin?: string;
-      lang?: string;
     }[] = [];
     for await (const row of ctx.db
       .query("bulletinAlerts")
@@ -491,7 +480,6 @@ export const liveSubscriptions = internalQuery({
         country: row.country,
         lastSeenCutoff: row.lastSeenCutoff,
         lastSeenBulletin: row.lastSeenBulletin,
-        lang: row.lang,
       });
     }
     return out;
@@ -603,15 +591,12 @@ export const sweep = internalAction({
       }
 
       try {
-        // The reader's language, stored at confirm time; the alert, its
-        // subject and its unsubscribe page all follow it.
-        const lang = mailLang(sub.lang);
         const token = await makeUnsubscribeToken(
           sub.email,
           unsubscribeSecret(),
           "bulletin-unsubscribe",
         );
-        const unsubUrl = withLang(actionUrl("/bulletin-alert/unsubscribe", token), lang);
+        const unsubUrl = actionUrl("/bulletin-alert/unsubscribe", token);
         const prefsUrl = await prefsLink(sub.email, unsubscribeSecret(), `bulletin:${sub._id}`);
         const label = seriesLabel(sub.category, sub.country);
         const fromWords = cutoffInWords(sub.lastSeenCutoff);
@@ -629,7 +614,6 @@ export const sweep = internalAction({
               toCutoff: toWords,
               unsubscribeUrl: unsubUrl,
               prefsUrl,
-              lang,
             });
           },
         );
@@ -639,10 +623,9 @@ export const sweep = internalAction({
           email: sub.email,
           kind: "bulletin",
           ref: `bulletin:${sub._id}`,
-          subject: alertText(lang).subject.bulletinMoved(label, monthLabel(latest.month)),
+          subject: `${label} moved in the ${monthLabel(latest.month)} visa bulletin`,
           html,
           listUnsubscribe: unsubUrl,
-          lang,
           summary: {
             title: label,
             line: `${fromWords} to ${toWords} in the ${monthLabel(latest.month)} bulletin`,

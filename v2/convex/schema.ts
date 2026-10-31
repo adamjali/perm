@@ -1476,8 +1476,8 @@ export default defineSchema({
   dolQueueAlerts: defineTable({
     email: v.string(),
     /**
-     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
-     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     * Retired Oct 31 2026 (the site is English only): kept so the rows a translated page
+     * wrote Oct 29 to 31 still validate. Nothing reads or writes it.
      */
     lang: v.optional(v.string()),
     /** Month the case was filed with DOL, "YYYY-MM". */
@@ -1612,8 +1612,8 @@ export default defineSchema({
   caseStatusAlerts: defineTable({
     email: v.string(),
     /**
-     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
-     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     * Retired Oct 31 2026 (the site is English only): kept so the rows a translated page
+     * wrote Oct 29 to 31 still validate. Nothing reads or writes it.
      */
     lang: v.optional(v.string()),
     /** Normalised DOL case number, e.g. "P-100-26125-868956". */
@@ -1783,8 +1783,8 @@ export default defineSchema({
   bulletinAlerts: defineTable({
     email: v.string(),
     /**
-     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
-     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     * Retired Oct 31 2026 (the site is English only): kept so the rows a translated page
+     * wrote Oct 29 to 31 still validate. Nothing reads or writes it.
      */
     lang: v.optional(v.string()),
     /** Employment category as the bulletin prints it: EB1..EB5, EW3. */
@@ -1870,8 +1870,8 @@ export default defineSchema({
   newsletterSubscribers: defineTable({
     email: v.string(),
     /**
-     * The language this address reads its alerts in (src/lib/i18n/mailLang.ts), set by the confirm click from a
-     * translated page's sign-up. Absent means English, as every row before Oct 29 2026 is.
+     * Retired Oct 31 2026 (the site is English only): kept so the rows a translated page
+     * wrote Oct 29 to 31 still validate. Nothing reads or writes it.
      */
     lang: v.optional(v.string()),
     confirmedAt: v.optional(v.number()),
@@ -2600,7 +2600,7 @@ export default defineSchema({
       v.literal("dropped"),
       v.literal("failed"),
     ),
-    /** The reader's language, so a bundle's frame is written in it (src/lib/i18n/mailLang.ts). */
+    /** Retired Oct 31 2026 (English only): kept so older rows validate; nothing reads or writes it. */
     lang: v.optional(v.string()),
     subject: v.string(),
     /** The single-item email. Cleared once sent; a bundle renders its own. */

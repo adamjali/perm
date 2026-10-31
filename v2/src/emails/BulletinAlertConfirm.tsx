@@ -6,8 +6,6 @@
  * India instead of worldwide) is visible before they confirm it.
  */
 import { Section, Text } from "@react-email/components";
-import type { MailLang } from "../lib/i18n/mailLang";
-import { BULLETIN_CONFIRM_TEXT } from "./i18n/confirm";
 import { EmailButton, EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
 
@@ -29,8 +27,6 @@ export interface BulletinAlertConfirmProps {
   includesNews?: boolean;
   /** Optional, default off: links already in inboxes predate it. */
   includesNewsletter?: boolean;
-  /** The reader’s language. English when not given. */
-  lang?: MailLang;
 }
 
 export function BulletinAlertConfirm({
@@ -38,44 +34,45 @@ export function BulletinAlertConfirm({
   confirmUrl,
   includesNews = false,
   includesNewsletter = false,
-  lang = "en",
 }: BulletinAlertConfirmProps) {
-  const t = BULLETIN_CONFIRM_TEXT[lang];
   return (
     <EmailLayout
-      lang={lang}
-      previewText={t.preview(seriesLabel)}
+      previewText={`Confirm and we’ll email you when the cutoff for ${seriesLabel} moves.`}
       hideSettingsLink
-      footerText={t.footer(seriesLabel)}
+      footerText={`This address was entered to be told when the State Department’s final-action cutoff for ${seriesLabel} moves. It isn’t confirmed yet, so nothing else will be sent.`}
     >
       <Section style={styles.stamp}>
-        <Text className="em-text-secondary" style={styles.stampEyebrow}>{t.eyebrow}</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>Your series</Text>
         <Text className="em-text" style={styles.stampValue}>{seriesLabel}</Text>
       </Section>
 
       <Text className="em-text-body" style={styles.body}>
-        {t.body}
+        You asked to be told when the State Department&rsquo;s final-action
+        cutoff for this series moves in a new visa bulletin. Confirm the alert
+        and we&rsquo;ll email you when it does.
       </Text>
 
       {includesNews ? (
         <Text className="em-text-secondary" style={styles.newsNote}>
-          {t.news}
+          You also asked for occasional product news. The same click confirms
+          that.
         </Text>
       ) : null}
       {includesNewsletter ? (
         <Text className="em-text-secondary" style={styles.newsNote}>
-          {t.newsletter}
+          You also asked for the weekly digest. The
+          same click confirms that.
         </Text>
       ) : null}
 
       <Section style={styles.cta}>
         <EmailButton href={confirmUrl} variant="primary">
-          {t.button}
+          Confirm the alert
         </EmailButton>
       </Section>
 
       <Text className="em-text-secondary" style={styles.note}>
-        {t.ignore}
+        If you didn&rsquo;t ask for this, ignore it. Nothing will be sent.
       </Text>
     </EmailLayout>
   );

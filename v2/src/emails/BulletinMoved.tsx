@@ -10,9 +10,6 @@ import { Link, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
 import { SITE_URL } from "../../convex/lib/links";
-import type { MailLang } from "../lib/i18n/mailLang";
-import { BULLETIN_ALERT_TEXT } from "./i18n/alerts";
-import { LAYOUT_TEXT } from "./i18n/layout";
 
 export interface BulletinMovedProps {
   /** "EB2 India". */
@@ -27,8 +24,6 @@ export interface BulletinMovedProps {
   unsubscribeUrl: string;
   /** The address's preference page, every alert it holds, as a magic link scoped by token. Optional for callers that predate it. */
   prefsUrl?: string;
-  /** The reader's language (src/lib/i18n/mailLang.ts). English when not given. */
-  lang?: MailLang;
 }
 
 export function BulletinMoved({
@@ -38,51 +33,48 @@ export function BulletinMoved({
   toCutoff,
   unsubscribeUrl,
   prefsUrl,
-  lang = "en",
 }: BulletinMovedProps) {
-  const t = BULLETIN_ALERT_TEXT[lang];
-  const L = LAYOUT_TEXT[lang];
   return (
     <EmailLayout
-      previewText={t.previewText(seriesLabel, fromCutoff, toCutoff)}
+      previewText={`${seriesLabel}: ${fromCutoff} to ${toCutoff}.`}
       hideSettingsLink={!prefsUrl}
       settingsUrl={prefsUrl}
-      settingsLabel={L.preferences}
-      lang={lang}
-      footerText={t.footerText(seriesLabel)}
+      settingsLabel="Email preferences"
+      footerText={`You asked to be told when the final-action cutoff for ${seriesLabel} moves. These alerts repeat whenever it does.`}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>
           <Link href={unsubscribeUrl} className="em-link" style={styles.footerLink}>
-            {L.stopAlerts}
+            Stop these alerts
           </Link>
         </Text>
       }
     >
       <Section style={styles.stamp}>
-        <Text className="em-text-secondary" style={styles.stampEyebrow}>{t.stampMoved(seriesLabel)}</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>{seriesLabel} moved</Text>
         <Text className="em-text" style={styles.stampValue}>{toCutoff}</Text>
         <Text className="em-text-secondary" style={styles.provenance}>
-          {t.provenance(bulletinMonth)}
+          {bulletinMonth} visa bulletin, final action
         </Text>
       </Section>
 
       <Section className="em-card" style={styles.changeCard}>
         <Text className="em-text-body" style={styles.changeRow}>
-          <span className="em-text-secondary" style={styles.changeLabel}>{t.before}&nbsp;&nbsp;</span>
+          <span className="em-text-secondary" style={styles.changeLabel}>Before&nbsp;&nbsp;</span>
           {fromCutoff}
         </Text>
         <Text className="em-text-body" style={styles.changeRowLast}>
-          <span className="em-text-secondary" style={styles.changeLabel}>{t.now}&nbsp;&nbsp;</span>
+          <span className="em-text-secondary" style={styles.changeLabel}>Now&nbsp;&nbsp;</span>
           {toCutoff}
         </Text>
       </Section>
 
       <Text className="em-text-body" style={styles.body}>
-        {t.body}
+        This is the State Department&rsquo;s own published figure. It
+        isn&rsquo;t advice and it isn&rsquo;t a prediction of your case.
       </Text>
 
       <Text className="em-text-secondary" style={styles.note}>
-        {t.note}{" "}
+        The full board and every bulletin since October 2014:{" "}
         <Link
           href={`${SITE_URL}/tools/priority-date-calculator`}
           className="em-link"

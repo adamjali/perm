@@ -70,9 +70,6 @@ import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
-import { mailLang, storedLang, withLang } from "../src/lib/i18n/mailLang";
-import { alertText } from "./lib/alertEmailText";
-import { mailMonth } from "../src/emails/i18n/dates";
 import { type DolQueue, queueLabel } from "./lib/mailKinds";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
 import { measureQueuePace, paceSentence } from "../src/lib/queuePace";
@@ -208,8 +205,6 @@ export const subscribe = internalMutation({
      * confirmation so the email can say so. See convex/emailPrefs.ts.
      */
     news: v.optional(v.boolean()),
-    /** The language the sign-up form was in; carried to the confirmation. */
-    lang: v.optional(v.string()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
     /**
@@ -345,7 +340,6 @@ export const subscribe = internalMutation({
       filingMonth: args.filingMonth,
       queue,
       includesNews,
-      lang: args.lang,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -423,27 +417,25 @@ export const sendConfirmation = internalAction({
      * render, and absent means "say nothing", which is the safe direction.
      */
     includesNews: v.optional(v.boolean()),
-    lang: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
       const queue: DolQueue = args.queue ?? "perm";
-      const lang = mailLang(args.lang);
       const includesNews = args.includesNews === true;
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
         "queue-confirm",
       );
-      const confirmUrl = withLang(actionUrl("/queue-alert/confirm", token), lang);
+      const confirmUrl = actionUrl("/queue-alert/confirm", token);
 
       // Presentation only. `formatMonth` returns null rather than a plausible
       // wrong month, and the raw "YYYY-MM" is still the true value, so an
       // unparseable input degrades the label instead of inventing a date.
       // Formatted ONCE here, then used by the HTML, the text part and the
       // subject alike, so no reader can be shown "2025-09" by one of them.
-      const filingLabel = (lang === "en" ? formatMonth(args.filingMonth) : mailMonth(args.filingMonth, lang)) ?? args.filingMonth;
+      const filingLabel = formatMonth(args.filingMonth) ?? args.filingMonth;
       const label = queueLabel(queue);
       const monthNoun = queue === "perm" ? "filing month" : "submission month";
 
@@ -460,8 +452,6 @@ export const sendConfirmation = internalAction({
             queueName: label,
             monthNoun,
             includesNews,
-            perm: queue === "perm",
-            lang,
           });
         },
       );
@@ -469,7 +459,10 @@ export const sendConfirmation = internalAction({
       const result = await sendOrQueue(ctx, "queue-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject: alertText(lang).subject.queueConfirm(queue === "perm"),
+        subject:
+          queue === "perm"
+            ? "Confirm your PERM queue alert"
+            : "Confirm your prevailing-wage queue alert",
         html,
         text: [
           `You asked to be told when the Department of Labor's ${label} reaches your ${monthNoun}.`,
@@ -548,7 +541,7 @@ async function rowsForToken(
 }
 
 export const confirmByToken = internalMutation({
-  args: { token: v.string(), lang: v.optional(v.string()) },
+  args: { token: v.string() },
   returns: v.union(
     v.object({
       email: v.string(),
@@ -574,8 +567,6 @@ export const confirmByToken = internalMutation({
     let primary: { email: string; filingMonth: string; alreadyReached: boolean } | null =
       null;
     const queuesToNotify = new Set<DolQueue>();
-    // The confirm click stores the reader's language; only when the link carries one.
-    const langPatch = args.lang !== undefined ? { lang: storedLang(mailLang(args.lang)) } : {};
 
     for (const row of rows) {
       // A confirm token never expires and is replayable by anyone who can
@@ -604,7 +595,6 @@ export const confirmByToken = internalMutation({
         pendingFilingMonth: undefined,
         unsubscribedAt: undefined,
         ...(monthChanged ? { notifiedAt: undefined } : {}),
-        ...langPatch,
       });
 
       // Most signups name a month the queue has ALREADY passed: the form
@@ -710,7 +700,6 @@ export const dueForAlert = internalQuery({
       _id: v.id("dolQueueAlerts"),
       email: v.string(),
       filingMonth: v.string(),
-      lang: v.optional(v.string()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -719,7 +708,6 @@ export const dueForAlert = internalQuery({
       _id: Id<"dolQueueAlerts">;
       email: string;
       filingMonth: string;
-      lang?: string;
     }[] = [];
 
     for await (const row of ctx.db
@@ -738,7 +726,7 @@ export const dueForAlert = internalQuery({
       // sweep runs against its own frontier so a PWD row must never qualify
       // off the PERM month or vice versa.
       if ((row.queue ?? "perm") !== queue) continue;
-      out.push({ _id: row._id, email: row.email, filingMonth: row.filingMonth, lang: row.lang });
+      out.push({ _id: row._id, email: row.email, filingMonth: row.filingMonth });
       if (out.length >= args.limit) break;
     }
 
@@ -799,41 +787,37 @@ export const notifyQueueReached = internalAction({
     const frontierLabel = formatMonth(args.frontier) ?? args.frontier;
     const asOfLabel = formatAsOf(args.asOf) ?? args.asOf;
     const label = queueLabel(queue);
-    const perm = queue === "perm";
+    const monthNoun = queue === "perm" ? "filing month" : "submission month";
 
     // Arithmetic on two figures DOL published, or null. Never a projection:
     // see src/lib/queuePace.ts. Measured on the PERM analyst frontier only -
     // the PWD history is too shallow to measure yet (store began 2026-08-25),
     // and a pace from the wrong queue would be a confident wrong number.
-    // Measured ONCE for the whole sweep; each row turns it into its own
-    // language's sentence below.
-    const paceData = perm
-      ? measureQueuePace(
-          (
-            await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
-          ).map((s) => ({
-            frontier:
-              s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))
-                ?.priorityDate ?? null,
-            asOf: s.permAsOf,
-          })),
-        )
-      : null;
+    const paceLine =
+      queue === "perm"
+        ? paceSentence(
+            measureQueuePace(
+              (
+                await ctx.runQuery(api.dolProcessingTimes.getHistory, { limit: 60 })
+              ).map((s) => ({
+                frontier:
+                  s.permQueues.find((q) => ANALYST_REVIEW.test(q.queue))
+                    ?.priorityDate ?? null,
+                asOf: s.permAsOf,
+              })),
+            ),
+          )
+        : null;
 
     for (const row of batch) {
       try {
-        // The reader's language is stored on the row at confirm time; the
-        // recurring alert, its subject and its unsubscribe page all follow it.
-        const lang = mailLang(row.lang);
         const token = await makeUnsubscribeToken(
           row.email,
           unsubscribeSecret(),
           "queue-unsubscribe",
         );
-        const unsubUrl = withLang(actionUrl("/queue-alert/unsubscribe", token), lang);
+        const unsubUrl = actionUrl("/queue-alert/unsubscribe", token);
         const prefsUrl = await prefsLink(row.email, unsubscribeSecret(), `queue:${row._id}`);
-        // The measured pace, as this reader's language writes it, or null.
-        const paceLine = paceSentence(paceData, lang);
 
         const filingLabel = formatMonth(row.filingMonth) ?? row.filingMonth;
         // How far DOL has run PAST this subscriber's month. 0 means it landed
@@ -854,8 +838,8 @@ export const notifyQueueReached = internalAction({
               paceLine,
               unsubscribeUrl: unsubUrl,
               prefsUrl,
-              perm,
-              lang,
+              queueName: label,
+              monthNoun,
             });
           },
         );
@@ -865,10 +849,12 @@ export const notifyQueueReached = internalAction({
           email: row.email,
           kind: "queue",
           ref: `queue:${row._id}`,
-          subject: alertText(lang).subject.queueReached(perm, frontierLabel),
+          subject:
+            queue === "perm"
+              ? `DOL has reached ${frontierLabel} in the PERM queue`
+              : `DOL has reached ${frontierLabel} in the prevailing-wage queue`,
           html,
           listUnsubscribe: unsubUrl,
-          lang,
           summary: {
             title: label.charAt(0).toUpperCase() + label.slice(1),
             line: `DOL has reached ${frontierLabel}. You asked about ${filingLabel}`,

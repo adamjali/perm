@@ -31,9 +31,6 @@ import { Link, Section, Text } from "@react-email/components";
 import { EmailButton, EmailLayout, EmailLinkList, QueueStamp } from "./components";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
 import { SITE_URL } from "../../convex/lib/links";
-import type { MailLang } from "../lib/i18n/mailLang";
-import { QUEUE_ALERT_TEXT } from "./i18n/alerts";
-import { LAYOUT_TEXT } from "./i18n/layout";
 
 /** DOL's own processing-times page. The figure in the stamp comes from here. */
 export const DOL_PROCESSING_TIMES_URL = "https://flag.dol.gov/processingtimes";
@@ -59,12 +56,12 @@ export interface QueueReachedProps {
   /** The address's preference page, every alert it holds, as a magic link scoped by token. Optional for callers that predate it. */
   prefsUrl?: string;
   /**
-   * The PERM queue (true) or the prevailing-wage queue (false). Defaults to
-   * PERM, so a caller that passes nothing reads exactly as before.
+   * Which DOL queue reached the month, in prose. Defaults to the PERM
+   * wording so existing callers read exactly as before.
    */
-  perm?: boolean;
-  /** The reader's language (src/lib/i18n/mailLang.ts). English when not given. */
-  lang?: MailLang;
+  queueName?: string;
+  /** "filing month" for PERM, "submission month" for PWD. */
+  monthNoun?: string;
 }
 
 export function QueueReached({
@@ -74,23 +71,20 @@ export function QueueReached({
   monthsPast,
   paceLine = null,
   unsubscribeUrl,
+  queueName = "PERM queue",
+  monthNoun = "filing month",
   prefsUrl,
-  perm = true,
-  lang = "en",
 }: QueueReachedProps) {
-  const t = QUEUE_ALERT_TEXT[lang];
-  const L = LAYOUT_TEXT[lang];
   const hasMovedPast = monthsPast > 0;
-  const queueName = t.queueName(perm);
+  const isPwd = queueName.toLowerCase().includes("prevailing");
 
   return (
     <EmailLayout
-      previewText={t.previewText(asOf)}
+      previewText={`The Department of Labor’s published figure, as of ${asOf}.`}
       hideSettingsLink={!prefsUrl}
       settingsUrl={prefsUrl}
-      settingsLabel={L.preferences}
-      lang={lang}
-      footerText={t.footerText(queueName, filingMonth)}
+      settingsLabel="Email preferences"
+      footerText={`You asked to be told when the Department of Labor’s ${queueName} reached ${filingMonth}. This alert doesn’t repeat.`}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>
           <Link
@@ -98,7 +92,7 @@ export function QueueReached({
             className="em-link"
             style={styles.footerLink}
           >
-            {t.removeAddress}
+            Remove this address
           </Link>
         </Text>
       }
@@ -110,9 +104,9 @@ export function QueueReached({
         "DOL has reached" plus the month is a sentence; the agency is still
         named by the source link directly beneath it.
       */}
-      <QueueStamp eyebrow={t.eyebrow} month={frontierMonth}>
+      <QueueStamp eyebrow="DOL has reached" month={frontierMonth}>
         <Text className="em-text-secondary" style={styles.provenance}>
-          {t.provenance(perm, asOf, queueName)}
+          {isPwd ? `${queueName}, as of ${asOf}` : `Analyst review, as of ${asOf}`}
         </Text>
         <Text style={styles.sourceLine}>
           <Link
@@ -128,7 +122,7 @@ export function QueueReached({
       {hasMovedPast ? (
         <Section className="em-card" style={styles.yours}>
           <Text className="qa-yours-label" style={styles.yoursLabel}>
-            {t.yourMonthLabel(perm)}
+            {`Your ${monthNoun}`}
           </Text>
           <Text className="em-text" style={styles.yoursValue}>
             {filingMonth}
@@ -138,9 +132,12 @@ export function QueueReached({
 
       <Text className="em-text-body" style={styles.body}>
         {hasMovedPast
-          ? t.bodyMovedPast(filingMonth, frontierMonth)
-          : t.bodyReached(filingMonth, perm)}{" "}
-        {t.notADecision}
+          ? `DOL has worked past ${filingMonth} and is now on ${frontierMonth}.`
+          : isPwd
+            ? `DOL is now working prevailing-wage requests submitted in ${filingMonth}.`
+            : `DOL is now adjudicating cases filed in ${filingMonth}.`}{" "}
+        It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction of
+        one.
       </Text>
 
       {paceLine ? (
@@ -154,20 +151,20 @@ export function QueueReached({
           href={`${SITE_URL}/perm-processing-times`}
           variant="outline"
         >
-          {t.cta}
+          See the current figures
         </EmailButton>
       </Section>
 
       <EmailLinkList
-        label={t.alsoHeading}
+        label="Also on PERM Tracker"
         items={[
           {
             href: `${SITE_URL}/tools/perm-timeline-calculator`,
-            text: t.alsoDeadlines,
+            text: "The deadlines on your side of the process",
           },
           {
             href: `${SITE_URL}/perm-cases`,
-            text: t.alsoDecisions,
+            text: "Every PERM decision DOL has published",
           },
         ]}
       />

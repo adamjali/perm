@@ -19,8 +19,6 @@
 
 import { SITE_URL } from "./links";
 import type { ConfirmOffer } from "./alertNextSteps";
-import { MAIL_LANG_TAG, type MailLang } from "../../src/lib/i18n/mailLang";
-import { mailPageText } from "./mailPageText";
 import {
   EMAIL_PREFERENCES_PATH,
   MAIL_KINDS,
@@ -86,8 +84,8 @@ legend{font-weight:700}
 `;
 
 /** The shared page: the brand bar and one card. `inner` is trusted HTML. */
-export function htmlPage(title: string, inner: string, status = 200, lang: MailLang = "en"): Response {
-  const html = `<!doctype html><html lang="${MAIL_LANG_TAG[lang]}"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="robots" content="noindex"/><title>${escapeHtml(title)} | PERM Tracker</title><style>${STYLE}</style></head>
+export function htmlPage(title: string, inner: string, status = 200): Response {
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="robots" content="noindex"/><title>${escapeHtml(title)} | PERM Tracker</title><style>${STYLE}</style></head>
 <body><div class="wrap"><div class="card"><a class="bar" href="${SITE_URL}"><b>PERM</b> Tracker</a><div class="body">${inner}</div></div></div></body></html>`;
   return new Response(html, { status, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
@@ -101,14 +99,13 @@ export function messagePage(
   body: string,
   action?: { post: string; label?: string } | { href: string; label: string },
   offers: readonly ConfirmOffer[] = [],
-  lang: MailLang = "en",
 ): Response {
   const control = !action
     ? ""
     : "post" in action
-      ? `<form method="POST" action="${action.post}" class="actions"><button type="submit" class="btn go">${escapeHtml(action.label ?? mailPageText(lang).unsubscribeLabel)}</button></form>`
+      ? `<form method="POST" action="${action.post}" class="actions"><button type="submit" class="btn go">${escapeHtml(action.label ?? "Unsubscribe")}</button></form>`
       : `<p class="actions"><a class="btn" href="${action.href}">${escapeHtml(action.label)}</a></p>`;
-  return htmlPage(title, `<h1>${escapeHtml(title)}</h1><p class="muted">${body}</p>${control}${offersHtml(offers)}`, 200, lang);
+  return htmlPage(title, `<h1>${escapeHtml(title)}</h1><p class="muted">${body}</p>${control}${offersHtml(offers)}`);
 }
 
 /**
@@ -131,15 +128,14 @@ export function offersHtml(offers: readonly ConfirmOffer[]): string {
  * subscription that's gone. Status 400, with a way forward instead of a bare
  * line of text.
  */
-export function badLinkPage(reason?: string, next?: string, lang: MailLang = "en"): Response {
-  const t = mailPageText(lang).badLink;
-  const r = reason ?? t.reason;
-  const n = next ?? t.next;
+export function badLinkPage(
+  reason = "This link is incomplete or out of date.",
+  next = "Ask for a fresh link to your email preferences, or set up the alert again from the site.",
+): Response {
   return htmlPage(
-    t.title,
-    `<h1>${escapeHtml(t.title)}</h1><p class="muted">${escapeHtml(r)} ${escapeHtml(n)}</p><p class="actions"><a class="btn go" href="${PREFERENCES_URL}">${escapeHtml(mailPageText(lang).prefsButton)}</a></p>`,
+    "This link doesn't work",
+    `<h1>This link doesn't work</h1><p class="muted">${escapeHtml(reason)} ${escapeHtml(next)}</p><p class="actions"><a class="btn go" href="${PREFERENCES_URL}">Email preferences</a></p>`,
     400,
-    lang,
   );
 }
 

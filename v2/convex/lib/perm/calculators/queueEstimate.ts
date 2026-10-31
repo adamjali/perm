@@ -177,7 +177,7 @@ const daysWords = (d: number) => (d === 14 ? 'two weeks' : d === 7 ? 'a week' : 
 
 /**
  * What the caveat under a pace range says, as data: which case it is and its figures. `rangeCaveat` words it
- * in English; a translated page words the same note in its own language, so the two can't say different things.
+ * in English from it, so the sentence and its figures can't disagree.
  */
 export type RangeNote =
   /** A measured range, tested on start days it wasn't drawn from. Shares 0 to 1. */
@@ -260,7 +260,7 @@ export function rangeCaveat(
 
 /**
  * Each caveat as data, beside its English sentence in `caveats` (same order, built from the same note through
- * `estimateNoteText`), so a translated page words the same facts and never parses English.
+ * `estimateNoteText`), so anything that reads a caveat reads its facts, never parses the sentence.
  */
 export type EstimateNote =
   /** DOL's queue passed the filing month this many months ago. */
@@ -340,7 +340,7 @@ export interface EstimateModel {
   rangeNote?: string;
   /** decision-pace only: a range the backtest measured, or the pace rule's. */
   rangeFrom?: 'measured' | 'pace';
-  /** The figures `basis` and `source` are worded from, so a translated page words the same ones. */
+  /** The figures `basis` and `source` are worded from. */
   facts?: ModelFacts;
   /** `rangeNote` as data. */
   rangeFacts?: RangeNote;
