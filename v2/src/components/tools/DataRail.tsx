@@ -7,6 +7,7 @@ import { IntentLink } from "@/components/ui/intent-link";
 import { usePathname } from "next/navigation";
 import {
   AirplaneTiltIcon,
+  GraduationCapIcon,
   BellRingingIcon,
   BuildingsIcon,
   CalendarDotsIcon,
@@ -73,6 +74,7 @@ export const GROUP_ICONS: Record<DataGroup, Icon> = {
   Breakdowns: ChartPieSliceIcon,
   Wages: CurrencyDollarIcon,
   "Other visas": AirplaneTiltIcon,
+  "Students and OPT": GraduationCapIcon,
 };
 
 export function DataRail() {

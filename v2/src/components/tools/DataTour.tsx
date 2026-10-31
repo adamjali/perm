@@ -66,6 +66,11 @@ const BANDS: Record<DataGroup, { lead: string; shot: DataShot; url: string }> = 
     shot: "visas",
     url: "permtracker.app/lca-cases",
   },
+  "Students and OPT": {
+    lead: "The employers that hired F-1 students on OPT, from ICE's own lists, and how far a pending H-1B carries a student's OPT.",
+    shot: "students",
+    url: "permtracker.app/opt-employers",
+  },
 };
 
 function PageLinks({ group, ink }: { group: DataGroup; ink: boolean }) {

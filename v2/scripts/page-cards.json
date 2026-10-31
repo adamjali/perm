@@ -266,6 +266,37 @@
   "css": "main section[data-embed] figure > p:last-child, main section[data-embed] dl, main section[data-embed] details{display:none!important} main section[data-embed] .grid p{visibility:hidden!important} main section[data-embed] ~ *{display:none!important} [data-shell-column] > section[aria-label='Check your case'], footer{display:none!important}"
  },
  {
+  "slug": "cap-gap-calculator",
+  "path": "/tools/cap-gap-calculator",
+  "title": "Cap-gap and OPT days",
+  "label": "How far a pending H-1B carries F-1 status and OPT, and the unemployment days left.",
+  "shot": "cap-gap-calculator.png",
+  "crop": [
+   0,
+   0,
+   2200,
+   772
+  ],
+  "fill": [
+   [
+    "OPT ends",
+    "2027-05-31"
+   ],
+   [
+    "H-1B start asked for",
+    "2027-10-01"
+   ],
+   [
+    "H-1B petition filed",
+    "2027-04-01"
+   ]
+  ],
+  "fromEl": "main section[data-embed] figure",
+  "css": "main section[data-embed] .grid p{visibility:hidden!important} main section[data-embed] figure > p:last-child, main section[data-embed] details, main section[data-embed] ~ section, [data-shell-column] > section[aria-label='Check your case'], footer{display:none!important}",
+  "viewport": 1440,
+  "maxWidth": 1100
+ },
+ {
   "slug": "i140-calculator",
   "path": "/tools/i140-calculator",
   "title": "I-140 processing time",

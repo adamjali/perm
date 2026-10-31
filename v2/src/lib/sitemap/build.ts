@@ -367,6 +367,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/pwd-validity`, lastModified: at("/tools/pwd-validity"), images: [`${base}/og/pwd-validity.jpg`] },
     { url: `${base}/tools/h1b-six-year-limit`, lastModified: at("/tools/h1b-six-year-limit"), images: [`${base}/og/h1b-six-year-limit.jpg`] },
     { url: `${base}/wage-violations`, lastModified: at("/wage-violations"), images: [`${base}/og/wage-violations.jpg`] },
+    { url: `${base}/tools/cap-gap-calculator`, lastModified: at("/tools/cap-gap-calculator"), images: [`${base}/og/cap-gap-calculator.jpg`] },
     { url: `${base}/tools/cspa-age-calculator`, lastModified: at("/tools/cspa-age-calculator"), images: [`${base}/og/cspa-age-calculator.jpg`] },
     { url: `${base}/tools/priority-date-retention`, lastModified: at("/tools/priority-date-retention"), images: [`${base}/og/priority-date-retention.jpg`] },
     { url: `${base}/tools/green-card-fees`, lastModified: at("/tools/green-card-fees"), images: [`${base}/og/green-card-fees.jpg`] },

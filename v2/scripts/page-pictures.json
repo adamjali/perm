@@ -187,6 +187,16 @@
     "alt": "The USCIS processing times page for April to June 2026: 3.9 months to decide an I-140, 6 for an employment-based I-485, 6.4 for a work permit and 5.8 for advance parole, with 12,807,907 applications pending at USCIS.",
     "captured": "2026-10-28"
   },
+  "data/students": {
+    "capture": {
+      "url": "/opt-employers",
+      "clip": "fromm:Who hires students on OPT and CPT",
+      "maxHeight": 1150,
+      "wait": 4000
+    },
+    "alt": "The OPT and CPT employers page: the 200 employers with the most F-1 students on practical training each year, as ICE lists them, with Amazon busiest in 2024 at 10,167 students on OPT or STEM OPT and the 10 busiest holding 26% of the 2024 list.",
+    "captured": "2026-10-31"
+  },
   "data/visas": {
     "capture": {
       "url": "/lca-cases",

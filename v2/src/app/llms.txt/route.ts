@@ -311,6 +311,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "Every Wage and Hour case DOL concluded under the H-1B, H-2A and H-2B programs since FY2005, from DOL's own compliance file: violations, back wages the employer agreed to pay and workers owed, by fiscal year and by employer.",
   },
   {
+    path: "/tools/cap-gap-calculator",
+    label: "Cap-gap and OPT unemployment calculator",
+    blurb: "How far a pending H-1B cap petition extends an F-1 student's status and OPT (until April 1 of the fiscal year since 89 FR 103054, effective January 17, 2025, or the approved start if earlier), and the OPT unemployment days left (90, or 150 with STEM OPT), from 8 CFR 214.2(f).",
+  },
+  {
     path: "/tools/cspa-age-calculator",
     label: "CSPA age calculator (will my child age out?)",
     blurb: "Whether a child on a parent's green card still counts as under 21 under the Child Status Protection Act: the CSPA age (INA 203(h)(1)), the day the visa counted as available from the bulletin archive, and the one-year deadline to file, by USCIS's Policy Manual.",
@@ -318,7 +323,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/tools/h1b-six-year-limit",
     label: "H-1B six-year limit and the 365-day rule",
-    blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",
+    blurb: "When H-1B status maxes out, the last day to file a PERM so one-year extensions stay available under AC21 section 106(a), and the 240-day rule (8 CFR 274a.12(b)(20)) for work while a timely extension waits. Dates with citations, no prediction.",
   },
   {
     path: "/lca-wage-sources",

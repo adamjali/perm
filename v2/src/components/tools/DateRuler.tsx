@@ -56,6 +56,7 @@ export function DateRuler({
   marks = [],
   emptyHint,
   leftWord = "left",
+  inclusive = false,
   className,
 }: {
   /** The date that starts the clock; null until the reader enters it. */
@@ -69,6 +70,8 @@ export function DateRuler({
   emptyHint: string;
   /** "left" for a deadline; another word where the end is not a deadline. */
   leftWord?: string;
+  /** The period counts both its first and last day (the 240 days of 274a.12(b)(20)), so "in all" is one more. */
+  inclusive?: boolean;
   className?: string;
 }) {
   const ready = from !== null && to !== null && to >= from;
@@ -141,7 +144,7 @@ export function DateRuler({
           {left >= 0 ? (
             <>
               <span className="font-heading text-3xl font-bold tabular-nums">{formatInt(left)}</span>{" "}
-              {left === 1 ? "day" : "days"} {leftWord}, of {formatInt(span)} in all.
+              {left === 1 ? "day" : "days"} {leftWord}, of {formatInt(inclusive ? span + 1 : span)} in all.
             </>
           ) : (
             <>

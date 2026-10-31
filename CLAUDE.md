@@ -1766,3 +1766,12 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   Oct 1 2025 aren't directly comparable.
 - **A reload refreshes only the employer pages whose cases moved** (`moved_pages`, through nginx to both web copies).
 - **`getFamilyBulletinSeries` throws on a failed read** (it had read as an empty list).
+- **`/tools/cap-gap-calculator`** (cap-gap and OPT unemployment days) and **the 240-day rule on `/tools/h1b-six-year-limit`**
+  (`#240-day-rule`), from 8 CFR 214.2(f)(5)(vii), 214.2(f)(10)(ii)(E) and 274a.12(b)(20) as eCFR printed them on Oct 28
+  2026 (`convex/lib/perm/calculators/f1Dates.ts`). The cap-gap runs until April 1 of the H-1B fiscal year (89 FR 103054,
+  effective Jan 17 2025; October 1 before), or the approved start if earlier. The 240 days count the I-94's end date as
+  day one, and the page prints the day-later count beside it.
+- **A "Students and OPT" menu group** holds the OPT employers page and the cap-gap tool; every other group was full at
+  nine. Its data tour picture is `data/students` in `scripts/page-pictures.json`.
+- **The priority-date tool answers "Can you file an I-485 for <month>?"** from the chart USCIS names that month and the
+  archive's cell for it, and says nothing for a month the archive doesn't hold.

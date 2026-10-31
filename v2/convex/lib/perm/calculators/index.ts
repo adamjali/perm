@@ -184,3 +184,17 @@ export {
   type CspaStatus,
   type CspaWindow,
 } from './cspa';
+export {
+  calculateCapGap,
+  calculateOptUnemployment,
+  calculatePendingExtension,
+  EXTENSION_PENDING_DAYS,
+  fiscalYearOfDay,
+  OPT_UNEMPLOYMENT_DAYS,
+  STEM_OPT_UNEMPLOYMENT_DAYS,
+  type CapGapInput,
+  type CapGapResult,
+  type OptUnemploymentInput,
+  type OptUnemploymentResult,
+  type PendingExtensionResult,
+} from './f1Dates';

@@ -538,3 +538,36 @@ describe("opening on one line, for a page about that line", () => {
     expect((screen.getByLabelText(/^category$/i) as HTMLSelectElement).value).toBe("EB2");
   });
 });
+
+describe("PriorityDateEstimator: can you file an I-485", () => {
+  const WITH_AUG = [...SERIES, bulletin("2026-08", "01JAN14")];
+
+  it("answers yes when the date is earlier than the cutoff on the chart USCIS names", () => {
+    renderTool({ bulletins: WITH_AUG, currentBulletinMonth: "2026-08", currentEmploymentChart: "Dates for Filing" });
+    setPriorityDate("2014-06-01");
+    const v = screen.getByTestId("i485-verdict");
+    expect(within(v).getByText("Yes, by the date")).toBeInTheDocument();
+    // The Dates for Filing cell (01JAN15), not the Final Action one (01JAN14).
+    expect(v.textContent).toMatch(/cutoff for this line is January 1, 2015\. Your date is earlier\./);
+  });
+
+  it("answers not yet, with how far, on that same chart", () => {
+    renderTool({ bulletins: WITH_AUG, currentBulletinMonth: "2026-08", currentEmploymentChart: "Final Action Dates" });
+    setPriorityDate("2014-06-01");
+    const v = screen.getByTestId("i485-verdict");
+    expect(within(v).getByText("Not yet")).toBeInTheDocument();
+    expect(v.textContent).toMatch(/Your date is 151 days later\./);
+  });
+
+  it("says the category is closed in a U month", () => {
+    renderTool({ currentBulletinMonth: "2026-07", currentEmploymentChart: "Final Action Dates" });
+    setPriorityDate("2010-01-01");
+    expect(within(screen.getByTestId("i485-verdict")).getByText("No, the category is closed")).toBeInTheDocument();
+  });
+
+  it("says nothing for a month the archive doesn't hold", () => {
+    renderTool({ currentBulletinMonth: "2026-09", currentEmploymentChart: "Dates for Filing" });
+    setPriorityDate("2014-06-01");
+    expect(screen.queryByTestId("i485-verdict")).not.toBeInTheDocument();
+  });
+});

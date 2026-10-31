@@ -34,7 +34,8 @@ export type DataGroup =
   | "Employers and firms"
   | "Breakdowns"
   | "Wages"
-  | "Other visas";
+  | "Other visas"
+  | "Students and OPT";
 
 /** The keys the data pages are known by (entity pages name their index by one). */
 export type DataSection =
@@ -104,7 +105,8 @@ export type DataSection =
   | "lottery-calculator"
   | "six-year-limit"
   | "cspa-age"
-  | "wage-violations";
+  | "wage-violations"
+  | "cap-gap";
 
 export interface DataNavSection extends SitePage {
   key: DataSection;
@@ -211,9 +213,11 @@ export const SECTIONS: DataNavSection[] = [
   t("six-year-limit", "Other visas", "H-1B six-year limit", "/tools/h1b-six-year-limit", "The end of six years and the 365-day rule."),
   s("seasonal-cases", "Other visas", "H-2A, H-2B and CW-1", "/seasonal-cases"),
   s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
-  s("opt-employers", "Other visas", "OPT and CPT employers", "/opt-employers"),
   s("cap-exempt", "Other visas", "H-1B cap-exempt employers", "/h1b-cap-exempt-employers"),
   s("wage-violations", "Other visas", "Visa wage violations", "/wage-violations"),
+
+  s("opt-employers", "Students and OPT", "OPT and CPT employers", "/opt-employers"),
+  t("cap-gap", "Students and OPT", "Cap-gap and OPT days", "/tools/cap-gap-calculator", "How far a pending H-1B carries status and OPT."),
 ];
 
 export const GROUPS: DataGroup[] = [
@@ -227,6 +231,7 @@ export const GROUPS: DataGroup[] = [
   "Breakdowns",
   "Wages",
   "Other visas",
+  "Students and OPT",
 ];
 
 /** Every calculator, in the order of the steps they serve: the entries the menu files as tools. */

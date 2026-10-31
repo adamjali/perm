@@ -22,6 +22,7 @@ import { CalendarBlankIcon as CalendarRange, ClockCounterClockwiseIcon as Histor
 
 import {
   estimatePriorityDate,
+  parseCutoff,
   type BulletinMonth,
   type CountryKey,
   type ChartKind,
@@ -78,9 +79,9 @@ export interface PriorityDateEstimatorProps {
    * `currentBulletinMonth`, read from USCIS at render time. Null when that
    * read failed.
    *
-   * Worth surfacing because it decides whether an I-485 can be filed at all,
-   * it changes month to month, and it is the one current, primary fact this
-   * page can honestly show while its cutoff series is stuck in the past.
+   * Worth surfacing because it decides whether an I-485 can be filed at all
+   * and it changes month to month. Read against the archive's cell for that
+   * month, it answers "can I file this month" (`i485`).
    */
   currentEmploymentChart?: "Final Action Dates" | "Dates for Filing" | null;
   /**
@@ -358,6 +359,22 @@ export function PriorityDateEstimator({
       return null;
     }
   }, [pdUsable, priorityDate, category, country, chart, bulletins]);
+
+  // Whether an I-485 can be filed for the bulletin month USCIS names: that month's cell on the chart USCIS says to
+  // use for employment-based filings. Only when the archive holds that month; otherwise nothing is said.
+  const i485 = useMemo(() => {
+    if (!pdUsable || !currentBulletinMonth || !currentEmploymentChart) return null;
+    const month = bulletins.find((b) => b.bulletinMonth === currentBulletinMonth);
+    if (!month) return null;
+    const key: ChartKind = currentEmploymentChart === "Final Action Dates" ? "finalAction" : "datesForFiling";
+    const cutoff = parseCutoff(month[key]?.[category]?.[country]);
+    if (!cutoff) return null;
+    // "Earlier than" the cutoff, as State prints on every chart.
+    const can = cutoff.kind === "current" || (cutoff.kind === "date" && priorityDate < cutoff.iso);
+    const daysLate =
+      cutoff.kind === "date" && !can ? Math.round((Date.parse(priorityDate) - Date.parse(cutoff.iso)) / MS_PER_DAY) : null;
+    return { month: currentBulletinMonth, chart: currentEmploymentChart, cutoff, can, daysLate };
+  }, [pdUsable, currentBulletinMonth, currentEmploymentChart, bulletins, category, country, priorityDate]);
 
   // How stale, stated in the two units that are actually true at once: the
   // newest bulletin here versus today's calendar month, and versus the newest
@@ -728,12 +745,10 @@ export function PriorityDateEstimator({
               </p>{" "}
 
               {currentBulletinMonth && currentEmploymentChart ? (
-                // The one CURRENT, primary fact this page can honestly show
-                // while its own cutoff series is stuck in the past. Which
-                // chart USCIS accepts decides whether an I-485 can be filed at
-                // all, it changes month to month, and it is published on a
-                // host that serves scripts. Dated, sourced, and never used to
-                // infer a cutoff.
+                // Which chart USCIS accepts decides whether an I-485 can be
+                // filed at all, it changes month to month, and it is published
+                // on a host that serves scripts. Dated and sourced; the cutoff
+                // itself always comes from the bulletin.
                 <div className="mt-4 bg-sage p-4 border-2 border-border">
                   <p className="text-sm font-bold text-muted-foreground">
                     What USCIS is accepting now
@@ -766,6 +781,38 @@ export function PriorityDateEstimator({
               ) : null}
             </div>
           </div>
+        </div>
+      ) : null}{" "}
+
+      {i485 ? (
+        <div
+          data-testid="i485-verdict"
+          className={cn("border-b-2 border-border p-6 sm:p-8", i485.can ? "bg-soft-good border-l-8 border-primary" : "bg-soft-wait")}
+        >
+          <p className="text-sm font-bold text-muted-foreground">
+            Can you file an <span className="whitespace-nowrap">I-485</span> for {formatMonth(i485.month)}?
+          </p>{" "}
+          <p className="mt-2 font-heading text-2xl font-bold leading-tight sm:text-3xl">
+            {i485.can ? "Yes, by the date" : i485.cutoff.kind === "unavailable" ? "No, the category is closed" : "Not yet"}
+          </p>{" "}
+          <p className="mt-3 text-base leading-relaxed">
+            USCIS takes employment-based <span className="whitespace-nowrap">I-485s</span> on the <strong>{i485.chart}</strong> chart for {formatMonth(i485.month)}
+            {i485.cutoff.kind === "date" ? (
+              <>
+                , and its cutoff for this line is <strong>{formatAsOf(i485.cutoff.iso)}</strong>.
+                {i485.can ? " Your date is earlier." : i485.daysLate !== null ? ` Your date is ${i485.daysLate.toLocaleString("en-US")} days later.` : ""}
+              </>
+            ) : i485.cutoff.kind === "current" ? (
+              ", and this line is current: every priority date can file."
+            ) : (
+              ", and this line has no visa numbers that month."
+            )}
+          </p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The date is the part this answers. The <span className="whitespace-nowrap">I-485</span> also needs the{" "}
+            <span className="whitespace-nowrap">I-140</span> filed or approved, and the person in the United States in a
+            status that allows adjusting.
+          </p>
         </div>
       ) : null}{" "}
 

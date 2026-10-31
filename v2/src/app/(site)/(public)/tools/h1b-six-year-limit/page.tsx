@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
 import { H1bMaxOutCalculator } from "@/components/tools/H1bMaxOutCalculator";
+import { PendingExtensionCalculator } from "@/components/tools/PendingExtensionCalculator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -20,7 +21,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "H-1B Six-Year Limit Calculator";
 const DESCRIPTION =
-  "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Two dates, with the citations.";
+  "When H-1B status maxes out, the last day to file a PERM to keep extending it under AC21 106(a), and the 240-day rule while an extension waits.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -43,6 +44,10 @@ const FAQS = [
   {
     q: "Does time in L-1 status count toward the six years?",
     a: "Yes. INA 214(g)(4) and 8 CFR 214.2(h)(13)(iii)(A) count time in H-1B and L-1 status together toward the six-year limit. Enter the earliest start of either status.",
+  },
+  {
+    q: "What is the 240-day rule?",
+    a: "8 CFR 274a.12(b)(20): when an H-1B extension by the same employer is filed before the I-94 ends, the worker may keep working for that employer for up to 240 days beginning on the day the stay expired, while the extension waits. A denial before then ends it. A new employer's petition works differently: under H-1B portability, 8 CFR 214.2(h)(2)(i)(H), an eligible worker may start the new job when its petition is filed, or on the start date it asks for if that is later.",
   },
   {
     q: "Is this legal advice?",
@@ -72,6 +77,17 @@ export default function H1bSixYearLimitPage() {
       </header>
       <section data-embed="h1b-six-year" className="mt-10">
         <H1bMaxOutCalculator />
+      </section>{" "}
+      <section id="240-day-rule" aria-labelledby="pending-h" className="mt-14">
+        <h2 id="pending-h" className="font-heading text-2xl font-bold sm:text-3xl">
+          While an extension is pending: the 240-day rule
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+          How long work with the same employer can go on after the I-94 ends, while a timely filed extension waits.
+        </p>{" "}
+        <div className="mt-6">
+          <PendingExtensionCalculator />
+        </div>
       </section>
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-bold">FAQs</h2>
