@@ -108,6 +108,8 @@ import { whdForSlug } from "@/lib/db/whd";
 import { oshaForSlug } from "@/lib/db/osha";
 import { WageHourCases } from "@/components/entities/WageHourCases";
 import { SafetyInspections } from "@/components/entities/SafetyInspections";
+import { FederalExclusions } from "@/components/entities/FederalExclusions";
+import { samExclusionsForSlug } from "@/lib/db/samExclusions";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { OtherEmployer } from "@/components/entities/OtherEmployer";
@@ -673,7 +675,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -737,6 +739,8 @@ export default async function EmployerPage({
       whdForSlug(canonicalSlug),
       // OSHA's inspections matched to this sponsor (published sponsors only: the join needs a PERM record).
       oshaForSlug(canonicalSlug),
+      // SAM.gov's exclusions matched to this sponsor by name and city. No catch, as with debarments.
+      samExclusionsForSlug(canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -975,7 +979,8 @@ export default async function EmployerPage({
         ) : null}{" "}
         <WarnNoticeBand rows={warn} pageName={row.name} />{" "}
         <WageHourCases summary={whd} pageName={row.name} />{" "}
-        <SafetyInspections summary={osha} pageName={row.name} />
+        <SafetyInspections summary={osha} pageName={row.name} />{" "}
+        <FederalExclusions rows={samRows} pageName={row.name} />
       </Chapter>
 
       <Chapter id="wait" title="How long it takes">

@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -49,6 +49,25 @@ case "$job" in
     REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
     export REVALIDATE_SECRET
     timeout 60m nice -n 10 python3 scripts/ingest_osha.py || { rc=1; fail ingest_osha.py "exited non-zero or ran past 60m"; } ;;
+  # USCIS's processing-times page as posted, every day since March 2022 (Oct 31 2026): the daily copies an
+  # open-source project publishes on GitHub (ingest_uscis_posted_times.py says why and how). Read daily; a day the
+  # project published nothing new writes nothing. The two pages that print the figures rebuild through nginx.
+  posted-times)
+    if timeout 20m nice -n 10 python3 scripts/ingest_uscis_posted_times.py; then
+      REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+      [ -n "$REVALIDATE_SECRET" ] && curl -s -m 60 -o /dev/null -w "refresh %{http_code}\n" -X POST \
+        -H "Host: permtracker.app" -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+        http://127.0.0.1:8081/api/revalidate-uscis-times || true
+    else
+      rc=1; fail ingest_uscis_posted_times.py "exited non-zero or ran past 20m"
+    fi ;;
+  # SAM.gov's exclusions of PERM sponsors (Oct 31 2026): one public file a day, no key. Read weekly; pages whose
+  # exclusions moved rebuild through nginx.
+  sam)
+    export REVALIDATE_BASE=http://127.0.0.1:8081
+    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+    export REVALIDATE_SECRET
+    timeout 15m nice -n 10 python3 scripts/ingest_sam_exclusions.py || { rc=1; fail ingest_sam_exclusions.py "exited non-zero or ran past 15m"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

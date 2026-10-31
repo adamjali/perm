@@ -1,0 +1,13 @@
+[Unit]
+Description=Schedule for permtracker-uscis@sam
+# SAM.gov's exclusions of PERM sponsors (ingest_sam_exclusions.py, Oct 31 2026). SAM
+# builds the day's file at about 5:40 AM Eastern; read Tuesdays at 9:10 AM, after
+# Monday's WHD and OSHA reads. Persistent: a Tuesday the server was down runs when
+# it's back.
+[Timer]
+OnCalendar=Tue *-*-* 09:10:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@sam.service
+
+[Install]
+WantedBy=timers.target

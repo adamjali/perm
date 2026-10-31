@@ -1829,6 +1829,20 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   `src/components/tools/__tests__/calculator-tour.test.ts` fails on a missing look. **After every push, read the
   Oracle run's Build step** (`gh run list --workflow oracle-deploy.yml`): a held push still builds, and a red build
   is a red night deploy.
-- **SAM.gov exclusions aren't loaded**: api.sam.gov answered an empty 404 to every exclusions path tried (v1 to v4),
-  with the api.data.gov key, DEMO_KEY and none, from the server and the Mac (Oct 31 2026). It likely wants a key
-  from a SAM.gov account, which is the owner's to make.
+- **SAM.gov exclusions come from its daily public file, no key** (`scripts/ingest_sam_exclusions.py`, table
+  `sam_exclusions`, `FederalExclusions` on sponsor pages, `permtracker-uscis@sam` Tuesdays): the Data Services list
+  (`sam.gov/api/prod/fileextractservices/v1/api/listfiles?domain=Exclusions%2FPublic%20V2&privacy=Public`) and its
+  download answer the server; api.sam.gov answered an empty 404 to every keyed path. Firms and special entity
+  designations only, never people or vessels, joined by name AND a city the sponsor's own PERM filings name (or a
+  national sponsor): the name rule alone joined 11 on Oct 31, of which 5 weren't certain by hand ("Maverick Services"
+  in Clarksville against a Houston sponsor); the city test keeps the 6 that were.
+- **USCIS's posted processing times, every posting since March 2022** (`scripts/ingest_uscis_posted_times.py`, table
+  `uscis_posted_times`, doc `uscis_posted_times`, `permtracker-uscis@posted-times` twice a day): the daily SQLite
+  copies the open-source jzebedee/uscis project publishes as GitHub releases. That project reaches egov.uscis.gov with
+  a Chrome-imitating curl and saved cookies; the owner chose to use its files knowing that (Oct 31 2026), and we do
+  none of it ourselves. Its `range_lower` is the figure USCIS's page prints (8 of 8 I-140 figures equal the owner's
+  hand reading, Oct 31). `/uscis-processing-times` prints the newest posting with USCIS's own date while it's current
+  (`i140Figures`, `isCurrent`: USCIS's longest gap x 1.5, at least 75 days) and the typed figures, dated when read,
+  otherwise; a history chart per I-140 subtype credits the project. GitHub's release list stops at 1,000 (page 11
+  answers 422), so the full load reads `git ls-remote --tags`. The health check warns when the typed fallback differs
+  from the newest posting (`check_posted_vs_typed`).

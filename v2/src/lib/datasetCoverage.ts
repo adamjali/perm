@@ -120,6 +120,10 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "The Labor Department's concluded Wage and Hour compliance actions since FY2005, as DOL publishes them: violations, back wages the employer agreed to pay, workers owed and penalties, H-1B, H-2A and H-2B counted apart. Kept here are the cases matched to an employer page by legal name, and every case with an H-1B, H-2A or H-2B finding.",
   "osha-inspections":
     "OSHA's and the state plans' workplace safety and health inspections opened since October 2016, matched to a PERM sponsor's page by name: why each was opened, when it opened and closed, and the violations cited with their type and penalty, counted as OSHA counts them. An open inspection's citations can still change.",
+  "uscis-posted-times":
+    "Every figure USCIS's processing-times page has posted since March 2022, by form, subtype and office, with USCIS's own posting date: the time it took to decide 80% of the cases it decided in the past six months. Copied from USCIS's page each day by an open-source project; checked against a weekly reading of the page itself.",
+  "sam-exclusions":
+    "Firms the federal government has excluded from contracts and certain assistance, from SAM.gov's daily public file: the excluding agency, the kind of exclusion and its dates. Kept here are firms matched to a PERM sponsor's page by name and state; people and vessels are never kept.",
   "warn-notices":
     "State WARN layoff notices from 47 states and DC, each from the record its state publishes. Arkansas, New Hampshire and Wyoming publish no list.",
   "warn-notices-ca":
@@ -290,6 +294,8 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "rule-pipeline-agenda": "The Unified Agenda",
   "whd-cases": "Wage and Hour cases",
   "osha-inspections": "OSHA inspections",
+  "uscis-posted-times": "USCIS posted processing times",
+  "sam-exclusions": "SAM.gov exclusions",
   "warn-notices": "WARN notices",
   "warn-notices-ca": "California WARN notices",
   "warn-notices-ny": "New York WARN notices",

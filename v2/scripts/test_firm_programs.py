@@ -63,6 +63,7 @@ add("not-mapped", "acme", "Acme", "CERTIFIED", "2024-10-01", 50)
 add("", "acme", "Acme", "CERTIFIED", "2024-10-01", 7)
 con.executemany("INSERT INTO lca_cases VALUES (?, ?, ?, ?, ?, ?)", rows)
 for t in ("pwd_cases", "seasonal_cases"):
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query -- t is from the fixed tuple above.
     con.execute(f"CREATE TABLE {t} AS SELECT * FROM lca_cases WHERE 0")
 
 bfp.query_rows = lambda db, sql, args=None: [tuple(r) for r in con.execute(sql, args or []).fetchall()]

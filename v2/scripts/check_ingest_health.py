@@ -434,6 +434,8 @@ PRECOMPUTED_DOCS = {
     "month_detail": (3, "the filing-month pages' decisions per day and initials grid"),
     # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).
     "seasonal_timing": (45, "the seasonal case page's decision-timing panel"),
+    # Rebuilt twice a day by ingest_uscis_posted_times.py; the pages fall back to the typed I-140 figures without it.
+    "uscis_posted_times": (3, "USCIS's posted processing times and their history on /uscis-processing-times"),
 }
 
 # A doc under this many bytes carries nothing ("{}", "null", a bare stamp).
@@ -826,6 +828,44 @@ def check_data_gov_key(db) -> int:
     return 0
 
 
+def check_posted_vs_typed(db) -> int:
+    """Warn when the typed I-140 figures (the fallback in i140ProcessingTimes.ts) differ from USCIS's newest posting,
+    as the posted-times loader compared them (`handCheck` in perm_docs['uscis_posted_times']). Never a failure: the
+    pages print the posted figures while the doc is current, and the warning says which typed figure to update."""
+    try:
+        got = query_rows(db, "SELECT json FROM perm_docs WHERE key = 'uscis_posted_times'")
+    except RuntimeError as exc:
+        print(f"posted vs typed   : unreadable ({str(exc)[:100]})")
+        return 0
+    if not got:
+        print("posted vs typed   : no posted-times doc yet")
+        return 0
+    try:
+        check = (json.loads(got[0][0] or "{}").get("handCheck") or {})
+    except ValueError:
+        print("posted vs typed   : the posted-times doc doesn't parse")
+        return 0
+    try:
+        doc = json.loads(got[0][0] or "{}")
+        lag = (datetime.date.today() - datetime.date.fromisoformat(str(doc.get("newestRelease")))).days
+    except (ValueError, TypeError):
+        lag = None
+    if lag is not None and lag > 4:
+        # The project copies USCIS's page daily; past 4 days it has stopped, and USCIS's own posting date (the
+        # freshness row) would take weeks to show it.
+        print(f"posted copies     : the project's newest daily file is {lag} days old  SOURCE PAUSED")
+        print(f"::warning::the jzebedee/uscis project's newest daily file is {lag} days old; the site keeps USCIS's "
+              "newest posting until it's past its own budget, then prints the typed figures")
+    differs = check.get("differs") or []
+    if differs:
+        print(f"posted vs typed   : {len(differs)} typed I-140 figure(s) differ  UPDATE THE FALLBACK")
+        print("::warning::the typed I-140 figures in i140ProcessingTimes.ts differ from USCIS's newest posting: "
+              + "; ".join(differs))
+    else:
+        print(f"posted vs typed   : {check.get('compared', 0)} typed I-140 figures match USCIS's newest posting  ok")
+    return 0
+
+
 def check_lookup_demand(db) -> int:
     try:
         rows = query_rows(db, "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
@@ -1004,6 +1044,7 @@ def main() -> int:
     check_warn_states(db)             # a warning only; see its docstring
     check_policy_sources(db)          # a warning only; see its docstring
     check_data_gov_key(db)            # a warning only; see its docstring
+    check_posted_vs_typed(db)         # a warning only; see its docstring
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)

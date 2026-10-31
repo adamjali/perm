@@ -42,12 +42,11 @@ import {
   type UscisFormRow,
 } from "@/lib/db/uscisQuarterly";
 import { monthsLabel, quarterLabel } from "@/lib/uscisQuarterlyShape";
-import {
-  PROCESSING_TIMES_AS_OF,
-  PROCESSING_TIMES_SOURCE_URL,
-  getI140ProcessingTime,
-  type I140Category,
-} from "@/lib/processing-times/i140ProcessingTimes";
+import { PROCESSING_TIMES_SOURCE_URL } from "@/lib/processing-times/i140ProcessingTimes";
+import { getUscisPosted } from "@/lib/db/uscisPosted";
+import { i140Figures, i140Series } from "@/lib/uscisPosted";
+import { easternDay } from "@/lib/time";
+import { PostedI140History } from "@/components/uscis/PostedI140History";
 import { formatAsOf } from "@/lib/dolFormat";
 import { SITE_URL } from "@/lib/constants/site";
 import { ScrollBox } from "@/components/ui/scroll-box";
@@ -218,11 +217,12 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
 }
 
 export default async function UscisProcessingTimesPage() {
-  const [quarter, historical, i140History, i485History] = await Promise.all([
+  const [quarter, historical, i140History, i485History, posted] = await Promise.all([
     getUscisFormQuarter(),
     getHistoricalMedians(),
     getUscisFormHistory("I-140"),
     getUscisFormHistory("I-485"),
+    getUscisPosted(),
   ]);
 
   const faqSchema = {
@@ -280,9 +280,11 @@ export default async function UscisProcessingTimesPage() {
     tone: row.form === "I-140" || row.title.includes("(Employment)") ? "primary" : "ink",
   }));
 
-  // The processing-times page's figures for the I-140, beside the one median.
-  const egovSubtypes = (["EB-1", "EB-2", "EB-2-NIW", "EB-3"] as I140Category[])
-    .flatMap((c) => getI140ProcessingTime(c)?.subtypes ?? []);
+  // The processing-times page's figures for the I-140, beside the one median: USCIS's newest posting when it's
+  // current, else the figures last read by hand, each with its own date.
+  const egov = i140Figures(posted, easternDay());
+  const egovSubtypes = egov.subtypes;
+  const postedSeries = i140Series(posted);
 
   const categories = [...new Set(forms.map((r) => r.category))].filter(Boolean);
   const factsheetSeries = historical
@@ -369,8 +371,8 @@ export default async function UscisProcessingTimesPage() {
                     Left: USCIS quarterly data, {quarterLabel(quarter.fy, quarter.quarter)}. Right:{" "}
                     <a href={PROCESSING_TIMES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="link">
                       USCIS processing times
-                    </a>{" "}
-                    as of {formatAsOf(PROCESSING_TIMES_AS_OF)}.
+                    </a>
+                    {egov.from === "posted" ? `, posted ${formatAsOf(egov.asOf)}` : `, read ${formatAsOf(egov.asOf)}`}.
                   </>
                 }
               >
@@ -396,6 +398,32 @@ export default async function UscisProcessingTimesPage() {
                     </ul>
                   </div>
                 </div>
+              </FigurePlate>
+            </section>
+          ) : null}
+
+          {postedSeries.length > 0 && posted ? (
+            <section id="posted-history" className="mt-12 scroll-mt-24">
+              <FigurePlate
+                title="How the posted I-140 times moved"
+                subject={`Every posting since ${formatAsOf(postedSeries[0]?.points[0]?.[0] ?? posted.published)}, by petition subtype`}
+                caption={
+                  <>
+                    Each line is one subtype&apos;s figure on the processing-times page, posting by posting, on its own
+                    scale. The dot is USCIS&apos;s newest posting, {formatAsOf(posted.published)}.
+                  </>
+                }
+                source={
+                  <>
+                    USCIS processing times, as copied each day by the open-source{" "}
+                    <a href={posted.project} target="_blank" rel="noopener noreferrer" className="link">
+                      jzebedee/uscis project
+                    </a>
+                    . USCIS keeps no history of its own.
+                  </>
+                }
+              >
+                <PostedI140History series={postedSeries} />
               </FigurePlate>
             </section>
           ) : null}

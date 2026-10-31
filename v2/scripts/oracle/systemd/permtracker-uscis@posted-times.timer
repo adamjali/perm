@@ -1,0 +1,14 @@
+[Unit]
+Description=Schedule for permtracker-uscis@posted-times
+# USCIS's posted processing times (ingest_uscis_posted_times.py, Oct 31 2026). The
+# project behind the copies publishes each day's file at about 6 to 7 AM Eastern;
+# read at 9:20 AM, with a second try in the evening for a late file. Persistent: a
+# day the server was down runs when it's back.
+[Timer]
+OnCalendar=*-*-* 09:20:00 America/New_York
+OnCalendar=*-*-* 19:20:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@posted-times.service
+
+[Install]
+WantedBy=timers.target
