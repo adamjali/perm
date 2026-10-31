@@ -15,7 +15,7 @@ import * as Sentry from "@sentry/nextjs";
 import { ArrowCounterClockwiseIcon as RefreshCcw, HouseIcon as Home } from "@phosphor-icons/react";
 import { isAuthError, isStaleDeploymentError, isLikelySessionTimeout } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
-import { claimAutoReload, isReloadCurable, reportCaughtError } from "./recovery";
+import { claimAutoReload, isReloadCurable, logClientError, reportCaughtError } from "./recovery";
 
 export interface RouteErrorProps {
   error: Error & { digest?: string };
@@ -36,12 +36,15 @@ export function RouteError({
     // Stale deployment: silently reload to pick up new Server Action hashes,
     // once a minute at most so it can't loop.
     if (isStaleDeployment) {
+      logClientError("RouteError", error, "reload-stale");
       if (claimAutoReload()) window.location.reload();
       return;
     }
 
     if (isExpiredSession) {
-      // Session expired — redirect gracefully, don’t report to Sentry
+      // Session expired — redirect gracefully, don’t report to Sentry. Our own
+      // server still hears of it: a timeout guessed wrong looks exactly like this.
+      logClientError("RouteError", error, "redirect-login");
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
       window.location.href = "/login?expired=1";
       return;

@@ -187,3 +187,14 @@ afterAll(() => {
   vi.useRealTimers();
 });
 
+
+/**
+ * An error screen's report (logClientError, Oct 31 2026) goes out by
+ * navigator.sendBeacon, and the test browsers send it for real (happy-dom's
+ * beacon fetches localhost:3000) or lack it (jsdom, so the fetch fallback runs):
+ * either way the refused connection failed the run. Every test gets a beacon
+ * that sends nothing; a test that checks the report stubs its own.
+ */
+if (typeof navigator !== "undefined") {
+  Object.defineProperty(navigator, "sendBeacon", { value: () => true, configurable: true, writable: true });
+}

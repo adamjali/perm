@@ -18,7 +18,7 @@
 
 import { useEffect } from "react";
 import { isAuthError, isStaleDeploymentError } from "@/components/error/auth-error";
-import { claimAutoReload, isReloadCurable, reportCaughtError } from "@/components/error/recovery";
+import { claimAutoReload, isReloadCurable, logClientError, reportCaughtError } from "@/components/error/recovery";
 import { failedLine } from "@/components/error/failedLine";
 
 const CSS = `
@@ -79,11 +79,13 @@ export default function GlobalError({
     // Stale deployment: silently reload to pick up new Server Action hashes,
     // once a minute at most so it can't loop.
     if (isStaleDeployment) {
+      logClientError("GlobalError", error, "reload-stale");
       if (claimAutoReload()) window.location.reload();
       return;
     }
 
     if (isExpiredSession) {
+      logClientError("GlobalError", error, "redirect-login");
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
       window.location.href = "/login?expired=1";
       return;

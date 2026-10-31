@@ -166,6 +166,45 @@ export function chunkDiagnostics(): ChunkDiagnostics | null {
  * Record a caught error in PostHog (always loaded) and, where it is, Sentry.
  * Pass `sentry: false` when the caller already reports to Sentry itself.
  */
+/** Errors already sent to /api/client-error by this page, so a re-render doesn't send one twice. */
+const sentToServer = new Set<string>();
+
+/**
+ * Tell our own server an error screen appeared, before it reloads or redirects
+ * (owner, Oct 31 2026: the screen "disappears super quick ... it needs to log").
+ * PostHog is off for staff and Sentry isn't loaded on the sign-in pages, so this
+ * is the one record that always exists. A beacon still goes out while the page
+ * navigates away. Never throws.
+ */
+export function logClientError(
+  boundary: string,
+  error: Error & { digest?: string },
+  outcome: "shown" | "reload" | "redirect-login" | "reload-stale",
+): void {
+  try {
+    if (typeof window === "undefined") return;
+    const message = String(error?.message ?? "");
+    const key = `${boundary}|${outcome}|${message}`;
+    if (sentToServer.has(key)) return;
+    sentToServer.add(key);
+    const body = JSON.stringify({
+      boundary,
+      outcome,
+      name: error?.name,
+      message,
+      digest: error?.digest,
+      path: window.location.pathname,
+      stack: typeof error?.stack === "string" ? error.stack.slice(0, 1500) : undefined,
+    });
+    const blob = new Blob([body], { type: "application/json" });
+    if (!navigator.sendBeacon?.("/api/client-error", blob)) {
+      void fetch("/api/client-error", { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } }).catch(() => {});
+    }
+  } catch {
+    // Reporting must never become a second failure.
+  }
+}
+
 export function reportCaughtError(
   boundary: string,
   error: Error & { digest?: string },
@@ -173,6 +212,7 @@ export function reportCaughtError(
 ): void {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
   const reloadCurable = isReloadCurable(error);
+  logClientError(boundary, error, autoReloaded ? "reload" : "shown");
   analytics.captureException(error, {
     boundary,
     digest: error.digest,
