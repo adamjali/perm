@@ -85,6 +85,7 @@ import type * as lib_calendarEventExtractor from "../lib/calendarEventExtractor.
 import type * as lib_calendarHelpers from "../lib/calendarHelpers.js";
 import type * as lib_calendarSyncHelpers from "../lib/calendarSyncHelpers.js";
 import type * as lib_calendarTypes from "../lib/calendarTypes.js";
+import type * as lib_callerIp from "../lib/callerIp.js";
 import type * as lib_caseDates from "../lib/caseDates.js";
 import type * as lib_caseListHelpers from "../lib/caseListHelpers.js";
 import type * as lib_caseListTypes from "../lib/caseListTypes.js";
@@ -338,6 +339,7 @@ declare const fullApi: ApiFromModules<{
   "lib/calendarHelpers": typeof lib_calendarHelpers;
   "lib/calendarSyncHelpers": typeof lib_calendarSyncHelpers;
   "lib/calendarTypes": typeof lib_calendarTypes;
+  "lib/callerIp": typeof lib_callerIp;
   "lib/caseDates": typeof lib_caseDates;
   "lib/caseListHelpers": typeof lib_caseListHelpers;
   "lib/caseListTypes": typeof lib_caseListTypes;

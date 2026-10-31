@@ -306,6 +306,13 @@ ACCEPTED_ADVISORIES: dict[str, tuple[str, str]] = {
     # renderer, merging the renderer's own option objects, never anything a visitor sends.
     # .planning/VERSION-DECISIONS.md, Oct 28 2026.
     "GHSA-gcqx-w48m-w2h4": ("deepmerge: no fix published; merges only our own email options", "2027-01-28"),
+    # glob 13.0.6 and minimatch 10.2.6 (moderate), reached only through Sentry's build-time upload plugin
+    # (@sentry/bundler-plugin-core), which globs our own build files: glob's issue needs an aborted walk and
+    # minimatch's an attacker's pattern, and neither happens there. The fixes (glob 14.0.2, minimatch 11.0.1)
+    # were published Oct 27 2026, under the 7-day release floor until Nov 3, and glob 14 is a major the plugin
+    # doesn't ask for (^13.0.6): taken as an override once they clear the floor and Sentry's plugin builds with them.
+    "GHSA-3g3m-2fjr-6pw4": ("glob: fix 4 days old; only Sentry's build plugin globs our own build files", "2026-11-04"),
+    "GHSA-g3hv-75wg-m249": ("minimatch: fix 4 days old; only Sentry's build plugin, our own patterns", "2026-11-04"),
 }
 
 

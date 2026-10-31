@@ -16,9 +16,15 @@ import { analytics } from "@/lib/analytics";
  * one (a chunk that no longer loads, webpack's "reading 'call'"), or a code or
  * data request that failed mid-navigation. Chrome words a response cut off
  * mid-read as "network error" (an Android sign-in page, Oct 12 2026).
+ *
+ * Production React sends two of these by number alone ("Minified React error
+ * #412; visit https://react.dev/errors/412 ..."), so their words never matched
+ * and the screen sat waiting for a click (Oct 2026). React's own list
+ * (scripts/error-codes/codes.json, read Oct 31 2026): #412 is "Connection
+ * closed.", #441 is "An error occurred in the Server Components render."
  */
 const RELOAD_CURABLE =
-  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed|reading 'call'|Failed to fetch|Network ?Error|Load failed|Connection closed|fetch failed|An error occurred in the Server Components render/i;
+  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed|reading 'call'|Failed to fetch|Network ?Error|Load failed|Connection closed|fetch failed|An error occurred in the Server Components render|Minified React error #(412|441)\b/i;
 
 export function isReloadCurable(error: unknown): boolean {
   if (!error) return false;

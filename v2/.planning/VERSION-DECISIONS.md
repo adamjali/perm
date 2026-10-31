@@ -253,3 +253,19 @@ again: by then deepmerge, html-to-text or the renderer may have moved.
   providers, the reading bar and the back-to-top button showing their content. Probed by giving the providers a
   hidden first frame (red). The SSR visibility audit over 40 pages on the dev server: 0 findings.
 - PR #68 is closed as superseded at go-live, with a link to this note.
+
+## October 31 2026: glob and minimatch, accepted until the fixes clear the release floor
+
+`pnpm audit --prod` lists two moderate advisories, both reached only through Sentry's build-time upload plugin
+(`@sentry/nextjs` > `@sentry/bundler-plugin-core` > `glob` 13.0.6 > `minimatch` 10.2.6):
+
+- GHSA-3g3m-2fjr-6pw4, glob: an aborted async walk keeps reading directories in the background. Fixed in glob
+  14.0.2, published Oct 27 2026.
+- GHSA-g3hv-75wg-m249, minimatch: an attacker-controlled pattern can amplify its own processing. Fixed in
+  minimatch 11.0.1, published Oct 27 2026.
+
+The plugin globs our own build output with our own patterns at build time; nothing a visitor sends reaches either
+package, and no walk is aborted. Both fixes are under the 7-day release floor until Nov 3, and glob 14 is a major
+the plugin doesn't ask for (`^13.0.6`). Accepted in `scripts/daily_monitor.py`'s `ACCEPTED_ADVISORIES` until Nov 4
+2026; then an override (`glob@>=14.0.2`, `minimatch@>=11.0.1`) once a production build with Sentry's source-map
+upload passes on it, or a Sentry release that asks for them.

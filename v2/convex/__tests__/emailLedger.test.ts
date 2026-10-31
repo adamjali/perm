@@ -18,6 +18,7 @@ import {
   msToNextUtcDay,
   utcDay,
 } from "../lib/emailLimits";
+import { aOrAn } from "../emailLedger";
 
 type T = ReturnType<typeof createTestContext>;
 
@@ -44,6 +45,14 @@ const pinMidday = () =>
   });
 
 const payload = (to = "a@example.com") => JSON.stringify({ from: "x@permtracker.app", to, subject: "s", html: "<p>h</p>" });
+
+describe("the owner's notice about a failed send", () => {
+  it("says an alert email and a confirmation email", () => {
+    expect(`${aOrAn("alert")} alert`).toBe("An alert");
+    expect(`${aOrAn("owner")} owner`).toBe("An owner");
+    expect(`${aOrAn("confirmation")} confirmation`).toBe("A confirmation");
+  });
+});
 
 describe("the day's count", () => {
   setupSchedulerTests();

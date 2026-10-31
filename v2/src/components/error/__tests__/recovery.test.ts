@@ -14,6 +14,9 @@ describe("isReloadCurable", () => {
     ["TypeError", "network error"],
     ["Error", "Connection closed."],
     ["Error", "An error occurred in the Server Components render."],
+    // The same two as production React words them.
+    ["Error", "Minified React error #412; visit https://react.dev/errors/412 for the full message"],
+    ["Error", "Minified React error #441; visit https://react.dev/errors/441 for the full message"],
   ])("a fresh load cures %s: %s", (name, message) => {
     const e = Object.assign(new Error(message), { name });
     expect(isReloadCurable(e)).toBe(true);
@@ -23,6 +26,7 @@ describe("isReloadCurable", () => {
     "Cannot read properties of undefined (reading 'length')",
     "x is not a function",
     "Minified React error #185",
+    "Minified React error #4120",
   ])("a code defect is not: %s", (message) => {
     expect(isReloadCurable(new Error(message))).toBe(false);
   });

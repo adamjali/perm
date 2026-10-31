@@ -137,8 +137,8 @@ export const enqueueRetry = internalMutation({
       ctx,
       row,
       "An email failed to send and was queued to retry",
-      `A ${args.kind} email failed to send (${args.error.slice(0, 200)}) and was put in the retry queue. ` +
-        `It is tried again automatically${args.quota ? " after Resend's daily count resets at midnight UTC (8 PM Eastern in summer)" : " in 5 minutes, then on a backoff"}, ` +
+      `${aOrAn(args.kind)} ${args.kind} email failed to send (${args.error.slice(0, 200)}) and was put in the retry queue. ` +
+        `It is tried again automatically${args.quota ? " after Resend's daily count resets at midnight UTC (8 PM EDT, 7 PM EST)" : " in 5 minutes, then on a backoff"}, ` +
         `for up to two weeks. The admin page's Alerts and email tab shows how many are waiting. This email comes at most once a day.`,
     );
     log.warn("send failed; queued for retry", { kind: args.kind, quota: args.quota });
@@ -146,9 +146,14 @@ export const enqueueRetry = internalMutation({
   },
 });
 
+/** "An" before a kind that starts with a vowel ("an alert email"), "A" otherwise ("a confirmation email"). */
+export function aOrAn(word: string): string {
+  return /^[aeiou]/i.test(word) ? "An" : "A";
+}
+
 function failedBody(kind: string, error: string, why: string): string {
   return (
-    `A ${kind} email failed to send (${error.slice(0, 200)}) and could not be queued for a retry: ${why}. ` +
+    `${aOrAn(kind)} ${kind} email failed to send (${error.slice(0, 200)}) and could not be queued for a retry: ${why}. ` +
     `It is counted as lost on the admin page. This email comes at most once a day.`
   );
 }
