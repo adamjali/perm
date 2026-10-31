@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
+import { getUscisCharts } from "@/lib/uscisChartsFetch";
 import Link from "next/link";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -118,7 +120,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
 }
 
 export default async function FamilyBulletinPage() {
-  const series = await getFamilyBulletinSeries();
+  const [series, uscisCharts] = await Promise.all([getFamilyBulletinSeries(), getUscisCharts()]);
   const board = summariseBulletins(series);
   const dataset = {
     "@context": "https://schema.org",
@@ -153,7 +155,8 @@ export default async function FamilyBulletinPage() {
           {board
             ? `Every family cutoff State printed in ${board.bulletinCount} bulletins from ${formatMonth(board.firstMonth)} to ${formatMonth(board.lastMonth)}, by category and country, with how far each moved and every month it went backwards.`
             : "The family charts are being read from the bulletin archive; check back shortly."}
-        </p>
+        </p>{" "}
+        <UscisChartNote charts={uscisCharts} only="family" className="mt-6" />
       </header>
 
       {board ? (

@@ -4,6 +4,8 @@ import {
   sameMonthMoves,
   summariseMoves,
   scenarioMonths,
+  cutoffGap,
+  gapLabel,
 } from "@/lib/bulletinNext";
 
 function month(bulletinMonth: string, fa: Record<string, Record<string, string>>): BulletinMonth {
@@ -104,5 +106,27 @@ describe("scenarioMonths", () => {
     expect(scenarioMonths(5911, 0)).toBeNull();
     expect(scenarioMonths(5911, -5)).toBeNull();
     expect(scenarioMonths(5911, Number.NaN)).toBeNull();
+  });
+});
+
+describe("cutoffGap and gapLabel", () => {
+  it("counts whole months from the cutoff to its bulletin's month", () => {
+    expect(cutoffGap("2026-11", { kind: "date", iso: "2013-11-01" })).toEqual({ months: 156, years: 13, rest: 0 });
+    // A cutoff after the 1st doesn't reach its month's start.
+    expect(cutoffGap("2026-11", { kind: "date", iso: "2015-01-15" })).toEqual({ months: 141, years: 11, rest: 9 });
+    expect(cutoffGap("2026-11", { kind: "date", iso: "2026-03-01" })).toEqual({ months: 8, years: 0, rest: 8 });
+  });
+
+  it("is null for Current, Unavailable and a missing cutoff", () => {
+    expect(cutoffGap("2026-11", { kind: "current" })).toBeNull();
+    expect(cutoffGap("2026-11", { kind: "unavailable" })).toBeNull();
+    expect(cutoffGap("2026-11", null)).toBeNull();
+  });
+
+  it("says the gap in words", () => {
+    expect(gapLabel({ years: 13, rest: 0 })).toBe("13 years");
+    expect(gapLabel({ years: 11, rest: 9 })).toBe("11 years, 9 months");
+    expect(gapLabel({ years: 1, rest: 1 })).toBe("1 year, 1 month");
+    expect(gapLabel({ years: 0, rest: 0 })).toBe("less than a month");
   });
 });

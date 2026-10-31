@@ -46,7 +46,8 @@ const MATRIX_KEY = [
 ];
 
 export default async function BulletinCategoriesPage() {
-  const raw = await getVisaBulletins().catch(() => []);
+  // A failed read throws, so a refresh during a database blip keeps the last good page.
+  const raw = await getVisaBulletins();
   const board = summariseBulletins(
     raw.map((b) => ({
       bulletinMonth: b.bulletinMonth,

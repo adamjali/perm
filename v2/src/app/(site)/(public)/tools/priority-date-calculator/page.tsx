@@ -12,7 +12,7 @@ import { getBulletinBoard, categoriesIn } from "@/lib/db/bulletin";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
-import { MONTH_NAMES } from "@convex/lib/months";
+import { getUscisCharts } from "@/lib/uscisChartsFetch";
 /**
  * Priority dates against the visa bulletin.
  *
@@ -51,106 +51,6 @@ export const metadata: Metadata = withSocialCard({
 // (the /api/revalidate-* routes).
 export const revalidate = 86400;
 
-/**
- * The newest bulletin the State Department has actually published, as USCIS
- * names it. USCIS is a separate primary federal source that serves scripts,
- * and while it publishes no cutoff dates of its own, it does name the
- * bulletin months it is operating against. That is exactly what the
- * staleness message needs, and it is sourced rather than guessed.
- *
- * It matters because the bulletin is FORWARD-DATED: late in a month, the
- * bulletin in force is that month's and the next one is already out.
- * Counting from the calendar alone would say "one month behind" when the
- * honest answer is two bulletins.
- *
- * Never fatal. A failed read leaves the prop null and the component falls back
- * to the calendar comparison, which is weaker but still true.
- */
-const USCIS_CHARTS_URL =
-  "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin";
-
-export interface UscisGuidance {
-  /** The newest bulletin month USCIS names, `YYYY-MM`. */
-  month: string;
-  /** Which chart USCIS accepts for EMPLOYMENT-BASED adjustment filings that month. */
-  employmentChart: "Final Action Dates" | "Dates for Filing" | null;
-}
-
-async function fetchUscisGuidance(): Promise<UscisGuidance | null> {
-  try {
-    const res = await fetch(USCIS_CHARTS_URL, {
-      headers: {
-        // uscis.gov answers a bare UA inconsistently and intermittently 403s
-        // datacenter runners. One honest browser-like set, and no retries.
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-      signal: AbortSignal.timeout(6000),
-      // The page's own window: a fetch's revalidate caps the page's.
-      next: { revalidate: 86400 },
-    });
-    if (!res.ok) return null;
-    const text = (await res.text())
-      .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ");
-
-    // Anchored on the USCIS heading, never on a bare "<Month> <Year>". The
-    // page names a dozen months in its archive list and the first bare match
-    // is the month in force, not the newest published one, so an unanchored
-    // read returns a plausible wrong answer with nothing to flag it.
-    const re = new RegExp(
-      `USCIS (${MONTH_NAMES.join("|")}) (\\d{4}) Adjustment of Status Filing Charts`,
-      "g",
-    );
-    const months: string[] = [];
-    for (const m of text.matchAll(re)) {
-      const idx = (MONTH_NAMES as readonly string[]).indexOf(m[1]!);
-      if (idx < 0) continue;
-      months.push(`${m[2]}-${String(idx + 1).padStart(2, "0")}`);
-    }
-    months.sort();
-    const month = months[months.length - 1];
-    if (!month) return null;
-
-    // Which chart USCIS accepts for EMPLOYMENT-BASED filings that month. This
-    // decides whether someone can file an I-485 at all and it changes month to
-    // month, and nobody else surfaces it.
-    //
-    // The "employment-based" half of the sentence is load-bearing, not
-    // decoration. The page carries the same sentence for FAMILY-SPONSORED
-    // filings and the two can disagree: in a given month employment-based can
-    // be "Final Action Dates" while family-sponsored is "Dates for Filing". A
-    // pattern matching a bare "must use the X chart" has five hits on this
-    // page and would report the wrong chart about half the time.
-    const chartRe = new RegExp(
-      "For all employment-based preference categories, you must use the " +
-        "(Final Action Dates|Dates for Filing) chart in the Department of State " +
-        `Visa Bulletin for (${MONTH_NAMES.join("|")}) (\\d{4})`,
-      "g",
-    );
-    let employmentChart: UscisGuidance["employmentChart"] = null;
-    let best = "";
-    for (const m of text.matchAll(chartRe)) {
-      const idx = (MONTH_NAMES as readonly string[]).indexOf(m[2]!);
-      if (idx < 0) continue;
-      const key = `${m[3]}-${String(idx + 1).padStart(2, "0")}`;
-      // Pair the chart with ITS OWN month and keep the newest, rather than
-      // assuming document order puts the newest last.
-      if (key > best) {
-        best = key;
-        employmentChart = m[1] as UscisGuidance["employmentChart"];
-      }
-    }
-    // Only report a chart that belongs to the month being reported.
-    return { month, employmentChart: best === month ? employmentChart : null };
-  } catch {
-    return null;
-  }
-}
-
 const FAQS = [
   {
     q: "What’s a priority date?",
@@ -182,7 +82,10 @@ export default async function PriorityDateCalculatorPage() {
   const [bulletins, board, uscis] = await Promise.all([
     getVisaBulletinSeries(),
     getBulletinBoard(),
-    fetchUscisGuidance(),
+    // The newest bulletin month USCIS names, and its chart for employment-based
+    // filings: the bulletin is forward-dated, so late in a month the next one
+    // is already out. Never fatal: without it the calendar comparison stands.
+    getUscisCharts(),
   ]);
 
   // The selector offers what the archive holds, computed here rather than
@@ -244,7 +147,7 @@ export default async function PriorityDateCalculatorPage() {
           categoryCodes={categoryCodes}
           today={today}
           currentBulletinMonth={uscis?.month ?? null}
-          currentEmploymentChart={uscis?.employmentChart ?? null}
+          currentEmploymentChart={uscis?.employment ?? null}
           provenance={provenance}
         />
       </section>

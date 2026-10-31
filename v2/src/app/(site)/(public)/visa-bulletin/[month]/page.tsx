@@ -15,6 +15,8 @@
  * never streams a 200 with a not-found body.
  */
 
+import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
+import { getUscisCharts } from "@/lib/uscisChartsFetch";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
@@ -43,7 +45,7 @@ import { bulletinMonthDate } from "@/lib/pageDates";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
-import { ISO_MONTH_RE } from "@convex/lib/months";
+import { ISO_MONTH_RE, shiftMonth } from "@convex/lib/months";
 
 // A bulletin changes once a month; a day bounds any re-parse far below that.
 export const revalidate = 86400;
@@ -327,6 +329,8 @@ export default async function BulletinMonthPage({
   const hasSetAsides = categories.some((c) => c === "EB5R" || c === "EB5HU" || c === "EB5I");
   const isNewest = month === newestMonth;
   const updated = bulletinMonthDate(isNewest, await getDateSources());
+  // Read only for the newest two months, the ones USCIS's notice can name.
+  const uscisCharts = month >= shiftMonth(newestMonth, -1) ? await getUscisCharts() : null;
 
   return (
     <>
@@ -358,6 +362,8 @@ export default async function BulletinMonthPage({
           </>
         )}
       </p>{" "}
+      {/* USCIS names a chart only for the newest bulletins; the note shows on the month it names. */}
+      <UscisChartNote charts={uscisCharts} month={month} only="employment" className="mt-6" />{" "}
 
       {prev ? (
         <section aria-labelledby="moved" className="mt-8 border-2 shadow-hard-sm p-5 sm:p-6 bg-card border-border">

@@ -74,6 +74,28 @@ export function cutoffLabel(c: Cutoff | null): string {
   return shortDate(c.iso) ?? c.iso;
 }
 
+/**
+ * How far a dated cutoff sits behind its bulletin's month, in whole months:
+ * the November 2026 bulletin's November 1 2013 is 156 months (13 years). A
+ * cutoff after the 1st doesn't reach its month's start, so that month isn't
+ * counted. Null for Current, Unavailable or a missing cutoff.
+ */
+export function cutoffGap(bulletinMonth: string, c: Cutoff | null): { months: number; years: number; rest: number } | null {
+  if (!c || c.kind !== "date") return null;
+  const [cy, cm, cd] = c.iso.split("-").map(Number) as [number, number, number];
+  const by = Number(bulletinMonth.slice(0, 4));
+  const bm = Number(bulletinMonth.slice(5, 7));
+  const months = Math.max(0, (by - cy) * 12 + (bm - cm) - (cd > 1 ? 1 : 0));
+  return { months, years: Math.floor(months / 12), rest: months % 12 };
+}
+
+/** "13 years", "12 years, 11 months", "8 months". */
+export function gapLabel(g: { years: number; rest: number }): string {
+  const y = g.years > 0 ? `${g.years} year${g.years === 1 ? "" : "s"}` : "";
+  const m = g.rest > 0 ? `${g.rest} month${g.rest === 1 ? "" : "s"}` : "";
+  return [y, m].filter(Boolean).join(", ") || "less than a month";
+}
+
 /** What a move means in words, with the signed day count where there is one. */
 export function moveLabel(kind: MoveKind, movedDays: number | null): string {
   switch (kind) {

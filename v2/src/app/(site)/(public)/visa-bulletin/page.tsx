@@ -38,6 +38,8 @@ import { getVisaAnnualLimits } from "@/lib/db/visaLimits";
 import { latestLimits, latestUsage } from "@/lib/visaLimits";
 import { formatInt } from "@/lib/format";
 import { getBulletinBoard, BOARD_COUNTRIES, type BoardCell } from "@/lib/db/bulletin";
+import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
+import { getUscisCharts } from "@/lib/uscisChartsFetch";
 import { computeI485Position } from "@/lib/i485/position";
 import { BulletinRelease } from "@/components/bulletin/BulletinRelease";
 import { BULLETIN_CAPTURES_MEASURED, BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
@@ -184,11 +186,14 @@ interface Row {
 }
 
 export default async function VisaBulletinPage() {
-  const [series, board, cells, limitsDoc] = await Promise.all([
-    getVisaBulletinSeries().catch(() => []),
-    getBulletinBoard().catch(() => null),
+  const [series, board, cells, limitsDoc, uscisCharts] = await Promise.all([
+    // The archive's reads throw: caught, a refresh during a database blip stored
+    // "not available" for a day. Thrown, the last good page stays.
+    getVisaBulletinSeries(),
+    getBulletinBoard(),
     getI485Cells().catch(() => ({}) as Record<string, [number, number, number, number][]>),
     getVisaAnnualLimits().catch(() => null),
+    getUscisCharts(),
   ]);
   const spill = latestLimits(limitsDoc);
   const usage = latestUsage(limitsDoc);
@@ -260,7 +265,8 @@ export default async function VisaBulletinPage() {
           Below, what it moved, then what every earlier {monthName(targetMonth)} bulletin did across {series.length}{" "}
           bulletins since {monthLabel(series[0]!.bulletinMonth)}. Measured, not predicted.
         </span>
-      </p>
+      </p>{" "}
+      <UscisChartNote charts={uscisCharts} className="mt-6" />
 
       {latestMoves.some((s) => s.rows.some((r) => r.move)) ? (
         <>

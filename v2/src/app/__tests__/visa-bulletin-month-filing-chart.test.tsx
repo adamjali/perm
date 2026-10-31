@@ -2,6 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db/publicData", () => ({ getVisaBulletins: vi.fn() }));
+// USCIS's chart notice is read over the network; a test never asks.
+vi.mock("@/lib/uscisChartsFetch", () => ({ getUscisCharts: async () => null }));
 // Reads Turso for the freshness line; not what this file is about.
 vi.mock("@/components/data/DataProvenance", () => ({
   DataProvenance: () => <div data-testid="provenance" />,

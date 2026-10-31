@@ -11,6 +11,8 @@
  * Unknown slugs 404 from `generateMetadata`, before anything streams.
  */
 
+import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
+import { getUscisCharts } from "@/lib/uscisChartsFetch";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
@@ -23,7 +25,7 @@ import { lineIssuance, monthName } from "@/lib/db/visaIssuances";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
-import { bulletinMonthLabel, cutoffLabel } from "@/lib/bulletinNext";
+import { bulletinMonthLabel, cutoffGap, cutoffLabel, gapLabel } from "@/lib/bulletinNext";
 import {
   LINE_CATEGORY_SHORT,
   LINE_COUNTRY_SHORT,
@@ -51,8 +53,11 @@ export const dynamicParams = true;
 /** Lines the green card line calculator covers. */
 const GREEN_CARD_LINE = new Set(["EB2", "EB3", "EW3"]);
 
+// A failed read throws: caught as an empty archive, it made every line "not
+// found", and a refresh during a database blip would store that 404 for a day.
+// Thrown, the refresh fails and the last good page stays.
 async function loadArchive(): Promise<BulletinMonth[]> {
-  const raw = await getVisaBulletins().catch(() => []);
+  const raw = await getVisaBulletins();
   return raw
     .map((b) => ({
       bulletinMonth: b.bulletinMonth,
@@ -79,7 +84,8 @@ function names(category: string, country: CountryKey) {
 }
 
 export async function generateStaticParams() {
-  const bulletins = await loadArchive();
+  // At build, an unreadable archive prerenders nothing; each line renders on its first request.
+  const bulletins = await loadArchive().catch(() => []);
   return lineSlugs(categoriesIn(bulletins)).map((line) => ({ line }));
 }
 
@@ -127,11 +133,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
   if (!got) notFound();
   const { category, country, bulletins, board, fa, dff } = got;
   const { cat, where } = names(category, country);
-  const [counts, issued] = await Promise.all([
+  const [counts, issued, uscisCharts] = await Promise.all([
     getLineCounts(category, country),
     lineIssuance(category, country).catch(() => null),
+    getUscisCharts(),
   ]);
   const years = fiscalYearMoves(fa.states);
+  // How far the final action cutoff sits behind this bulletin's own month.
+  const gap = cutoffGap(fa.latestMonth, fa.latest);
   // One scale for every year's bar, so a year that moved four times as far
   // draws four times as long.
   const maxMove = Math.max(1, ...years.map((y) => Math.abs(y.movedDays ?? 0)));
@@ -173,6 +182,25 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             </dt>{" "}
             <dd className="font-heading text-2xl font-bold tabular-nums">{cutoffLabel(dff?.latest ?? null)}</dd>
           </div>{" "}
+          {gap ? (
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+              <dt className="text-base text-soft">Behind the bulletin</dt>{" "}
+              <dd>
+                <span className="font-heading text-2xl font-bold tabular-nums">{gapLabel(gap)}</span>{" "}
+                <span className="block text-sm text-muted-foreground">
+                  {`The ${bulletinMonthLabel(fa.latestMonth)} bulletin approves priority dates from before ${cutoffLabel(fa.latest)}.`}
+                </span>{" "}
+                {gap.years > 0 ? (
+                  // One square a year between the cutoff and the bulletin's month.
+                  <span className="mt-2 flex flex-wrap gap-1" aria-hidden="true">
+                    {Array.from({ length: gap.years }, (_, i) => (
+                      <span key={i} className="size-4 border border-data-warn-ink bg-chart-yellow" />
+                    ))}
+                  </span>
+                ) : null}
+              </dd>
+            </div>
+          ) : null}{" "}
           <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
             <dt className="text-base text-soft">Since October 2014</dt>{" "}
             <dd className="text-base leading-relaxed">
@@ -191,7 +219,8 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           </Link>
           .
         </p>
-      </section>
+      </section>{" "}
+      <UscisChartNote charts={uscisCharts} month={fa.latestMonth} only="employment" className="mt-8" />
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-bold">Check your priority date</h2>{" "}

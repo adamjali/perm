@@ -16,6 +16,7 @@
  * the exact moment the category closed.
  */
 
+import { USCIS_CHARTS_URL } from "@/lib/uscisCharts";
 import { Fragment, useId, useMemo, useState, type ReactNode } from "react";
 import { CalendarBlankIcon as CalendarRange, ClockCounterClockwiseIcon as History, TrendDownIcon, WarningIcon } from "@phosphor-icons/react";
 
@@ -106,8 +107,7 @@ export interface PriorityDateEstimatorProps {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DOS_BULLETIN_URL =
   "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html";
-const USCIS_CHARTS_URL =
-  "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin";
+
 
 /** Whole months from `from` to `to`, both `YYYY-MM`. Negative if `to` is earlier. */
 function monthsBetween(from: string, to: string): number {
