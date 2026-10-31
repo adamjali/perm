@@ -15,7 +15,7 @@ name: Backup observations
 
 on:
   schedule:
-    - cron: "0 3 * * 0"        # Sundays 03:00 UTC = 11:00 PM Saturday ET, before the sweeps
+    - cron: "0 3 * * 0"        # Sundays 03:00 UTC: Saturday 11 PM EDT, 10 PM EST, before the sweeps
   workflow_dispatch:
 
 permissions:

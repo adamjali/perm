@@ -50,10 +50,28 @@ def page_checks_never_read_a_missing_check_as_a_pass() -> None:
     v = dm.page_checks_verdict(doc(ok, bad), now)
     check(v["status"] == "warn" and any("/layoffs: 2 h1" in l for l in says(v)), "page checks: a finding warns and says what", str(v))
     check(dm.page_checks_verdict(doc(ok, flows), now)["status"] == "fail", "page checks: a broken browser flow fails")
+    named = {**flows, "tail": ["17 passed (2.1m)"],
+             "findings": ["1) [chromium] › public-flows.spec.ts:18:1 › the case lookup answers", "Error: expect(locator).toBeVisible() failed"]}
+    v = dm.page_checks_verdict(doc(ok, named), now)
+    check(any("the case lookup answers" in l and "Error: expect" in l for l in says(v)) and not any("17 passed" in l for l in says(v)),
+          "page checks: a failed flow names the test and its error, not the passing count", str(v))
     check(dm.page_checks_verdict(doc(ok, slow), now)["status"] == "fail", "page checks: a check that timed out fails")
     check(dm.page_checks_verdict(None, now)["status"] == "fail", "page checks: no results fail")
     check(dm.page_checks_verdict(doc(), now)["status"] == "fail", "page checks: results with no checks fail")
     check(dm.page_checks_verdict(doc(ok, age_h=9), now)["status"] == "fail", "page checks: yesterday's results fail")
+
+
+def sentry_names_issues_that_came_back() -> None:
+    """An issue resolved earlier that fires again keeps its old first-seen day,
+    so a read of new issues alone never lists it (Oct 31 2026)."""
+    new = [{"id": "1", "shortId": "JS-5X", "title": "TypeError: x is undefined", "count": "3"}]
+    back = [{"id": "2", "shortId": "JS-4T", "title": "turso query deadline", "count": "12"}]
+    v = dm.sentry_verdict(new, back)
+    check(v["status"] == "warn" and "1 resolved earlier and seen again" in v["summary"]
+          and any(l.startswith("BACK JS-4T") for l in says(v)), "sentry: an issue that came back is named, marked BACK", str(v))
+    v = dm.sentry_verdict([], back)
+    check(v["status"] == "warn", "sentry: an issue that came back warns on its own", str(v))
+    check(dm.sentry_verdict([], [])["status"] == "ok", "sentry: nothing new and nothing back is ok")
 
 
 def security_section_says_what_is_open() -> None:
@@ -647,6 +665,7 @@ def main() -> int:
     data_section_reads_the_scorecard_alarms()
     long_lines_end_at_a_sentence()
     security_section_says_what_is_open()
+    sentry_names_issues_that_came_back()
     newsworthy_is_first_and_says_each_move()
     page_checks_never_read_a_missing_check_as_a_pass()
     audit_findings_are_sorted()

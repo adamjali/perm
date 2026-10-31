@@ -1,7 +1,7 @@
 "use client";
 
 import { FinePrint } from "@/components/data/FinePrint";
-import { Fragment, useEffect, useId, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import { PlusIcon, WarningIcon, XIcon } from "@phosphor-icons/react";
 
 import { ChartTips } from "@/components/data/ChartTips";
@@ -20,11 +20,12 @@ import {
   type SiteLevel,
 } from "@/lib/h1bLotteryCalc";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
-import { seriesYearFor, WAGE_SEARCH_PAGE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { seriesYearFor, WAGE_SEARCH_PAGE, type WageLevel } from "@/lib/wageLevels";
 import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { SocPicker } from "@/components/soc/SocPicker";
+import { AreaLoadFailure, areaPlaceholder, useWageAreas } from "@/components/tools/WageAreas";
 
 /**
  * The weighted H-1B lottery for one job: the OEWS level an offer meets in
@@ -83,34 +84,14 @@ function Worksite({
 }) {
   const stateId = useId();
   const areaId = useId();
-  const [areas, setAreas] = useState<AreaOption[] | null>(null);
   const stateName = STATES.find((s) => s.code === site.state)?.name ?? "";
+  // The first area is picked when a list arrives; `site` and `onChange` are read as they are then.
+  const { areas, failure, retry } = useWageAreas(stateName, seriesYear, (list) => {
+    const first = list[0];
+    if (!stateName && !site.area) return;
+    onChange({ ...site, area: first ? String(first.value) : "", areaLabel: first?.label ?? "" });
+  });
 
-  useEffect(() => {
-    if (!stateName) {
-      setAreas(null);
-      return;
-    }
-    let live = true;
-    setAreas(null);
-    fetch(`/api/wage-areas?state=${encodeURIComponent(stateName.toUpperCase())}&year=${seriesYear}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: { areas?: AreaOption[] } | null) => {
-        if (!live) return;
-        const list = j?.areas ?? [];
-        setAreas(list);
-        const first = list[0];
-        onChange({ ...site, area: first ? String(first.value) : "", areaLabel: first?.label ?? "" });
-      })
-      .catch(() => {
-        if (live) setAreas([]);
-      });
-    return () => {
-      live = false;
-    };
-    // `site` and `onChange` change on every keystroke elsewhere; the areas depend on the state and series only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateName, seriesYear]);
 
   return (
     <div className="grid grid-cols-1 gap-3 bg-sage p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end [&>*]:min-w-0 border-2 border-border">
@@ -141,16 +122,15 @@ function Worksite({
           className={FIELD}
           disabled={!areas || areas.length === 0}
         >
-          {!stateName ? <option value="">Choose a state first</option> : null}
-          {stateName && areas === null ? <option value="">Loading DOL&apos;s areas</option> : null}
-          {areas && areas.length === 0 && stateName ? <option value="">DOL lists no areas</option> : null}
+          {areaPlaceholder(stateName, areas, failure) ? <option value="">{areaPlaceholder(stateName, areas, failure)}</option> : null}
           {(areas ?? []).map((a) => (
             <option key={a.value} value={String(a.value)}>
               {a.label}
             </option>
           ))}
         </select>{" "}
-        <SelectedInFull label={site.areaLabel || undefined} />
+        <SelectedInFull label={site.areaLabel || undefined} />{" "}
+        <AreaLoadFailure failure={failure} retry={retry} />
       </div>{" "}
       {onRemove ? (
         <button

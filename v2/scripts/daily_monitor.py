@@ -976,12 +976,27 @@ def sentry_section() -> dict:
     tok = os.environ.get("SENTRY_AUTH_TOKEN")
     if not tok:
         return section("sentry", "Errors (Sentry)", "off", "set the SENTRY_AUTH_TOKEN secret to read new issues")
-    q = urllib.parse.quote("is:unresolved firstSeen:-24h")
-    issues = http_json(f"https://sentry.io/api/0/organizations/perm-tracker/issues/?query={q}&statsPeriod=24h&limit=25",
-                       {"Authorization": f"Bearer {tok}"})
+    def read(query: str) -> list[dict]:
+        q = urllib.parse.quote(query)
+        return http_json(f"https://sentry.io/api/0/organizations/perm-tracker/issues/?query={q}&statsPeriod=24h&limit=25",
+                         {"Authorization": f"Bearer {tok}"})
+    issues = read("is:unresolved firstSeen:-24h")
+    # An issue resolved earlier that came back (Sentry's "regressed") or one past its
+    # usual volume ("escalating") was first seen long ago, so the new-issue read
+    # above never lists it (Sentry's own terms: docs.sentry.io/product/issues/states-triage).
+    seen = {i.get("id") for i in issues}
+    back = [i for q in ("is:regressed lastSeen:-24h", "is:escalating lastSeen:-24h") for i in read(q)]
+    back = [i for i in {i.get("id"): i for i in back}.values() if i.get("id") not in seen]
+    return sentry_verdict(issues, back)
+
+
+def sentry_verdict(issues: list[dict], back: list[dict]) -> dict:
     lines = [f"{i.get('shortId')}: {str(i.get('title'))[:90]} ({i.get('count')} events)" for i in issues[:8]]
-    return section("sentry", "Errors (Sentry)", "warn" if issues else "ok",
-                   f"{len(issues)} new issue{'s' if len(issues) != 1 else ''} in 24 h", lines)
+    lines += [f"BACK {i.get('shortId')}: {str(i.get('title'))[:90]} ({i.get('count')} events)" for i in back[:8]]
+    summary = f"{len(issues)} new issue{'s' if len(issues) != 1 else ''} in 24 h"
+    if back:
+        summary += f", {len(back)} resolved earlier and seen again"
+    return section("sentry", "Errors (Sentry)", "warn" if issues or back else "ok", summary, lines)
 
 
 # ── browser errors (PostHog) ──────────────────────────────────────────────
@@ -1638,7 +1653,10 @@ def page_checks_verdict(doc: dict | None, now_ms: int) -> dict:
             why = "found problems"
             if c.get("key") == "flows":
                 status = "fail"
-        last = next((t for t in reversed(c.get("tail") or []) if t.strip()), "")
+        # The check's own findings when it names them (which flow failed, and
+        # how), else its last line (most checks end on their own count).
+        found = [t for t in (c.get("findings") or []) if t.strip()][:3]
+        last = "; ".join(found) or next((t for t in reversed(c.get("tail") or []) if t.strip()), "")
         lines.append(f"{c.get('title')}: {why}." + (f" {last}" if last else ""))
     summary = f"{len(failed)} of {len(checks)} checks failed: " + ", ".join(
         str(c.get("title")).split(" (")[0].lower() for c in failed) + "."

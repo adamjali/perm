@@ -73,6 +73,10 @@ def checks(base: str) -> list[dict]:
             "cmd": ["pnpm", "exec", "playwright", "test", "--reporter=line"],
             "env": {"BASE_URL": base},
             "limit": 900,
+            # Playwright's line reporter ends with its counts ("17 passed"), which
+            # was all the report showed on Oct 31 2026 while a flow had failed. The
+            # findings are the failing tests' titles and their first error lines.
+            "keep": r"^\s*\d+\) \[|^\s*Error: |^\s*\d+ (failed|flaky)\b",
         },
     ]
 
@@ -96,6 +100,7 @@ def run(check: dict) -> dict:
     # 2026 its last 12 lines were the clean 320 pass while the problem sat at 390.
     if code != 0 and check.get("clean"):
         lines = [ln for ln in lines if not re.search(check["clean"], ln)] or lines
+    findings = [ln.strip()[:300] for ln in lines if check.get("keep") and re.search(check["keep"], ln)]
     return {
         "key": check["key"],
         "title": check["title"],
@@ -103,6 +108,8 @@ def run(check: dict) -> dict:
         "exit": code,
         "seconds": round(time.monotonic() - started),
         "tail": [ln[:300] for ln in lines[-12:]],
+        # A failing check's own finding lines, first ones first, when it names them.
+        **({"findings": findings[:12]} if code != 0 and findings else {}),
     }
 
 
@@ -123,7 +130,7 @@ def main() -> int:
         results.append(r)
         print(f"{'pass' if r['ok'] else 'FAIL'}  {r['key']}  ({r['seconds']} s, exit {r['exit']})", flush=True)
         if not r["ok"]:
-            for ln in r["tail"]:
+            for ln in r.get("findings") or r["tail"]:
                 print(f"    {ln}")
     doc = {"base": args.base, "checkedAt": int(time.time() * 1000), "checks": results}
     if args.out:

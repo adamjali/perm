@@ -93,7 +93,8 @@ describe("the thanks, by the stars given", () => {
   function routes() {
     const sent: { path: string; body: Record<string, unknown> }[] = [];
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const path = new URL(String(input), "https://x.test").pathname;
+      // The form posts through the site's own relay (/c/<route>); the route is what's after it.
+      const path = new URL(String(input), "https://x.test").pathname.replace(/^\/c(?=\/)/, "");
       if (init?.method === "POST") sent.push({ path, body: JSON.parse(String(init.body)) as Record<string, unknown> });
       if (path === "/review/submit") return new Response(JSON.stringify({ ok: true, message: "Thanks.", reviewId: "rev123" }), { status: 200 });
       if (path === "/review/note") return new Response(JSON.stringify({ ok: true, message: "Thank you." }), { status: 200 });

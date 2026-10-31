@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
-import { seriesYearFor, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { seriesYearFor, type WageLevel } from "@/lib/wageLevels";
 import { SOC_CODE_RE } from "@/lib/socCode";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { WageAcrossAreas } from "@/components/tools/WageAcrossAreas";
 import { SocCodeText } from "@/components/data/SocCodeText";
 import { SocPicker } from "@/components/soc/SocPicker";
+import { AreaLoadFailure, areaPlaceholder, useWageAreas } from "@/components/tools/WageAreas";
 
 /**
  * The four prevailing wage levels for one occupation in one area, read live
@@ -146,7 +147,6 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   const currentSeries = useMemo(() => seriesYearFor(new Date().toISOString().slice(0, 10)), []);
   const [state, setState] = useState("");
   const [seriesYear, setSeriesYear] = useState(currentSeries);
-  const [areas, setAreas] = useState<AreaOption[] | null>(null);
   const [area, setArea] = useState("");
   const [soc, setSoc] = useState(initialSoc);
   const [result, setResult] = useState<Result>({ kind: "idle" });
@@ -156,30 +156,8 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   const formRef = useFormDomSync({ soc: setSoc });
 
   const stateName = STATES.find((s) => s.code === state)?.name ?? "";
+  const { areas, failure, retry } = useWageAreas(stateName, seriesYear, (list) => setArea(list[0] ? String(list[0].value) : ""));
 
-  useEffect(() => {
-    if (!stateName) {
-      setAreas(null);
-      setArea("");
-      return;
-    }
-    let live = true;
-    setAreas(null);
-    fetch(`/api/wage-areas?state=${encodeURIComponent(stateName.toUpperCase())}&year=${seriesYear}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: { areas?: AreaOption[] } | null) => {
-        if (!live) return;
-        const list = j?.areas ?? [];
-        setAreas(list);
-        setArea(list[0] ? String(list[0].value) : "");
-      })
-      .catch(() => {
-        if (live) setAreas([]);
-      });
-    return () => {
-      live = false;
-    };
-  }, [stateName, seriesYear]);
 
   const ready = SOC_CODE_RE.test(soc.trim()) && area !== "" && result.kind !== "loading";
 
@@ -233,16 +211,15 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
         <div>
           <Label htmlFor={areaId}>Area</Label>{" "}
           <select id={areaId} value={area} onChange={(e) => setArea(e.target.value)} className={SELECT} disabled={!areas || areas.length === 0}>
-            {!stateName ? <option value="">Choose a state first</option> : null}
-            {stateName && areas === null ? <option value="">Loading DOL&apos;s areas</option> : null}
-            {areas && areas.length === 0 && stateName ? <option value="">DOL lists no areas</option> : null}
+            {areaPlaceholder(stateName, areas, failure) ? <option value="">{areaPlaceholder(stateName, areas, failure)}</option> : null}
             {(areas ?? []).map((a) => (
               <option key={a.value} value={String(a.value)}>
                 {a.label}
               </option>
             ))}
           </select>{" "}
-          <SelectedInFull label={areas?.find((a) => String(a.value) === area)?.label} />
+          <SelectedInFull label={areas?.find((a) => String(a.value) === area)?.label} />{" "}
+          <AreaLoadFailure failure={failure} retry={retry} />
         </div>{" "}
         <div>
           <Label htmlFor={yearId}>Wage series</Label>{" "}

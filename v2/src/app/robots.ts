@@ -23,6 +23,8 @@ export default function robots(): MetadataRoute.Robots {
     // documents them and is the page to index.
     '/v1',
     '/mcp',
+    // The public forms' relay to the backend (src/lib/convexSite.ts): posts, never pages.
+    '/c/',
     '/dashboard',     // Authenticated dashboard
     '/admin',         // Authenticated admin dashboard
     '/cases',         // Authenticated case management (all /cases/* routes)

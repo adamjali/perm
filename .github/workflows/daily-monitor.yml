@@ -70,6 +70,24 @@ jobs:
         working-directory: v2
         run: pnpm install --frozen-lockfile
 
+      # The browser flows test what a reader does on the live site, so they come
+      # from the build that's live: a flow changed on main after the night deploy
+      # would fail against a site that doesn't have its change yet. Every page
+      # carries the live build's commit in its scripts' addresses (?dpl=<sha>-<run>).
+      - name: Read the browser flows from the build that's live
+        working-directory: v2
+        run: |
+          sha=$(curl -fsS https://permtracker.app/about | grep -o 'dpl=[0-9a-f]\{40\}' | head -1 | cut -d= -f2 || true)
+          if [ -z "$sha" ]; then
+            echo "::warning::couldn't read the live build's commit; main's browser flows are used"
+          elif [ "$sha" = "$(git rev-parse HEAD)" ]; then
+            echo "main is the live build (${sha:0:12})"
+          elif git fetch -q --depth=1 origin "$sha" && git checkout -q FETCH_HEAD -- tests/e2e playwright.config.ts; then
+            echo "browser flows read from the live build ${sha:0:12}, not main"
+          else
+            echo "::warning::couldn't read the live build ${sha:0:12}'s browser flows; main's are used"
+          fi
+
       - name: Check the live pages
         working-directory: v2
         env:

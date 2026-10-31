@@ -23,6 +23,28 @@ def main() -> int:
     clean = pc.run({**phone, "cmd": [sys.executable, "-c", "import sys\nprint('320 / overflow=0px  small=0  taps=0')\nsys.exit(1)\n"]})
     if not clean["tail"]:
         failures.append("a failure with no finding lines still reports what it printed")
+    # Oct 31 2026: a failed browser flow reached the report as "17 passed", the
+    # line reporter's last line. Its findings are the failing test and its error.
+    flows = next(c for c in pc.checks("https://example.test") if c["key"] == "flows")
+    out = [
+        "Running 18 tests using 1 worker",
+        "  1) [chromium] \u203a tests/e2e/public-flows.spec.ts:18:1 \u203a the case lookup answers a real case number",
+        "    Error: expect(locator).toBeVisible() failed",
+        "    Locator: getByText('The record')",
+        "  1 failed",
+        "    [chromium] \u203a tests/e2e/public-flows.spec.ts:18:1 \u203a the case lookup answers a real case number",
+        "  17 passed (2.1m)",
+    ]
+    script = "import sys\n" + "".join(f"print({ln!r})\n" for ln in out) + "sys.exit(1)\n"
+    r = pc.run({**flows, "cmd": [sys.executable, "-c", script], "env": {}})
+    found = r.get("findings") or []
+    if not (found and "the case lookup answers" in found[0] and any(f.startswith("Error:") for f in found)):
+        failures.append(f"a failing flow's report names the test and its error (got {found})")
+    if any("passed" in f for f in found):
+        failures.append("a failing flow's findings leave out the passing count")
+    passing = pc.run({**flows, "cmd": [sys.executable, "-c", "print('  1) [chromium] x')"], "env": {}})
+    if "findings" in passing:
+        failures.append("a check that passed carries no findings")
     for f in failures:
         print("FAIL", f)
     print("ALL PASS" if not failures else f"{len(failures)} failed")

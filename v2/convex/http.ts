@@ -34,6 +34,7 @@ import { SITE_URL } from "./lib/links";
 import { createLogger } from "./lib/logging";
 import { watchedSecretOk, sharedSecretOk } from "./watchedCases";
 import { checkTurnstile } from "./lib/turnstileVerify";
+import { callerIp } from "./lib/callerIp";
 
 const http = httpRouter();
 
@@ -354,11 +355,12 @@ http.route({
     // to the connecting address and drops whatever the client sent (measured on
     // the dev deployment, Oct 23 2026: a request carrying "6.6.6.6" arrived
     // with the real address), so it can't be faked by a header, only rotated
-    // by changing networks. The control that bounds damage to the shared Resend
+    // by changing networks; a form relayed through the site's own /c/ path
+    // carries the visitor's address, believed only from the relay (callerIp).
+    // The control that bounds damage to the shared Resend
     // quota is still the global confirmation budget inside `subscribe`, which
     // no amount of IP or address rotation can get around.
-    const forwarded = req.headers.get("x-forwarded-for") ?? "";
-    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const ip = callerIp(req);
 
     const result = await ctx.runMutation(internal.queueAlerts.subscribe, {
       email,
@@ -525,7 +527,7 @@ http.route({
       // confirm click completes both, and the confirmation email says so.
       news: news === true,
       newsletter: newsletter === true,
-      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+      ip: callerIp(req),
     });
 
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
@@ -781,8 +783,7 @@ http.route({
       return json({ ok: false, message: "The message needs 10 to 4,000 characters." }, 400);
     }
 
-    const forwarded = req.headers.get("x-forwarded-for") ?? "";
-    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const ip = callerIp(req);
 
     // Turnstile last, after the cheap checks: a bad token is refused, a missing
     // one or an outage only adds weight to the spam check (convex/lib/spamCheck.ts),
@@ -865,7 +866,7 @@ http.route({
     }
     const secret = process.env.UNSUBSCRIBE_SECRET;
     const linkEmail = secret && typeof fields.t === "string" ? await openEmail(fields.t, secret, Date.now()) : null;
-    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown";
+    const ip = callerIp(req);
     const result = await ctx.runMutation(internal.siteReviews.submit, {
       ...checked.review,
       ip,
@@ -1023,7 +1024,7 @@ http.route({
       // confirm click completes both, and the confirmation email says so.
       news: news === true,
       newsletter: newsletter === true,
-      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+      ip: callerIp(req),
     });
 
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
@@ -1094,7 +1095,7 @@ http.route({
     const result = await ctx.runMutation(internal.digestSignup.subscribe, {
       email: email.slice(0, 320),
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
-      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+      ip: callerIp(req),
     });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -1222,7 +1223,7 @@ http.route({
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
       news: news === true,
       newsletter: newsletter === true,
-      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+      ip: callerIp(req),
     });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -1337,9 +1338,6 @@ function profileFromJson(raw: unknown): ProfileInput & {
   };
 }
 
-function clientIp(req: Request): string {
-  return (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown";
-}
 
 for (const path of ["/firm-claim/request", "/firm-claim/edit-link"]) {
   http.route({
@@ -1390,7 +1388,7 @@ http.route({
       profile: profileFromJson(profile),
       verdict,
       source: typeof source === "string" ? source.slice(0, 64) : undefined,
-      ip: clientIp(req),
+      ip: callerIp(req),
     });
     return json(result, result.ok ? 200 : "throttled" in result && result.throttled ? 429 : 400);
   }),
@@ -1416,7 +1414,7 @@ http.route({
     const result = await ctx.runMutation(internal.firmClaims.requestEditLink, {
       email: email.slice(0, 320),
       slug: slug.slice(0, 120),
-      ip: clientIp(req),
+      ip: callerIp(req),
     });
     return json(result, result.ok ? 200 : "throttled" in result && result.throttled ? 429 : 400);
   }),
@@ -1580,7 +1578,7 @@ http.route({
 
     const result = await ctx.runMutation(internal.emailPrefs.requestLink, {
       email: email.slice(0, 320),
-      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+      ip: callerIp(req),
     });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -1746,8 +1744,7 @@ http.route({
     if (caseNumber.length > 24 || kind.length > 20 || eventDate.length > 10) {
       return json({ ok: false, message: "Malformed request." }, 400);
     }
-    const forwarded = req.headers.get("x-forwarded-for") ?? "";
-    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const ip = callerIp(req);
     const ipHash = await sha256Hex(`milestone:${ip}`);
     const result = await ctx.runMutation(internal.caseMilestones.report, { caseNumber, kind, eventDate, ipHash });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
@@ -1847,8 +1844,7 @@ http.route({
     }
     if (typeof b.premium === "boolean") input.premium = b.premium;
     input.public = b.public === true;
-    const forwarded = req.headers.get("x-forwarded-for") ?? "";
-    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const ip = callerIp(req);
     const [ipHash, editKeyHash] = await Promise.all([
       sha256Hex(`timeline:${ip}`),
       sha256Hex(`timeline-key:${b.key as string}`),
@@ -1951,8 +1947,7 @@ http.route({
       return json({ ok: false, message: "A case number and a browser subscription are both required." }, 400);
     }
     if (caseNumber.length > 24 || subscription.length > 2000) return json({ ok: false, message: "Malformed request." }, 400);
-    const forwarded = req.headers.get("x-forwarded-for") ?? "";
-    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const ip = callerIp(req);
     const ipHash = await sha256Hex(`push:${ip}`);
     let endpoint: string | null = null;
     try {

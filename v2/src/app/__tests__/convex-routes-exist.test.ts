@@ -3,6 +3,8 @@ import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { convexSiteUrl } from "@/lib/convexSite";
+
 /**
  * Every Convex HTTP route something points at exists.
  *
@@ -150,6 +152,15 @@ describe("Convex HTTP routes that something points at", () => {
       return !paths.some((p) => p === base || p.startsWith(`${base}/`));
     });
     expect(empty).toEqual([]);
+  });
+
+  it("sends every form through the site's own /c/ path, which nginx and the dev server relay", () => {
+    // Oct 31 2026: some work networks block the .convex.site host, and six people's sign-ups failed there.
+    process.env.NEXT_PUBLIC_CONVEX_URL ??= "https://example.convex.cloud";
+    expect(convexSiteUrl("/case-alert/subscribe")).toBe("/c/case-alert/subscribe");
+    expect(read("scripts/oracle/nginx/permtracker.conf")).toMatch(/location \^~ \/c\/ \{[^}]*rewrite \^\/c\(\/\.\*\)\$ \$1 break;/);
+    expect(read("next.config.ts")).toContain('{ source: "/c/:path*", destination: `${convexSite}/:path*` }');
+    expect(read("src/app/robots.ts")).toContain("'/c/',");
   });
 
   it("relays every emailed link through nginx straight to Convex", () => {

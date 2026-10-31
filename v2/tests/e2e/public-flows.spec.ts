@@ -13,7 +13,8 @@ import { expect, test } from "@playwright/test";
  *   BASE_URL=http://localhost:3000 npx playwright test tests/e2e/public-flows.spec.ts
  */
 
-test.describe.configure({ mode: "serial" });
+// Each flow stands alone (no flow reads another's state), so one failing never
+// skips the rest: in serial mode a failure hid every flow after it.
 
 test("the case lookup answers a real case number", async ({ page }) => {
   await page.goto("/perm-case-status");

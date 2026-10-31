@@ -258,8 +258,13 @@ const nextConfig: NextConfig = {
         ]
       : [];
 
+    // The public forms post to /c/<route> (src/lib/convexSite.ts). nginx relays
+    // them in production ("FORMS"); this is the dev server's way there.
+    const formRewrites = convexSite ? [{ source: "/c/:path*", destination: `${convexSite}/:path*` }] : [];
+
     return [
       ...emailLinkRewrites,
+      ...formRewrites,
       // PostHog reverse proxy — reduces ad-blocker interference
       {
         source: "/ingest/static/:path*",

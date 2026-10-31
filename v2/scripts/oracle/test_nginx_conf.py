@@ -147,8 +147,9 @@ def run(conf_text: str) -> None:
     relay = locs.get("^~ /ingest/", "")
     mail_sel = r"~ ^/(prefs(/.*)?|unsubscribe|(queue|case|bulletin|employer)-alert/.*|firm-claim/.*|digest/.*)$"
     mail = locs.get(mail_sel, "")
+    forms = locs.get("^~ /c/", "")
     proxied = {sel: b for sel, b in locs.items() if "proxy_pass" in b and not sel.startswith("@")
-               and sel not in ("^~ /ingest/", mail_sel) and "internal;" not in b}
+               and sel not in ("^~ /ingest/", mail_sel, "^~ /c/") and "internal;" not in b}
     # /mcp is checked on its own below: it keeps its own in-flight cap and no
     # crawler pools (an assistant's notification stream must not hold a render
     # slot for hours, and tool calls are not crawling).
@@ -170,6 +171,22 @@ def run(conf_text: str) -> None:
     # The email links go to the backend, never the app, with only the headers
     # it needs (Cloudflare's own would be refused by the backend's Cloudflare),
     # never stored, never framed.
+    # The forms (Oct 31 2026): posted to /c/<route> here, relayed to the backend
+    # with the visitor's address in X-PT-Client-IP (the backend replaces
+    # X-Forwarded-For with whoever connected), the /c prefix dropped, nothing of
+    # the visitor's beyond what a form needs, never stored, never the app.
+    check("form relay exists", bool(forms))
+    check("forms go to the backend, looked up per request",
+          "proxy_pass https://$pt_convex_site$uri$is_args$args;" in forms and "resolver " in forms)
+    check("forms drop the /c prefix before the backend", "rewrite ^/c(/.*)$ $1 break;" in forms)
+    check("forms pass the visitor's address where the backend reads it",
+          "proxy_set_header X-PT-Client-IP $remote_addr;" in forms)
+    check("forms send only the headers a form needs",
+          "proxy_pass_request_headers off;" in forms and "Cookie" not in forms and "Authorization" not in forms)
+    check("forms are never stored", 'add_header Cache-Control "private, no-store" always;' in forms)
+    check("forms have a per-address limit and hold no app slots",
+          "pt_api" in zones_in(forms, "limit_req") and "pt_app" not in zones_in(forms, "limit_conn"))
+    check("forms' bodies are capped", "client_max_body_size 64k;" in forms)
     check("email-link relay exists", bool(mail))
     check("email links go to the backend, looked up per request",
           "proxy_pass https://$pt_convex_site;" in mail and "resolver " in mail

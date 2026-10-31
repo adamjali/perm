@@ -142,6 +142,7 @@ jobs:
         if: steps.plan.outputs.build == 'true'
         env:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
         run: |
           # Two ports: the main database and, since Oct 19 2026, the H-1B LCA
           # filings' own (permtracker-db-lca), which the build reads once the
@@ -149,13 +150,21 @@ jobs:
           # permitopen allows exactly these two.
           ssh -i ~/.ssh/deploy -o BatchMode=yes -o ExitOnForwardFailure=yes \
             -o ServerAliveInterval=20 -f -N -L 18080:127.0.0.1:8080 -L 18082:127.0.0.1:8082 "deploy@$ORACLE_HOST"
-          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18080/v2/pipeline -d '{}')
-          echo "database tunnel answered HTTP $code (401 = reached, login required)"
-          test "$code" = "401"
+          # The build's own login asks SELECT 1, which proves the tunnel and the
+          # token at once. Until Oct 31 2026 this sent no login on purpose and
+          # expected a 401, which wrote an ERROR line in the database's log on
+          # every deploy.
+          probe() {
+            body=$(curl -s -w '\n%{http_code}' -X POST "http://127.0.0.1:$1/v2/pipeline" \
+              -H "Authorization: Bearer $DATABASE_AUTH_TOKEN" -H "Content-Type: application/json" \
+              -d '{"requests":[{"type":"execute","stmt":{"sql":"SELECT 1"}},{"type":"close"}]}')
+            code=$(printf '%s' "$body" | tail -n1)
+            echo "$2 answered HTTP $code"
+            test "$code" = "200" && printf '%s' "$body" | grep -q '"type":"ok"'
+          }
+          probe 18080 "the database tunnel"
           if [ "${{ vars.ORACLE_DB_LCA }}" = "on" ]; then
-            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18082/v2/pipeline -d '{}')
-            echo "LCA database tunnel answered HTTP $code"
-            test "$code" = "401"
+            probe 18082 "the LCA database tunnel"
           fi
 
       - name: Date each page by its last change (the sitemap's lastmod)

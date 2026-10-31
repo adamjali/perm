@@ -41,7 +41,7 @@ describe("FirmClaimPanel", () => {
     fireEvent.submit(screen.getByRole("form", { name: "Claim this firm's page" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(String(url)).toBe("https://example.convex.site/firm-claim/request");
+    expect(String(url)).toBe("/c/firm-claim/request");
     const body = JSON.parse(String((init as RequestInit).body));
     expect(body).toMatchObject({
       email: "jane@smithlaw.com",
@@ -59,7 +59,7 @@ describe("FirmClaimPanel", () => {
     fireEvent.submit(screen.getByRole("form", { name: "Get a link to edit this firm's profile" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(String(url)).toBe("https://example.convex.site/firm-claim/edit-link");
+    expect(String(url)).toBe("/c/firm-claim/edit-link");
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({ email: "jane@smithlaw.com", slug: "smith-immigration-pllc" });
   });
 });
