@@ -53,6 +53,8 @@ import { getDisclosureStats } from "@/lib/db/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/db/processingTimes";
 import { dolNow, howLongSentence, queueLine } from "@/lib/dolNow";
 import { getPermBoard } from "@/lib/db/board";
+import { getPwdLine } from "@/lib/db/pwdDayQueue";
+import { longDate } from "@convex/lib/months";
 import { StageMedians } from "@/components/community/TimelineBoard";
 import { api } from "@convex/_generated/api";
 import { getEstimatorData } from "@/lib/db/estimate";
@@ -132,7 +134,7 @@ const FAQ = [
 ];
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history, disclosure, estimator, board, permBoard] = await Promise.all([
+  const [snapshot, history, disclosure, estimator, board, permBoard, pwdLine] = await Promise.all([
     getProcessingTimes(),
     getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
@@ -147,6 +149,8 @@ export default async function PermProcessingTimesPage() {
     queryStatic(api.communityTimelines.board, {}, revalidate).catch(() => null),
     // What the cases DOL decided on its last working day had waited: the live answer to "how long".
     getPermBoard().catch(() => null),
+    // Where DOL really is in the wage-request line, by our own daily check: its table trails it by weeks.
+    getPwdLine(),
   ]);
   const howLong = howLongSentence(permBoard, snapshot);
   const faq = FAQ.map((f) => ({ ...f, answer: f.answer.replace(HOW_LONG_NOW, howLong) }));
@@ -398,7 +402,9 @@ export default async function PermProcessingTimesPage() {
               <Figure
                 label="Prevailing wage (PERM)"
                 value={formatMonth(pwdPerm.oewsReceiptDate) ?? pwdPerm.oewsReceiptDate}
-                note={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.`}
+                note={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.${
+                  pwdLine ? ` Our check of ${longDate(pwdLine.asOf)}: requests filed ${longDate(pwdLine.day)} being decided.` : ""
+                }`}
               />
             ) : null}
           </FigureRow>

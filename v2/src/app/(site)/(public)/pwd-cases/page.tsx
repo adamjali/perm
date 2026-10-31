@@ -6,6 +6,8 @@ import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
 import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { dolPwdNow, pwdLine } from "@/lib/dolNow";
+import { getPwdLine } from "@/lib/db/pwdDayQueue";
+import { waitPhrase } from "@/lib/pwdLine";
 import { formatInt } from "@/lib/format";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -50,21 +52,28 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function PwdCasesPage() {
-  const [summary, disclosure, times] = await Promise.all([
+  const [summary, disclosure, times, line] = await Promise.all([
     getPwdSummary(),
     getPwdDisclosureSummary(),
     getProcessingTimes().catch(() => null),
+    getPwdLine(),
   ]);
   // DOL's own position in the PERM wage-request line: the month it is issuing
   // determinations on, from its processing-times page.
   const now = dolPwdNow(times);
   const frontier = (times?.pwdQueues ?? []).find((q) => q.program.toUpperCase() === "PERM")?.oewsReceiptDate ?? null;
+  // Our own daily check of DOL's case status leads (src/lib/pwdLine.ts): DOL's
+  // published month trails it by weeks, so it's the figure under it.
+  const lineDay = line ? longDate(line.day) : null;
+  const lede = line && lineDay
+    ? `PERM wage requests take ${waitPhrase(line.waitDays)} at DOL now: requests filed ${lineDay} are being decided, by our daily check of DOL's case status.`
+    : pwdLine(now);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <IndexHeader
         title="Find a prevailing wage request"
-        lede={`${pwdLine(now)} Search by employer to find one: you rarely see its number.`}
+        lede={`${lede} Search by employer to find one: you rarely see its number.`}
         figures={[
           {
             label: "Waiting at DOL now",
@@ -78,12 +87,21 @@ export default async function PwdCasesPage() {
               ? { note: `Published through ${longDate(disclosure?.latestDecision ?? null)}` }
               : {}),
           },
-          {
-            label: "DOL is deciding requests filed in",
-            value: now.frontier ?? "—",
-            href: "/tools/pwd-calculator",
-            ...(now.asOf ? { note: `As of ${now.asOf}` } : {}),
-          },
+          line && lineDay
+            ? {
+                label: "DOL is deciding requests filed on",
+                value: lineDay,
+                href: "/tools/pwd-calculator",
+                note: `${Math.round(line.decidedShare * 100)}% of that day's ${formatInt(line.filed)} decided, our check of ${longDate(line.asOf)}${
+                  now.frontier ? `. DOL's own figure${now.asOf ? ` of ${now.asOf}` : ""}: ${now.frontier}` : ""
+                }`,
+              }
+            : {
+                label: "DOL is deciding requests filed in",
+                value: now.frontier ?? "—",
+                href: "/tools/pwd-calculator",
+                ...(now.asOf ? { note: `As of ${now.asOf}` } : {}),
+              },
         ]}
         aside={
           <IndexLookup
@@ -107,7 +125,13 @@ export default async function PwdCasesPage() {
                   <h2 className="font-heading text-xl font-bold">Where DOL is in the line</h2>{" "}
                   <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     Wage requests by the month they were filed, from DOL&apos;s case-status service.
-                    {now.frontier ? ` DOL is issuing determinations on ${now.frontier}.` : ""}
+                    {line && lineDay
+                      ? ` By our check of ${longDate(line.asOf)}, DOL is deciding requests filed ${lineDay}${
+                          line.before ? ` and has decided ${Math.round(line.before.decidedShare * 100)}% of ${longDate(line.before.day)}'s` : ""
+                        }.`
+                      : now.frontier
+                        ? ` DOL is issuing determinations on ${now.frontier}.`
+                        : ""}
                   </p>{" "}
                   <FilingMonthBars
                     className="mt-5"

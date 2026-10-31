@@ -36,6 +36,8 @@ export const SWEEP_PAGES = [
   // The wage-request, LCA and H-2A/H-2B summaries, written by
   // pwd-status-direct.yml, which calls this endpoint too.
   "/pwd-cases",
+  // Where DOL is in the wage-request line, by the same sweep (src/lib/pwdLine.ts).
+  "/tools/pwd-calculator",
   "/lca-cases",
   "/seasonal-cases",
   "/case-search",

@@ -33,6 +33,7 @@ import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { DecisionsOverTime } from "@/components/pulse/DecisionsOverTime";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getPwdSummary } from "@/lib/db/pwdCases";
+import { getPwdLine } from "@/lib/db/pwdDayQueue";
 import { getRfiClock } from "@/lib/db/rfiClock";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { HOLD_STATUS, heldRanking, holdSinceShort } from "@/lib/employerStages";
@@ -152,7 +153,7 @@ function Tile({
 }
 
 export default async function PermByTheNumbersPage() {
-  const [census, observed, coverage, stages, filings, newEmployers, rfiWeeks, rfiClock, pwd, snapshot, readings, bulletins, decidedByMonth] =
+  const [census, observed, coverage, stages, filings, newEmployers, rfiWeeks, rfiClock, pwd, snapshot, readings, bulletins, decidedByMonth, pwdLine] =
     await Promise.all([
       getBacklogCensus(),
       getObservedDays(),
@@ -167,6 +168,7 @@ export default async function PermByTheNumbersPage() {
       getProcessingTimesArchive(),
       getVisaBulletinsHeld(),
       getDecidedByMonth(),
+      getPwdLine(),
     ]);
 
   // The waiting line, by DOL's own month.
@@ -195,8 +197,17 @@ export default async function PermByTheNumbersPage() {
   const firstStep = steps[0] ?? null;
   const moved = lastStep && firstStep ? monthIndex(lastStep.month) - monthIndex(firstStep.month) : 0;
 
+  // Where DOL is in the wage-request line: our own daily check of its case
+  // status first (src/lib/pwdLine.ts), DOL's published month when that can't say.
   const pwdMonth =
-    snapshot?.pwdQueues.find((q) => q.program.toUpperCase() === "PERM")?.oewsReceiptDate?.slice(0, 7) ?? null;
+    pwdLine?.day.slice(0, 7) ??
+    snapshot?.pwdQueues.find((q) => q.program.toUpperCase() === "PERM")?.oewsReceiptDate?.slice(0, 7) ??
+    null;
+  const pwdSub = pwdLine
+    ? `By our check of ${longDate(pwdLine.asOf)}, DOL is deciding PERM requests filed on ${longDate(pwdLine.day)}.`
+    : pwdMonth
+      ? `DOL is deciding PERM requests filed in ${monthYear(pwdMonth)}.`
+      : undefined;
 
   // Filed by filing month (the census) beside decided by decision month (DOL's files, then our sweep).
   const flow = monthlyFlow({
@@ -476,7 +487,7 @@ export default async function PermByTheNumbersPage() {
             className="lg:col-span-4"
             figure={formatInt(pwd.pending)}
             claim="wage requests waiting"
-            sub={pwdMonth ? `DOL is deciding PERM requests filed in ${monthYear(pwdMonth)}.` : undefined}
+            sub={pwdSub}
             more={{ href: "/pwd-cases", label: "Wage requests" }}
           >
             <FilingMonthBars

@@ -9,6 +9,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getPwdEstimatorData } from "@/lib/db/estimate";
+import { getPwdLine } from "@/lib/db/pwdDayQueue";
 import { currentMonthUtc } from "@/lib/dolFormat";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
@@ -67,7 +68,7 @@ const FAQS = [
 ];
 
 export default async function PwdCalculatorPage() {
-  const data = await getPwdEstimatorData();
+  const [data, line] = await Promise.all([getPwdEstimatorData(), getPwdLine()]);
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -99,6 +100,7 @@ export default async function PwdCalculatorPage() {
           backlog={data ? data.backlog : []}
           asOf={data ? data.asOf : null}
           clearancePerMonth={data ? data.clearancePerMonth : null}
+          measured={line ? { day: line.day, asOf: line.asOf } : null}
         />
       </section>
 

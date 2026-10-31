@@ -102,6 +102,10 @@ ms = lambda d, h=6: int(_dt.datetime(d.year, d.month, d.day, h, tzinfo=_ET).time
 exits = [("e1", ms(date(2026, 10, 7))), ("e1", ms(date(2026, 10, 7), 9)), ("e2", ms(date(2026, 10, 6))),
          ("e3", ms(today)), ("e4", ms(date(2026, 9, 1))), ("e5", ms(today, 14))]
 doc = day_queue_doc([("2026-07-01", 3), ("2026-07-02", "2"), (None, 9)], exits, today)
+filed_doc = day_queue_doc([("2026-07-01", 3)], exits, today, [("2026-07-02", "5"), ("2026-07-01", 4), (None, 2)])
+check(filed_doc["filedByDay"] == [["2026-07-01", 4], ["2026-07-02", 5]],
+      "filedByDay: every day's filings, sorted, numbers not strings, no undated row")
+check(day_queue_doc([("2026-07-01", 3)], exits, today)["filedByDay"] == [], "filedByDay: empty when not asked")
 check(doc["byDay"] == [["2026-07-01", 3], ["2026-07-02", 2]] and doc["inProcess"] == 5, "in process by filing day, a missing day dropped")
 check(doc["clock"] == "dol", "the doc says its days are DOL's")
 dd = {x["date"]: x["n"] for x in doc["days"]}

@@ -719,15 +719,20 @@ DAY_QUEUE_PACE_DAYS = 28
 # PERM wage requests: P-100 numbers DOL tags PERM or leaves untagged. The
 # primary-key range is the prefix: "." sorts right after "-".
 DAY_QUEUE_RANGE = ("P-100-", "P-100.")
+# How far back `filedByDay` reaches: past the longest wait DOL has had lately (about 4 months).
+FILED_DAYS = 200
 PERM_WAGE = "(visa_type IS NULL OR upper(visa_type) = 'PERM')"
 
 
-def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> dict:
+def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date, filed_rows: list = ()) -> dict:
     """Pure: requests in process by filing day, and the requests that left IN
     PROCESS for a final status on each of the 28 complete days before today,
     each case once. Dated by the day DOL decided it (lib_holidays.decided_on):
     our morning sweep reads the day before's decisions, so a status seen
-    before noon belongs to the day before (`clock: "dol"`, since Oct 15 2026)."""
+    before noon belongs to the day before (`clock: "dol"`, since Oct 15 2026).
+    `filedByDay` is every request filed each day of the last FILED_DAYS, so a
+    page can read how much of each day DOL has decided: where DOL really is in
+    the line, which its own published month trails by weeks (Oct 31 2026)."""
     by_day = sorted([str(fd), int(n)] for fd, n in by_day_rows if fd)
     counts: dict[str, int] = {}
     seen: set[str] = set()
@@ -743,8 +748,9 @@ def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> d
         d = (today - datetime.timedelta(days=i)).isoformat()
         if first is not None and d >= first:
             days.append({"date": d, "n": counts.get(d, 0)})
+    filed = sorted([str(fd), int(n)] for fd, n in filed_rows if fd)
     return {"asOf": today.isoformat(), "clock": "dol", "byDay": by_day, "days": days,
-            "inProcess": sum(n for _, n in by_day)}
+            "inProcess": sum(n for _, n in by_day), "filedByDay": filed}
 
 
 def write_pwd_day_queue(db: Database) -> bool:
@@ -763,7 +769,12 @@ def write_pwd_day_queue(db: Database) -> bool:
         "ON s.case_number = e.case_number WHERE e.changed_at >= ? AND e.case_number >= ? "
         f"AND e.case_number < ? AND e.to_final = 1 AND e.from_status = 'IN PROCESS' AND {PERM_WAGE.replace('visa_type', 's.visa_type')}",
         [since_ms, lo, hi])
-    doc = day_queue_doc(by_day_rows, exit_rows, today)
+    filed_rows = query_rows(
+        db,
+        "SELECT filing_date, COUNT(*) FROM pwd_case_status WHERE case_number >= ? AND case_number < ? "
+        f"AND filing_date >= ? AND {PERM_WAGE} GROUP BY filing_date",
+        [lo, hi, (today - datetime.timedelta(days=FILED_DAYS)).isoformat()])
+    doc = day_queue_doc(by_day_rows, exit_rows, today, filed_rows)
     if not doc["byDay"] or len(doc["days"]) < 14:
         log(f"  {DAY_QUEUE_KEY}: {len(doc['byDay'])} filing days, {len(doc['days'])} days of exits; not written")
         return False

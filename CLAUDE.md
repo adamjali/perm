@@ -1652,7 +1652,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 - **A dev server can serve a stale shared module** (the new pages with the old `@/lib/constants/about`): restart it before reading a
   render that contradicts the source.
 
-## Oct 31 2026 (night), in five lines
+## Oct 31 2026 (night), in eight lines
 
 - **A `nosemgrep` mark doesn't close a GitHub alert.** The mark reaches the uploaded SARIF as a suppression, but GitHub
   keeps the alert open until it's dismissed through the API (`gh api -X PATCH .../code-scanning/alerts/N -f
@@ -1670,3 +1670,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
 - **The site is English only** (owner, Oct 29 and Oct 31 2026): the translated pages answer 308 to their English pages
   (`next.config.ts`, `retired-translations-redirect.test.ts`), the translation code is deleted, emails are English
   again (196 email tests unchanged), the schema's `lang` fields stay inert, and nginx and Cloudflare match.
+- **Every error screen records itself** (`logClientError` in `src/components/error/recovery.ts`, by `sendBeacon` so it
+  survives the reload or the redirect to sign-in that follows): `POST /api/client-error` writes `[client-error]` to the
+  server's journal and one Sentry message per boundary and message. Read it with
+  `journalctl -u 'permtracker-web@*' | grep client-error` on the server. A screen that flashes past is still on record.
+- **The wage-request line leads with our own check** (`src/lib/pwdLine.ts`, `getPwdLine`): DOL's table of Sep 30 said
+  June 2026 while our sweep showed July 27's requests being decided on Oct 30. The PWD sweep writes `filedByDay` (every
+  request filed each day for 200 days) into `perm_docs['pwd_day_queue']`; the working day is the earliest day with 100+
+  requests that DOL hasn't decided half of. /pwd-cases, the numbers board, the processing-times tile, the calculator and
+  `<DolNow show="pwd*" />` read it, with DOL's dated month beside it and DOL's month alone when the doc can't say.
+- **happy-dom implements `sendBeacon` with a real fetch**, so a test that sends one hits localhost:3000 and fails
+  later in an unrelated test; `vitest.setup.ts` stubs it for every project.

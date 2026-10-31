@@ -16,6 +16,7 @@ import { ScalesIcon as Scale } from "@phosphor-icons/react";
 
 import { estimatePwdQueue, type PwdBacklogMonth } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
+import { longDate } from "@convex/lib/months";
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { Label } from "@/components/ui/label";
 import { CaveatBox } from "@/components/ui/note";
@@ -26,6 +27,8 @@ export interface PwdQueueEstimatorProps {
   backlog: readonly PwdBacklogMonth[];
   asOf: string | null;
   clearancePerMonth: number | null;
+  /** Where our own daily check of DOL's case status puts the line (src/lib/pwdLine.ts), which DOL's table trails. */
+  measured?: { day: string; asOf: string } | null;
   className?: string;
 }
 
@@ -34,6 +37,7 @@ export function PwdQueueEstimator({
   backlog,
   asOf,
   clearancePerMonth,
+  measured,
   className,
 }: PwdQueueEstimatorProps) {
   const selectId = useId();
@@ -149,9 +153,15 @@ export function PwdQueueEstimator({
             </>
           ) : null}
         </p>
+        {measured ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            By our daily check of DOL&apos;s case status on {longDate(measured.asOf)}, DOL is deciding
+            requests filed {longDate(measured.day)}. The count above is DOL&apos;s own table.
+          </p>
+        ) : null}
         {frontier && frontier.oewsMonth ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            DOL is issuing determinations for requests received{" "}
+            DOL&apos;s table says it is issuing determinations for requests received{" "}
             {formatMonth(frontier.oewsMonth)} where the wage comes from the OEWS
             survey
             {frontier.nonOewsMonth
