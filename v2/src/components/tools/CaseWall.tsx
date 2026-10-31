@@ -1,13 +1,11 @@
 import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import { Bold } from "@/components/i18n/Bold";
 import type { Wall } from "@/lib/casePosition";
 import { cn } from "@/lib/utils";
-import type { Lang } from "@/lib/i18n/lang";
-import { intLabel, monthLabel, monthShortLabel, percentLabel } from "@/lib/i18n/format";
-
-import { CASE_WALL, type CaseWallText } from "./CaseWall.messages";
+import { formatInt } from "@/lib/format";
+import { formatMonthShort } from "@/lib/dolFormat";
+import { monthYear } from "@convex/lib/months";
 
 /**
  * The wall in front of one case, drawn as mass rather than as progress.
@@ -52,8 +50,6 @@ export interface CaseWallProps {
    */
   publishedFront?: string | null;
   className?: string;
-  /** The wall's words, month labels and number grouping; English by default. */
-  lang?: Lang;
 }
 
 export function CaseWall({
@@ -61,31 +57,28 @@ export function CaseWall({
   publishedFront,
   attribution = "case",
   className,
-  lang = "en",
 }: CaseWallProps) {
-  const t: CaseWallText = CASE_WALL[lang];
-  const n = (x: number) => intLabel(x, lang);
-  const month = (m: string) => monthLabel(m, lang) ?? m;
+  const n = formatInt;
+  const month = (m: string) => monthYear(m) ?? m;
   const peak = Math.max(...wall.segments.map((s) => s.pending), 1);
   const ownCase = attribution === "case";
-  const subjectMark = ownCase ? t.mark.case : t.mark.month;
-  const drawn = t.drawn(n(wall.drawnAhead), ownCase);
+  const subjectMark = ownCase ? "Yours" : "This month";
 
   return (
     <div className={className}>
-      <ChartTips label={t.chartLabel} scroll="-mx-1 px-1">
+      <ChartTips label="Undecided cases by filing month, up to this case's month" scroll="-mx-1 px-1">
         <ul className="flex min-w-[560px] items-end gap-1.5">
           {wall.segments.map((s) => {
-            const label = monthShortLabel(s.month, lang) ?? s.month;
+            const label = formatMonthShort(s.month) ?? s.month;
             return (
               <Fragment key={s.month}>{" "}
               <li
                 data-tip={[
                   month(s.month),
-                  t.tipUndecided(n(s.pending)),
-                  t.tipShare(percentLabel(Math.round(s.share), lang, 0)),
-                  s.isSubject ? (ownCase ? t.tipSubject.case : t.tipSubject.month) : null,
-                  s.isFront ? t.tipFront : null,
+                  `${n(s.pending)} undecided in DOL's normal queue`,
+                  `${Math.round(s.share).toFixed(0)}% of the cases drawn`,
+                  s.isSubject ? (ownCase ? "Your filing month" : "The month this number decodes to") : null,
+                  s.isFront ? "The oldest month still open" : null,
                 ]
                   .filter(Boolean)
                   .join("\n")}
@@ -132,7 +125,7 @@ export function CaseWall({
                   {label}
                 </span>{" "}
                 <span className="mt-1 min-h-[1.25rem] text-center text-sm font-bold text-primary">
-                  {s.isSubject ? subjectMark : s.isFront ? t.dolHere : null}
+                  {s.isSubject ? subjectMark : s.isFront ? "DOL here" : null}
                 </span>
               </li>
               </Fragment>
@@ -142,9 +135,20 @@ export function CaseWall({
       </ChartTips>
 
       <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
-        <Bold parts={drawn} />
-        {wall.ahead > wall.drawnAhead ? t.earlier(n(wall.ahead - wall.drawnAhead), ownCase, n(wall.ahead)) : null}
-        {publishedFront ? <Bold parts={t.published(month(publishedFront), publishedFront === wall.frontMonth)} /> : null}
+        <b className="font-bold text-foreground">{`${n(wall.drawnAhead)} undecided cases`}</b>
+        {` in DOL's normal queue sit in the months drawn here, between the oldest month still open and ${ownCase ? "yours" : "this one"}.`}
+        {wall.ahead > wall.drawnAhead
+          ? ` Another ${n(wall.ahead - wall.drawnAhead)} were filed earlier still and remain open: cases held up in an audit, an appeal or a request for information, in months DOL has otherwise finished. Counting them takes the total filed before ${ownCase ? "yours" : "that month"} to ${n(wall.ahead)}.`
+          : null}
+        {publishedFront ? (
+          <>
+            {" DOL publishes its own analyst-review position as "}
+            <b className="font-bold text-foreground">{month(publishedFront)}</b>
+            {publishedFront === wall.frontMonth
+              ? ", which is the same month this count puts the front in."
+              : ", a month apart from where these counts put the front. Both are shown rather than one being picked."}
+          </>
+        ) : null}
       </p>
     </div>
   );
@@ -161,24 +165,25 @@ export function CaseWall({
 export function PastFrontNote({
   wall,
   className,
-  lang = "en",
 }: {
   wall: Wall;
   className?: string;
-  lang?: Lang;
 }) {
-  const t: CaseWallText = CASE_WALL[lang];
   const behind = Math.abs(wall.monthsBehindFront);
-  const month = (m: string) => monthLabel(m, lang) ?? m;
+  const month = (m: string) => monthYear(m) ?? m;
   return (
     <div className={className}>
       <p className="text-base leading-relaxed text-soft">
-        <Bold parts={t.pastFront(month(wall.frontMonth), behind)} />
-        <Bold
-          parts={t.pastStillOpen(intLabel(wall.sameMonth, lang), month(wall.subject.month), intLabel(wall.subject.total, lang))}
-        />
+        {"The oldest month still open is "}
+        <b className="font-bold text-foreground">{month(wall.frontMonth)}</b>
+        {`, ${behind} ${behind === 1 ? "month" : "months"} newer than this case's filing month. So filing order is no longer what this case is waiting on. `}
+        <b className="font-bold text-foreground">{`${formatInt(wall.sameMonth)} cases`}</b>
+        {` filed in ${month(wall.subject.month)} are still open, out of ${formatInt(wall.subject.total)} filed that month.`}
       </p>{" "}
-      <p className="mt-3 text-base leading-relaxed text-soft">{t.pastWhy}</p>
+      <p className="mt-3 text-base leading-relaxed text-soft">
+        A case still open past its month is usually out of filing order: at an RFI, an audit, supervised recruitment or
+        an appeal. The split below shows where the rest of its month sits.
+      </p>
     </div>
   );
 }
@@ -195,16 +200,13 @@ export function CohortNeighbours({
   subjectMonth,
   attribution = "case",
   className,
-  lang = "en",
 }: {
   months: readonly { month: string; total: number; pending: number; decidedPct: number | null }[];
   subjectMonth: string;
   /** Same rule as CaseWall: only a FOUND case may be called "Yours". */
   attribution?: "case" | "month";
   className?: string;
-  lang?: Lang;
 }) {
-  const t: CaseWallText = CASE_WALL[lang];
   if (months.length === 0) return null;
   return (
     <ul className={cn("space-y-2", className)}>
@@ -224,19 +226,18 @@ export function CohortNeighbours({
                 isSubject ? "font-bold text-foreground" : "text-muted-foreground",
               )}
             >
-              {monthLabel(x.month, lang)}
+              {monthYear(x.month)}
               {isSubject ? (
                 <span className="ml-2 border border-primary px-1.5 py-0.5 text-sm font-bold tracking-[0.1em] text-primary">
-                  {attribution === "case" ? t.mark.case : t.mark.month}
+                  {attribution === "case" ? "Yours" : "This month"}
                 </span>
               ) : null}
             </span>{" "}
             <span className="text-sm tabular-nums text-muted-foreground">
-              <Bold parts={t.stillOpen(intLabel(x.pending, lang), intLabel(x.total, lang))} />
+              <b className="font-bold text-foreground">{formatInt(x.pending)}</b>
+              {` of ${formatInt(x.total)} still open`}
               {x.decidedPct !== null ? (
-                <span className="ml-2 text-muted-foreground">
-                  {t.decidedShare(percentLabel(x.decidedPct, lang, 0))}
-                </span>
+                <span className="ml-2 text-muted-foreground">{`(${x.decidedPct.toFixed(0)}% decided)`}</span>
               ) : null}
             </span>
           </li>

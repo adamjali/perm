@@ -1,11 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { CaretRightIcon, CheckIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
-import { useLang } from "@/components/i18n/LangProvider";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PageSection } from "@/components/data/PageSection";
@@ -23,9 +22,7 @@ import {
   type TimelineInput,
 } from "@/lib/communityTimeline";
 import { convexSiteUrl } from "@/lib/convexSite";
-import { dayShortLabel } from "@/lib/i18n/format";
-
-import { MILESTONES, type MilestonesText } from "./CaseMilestones.messages";
+import { shortDate } from "@convex/lib/months";
 
 /**
  * The case's timeline after PERM: what people report, and a form to add
@@ -42,9 +39,6 @@ import { MILESTONES, type MilestonesText } from "./CaseMilestones.messages";
  *
  * The `#timeline` anchor is what the "certified" alert email links to, and it
  * opens the form.
- *
- * Its words are in CaseMilestones.messages.ts, in the page's language (English
- * unless a translated page wraps it in LangProvider).
  */
 
 interface Summary {
@@ -81,10 +75,7 @@ function newKey(): string {
   return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-/** A template's `{name}` slots filled with nodes: word order is the language's, not the code's. */
-function fill(template: string, parts: Readonly<Record<string, ReactNode>>): ReactNode {
-  return template.split(/\{(\w+)\}/).map((piece, i) => (i % 2 === 1 ? <Fragment key={i}>{parts[piece]}</Fragment> : piece));
-}
+const fullDay = (iso: string) => shortDate(iso) ?? iso;
 
 const EMPTY: TimelineInput = { route: "adjustment", public: false };
 
@@ -92,9 +83,6 @@ const selectCls =
   "mt-1.5 block h-11 w-full min-w-0 border-2 border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function CaseMilestones({ caseNumber, className }: { caseNumber: string; className?: string }) {
-  const lang = useLang();
-  const t: MilestonesText = MILESTONES[lang];
-  const fullDay = (iso: string) => dayShortLabel(iso, lang) ?? iso;
   const uid = useId();
   const valid = PERM_CASE.test(caseNumber);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -158,7 +146,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
     e.preventDefault();
     if (state.kind === "sending" || !saveUrl) return;
     if (!check.ok) {
-      setState({ kind: "refused", message: t.problem(check) });
+      setState({ kind: "refused", message: check.message });
       return;
     }
     const k = key ?? newKey();
@@ -170,21 +158,18 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
         body: JSON.stringify({ caseNumber, key: k, ...form }),
       });
       const body = (await res.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
-      const saved = res.ok && Boolean(body?.ok);
-      if (saved) {
+      if (res.ok && body?.ok) {
         writeKey(caseNumber, k);
         setKey(k);
         setMine((m) => ({ input: form, permFiledOn: m?.permFiledOn ?? null, permCertifiedOn: m?.permCertifiedOn ?? null }));
         loadSummary(true);
       }
-      const said = body?.message;
       setState({
-        kind: saved ? "done" : "refused",
-        message:
-          said != null ? t.server(said) : saved && t.done ? (mine ? t.done.updated : t.done.recorded) : t.failed,
+        kind: res.ok && body?.ok ? "done" : "refused",
+        message: body?.message ?? "That didn't go through. Try again in a moment.",
       });
     } catch {
-      setState({ kind: "refused", message: t.failedConnection });
+      setState({ kind: "refused", message: "That didn't go through, which usually means the connection dropped." });
     }
   }
 
@@ -205,13 +190,9 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
         setForm(EMPTY);
         loadSummary(true);
       }
-      const said = body?.message;
-      setState({
-        kind: res.ok ? "done" : "refused",
-        message: said != null ? t.server(said) : res.ok && t.done ? t.done.removed : t.failedShort,
-      });
+      setState({ kind: res.ok ? "done" : "refused", message: body?.message ?? "That didn't go through." });
     } catch {
-      setState({ kind: "refused", message: t.failedConnection });
+      setState({ kind: "refused", message: "That didn't go through, which usually means the connection dropped." });
     }
   }
 
@@ -220,25 +201,27 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
   const shown = stops.filter((st) => st.count > 0);
 
   return (
-    <PageSection id="timeline" title={t.title} className={className} lede={t.lede}>
+    <PageSection
+      id="timeline"
+      title="After PERM"
+      className={className}
+      lede="USCIS doesn't publish the I-140 or the I-485 case by case, so this part comes from the people waiting. Their dates are self-reported; the PERM dates come from DOL's own record."
+    >
       {summary ? (
         <p className="text-base leading-relaxed text-soft">
           {shown.length > 0 ? (
             <>
-              {t.reported}
+              Reported for this case:{" "}
               {shown.map((st, i) => (
                 <Fragment key={st.id}>
-                  {i > 0 ? t.listSep : ""}
-                  <b className="font-semibold text-foreground">
-                    {(t.stops as Readonly<Record<string, string | undefined>>)[st.id] ?? st.label}
-                  </b>
-                  {t.count(st.count)}
+                  {i > 0 ? ", " : ""}
+                  <b className="font-semibold text-foreground">{st.label}</b> ({st.count})
                 </Fragment>
               ))}
-              {t.end}
+              .
             </>
           ) : !mine ? (
-            t.nobody
+            "Nobody has added dates for this case yet."
           ) : null}
         </p>
       ) : null}
@@ -250,63 +233,62 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
       >
         <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
           <CaretRightIcon className="size-4 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
-          {mine ? t.openMine : t.openAdd}
+          {mine ? "Your timeline for this case" : "Add your dates"}
         </summary>
 
         {mine?.permCertifiedOn ? (
           <p className="mt-3 flex items-start gap-2 text-sm text-soft">
             <CheckIcon size={18} weight="bold" className="mt-0.5 shrink-0 text-primary-text" aria-hidden="true" />
             <span>
-              {fill(mine.permFiledOn ? t.record : t.recordNoFiled, {
-                filed: mine.permFiledOn ? <b translate="no">{fullDay(mine.permFiledOn)}</b> : null,
-                certified: <b translate="no">{fullDay(mine.permCertifiedOn)}</b>,
-              })}
+              DOL&apos;s record for this case: filed{" "}
+              {mine.permFiledOn ? <b translate="no">{fullDay(mine.permFiledOn)}</b> : "on a date DOL doesn't show"},
+              certified <b translate="no">{fullDay(mine.permCertifiedOn)}</b>.
             </span>
           </p>
         ) : null}
 
         <form onSubmit={save} className="mt-4 space-y-6" noValidate>
           <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <legend className="mb-2 text-base font-semibold">{t.aboutCase}</legend>
+            <legend className="mb-2 text-base font-semibold">About the case</legend>
             <div>
-              <Label htmlFor={`${uid}-cat`}>{t.category}</Label>
+              <Label htmlFor={`${uid}-cat`}>Category</Label>
               <select id={`${uid}-cat`} className={selectCls} value={form.category ?? ""} onChange={(e) => set("category", e.target.value || null)}>
-                <option value="">{t.notSaying}</option>
+                <option value="">Not saying</option>
                 {CATEGORIES.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {t.categories[c.id]}
+                    {c.label}
                   </option>
                 ))}
               </select>
             </div>{" "}
             <div>
-              <Label htmlFor={`${uid}-country`}>{t.country}</Label>
+              <Label htmlFor={`${uid}-country`}>Country of chargeability</Label>
               <select id={`${uid}-country`} className={selectCls} value={form.country ?? ""} onChange={(e) => set("country", e.target.value || null)}>
-                <option value="">{t.notSaying}</option>
+                <option value="">Not saying</option>
                 {COUNTRIES.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {t.countries[c.id]}
+                    {c.label}
                   </option>
                 ))}
               </select>
             </div>{" "}
             <div>
-              <Label htmlFor={`${uid}-route`}>{t.route}</Label>
+              <Label htmlFor={`${uid}-route`}>After the I-140</Label>
               <select id={`${uid}-route`} className={selectCls} value={route} onChange={(e) => set("route", e.target.value)}>
                 {ROUTES.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {t.routes[r.id]}
+                    {r.label}
                   </option>
                 ))}
               </select>
             </div>{" "}
             <div>
-              <Label htmlFor={`${uid}-center`}>{t.center}</Label>
+              <Label htmlFor={`${uid}-center`}>Where the I-140 was decided</Label>
               <select id={`${uid}-center`} className={selectCls} value={form.i140Center ?? ""} onChange={(e) => set("i140Center", e.target.value || null)}>
-                <option value="">{t.notSure}</option>
+                <option value="">Not sure</option>
                 {I140_CENTERS.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {t.centers[c.id]}
+                    {c.label}
                   </option>
                 ))}
               </select>
@@ -318,17 +300,17 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 checked={form.premium === true}
                 onChange={(e) => set("premium", e.target.checked ? true : null)}
               />
-              <span>{t.premium}</span>
+              <span>The I-140 was filed with premium processing</span>
             </label>
           </fieldset>{" "}
 
           <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <legend className="mb-2 text-base font-semibold">{t.datesLegend}</legend>
+            <legend className="mb-2 text-base font-semibold">Dates, only the ones that have happened</legend>
             {dateFields.map((f) => (
               <Fragment key={f.id}>
                 {" "}
                 <div>
-                  <Label htmlFor={`${uid}-${f.id}`}>{t.dates[f.id]}</Label>
+                  <Label htmlFor={`${uid}-${f.id}`}>{f.label}</Label>
                   <DateInput
                     id={`${uid}-${f.id}`}
                     value={(form[f.id] as string | null | undefined) ?? ""}
@@ -342,13 +324,13 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
 
           <details className="border-border p-2 border-2" open={Boolean(form.rfeForm)}>
             <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-base font-semibold [&::-webkit-details-marker]:hidden">
-              {t.rfeSummary}
+              Got a request for evidence (RFE)?
             </summary>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
               <div>
-                <Label htmlFor={`${uid}-rfe-form`}>{t.rfeForm}</Label>
+                <Label htmlFor={`${uid}-rfe-form`}>On which form</Label>
                 <select id={`${uid}-rfe-form`} className={selectCls} value={form.rfeForm ?? ""} onChange={(e) => set("rfeForm", e.target.value || null)}>
-                  <option value="">{t.noRfe}</option>
+                  <option value="">No RFE</option>
                   {RFE_FORMS.map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.label}
@@ -357,31 +339,31 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 </select>
               </div>{" "}
               <div>
-                <Label htmlFor={`${uid}-rfe-reason`}>{t.rfeReason}</Label>
+                <Label htmlFor={`${uid}-rfe-reason`}>What it asked about</Label>
                 <select id={`${uid}-rfe-reason`} className={selectCls} value={form.rfeReason ?? ""} onChange={(e) => set("rfeReason", e.target.value || null)}>
-                  <option value="">{t.notSaying}</option>
+                  <option value="">Not saying</option>
                   {RFE_REASONS.map((x) => (
                     <option key={x.id} value={x.id}>
-                      {t.rfeReasons[x.id]}
+                      {x.label}
                     </option>
                   ))}
                 </select>
               </div>{" "}
               <div>
-                <Label htmlFor={`${uid}-rfe-issued`}>{t.rfeIssued}</Label>
+                <Label htmlFor={`${uid}-rfe-issued`}>RFE dated</Label>
                 <DateInput id={`${uid}-rfe-issued`} value={form.rfeIssuedOn ?? ""} onChange={(e) => set("rfeIssuedOn", e.target.value || null)} className="mt-1.5" />
               </div>{" "}
               <div>
-                <Label htmlFor={`${uid}-rfe-resp`}>{t.rfeResponded}</Label>
+                <Label htmlFor={`${uid}-rfe-resp`}>Response sent</Label>
                 <DateInput id={`${uid}-rfe-resp`} value={form.rfeRespondedOn ?? ""} onChange={(e) => set("rfeRespondedOn", e.target.value || null)} className="mt-1.5" />
               </div>{" "}
               <div className="sm:col-span-2">
-                <Label htmlFor={`${uid}-rfe-out`}>{t.rfeOutcome}</Label>
+                <Label htmlFor={`${uid}-rfe-out`}>What happened</Label>
                 <select id={`${uid}-rfe-out`} className={selectCls} value={form.rfeOutcome ?? ""} onChange={(e) => set("rfeOutcome", e.target.value || null)}>
-                  <option value="">{t.notSaying}</option>
+                  <option value="">Not saying</option>
                   {RFE_OUTCOMES.map((x) => (
                     <option key={x.id} value={x.id}>
-                      {t.rfeOutcomes[x.id]}
+                      {x.label}
                     </option>
                   ))}
                 </select>
@@ -398,26 +380,26 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 onChange={(e) => set("public", e.target.checked)}
               />
               <span>
-                <b className="font-semibold">{t.publicLead}</b>
-                {t.publicRest}
+                <b className="font-semibold">Show my timeline on the public board.</b> The case number and employer never show there; it lists
+                the filing month and how many days each step took.
               </span>
             </label>{" "}
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {t.mediansBefore}
+              Either way, your dates count toward the anonymous medians on the{" "}
               <Link href="/green-card-timelines" className="link">
-                {t.mediansLink}
-              </Link>
-              {t.mediansAfter}
+                green card timelines
+              </Link>{" "}
+              page. This browser keeps a key for this case so you can edit or remove it later.
             </p>
           </div>{" "}
 
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="outline" loading={state.kind === "sending"}>
-              {mine ? t.saveChanges : t.save}
+              {mine ? "Save changes" : "Save my timeline"}
             </Button>{" "}
             {mine ? (
               <Button type="button" variant="ghost" onClick={remove} disabled={state.kind === "sending"}>
-                {t.remove}
+                Remove my timeline
               </Button>
             ) : null}
           </div>{" "}

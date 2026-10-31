@@ -21,7 +21,6 @@ import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { ageByStatusFrom, exitMixFor, stageDurationFor } from "@/lib/stageStatsShape";
 import type { AppCaseCorpus } from "@/lib/db/appCaseCorpus";
 import type { LineAheadRow } from "@/lib/queueAhead";
-import type { Lang } from "@/lib/i18n/lang";
 
 export interface AppCaseEstimateInput {
   corpus: AppCaseCorpus;
@@ -35,7 +34,6 @@ export interface AppCaseEstimateInput {
   today: string;
   /** The day our sweep saw the case enter RFI, when known (server read); else null. */
   rfiEnteredOn?: string | null;
-  lang?: Lang;
 }
 
 export interface AppCaseEstimateResult {
@@ -52,7 +50,6 @@ export function appCaseEstimate({
   isFinal,
   today,
   rfiEnteredOn = null,
-  lang,
 }: AppCaseEstimateInput): AppCaseEstimateResult {
   const { casesAhead, sweepAgeDays, lineAhead } = caseEstimateInputs({
     backlog: corpus.backlog,
@@ -77,7 +74,6 @@ export function appCaseEstimate({
     rangeCoverage: corpus.rangeCoverage,
     rfi: { enteredOn: rfiEnteredOn, clock: corpus.rfiClock },
     today,
-    lang,
   });
 
   return { estimate, lineAhead, casesAhead };

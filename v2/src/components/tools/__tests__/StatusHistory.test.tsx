@@ -22,23 +22,6 @@ describe("StatusHistory", () => {
     expect(text).toContain("Nov 3, 2026 Analyst Review (now)");
   });
 
-  it("speaks a translated page's language and keeps DOL's status words in English", () => {
-    const { container } = render(
-      <StatusHistory
-        lang="es"
-        events={[
-          { at: at("2026-09-30", 10), from: "ANALYST REVIEW", to: "RFI ISSUED" },
-          { at: at("2026-11-03", 15), from: "RFI ISSUED", to: "ANALYST REVIEW" },
-        ]}
-      />,
-    );
-    expect(screen.getByRole("heading", { name: "Cada estado que ha mostrado el DOL" })).toBeInTheDocument();
-    const text = (container.textContent ?? "").replace(/\s+/g, " ");
-    expect(text).toContain("RFI Issued Duró 34 días");
-    expect(text).toContain("Analyst Review (ahora)");
-    expect(text).not.toMatch(/Held for|Every status|\(now\)/);
-  });
-
   it("renders nothing for a case that hasn't changed on our record", () => {
     const { container } = render(<StatusHistory events={[]} />);
     expect(container).toBeEmptyDOMElement();

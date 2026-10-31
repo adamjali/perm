@@ -15,13 +15,10 @@ import type { CohortMonth } from "@/lib/liveQueue";
 import type { Wall } from "@/lib/casePosition";
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
-import { budgetResetEastern, isLookupGap, type DiscoveryMiss } from "@/lib/dolMiss";
-import { DOL_MISS } from "@/lib/dolMiss.messages";
-import { intlLocale, localizedPath, type Lang } from "@/lib/i18n/lang";
-import { dayLabel, intLabel, monthLabel } from "@/lib/i18n/format";
-import { CASE_STATUS_EMPTY } from "./CaseStatusEmpty.messages";
-import { CASE_NOT_FOUND, type CaseNotFoundText } from "./CaseNotFound.messages";
-import { CASE_NUMBER_PLATE } from "./CaseNumberPlate.messages";
+import { isLookupGap, unsettledClause, unsettledVerdict, type DiscoveryMiss } from "@/lib/dolMiss";
+import { CASE_NUMBER_ACCURACY } from "@/lib/permCaseNumber";
+import { formatInt } from "@/lib/format";
+import { longDate, monthYear } from "@convex/lib/months";
 
 /**
  * A case number we hold no record for. A real state, not an error.
@@ -68,8 +65,6 @@ export interface CaseNotFoundProps {
    * been slow.
    */
   dolMiss?: DiscoveryMiss | "records" | null;
-  /** The page's language. English by default, and English output never changes. */
-  lang?: Lang;
 }
 
 export function CaseNotFound({
@@ -83,40 +78,38 @@ export function CaseNotFound({
   publishedAsOf,
   mirrorSize,
   dolMiss = null,
-  lang = "en",
 }: CaseNotFoundProps) {
-  const t: CaseNotFoundText = CASE_NOT_FOUND[lang];
-  const month = (iso: string) => monthLabel(iso, lang) ?? iso;
-  const checked = mirrorSize ? t.checked(intLabel(mirrorSize, lang)) : null;
+  const month = (iso: string) => monthYear(iso) ?? iso;
+  const checked = mirrorSize
+    ? `Checked ${formatInt(mirrorSize)} per-case statuses and DOL's decided files since October 2015`
+    : null;
   if (isLookupGap(dolMiss)) {
-    const retry = `${localizedPath("/perm-case-status", lang)}?case=${encodeURIComponent(caseNumber)}`;
-    const which = dolMiss === "records" ? "records" : "other";
+    const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
     return (
       <div>
         <AnswerPanel
-          verdict={DOL_MISS[lang].verdict[dolMiss]}
+          verdict={unsettledVerdict(dolMiss)}
           direction="flat"
           source={
             checked && dolMiss !== "records"
-              ? `${checked}${dolMiss === "unavailable" ? t.afterDolUnavailable : t.afterNotAsked}`
+              ? `${checked}; ${dolMiss === "unavailable" ? "DOL's live check didn't answer within 8 seconds" : "the live check with DOL wasn't made"}`
               : undefined
           }
         >
-          {t.gapLead[which]}{" "}
+          {dolMiss === "records" ? "We couldn't check" : "We hold no record for"}{" "}
           <b className="font-mono" translate="no">
             {caseNumber}
           </b>
-          {t.gapAfter[which]}
-          {DOL_MISS[lang].clause(dolMiss, budgetResetEastern(new Date(), intlLocale(lang)))}
-          {t.sep}
+          {dolMiss === "records" ? " just now: " : " yet, "}
+          {unsettledClause(dolMiss)}{" "}
           <a href={retry} className="link">
-            {t.tryAgain}
+            Try again
+          </a>{" "}
+          or use{" "}
+          <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link">
+            DOL&apos;s own case-status search
           </a>
-          {t.orUse}
-          <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link" hrefLang="en">
-            {t.dolSearch}
-          </a>
-          {t.gapEnd}
+          .
         </AnswerPanel>
       </div>
     );
@@ -124,70 +117,71 @@ export function CaseNotFound({
   return (
     <div>
       <AnswerPanel
-        verdict={t.notInRecords}
+        verdict="Not in our records"
         direction="flat"
         label={<span translate="no">{caseNumber}</span>}
-        source={checked ? `${checked}${t.thenAskedDol}` : undefined}
+        source={checked ? `${checked}, then asked DOL directly` : undefined}
         actions={
           // A number in the current format we can't find is usually a recent
           // filing, the case most worth watching. Legacy numbers are all
           // decided, so they get nothing.
           isLegacy ? undefined : (
             <div className="mt-6 border-t border-foreground/10 pt-6">
-              <WatchThisNumber caseNumber={caseNumber} program="perm" variant="inline" lang={lang} />
+              <WatchThisNumber caseNumber={caseNumber} program="perm" variant="inline" />
             </div>
           )
         }
       >
-        {t.noRecordLead}
+        We hold no record for this number. That isn&apos;t a statement about the case, only that this project
+        hasn&apos;t got it, and{" "}
         {/* THE CASE-STATUS SEARCH, NOT THE PROCESSING-TIMES PAGE: the link says
             DOL's own system is the authority on THIS NUMBER. */}
-        <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link" hrefLang="en">
-          {t.dolSearch}
-        </a>
-        {t.noRecordEnd}
+        <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link">
+          DOL&apos;s own case-status search
+        </a>{" "}
+        is the authority either way.
       </AnswerPanel>
 
-      <PageSection title={t.whyTitle}>
+      <PageSection title="Why a real case can be missing here">
         <ul className="max-w-3xl space-y-3 text-base leading-relaxed text-soft">
           <li>
-            <b className="font-semibold text-foreground">{t.whyDol.lead}</b>
-            {t.sep}
-            {t.whyDol.rest}
+            <b className="font-semibold text-foreground">DOL doesn&apos;t return it.</b> A number we don&apos;t
+            already hold is asked of DOL at the moment you search, so a filing from this week resolves. If DOL&apos;s
+            own system has no exact match, neither do we.
           </li>{" "}
           <li>
-            <b className="font-semibold text-foreground">{t.whyOld.lead}</b>
-            {t.sep}
-            {t.whyOld.rest}
+            <b className="font-semibold text-foreground">It was decided before October 2015.</b> DOL&apos;s published
+            decision files we hold start then.
           </li>{" "}
           <li>
-            <b className="font-semibold text-foreground">{t.whyDigitLead}</b>
-            {t.sep}
-            {t.whyDigitRest}
-            <Link href="/case-search" className="link" hrefLang={lang === "en" ? undefined : "en"}>
-              {t.findByEmployer}
+            <b className="font-semibold text-foreground">A digit is off.</b> One wrong digit in the serial is still a
+            well-formed number that belongs to nobody. Check it against the receipt, or{" "}
+            <Link href="/case-search" className="link">
+              find the case by employer name
             </Link>
-            {t.end}
+            .
           </li>
         </ul>{" "}
         {parsed ? (
-          <FinePrint summary={t.numberSays} className="mt-4">
-            <CaseNumberPlate parsed={parsed} lang={lang} />{" "}
-            <p>{CASE_NUMBER_PLATE[lang].accuracy}</p>
+          <FinePrint summary="What the case number says" className="mt-4">
+            <CaseNumberPlate parsed={parsed} />{" "}
+            <p>{CASE_NUMBER_ACCURACY}</p>
           </FinePrint>
         ) : null}
       </PageSection>
 
       {isLegacy ? (
-        <PageSection title={t.legacyTitle}>
+        <PageSection title="This is the older case-number format">
           <p className="max-w-3xl text-base leading-relaxed text-soft">
-            {t.legacyBefore}
+            Numbers like{" "}
             <b className="font-mono font-semibold text-foreground" translate="no">
               {caseNumber}
-            </b>
-            {t.legacyMiddle}
-            <b className="font-semibold text-foreground">{t.legacyBold}</b>
-            {t.legacyAfter}
+            </b>{" "}
+            are the older three-part format, used mostly in 2022 and 2023. Its middle digits aren&apos;t a filing date:
+            read as one, they match DOL&apos;s receipt date only{" "}
+            <b className="font-semibold text-foreground">13% of the time</b>, against 90% for the current format. Every
+            case in this format is already decided and published, so a real one would be found here. Check the digits
+            against the receipt.
           </p>
         </PageSection>
       ) : null}
@@ -197,38 +191,38 @@ export function CaseNotFound({
           // The heading carries the attribution: everything here is about a
           // month, and a reader who only reads headings must not think any of
           // it was measured on their case.
-          <Fold title={t.monthTitle(month(cohort.month))} hint={t.monthHint}>
+          <Fold title={`Cases filed in ${month(cohort.month)}`} hint="The month this number decodes to">
             <p className="max-w-2xl text-base leading-relaxed text-soft">
-              <b className="font-semibold text-foreground">{t.notMeasuredBold(caseNumber)}</b>
-              {t.notMeasuredRest(intLabel(cohort.total, lang))}
+              <b className="font-semibold text-foreground">{`None of this was measured on ${caseNumber}`}</b>
+              {`, which we couldn't find. It describes the ${formatInt(cohort.total)} cases we hold that were filed alongside it.`}
             </p>
 
             <FigureRow className="mt-6">
-              <Figure label={t.filedThatMonth} value={intLabel(cohort.total, lang)} note={t.checkedAgainstDol} />
+              <Figure label="Filed that month" value={formatInt(cohort.total)} note="cases checked against DOL" />
               <Figure
-                label={t.stillUndecided}
-                value={intLabel(cohort.pending, lang)}
+                label="Still undecided"
+                value={formatInt(cohort.pending)}
                 note={
                   cohort.decidedPct !== null
-                    ? t.pctDecided(cohort.decidedPct.toLocaleString(intlLocale(lang), { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
-                    : t.ofThatMonth
+                    ? `${cohort.decidedPct.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% of the month is decided`
+                    : "of that month"
                 }
               />
               {wall && !wall.isPastFront ? (
-                <Figure label={t.filedBefore} value={intLabel(wall.ahead, lang)} note={t.filedBeforeNote} />
+                <Figure label="Filed before that month" value={formatInt(wall.ahead)} note="undecided, across every earlier month" />
               ) : null}
             </FigureRow>
 
             {wall && !wall.isPastFront ? (
               <FigurePlate
-                title={t.wallTitle}
-                subject={t.wallSubject}
+                title="The wall in front of that filing month"
+                subject="Undecided cases by filing month"
                 className="mt-6"
-                caption={t.wallCaption(month(cohort.month))}
+                caption={`Drawn for ${month(cohort.month)}, the month this number decodes to: the queue in front of that month rather than in front of any one case.`}
                 source={
-                  publishedAsOf && dayLabel(publishedAsOf, lang)
-                    ? t.wallSourceAsOf(dayLabel(publishedAsOf, lang) ?? publishedAsOf)
-                    : t.wallSource
+                  longDate(publishedAsOf)
+                    ? `Per-case statuses from DOL's own case status system, checked daily · DOL queue position as of ${longDate(publishedAsOf)}`
+                    : "Per-case statuses from DOL's own case status system, checked daily"
                 }
               >
                 {/* Not "Yours": the case wasn't found, so this column is the
@@ -242,22 +236,39 @@ export function CaseNotFound({
             ) : null}
 
             <p className="mt-5 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-              <Link href={`/perm-queue/${cohort.month}`} className="link" hrefLang={lang === "en" ? undefined : "en"}>
-                {t.fullSplit(month(cohort.month))}
+              <Link href={`/perm-queue/${cohort.month}`} className="link">
+                {`The full split for ${month(cohort.month)}`}
               </Link>{" "}
-              <Link href="/perm-processing-times" className="link" hrefLang={lang === "en" ? undefined : "en"}>
-                {t.getTold}
+              <Link href="/perm-processing-times" className="link">
+                Get told when DOL reaches that month
               </Link>
             </p>
           </Fold>
         ) : null}
-        <Fold title={t.wontSayTitle}>
+        <Fold title="What this page won't tell you">
           <WontSay isFinal={false} />
         </Fold>
       </FoldList>
     </div>
   );
 }
+
+/** What a looked-up number brings, as the empty page lists it. */
+const GETS_YOU: readonly { lead: string; rest: string }[] = [
+  {
+    lead: "The status, decoded.",
+    rest: "DOL shows one word and explains none of them. Some mean waiting and some mean a 30-day clock is running on the employer.",
+  },
+  {
+    lead: "The position.",
+    rest: "How many undecided cases were filed before it, and how far its filing month sits behind the month DOL is working.",
+  },
+  { lead: "An estimated decision date, and an email when it moves.", rest: "" },
+  {
+    lead: "For a decided case, DOL's own file.",
+    rest: "The outcome, the days it took, the offered wage against its occupation, and the worksite state.",
+  },
+];
 
 /**
  * The page with nothing typed in yet.
@@ -272,29 +283,30 @@ export function CaseStatusEmpty({
   publishedFront,
   publishedAsOf,
   mirrorSize,
-  lang = "en",
 }: {
   front: string | null;
   wallTotal: number | null;
   publishedFront: string | null;
   publishedAsOf: string | null;
   mirrorSize: number | null;
-  lang?: Lang;
 }) {
-  const t = CASE_STATUS_EMPTY[lang];
   const facts: { label: string; value: string; note: string }[] = [];
   if (front) {
-    facts.push({ label: t.oldestOpen, value: monthLabel(front, lang) ?? front, note: t.oldestOpenNote });
+    facts.push({
+      label: "Oldest month still open",
+      value: monthYear(front) ?? front,
+      note: "the oldest filing month DOL hasn't substantially decided",
+    });
   }
   if (wallTotal !== null) {
-    facts.push({ label: t.undecided, value: intLabel(wallTotal, lang), note: t.undecidedNote });
+    facts.push({ label: "Undecided cases", value: formatInt(wallTotal), note: "across every filing month, the whole wall" });
   }
   if (publishedFront && publishedFront !== front) {
-    const asOf = dayLabel(publishedAsOf, lang);
+    const asOf = longDate(publishedAsOf);
     facts.push({
-      label: t.dolWorking,
-      value: monthLabel(publishedFront, lang) ?? publishedFront,
-      note: asOf ? t.asOf(asOf) : t.analystReview,
+      label: "DOL is working",
+      value: monthYear(publishedFront) ?? publishedFront,
+      note: asOf ? `as of ${asOf}` : "analyst review",
     });
   }
 
@@ -310,9 +322,9 @@ export function CaseStatusEmpty({
           ))}
         </FigureRow>
       ) : null}{" "}
-      <PageSection title={t.sectionTitle}>
+      <PageSection title="What a case number gets you here">
         <ul className="max-w-3xl space-y-3 text-base leading-relaxed text-soft">
-          {t.bullets.map((b) => (
+          {GETS_YOU.map((b) => (
             <Fragment key={b.lead}>
               <li>
                 <b className="font-semibold text-foreground">{b.lead}</b>
@@ -323,7 +335,8 @@ export function CaseStatusEmpty({
         </ul>
         {mirrorSize ? (
           <p className="mt-5 text-sm text-muted-foreground border-t-2 border-border">
-            {t.searched(intLabel(mirrorSize, lang))}
+            Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search,
+            plus DOL&apos;s published decisions since October 2015. Nothing is stored and nothing is sent anywhere else.
           </p>
         ) : null}
       </PageSection>

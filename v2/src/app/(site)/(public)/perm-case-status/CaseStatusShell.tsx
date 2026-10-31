@@ -1,7 +1,5 @@
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
-import { normaliseFlagCaseNumber } from "@/lib/flagCaseNumber";
-import type { Lang } from "@/lib/i18n/lang";
-import { CASE_STATUS } from "./caseStatus.messages";
+import { normaliseFlagCaseNumber, type FlagProgram } from "@/lib/flagCaseNumber";
 
 /**
  * The parts of /perm-case-status that its loading state and the page share,
@@ -20,12 +18,21 @@ export const CASE_STATUS_FRAME = "mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm
  * request or an LCA looked up here isn't a PERM case. With nothing typed (or
  * nothing readable) it's the PERM lookup the page is named for.
  */
-export function headingFor(typed: string, lang: Lang = "en"): string {
+export function headingFor(typed: string): string {
   const program = normaliseFlagCaseNumber(typed)?.program ?? "perm";
-  // A PERM case's heading carries the phrases people search for it, "PERM case status" and "track" (Search Console,
-  // 3 months to Oct 28 2026: the homepage outranked this page for both). Each language's words are in its messages.
-  return CASE_STATUS[lang].heading[program];
+  return HEADINGS[program];
 }
+
+/**
+ * A PERM case's heading carries the phrases people search for it, "PERM case status" and "track" (Search Console,
+ * 3 months to Oct 28 2026: the homepage outranked this page for both).
+ */
+const HEADINGS: Record<FlagProgram, string> = {
+  perm: "Check and track your PERM case status",
+  pwd: "Check a prevailing wage request",
+  lca: "Check an LCA",
+  seasonal: "Check an H-2A, H-2B or CW-1 filing",
+};
 
 /**
  * The page's head. With nothing typed it's the title, one line on what the
@@ -43,17 +50,14 @@ export function CaseStatusHead({
   typed,
   loading = false,
   withBox = typed.trim() === "",
-  lang = "en",
 }: {
   typed: string;
   loading?: boolean;
   /** The lookup box under the title: on when nothing (or nothing usable) was typed. */
   withBox?: boolean;
-  /** The page's language (a translated page under /es, /zh and the rest). */
-  lang?: Lang;
 }) {
   const titleClass = "font-heading text-4xl font-bold leading-tight sm:text-5xl";
-  const title = headingFor(typed, lang);
+  const title = headingFor(typed);
   return (
     <>
       <header>
@@ -65,7 +69,9 @@ export function CaseStatusHead({
           <h1 className={titleClass}>{title}</h1>
         )}{" "}
         {withBox ? (
-          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-soft">{CASE_STATUS[lang].intro}</p>
+          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-soft">
+            Its status in plain English, where it sits in DOL&apos;s queue, an estimated decision date, and a free email the moment it changes. Wage request, LCA, H-2A, H-2B and CW-1 numbers work too. No account needed.
+          </p>
         ) : null}
       </header>{" "}
       {withBox ? (
@@ -78,14 +84,13 @@ export function CaseStatusHead({
 }
 
 /** The lookup box again, at the end of a result. */
-export function CheckAnother({ typed, lang = "en" }: { typed: string; lang?: Lang }) {
-  const t = CASE_STATUS[lang];
+export function CheckAnother({ typed }: { typed: string }) {
   return (
     <section aria-labelledby="check-another" className="mt-12 border-t border-border pt-8 sm:mt-16">
       <h2 id="check-another" className="font-heading text-xl font-bold">
-        {t.checkAnother}
+        Check another case
       </h2>{" "}
-      <CaseLookupForm defaultValue={typed} source="case-page" label={t.caseNumber} help={null} className="mt-4" />
+      <CaseLookupForm defaultValue={typed} source="case-page" label="Case number" help={null} className="mt-4" />
     </section>
   );
 }

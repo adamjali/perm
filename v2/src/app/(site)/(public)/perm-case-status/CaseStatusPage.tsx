@@ -10,10 +10,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { CASE_STATUS_FRAME, CaseStatusHead, CheckAnother, LookupSkeleton } from "./CaseStatusShell";
-import { CASE_STATUS, waitFigure } from "./caseStatus.messages";
-import { intlLocale, localizedPath, pageAlternates, type Lang } from "@/lib/i18n/lang";
-import { dayLabel, intLabel, monthLabel } from "@/lib/i18n/format";
-import { howLongFigures, howLongSentence } from "@/lib/dolNow";
+import { howLongSentence } from "@/lib/dolNow";
 import { getPermBoard } from "@/lib/db/board";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getStatusHistory } from "@/lib/db/statusHistory";
@@ -87,49 +84,73 @@ import { caseSearchHref } from "@/lib/caseSearchPlan";
  * to ask.
  */
 
+const TITLE = "PERM Case Status: Check and Track a Case";
+const DESCRIPTION =
+  "Look up a PERM case number: its status in plain English, how many undecided cases were filed before it, and the employer's own record with DOL.";
 
-/**
- * The page's metadata in one language. English is canonical at the bare path; a translation is canonical at its
- * own `/<lang>/perm-case-status`, and every version names all six (hreflang must be reciprocal).
- */
-export async function caseStatusMetadata(lang: Lang, raw: string | undefined): Promise<Metadata> {
-  const t = CASE_STATUS[lang];
+export async function caseStatusMetadata(raw: string | undefined): Promise<Metadata> {
   const hasCase = typeof raw === "string" && raw.trim().length > 0;
-  const path = localizedPath("/perm-case-status", lang);
   return withSocialCard({
-    title: t.metaTitle,
-    description: t.metaDescription,
+    title: TITLE,
+    description: DESCRIPTION,
     // The bare path on every variant. A result page is one of ~412,000, and
     // they are all the same page with a different argument.
-    alternates: { canonical: path, languages: pageAlternates("/perm-case-status") },
+    alternates: { canonical: "/perm-case-status" },
     robots: hasCase ? { index: false, follow: true } : undefined,
     openGraph: {
       ...openGraphBase,
-      title: `${t.metaTitle} | PERM Tracker`,
-      description: t.metaDescription,
-      url: path,
+      title: `${TITLE} | PERM Tracker`,
+      description: DESCRIPTION,
+      url: "/perm-case-status",
     },
   }, "perm-case-status");
 }
 
-/** Stands in for the live answer to "how long" in each language's FAQ, filled at render. */
+/** Stands in for the live answer to "how long" in the FAQ, filled at render. */
 const HOW_LONG = "{{howLong}}";
 
-/** The "how long right now" answer: English in the processing-times page's own sentence, other languages in theirs. */
-function howLongAnswer(lang: Lang, board: Parameters<typeof howLongSentence>[0], times: Parameters<typeof howLongSentence>[1]): string {
-  if (lang === "en") return howLongSentence(board, times);
-  const t = CASE_STATUS[lang];
-  const f = howLongFigures(board, times);
-  const nf = new Intl.NumberFormat(intlLocale(lang), { maximumFractionDigits: 1 });
-  return t.howLong({
-    day: dayLabel(f.decidedOn, lang),
-    wait: f.waitedDays === null ? null : t.waitWords(waitFigure(f.waitedDays), (n) => nf.format(n)),
-    frontier: monthLabel(f.frontier, lang),
-    avgDays: f.days === null ? null : intLabel(f.days, lang),
-    decidedIn: monthLabel(f.decidedIn, lang),
-    asOf: dayLabel(f.asOf, lang),
-  });
-}
+const FAQS = [
+  {
+    q: "How do I track my PERM case?",
+    a: "Enter its case number above. The page shows DOL's status for it in plain English, how many cases filed before it are still waiting, and when DOL is likely to decide it. To hear the moment it changes, add your email under the answer. It's free and needs no account.",
+  },
+  {
+    q: "Can I get an email when my PERM case status changes?",
+    a: "Yes, free and with no account. A watched case is checked against DOL's record every 5 minutes on weekdays from 7 AM to 9 PM Eastern, and every half hour otherwise, and a status change is emailed at once. The watch carries on for a year after DOL decides, in case of an appeal or a reversal, and every email has a one-click way to stop. Wage requests and H-1B LCAs work the same way.",
+  },
+  {
+    q: "How long does PERM take right now?",
+    a: "{{howLong}} Your own case's estimate, from its filing day and the cases still waiting ahead of it, shows once you enter its number.",
+  },
+  {
+    q: "Where do I find my PERM case number?",
+    a: "On the ETA-9089 filing receipt, and on any status notice DOL sent the employer. Current ones look like G-100-26125-868956; cases filed in 2022 and 2023 use a shorter form like A-23043-00641, and both work here. The employer's attorney has it if you don't.",
+  },
+  {
+    q: "Is this DOL's official status?",
+    a: "It's DOL's own record, read from its case-status search: every pending case several times a day, every case at least once a day, and a case someone has an alert on every 5 minutes on weekdays. DOL publishes no documented API for it, so this is the same endpoint its search page uses. Between checks, a newly decided case shows at DOL first, and DOL is the authority for any single case.",
+  },
+  {
+    q: "Is the estimated decision date a prediction for my case?",
+    a: "It's an estimate, labeled as one. It counts the cases filed before yours that are still waiting and divides by how many DOL has been deciding a day, and its range comes from how far recent estimates landed from the real decisions. It's checkable arithmetic over DOL's own record, and it isn't a promise about any single case.",
+  },
+  {
+    q: "Why won't you tell me my odds of being certified?",
+    a: "A single odds figure would read as precision the data can't support. The measured denial factors aren't independent, so blending them into one score hides which one is doing the work. The denial-rate pages publish the measured rates separately and refuse the blend on purpose. What's real, and shown, is the employer's published record across its own decided cases.",
+  },
+  {
+    q: "My case isn't here. Is something wrong?",
+    a: "Almost certainly not. If we don't already hold your number, we ask DOL's case system for it and record what comes back, so a recent filing usually turns up. A wrong digit still makes a well-formed number, so check that first. DOL's published files reach back to fiscal year 2016; a case older than that, and no longer in DOL's live search, may not be found.",
+  },
+  {
+    q: "What does my case number actually mean?",
+    a: "The current format encodes its own filing date. In G-100-26125-868956, the 26 is the year and the 125 is the day of that year, so it decodes to May 5, 2026. Measured against 20,000 cases in DOL's records, that decoded date matches exactly 89% of the time and is a day or two off otherwise. The older three-part format, like A-23043-00641, doesn't: the same reading lands 13% of the time, so the lookup won't decode one rather than guess a filing month.",
+  },
+  {
+    q: "Do you store the case number I type in?",
+    a: "No. It goes into the page's address so you can bookmark or share the result, and it's stripped out of analytics before anything is sent. Nothing is written down and nothing goes to a third party.",
+  },
+];
 
 /**
  * UTC, deliberately, and shared by every elapsed figure on the page.
@@ -160,12 +181,8 @@ function looksLikeName(input: string): boolean {
   return letters >= 2 && letters > digits;
 }
 
-/**
- * The whole page in one language. The English route (`page.tsx`) and the translated ones
- * (`[lang]/perm-case-status/page.tsx`) render exactly this, so the two can't drift.
- */
-export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | undefined }) {
-  const t = CASE_STATUS[lang];
+/** The whole page, rendered by `page.tsx`. */
+export async function CaseStatusPage({ raw }: { raw: string | undefined }) {
   const typed = typeof raw === "string" ? raw : "";
   // A USCIS receipt (EAC2190123456) is a different agency's record and has
   // its own page. Checked before anything DOL-shaped: a reader holding an
@@ -202,8 +219,8 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
   const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
   // DOL's queue month and average, dated, in the "how long" answer; read on render, never typed.
   const [times, permBoard] = await Promise.all([getProcessingTimes().catch(() => null), getPermBoard().catch(() => null)]);
-  const howLong = howLongAnswer(lang, permBoard, times);
-  const faqs = t.faqs.map((f) => ({ ...f, a: f.a.replace(HOW_LONG, howLong) }));
+  const howLong = howLongSentence(permBoard, times);
+  const faqs = FAQS.map((f) => ({ ...f, a: f.a.replace(HOW_LONG, howLong) }));
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -220,17 +237,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
       <div className="pt-8 sm:pt-10" />
       <JsonLdScript schema={faqSchema} />
 
-      <CaseStatusHead typed={typed} withBox={!hasNumber} lang={lang} />
-
-      {/* A translation says where the authority is, above everything it translates. */}
-      {lang !== "en" ? (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {t.termsNote}{" "}
-          <Link href={typed ? `/perm-case-status?case=${encodeURIComponent(typed)}` : "/perm-case-status"} className="link" hrefLang="en">
-            {t.readInEnglish}
-          </Link>
-        </p>
-      ) : null}
+      <CaseStatusHead typed={typed} withBox={!hasNumber} />
 
       {/* The warning sits ABOVE anything it qualifies and nothing is computed
           from bad input. A figure the reader has already absorbed cannot be
@@ -239,28 +246,23 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
         <p className="mt-6 flex items-start gap-2 border-l-2 border-data-warn-ink bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft border-2">
           <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
-            <b className="font-semibold text-foreground">{t.malformedLead}</b> {t.malformedBody}
+            <b className="font-semibold text-foreground">That isn&apos;t the shape of a case number,</b> so nothing was looked up. PERM numbers look like G-100-26125-868956 (A-23043-00641 for 2022 and 2023) and are on the ETA-9089 receipt. Wage requests start with P, H-1B LCAs with I, H-2A and H-2B cases with H (an H-2A job order with JO-A), and CW-1 with C.
           </span>
         </p>
       ) : null}
       {malformed && looksLikeReceipt(typed) ? (
         <div className="mt-4 bg-tint p-5 border-2 border-border">
           <p className="text-base leading-relaxed">
-            <b className="font-semibold">{t.receiptLead}</b> {t.receiptBody}
+            <b className="font-semibold">Holding a USCIS receipt number?</b> Three letters and ten digits, like EAC2190123456, is USCIS&apos;s record of the I-140 or I-485, not DOL&apos;s record of the PERM. It has its own page.
           </p>{" "}
           <p className="mt-3">
             <Link href="/uscis-case-status" className={buttonVariants({ variant: "outline" })}>
-              {t.receiptButton}
+              Check a USCIS receipt instead
             </Link>
           </p>
         </div>
       ) : null}
-      {/* A wage request, LCA or H-2A, H-2B and CW-1 result is English on every page for now: a translated page
-          says so in its own language, and marks the block as English for screen readers (WCAG 3.1.2). */}
-      {lang !== "en" && (pwdNumber || seasonalNumber || lcaNumber) ? (
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-soft">{t.otherProgramEnglish}</p>
-      ) : null}{" "}
-      <div className="mt-8" lang={lang !== "en" && (pwdNumber || seasonalNumber || lcaNumber) ? "en" : undefined}>
+      <div className="mt-8">
         {pwdNumber ? (
           <Suspense key={pwdNumber} fallback={<LookupSkeleton />}>
             <PwdLookup caseNumber={pwdNumber} />
@@ -275,28 +277,28 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
           </Suspense>
         ) : caseNumber ? (
           <Suspense key={caseNumber} fallback={<LookupSkeleton />}>
-            <Lookup caseNumber={caseNumber} lang={lang} />
+            <Lookup caseNumber={caseNumber} />
           </Suspense>
         ) : (
           <Suspense fallback={<LookupSkeleton />}>
-            <Empty lang={lang} />
+            <Empty />
           </Suspense>
         )}
       </div>
 
-      {hasNumber ? <CheckAnother typed={typed} lang={lang} /> : null}
+      {hasNumber ? <CheckAnother typed={typed} /> : null}
 
       <section className="mt-12 border-t border-border pt-8 sm:mt-16">
-        <h2 className="font-heading text-2xl font-bold">{t.faqTitle}</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Questions about this page</h2>{" "}
         <FaqList items={faqs} />
       </section>
 
-      <DataProvenance datasets={["perm-case-status", "perm-cases", "processing-times"]} lang={lang} />
-      <MoreText gist={t.provenanceGist} className="mt-2">
+      <DataProvenance datasets={["perm-case-status", "perm-cases", "processing-times"]} />
+      <MoreText gist="Read from DOL's own case-status search, every case daily. DOL is the authority." className="mt-2">
         <p className="text-sm text-muted-foreground">
-          {t.provenanceBody}{" "}
+          These statuses are read from DOL directly. The FLAG case-status search answers a batch lookup, and we run it against every case once a day, against every undecided case at least twice a day (three times on weekdays), and against cases with an alert on them every 5 minutes on weekdays (every half hour at night and at weekends). DOL publishes no documented API for this, so it is the same endpoint their own search page uses rather than a supported one. The date shown on each case is when our check saw it, and it is a snapshot rather than a live feed. DOL is the authority for any case and this page is never a substitute for the determination letter.{" "}
           <a href="https://flag.dol.gov" rel="noopener noreferrer" className="link">
-            {t.checkYourself}
+            Check it yourself at flag.dol.gov
           </a>
           .
         </p>
@@ -304,10 +306,9 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
 
       <ToolPageFooter
         currentHref="/perm-case-status"
-        title={t.readingTitle}
         reading={[
-          { href: "/tools/perm-timeline-calculator", ...t.readingWait },
-          { href: "/perm-queue", ...t.readingQueue },
+          { href: "/tools/perm-timeline-calculator", label: "How long the wait runs", note: "The lookup counts what's in front of a case. The calculator gives the whole range, from cases DOL has decided." },
+          { href: "/perm-queue", label: "The whole queue", note: "Every filing month DOL still has undecided cases in, and where the work front sits." },
         ]}
       />
     </div>
@@ -330,7 +331,7 @@ export async function CaseStatusPage({ lang, raw }: { lang: Lang; raw: string | 
  * ahead of its data hits precisely this window, and each section renders its
  * own absence.
  */
-async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) {
+async function Lookup({ caseNumber }: { caseNumber: string }) {
   const today = todayUtc();
 
   const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage, rfiClock, byDay] =
@@ -406,7 +407,6 @@ async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) 
         mirrorSize={mirrorSize || null}
         // A lookup that threw is "our records couldn't be read", never "not found".
         dolMiss={result ? (result.dolMiss ?? null) : "records"}
-        lang={lang}
       />
     );
   }
@@ -460,13 +460,12 @@ async function Lookup({ caseNumber, lang }: { caseNumber: string; lang: Lang }) 
       timeline={timeline}
       history={history}
       today={today}
-      lang={lang}
     />
   );
 }
 
 /** The page with nothing typed in: still the national picture, not a blank. */
-async function Empty({ lang }: { lang: Lang }) {
+async function Empty() {
   const [backlog, estimator, mirrorSize] = await Promise.all([
     getLiveBacklog().catch((): CohortMonth[] => []),
     getEstimatorData().catch(() => null),
@@ -480,7 +479,6 @@ async function Empty({ lang }: { lang: Lang }) {
       publishedFront={estimator?.frontier?.analystQueueMonth ?? null}
       publishedAsOf={estimator?.frontier?.asOf ?? null}
       mirrorSize={mirrorSize || null}
-      lang={lang}
     />
   );
 }

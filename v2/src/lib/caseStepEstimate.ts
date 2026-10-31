@@ -35,7 +35,6 @@ import { estimatePwdDay, type PwdDayEstimate } from "@/lib/perm";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { programOf } from "@/lib/flagCaseNumber";
 import type { AppCaseCorpus } from "@/lib/db/appCaseCorpus";
-import type { Lang } from "@/lib/i18n/lang";
 
 export interface CaseStepInput {
   corpus: AppCaseCorpus | null;
@@ -59,7 +58,6 @@ export interface CaseStepInput {
   /** The day our sweep saw the case enter RFI, when known (server read); else null. */
   rfiEnteredOn?: string | null;
   today: string;
-  lang?: Lang;
 }
 
 export type CaseStepResult =
@@ -124,7 +122,6 @@ export function caseStepEstimate(input: CaseStepInput): CaseStepResult {
       isFinal,
       rfiEnteredOn: input.rfiEnteredOn ?? null,
       today,
-      lang: input.lang,
     });
     // Nothing to show (no date and no outcome worth a block): fall through.
     if (perm.estimate) return { step: "perm", filingDate: permFilingDate, liveStatus: permLive, perm };

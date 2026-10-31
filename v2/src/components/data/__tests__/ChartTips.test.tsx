@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChartTips } from "../ChartTips";
-import { LangProvider } from "@/components/i18n/LangProvider";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", async (importOriginal) => ({
@@ -97,25 +96,5 @@ describe("ChartTips", () => {
     fireEvent.keyDown(group(), { key: "Home" });
     fireEvent.keyDown(group(), { key: "Enter" });
     expect(push).toHaveBeenCalledWith("/perm-decision-activity?day=2026-09-28#day");
-  });
-});
-
-describe("ChartTips in a translated page", () => {
-  it("gives the keyboard hint in the page's language", () => {
-    const { container } = render(
-      <LangProvider lang="zh">
-        <ChartTips label="每天的判定">
-          <div data-tip={"9月28日\n712"} />
-        </ChartTips>
-      </LangProvider>,
-    );
-    expect(container.querySelector('[role="group"]')?.getAttribute("aria-label")).toBe("每天的判定。用方向键逐个读取数值。");
-  });
-
-  it("keeps the English hint with no provider", () => {
-    const { container } = chart();
-    expect(container.querySelector('[role="group"]')?.getAttribute("aria-label")).toBe(
-      "Decisions per day. Use the arrow keys to read each value.",
-    );
   });
 });

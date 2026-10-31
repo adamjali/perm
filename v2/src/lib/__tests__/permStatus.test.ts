@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LANGS } from "@/lib/i18n/lang";
-
-import { KIND_LABEL, allStatusMeanings, getStatusMeaning, kindLabel } from "../permStatus";
+import { KIND_LABEL, allStatusMeanings, getStatusMeaning } from "../permStatus";
 
 /**
  * The decoder's obligations are all about restraint: cover every status the
@@ -150,101 +148,13 @@ describe("getStatusMeaning", () => {
   });
 });
 
-/**
- * The translated pages show the same meanings in the reader's language. What may change is the words;
- * DOL's status word, the citation, the kind and the order may not, and no translation may fall back to
- * English, add a clock the English doesn't state, or break the house prose rules.
- */
-describe("getStatusMeaning in the translated languages", () => {
-  const OTHER = LANGS.filter((l) => l !== "en");
-
-  it("keeps DOL's word, the citation and the kind as printed, in every language", () => {
-    const en = allStatusMeanings();
-    for (const lang of OTHER) {
-      const t = allStatusMeanings(lang);
-      expect(t.map((m) => m.status)).toEqual(en.map((m) => m.status));
-      t.forEach((m, i) => {
-        expect(m.label).toBe(en[i]!.label);
-        expect(m.cite).toEqual(en[i]!.cite);
-        expect(m.kind).toBe(en[i]!.kind);
-      });
-    }
-  });
-
-  it("translates every summary, action and deadline, and states a clock exactly where the English does", () => {
-    const en = allStatusMeanings();
-    for (const lang of OTHER) {
-      allStatusMeanings(lang).forEach((m, i) => {
-        const e = en[i]!;
-        expect(m.summary, `${lang} ${m.status}`).not.toBe(e.summary);
-        expect(m.action === null, `${lang} ${m.status} action`).toBe(e.action === null);
-        expect(m.deadline === null, `${lang} ${m.status} deadline`).toBe(e.deadline === null);
-        if (m.action) expect(m.action).not.toBe(e.action);
-        if (m.deadline) expect(m.deadline).not.toBe(e.deadline);
-      });
-    }
-  });
-
-  it("carries the deadlines' numbers into every language", () => {
-    for (const lang of OTHER) {
-      expect(getStatusMeaning("PENDING AUDIT RESPONSE", lang)!.deadline).toContain("30");
-      expect(getStatusMeaning("CERTIFIED", lang)!.deadline).toContain("180");
-      expect(getStatusMeaning("CERTIFIED", lang)!.deadline).toContain("I-140");
-      expect(getStatusMeaning("DENIED", lang)!.deadline).toContain("30");
-    }
-  });
-
-  it("keeps BALCA and the Certifying Officer as DOL names them, beside the reader's words", () => {
-    for (const lang of OTHER) {
-      // Chinese glosses with full-width parentheses, the others with Latin ones.
-      expect(getStatusMeaning("BALCA APPEALS", lang)!.summary).toMatch(/[(（]BALCA[)）]/);
-      expect(getStatusMeaning("DENIED", lang)!.summary).toMatch(/[(（]Certifying Officer[)）]/);
-    }
-  });
-
-  it("reads in Spanish and Korean", () => {
-    expect(getStatusMeaning("RFI ISSUED", "es")!.summary).toContain("no es una auditoría");
-    expect(getStatusMeaning("ANALYST REVIEW", "es")!.summary).toMatch(/^La fila normal\./);
-    expect(getStatusMeaning("CERTIFIED", "ko")!.summary).toContain("영주권");
-    expect(getStatusMeaning("CERTIFIED", "ko")!.label).toBe("Certified");
-    expect(getStatusMeaning("rfi issued", "zh")!.status).toBe("RFI ISSUED");
-    expect(getStatusMeaning("SOME NEW DOL STATE", "vi")).toBeNull();
-  });
-
-  it("keeps the house prose rules in every language", () => {
-    for (const lang of OTHER) {
-      for (const m of allStatusMeanings(lang)) {
-        for (const field of [m.summary, m.action ?? "", m.deadline ?? ""]) {
-          expect(field, `${lang} ${m.status}`).not.toContain("\u2014");
-          expect(field, `${lang} ${m.status}`).not.toMatch(/[!\uFF01]/);
-        }
-      }
-    }
-  });
-
-  it("uses full-width punctuation in Chinese", () => {
-    for (const m of allStatusMeanings("zh")) {
-      for (const field of [m.summary, m.action ?? "", m.deadline ?? ""]) {
-        // A Latin comma or full stop right after a Chinese character is the half-width slip.
-        expect(field, m.status).not.toMatch(/[\u4e00-\u9fff][,.;:]/);
-      }
-    }
-  });
-
-  it("words the kind of each status in every language, and English is unchanged", () => {
+describe("KIND_LABEL", () => {
+  it("words the kind of each status", () => {
     expect(KIND_LABEL).toEqual({
       queue: "Waiting",
       action: "Something is due",
       appeal: "Under appeal",
       decided: "Decided",
     });
-    expect(kindLabel("action")).toBe("Something is due");
-    expect(kindLabel("decided", "es")).toBe("Decidido");
-    expect(kindLabel("queue", "zh")).toBe("等待中");
-    for (const lang of OTHER) {
-      for (const k of ["queue", "action", "appeal", "decided"] as const) {
-        expect(kindLabel(k, lang)).not.toBe(KIND_LABEL[k]);
-      }
-    }
   });
 });

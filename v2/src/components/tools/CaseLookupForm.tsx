@@ -8,9 +8,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt } from "@/lib/uscis/receipt";
-import { localizedPath } from "@/lib/i18n/lang";
-import { useLang } from "@/components/i18n/LangProvider";
-import { LOOKUP_FORM } from "./CaseLookupForm.messages";
 
 /**
  * The one input on the page, as a plain GET form.
@@ -66,31 +63,25 @@ export interface CaseLookupFormProps {
   names?: boolean;
 }
 
+/** The button's one word, everywhere a case number is asked for. */
+export const CHECK_LABEL = "Check";
+
 export function CaseLookupForm({
   defaultValue = "",
   className,
-  label,
+  label = "Your PERM case number",
   compact = false,
   stack = false,
   searchHref = "/case-search",
-  searchLabel,
+  searchLabel = "Find a case by employer name",
   source,
-  action,
+  action = "/perm-case-status",
   placeholder = "G-100-26125-868956",
-  help,
-  buttonLabel,
+  help = "It's on your ETA-9089 receipt. It goes into the page's address, so you can bookmark the result.",
+  buttonLabel = CHECK_LABEL,
   hiddenFields,
   names = false,
 }: CaseLookupFormProps) {
-  // The page's language (English unless a translated page wraps this in LangProvider). A prop still wins: the
-  // language guides and the embed pass their own words.
-  const lang = useLang();
-  const t = LOOKUP_FORM[lang];
-  label ??= t.label;
-  searchLabel ??= t.searchLabel;
-  action ??= localizedPath("/perm-case-status", lang);
-  if (help === undefined) help = t.help;
-  buttonLabel ??= t.button;
   const inputId = useId();
   const helpId = useId();
   const [value, setValue] = useState(defaultValue);
@@ -106,9 +97,12 @@ export function CaseLookupForm({
   const malformed =
     edited && !isReceipt && !looksLikeName && value.trim().length > 0 && normaliseCaseNumber(value) === null;
   const hint = isReceipt ? (
-    <span className="text-data-warn-ink">{t.receipt}</span>
+    <span className="text-data-warn-ink">
+      That looks like a USCIS receipt number, which is USCIS&apos;s record rather than DOL&apos;s.
+      Checking it takes you to the USCIS page.
+    </span>
   ) : malformed ? (
-    <span className="text-data-bad-ink">{t.malformed}</span>
+    <span className="text-data-bad-ink">That isn&apos;t the shape of a case number. They look like G-100-26125-868956.</span>
   ) : (
     help
   );
@@ -174,11 +168,11 @@ export function CaseLookupForm({
           Finding the case by employer reaches pending cases too. */}
       {searchHref ? (
         <p className="mt-2 text-sm text-muted-foreground">
-          {t.noNumber}{" "}
-          <Link href={searchHref} className="link" hrefLang={lang === "en" ? undefined : "en"}>
+          Don&apos;t have the number?{" "}
+          <Link href={searchHref} className="link">
             {searchLabel}
           </Link>
-          {lang === "zh" ? "。" : "."}
+          .
         </p>
       ) : null}
     </form>

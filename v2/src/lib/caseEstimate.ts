@@ -22,17 +22,11 @@ import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import {
   estimateQueueDecision,
   estimateRfiCase,
-  type EstimateModel,
   type EstimateModelId,
-  type EstimateNote,
   type MeasuredPace,
   type RangeCoverage,
-  type RangeNote,
   type RfiClock,
 } from "@/lib/perm";
-import { ESTIMATE_TEXT, type EstimateLibText, type StageKey } from "@/lib/caseEstimate.messages";
-import { dayLabel, intLabel, monthLabel, percentLabel } from "@/lib/i18n/format";
-import { intlLocale, type Lang } from "@/lib/i18n/lang";
 import {
   COHORT_PERCENTILE_FACTOR,
   placeCaseInCohort,
@@ -105,11 +99,6 @@ export interface CaseEstimateInput {
   rfi?: { enteredOn: string | null; clock: RfiClock | null } | null;
   /** `YYYY-MM-DD`, injected so the function stays pure. */
   today: string;
-  /**
-   * The language the estimate's sentences are in. English (the default) is the text the API and the scorecard
-   * read, unchanged; a translated case page passes its own (src/lib/caseEstimate.messages.ts).
-   */
-  lang?: Lang;
 }
 
 export type CaseEstimate =
@@ -187,123 +176,6 @@ export type CaseEstimate =
       } | null;
     };
 
-/* ------------------------------------------------------------------ */
-/* The sentences in a translated page's language, from the same figures */
-/* ------------------------------------------------------------------ */
-
-type Translation = { t: EstimateLibText; lang: Exclude<Lang, "en"> };
-
-const num = (v: number, x: Translation) => intLabel(v, x.lang);
-const share = (v01: number, x: Translation) => percentLabel(Math.round(v01 * 100), x.lang, 0);
-const monthIn = (ym: string, x: Translation) => monthLabel(ym, x.lang) ?? ym;
-const dayIn = (iso: string, x: Translation) => dayLabel(iso, x.lang) ?? iso;
-const decimal2 = (v: number, x: Translation) =>
-  new Intl.NumberFormat(intlLocale(x.lang), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
-/** A lead-in and the sentence after it: a space between them, none in Chinese. */
-const joined = (x: Translation, ...parts: string[]) => parts.join(x.lang === "zh" ? "" : " ");
-
-function rangeIn(r: RangeNote, x: Translation): string {
-  const { t } = x;
-  switch (r.kind) {
-    case "measured-served":
-    case "measured-row": {
-      const sentence = r.kind === "measured-served" ? t.rangeServed : t.rangeRow;
-      const wait = t.waitDays(r.judgeDays, num(r.judgeDays, x));
-      return joined(x, t.rangeMeasuredLead, sentence(num(r.judged, x), share(r.insideShare, x), share(r.stuckShare, x), wait));
-    }
-    case "measured":
-      return t.rangeMeasuredLead;
-    case "pace-far":
-      return joined(x, t.rangePaceLead, t.rangeFar);
-    case "pace-untested":
-      return joined(x, t.rangePaceLead, t.rangeUntested);
-    case "pace-tested":
-      return joined(
-        x,
-        t.rangePaceLead,
-        t.rangeTested(
-          percentLabel(r.insidePct, x.lang, 0),
-          num(r.judged, x),
-          r.within7Pct !== null ? percentLabel(r.within7Pct, x.lang, 0) : null,
-        ),
-      );
-  }
-}
-
-function noteIn(n: EstimateNote, x: Translation): string {
-  const { t } = x;
-  switch (n.kind) {
-    case "overdue":
-      return t.overdue(monthIn(n.filingMonth, x), n.months, num(n.months, x));
-    case "range":
-      return rangeIn(n.range, x);
-    case "pace-absent": {
-      const why =
-        n.why === "stale-data"
-          ? t.paceStale(n.sweepAgeDays, num(n.sweepAgeDays, x))
-          : n.why === "pace-unmeasurable"
-            ? t.paceUnmeasurable
-            : n.why === "no-count"
-              ? t.paceNoCount
-              : t.paceNoRate;
-      return joined(x, t.paceAbsent, why);
-    }
-    case "cohort-unstarted":
-      return t.cohortUnstarted(monthIn(n.filingMonth, x));
-    case "cohort-open":
-      return t.cohortOpen(monthIn(n.filingMonth, x));
-    case "no-data":
-      return t.noData;
-    case "out-of-order":
-      return t.outOfOrder;
-  }
-}
-
-/** A model's label, basis and source from its figures; the English when a model carries none. */
-function modelIn(m: EstimateModel, x: Translation): { label: string; basis: string; source: string } {
-  const { t } = x;
-  const f = m.facts;
-  if (!f) return { label: m.label, basis: m.basis, source: m.source };
-  switch (f.id) {
-    case "decision-pace":
-      return {
-        label: t.modelLabel["decision-pace"],
-        basis: t.basisPace(num(f.casesAhead, x), num(f.pace, x), num(f.rawDays, x)),
-        source: t.sourcePace,
-      };
-    case "queue-advance":
-      return {
-        label: t.modelLabel["queue-advance"],
-        basis: t.basisAdvance(monthIn(f.queueMonth, x), f.monthsBehind, num(f.monthsBehind, x), decimal2(f.rate, x)),
-        source: t.sourceAdvance(dayIn(f.asOf, x)),
-      };
-    case "dol-average":
-      return {
-        label: t.modelLabel["dol-average"],
-        basis: t.basisAverage(num(f.avgDays, x)),
-        source: t.sourceAverage(dayIn(f.asOf, x)),
-      };
-    case "cohort-percentile":
-      return {
-        label: t.modelLabel["cohort-percentile"],
-        basis: t.basisCohort(num(f.decided, x), monthIn(f.month, x), num(f.medianDays, x)),
-        source: t.sourceCohort,
-      };
-    case "cohort-shape":
-      return {
-        label: t.modelLabel["cohort-shape"],
-        basis: t.basisShape(num(f.decided, x), num(f.total, x), monthIn(f.month, x), num(f.fromPercentile, x)),
-        source: t.sourceShape,
-      };
-  }
-}
-
-/** A stage's note from the stage table, in the page's language. */
-function stageNoteIn(status: string | null, english: string, x: Translation | null): string {
-  if (!x || !status) return english;
-  return x.t.stage[status.trim().toUpperCase() as StageKey] ?? english;
-}
-
 /**
  * Build the estimate for one case, or null when nothing defensible exists.
  *
@@ -313,8 +185,6 @@ function stageNoteIn(status: string | null, english: string, x: Translation | nu
  */
 export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null {
   if (input.isFinal) return null;
-  const lang = input.lang ?? "en";
-  const x: Translation | null = lang === "en" ? null : { t: ESTIMATE_TEXT[lang], lang };
   if (!input.filingDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.filingDate)) return null;
 
   // A decision already EXISTS for this case - the outcome just hasn't
@@ -336,29 +206,15 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     if (r.kind === "estimate") {
       const entered = input.rfi.enteredOn;
       const longDay = (iso: string) => format(parseISO(iso), "MMMM d, yyyy");
-      const caveats = x
-        ? [
-            clock.slowEndFrom === "measured"
-              ? x.t.rfiLateMeasured(num(clock.slowEndDays, x))
-              : x.t.rfiLateEstimate(num(clock.slowEndDays, x)),
-            x.t.rfiMoreTime,
-          ]
-        : [
-            clock.slowEndFrom === "measured"
-              ? `The late end allows ${clock.slowEndDays} days after the 30, the slowest tenth of the RFIs we've followed.`
-              : `The late end allows ${clock.slowEndDays} days after the 30, an immigration attorney's estimate, until our record has followed enough RFIs that long to measure it.`,
-            "An employer can ask for more time, and DOL can ask a second time; either moves the date, and the status above will show it.",
-          ];
+      const caveats = [
+        clock.slowEndFrom === "measured"
+          ? `The late end allows ${clock.slowEndDays} days after the 30, the slowest tenth of the RFIs we've followed.`
+          : `The late end allows ${clock.slowEndDays} days after the 30, an immigration attorney's estimate, until our record has followed enough RFIs that long to measure it.`,
+        "An employer can ask for more time, and DOL can ask a second time; either moves the date, and the status above will show it.",
+      ];
       if (clock.test && clock.test.decided >= 30 && clock.test.typicalMissDays !== null) {
         caveats.push(
-          x
-            ? x.t.rfiTested(
-                num(clock.test.judged, x),
-                clock.test.typicalMissDays,
-                num(clock.test.typicalMissDays, x),
-                share(clock.test.insideShare, x),
-              )
-            : `Tested on ${clock.test.judged.toLocaleString("en-US")} RFIs from days it wasn't drawn from, the date was typically ${clock.test.typicalMissDays} ${clock.test.typicalMissDays === 1 ? "day" : "days"} off and ${Math.round(clock.test.insideShare * 100)}% were decided inside the range.`,
+          `Tested on ${clock.test.judged.toLocaleString("en-US")} RFIs from days it wasn't drawn from, the date was typically ${clock.test.typicalMissDays} ${clock.test.typicalMissDays === 1 ? "day" : "days"} off and ${Math.round(clock.test.insideShare * 100)}% were decided inside the range.`,
         );
       }
       return {
@@ -369,16 +225,13 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
         earliestDate: r.earliest,
         latestDate: r.latest,
         totalDays: differenceInCalendarDays(parseISO(r.date), parseISO(input.filingDate)),
-        modelLabel: x ? x.t.modelLabel["rfi-clock"] : "Request for information",
-        basis: x
-          ? x.t.rfiBasis(dayIn(entered, x), num(clock.watched, x), num(clock.leaveDays.p50, x), num(clock.afterLeaveDays.p50, x))
-          : `Our daily check saw DOL issue a request for information on this case on ${longDay(entered)}. ` +
-            `Of the ${clock.watched.toLocaleString("en-US")} RFIs we've followed from their first day, nearly all moved on day ${clock.leaveDays.p50} of our record ` +
-            `(the 30-day response window; the check sees each move a day after DOL makes it), most went back to analyst review, ` +
-            `and DOL decided those a median ${clock.afterLeaveDays.p50} days later.`,
-        source: x
-          ? x.t.sourceCheck
-          : "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
+        modelLabel: "Request for information",
+        basis:
+          `Our daily check saw DOL issue a request for information on this case on ${longDay(entered)}. ` +
+          `Of the ${clock.watched.toLocaleString("en-US")} RFIs we've followed from their first day, nearly all moved on day ${clock.leaveDays.p50} of our record ` +
+          `(the 30-day response window; the check sees each move a day after DOL makes it), most went back to analyst review, ` +
+          `and DOL decided those a median ${clock.afterLeaveDays.p50} days later.`,
+        source: "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
         stage: null,
         caveats,
       };
@@ -386,11 +239,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     if (r.reason === "past-window") {
       return {
         kind: "no-date",
-        note: x
-          ? x.t.rfiPastWindow(
-              num(r.daysInRfi ?? differenceInCalendarDays(parseISO(input.today), parseISO(input.rfi.enteredOn)), x),
-            )
-          : r.detail,
+        note: r.detail,
         age: { of: "this-case", days: differenceInCalendarDays(parseISO(input.today), parseISO(input.filingDate)) },
         nextStep: input.stageExit ?? null,
         stageDuration: input.stageDuration ?? null,
@@ -404,7 +253,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   if (place && place.percentile === null) {
     return {
       kind: "no-date",
-      note: stageNoteIn(input.status, place.note, x),
+      note: place.note,
       age: { of: "stage", days: place.observedAgeDays },
       nextStep: input.stageExit ?? null,
       stageDuration: input.stageDuration ?? null,
@@ -458,30 +307,16 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
       earliestDate: at(1),
       latestDate: at(s.p80Days),
       totalDays: differenceInCalendarDays(addDays(today, s.medianDays), parseISO(input.filingDate)),
-      modelLabel: x ? x.t.modelLabel.stragglers : "Behind DOL's queue",
-      basis: x
-        ? x.t.stragglerBasis({
-            months: passedBy,
-            monthsText: passedBy ? num(passedBy, x) : "",
-            windowDays: num(s.windowDays, x),
-            decided: num(s.decided, x),
-            pool: num(s.pool, x),
-            rate: share(s.dailyRate, x),
-            median: num(s.medianDays, x),
-            p80: num(s.p80Days, x),
-          })
-        : `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}, ` +
-          `and this case is still in analyst review. Over the last ${s.windowDays} days DOL decided ` +
-          `${s.decided.toLocaleString("en-US")} of the ${s.pool.toLocaleString("en-US")} cases in the same spot, ` +
-          `about ${Math.round(s.dailyRate * 100)}% a day: half within ${s.medianDays} days, eight in ten within ${s.p80Days}.`,
-      source: x
-        ? x.t.sourceCheck
-        : "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
+      modelLabel: "Behind DOL's queue",
+      basis:
+        `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}, ` +
+        `and this case is still in analyst review. Over the last ${s.windowDays} days DOL decided ` +
+        `${s.decided.toLocaleString("en-US")} of the ${s.pool.toLocaleString("en-US")} cases in the same spot, ` +
+        `about ${Math.round(s.dailyRate * 100)}% a day: half within ${s.medianDays} days, eight in ten within ${s.p80Days}.`,
+      source: "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
       stage: null,
       caveats: [
-        x
-          ? x.t.stragglerCaveat
-          : "A case can still leave the line for an audit, a request for information or a hold, and a rate can't see that coming. If the status above changes, this estimate does too.",
+        "A case can still leave the line for an audit, a request for information or a hold, and a rate can't see that coming. If the status above changes, this estimate does too.",
       ],
     };
   }
@@ -502,10 +337,9 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
         kind: "no-date",
         nextStep: input.stageExit ?? null,
         stageDuration: input.stageDuration ?? null,
-        note: x
-          ? x.t.overdueNote(passedBy, passedBy ? num(passedBy, x) : "")
-          : `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}. ` +
-            "A case still pending at that point has usually been taken out of filing order by an audit, a request for information, or a hold, and none of those can be dated from the filing month. The live status above is the accurate read.",
+        note:
+          `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}. ` +
+          "A case still pending at that point has usually been taken out of filing order by an audit, a request for information, or a hold, and none of those can be dated from the filing month. The live status above is the accurate read.",
         // THIS case's own wait, not a population statistic. The overdue
         // branch has no measured stage to average over - that is what makes
         // it the overdue branch.
@@ -534,15 +368,12 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   };
 
   const totalDays = Math.round(model.totalDays * factor);
-  const caveats = x ? est.notes.map((n) => noteIn(n, x)) : [...est.caveats];
+  const caveats = [...est.caveats];
   if (!place && input.status) {
     caveats.push(
-      x
-        ? x.t.unmeasuredStage
-        : "This status hasn't been measured against its filing month, so the estimate reads the middle of the month rather than adjusting for the stage.",
+      "This status hasn't been measured against its filing month, so the estimate reads the middle of the month rather than adjusting for the stage.",
     );
   }
-  const words = x ? modelIn(model, x) : { label: model.label, basis: model.basis, source: model.source };
 
   return {
     kind: "date",
@@ -553,12 +384,12 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     earliestDate: shiftDate(model.earliestDate),
     latestDate: shiftDate(model.latestDate),
     totalDays,
-    modelLabel: words.label,
-    basis: words.basis,
-    source: words.source,
+    modelLabel: model.label,
+    basis: model.basis,
+    source: model.source,
     stage:
       place && place.percentile !== null
-        ? { percentile: place.percentile, note: stageNoteIn(input.status, place.note, x) }
+        ? { percentile: place.percentile, note: place.note }
         : null,
     caveats,
   };

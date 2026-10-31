@@ -18,18 +18,4 @@ describe("CaseNumberPlate", () => {
     const { container } = render(<CaseNumberPlate parsed={parsed} recordedFilingDate="2026-05-06" />);
     expect(container.textContent).toContain("one or two days off that, at May 6, 2026, and the record");
   });
-
-  it("speaks a translated page's language, dates in its own form", () => {
-    const { container } = render(<CaseNumberPlate parsed={parsed} recordedFilingDate="2026-05-06" lang="es" />);
-    expect(screen.getByText("Día del año")).toBeInTheDocument();
-    expect(container.textContent).toContain("el día 125 de 2026, es decir, el 5 de mayo de 2026.");
-    expect(container.textContent).toContain("el 6 de mayo de 2026, y ese registro");
-  });
-
-  it("keeps the case number's segments as printed in any language", () => {
-    render(<CaseNumberPlate parsed={parsed} lang="ko" />);
-    expect(screen.getByText("일련번호")).toBeInTheDocument();
-    expect(screen.getByText("868956")).toBeInTheDocument();
-    expect(screen.getByText("G-100")).toBeInTheDocument();
-  });
 });

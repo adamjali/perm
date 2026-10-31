@@ -159,35 +159,6 @@ export interface DecidedReading {
   span: DecidedSpan | null;
 }
 
-/** The figures behind `howLongSentence`, unworded, so a translated page can say them in its own language. */
-export interface HowLongFigures {
-  /** DOL's last working day with decisions (ISO), when its cases' wait could be read. */
-  decidedOn: string | null;
-  waitedDays: number | null;
-  /** The filing month analyst review is working ("2025-12"). */
-  frontier: string | null;
-  /** DOL's published average, calendar days, and the month of decisions it was measured on. */
-  days: number | null;
-  decidedIn: string | null;
-  /** The day DOL published these figures (ISO). */
-  asOf: string | null;
-}
-
-export function howLongFigures(reading: DecidedReading | null, t: ProcessingTimesSnapshot | null): HowLongFigures {
-  const ruler = reading?.span ? rulerOf(reading.span, reading.day) : null;
-  const waited = ruler && ruler.waitedDays > 0 ? ruler.waitedDays : null;
-  const avg = t ? analystReviewAverage(t.permAverageDays ?? []) : null;
-  const queue = t ? analystReviewQueue(t.permQueues ?? []) : null;
-  return {
-    decidedOn: waited !== null && reading ? reading.day : null,
-    waitedDays: waited,
-    frontier: queue?.priorityDate ?? null,
-    days: avg?.calendarDays ?? null,
-    decidedIn: avg?.month ?? null,
-    asOf: t?.permAsOf ?? null,
-  };
-}
-
 /**
  * The answer to "how long does PERM take right now": what the cases DOL decided on its last working day had
  * waited (/today's board, the homepage's figure), then DOL's own month and average, dated. A part whose reading

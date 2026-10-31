@@ -13,7 +13,6 @@
  * A plain module (no server-only import) so the result panels can use it.
  */
 
-import { DOL_MISS } from "@/lib/dolMiss.messages";
 import { EASTERN_TIMEZONE } from "@/lib/time";
 
 export type DiscoveryMiss = "none" | "unavailable" | "budget" | "not-asked";
@@ -36,9 +35,9 @@ export function isUnsettledMiss(m: DiscoveryMiss | null | undefined): m is Unset
 }
 
 /** When the live-check allowance resets: midnight UTC, said in Eastern time. */
-export function budgetResetEastern(now: Date = new Date(), locale = "en-US"): string {
+export function budgetResetEastern(now: Date = new Date()): string {
   const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat("en-US", {
     timeZone: EASTERN_TIMEZONE,
     hour: "numeric",
     minute: "2-digit",
@@ -47,10 +46,22 @@ export function budgetResetEastern(now: Date = new Date(), locale = "en-US"): st
 
 /** The short heading for an unsettled lookup. */
 export function unsettledVerdict(m: LookupGap): string {
-  return DOL_MISS.en.verdict[m];
+  if (m === "records") return "Our records couldn't be read";
+  if (m === "unavailable") return "DOL didn't answer";
+  if (m === "budget") return "Live checks used up for today";
+  return "Not checked with DOL";
 }
 
 /** The clause after "We hold no record for <number> yet, ". */
 export function unsettledClause(m: LookupGap, now: Date = new Date()): string {
-  return DOL_MISS.en.clause(m, budgetResetEastern(now));
+  if (m === "records") {
+    return "this site's own case records couldn't be read, so this doesn't mean the case isn't there.";
+  }
+  if (m === "unavailable") {
+    return "and DOL's case system didn't answer when we asked just now (it gets 8 seconds), so we can't say whether DOL has it. That's usually brief.";
+  }
+  if (m === "budget") {
+    return `and we couldn't ask DOL live, because the site's daily allowance of live checks is used up. It resets at ${budgetResetEastern(now)} Eastern.`;
+  }
+  return "and the live check with DOL couldn't be made just now, so we can't say whether DOL has it.";
 }

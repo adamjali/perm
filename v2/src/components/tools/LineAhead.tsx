@@ -2,22 +2,8 @@ import { Fragment } from "react";
 
 import { PageSection } from "@/components/data/PageSection";
 import { ChartTips } from "@/components/data/ChartTips";
-import type { Lang } from "@/lib/i18n/lang";
-import { intLabel, monthShortLabel } from "@/lib/i18n/format";
+import { formatInt } from "@/lib/format";
 import type { LineAheadRow } from "@/lib/queueAhead";
-
-import { LINE_AHEAD, type LineAheadText } from "./LineAhead.messages";
-
-/**
- * A row's month in the reader's language. English keeps the row's own label ("September 2025",
- * "Before May 2025"); the short form elsewhere fits the label column.
- */
-function rowLabel(r: LineAheadRow, lang: Lang, t: LineAheadText): string {
-  if (lang === "en") return r.label;
-  const before = r.key.startsWith("before:");
-  const month = monthShortLabel(before ? r.key.slice("before:".length) : r.key, lang) ?? r.label;
-  return before ? t.before(month) : month;
-}
 
 /**
  * The line ahead of a case in DOL's ordinary queue, month by month.
@@ -32,15 +18,11 @@ function rowLabel(r: LineAheadRow, lang: Lang, t: LineAheadText): string {
 export function LineAhead({
   rows,
   perDay,
-  lang = "en",
 }: {
   rows: readonly LineAheadRow[];
   /** DOL's measured decisions per calendar day, when the pace is known. */
   perDay: number | null;
-  lang?: Lang;
 }) {
-  const t: LineAheadText = LINE_AHEAD[lang];
-  const formatInt = (x: number) => intLabel(x, lang);
   const total = rows.reduce((a, r) => a + r.n, 0);
   if (total <= 0) return null;
   const max = Math.max(...rows.map((r) => r.n));
@@ -48,29 +30,31 @@ export function LineAhead({
   return (
     <PageSection
       id="line-ahead"
-      title={t.title}
+      title="The line ahead of you"
       aside={
         <p className="font-heading text-3xl font-bold tabular-nums">
-          {formatInt(total)} <span className="text-base font-semibold">{t.cases}</span>
+          {formatInt(total)} <span className="text-base font-semibold">cases</span>
         </p>
       }
       lede={
         <>
-          {t.lede}
-          {days !== null && perDay ? t.pace(formatInt(Math.round(perDay)), formatInt(days), days) : ""}
+          Filed before yours and still in DOL&apos;s ordinary line.
+          {days !== null && perDay
+            ? ` DOL decides about ${formatInt(Math.round(perDay))} a day lately, so that's about ${formatInt(days)} ${days === 1 ? "day" : "days"} of work.`
+            : ""}
         </>
       }
     >
-      <ChartTips label={t.chartLabel}>
+      <ChartTips label="Cases ahead of yours in DOL's line, by filing month">
         <ol className="space-y-2">
           {rows.map((r) => (
             <Fragment key={r.key}>{" "}
             <li
               className="grid grid-cols-[7.75rem_minmax(0,1fr)_4rem] items-center gap-x-3"
-              data-tip={`${rowLabel(r, lang, t)}${r.own ? t.ownSuffix : ""}\n${t.tipCount(formatInt(r.n))}`}
+              data-tip={`${r.label}${r.own ? ", your own month, filed before you" : ""}\n${formatInt(r.n)} cases still in line`}
               data-href={r.key.startsWith("before:") ? undefined : `/perm-queue/${r.key}`}
             >
-              <span className={`font-mono text-sm ${r.own ? "font-semibold" : "text-soft"}`}>{rowLabel(r, lang, t)}</span>{" "}
+              <span className={`font-mono text-sm ${r.own ? "font-semibold" : "text-soft"}`}>{r.label}</span>{" "}
               {/* Soft colours, no black or grey (round 3, Oct 15 2026): the
                   line ahead of you soft green, your own month lime. */}
               <span className="block h-4 border border-foreground/30 bg-card" aria-hidden="true">
@@ -86,8 +70,8 @@ export function LineAhead({
         </ol>
       </ChartTips>{" "}
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        {rows.some((r) => r.own) ? t.ownNote : ""}
-        {t.outOfLine}
+        {rows.some((r) => r.own) ? "The last bar is your own filing month, counting only the days before yours. " : ""}
+        Cases on hold, at an RFI or on appeal aren&apos;t in the line and aren&apos;t counted.
       </p>
     </PageSection>
   );

@@ -25,20 +25,18 @@ export interface ToolPageFooterProps {
   /** The page rendering this. Kept for callers; its siblings are the section list. */
   currentHref?: string;
   reading: readonly RelatedReading[];
-  /** The section's heading in a translated page's language. */
-  title?: string;
 }
 
 /** A page ends with a few related reads, never a wall of links. */
 const MAX_READING = 3;
 const COLUMNS: Record<number, string> = { 1: "", 2: "sm:grid-cols-2", 3: "md:grid-cols-3" };
 
-export function ToolPageFooter({ reading, title = "The rules behind these numbers" }: ToolPageFooterProps) {
+export function ToolPageFooter({ reading }: ToolPageFooterProps) {
   return (
     <>
       {reading.length > 0 ? (
         <section className="mt-12">
-          <h2 className="font-heading text-2xl font-bold">{title}</h2>
+          <h2 className="font-heading text-2xl font-bold">The rules behind these numbers</h2>
           {/* As many columns as links, so a third link never sits alone under
               two with an empty space beside it (owner, Oct 27 2026). */}
           <ul className={cn("mt-6 grid gap-x-8 gap-y-6", COLUMNS[Math.min(reading.length, MAX_READING)])}>

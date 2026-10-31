@@ -27,7 +27,6 @@ const DOL_ROUTE = "(site)/(public)/perm-case-status/page.tsx";
 const USCIS_PAGE = "(site)/(public)/uscis-case-status/page.tsx";
 const PRIVACY = "(site)/(public)/privacy/page.tsx";
 const DOL_FORM = "../components/tools/CaseLookupForm.tsx";
-const DOL_FORM_WORDS = "../components/tools/CaseLookupForm.messages.ts";
 const STORAGE = "../lib/db/uscisCaseStatus.ts";
 
 /** The page function's body only, so a mention elsewhere cannot satisfy an ordering assertion. */
@@ -63,7 +62,7 @@ describe("the DOL page routes a USCIS receipt away", () => {
   it("the DOL form says the same before submit", () => {
     const form = read(DOL_FORM);
     expect(form).toMatch(/looksLikeReceipt\(value\)/);
-    expect(read(DOL_FORM_WORDS)).toMatch(/USCIS receipt number/);
+    expect(form).toMatch(/USCIS receipt number/);
   });
 
   it("the route renders that page, so the receipt check is the one a visitor meets", () => {

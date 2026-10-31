@@ -3,19 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useLang } from "@/components/i18n/LangProvider";
-import type { Messages } from "@/lib/i18n/lang";
 import { cn } from "@/lib/utils";
-
-/** The keyboard hint after a chart's label, in the page's language (English unless a LangProvider says). */
-const KEYS_HINT = {
-  en: (label: string) => `${label}. Use the arrow keys to read each value.`,
-  es: (label: string) => `${label}. Use las flechas del teclado para leer cada valor.`,
-  zh: (label: string) => `${label}。用方向键逐个读取数值。`,
-  "pt-br": (label: string) => `${label}. Use as setas do teclado para ler cada valor.`,
-  ko: (label: string) => `${label}. 화살표 키로 각 값을 읽을 수 있습니다.`,
-  vi: (label: string) => `${label}. Dùng các phím mũi tên để đọc từng giá trị.`,
-} satisfies Messages<(label: string) => string>;
 
 /**
  * Exact figures on hover, tap or arrow key, for any chart on the site.
@@ -80,7 +68,6 @@ export function ChartTips({
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const lang = useLang();
   const openAtEnd = useCallback(
     (el: HTMLDivElement | null) => {
       if (el && startAtEnd) el.scrollLeft = el.scrollWidth;
@@ -150,7 +137,7 @@ export function ChartTips({
   const stop = {
     tabIndex: 0,
     role: "group",
-    "aria-label": KEYS_HINT[lang](label),
+    "aria-label": `${label}. Use the arrow keys to read each value.`,
   } as const;
 
   return (

@@ -30,8 +30,6 @@
 // and it already owns the acronym rules that turn RFI into Rfi if you get
 // them wrong. A second copy here is exactly the drift this repo gates for.
 import { prettyStatus } from "@/components/queue/stages";
-import type { Lang, Messages } from "@/lib/i18n/lang";
-import { KIND_LABELS, MEANING_TRANSLATIONS } from "@/lib/permStatus.messages";
 
 export type StatusKind = "queue" | "action" | "appeal" | "decided";
 
@@ -54,7 +52,7 @@ export interface StatusMeaning {
 const CFR = (section: string) =>
   `https://www.ecfr.gov/current/title-20/chapter-V/part-656/section-${section}`;
 
-const MEANINGS = {
+const MEANINGS: Record<string, Omit<StatusMeaning, "status" | "label">> = {
   "ANALYST REVIEW": {
     kind: "queue",
     summary:
@@ -211,35 +209,7 @@ const MEANINGS = {
     deadline: null,
     cite: null,
   },
-} satisfies Record<string, Omit<StatusMeaning, "status" | "label">>;
-
-/** A status this page has written a meaning for. */
-export type MeaningKey = keyof typeof MEANINGS;
-
-/**
- * One status's words in a language: the summary, and the action and deadline exactly where the English has
- * them. A translation can't add a clock the English doesn't state, or drop one it does: the type follows the
- * English entry's nulls.
- */
-export type MeaningText<K extends MeaningKey> = {
-  summary: string;
-  action: (typeof MEANINGS)[K]["action"] extends null ? null : string;
-  deadline: (typeof MEANINGS)[K]["deadline"] extends null ? null : string;
 };
-export type MeaningTexts = { [K in MeaningKey]: MeaningText<K> };
-
-/**
- * Every language's words for every status. English is read from MEANINGS, the one English source; the five
- * translations live in permStatus.messages.ts, keyed by the same statuses.
- */
-const TEXT = {
-  en: Object.fromEntries(
-    Object.entries(MEANINGS).map(([k, m]) => [k, { summary: m.summary, action: m.action, deadline: m.deadline }]),
-  ) as MeaningTexts,
-  ...MEANING_TRANSLATIONS,
-} satisfies Messages<MeaningTexts>;
-
-const isMeaningKey = (key: string): key is MeaningKey => Object.prototype.hasOwnProperty.call(MEANINGS, key);
 
 /**
  * The decoded status, or null for one nothing has been written for.
@@ -250,33 +220,22 @@ const isMeaningKey = (key: string): key is MeaningKey => Object.prototype.hasOwn
  * quietly returned a wrong neighbour would be far worse than a page saying
  * plainly that it does not know this one.
  */
-export function getStatusMeaning(status: string, lang: Lang = "en"): StatusMeaning | null {
+export function getStatusMeaning(status: string): StatusMeaning | null {
   const key = status.trim().toUpperCase();
-  if (!isMeaningKey(key)) return null;
-  const m: Omit<StatusMeaning, "status" | "label"> = MEANINGS[key];
-  // The summary, action and deadline in the reader's language; DOL's status word (`status`, `label`) and the
-  // regulation's citation stay as printed.
-  const t = TEXT[lang][key];
-  return {
-    status: key,
-    label: prettyStatus(key),
-    kind: m.kind,
-    summary: t.summary,
-    action: t.action,
-    deadline: t.deadline,
-    cite: m.cite,
-  };
+  const m = MEANINGS[key];
+  if (!m) return null;
+  return { status: key, label: prettyStatus(key), ...m };
 }
 
 /** Every status this page can decode, for the glossary section. */
-export function allStatusMeanings(lang: Lang = "en"): StatusMeaning[] {
-  return Object.keys(MEANINGS).map((k) => getStatusMeaning(k, lang)!);
+export function allStatusMeanings(): StatusMeaning[] {
+  return Object.keys(MEANINGS).map((k) => getStatusMeaning(k)!);
 }
 
 /** How to word the fact that a status carries a clock. */
-export const KIND_LABEL: Record<StatusKind, string> = KIND_LABELS.en;
-
-/** The same, in the reader's language. */
-export function kindLabel(kind: StatusKind, lang: Lang = "en"): string {
-  return KIND_LABELS[lang][kind];
-}
+export const KIND_LABEL: Record<StatusKind, string> = {
+  queue: "Waiting",
+  action: "Something is due",
+  appeal: "Under appeal",
+  decided: "Decided",
+};

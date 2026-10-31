@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { StageBar, StageLegend, stageTip } from "../StageBar";
+import { StageBar, stageTip } from "../StageBar";
 import type { StageGroup } from "../stages";
 
 /** A segment's hover detail names the DOL statuses the bar folds together. */
@@ -33,20 +33,5 @@ describe("StageBar tooltips", () => {
     const tips = [...container.querySelectorAll("[data-tip]")].map((el) => el.getAttribute("data-tip"));
     expect(tips).toHaveLength(2);
     expect(tips[0]).toMatch(/^Filed in March 2026\n/);
-  });
-});
-
-describe("StageBar in a translated page", () => {
-  it("words the hover detail in the page's language, DOL's statuses as printed", () => {
-    expect(stageTip(STAGES[1]!, 1290, "Presentados en marzo de 2026", "es")).toBe(
-      "Presentados en marzo de 2026\nFuera del orden de presentación: 90 casos\nAPPLICATION ON HOLD: 60\nRFI ISSUED: 30\nDe 1290 pendientes",
-    );
-    expect(stageTip(STAGES[0]!, 1290, undefined, "ko")).toBe("심사관 검토: 1,200건\n대기 중 1,290건 중");
-  });
-
-  it("labels the legend in the page's language", () => {
-    const { container } = render(<StageLegend stages={STAGES} lang="vi" />);
-    expect(container.textContent).toContain("Chuyên viên xét duyệt");
-    expect(container.textContent).toContain("Ngoài thứ tự nộp");
   });
 });

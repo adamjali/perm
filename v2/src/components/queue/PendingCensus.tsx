@@ -2,11 +2,8 @@ import Link from "next/link";
 import { Fragment } from "react";
 
 import { formatInt } from "@/lib/format";
-import type { Lang } from "@/lib/i18n/lang";
-import { intLabel } from "@/lib/i18n/format";
 
 import { STAGE_META, prettyStatus, type StageGroup } from "./stages";
-import { STAGE_TEXT, type StageText } from "./stages.messages";
 
 /**
  * Every DOL status a pending case is sitting in, grouped by queue.
@@ -38,15 +35,12 @@ export function PendingCensus({
   stages,
   caption,
   hrefFor,
-  lang = "en",
 }: {
   stages: readonly StageGroup[];
   caption: string;
   /** Where a status's own cases are listed, when a page can say; the status then opens them. */
   hrefFor?: (status: string) => string | null;
-  lang?: Lang;
 }) {
-  const t: StageText = STAGE_TEXT[lang];
   const populated = stages.filter((s) => s.statuses.length > 0);
   if (populated.length === 0) return null;
 
@@ -59,13 +53,13 @@ export function PendingCensus({
             scope="col"
             className="border-b-2 border-border pb-2 text-sm font-bold text-soft"
           >
-            {t.censusStatus}{" "}
+            DOL status{" "}
           </th>
           <th
             scope="col"
             className="border-b-2 border-border pb-2 text-right text-sm font-bold text-soft"
           >
-            {t.censusCases}{" "}
+            Cases{" "}
           </th>
         </tr>
       </thead>
@@ -86,10 +80,10 @@ export function PendingCensus({
                       aria-hidden="true"
                     />{" "}
                     <span className="font-heading text-base font-bold">
-                      {t.label[group.stage]}
+                      {meta.label}
                     </span>{" "}
                     <span className="font-mono text-sm tabular-nums text-muted-foreground">
-                      {intLabel(group.count, lang)}
+                      {formatInt(group.count)}
                     </span>
                   </span>{" "}
                 </th>
@@ -108,7 +102,7 @@ export function PendingCensus({
                       )}{" "}
                     </td>
                     <td className="py-2 text-right text-base font-bold tabular-nums">
-                      {intLabel(s.count, lang)}{" "}
+                      {formatInt(s.count)}{" "}
                     </td>
                   </tr>
                 );
