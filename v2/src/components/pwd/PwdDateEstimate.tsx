@@ -18,7 +18,16 @@ import { longDate, weekdayName } from "@convex/lib/months";
  * for someone who knows the day it was filed and not its number. Nothing is
  * sent anywhere: the queue is in the page.
  */
-export function PwdDateEstimate({ data, lineDay }: { data: PwdDayData; lineDay: string | null }) {
+export function PwdDateEstimate({
+  data,
+  lineDay,
+  filedByDay = [],
+}: {
+  data: PwdDayData;
+  lineDay: string | null;
+  /** Every request filed each day (our check's document), for "N of that day's requests are decided". */
+  filedByDay?: readonly (readonly [string, number])[];
+}) {
   const id = useId();
   const [filed, setFiled] = useState("");
   const ok = /^\d{4}-\d{2}-\d{2}$/.test(filed);
@@ -30,6 +39,10 @@ export function PwdDateEstimate({ data, lineDay }: { data: PwdDayData; lineDay: 
   const dated = est && est.kind === "estimate" ? est : null;
   // Filed on or before the day DOL is deciding: DOL has reached it already.
   const reached = dated && lineDay !== null && filed <= lineDay;
+  // That day's requests: how many were filed and how many DOL has finished.
+  const sameDay = ok ? filedByDay.find(([d]) => d === filed)?.[1] ?? null : null;
+  const waitingThatDay = ok ? data.queue.byDay.find(([d]) => d === filed)?.[1] ?? 0 : 0;
+  const decidedThatDay = sameDay !== null ? Math.max(0, sameDay - waitingThatDay) : null;
 
   return (
     <div>
@@ -50,6 +63,11 @@ export function PwdDateEstimate({ data, lineDay }: { data: PwdDayData; lineDay: 
                 ? `DOL is already deciding requests filed that day. One still waiting may have an RFI or another review.`
                 : `Most likely between ${longDate(dated.earliest)} and ${longDate(dated.latest)}. ${formatInt(dated.requestsAhead)} requests filed before it are still waiting; DOL finishes about ${formatInt(Math.round(dated.pace))} a working day.`}
             </p>{" "}
+            {sameDay !== null && sameDay > 0 && decidedThatDay !== null ? (
+              <p className="mt-2 text-base">
+                {formatInt(decidedThatDay)} of the {formatInt(sameDay)} requests filed that day are decided.
+              </p>
+            ) : null}{" "}
             <DateRuler
               className="mt-5"
               from={filed}

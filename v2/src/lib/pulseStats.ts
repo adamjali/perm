@@ -145,6 +145,8 @@ export function certifiedShare(day: ActivityDay): number | null {
 export interface PulseSummary {
   /** Decisions in the 7 calendar days ending on the newest day. */
   last7: number;
+  /** Decisions in the 7 calendar days before those, or null when the record doesn't reach back that far. */
+  prior7: number | null;
   /** Decisions in the 30 calendar days ending on the newest day. */
   last30: number;
   /** Mean decisions on a DOL working day (Monday to Friday, not a federal holiday) in those 30 days, or null with none. */
@@ -168,8 +170,13 @@ export function pulseSummary(days: readonly ActivityDay[]): PulseSummary | null 
   const month = within(30);
   const weekdays = month.filter((d) => isDolWorkday(d.date));
   const last30 = sum(month, "total");
+  const last7 = sum(within(7), "total");
+  // The week before, only when the record covers its first day: a part week would read as a drop.
+  const oldest = Date.parse(`${sorted[0]!.date}T00:00:00Z`);
+  const prior7 = newest - oldest >= 13 * MS_PER_DAY ? sum(within(14), "total") - last7 : null;
   return {
-    last7: sum(within(7), "total"),
+    last7,
+    prior7,
     last30,
     weekdayAvg: weekdays.length ? Math.round(sum(weekdays, "total") / weekdays.length) : null,
     certifiedPct: last30 > 0 ? Math.round((sum(month, "certified") / last30) * 100) : null,

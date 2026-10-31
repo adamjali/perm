@@ -92,7 +92,7 @@ export function PwdNowBoard({
             claim="When might mine be decided?"
             sub="Put in the day it was filed. No number needed."
           >
-            <PwdDateEstimate data={dayData} lineDay={line?.day ?? null} />
+            <PwdDateEstimate data={dayData} lineDay={line?.day ?? null} filedByDay={queue?.filedByDay ?? []} />
           </Tile>
         ) : null}{" "}
 

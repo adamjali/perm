@@ -131,6 +131,12 @@ describe("pulseSummary", () => {
     expect(s.last30).toBe(700 + 800 + 2 + 600 + 900 + 8 + 712 + 989);
   });
 
+  it("gives the 7 days before the last 7, and nothing when the record doesn't reach back", () => {
+    // Sep 16 to 22: Sun 2 + Mon 600 + Tue 900. Sep 15 is fourteen days back, outside both weeks.
+    expect(pulseSummary(SERIES)!.prior7).toBe(2 + 600 + 900);
+    expect(pulseSummary(SERIES.slice(-3))!.prior7).toBeNull();
+  });
+
   it("leaves a federal holiday out of the typical weekday and the typical week", () => {
     const rows = [d("2026-10-05", 628), d("2026-10-09", 615), d("2026-10-12", 11, 0)];
     expect(pulseSummary(rows)!.weekdayAvg).toBe(Math.round((628 + 615) / 2));

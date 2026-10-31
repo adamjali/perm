@@ -56,6 +56,14 @@ export interface PermPulseProps {
   className?: string;
 }
 
+/** "4% more than the week before (3,460)": this week against the 7 days before it. */
+function weekNote(last7: number, prior7: number | null): string | null {
+  if (prior7 === null || prior7 <= 0) return null;
+  const pct = Math.round(((last7 - prior7) / prior7) * 100);
+  if (pct === 0) return `About the same as the week before (${formatInt(prior7)})`;
+  return `${Math.abs(pct)}% ${pct > 0 ? "more" : "fewer"} than the week before (${formatInt(prior7)})`;
+}
+
 export function PermPulse({ days, checkedAt, showLink = true, variant = "band", className }: PermPulseProps) {
   const head = pulseHeadline(days);
   if (!head) return null;
@@ -75,11 +83,11 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
   const summary = pulseSummary(days);
   const summaryFigures = summary
     ? [
-        { label: "Last 7 days", value: formatInt(summary.last7) },
+        { label: "Last 7 days", value: formatInt(summary.last7), note: weekNote(summary.last7, summary.prior7) },
         { label: "Last 30 days", value: formatInt(summary.last30) },
         { label: "A typical weekday", value: summary.weekdayAvg === null ? null : formatInt(summary.weekdayAvg) },
         { label: "Certified, last 30 days", value: summary.certifiedPct === null ? null : `${summary.certifiedPct}%` },
-      ].filter((f): f is { label: string; value: string } => f.value !== null)
+      ].filter((f): f is { label: string; value: string; note?: string | null } => f.value !== null)
     : [];
 
   const body = (
@@ -152,7 +160,10 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
             {" "}
             <div>
               <dt className="text-sm text-muted-foreground">{f.label}</dt>{" "}
-              <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums">{f.value}</dd>
+              <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums">
+                {f.value}
+                {f.note ? <span className="mt-1.5 block font-sans text-sm font-normal text-muted-foreground"> {f.note}</span> : null}
+              </dd>
             </div>
           </Fragment>
         ))}

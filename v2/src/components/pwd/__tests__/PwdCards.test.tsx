@@ -50,6 +50,12 @@ describe("PwdDateEstimate", () => {
     expect(screen.getByText("Any day now")).toBeTruthy();
   });
 
+  it("says how many of that day's requests are decided", () => {
+    render(<PwdDateEstimate data={DATA} lineDay="2026-07-27" filedByDay={[["2026-08-14", 800]]} />);
+    fireEvent.change(screen.getByLabelText("The day the wage request was filed"), { target: { value: "2026-08-14" } });
+    expect(screen.getByText("40 of the 800 requests filed that day are decided.")).toBeTruthy();
+  });
+
   it("refuses a day that hasn't come", () => {
     render(<PwdDateEstimate data={DATA} lineDay="2026-07-27" />);
     fireEvent.change(screen.getByLabelText("The day the wage request was filed"), { target: { value: "2026-12-01" } });
