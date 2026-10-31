@@ -1,0 +1,13 @@
+[Unit]
+Description=Schedule for permtracker-uscis@taa
+# DOL's Trade Adjustment Assistance petitions of PERM sponsors (ingest_taa.py, Oct 31
+# 2026). The program stopped July 1 2022 and the file is closed; read on the 3rd of
+# each month to catch a correction or the file moving. Persistent: a month the server
+# was down runs when it's back.
+[Timer]
+OnCalendar=*-*-03 09:30:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@taa.service
+
+[Install]
+WantedBy=timers.target

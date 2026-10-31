@@ -63,8 +63,18 @@ export function citedLine(
   return `${head}${i.penalty > 0 ? `, ${money(i.penalty)} in penalties` : ""}.`;
 }
 
-export function SafetyInspections({ summary, pageName }: { summary: OshaSummary | null; pageName: string }) {
+export function SafetyInspections({
+  summary,
+  pageName,
+  level = 2,
+}: {
+  summary: OshaSummary | null;
+  pageName: string;
+  /** 3 inside a page chapter (whose own title is an h2), 2 where the section stands alone. */
+  level?: 2 | 3;
+}) {
   if (!summary) return null;
+  const Heading = level === 3 ? "h3" : "h2";
   const grave = summary.serious + summary.willful + summary.repeat;
   const notes = [
     summary.open > 0 ? `${plural(summary.open, "inspection")} still open` : null,
@@ -74,9 +84,9 @@ export function SafetyInspections({ summary, pageName }: { summary: OshaSummary 
   const to = monthYear(summary.lastOpen);
   return (
     <section id="safety-inspections" className="mt-8 border-2 shadow-hard p-5 sm:p-6 bg-card border-border" aria-labelledby="osha-heading">
-      <h2 id="osha-heading" className="font-heading text-xl font-bold">
+      <Heading id="osha-heading" className="font-heading text-xl font-bold">
         OSHA inspections at {pageName}
-      </h2>{" "}
+      </Heading>{" "}
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Workplace safety and health inspections by OSHA and the state plans{from ? `, opened ${from === to ? `in ${from}` : `from ${from} to ${to}`}` : ""},
         matched to this employer by name.

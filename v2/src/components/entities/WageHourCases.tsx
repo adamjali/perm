@@ -43,8 +43,18 @@ function caseLine(c: WhdCase): string {
   return `${parts.join(", ")}.`;
 }
 
-export function WageHourCases({ summary, pageName }: { summary: WhdSummary | null; pageName: string }) {
+export function WageHourCases({
+  summary,
+  pageName,
+  level = 2,
+}: {
+  summary: WhdSummary | null;
+  pageName: string;
+  /** 3 inside a page chapter (whose own title is an h2), 2 where the section stands alone. */
+  level?: 2 | 3;
+}) {
   if (!summary) return null;
+  const Heading = level === 3 ? "h3" : "h2";
   const visa = [
     ["H-1B", summary.h1b],
     ["H-2A", summary.h2a],
@@ -53,9 +63,9 @@ export function WageHourCases({ summary, pageName }: { summary: WhdSummary | nul
   const visaFound = visa.filter(([, t]) => t.cases > 0);
   return (
     <section id="wage-cases" className="mt-8 border-2 shadow-hard p-5 sm:p-6 bg-card border-border" aria-labelledby="whd-heading">
-      <h2 id="whd-heading" className="font-heading text-xl font-bold">
+      <Heading id="whd-heading" className="font-heading text-xl font-bold">
         Wage and Hour cases at {pageName}
-      </h2>{" "}
+      </Heading>{" "}
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         The Labor Department&apos;s concluded compliance actions{summary.firstStart ? ` with findings from ${monthYear(summary.firstStart)}` : ""}
         {summary.lastEnd ? ` to ${monthYear(summary.lastEnd)}` : ""}, matched to this employer by name.

@@ -122,6 +122,37 @@ def sponsor_rule(sponsors, states, *, bare_needs_national: bool = False, nationa
     return match
 
 
+# The city test, for records whose name alone is too weak a join (SAM.gov's exclusions, DOL's TAA petitions): unless
+# the sponsor is national, the record's city must be one the sponsor's own PERM filings name as a worksite.
+def city_key(city: str | None) -> str:
+    """A city's first word, upper case: "Dania" and "DANIA BEACH" (renamed in 1998) are one place."""
+    words = re.sub(r"[^A-Za-z ]", " ", city or "").upper().split()
+    return words[0] if words else ""
+
+
+def same_city(cities: dict[str, set[str]], totals: dict[str, int]):
+    def ok(slug: str, city: str | None) -> bool:
+        if totals.get(slug, 0) >= NATIONAL_SPONSOR:
+            return True
+        key = city_key(city)
+        return bool(key) and key in cities.get(slug, set())
+    return ok
+
+
+def sponsor_cities(db: Database, slugs: set[str]) -> dict[str, set[str]]:
+    """Each candidate sponsor's PERM worksite cities, as city keys."""
+    out: dict[str, set[str]] = {}
+    items = sorted(slugs)
+    for i in range(0, len(items), 200):
+        part = items[i:i + 200]
+        marks = ",".join("?" for _ in part)
+        for slug, city in query_rows(db, f"SELECT employer_slug, worksite_city FROM perm_cases WHERE employer_slug IN ({marks}) "
+                                         "AND worksite_city IS NOT NULL GROUP BY 1, 2", part):
+            if city_key(city):
+                out.setdefault(str(slug), set()).add(city_key(city))
+    return out
+
+
 def moved_pages(db: Database, table: str, cols: Sequence[str], keep: list[list]) -> list[str]:
     """The employer pages whose records changed: a record new, changed or gone, under its old page and its new one,
     the busiest first. `cols` starts with the key and ends with `employer_slug`. Read before the write, so a removed

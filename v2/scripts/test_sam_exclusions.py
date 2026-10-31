@@ -57,8 +57,8 @@ def archive(rows, header=HEADER) -> zipfile.ZipFile:
     return zipfile.ZipFile(raw)
 
 
-check("a city's first word is its key", s.city_key("DANIA BEACH") == "DANIA" and s.city_key("Dania") == "DANIA")
-check("a city with no letters has no key", s.city_key("  ") == "" and s.city_key(None) == "")
+check("a city's first word is its key", s.dol.city_key("DANIA BEACH") == "DANIA" and s.dol.city_key("Dania") == "DANIA")
+check("a city with no letters has no key", s.dol.city_key("  ") == "" and s.dol.city_key(None) == "")
 check("SAM's dates read in both its shapes", s.day("2026-09-28") == "2026-09-28" and s.day("09/28/2026") == "2026-09-28")
 check("'Indefinite' is no date", s.day("Indefinite") is None)
 
@@ -81,7 +81,7 @@ rows = list(s.records(archive([
 cities = {"royal-caribbean": {"MIAMI", "MIRAMAR"}, "maverick-services-llc": {"HOUSTON"}, "q-link": {"DANIA"},
           "big-national": {"BOSTON"}}
 totals = {"big-national": 400}
-keep, seen = s.select(rows, match, s.same_city(cities, totals))
+keep, seen = s.select(rows, match, s.dol.same_city(cities, totals))
 by = {r[1]: r for r in keep}
 check("people and vessels are never kept", "Jane Doe" not in by and sum(1 for r in keep if r[6] == "Vessel") == 0, str(list(by)))
 check("a firm in a city its sponsor files in joins", "Royal Caribbean Cruises, Ltd." in by)

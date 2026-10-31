@@ -1,0 +1,13 @@
+[Unit]
+Description=Schedule for permtracker-uscis@ppp
+# SBA's PPP loans to PERM sponsors (ingest_ppp.py, Oct 31 2026). A closed program and
+# a snapshot release, 5.2 GB; read on the 4th of each month at 3:30 AM Eastern, after
+# the night deploy and before the morning sweep reads the employer tables. Persistent:
+# a month the server was down runs when it's back.
+[Timer]
+OnCalendar=*-*-04 03:30:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@ppp.service
+
+[Install]
+WantedBy=timers.target

@@ -122,6 +122,10 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "OSHA's and the state plans' workplace safety and health inspections opened since October 2016, matched to a PERM sponsor's page by name: why each was opened, when it opened and closed, and the violations cited with their type and penalty, counted as OSHA counts them. An open inspection's citations can still change.",
   "uscis-posted-times":
     "Every figure USCIS's processing-times page has posted since March 2022, by form, subtype and office, with USCIS's own posting date: the time it took to decide 80% of the cases it decided in the past six months. Copied from USCIS's page each day by an open-source project; checked against a weekly reading of the page itself.",
+  "ppp-loans":
+    "SBA's Paycheck Protection Program loans from 2020 and 2021, as SBA released them (its snapshot of September 30 2024): the amount approved and forgiven and the jobs the borrower reported then. Kept here are loans matched to a PERM sponsor's page by name and city; loans to people (sole proprietors, the self-employed) are never kept.",
+  "taa-petitions":
+    "DOL's Trade Adjustment Assistance petitions decided from October 2012 to June 2022, when the program stopped: groups of workers DOL certified, or didn't, as losing their jobs to imports or work moved abroad. Kept here are petitions matched to a PERM sponsor's page by name and city, with DOL's own determination codes.",
   "sam-exclusions":
     "Firms the federal government has excluded from contracts and certain assistance, from SAM.gov's daily public file: the excluding agency, the kind of exclusion and its dates. Kept here are firms matched to a PERM sponsor's page by name and state; people and vessels are never kept.",
   "warn-notices":
@@ -296,6 +300,8 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "osha-inspections": "OSHA inspections",
   "uscis-posted-times": "USCIS posted processing times",
   "sam-exclusions": "SAM.gov exclusions",
+  "taa-petitions": "Trade Adjustment Assistance petitions",
+  "ppp-loans": "Paycheck Protection Program loans",
   "warn-notices": "WARN notices",
   "warn-notices-ca": "California WARN notices",
   "warn-notices-ny": "New York WARN notices",

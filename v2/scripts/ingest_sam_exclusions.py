@@ -18,7 +18,7 @@ prints the legal name and the address it has on file. People and vessels are nev
 person.
 
 One more test than WHD's, because an exclusion is the gravest thing a page can say about an employer: unless the
-sponsor is national, SAM's city must be one the sponsor's own PERM filings name as a worksite (`same_city`). Measured
+sponsor is national, SAM's city must be one the sponsor's own PERM filings name as a worksite (`dol.same_city`). Measured
 Oct 31 2026: the name rule alone joined 11 records, and checked by hand against each sponsor's filings, 6 were
 plainly the same company and city (Royal Caribbean Cruises in Miami, Q Link Wireless in Dania Beach, XChange Logistics
 in West Covina) while 5 weren't certain: "Maverick Services" in Clarksville against a one-case Houston sponsor, and
@@ -52,7 +52,7 @@ import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import lib_dol_records as dol  # noqa: E402
-from lib_db import Database, query_rows, record_run, stamp_freshness  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness  # noqa: E402
 from lib_reference import sync_rows  # noqa: E402
 
 SCRIPT = "ingest_sam_exclusions.py"
@@ -162,35 +162,6 @@ def record_id(r: dict) -> str:
     return "|".join(parts)
 
 
-def city_key(city: str | None) -> str:
-    """A city's first word, upper case: "Dania" and "DANIA BEACH" (renamed in 1998) are one place."""
-    words = re.sub(r"[^A-Za-z ]", " ", city or "").upper().split()
-    return words[0] if words else ""
-
-
-def same_city(cities: dict[str, set[str]], totals: dict[str, int]):
-    def ok(slug: str, city: str | None) -> bool:
-        if totals.get(slug, 0) >= dol.NATIONAL_SPONSOR:
-            return True
-        key = city_key(city)
-        return bool(key) and key in cities.get(slug, set())
-    return ok
-
-
-def sponsor_cities(db: Database, slugs: set[str]) -> dict[str, set[str]]:
-    """Each candidate sponsor's PERM worksite cities, as city keys."""
-    out: dict[str, set[str]] = {}
-    items = sorted(slugs)
-    for i in range(0, len(items), 200):
-        part = items[i:i + 200]
-        marks = ",".join("?" for _ in part)
-        for slug, city in query_rows(db, f"SELECT employer_slug, worksite_city FROM perm_cases WHERE employer_slug IN ({marks}) "
-                                         "AND worksite_city IS NOT NULL GROUP BY 1, 2", part):
-            if city_key(city):
-                out.setdefault(str(slug), set()).add(city_key(city))
-    return out
-
-
 def select(rows, match, place_ok=None) -> tuple[list[list], dict[str, int]]:
     """The exclusions to keep, each with its page. `place_ok(slug, city)` is the city test; None skips it (the first
     pass, which only gathers the candidate sponsors)."""
@@ -242,7 +213,7 @@ def main() -> int:
                 rows = list(records(archive))
             first, _ = select(rows, match)
             totals = {str(slug): int(t or 0) for _, slug, t in sponsors}
-            keep, seen = select(rows, match, same_city(sponsor_cities(db, {r[-1] for r in first}), totals))
+            keep, seen = select(rows, match, dol.same_city(dol.sponsor_cities(db, {r[-1] for r in first}), totals))
         if seen["records"] < MIN_RECORDS:
             raise RuntimeError(f"SAM's file held {seen['records']:,} records, under {MIN_RECORDS:,}: refusing a short file")
         # The file's day code is YYDDD (two-digit year, day of the year).

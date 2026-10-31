@@ -1836,6 +1836,23 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   designations only, never people or vessels, joined by name AND a city the sponsor's own PERM filings name (or a
   national sponsor): the name rule alone joined 11 on Oct 31, of which 5 weren't certain by hand ("Maverick Services"
   in Clarksville against a Houston sponsor); the city test keeps the 6 that were.
+- **Sponsor pages have a "Federal records" chapter** (shown only when it holds something): Wage and Hour cases, OSHA
+  inspections, SAM.gov exclusions, TAA petitions and PPP loans, each section an h3 under the chapter's h2 (WHD and
+  OSHA take `level={3}` there and default to h2 where they stand alone). They had sat under "Right now", whose dek
+  promises DOL's live case record.
+- **DOL's Trade Adjustment Assistance petitions** (`scripts/ingest_taa.py`, table `taa_petitions`, `TradeAdjustment` on
+  sponsor pages, `permtracker-uscis@taa` on the 3rd): data.dol.gov dataset 10363, 86,334 petitions, closed since the
+  program stopped July 1 2022. Decided from Oct 1 2012, joined by name and city (the shared `dol.same_city`): 1,302 on
+  Oct 31. **The codes come from DOL's Petition Data Dictionary** (www.dol.gov, read in a browser; scripts get 403): C1
+  imports, C2 shift abroad or foreign acquisition, CU and CD secondary, C unspecified, P partial, D denied, T terminated.
+  The file's DISPLAY_TEXT is a flag (1.0), not words. The petitioners', investigators' and certifiers' names are never read.
+- **SBA's PPP loans** (`scripts/ingest_ppp.py`, table `ppp_loans`, `PaycheckProtection` on sponsor pages,
+  `permtracker-uscis@ppp` on the 4th, 3:30 AM): thirteen CSVs (5.2 GB, SBA's Sep 30 2024 snapshot) listed on
+  data.sba.gov/dataset/ppp-foia, read one at a time into /var/tmp. Joined by name and city; a person's loan (sole
+  proprietor, self-employed, contractor) is skipped unless the name carries a company form word; a blank borrower
+  state takes the project's. Race, ethnicity, gender and veteran columns are never read. **E-Verify isn't loaded**
+  (USCIS's robots.txt bars its search and export) **and SEC headcount isn't either** (376 of 20,537 companies report
+  `dei:EntityNumberOfEmployees`, and sponsors carry no EIN to match on).
 - **USCIS's posted processing times, every posting since March 2022** (`scripts/ingest_uscis_posted_times.py`, table
   `uscis_posted_times`, doc `uscis_posted_times`, `permtracker-uscis@posted-times` twice a day): the daily SQLite
   copies the open-source jzebedee/uscis project publishes as GitHub releases. That project reaches egov.uscis.gov with

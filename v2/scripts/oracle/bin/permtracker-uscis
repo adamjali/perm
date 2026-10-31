@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -68,6 +68,20 @@ case "$job" in
     REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
     export REVALIDATE_SECRET
     timeout 15m nice -n 10 python3 scripts/ingest_sam_exclusions.py || { rc=1; fail ingest_sam_exclusions.py "exited non-zero or ran past 15m"; } ;;
+  # DOL's Trade Adjustment Assistance petitions of PERM sponsors (Oct 31 2026): one 48 MB file from data.dol.gov. The
+  # program stopped on July 1 2022, so the file is closed; read monthly to catch a correction or the file moving.
+  taa)
+    export REVALIDATE_BASE=http://127.0.0.1:8081
+    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+    export REVALIDATE_SECRET
+    timeout 15m nice -n 10 python3 scripts/ingest_taa.py || { rc=1; fail ingest_taa.py "exited non-zero or ran past 15m"; } ;;
+  # SBA's PPP loans to PERM sponsors (Oct 31 2026): thirteen CSVs from data.sba.gov, 5.2 GB, read one at a time into
+  # /var/tmp and deleted. The program closed in May 2021 and SBA's release is a snapshot; read monthly.
+  ppp)
+    export REVALIDATE_BASE=http://127.0.0.1:8081
+    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+    export REVALIDATE_SECRET
+    timeout 90m nice -n 10 python3 scripts/ingest_ppp.py || { rc=1; fail ingest_ppp.py "exited non-zero or ran past 90m"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

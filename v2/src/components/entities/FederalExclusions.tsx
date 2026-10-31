@@ -44,9 +44,9 @@ export function FederalExclusions({ rows, pageName }: { rows: SamExclusion[]; pa
   if (rows.length === 0) return null;
   return (
     <aside id="federal-exclusions" className="mt-8 border-2 border-foreground bg-card p-5 shadow-hard sm:p-6" aria-labelledby="sam-heading">
-      <h2 id="sam-heading" className="font-heading text-xl font-bold">
+      <h3 id="sam-heading" className="font-heading text-xl font-bold">
         Excluded from federal contracts
-      </h2>{" "}
+      </h3>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed">
         SAM.gov lists {rows.length === 1 ? "a firm" : `${rows.length} records`} matching {pageName} as excluded today,
         by name and city. SAM&apos;s record, as published:

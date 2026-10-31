@@ -110,6 +110,10 @@ import { WageHourCases } from "@/components/entities/WageHourCases";
 import { SafetyInspections } from "@/components/entities/SafetyInspections";
 import { FederalExclusions } from "@/components/entities/FederalExclusions";
 import { samExclusionsForSlug } from "@/lib/db/samExclusions";
+import { TradeAdjustment } from "@/components/entities/TradeAdjustment";
+import { taaForSlug } from "@/lib/db/taaPetitions";
+import { PaycheckProtection } from "@/components/entities/PaycheckProtection";
+import { pppForSlug } from "@/lib/db/pppLoans";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { OtherEmployer } from "@/components/entities/OtherEmployer";
@@ -675,7 +679,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows, taaRows, pppRows] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -741,6 +745,10 @@ export default async function EmployerPage({
       oshaForSlug(canonicalSlug),
       // SAM.gov's exclusions matched to this sponsor by name and city. No catch, as with debarments.
       samExclusionsForSlug(canonicalSlug),
+      // DOL's Trade Adjustment Assistance petitions matched by name and city (FY2013 to June 2022). No catch.
+      taaForSlug(canonicalSlug),
+      // SBA's PPP loans matched by name and city (2020 and 2021). No catch.
+      pppForSlug(canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -842,12 +850,15 @@ export default async function EmployerPage({
     facets.occupation || facets.state || facets.attorney || facets.city || facets.industry || facets.newspaper || facets.recruit_lead,
   );
   const hasHistory = years.length > 0 || historyCases.length > 0 || Object.values(workers).some((r) => (r?.length ?? 0) > 0);
+  // Other agencies' records (WHD, OSHA, SAM.gov, TAA, PPP): a chapter of their own, only when there's one to show.
+  const hasRecords = Boolean(whd) || Boolean(osha) || samRows.length > 0 || taaRows.length > 0 || pppRows.length > 0;
   const chapters: ChapterItem[] = [
     { id: "now", label: "Right now" },
     { id: "wait", label: "How long" },
     { id: "programs", label: "Every program" },
     { id: "compare", label: "Against others" },
     ...(hasWork ? [{ id: "work", label: "The work" }] : []),
+    ...(hasRecords ? [{ id: "records", label: "Federal records" }] : []),
     ...(hasHistory ? [{ id: "history", label: "History" }] : []),
     { id: "notes", label: "Notes" },
   ];
@@ -977,10 +988,7 @@ export default async function EmployerPage({
             <FromDolLive />
           </section>
         ) : null}{" "}
-        <WarnNoticeBand rows={warn} pageName={row.name} />{" "}
-        <WageHourCases summary={whd} pageName={row.name} />{" "}
-        <SafetyInspections summary={osha} pageName={row.name} />{" "}
-        <FederalExclusions rows={samRows} pageName={row.name} />
+        <WarnNoticeBand rows={warn} pageName={row.name} />
       </Chapter>
 
       <Chapter id="wait" title="How long it takes">
@@ -1125,6 +1133,20 @@ export default async function EmployerPage({
             lead={facets.recruit_lead}
             className="mt-4"
           />
+        </Chapter>
+      ) : null}
+
+      {hasRecords ? (
+        <Chapter
+          id="records"
+          title="Federal records"
+          dek="What other agencies' own records hold under this employer's name: each matched by name, and by city where the name alone could be another company."
+        >
+          <WageHourCases summary={whd} pageName={row.name} level={3} />{" "}
+          <SafetyInspections summary={osha} pageName={row.name} level={3} />{" "}
+          <FederalExclusions rows={samRows} pageName={row.name} />{" "}
+          <TradeAdjustment rows={taaRows} pageName={row.name} />{" "}
+          <PaycheckProtection rows={pppRows} pageName={row.name} />
         </Chapter>
       ) : null}
 
