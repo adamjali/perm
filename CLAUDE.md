@@ -1646,9 +1646,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
   5+ filings (`fullListFloor` = `MIN_TOTAL_FOR_BULK`); the table had promised "Load all 5,571" and then read "All 2,882".
 - **The DOL decision card sits at the foot of a case's Overview**, one compact `detail-card` (866px became about 375px): the past a
   fixed third, the coming weeks to scale with a tick a week, the line ahead as one labelled queue, the rest folded.
-- **The LLC is ASOLYS LLC** (rename filed Oct 8 2026, Sunbiz read Oct 30): `LEGAL_NAME`, `TRADE_NAME_NOTE` on About and the public
-  footer, the Terms "Asolys LLC, doing business as PERM Tracker" (Gate R in `.planning/llc-and-uscis-plan.md`). The fictitious-name
-  filing and the EIN are the owner's next steps.
+- **The LLC is ASOLYS LLC** (rename filed Oct 8 2026, Sunbiz read Oct 30). Where it's named is Oct 31's rule, below. The
+  fictitious-name filing and the EIN are the owner's next steps.
 - **A dev server can serve a stale shared module** (the new pages with the old `@/lib/constants/about`): restart it before reading a
   render that contradicts the source.
 
@@ -1722,8 +1721,12 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
 - **An email rating waits as an anonymous review** ("Case alert reader", the month only, one per address, replaced by
   the same person's written review once approved). Admin > Reviews names who rated, for the owner only, and filters
   Waiting, Posted and Declined. The Oct 28 rating is queued; the Oct 13 one stays out (same person as the named Oct 23 review).
-- **The company is Asolys LLC, doing business as PERM Tracker** (`LEGAL_DBA`) on every legal page, email footer (HTML and
-  plain text, `convex/lib/textFooter.ts`), structured data, licence and package. The Florida fictitious-name filing is the owner's.
+- **The company's legal name appears only where the law needs a party** (owner, Oct 31 2026, 6:27 PM EDT: "only put Asolys
+  where actually needed use PERM Tracker wherever possible"): the Terms, the Privacy Policy and the API terms (each in its
+  opening and its operator line, `LEGAL_DBA`) and the Organization's `legalName`. Footers, copyright lines, licences,
+  packages, the OpenAPI contact, llms.txt and email footers say PERM Tracker (a copyright notice may use the name the public
+  knows, 17 U.S.C. 401(b)(3); CAN-SPAM asks for the postal address, `TEXT_LEGAL_LINE`). `legal-name.test.ts` walks the tree
+  and fails any other file that names the company. The Florida fictitious-name filing is the owner's.
 - **USCIS's processing times are read through the owner's Chrome, weekly** (Mondays; timer `uscis-times` in
   `~/.claude/timers/registry.py`; ledger `.planning/uscis-times-readings.md`): egov.uscis.gov refuses GitHub and the server.
 - **The server's timers run on Eastern time** (every `permtracker-cron@*.timer` but the UTC hourly one), and Convex's
@@ -1741,8 +1744,11 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   independently, from the live build's commit.
 - **The deploy's database check logs in and asks SELECT 1**; it had expected a 401, an ERROR line in the log per deploy.
 - **The Gmail janitor files alarms and Sentry issue alerts instead of trashing them** (`~/gmail-janitor/memory/rules.md`).
-- **Parked for the owner:** the offline compaction of the main database file never ran (about 2.7 GB back, about 16
-  minutes offline at night; its first reason, the RAM lock, was retired Oct 29).
+- **The main database has nothing to compact** (measured Oct 31, 6:47 PM EDT: 4.76 GB, 1 free page of 1,162,528): the
+  space the retired LCA copy held has been reused, so the parked offline compaction is dropped. Re-measure free pages
+  (`pragma freelist_count`) before planning one.
+- **The morning trust check had checked no page's date** (`scripts/audit_trust.py`): an exemption for "/" matched every path
+  as a prefix. "/" is the homepage alone now, and the control asserts a missing date is caught.
 
 ## Oct 31 2026 (evening): the child age-out calculator, and DOL's wage cases
 

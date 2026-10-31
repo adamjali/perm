@@ -1261,7 +1261,7 @@ export default function PrivacyPage() {
             <p className="text-soft leading-relaxed">
               The USCIS case status lookup lets you enter a receipt number and see what
               USCIS says about that case. It runs on USCIS&apos;s Case Status API under
-              credentials issued to {LEGAL_NAME}, and it&apos;s available only once
+              credentials issued to us, and it&apos;s available only once
               USCIS has granted that access; until then the page says so and looks
               nothing up.
             </p>{" "}

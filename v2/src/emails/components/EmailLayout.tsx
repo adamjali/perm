@@ -22,7 +22,7 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
-import { LEGAL_DBA, LEGAL_NAME, POSTAL_ADDRESS } from "../../lib/constants/about";
+import { POSTAL_ADDRESS } from "../../lib/constants/about";
 import { SITE_URL } from "../../../convex/lib/links";
 
 export interface EmailLayoutProps {
@@ -301,10 +301,10 @@ export function EmailLayout({
             </Text>
             {footerExtra}
             <Text className="em-footer-muted" style={styles.copyright}>
-              {`${LEGAL_DBA}, ${POSTAL_ADDRESS}`}
+              {`PERM Tracker, ${POSTAL_ADDRESS}`}
             </Text>
             <Text className="em-footer-muted" style={styles.copyright}>
-              &copy; {`${new Date().getFullYear()} ${LEGAL_NAME}`}. All rights
+              &copy; {`${new Date().getFullYear()} PERM Tracker`}. All rights
               reserved.
             </Text>
           </Section>

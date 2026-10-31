@@ -44,7 +44,6 @@ import { DownloadIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
-import { LEGAL_DBA } from "@/lib/constants/about";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
 import AnalyticsToggle from "./AnalyticsToggle";
@@ -303,7 +302,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       </SettingsCard>
 
       <p className="border-t border-border pt-6 text-sm text-muted-foreground">
-        PERM Tracker v{appVersion}. &copy; {`${currentYear} ${LEGAL_DBA}`}
+        PERM Tracker v{appVersion}. &copy; {`${currentYear} PERM Tracker`}
       </p>
 
       {/* Confirmation Dialog */}

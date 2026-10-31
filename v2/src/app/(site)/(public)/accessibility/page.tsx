@@ -13,7 +13,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { LEGAL_DBA } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { MoreText } from "@/components/data/MoreText";
@@ -43,7 +42,7 @@ export default function AccessibilityPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Accessibility</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Statement dated {STATEMENT_DATE}. Operated by {LEGAL_DBA}.
+          Statement dated {STATEMENT_DATE}.
         </p>{" "}
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">

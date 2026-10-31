@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import Footer from "../Footer";
-import { LEGAL_NAME, NOT_LEGAL_SERVICES } from "@/lib/constants/about";
+import { NOT_LEGAL_SERVICES, TRADE_NAME } from "@/lib/constants/about";
 import { APP_FOOTER, FOOTER_COLUMNS, FOOTER_LEGAL } from "@/lib/siteMap";
 
 /**
@@ -16,7 +16,7 @@ describe("Footer", () => {
     it(`says this isn't a law firm, and whose site it is, for the ${audience} audience`, () => {
       renderWithProviders(<Footer audience={audience} />);
       expect(screen.getByText(NOT_LEGAL_SERVICES)).toBeInTheDocument();
-      expect(screen.getByText(new RegExp(`© ${new Date().getFullYear()} ${LEGAL_NAME}`))).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`© ${new Date().getFullYear()} ${TRADE_NAME}`))).toBeInTheDocument();
     });
 
     it(`never offers sign in or sign up for the ${audience} audience (the header does that)`, () => {

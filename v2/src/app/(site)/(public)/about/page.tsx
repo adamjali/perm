@@ -47,9 +47,6 @@ import { getRecordCounts } from "@/lib/db/recordCounts";
 import {
   ABOUT_ONE_LINER,
   FOUNDED,
-  LEGAL_FORM,
-  LEGAL_NAME,
-  TRADE_NAME_NOTE,
   LIVE_SINCE,
   SABRINA,
 } from "@/lib/constants/about";
@@ -459,11 +456,7 @@ export default async function AboutPage() {
           ))}
         </ul>{" "}
         <p className="mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          {TRADE_NAME_NOTE} {LEGAL_NAME} is the party named in the{" "}
-          <Link href="/terms" className="link">
-            terms
-          </Link>
-          . The domain was registered in {monthLabel(FOUNDED)}.
+          The domain was registered in {monthLabel(FOUNDED)}.
         </p>
       </section>
     </div>

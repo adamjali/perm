@@ -4,7 +4,7 @@
  * Generates structured data (JSON-LD) for content pages.
  */
 
-import { LEGAL_NAME, TRADE_NAME } from "@/lib/constants/about";
+import { TRADE_NAME } from "@/lib/constants/about";
 import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
 import { SCHEMA_IDS } from "@/lib/structuredData";
 import type { PostMeta, ContentType, PostSummary } from "./types";
@@ -14,14 +14,12 @@ const BASE_URL = SITE_URL;
 
 /**
  * Emitted identically by Article and VideoObject; written once so it stays that way.
- * It is the site's own Organization node (`@id`), so an article's publisher carries the
- * company behind the brand (`legalName`) as every other page's does.
+ * It is the site's own Organization node (`@id`); that node alone carries the company's `legalName`.
  */
 const PUBLISHER = {
   "@type": "Organization" as const,
   "@id": SCHEMA_IDS.organization(BASE_URL),
   name: TRADE_NAME,
-  legalName: LEGAL_NAME,
   logo: {
     "@type": "ImageObject" as const,
     url: `${BASE_URL}/icon-512.png`,

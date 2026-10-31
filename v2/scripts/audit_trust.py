@@ -35,6 +35,9 @@ FOOTER_LINKS = ("/about", "/methodology", "/editorial-standards", "/changelog/co
 # Python can't read that file, so it is typed here and legal-name.test.ts holds the two equal:
 # the old "PERM Tracker LLC" failed every page from the Oct 30 2026 rename until Oct 31.
 LEGAL_NAME = "Asolys LLC"
+# The binding documents, the only pages that name the company (owner, Oct 31 2026: everywhere
+# else says PERM Tracker). Each must name it, or a reader can't tell who the agreement is with.
+LEGAL_PAGES = ("/terms", "/privacy", "/api-terms")
 ARTICLE = re.compile(r"^/(guides|blog|changelog)/[^/]+$")
 # Pages that legitimately lack one of the signals, with the reason.
 EXEMPT: dict[str, set[str]] = {
@@ -46,7 +49,9 @@ EXEMPT: dict[str, set[str]] = {
 
 
 def exempt(path: str, signal: str) -> bool:
-    return any(signal in sigs and (path == p or (p.endswith("/") and path.startswith(p))) for p, sigs in EXEMPT.items())
+    # "/" is the homepage alone: as a prefix it matched every path, and no page's date was ever checked.
+    return any(signal in sigs and (path == p or (p != "/" and p.endswith("/") and path.startswith(p)))
+               for p, sigs in EXEMPT.items())
 
 
 def links(html: str) -> set[str]:
@@ -72,8 +77,8 @@ def findings_for(path: str, html: str) -> list[str]:
         missing = [h for h in FOOTER_LINKS if h not in found]
         if missing:
             out.append(f"no link to {', '.join(missing)}")
-        if LEGAL_NAME not in html:
-            out.append(f"the legal name ({LEGAL_NAME}) isn't on the page")
+    if path in LEGAL_PAGES and LEGAL_NAME not in html:
+        out.append(f"the legal name ({LEGAL_NAME}) isn't on this binding document")
     if not exempt(path, "date") and not re.search(r'"dateModified":"\d{4}-\d{2}-\d{2}', html):
         out.append("no dateModified: the page doesn't say when it last changed")
     if ARTICLE.match(path):
@@ -96,8 +101,11 @@ def findings_for(path: str, html: str) -> list[str]:
 def control() -> None:
     """A planted page missing everything must trip every check, or the audit is blind."""
     bad = findings_for("/guides/x", "<html><body><p>nothing here</p></body></html>")
+    assert any("dateModified" in b for b in bad), f"the date check is blind: {bad}"
     assert len(bad) >= 4, f"the audit stopped seeing missing signals: {bad}"
-    good_footer = "".join(f'<a href="{h}">x</a>' for h in FOOTER_LINKS) + LEGAL_NAME
+    good_footer = "".join(f'<a href="{h}">x</a>' for h in FOOTER_LINKS)
+    assert findings_for("/terms", f'{good_footer}"dateModified":"2026-10-28"'), "the legal-page check is blind"
+    assert not findings_for("/terms", f'{good_footer}{LEGAL_NAME}"dateModified":"2026-10-28"'), "the legal-page check misfires"
     data = f'<div data-provenance><a href="/methodology">m</a></div>{good_footer}"dateModified":"2026-10-28"'
     got = findings_for("/perm-queue", data)
     assert any("report an error" in g for g in got) and len(got) == 2, f"the source-line check is blind: {got}"

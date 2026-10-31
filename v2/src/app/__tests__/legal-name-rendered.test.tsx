@@ -20,12 +20,12 @@ describe("the operator, as the pages read", () => {
   it("the Terms name it with its spaces", () => {
     const t = text(<TermsPage />);
     expect(t).toContain("operated by Asolys LLC, doing business as PERM Tracker (");
-    expect(t).toContain("hold harmless Asolys LLC, doing business as PERM Tracker, and its operators");
-    expect(t).toContain("agreement between you and Asolys LLC regarding the Service");
+    expect(t).toContain("hold harmless PERM Tracker and its operators");
+    expect(t).toContain("agreement between you and us regarding the Service");
   });
 
-  it("the API terms and the accessibility statement name it the same way", () => {
+  it("the API terms name it the same way, and the accessibility statement leaves it to them", () => {
     expect(text(<ApiTermsPage />)).toContain("provided by Asolys LLC, doing business as PERM Tracker, a Florida limited liability company");
-    expect(text(<AccessibilityPage />)).toContain("Operated by Asolys LLC, doing business as PERM Tracker.");
+    expect(text(<AccessibilityPage />)).not.toContain("Asolys");
   });
 });

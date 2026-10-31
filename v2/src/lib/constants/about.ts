@@ -71,13 +71,16 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
  * page's lede is it, so an engine lifting either gets the same sentence.
  */
 /**
- * The legal entity behind the site, a Florida LLC. The Terms bind this name,
- * so every surface that names the operator reads it from here.
+ * The legal entity behind the site, a Florida LLC. It is named only where the
+ * law needs the party: the Terms, the Privacy Policy, the API terms (each once,
+ * in its opening and its operator line) and the Organization's `legalName`.
+ * Everywhere else the site, its emails, packages and licences say PERM Tracker
+ * (owner, Oct 31 2026: "only put Asolys where actually needed").
  *
  * Formed Sep 23 2026 as PERM Tracker LLC and renamed Asolys LLC by Articles of
  * Amendment filed Oct 8 2026 (Sunbiz document L26000495521, read Oct 30 2026:
  * "ASOLYS LLC", last event "LC NAME CHANGE"). PERM Tracker is the name it
- * trades under (TRADE_NAME_NOTE).
+ * trades under; its Florida fictitious-name registration is the owner's to file.
  */
 export const LEGAL_NAME = "Asolys LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
@@ -86,18 +89,10 @@ export const LEGAL_FORM = "a Florida limited liability company";
 export const TRADE_NAME = "PERM Tracker";
 
 /**
- * The operator wherever a party or publisher is named: the Terms, the Privacy
- * Policy, the API terms, email footers, llms.txt. PERM Tracker is the trade name;
- * the company is Asolys LLC.
+ * The party in the three binding documents (Terms, Privacy Policy, API terms).
+ * PERM Tracker is the trade name; the company is Asolys LLC.
  */
 export const LEGAL_DBA = `${LEGAL_NAME}, doing business as ${TRADE_NAME}`;
-
-/**
- * The one sentence that ties the brand to the company, on the About page and
- * in the public footer (owner's yes, Oct 18 2026, for the day the rename
- * landed). The manager's name comes from SABRINA, never typed twice.
- */
-export const TRADE_NAME_NOTE = `${TRADE_NAME} is a trade name of ${LEGAL_NAME}, a Florida company managed by immigration attorney ${SABRINA.name}.`;
 
 /**
  * Where reporters write. Printed on /press. Inbound mail to any permtracker.app
@@ -112,11 +107,10 @@ export const PRESS_EMAIL = "press@permtracker.app";
  * disambiguate from other, similar items") and the top of llms.txt. Google's
  * site-names guide (updated Dec 10 2025) reads only name, url and
  * alternateName, so this is for assistants that read the JSON-LD or llms.txt.
- * It names only what no other site can claim (the domain, the company, the
- * source) and no other site and no person. It reads LEGAL_NAME, so the
- * rename changes it with everything else.
+ * It names only what no other site can claim (the domain, the place, the
+ * source) and no other site and no person.
  */
-export const DISAMBIGUATION = `PERM Tracker at permtracker.app, run by ${LEGAL_NAME} in Florida: a free site that reads the Department of Labor's own case records for PERM, prevailing wage, H-1B LCA, H-2A and H-2B filings, with a free deadline app for immigration attorneys.`;
+export const DISAMBIGUATION = `PERM Tracker at permtracker.app, based in Florida: a free site that reads the Department of Labor's own case records for PERM, prevailing wage, H-1B LCA, H-2A and H-2B filings, with a free deadline app for immigration attorneys.`;
 
 /**
  * The LLC's postal address, printed in every email footer. It is the principal

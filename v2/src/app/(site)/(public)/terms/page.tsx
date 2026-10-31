@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
-import { LEGAL_DBA, LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
+import { LEGAL_DBA, LEGAL_FORM, POSTAL_ADDRESS } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -79,8 +79,8 @@ export default function TermsPage() {
               Service.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">
-              These Terms constitute a legally binding agreement between you and{" "}
-              {LEGAL_NAME} regarding your use of the Service.
+              These Terms constitute a legally binding agreement between you and
+              us regarding your use of the Service.
             </p>
           </details>{" "}
 
@@ -604,8 +604,8 @@ export default function TermsPage() {
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
-              You agree to indemnify, defend, and hold harmless {LEGAL_DBA}, and
-              its operators, from any claims, damages, losses, or expenses
+              You agree to indemnify, defend, and hold harmless PERM Tracker and
+              its operators from any claims, damages, losses, or expenses
               (including reasonable attorney&apos;s fees) arising from:
             </p>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
@@ -738,7 +738,7 @@ export default function TermsPage() {
             </summary>{" "}
             <p className="text-soft leading-relaxed">
               These Terms, together with our Privacy Policy, constitute the entire
-              agreement between you and {LEGAL_NAME} regarding the Service and
+              agreement between you and us regarding the Service and
               supersede any prior agreements.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">

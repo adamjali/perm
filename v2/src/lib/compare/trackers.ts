@@ -14,7 +14,7 @@
  */
 
 import { longDate, MONTH_NAMES } from "@convex/lib/months";
-import { LEGAL_NAME } from "@/lib/constants/about";
+import { SABRINA } from "@/lib/constants/about";
 
 export type Mark = "yes" | "partial" | "no" | "unknown";
 
@@ -111,7 +111,7 @@ export const PERM_TRACKER: Tracker = {
   slug: "permtracker",
   name: "PERM Tracker",
   url: OURS,
-  operator: `${LEGAL_NAME} (Florida)`,
+  operator: `immigration attorney ${SABRINA.name} (Florida)`,
   price: "Free",
   group: "perm",
   checkedOn: "2026-10-28",
