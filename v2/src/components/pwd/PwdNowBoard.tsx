@@ -6,6 +6,7 @@ import { PwdDateEstimate } from "@/components/pwd/PwdDateEstimate";
 import { formatInt } from "@/lib/format";
 import type { PwdDayData } from "@/lib/pwdDay";
 import type { PwdLine } from "@/lib/pwdLine";
+import type { PwdReviewRow } from "@convex/lib/dolProcessingTimes";
 import { catchingUp, outcomeMix, yearOnYear, type PwdQueueDoc, type WaitTrend } from "@/lib/pwdNow";
 import { longDate, monthDay, monthYear } from "@convex/lib/months";
 
@@ -32,6 +33,7 @@ export function PwdNowBoard({
   trend,
   dol,
   others,
+  reviews = [],
 }: {
   line: PwdLine | null;
   dayData: PwdDayData | null;
@@ -41,8 +43,18 @@ export function PwdNowBoard({
   dol: { frontier: string | null; asOf: string | null };
   /** DOL's other wage queues (H-1B, H-2B, CW-1), the month each is on. */
   others: OtherQueue[];
+  /** Redeterminations and Center Director reviews, the month DOL is on for each program. */
+  reviews?: readonly PwdReviewRow[];
 }) {
   const flow = queue ? catchingUp(queue) : null;
+  // One row per program, PERM first: its redetermination and Director review months.
+  const reviewPrograms = [...new Set(reviews.map((r) => r.program))].sort((a, b) =>
+    a === "PERM" ? -1 : b === "PERM" ? 1 : a.localeCompare(b),
+  );
+  const reviewMonth = (program: string, kind: PwdReviewRow["kind"]) => {
+    const r = reviews.find((x) => x.program === program && x.kind === kind);
+    return r ? (r.month ? monthYear(r.month) : "None published") : "Not listed";
+  };
   const mix = queue ? outcomeMix(queue) : null;
   const yoy = trend ? yearOnYear(trend) : null;
   const newest = trend ? [...trend.months].reverse().find((m) => !m.partial) : undefined;
@@ -201,7 +213,38 @@ export function PwdNowBoard({
                   <dd className="font-semibold">{q.month ? monthYear(q.month) : "Not published"}</dd>
                 </div>
               ))}
-            </dl>
+            </dl>{" "}
+            {reviewPrograms.length > 0 ? (
+              <table className="mt-5 w-full text-sm">
+                <caption className="pb-2 text-left text-base">
+                  Requests sent back for a second look: a redetermination, or a Center Director review.{" "}
+                </caption>
+                <thead>
+                  <tr className="border-b-2 border-input text-left">
+                    <th scope="col" className="py-1.5 pr-2 font-semibold">
+                      Visa{" "}
+                    </th>
+                    <th scope="col" className="py-1.5 pr-2 font-semibold">
+                      Redetermination{" "}
+                    </th>
+                    <th scope="col" className="py-1.5 font-semibold">
+                      Director review{" "}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviewPrograms.map((p) => (
+                    <tr key={p} className="border-b border-border">
+                      <th scope="row" className="py-1.5 pr-2 text-left font-normal">
+                        {p}{" "}
+                      </th>
+                      <td className="py-1.5 pr-2 font-semibold">{reviewMonth(p, "redetermination")}{" "}</td>
+                      <td className="py-1.5 font-semibold">{reviewMonth(p, "center-director")}{" "}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
           </Tile>
         ) : null}
       </div>

@@ -127,6 +127,7 @@ export default async function PwdCasesPage() {
         trend={nowDocs.trend}
         dol={{ frontier: now.frontier, asOf: now.asOf }}
         others={others}
+        reviews={times?.pwdReviews ?? []}
       />{" "}
 
       <div className="mt-10">

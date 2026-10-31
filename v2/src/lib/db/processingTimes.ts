@@ -21,12 +21,14 @@ export type {
   PermDeterminationRow,
   PwdQueueRow,
   PwdBacklogRow,
+  PwdReviewRow,
 } from "@convex/lib/dolProcessingTimes";
 import type {
   PermQueueRow,
   PermDeterminationRow,
   PwdQueueRow,
   PwdBacklogRow,
+  PwdReviewRow,
 } from "@convex/lib/dolProcessingTimes";
 
 export interface ProcessingTimesSnapshot {
@@ -36,6 +38,8 @@ export interface ProcessingTimesSnapshot {
   pwdAsOf: string | null;
   pwdQueues: PwdQueueRow[];
   pwdPermBacklog: PwdBacklogRow[];
+  /** Redeterminations and Center Director reviews; empty in readings taken before Oct 31 2026. */
+  pwdReviews: PwdReviewRow[];
   sourceUrl: string;
   fetchedAt: number;
 }
@@ -58,6 +62,8 @@ export function hydrate(r: { json: string; fetched_at: number }): ProcessingTime
   return {
     ...raw,
     ...lists,
+    // Absent from readings taken before it was read: empty, and nothing logged.
+    pwdReviews: Array.isArray(raw.pwdReviews) ? raw.pwdReviews : [],
     permAsOf: typeof raw.permAsOf === "string" ? raw.permAsOf : "",
     pwdAsOf: typeof raw.pwdAsOf === "string" ? raw.pwdAsOf : null,
     sourceUrl: typeof raw.sourceUrl === "string" ? raw.sourceUrl : "",

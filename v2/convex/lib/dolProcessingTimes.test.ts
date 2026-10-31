@@ -324,6 +324,36 @@ describe("failure policy", () => {
   });
 });
 
+describe("redeterminations and Center Director reviews", () => {
+  const snapshot = parseProcessingTimes(FIXTURE);
+
+  it("reads the month each program is being worked from, N/A as no month", () => {
+    expect(snapshot.pwdReviews).toEqual([
+      { kind: "redetermination", program: "H-1B", month: "2026-04", raw: "April 2026" },
+      { kind: "redetermination", program: "PERM", month: "2026-04", raw: "April 2026" },
+      { kind: "center-director", program: "CW-1", month: "2026-02", raw: "February 2026" },
+      { kind: "center-director", program: "H-1B", month: null, raw: "N/A" },
+      { kind: "center-director", program: "H-2B", month: "2025-02", raw: "February 2025" },
+      { kind: "center-director", program: "PERM", month: "2026-05", raw: "May 2026" },
+    ]);
+  });
+
+  it("doesn't count the two rows as wage queues", () => {
+    expect(snapshot.pwdQueues.map((q) => q.program)).toEqual(["CW-1", "H-1B", "H-2B", "PERM"]);
+  });
+
+  it("is empty, never fatal, when DOL drops the rows", () => {
+    const without = FIXTURE.replace(/<tr><td headers="a">Redeterminations[\s\S]*?<\/tr><tr><td headers="a">Center Director Reviews[\s\S]*?<\/tr>/, "");
+    expect(parseProcessingTimes(without).pwdReviews).toEqual([]);
+  });
+
+  it("leaves the change hash as it was, so Convex sees no new publication", async () => {
+    const moved = parseProcessingTimes(FIXTURE.replace("<p>PERM: May 2026</p>", "<p>PERM: June 2026</p>"));
+    expect(moved.pwdReviews[moved.pwdReviews.length - 1]!.month).toBe("2026-06");
+    expect(await hashSnapshot(moved)).toBe(await hashSnapshot(snapshot));
+  });
+});
+
 describe("hashSnapshot", () => {
   it("changes when DOL rewords a cell without changing the parsed value", async () => {
     // `contentHash` is documented as catching a silent DOL correction. Without

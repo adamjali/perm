@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import { CatchingUp } from "../CatchingUp";
 import { PwdDateEstimate } from "../PwdDateEstimate";
+import { PwdNowBoard } from "../PwdNowBoard";
 import type { PwdDayData } from "@/lib/pwdDay";
 
 // The estimate reads today; pin it (Saturday Oct 31 2026, midday Eastern).
@@ -79,5 +80,41 @@ describe("CatchingUp", () => {
     expect(screen.getByText(/Losing ground: 324 more joined/)).toBeTruthy();
     expect(screen.getByText(/about half as many on a Friday/)).toBeTruthy();
     expect(screen.getByText("DOL issued 334; employers withdrew 4.")).toBeTruthy();
+  });
+});
+
+describe("PwdNowBoard's second-look table", () => {
+  const board = (reviews: Parameters<typeof PwdNowBoard>[0]["reviews"]) => (
+    <PwdNowBoard
+      line={null}
+      dayData={null}
+      queue={null}
+      trend={null}
+      dol={{ frontier: "June 2026", asOf: "September 30, 2026" }}
+      others={[{ program: "H-1B", month: "2026-06" }]}
+      reviews={reviews}
+    />
+  );
+
+  it("lists each program's redetermination and Director review months, PERM first", () => {
+    render(
+      board([
+        { kind: "redetermination", program: "H-1B", month: "2026-08", raw: "August 2026" },
+        { kind: "redetermination", program: "PERM", month: "2026-07", raw: "July 2026" },
+        { kind: "center-director", program: "CW-1", month: "2026-09", raw: "September 2026" },
+        { kind: "center-director", program: "H-1B", month: null, raw: "N/A" },
+      ]),
+    );
+    const rows = screen.getAllByRole("row").slice(1).map((r) => [...r.children].map((c) => c.textContent!.trim()));
+    expect(rows).toEqual([
+      ["PERM", "July 2026", "Not listed"],
+      ["CW-1", "Not listed", "September 2026"],
+      ["H-1B", "August 2026", "None published"],
+    ]);
+  });
+
+  it("draws no table when DOL's reading has none", () => {
+    render(board([]));
+    expect(screen.queryByRole("table")).toBeNull();
   });
 });

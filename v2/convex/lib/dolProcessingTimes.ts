@@ -73,6 +73,21 @@ export interface PwdQueueRow {
   nonOewsReceiptDate: string | null;
 }
 
+/**
+ * A wage request asked about again: a redetermination (the employer asks the
+ * National Prevailing Wage Center to reconsider) or a Center Director review.
+ * DOL prints, for each, the receipt month each program's requests are being
+ * worked from.
+ */
+export interface PwdReviewRow {
+  kind: "redetermination" | "center-director";
+  /** e.g. "PERM", "H-1B" */
+  program: string;
+  /** "YYYY-MM", or null when DOL prints "--" or "N/A". */
+  month: string | null;
+  raw: string;
+}
+
 /** One row of the PERM prevailing-wage backlog. */
 export interface PwdBacklogRow {
   /** "YYYY-MM" */
@@ -91,6 +106,8 @@ export interface DolProcessingTimesSnapshot {
   pwdQueues: PwdQueueRow[];
   /** Prevailing-wage backlog for PERM cases, by month of receipt. */
   pwdPermBacklog: PwdBacklogRow[];
+  /** Redeterminations and Center Director reviews, by program; empty when DOL prints none. */
+  pwdReviews: PwdReviewRow[];
   /** Canonical source, recorded on every snapshot so a stored row is self-describing. */
   sourceUrl: string;
 }
@@ -438,6 +455,24 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     throw new DolParseError("prevailing-wage queue table parsed to zero rows");
   }
 
+  // The same table's last two rows span both columns and list a month per
+  // program ("H-1B: August 2026 PERM: July 2026"). Display-only, so read
+  // leniently: a row or a pair DOL words some other way is left out, never fatal.
+  const pwdReviews: PwdReviewRow[] = pwdTable.rows.flatMap((cells) => {
+    const kind = /^redetermination/i.test(cells[0] ?? "")
+      ? ("redetermination" as const)
+      : /^center director/i.test(cells[0] ?? "")
+        ? ("center-director" as const)
+        : null;
+    if (!kind || cells.length < 2) return [];
+    return [...cells[1]!.matchAll(/([A-Z][A-Z0-9-]*)\s*:\s*([A-Za-z]+\.?\s+\d{4}|--|N\/A)/g)].map((m) => ({
+      kind,
+      program: m[1]!,
+      month: m[2] === "--" || m[2] === "N/A" ? null : parseMonthYear(m[2]!),
+      raw: m[2]!,
+    }));
+  });
+
   // The prevailing-wage section stamps its as-of date in prose above the table
   // rather than in a caption, so read it from the surrounding document.
   const pwdAsOfMatch = /Prevailing Wage Determination Processing Times[\s\S]{0,120}?\(as of ([^)]+)\)/i.exec(
@@ -482,6 +517,7 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     pwdAsOf,
     pwdQueues,
     pwdPermBacklog,
+    pwdReviews,
     sourceUrl: SOURCE_URL,
   };
 }
@@ -499,6 +535,10 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
  *
  * Uses Web Crypto, which is available in Convex's default V8 runtime with no
  * import and no "use node" directive.
+ *
+ * `pwdReviews` is left out on purpose: Convex doesn't store it, and a new
+ * hash would read as a new publication there (webhooks and queue alerts).
+ * The site's own copy compares the whole stored JSON, which includes it.
  */
 export async function hashSnapshot(snapshot: DolProcessingTimesSnapshot): Promise<string> {
   const canonical = JSON.stringify([
