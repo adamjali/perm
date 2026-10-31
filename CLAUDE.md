@@ -1681,3 +1681,25 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
   `<DolNow show="pwd*" />` read it, with DOL's dated month beside it and DOL's month alone when the doc can't say.
 - **happy-dom implements `sendBeacon` with a real fetch**, so a test that sends one hits localhost:3000 and fails
   later in an unrelated test; `vitest.setup.ts` stubs it for every project.
+
+## Oct 31 2026 (morning): what the rivals had, built from our own records
+
+Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/explanations/20261031_landscape_gaps/SUMMARY.md`.
+
+- **/pwd-cases opens with a board** (`PwdNowBoard`, compact tiles from `src/components/numbers/Tile.tsx`): a date-in
+  estimate that says how many of that day's requests are decided, "Is DOL keeping up?" by week (the default: DOL's
+  Fridays run at about half) or day, how requests end, the median wait by decided month, what DOL did each day, and
+  DOL's other wage queues with the redetermination and Center Director review months.
+- **How long each month's decisions waited** (`scripts/build_wait_trends.py` after the full sweep, docs
+  `perm_wait_trend` and `pwd_wait_trend`, health budget 3 days): DOL's files through June, our sweep from September;
+  months with neither are empty outlines, never zero. /perm-processing-times opens with PERM's (`WaitTrendChart`).
+- **DOL's redetermination and Center Director review rows** span both columns of its wage table and were dropped by
+  the three-cell filter; `pwdReviews` reads them leniently. They're left out of `hashSnapshot` on purpose: a new hash
+  reads as a new publication in Convex (webhooks, queue alerts). The site's copy compares the whole stored JSON.
+- **Each filing month lists its 20 busiest employers** (`fold_month_employers` in the month writer,
+  `MonthEmployers`), one bar each split decided and waiting, linked through `keepLinkableSlugs`.
+- **The RFI page sets RFI cases' certified share beside every PERM case's** over the same weeks (`RfiJourney`,
+  `getObservedDays`): 89% of 711 against 94% of 34,838 on Oct 31. The pulse says how the last 7 days compare with the 7
+  before (`prior7`).
+- **Not built on purpose:** a shareable estimate image (a card never carries a live figure, and estimates are never
+  pitched).
