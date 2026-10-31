@@ -139,10 +139,10 @@ def stored_row(cid, slug, violations=1):
     return [r[c] for c in w.COLS]
 
 table = [stored_row("1", "a-co"), stored_row("2", "b-co"), stored_row("3", "c-co")]
-real_query = w.query_rows
-w.query_rows = lambda db, sql, args=None: [list(r) for r in table]
+real_query = w.dol.query_rows
+w.dol.query_rows = lambda db, sql, args=None: [list(r) for r in table]
 moved = w.moved_pages(None, [stored_row("1", "a-co"), stored_row("2", "d-co"), stored_row("4", "e-co")])
-w.query_rows = real_query
+w.dol.query_rows = real_query
 check("a reload refreshes the pages a case left, joined or vanished from, and no other",
       sorted(moved) == ["b-co", "c-co", "d-co", "e-co"], str(moved))
 

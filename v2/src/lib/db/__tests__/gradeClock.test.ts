@@ -36,7 +36,8 @@ describe("gradeOpenPredictions: each method on its own clock", () => {
     const updates = exec.mock.calls.filter(([sql]) => String(sql).includes("UPDATE estimate_predictions SET decided_on"));
     const dol = updates.find(([sql]) => String(sql).includes("model IN"));
     const rest = updates.find(([sql]) => !String(sql).includes("model IN"));
-    expect(dol?.[1]).toEqual(["2026-10-12", "DETERMINATION ISSUED", expect.any(String), "pwd", "P-100-26180-000001", "pwd-workday"]);
+    // Ours and Rival D's wage-request range both date DOL's day, so both are graded on it.
+    expect(dol?.[1]).toEqual(["2026-10-12", "DETERMINATION ISSUED", expect.any(String), "pwd", "P-100-26180-000001", "pwd-workday", "rival-pwd-range"]);
     expect(rest?.[1]?.[0]).toBe("2026-10-13");
     // The DOL-day update runs first, so the general one only reaches what it left.
     expect(updates.indexOf(dol!)).toBeLessThan(updates.indexOf(rest!));

@@ -110,6 +110,19 @@ def main() -> int:
           (fc["filingLag"]["typicalMissMonths"], fc["pace"]["typicalMissMonths"] <= 0.5), (0.0, True))
     check("the same readers for both", fc["pace"]["readers"], fc["filingLag"]["readers"])
 
+    # Next month's cutoff, guessed three ways on a line moving 30 days a month: the pace is exact, holding still
+    # is off by a month every time, and a line that went current next month is counted apart.
+    arch = [(m, {"EB2": {"india": fmt(c[1])}, "EB3": {"china": fmt(date(2015, 1, 1))}}) for m, c in steady]
+    arch[-1][1]["EB2"]["india"] = "C"
+    nc = bt.next_cutoff_test(arch)
+    check("every month from October 2016 with a dated month after it, both lines", nc["months"], 34 + 35)
+    check("a line that went current is counted apart", nc["wentCurrentOrUnavailable"], 1)
+    g = nc["guesses"]
+    check("holding still is exact on the line that never moved and a month off on the one that did",
+          (g["hold"]["exactShare"], g["hold"]["typicalMissDays"]), (round(35 / 69, 3), 0))
+    check("the pace is exact on the moving line", g["pace"]["within30Share"], 1.0)
+    check("half the months moved", nc["movedShare"], round(34 / 69, 3))
+
     print(f"\n{len(FAILED)} failed")
     return 1 if FAILED else 0
 

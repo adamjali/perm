@@ -5,8 +5,10 @@ import {
   chanceOfSplit,
   chanceWords,
   letterFor,
+  parseNextCutoff,
   parseSupplyDivision,
   readMethods,
+  readNextCutoff,
   readOurs,
   readRival,
   readSupplyDivision,
@@ -258,5 +260,33 @@ describe("readSupplyDivision", () => {
     expect(readSupplyDivision(parseSupplyDivision(JSON.stringify({ byGap: {} })))).toEqual([]);
     expect(readSupplyDivision(parseSupplyDivision("not json"))).toEqual([]);
     expect(readSupplyDivision(parseSupplyDivision(null))).toEqual([]);
+  });
+});
+
+describe("readNextCutoff", () => {
+  const doc = JSON.stringify({
+    nextCutoff: {
+      months: 1936,
+      movedShare: 0.556,
+      wentCurrentOrUnavailable: 55,
+      guesses: {
+        hold: { typicalMissDays: 7, exactShare: 0.444, within30Share: 0.604 },
+        pace: { typicalMissDays: 32, exactShare: 0.04, within30Share: 0.467 },
+        recent: { typicalMissDays: 28, exactShare: 0.105, within30Share: 0.537 },
+      },
+    },
+  });
+
+  it("names the three guesses, their grades and the closest, and says it's never shown", () => {
+    const [line] = readNextCutoff(parseNextCutoff(doc));
+    expect(line).toContain("1,936 months since October 2016");
+    expect(line).toContain("holding still 7 days off typically, exact 44%, within 30 days 60%");
+    expect(line).toContain("Closest typically: holding still.");
+    expect(line).toContain("Never shown on the site.");
+  });
+
+  it("reads nothing from a backtest without the section", () => {
+    expect(readNextCutoff(parseNextCutoff(JSON.stringify({ byGap: {} })))).toEqual([]);
+    expect(readNextCutoff(parseNextCutoff("not json"))).toEqual([]);
   });
 });

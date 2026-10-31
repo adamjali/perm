@@ -3,6 +3,7 @@ import "server-only";
 import type { NewPrediction, SampledCase } from "@/lib/db/predictions";
 import { rows } from "@/lib/db/client";
 import { MS_PER_DAY } from "@/lib/time";
+import { RIVAL_PWD_MODEL } from "@/lib/scorecard/score";
 
 /**
  * Rival predictions for a few of the day's sampled cases, for the PRIVATE
@@ -16,7 +17,7 @@ import { MS_PER_DAY } from "@/lib/time";
  * rival's site disallows its /api/, so it is never called: its PUBLISHED method
  * (month order, then employer A to Z, at its stated 616 a day) is re-run on our
  * own data instead and labelled as exactly that. Endpoints are configuration
- * (RIVAL_A_API, RIVAL_B_API), so no rival is named in this public repository.
+ * (RIVAL_A_API, RIVAL_B_API, RIVAL_PWD_API), so no rival is named in this public repository.
  *
  * NAMED, NEVER SWALLOWED. A rival that changes its API shows up as a failure
  * count in the run's response, not as a rival that silently stopped being
@@ -147,4 +148,60 @@ export async function rivalPredictions(
     perHost("rival-c", (c) => rivalC(c, today, pendingBefore), false),
   ]);
   return { preds: [...a, ...b, ...cc], failures };
+}
+
+/** The middle day of a range, rounded to the earlier day. */
+const middleOf = (from: string, to: string): string => {
+  const a = Date.parse(`${from}T00:00:00Z`);
+  const b = Date.parse(`${to}T00:00:00Z`);
+  return new Date(a + Math.floor((b - a) / MS_PER_DAY / 2) * MS_PER_DAY).toISOString().slice(0, 10);
+};
+
+/**
+ * Rival D's wage-request estimate for one of the day's sampled wage requests: a filing date in, a range out
+ * ("2026-11-18" to "2026-12-07"), recorded at its middle with the range as its band. A request at or before the day
+ * it says DOL has reached gets no range from it, and records nothing (that's its answer, not a failure); an answer
+ * of any other shape is a failure, named.
+ */
+async function rivalD(c: Pick<SampledCase, "filingDate">): Promise<Omit<NewPrediction, "caseNumber" | "filingDate" | "status" | "program"> | null> {
+  const url = process.env.RIVAL_PWD_API;
+  if (!url) return null;
+  const j = (await fetchJson(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filing_date: c.filingDate.slice(0, 10) }),
+  })) as { estimate?: { from?: unknown; to?: unknown } | null; at_or_before_focus?: unknown; estimate_reason?: unknown };
+  const from = isoDate(j.estimate?.from);
+  const to = isoDate(j.estimate?.to);
+  if (!from || !to) {
+    if (j.at_or_before_focus === true || typeof j.estimate_reason === "string") return null;
+    throw new Error("no estimate.from or estimate.to");
+  }
+  return { source: "rival-d", model: RIVAL_PWD_MODEL, predicted: middleOf(from, to), bandEarly: from, bandLate: to, casesAhead: null };
+}
+
+/** The day's sampled wage requests put to Rival D, one at a time, spaced as the PERM rivals are. */
+export async function rivalPwdPredictions(
+  cases: readonly Pick<SampledCase, "caseNumber" | "filingDate" | "status">[],
+  spacingMs: number = SPACING_MS,
+): Promise<{ preds: NewPrediction[]; failures: string[] }> {
+  const failures: string[] = [];
+  const preds: NewPrediction[] = [];
+  // Requests filed the same day get the same answer: one request a filing day.
+  const byDay = new Map<string, Awaited<ReturnType<typeof rivalD>> | Error>();
+  for (const c of cases) {
+    const day = c.filingDate.slice(0, 10);
+    if (!byDay.has(day)) {
+      if (byDay.size > 0) await sleep(spacingMs);
+      try {
+        byDay.set(day, await rivalD(c));
+      } catch (e) {
+        byDay.set(day, e instanceof Error ? e : new Error(String(e)));
+      }
+    }
+    const got = byDay.get(day);
+    if (got instanceof Error) failures.push(`rival-d ${c.caseNumber}: ${got.message}`);
+    else if (got) preds.push({ caseNumber: c.caseNumber, filingDate: c.filingDate, status: c.status, program: "pwd", ...got });
+  }
+  return { preds, failures };
 }

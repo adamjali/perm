@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -41,6 +41,14 @@ case "$job" in
     REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
     export REVALIDATE_SECRET
     timeout 30m nice -n 10 python3 scripts/ingest_whd.py || { rc=1; fail ingest_whd.py "exited non-zero or ran past 30m"; } ;;
+  # OSHA's inspections of PERM sponsors (Oct 31 2026): two files from data.dol.gov, 1.5 and 2.3 GB, stored
+  # uncompressed. They go to /var/tmp on disk (ingest_osha.py), since /tmp here is memory. OSHA updates daily; read
+  # weekly, and a week with nothing new writes nothing. Pages whose inspections moved rebuild through nginx.
+  osha)
+    export REVALIDATE_BASE=http://127.0.0.1:8081
+    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+    export REVALIDATE_SECRET
+    timeout 60m nice -n 10 python3 scripts/ingest_osha.py || { rc=1; fail ingest_osha.py "exited non-zero or ran past 60m"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

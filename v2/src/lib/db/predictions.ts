@@ -17,7 +17,7 @@ import {
 } from "@/lib/scorecard/score";
 import { scorecardAlarms } from "@/lib/scorecard/alarms";
 import type { BacktestRangeFields } from "@/lib/rangeCoverage";
-import { isCurrentMethod, parseSupplyDivision, readMethods, readOurs, readRival, readSupplyDivision } from "@/lib/scorecard/verdict";
+import { isCurrentMethod, parseNextCutoff, parseSupplyDivision, readMethods, readNextCutoff, readOurs, readRival, readSupplyDivision } from "@/lib/scorecard/verdict";
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
 import { timingView, viewEstimate } from "@/lib/seasonalTiming";
 import { BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
@@ -784,6 +784,8 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
       // Priority dates: our pace against dividing by yearly visas, on the same
       // dates (the weekly bulletin backtest).
       priorityDate: readSupplyDivision(parseSupplyDivision(bulletinDoc?.json ? String(bulletinDoc.json) : null)),
+      // Next month's cutoff, guessed and graded on the archive: the owner's test, never shown on the site.
+      nextCutoff: readNextCutoff(parseNextCutoff(bulletinDoc?.json ? String(bulletinDoc.json) : null)),
     },
   };
   const now = Date.now();

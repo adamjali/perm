@@ -15,7 +15,7 @@
 import { NextResponse } from "next/server";
 
 import { pick, rngFor } from "@/lib/scorecard/score";
-import { rivalPredictions } from "@/lib/scorecard/rivals";
+import { rivalPredictions, rivalPwdPredictions } from "@/lib/scorecard/rivals";
 import {
   easternDate,
   ensurePredictionsTable,
@@ -72,7 +72,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     const ours = await recordPredictions(recordedOn, [...perm, ...pwd, ...seasonal, ...release, ...watched]);
     const rivalCases = pick(sample, RIVAL_SAMPLE, rngFor(recordedOn));
     const { preds, failures } = await rivalPredictions(rivalCases, today, pendingBefore);
-    const rivals = await recordPredictions(recordedOn, preds);
+    // The same day's wage-request sample, put to the one rival that dates wage requests.
+    const pwdRival = await rivalPwdPredictions(pwd);
+    const rivals = await recordPredictions(recordedOn, [...preds, ...pwdRival.preds]);
+    failures.push(...pwdRival.failures);
     const { graded, open } = await gradeOpenPredictions();
     const { rows } = await writeScorecardDocs(recordedOn);
     const out = {

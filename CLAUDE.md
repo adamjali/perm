@@ -1757,9 +1757,10 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   data.dol.gov (found from DOL's catalog record), read by the server Mondays (`permtracker-uscis@whd`). Kept: every
   H-1B, H-2A and H-2B case, and every case joined to an employer page. 16,345 of 370,964 on the first load.
 - **A case joins a page only on strict rules, because a wrong link names the wrong company**: the legal name (a
-  franchisee's trade name is the brand); a one-word name only to a sponsor with 50+ PERM filings; a non-visa case only
-  to a PERM sponsor in a state its own filings name; a visa case to a no-PERM page only when that page files the same
-  program. Each rule is a case found in DOL's file and checked by hand (`scripts/test_whd.py`).
+  franchisee's trade name is the brand); a one-word name only to a sponsor with 50+ PERM filings;
+  a non-visa case only to a PERM sponsor in a state its own filings name; a visa case to a no-PERM page only when that
+  page files the same program. Each rule is a case found in DOL's file and checked by hand (`scripts/test_whd.py`).
+  The rule is shared with OSHA's loader (`scripts/lib_dol_records.py`, `sponsor_rule`).
 - **Employer pages show the cases** (`WageHourCases`, beside the layoff notices on all three kinds of page) and
   **`/wage-violations`** counts H-1B, H-2A and H-2B cases by fiscal year with the largest back wages. DOL's cautions go
   with every figure: back wages are agreed, not paid; findings dates aren't the case's dates; counts loaded after
@@ -1788,3 +1789,34 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   the real tools (`src/app/api/chat/__tests__/public-records.test.ts`) and the long-conversation summarizer
   (`src/lib/ai/__tests__/summarize.test.ts`: facts merged, Gemini's fallback, nothing saved and the lock let go when
   every prose model fails). No model quota is spent.
+- **OSHA inspections on employer pages** (`scripts/ingest_osha.py`, table `osha_inspections`, dataset
+  `osha-inspections`, `SafetyInspections` under the wage cases): OSHA's inspection and violation files (DOL datasets
+  10334 and 10338, 1.5 and 2.3 GB, stored uncompressed), read by the server Mondays (`permtracker-uscis@osha`, 08:40 ET)
+  into `/var/tmp`, since the server's `/tmp` is memory. Inspections opened since Oct 1 2016 that join a PERM sponsor
+  (published sponsors only); violations counted OSHA's way: deleted ones left out, grouped items once, types W/R/S/O.
+  First load Oct 31 2026, 5:25 PM EDT: 5,208,958 inspections in OSHA's file, 677,270 since FY2017, 13,074 joined to
+  a sponsor's page, 6,492 of them with violations.
+- **OSHA prints only the establishment's name**, so its join is stricter than WHD's: a bare brand ("7 ELEVEN", no
+  Inc. or LLC) joins only a national sponsor, since a franchisee's store prints the brand; "national" needs 5+ PERM
+  states as well as 50+ cases (`national_states`; a cleaning company with 74 cases, all in Tennessee, isn't
+  national); and because PERM jobs sit at headquarters (Costco's 111 cases name 2 states, Kroger's 54 name 1), a big
+  sponsor's legal name joins out of state when OSHA inspected that exact name in 5+ states. Checked by hand on 60
+  random joins and the 40 busiest. **WHD keeps the 50-case test alone**: its records print the legal name, and the
+  5-state rule, dry-run on WHD's file, dropped 276 joined cases, nearly all real (Tyson's Texas plant, Delta in
+  California).
+- **www.osha.gov's data pages ask robots off** (`Disallow: /data/` and `/ords/`): the loader never reads them, the
+  page links each inspection's OSHA record for people (`establishment.inspection_detail?id=`), and OSHA puts a human
+  check in front of it. Violation types and counting rules were read once, by hand, from its definitions page.
+- **A rival that dates wage requests is on the private scorecard as Rival D** (`rivalPwdPredictions`, env
+  `RIVAL_PWD_API`; its robots.txt allows everything but login and admin): a filing date in, a range out, recorded at
+  its middle with the range as the band, one request a filing day, graded on DOL's day as ours is
+  (`RIVAL_PWD_MODEL` in `DOL_DAY_MODELS`). `headToHead` pairs a rival with our prediction in the same program.
+- **Next month's bulletin cutoff, guessed and graded on the archive, never shown** (`next_cutoff_test` in
+  `scripts/backtest_bulletin.py`, `nextCutoff` in `perm_docs['bulletin_backtest']`, a line in the private scorecard
+  readings and the morning report). Oct 31 2026, 1,936 months since Oct 2016: "it won't move" was typically 7 days
+  off and exactly right 44% of the time; the pace since 2014 32 days, the last year's pace 28. No simple forecast
+  beats holding still, which is why /visa-bulletin doesn't predict. A line with history and no movement counts as a
+  pace of zero (`pace_or_still`): dropping those months would have graded the guesses only on lines that moved.
+- **SAM.gov exclusions aren't loaded**: api.sam.gov answered an empty 404 to every exclusions path tried (v1 to v4),
+  with the api.data.gov key, DEMO_KEY and none, from the server and the Mac (Oct 31 2026). It likely wants a key
+  from a SAM.gov account, which is the owner's to make.

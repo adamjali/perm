@@ -108,7 +108,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-employers",
     label: "PERM employers",
     blurb:
-      "Every company that filed a PERM case, ranked by volume, with approval rate and median processing days.",
+      "Every company that filed a PERM case, ranked by volume, with approval rate and median processing days. Each employer's page adds the federal records matched to it by name: DOL debarments, WARN layoff notices, Wage and Hour cases and OSHA inspections.",
   },
   {
     path: "/perm-attorneys",

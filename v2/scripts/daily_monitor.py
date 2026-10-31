@@ -758,6 +758,8 @@ def data_section(now_ms: int) -> dict:
         # the line that says what is compared.
         for line in (readings.get("priorityDate") or [])[:2]:
             lines.append(f"Scorecard, priority dates: {line}")
+        for line in (readings.get("nextCutoff") or [])[:1]:
+            lines.append(f"Scorecard, next month's cutoff: {line}")
         # The other estimates, from the same doc. Wage requests are read per
         # method, without the retired ones: their sum had carried the 144
         # predictions recorded with the Oct 3 2026 bug and read "typical miss

@@ -1,0 +1,13 @@
+[Unit]
+Description=Schedule for permtracker-uscis@osha
+# OSHA's inspections of PERM sponsors (ingest_osha.py, Oct 31 2026). OSHA updates
+# daily; read Mondays after the Wage and Hour read (08:05), when nothing else
+# reads the employer tables. Persistent: a Monday the server was down runs when
+# it's back.
+[Timer]
+OnCalendar=Mon *-*-* 08:40:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@osha.service
+
+[Install]
+WantedBy=timers.target

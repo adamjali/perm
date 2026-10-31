@@ -41,30 +41,26 @@ from __future__ import annotations
 import argparse
 import csv
 import io
-import json
 import pathlib
 import re
 import sys
 import tempfile
 import time
-import urllib.request
 import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import lib_dol_records as dol  # noqa: E402
 from entity_identity import program_key  # noqa: E402
-from ingest_warn import FORM_WORD, page_matcher, sponsor_matcher  # noqa: E402
-from lib_db import Database, canon_hash, query_rows, record_run, stamp_freshness  # noqa: E402
-from lib_gov_data import robots_allowed  # noqa: E402
+from ingest_warn import FORM_WORD, page_matcher  # noqa: E402
+from lib_db import Database, query_rows, record_run, stamp_freshness  # noqa: E402
 from lib_reference import sync_rows  # noqa: E402
 
 SCRIPT = "ingest_whd.py"
 DATASET = "whd-cases"
 SOURCE = "DOL Wage and Hour Division compliance actions (data.dol.gov)"
-CATALOG_URL = "https://apiprod.dol.gov/v4/datasets/10362"
-HEADERS = {"User-Agent": "PERMTracker/1.0 (+https://permtracker.app; support@permtracker.app)"}
+# DOL's open data catalog: "Wage and Hour Compliance Action Data".
+DATASET_ID = 10362
 TABLE = "whd_cases"
-# A sponsor this big files from many states, so a case in another state can still be its own.
-NATIONAL_SPONSOR = 50
 # DOL's file held 370,964 cases on Oct 26 2026; a file a tenth that size is a broken download, not a quarter.
 MIN_CASES = 300_000
 
@@ -114,24 +110,6 @@ def log(msg: str) -> None:
     print(f"[whd] {msg}", flush=True)
 
 
-def catalog_url() -> str:
-    """The file's address, from DOL's own catalog record: data-catalog/<agency>/<api path>/<table name>.zip."""
-    req = urllib.request.Request(CATALOG_URL, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=60) as res:
-        meta = json.load(res)["dataset"]
-    url = f"https://data.dol.gov/data-catalog/{meta['agency']['abbr']}/{meta['api_url']}/{meta['tablename']}.zip"
-    if not robots_allowed(url):
-        raise RuntimeError(f"robots.txt asks scripts off {url}")
-    return url
-
-
-def download(url: str, dest: pathlib.Path) -> None:
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=600) as res, open(dest, "wb") as out:
-        while chunk := res.read(1 << 20):
-            out.write(chunk)
-
-
 def number(value: str, kind: type):
     text = (value or "").strip().replace(",", "")
     if text == "":
@@ -176,12 +154,7 @@ def rows_of(archive: zipfile.ZipFile):
 
 
 def file_date(archive: zipfile.ZipFile) -> str | None:
-    """DOL names each chunk by the day it wrote the file: "2026-10-26_chunk_1.csv"."""
-    for name in archive.namelist():
-        m = re.match(r"(\d{4}-\d{2}-\d{2})_", pathlib.PurePath(name).name)
-        if m:
-            return m.group(1)
-    return None
+    return dol.file_date(archive.namelist())
 
 
 def visa_programs(row: dict) -> list[str]:
@@ -192,48 +165,36 @@ def visa_programs(row: dict) -> list[str]:
 def make_matcher(sponsors, states, others, program_counts):
     """`sponsors`: (merge_key, slug, total) busiest first. `states`: sponsor slug -> the worksite states its PERM
     filings name. `others`: (key, page_slug) of no-PERM pages. `program_counts`: page slug -> {"lca": n, "h2a": n,
-    "h2b": n} for no-PERM pages."""
-    sponsor = sponsor_matcher(sponsors)
-    totals = {str(s): int(t or 0) for _, s, t in sponsors}
+    "h2b": n} for no-PERM pages. A PERM sponsor first, under the shared rule (lib_dol_records.sponsor_rule), with
+    the state waived for a visa-program case; then a no-PERM page that files the same program."""
+    rule = dol.sponsor_rule(sponsors, states)
     other = page_matcher(others)
     needs = {"h1b": "lca", "h2a": "h2a", "h2b": "h2b"}
 
     def match(row: dict) -> str | None:
         programs = visa_programs(row)
         name = row["legal_name"] or row["trade_name"]
+        slug = rule(name, row["state"], lenient=bool(programs))
+        if slug:
+            return slug
         key = program_key(name)
-        if key:
-            slug = sponsor(key)
-            national = totals.get(slug or "", 0) >= NATIONAL_SPONSOR
-            in_state = row["state"].upper() in states.get(slug or "", ())
-            # A one-word name is shared by unrelated companies too often to trust below a national sponsor.
-            if slug and (national or (len(key.split()) > 1 and (programs or in_state))):
-                return slug
-            if programs and (len(key.split()) > 1 or FORM_WORD.search(name)):
-                page = other(key)
-                counts = program_counts.get(page or "", {})
-                if page and all(counts.get(needs[p], 0) > 0 for p in programs):
-                    return page
+        if key and programs and (len(key.split()) > 1 or FORM_WORD.search(name)):
+            page = other(key)
+            counts = program_counts.get(page or "", {})
+            if page and all(counts.get(needs[p], 0) > 0 for p in programs):
+                return page
         return None
 
     return match
 
 
 def load_matcher(db: Database):
-    sponsors = query_rows(
-        db, "SELECT merge_key, slug, total FROM perm_entities WHERE kind = 'employer' AND merge_key IS NOT NULL "
-            "ORDER BY total DESC")
-    states: dict[str, set[str]] = {}
-    # One pass over the PERM file's (employer, worksite state) index.
-    for slug, state in query_rows(
-            db, "SELECT employer_slug, state FROM perm_cases WHERE employer_slug IS NOT NULL AND state IS NOT NULL "
-                "GROUP BY employer_slug, state"):
-        states.setdefault(str(slug), set()).add(str(state).strip().upper())
+    sponsors, states = dol.load_sponsors(db)
     others = query_rows(db, "SELECT key, page_slug FROM employer_page_map WHERE page_kind = 'other'")
     counts = {str(s): {"lca": int(l or 0), "h2a": int(a or 0), "h2b": int(b or 0)}
               for s, l, a, b in query_rows(db, "SELECT slug, lca, h2a, h2b FROM employer_other_index")}
-    if not sponsors or not others:
-        raise RuntimeError("the employer tables read empty; a match against nothing would unlink every case")
+    if not others:
+        raise RuntimeError("the no-PERM page map read empty; a match against nothing would unlink every case")
     return make_matcher(sponsors, states, others, counts)
 
 
@@ -254,59 +215,8 @@ def select(rows, match) -> tuple[list[list], dict[str, int]]:
     return keep, seen
 
 
-# The most pages one refresh call takes (MAX_PATHS in src/app/api/revalidate-live-employers/route.ts).
-MAX_REFRESH = 800
-
-
 def moved_pages(db: Database, keep: list[list]) -> list[str]:
-    """The employer pages whose cases changed: a case new, changed or gone, under its old page and its new one,
-    the busiest first. Read before the write, so a removed case still names the page it has to leave."""
-    stored: dict[str, tuple[str, str | None]] = {}
-    try:
-        for r in query_rows(db, f"SELECT {', '.join(COLS)} FROM {TABLE}"):
-            stored[str(r[0])] = (canon_hash(r), r[-1])
-    except RuntimeError as exc:
-        if "no such table" not in str(exc).lower():
-            raise
-    counts: dict[str, int] = {}
-
-    def bump(slug):
-        if slug:
-            counts[str(slug)] = counts.get(str(slug), 0) + 1
-
-    seen = set()
-    for row in keep:
-        cid = str(row[0])
-        seen.add(cid)
-        old = stored.get(cid)
-        if old is None or old[0] != canon_hash(row):
-            bump(row[-1])
-            bump(old[1] if old else None)
-    for cid, (_, slug) in stored.items():
-        if cid not in seen:
-            bump(slug)
-    return sorted(counts, key=lambda k: (-counts[k], k))[:MAX_REFRESH]
-
-
-def refresh_pages(slugs: list[str]) -> str:
-    """Ask the site to rebuild the employer pages whose cases moved; their own window is 30 days."""
-    import os
-    import urllib.error
-    secret = os.environ.get("REVALIDATE_SECRET", "").strip()
-    if not slugs or not secret:
-        return "no pages to refresh" if not slugs else "no REVALIDATE_SECRET, pages not refreshed"
-    base = os.environ.get("REVALIDATE_BASE", "https://permtracker.app").rstrip("/")
-    headers = {"x-revalidate-secret": secret, "Content-Type": "application/json", "User-Agent": "permtracker whd"}
-    if "127.0.0.1" in base or "localhost" in base:
-        headers["Host"] = "permtracker.app"
-    req = urllib.request.Request(base + "/api/revalidate-live-employers", data=json.dumps({"slugs": slugs}).encode(),
-                                 method="POST", headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=120) as r:
-            return f"{len(slugs):,} pages refreshed" if r.status == 200 else f"refresh answered {r.status}"
-    except urllib.error.HTTPError as e:
-        print(f"::warning::the page refresh answered {e.code}", flush=True)
-        return f"refresh answered {e.code}"
+    return dol.moved_pages(db, TABLE, COLS, keep)
 
 
 def main() -> int:
@@ -320,9 +230,9 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as tmp:
             path = args.file
             if path is None:
-                url = catalog_url()
+                url = dol.catalog_url(DATASET_ID)
                 path = pathlib.Path(tmp) / "whd.zip"
-                download(url, path)
+                dol.download(url, path)
                 log(f"downloaded {path.stat().st_size:,} bytes from {url}")
             with zipfile.ZipFile(path) as archive:
                 dated = file_date(archive)
@@ -338,7 +248,7 @@ def main() -> int:
         moved = moved_pages(db, keep)
         got = sync_rows(db, TABLE, ["case_id"], COLS, keep, pause_s=0.3)
         note = (f"{len(keep):,} cases kept of {seen['cases']:,}; {seen['matched']:,} on an employer page; "
-                f"{got['written']:,} written, {got['deleted']:,} removed; {refresh_pages(moved)}")
+                f"{got['written']:,} written, {got['deleted']:,} removed; {dol.refresh_pages(moved, 'whd')}")
         stamp_freshness(db, DATASET, as_of=dated, source=SOURCE, cadence="DOL updates quarterly; read weekly",
                         note=note, max_age_days=150)
         record_run(db, SCRIPT, status="ok", rows_written=got["written"], note=note, started_at=started)

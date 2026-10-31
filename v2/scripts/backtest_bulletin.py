@@ -194,6 +194,81 @@ def backtest(bulletins: list[tuple[str, dict]]) -> dict:
     }
 
 
+# ---- next month's cutoff, guessed and graded (Oct 31 2026) -------------------
+# Never shown on the site: /visa-bulletin computes and never predicts. This is the owner's test of whether any simple
+# guess at next month's final-action cutoff beats saying it won't move. At every bulletin from FIRST_ORIGIN with a
+# dated cutoff and a bulletin the month after, three guesses are scored against what State printed next:
+#   hold      the cutoff doesn't move;
+#   pace      it moves by the site's pace (since October 2014), one month's worth;
+#   recent    it moves by the last 12 months' pace.
+# A next month that went current or unavailable is counted apart: no date guess can be right about it.
+NEXT_GUESSES = ("hold", "pace", "recent")
+
+
+def pace_or_still(series: list[tuple[str, tuple]], i: int, window: int | None = None) -> float | None:
+    """The pace as per_month reads it, but 0 for a line with history that didn't move (per_month answers None
+    there, and leaving those months out would grade the guesses only on lines that moved). None without history."""
+    pace = per_month(series, i, window)
+    if pace is not None:
+        return pace
+    origin = series[i][0]
+    floor = MEASURED_FROM
+    if window:
+        y, m = int(origin[:4]), int(origin[5:7]) - window
+        while m <= 0:
+            y, m = y - 1, m + 12
+        floor = max(floor, f"{y:04d}-{m:02d}")
+    dated = [m for m, c in series[: i + 1] if m >= floor and c[0] == "date"]
+    return 0.0 if len(dated) >= 2 and months_between(dated[0], dated[-1]) > 0 else None
+
+
+def next_cutoff_test(bulletins: list[tuple[str, dict]]) -> dict:
+    errs: dict[str, list[int]] = {g: [] for g in NEXT_GUESSES}
+    moved = jumps = 0
+    for cat in CATEGORIES:
+        for country in COUNTRIES:
+            series = []
+            for month, chart in bulletins:
+                c = parse_cutoff(((chart or {}).get(cat) or {}).get(country))
+                if c:
+                    series.append((month, c))
+            for i in range(len(series) - 1):
+                (month, c), (nxt_month, nxt) = series[i], series[i + 1]
+                if month < FIRST_ORIGIN or c[0] != "date" or months_between(month, nxt_month) != 1:
+                    continue
+                if nxt[0] != "date":
+                    jumps += 1
+                    continue
+                pace, recent = pace_or_still(series, i), pace_or_still(series, i, 12)
+                guess = {
+                    "hold": c[1].toordinal(),
+                    "pace": c[1].toordinal() + round(pace) if pace is not None else None,
+                    "recent": c[1].toordinal() + round(recent) if recent is not None else None,
+                }
+                if any(v is None for v in guess.values()):
+                    continue   # every guess on the same months, or none
+                truth = nxt[1].toordinal()
+                moved += truth != guess["hold"]
+                for g, v in guess.items():
+                    errs[g].append(v - truth)
+    n = len(errs["hold"])
+
+    def grade(xs: list[int]) -> dict:
+        return {
+            "typicalMissDays": round(statistics.median(abs(x) for x in xs)) if xs else None,
+            "meanMissDays": round(statistics.mean(abs(x) for x in xs)) if xs else None,
+            "exactShare": round(sum(1 for x in xs if x == 0) / len(xs), 3) if xs else None,
+            "within30Share": round(sum(1 for x in xs if abs(x) <= 30) / len(xs), 3) if xs else None,
+        }
+
+    return {
+        "months": n,
+        "movedShare": round(moved / n, 3) if n else None,
+        "wentCurrentOrUnavailable": jumps,
+        "guesses": {g: grade(v) for g, v in errs.items()},
+    }
+
+
 # ---- the dates-for-filing chart as an early signal (Oct 8 2026) -------------
 # The bulletin prints two charts. The dates-for-filing chart is where State
 # expects the final-action date to reach in the coming months, so a reader
@@ -400,6 +475,7 @@ def main() -> int:
         **backtest(bulletins),
     }
     out["filingChart"] = filing_chart_test(bulletins, filing)
+    out["nextCutoff"] = next_cutoff_test(bulletins)
     supply = supply_division(bulletins, read_inventory(db), newest_table_v(db))
     if supply:
         out["supplyDivision"] = supply

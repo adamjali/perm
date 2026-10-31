@@ -118,6 +118,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Rules from USCIS, and immigration rules from DOL, State and DHS, from White House review (OIRA's own lists) through public inspection to the Federal Register. A rule OIRA doesn't review appears once it's on public inspection.",
   "whd-cases":
     "The Labor Department's concluded Wage and Hour compliance actions since FY2005, as DOL publishes them: violations, back wages the employer agreed to pay, workers owed and penalties, H-1B, H-2A and H-2B counted apart. Kept here are the cases matched to an employer page by legal name, and every case with an H-1B, H-2A or H-2B finding.",
+  "osha-inspections":
+    "OSHA's and the state plans' workplace safety and health inspections opened since October 2016, matched to a PERM sponsor's page by name: why each was opened, when it opened and closed, and the violations cited with their type and penalty, counted as OSHA counts them. An open inspection's citations can still change.",
   "warn-notices":
     "State WARN layoff notices from 47 states and DC, each from the record its state publishes. Arkansas, New Hampshire and Wyoming publish no list.",
   "warn-notices-ca":
@@ -287,6 +289,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "rule-pipeline": "Rules in review and on public inspection",
   "rule-pipeline-agenda": "The Unified Agenda",
   "whd-cases": "Wage and Hour cases",
+  "osha-inspections": "OSHA inspections",
   "warn-notices": "WARN notices",
   "warn-notices-ca": "California WARN notices",
   "warn-notices-ny": "New York WARN notices",

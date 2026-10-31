@@ -31,7 +31,7 @@ import { daysBetween, EASTERN_TIMEZONE, easternDay } from "@/lib/time";
  * case (predictWatched). It is ours, kept apart from the random sample so the
  * two can't be mixed, and it is never a rival in the head-to-head.
  */
-export type Source = "ours" | "watched" | "rival-a" | "rival-b" | "rival-c";
+export type Source = "ours" | "watched" | "rival-a" | "rival-b" | "rival-c" | "rival-d";
 
 export type Program = "perm" | "pwd" | "seasonal" | "bulletin";
 
@@ -75,7 +75,13 @@ export const PWD_DAY_MODEL = "pwd-workday";
  * (decidedOnFromSeen), where every other method is graded on the day our
  * sweep first saw the decision, the clock it was built on.
  */
-export const DOL_DAY_MODELS: ReadonlySet<string> = new Set([PWD_DAY_MODEL]);
+/**
+ * A rival's wage-request range (a filing date in, "Nov 18 to Dec 7" out), recorded at its middle with the range as
+ * its band. It dates when DOL issues the determination, so it's graded on DOL's day, as ours is.
+ */
+export const RIVAL_PWD_MODEL = "rival-pwd-range";
+
+export const DOL_DAY_MODELS: ReadonlySet<string> = new Set([PWD_DAY_MODEL, RIVAL_PWD_MODEL]);
 
 /**
  * A status first seen before this hour, Eastern, was decided the day before:
@@ -392,14 +398,16 @@ export function headToHead(
   rows: readonly (PredictionRow & { caseNumber: string })[],
   today: string,
 ): Record<string, HeadToHead> {
-  const key = (r: { recordedOn: string; caseNumber: string }) => `${r.recordedOn}|${r.caseNumber}`;
+  // A rival is paired with our prediction for the same case, on the same day, in the same program: each rival dates
+  // one program (PERM, or wage requests), so it's only ever set against that program's cases.
+  const key = (r: { recordedOn: string; caseNumber: string; program: Program }) => `${r.program}|${r.recordedOn}|${r.caseNumber}`;
   const ours = new Map<string, PredictionRow & { caseNumber: string }>();
-  for (const r of rows) if (r.source === "ours" && r.program === "perm") ours.set(key(r), r);
+  for (const r of rows) if (r.source === "ours") ours.set(key(r), r);
   const out: Record<string, HeadToHead> = {};
   for (const src of [...new Set(rows.filter((r) => r.source !== "ours" && r.source !== "watched").map((r) => r.source))].sort()) {
     const pairs: [PredictionRow, PredictionRow][] = [];
     for (const r of rows) {
-      if (r.source !== src || r.program !== "perm") continue;
+      if (r.source !== src) continue;
       const o = ours.get(key(r));
       if (o) pairs.push([o, r]);
     }

@@ -31,6 +31,7 @@ export const SOURCE_NAME: Record<string, string> = {
   "rival-a": "Rival A",
   "rival-b": "Rival B",
   "rival-c": "Rival C",
+  "rival-d": "Rival D (wage requests)",
 };
 
 export const sourceName = (s: string) => SOURCE_NAME[s] ?? s;
@@ -427,4 +428,49 @@ export function readSupplyDivision(sd: SupplyDivision | null): string[] {
     );
   }
   return out;
+}
+
+/**
+ * Next month's final-action cutoff, guessed three ways and graded on every month since October 2016
+ * (scripts/backtest_bulletin.py, `nextCutoff`). The owner's test only: /visa-bulletin computes and never predicts,
+ * and nothing public reads this.
+ */
+export interface NextCutoffGrade {
+  typicalMissDays: number | null;
+  exactShare: number | null;
+  within30Share: number | null;
+}
+
+export interface NextCutoff {
+  months: number;
+  movedShare: number | null;
+  wentCurrentOrUnavailable: number;
+  guesses: { hold: NextCutoffGrade; pace: NextCutoffGrade; recent: NextCutoffGrade };
+}
+
+export function parseNextCutoff(json: string | null | undefined): NextCutoff | null {
+  if (!json) return null;
+  try {
+    const nc = (JSON.parse(json) as { nextCutoff?: NextCutoff }).nextCutoff;
+    return nc && nc.guesses?.hold && nc.guesses.pace && nc.guesses.recent && nc.months > 0 ? nc : null;
+  } catch {
+    return null;
+  }
+}
+
+const pct = (x: number | null) => (x === null ? "-" : `${Math.round(x * 100)}%`);
+
+export function readNextCutoff(nc: NextCutoff | null): string[] {
+  if (!nc) return [];
+  const { hold, pace, recent } = nc.guesses;
+  const line = (name: string, g: NextCutoffGrade) =>
+    `${name} ${g.typicalMissDays === null ? "-" : dayWord(g.typicalMissDays)} off typically, exact ${pct(g.exactShare)}, within 30 days ${pct(g.within30Share)}`;
+  const best = [
+    ["holding still", hold],
+    ["the pace since 2014", pace],
+    ["the last year's pace", recent],
+  ].sort((a, b) => ((a[1] as NextCutoffGrade).typicalMissDays ?? 1e9) - ((b[1] as NextCutoffGrade).typicalMissDays ?? 1e9))[0]![0];
+  return [
+    `Next month's final-action cutoff, guessed on ${formatInt(nc.months)} months since October 2016 (the cutoff moved in ${pct(nc.movedShare)} of them): ${line("holding still", hold)}; ${line("the pace since 2014", pace)}; ${line("the last year's pace", recent)}. Closest typically: ${best}. Never shown on the site.`,
+  ];
 }

@@ -8,6 +8,7 @@ const ensurePredictionsTable = vi.fn();
 const gradeOpenPredictions = vi.fn();
 const writeScorecardDocs = vi.fn();
 const rivalPredictions = vi.fn();
+const rivalPwdPredictions = vi.fn();
 
 vi.mock("@/lib/db/predictions", () => ({
   predictOurs: (...a: unknown[]) => predictOurs(...a),
@@ -23,6 +24,7 @@ vi.mock("@/lib/db/predictions", () => ({
 }));
 vi.mock("@/lib/scorecard/rivals", () => ({
   rivalPredictions: (...a: unknown[]) => rivalPredictions(...a),
+  rivalPwdPredictions: (...a: unknown[]) => rivalPwdPredictions(...a),
 }));
 
 const { GET } = await import("../route");
@@ -43,10 +45,11 @@ const SAMPLE = [
 
 describe("GET /api/cron/scorecard", () => {
   beforeEach(() => {
-    for (const f of [predictOurs, predictSeasonal, predictWatched, recordPredictions, ensurePredictionsTable, gradeOpenPredictions, writeScorecardDocs, rivalPredictions]) f.mockReset();
+    for (const f of [predictOurs, predictSeasonal, predictWatched, recordPredictions, ensurePredictionsTable, gradeOpenPredictions, writeScorecardDocs, rivalPredictions, rivalPwdPredictions]) f.mockReset();
     predictSeasonal.mockResolvedValue([{ id: "seasonal" }]);
     predictWatched.mockResolvedValue([{ id: "watched", caseNumber: "G-100-26009-000009" }]);
-    predictOurs.mockResolvedValue({ perm: [{ id: 1 }], pwd: [], sample: SAMPLE, pendingBefore: () => 0 });
+    predictOurs.mockResolvedValue({ perm: [{ id: 1 }], pwd: [{ id: "pwd", caseNumber: "P-100-26200-000001" }], sample: SAMPLE, pendingBefore: () => 0 });
+    rivalPwdPredictions.mockResolvedValue({ preds: [{ id: "rival-d" }], failures: ["rival-d P-2: HTTP 503"] });
     recordPredictions.mockResolvedValue(1);
     rivalPredictions.mockResolvedValue({ preds: [], failures: ["rival-a x: HTTP 500"] });
     gradeOpenPredictions.mockResolvedValue({ graded: 0, open: 1 });
@@ -84,18 +87,23 @@ describe("GET /api/cron/scorecard", () => {
     expect(recordPredictions).not.toHaveBeenCalled();
     expect(ensurePredictionsTable).not.toHaveBeenCalled();
     expect(rivalPredictions).not.toHaveBeenCalled();
+    expect(rivalPwdPredictions).not.toHaveBeenCalled();
   });
 
   it("records, puts a seeded subset to the rivals, grades, and reports failures by name", async () => {
     const res = await call(`Bearer ${SECRET}`);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.failures).toEqual(["rival-a x: HTTP 500"]);
+    expect(body.failures).toEqual(["rival-a x: HTTP 500", "rival-d P-2: HTTP 503"]);
     expect(recordPredictions).toHaveBeenCalledTimes(2);
     // Ours, H-2A, H-2B and CW-1 and subscribers' cases, in one write before any rival is asked.
     expect(recordPredictions.mock.calls[0]![1]).toEqual([
-      { id: 1 }, { id: "seasonal" }, { id: "watched", caseNumber: "G-100-26009-000009" },
+      { id: 1 }, { id: "pwd", caseNumber: "P-100-26200-000001" }, { id: "seasonal" }, { id: "watched", caseNumber: "G-100-26009-000009" },
     ]);
+    // The day's wage-request sample goes to the one rival that dates wage requests, and its answers are recorded.
+    expect(rivalPwdPredictions.mock.calls[0]![0]).toEqual([{ id: "pwd", caseNumber: "P-100-26200-000001" }]);
+    expect(recordPredictions.mock.calls[1]![1]).toEqual([{ id: "rival-d" }]);
+    expect(JSON.stringify(rivalPwdPredictions.mock.calls)).not.toContain("G-100-26009-000009");
     expect(body.watched).toBe(1);
     // No subscriber's case is ever put to a rival.
     expect(JSON.stringify(rivalPredictions.mock.calls)).not.toContain("G-100-26009-000009");
@@ -111,7 +119,7 @@ describe("GET /api/cron/scorecard", () => {
     const res = await call(`Bearer ${SECRET}`);
     expect(res.status).toBe(200);
     expect((await res.json()).watched).toBe(0);
-    expect(recordPredictions.mock.calls[0]![1]).toEqual([{ id: 1 }, { id: "seasonal" }]);
+    expect(recordPredictions.mock.calls[0]![1]).toEqual([{ id: 1 }, { id: "pwd", caseNumber: "P-100-26200-000001" }, { id: "seasonal" }]);
   });
 
   it("reports a failed run as 500", async () => {

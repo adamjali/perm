@@ -185,6 +185,19 @@ describe("headToHead", () => {
     expect(h.rivalCloser).toBe(0);
   });
 
+  it("sets a wage-request rival against our wage-request dates only, never a PERM one of the same number", () => {
+    const rows = [
+      r({ caseNumber: "P-1", program: "pwd", model: "pwd-workday", predicted: "2026-11-20", decidedOn: "2026-11-21", outcome: "DETERMINATION ISSUED" }), // off 1
+      r({ caseNumber: "P-1", program: "pwd", source: "rival-d", model: "rival-pwd-range", predicted: "2026-11-28", decidedOn: "2026-11-21", outcome: "DETERMINATION ISSUED" }), // off 7
+      r({ caseNumber: "P-1", predicted: "2026-12-30" }), // a PERM row under the same number: never its pair
+    ];
+    const h = headToHead(rows, "2026-12-01")["rival-d"]!;
+    expect(h.shared).toBe(1);
+    expect(h.oursTypicalDays).toBe(1);
+    expect(h.rivalTypicalDays).toBe(7);
+    expect(h.oursCloser).toBe(1);
+  });
+
   it("settles a case still waiting past both dates in favour of the later one", () => {
     const rows = [
       r({ caseNumber: "G-3", predicted: "2026-09-20" }),
