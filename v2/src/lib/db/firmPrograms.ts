@@ -18,9 +18,11 @@ import { tableColumns } from "./tableColumns";
  * "Fragomen Del Rey Bernsen & LoewyLLP" on an LCA counts on Fragomen's page.
  * Before that table's first build, the page's own slug stands in.
  *
- * Every read runs on `<table>_att_dec (attorney_slug, decision_date)`.
- * Measured Oct 4 2026 on the largest firm (527,135 LCAs): the counts in 0.7 s
- * and the top employers in 1 s, on a page rebuilt monthly.
+ * The lines are worked out once a night (`firm_programs`,
+ * scripts/build_firm_programs.py) and the page reads its firm's rows: read live
+ * on the LCA database, the biggest firm's employers took 12.7 s and its count
+ * 8.7 s (Oct 31 2026), near the read layer's 20-second deadline, on every
+ * page build. The live reads below run only where that table doesn't exist yet.
  */
 
 export interface FirmEmployer {
@@ -49,7 +51,41 @@ export interface FirmPrograms {
 }
 
 const MAP = "firm_page_map";
+const PRECOMPUTED = "firm_programs";
 export const FIRM_TOP_EMPLOYERS = 8;
+
+type Program = "lca" | "pwd" | "seasonal";
+
+/** The firm's nightly rows, or undefined when the table isn't there to read. */
+async function precomputedLines(slug: string): Promise<Partial<Record<Program, FirmProgramLine>> | undefined> {
+  if (!(await tableColumns(PRECOMPUTED)).has("page_slug")) return undefined;
+  const got = await rows<{
+    program: string;
+    filings: number | string;
+    certified: number | string | null;
+    first_decided: string | null;
+    last_decided: string | null;
+    employers: string;
+  }>(
+    `SELECT program, filings, certified, first_decided, last_decided, employers FROM ${PRECOMPUTED} WHERE page_slug = ?`,
+    [slug],
+  );
+  const out: Partial<Record<Program, FirmProgramLine>> = {};
+  for (const r of got) {
+    const filings = Number(r.filings);
+    if (!filings || (r.program !== "lca" && r.program !== "pwd" && r.program !== "seasonal")) continue;
+    const listed = JSON.parse(r.employers) as { slug: string | null; name: string; n: number }[];
+    const linked = await keepLinkableSlugs(listed.map((e) => ({ employerSlug: e.slug, name: e.name, n: e.n })));
+    out[r.program] = {
+      filings,
+      certified: r.certified === null || r.certified === undefined ? null : Number(r.certified),
+      firstDecided: r.first_decided ? String(r.first_decided).slice(0, 10) : null,
+      lastDecided: r.last_decided ? String(r.last_decided).slice(0, 10) : null,
+      employers: linked.map((e) => ({ name: e.name, slug: e.employerSlug, filings: e.n })),
+    };
+  }
+  return out;
+}
 
 async function firmSlugs(slug: string): Promise<string[]> {
   if (!(await tableColumns(MAP)).has("page_slug")) return [slug];
@@ -104,6 +140,12 @@ async function line(table: "lca_cases" | "pwd_cases" | "seasonal_cases", slugs: 
  */
 export const getFirmPrograms = cache(async (slug: string): Promise<FirmPrograms | null> => {
   const slugs = await firmSlugs(slug);
+  const nightly = await precomputedLines(slug);
+  if (nightly) {
+    const { lca = null, pwd = null, seasonal = null } = nightly;
+    if (!lca && !pwd && !seasonal) return null;
+    return { lca, pwd, seasonal, spellings: slugs.length };
+  }
   const [lca, pwd, seasonal] = await Promise.all([
     line("lca_cases", slugs),
     line("pwd_cases", slugs),

@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -29,6 +29,10 @@ case "$job" in
   # refused without notice. It reads the four keys from the app's own env file by name and writes its own run
   # row; it exits non-zero only when no chat model answered, which the alarm emails.
   chat-models) timeout 8m python3 scripts/check_chat_models.py || { rc=1; fail check_chat_models.py "no chat model answered, or the check couldn't run"; } ;;
+  # Each law firm's H-1B, wage-request and seasonal lines, worked out once for every firm page (Oct 31 2026): read
+  # live, one big firm's page build took 21 s on the LCA database. Here, with no tunnel, every firm takes under a
+  # minute. It runs after the 4:10 AM sweep has rebuilt the firm map, and writes its own run row.
+  firm-programs) timeout 15m nice -n 5 python3 scripts/build_firm_programs.py || { rc=1; fail build_firm_programs.py "exited non-zero or ran past 15m"; } ;;
   i140)
     t=$(mktemp -d)
     # The ingest writes the quarter to the database (perm_docs['uscis_i140']),

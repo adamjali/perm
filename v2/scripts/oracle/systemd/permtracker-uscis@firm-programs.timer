@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule for permtracker-uscis@firm-programs
+# Each law firm's H-1B, wage-request and seasonal lines (build_firm_programs.py,
+# Oct 31 2026), after the 4:10 AM sweep, which may run to 6:40 AM, has rebuilt
+# the firm map. Persistent: a morning the server was down runs when it comes back.
+[Timer]
+OnCalendar=*-*-* 07:20:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@firm-programs.service
+
+[Install]
+WantedBy=timers.target

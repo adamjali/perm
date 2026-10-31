@@ -576,6 +576,8 @@ NIGHTLY_BUILDERS = {
     "build_employer_map.py": 3,
     "build_sponsor_index.py": 3,
     "build_lca_cities.py": 3,
+    # Each law firm's lines outside PERM, on the server at 7:20 AM Eastern (Oct 31 2026).
+    "build_firm_programs.py": 3,
     "build_straggler_rates.py": 3,
     "build_census_days.py": 3,
     "sync_published_live.py": 3,

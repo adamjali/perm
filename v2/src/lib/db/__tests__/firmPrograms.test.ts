@@ -28,7 +28,8 @@ beforeEach(() => {
 
 describe("getFirmPrograms", () => {
   it("reads the firm's mapped spellings on the attorney index, and links only employers with a page", async () => {
-    tableColumns.mockResolvedValue(new Set(["source_slug", "page_slug"]));
+    // The nightly firm map exists; the nightly lines table doesn't yet, so the page reads live.
+    tableColumns.mockImplementation(async (t) => (t === "firm_page_map" ? new Set(["source_slug", "page_slug"]) : new Set()));
     rows.mockImplementation(async (sql: string) => {
       if (sql.includes("FROM firm_page_map")) return [{ source_slug: "fragomen-llp" }, { source_slug: "fragomen-loewyllp" }];
       if (sql.includes("FROM lca_cases")) return [
@@ -76,5 +77,38 @@ describe("getFirmPrograms", () => {
     });
     rows.mockResolvedValue([]);
     await expect(getFirmPrograms("busy-firm")).rejects.toThrow("database query deadline");
+  });
+
+  it("reads the firm's nightly lines when the table is there, and never the program tables", async () => {
+    tableColumns.mockResolvedValue(new Set(["source_slug", "page_slug"]));
+    rows.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM firm_page_map")) return [{ source_slug: "fragomen-llp" }, { source_slug: "fragomen-loewyllp" }];
+      if (sql.includes("FROM firm_programs"))
+        return [
+          {
+            program: "lca", filings: "525175", certified: "500000", first_decided: "2019-10-01", last_decided: "2026-06-30",
+            employers: JSON.stringify([{ slug: "apple-inc", name: "Apple Inc.", n: 9000 }, { slug: "tiny-co", name: "Tiny Co", n: 3 }]),
+          },
+          { program: "pwd", filings: "128435", certified: null, first_decided: "2021-10-18", last_decided: "2026-06-30", employers: "[]" },
+        ];
+      throw new Error(`unexpected read: ${sql}`);
+    });
+    const got = await getFirmPrograms("fragomen");
+    expect(got).toEqual({
+      lca: {
+        filings: 525175, certified: 500000, firstDecided: "2019-10-01", lastDecided: "2026-06-30",
+        employers: [{ name: "Apple Inc.", slug: "apple-inc", filings: 9000 }, { name: "Tiny Co", slug: null, filings: 3 }],
+      },
+      pwd: { filings: 128435, certified: null, firstDecided: "2021-10-18", lastDecided: "2026-06-30", employers: [] },
+      seasonal: null,
+      spellings: 2,
+    });
+    expect(one).not.toHaveBeenCalled();
+  });
+
+  it("is null from the nightly lines when the firm filed nothing outside PERM", async () => {
+    tableColumns.mockResolvedValue(new Set(["source_slug", "page_slug"]));
+    rows.mockImplementation(async (sql: string) => (sql.includes("FROM firm_page_map") ? [{ source_slug: "small" }] : []));
+    expect(await getFirmPrograms("small")).toBeNull();
   });
 });
