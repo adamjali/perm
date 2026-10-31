@@ -269,8 +269,9 @@ export default async function AttorneyPage({
     // No catch: see debarmentsForSlug.
     debarmentsForSlug(canonicalSlug),
     // Its H-1B LCAs and wage requests, by every printed spelling the nightly
-    // firm map assigns this page.
-    getFirmPrograms(canonicalSlug).catch(() => null),
+    // firm map assigns this page. A failed read throws, so the page keeps its
+    // last good render instead of saving "no filings" for its whole window.
+    getFirmPrograms(canonicalSlug),
     // What a firm that claimed this page says about itself (convex/firmClaims.ts),
     // read on the page's own window; a profile change refreshes the page through
     // /api/revalidate-firm. A failed read shows no block rather than an error.

@@ -6357,7 +6357,7 @@ can never put a stranger's words in someone's inbox (probed: passing the body's 
 **One alert email a day** (`convex/lib/alertDelivery.ts`, `convex/alertOutbox.ts`). Every alert kind
 (case, queue, bulletin, employer) builds its full email and hands it to `deliverAlert`. An address
 following exactly one live thing, not yet mailed today and with nothing waiting, gets it at once;
-anything else waits in `alertOutbox`, and `sendBundles` (11:30, 18:00, 23:30 UTC) sends each address at
+anything else waits in `alertOutbox`, and `sendBundles` (12:30, 18:00, 23:30 UTC since Oct 31 2026; 11:30 before) sends each address at
 most one email per Eastern day: the stored email for one item, `DailyUpdate` for several, its
 List-Unsubscribe a prefs one-click with the new `alerts` kind (every alert kind off, news and digests
 kept). A queued item counts as delivered for the producer's own detector; the outbox retries 6 times,
@@ -9148,7 +9148,7 @@ for FAIL misses a test that crashed.**
 **An outbox row that waits with no attempts and no error is the one-a-day rule.** A subscriber got
 their own case's alert at 10:15 AM EDT Oct 8, so a Microsoft employer alert at 7:15 PM waited; the
 7:30 PM run is the same Eastern day, so it went on the 7:30 AM run (Resend: delivered). Bundles run at
-7:30 AM, 2 PM and 7:30 PM EDT (11:30, 18:00, 23:30 UTC); case-status alerts always go at once.
+12:30, 18:00 and 23:30 UTC since Oct 31 2026 (7:30 AM, 1 PM and 6:30 PM EST; an hour later in EDT); case-status alerts always go at once.
 
 **The "reading 'call'" evidence so far.** Since the capture went live (11:27 PM EDT Oct 8) one crash
 was recorded: no duplicate chunk ids, no `chrome-extension:` script (only Ahrefs, Cloudflare Insights

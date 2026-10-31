@@ -1565,7 +1565,7 @@ Not live until the owner's yes; the ledger is `~/.claude/plans/cozy-sniffing-pum
   modified date and, on articles, the author and standards links.
 - **The dev server's watcher can go stale**: when served output doesn't match the source, restart it before debugging.
   `pnpm check` bails at the first failure locally, and GitHub runs no pull_request workflow while a PR conflicts with main.
-- **The "Claude Code Review" workflow fails on every PR**: the Claude GitHub App isn't installed on the repo. Not a gate.
+- **The "Claude Code Review" workflow failed on every PR** (the Claude GitHub App isn't installed on the repo); removed Oct 31 2026.
 
 ## Oct 28 2026 (evening): the catch-up release is live, and what followed it
 

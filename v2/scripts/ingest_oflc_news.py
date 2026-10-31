@@ -51,13 +51,18 @@ DATASET = "policy-notices-oflc"
 # gaps between OFLC posting days since 2024: median 7, p90 22, p95 29, max 39.
 # The 10 days this used to carry would have fired on 35% of ordinary quiet
 # spells - a false alarm a third of the time, which trains the reader to skim
-# past the real one. 45 days sits above the observed maximum with margin.
+# past the real one. 45 days sat above the observed maximum with margin.
+# Measured again Oct 31 2026: the longest gap since Oct 2023 was 39 days, and
+# OFLC has posted nothing since Sep 17 (44 days, its page and FLAG's own
+# announcements page agree), so 45 would warn tomorrow about a quiet agency.
+# The WARN states' rule: the longest gap plus a week, never under today's
+# quiet spell plus two weeks: 58.
 # This budget only has to catch "DOL stopped publishing at all"; the separate
 # `fetched_at` run-age guard in check_ingest_health is what catches "our
 # ingest stopped", and that one is monotonic.
 TYPE = "OFLC announcement"
 AGENCIES = ["Office of Foreign Labor Certification"]
-MAX_AGE_DAYS = 45
+MAX_AGE_DAYS = 58
 ABSTRACT_CHARS = 600
 
 # The same topic vocabulary the Federal Register feed tags with, matched on

@@ -108,10 +108,14 @@ export function fromBrowserExtension(props: Record<string, unknown> | undefined)
  * Tab not found.") is one this site never calls, which exceptionNoise.test.ts
  * holds. `self.smartRules` and `self.curSiteRule` are an iPhone extension's own
  * (2 visits from Oct 14; one tripped the new-error-type alert at 1:27 AM EDT
- * Oct 19); neither name is in this site's source or build.
+ * Oct 19); neither name is in this site's source or build. `DarkReader` is the
+ * Dark Reader extension's own global ("Can't find variable: DarkReader", an
+ * iPhone, Oct 2026), which this site never names either.
  */
 export function fromExtensionMessage(msg = ""): boolean {
-  return /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\bself\.(?:smartRules|curSiteRule)\b/.test(msg);
+  return /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\bself\.(?:smartRules|curSiteRule)\b|\bvariable: DarkReader\b|\bDarkReader is not defined\b/.test(
+    msg,
+  );
 }
 
 type ServerEvent = {

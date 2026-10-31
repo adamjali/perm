@@ -135,11 +135,14 @@ describe("fromExtensionMessage", () => {
         "self.smartRules.filter is not a function. (In 'self.smartRules.filter(item => {return item && item.url != self.curSiteRule.url})', 'self.smartRules.filter' is undefined)",
       ),
     ).toBe(true);
+    expect(fromExtensionMessage("Can't find variable: DarkReader")).toBe(true);
+    expect(fromExtensionMessage("DarkReader is not defined")).toBe(true);
   });
 
   it("keeps ordinary errors, and words that only look alike", () => {
     expect(fromExtensionMessage("Cannot read properties of undefined (reading 'call')")).toBe(false);
     expect(fromExtensionMessage("smartRulesEngine failed")).toBe(false);
+    expect(fromExtensionMessage("Can't find variable: DarkReaderTheme")).toBe(false);
     expect(fromExtensionMessage("runtime.sendMessages is not defined")).toBe(false);
     expect(fromExtensionMessage("")).toBe(false);
   });
@@ -156,7 +159,7 @@ describe("fromExtensionMessage", () => {
     walk(join(process.cwd(), "src"));
     expect(files.length).toBeGreaterThan(500);
     const hits = files.filter((f) =>
-      /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\b(?:smartRules|curSiteRule)\b/.test(readFileSync(f, "utf8")),
+      /\b(?:runtime\.(?:sendMessage|connect)|(?:chrome|browser)\.runtime)\b|\b(?:smartRules|curSiteRule|DarkReader)\b/.test(readFileSync(f, "utf8")),
     );
     expect(hits).toEqual([]);
   });

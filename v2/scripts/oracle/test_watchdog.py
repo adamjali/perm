@@ -147,9 +147,14 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
         setup(root)
+        # Oct 26 2026: a planned 320-second index build held the LCA database's
+        # write lock, and three failed checks restarted it mid-build.
         got = run(root, 3, LCA_UNIT="1", LCA_WRITE="locked")
-        check("three locked writes on the LCA database restart it, and only it",
-              got == ["permtracker-db-lca"], str(got))
+        check("a long planned write on the LCA database (three locked checks) restarts nothing", got == [], str(got))
+        got = run(root, 26, LCA_UNIT="1", LCA_WRITE="locked")
+        check("...still nothing at 58 minutes", got == [], str(got))
+        got = run(root, 1, LCA_UNIT="1", LCA_WRITE="locked")
+        check("...an hour of locked writes restarts it, and only it", got == ["permtracker-db-lca"], str(got))
 
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)

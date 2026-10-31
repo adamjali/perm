@@ -67,4 +67,14 @@ describe("getFirmPrograms", () => {
     expect(await getFirmPrograms("small-firm")).toBeNull();
     expect(one.mock.calls.every((c) => JSON.stringify(c[1]) === JSON.stringify(["small-firm"]))).toBe(true);
   });
+
+  it("throws when a program's table can't be read, never answering as if the firm filed none", async () => {
+    tableColumns.mockResolvedValue(new Set());
+    one.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM lca_cases")) throw new Error("database query deadline");
+      return { n: "3", certified: null, first: "2026-01-02", last: "2026-03-04" };
+    });
+    rows.mockResolvedValue([]);
+    await expect(getFirmPrograms("busy-firm")).rejects.toThrow("database query deadline");
+  });
 });

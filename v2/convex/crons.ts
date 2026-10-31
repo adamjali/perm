@@ -268,16 +268,19 @@ crons.cron(
  * `POST /watched-cases/sweep` the moment a watched case moved; these ticks
  * remain the floor.
  *
- * 11:00 and 23:00 UTC (7am and 7pm ET), deliberately clear of the 14:00, 15:00
- * and 16:00 UTC bulk email jobs above so the two never contend for the shared
- * Resend quota in the same minute.
+ * 12:00 and 23:00 UTC (8am EDT or 7am EST, and 7pm EDT or 6pm EST), deliberately
+ * clear of the 14:00, 15:00 and 16:00 UTC bulk email jobs above so the two never
+ * contend for the shared Resend quota in the same minute. The morning tick moved
+ * from 11:00 on Oct 31 2026: Convex runs on UTC and the 4:10 AM full sweep on
+ * Eastern time, and the sweep may run to 6:40 AM Eastern (its 150-minute cap),
+ * which is 11:40 UTC in winter. Every morning job below keeps its place after it.
  *
  * The sweep reschedules ITSELF when work remains, so these two ticks are the
  * floor rather than the ceiling.
  */
 crons.cron(
   "case-status-alerts",
-  "0 11,23 * * *",
+  "0 12,23 * * *",
   internal.caseAlerts.sweepCaseChanges,
   {}
 );
@@ -287,7 +290,7 @@ crons.cron(
 // message, so it has no Resend line; its own limits are in casePushAlerts.ts.
 crons.cron(
   "case-status-push-alerts",
-  "20 11,23 * * *",
+  "20 12,23 * * *",
   internal.casePushAlertsSweep.sweep,
   {}
 );
@@ -334,7 +337,7 @@ crons.cron(
  */
 crons.cron(
   "employer-alerts",
-  "15 11,23 * * *",
+  "15 12,23 * * *",
   internal.employerAlerts.sweep,
   {}
 );
@@ -347,7 +350,7 @@ crons.cron(
  */
 crons.cron(
   "alert-bundles",
-  "30 11,23 * * *",
+  "30 12,23 * * *",
   internal.alertOutbox.sendBundles,
   {}
 );
@@ -359,7 +362,7 @@ crons.cron(
  */
 crons.daily(
   "pwd-perm-matches",
-  { hourUTC: 11, minuteUTC: 10 },
+  { hourUTC: 12, minuteUTC: 10 },
   internal.pipelineMatches.sweep,
   {}
 );
@@ -416,7 +419,7 @@ crons.cron(
  */
 crons.cron(
   "webhook-case-watches",
-  "5 11,23 * * *",
+  "5 12,23 * * *",
   internal.webhookSweeps.sweepCaseWatches,
   {}
 );
@@ -425,7 +428,7 @@ crons.cron(
 // follows read is written (the same times as employer-alerts, two minutes on).
 crons.cron(
   "webhook-employer-watches",
-  "17 11,23 * * *",
+  "17 12,23 * * *",
   internal.webhookSweeps.sweepEmployerWatches,
   {}
 );

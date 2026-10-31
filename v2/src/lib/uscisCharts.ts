@@ -62,7 +62,9 @@ export function parseUscisCharts(html: string): UscisCharts | null {
   if (!month) return null;
   // "employment-based" and "family-sponsored" are load-bearing: the page
   // carries both sentences for every month, and they can name different charts.
-  const chartFor = (kind: string): UscisChart | null => {
+  const chartFor = (kind: "employment-based" | "family-sponsored"): UscisChart | null => {
+    // Built only from the two fixed words above and the month names, never from input.
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
     const re = new RegExp(
       `For all ${kind} preference categories, you must use the (Final Action Dates|Dates for Filing) chart ` +
         `in the Department of State Visa Bulletin for (${MONTHS}) (\\d{4})`,

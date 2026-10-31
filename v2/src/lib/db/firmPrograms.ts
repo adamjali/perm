@@ -97,12 +97,17 @@ async function line(table: "lca_cases" | "pwd_cases" | "seasonal_cases", slugs: 
   };
 }
 
+/**
+ * Null only when no file names the firm. A read that fails throws: the firm's page keeps its last good render for
+ * its 30-day window, where a swallowed failure (each line's `.catch(() => null)` until Oct 31 2026) would have been
+ * saved into it as "this firm files no H-1B LCAs".
+ */
 export const getFirmPrograms = cache(async (slug: string): Promise<FirmPrograms | null> => {
   const slugs = await firmSlugs(slug);
   const [lca, pwd, seasonal] = await Promise.all([
-    line("lca_cases", slugs).catch(() => null),
-    line("pwd_cases", slugs).catch(() => null),
-    line("seasonal_cases", slugs).catch(() => null),
+    line("lca_cases", slugs),
+    line("pwd_cases", slugs),
+    line("seasonal_cases", slugs),
   ]);
   if (!lca && !pwd && !seasonal) return null;
   return { lca, pwd, seasonal, spellings: slugs.length };

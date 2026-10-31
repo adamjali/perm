@@ -89,9 +89,16 @@ if [ "$deploying" = 0 ]; then
 fi
 if systemctl is-enabled --quiet cloudflared; then tunnel_ok && note tunnel 1 || note tunnel 0; else fails[tunnel]=0; fi
 
+# Failed checks before a restart. The LCA database's write check waits an hour
+# (30 checks): nothing on the site writes to it, so a held write lock there
+# turns no visitor away, and the loaders' long writes hold it on purpose. On
+# Oct 26 2026 a planned 320-second index build held it, three checks failed,
+# and the restart killed the build. Its read check keeps the usual three.
+need() { case "$1" in db_lca_write) echo 30 ;; *) echo 3 ;; esac; }
+
 repair() { # name, unit
   local n=$1 unit=$2
-  [ "${fails[$n]:-0}" -ge 3 ] || return 0
+  [ "${fails[$n]:-0}" -ge "$(need "$n")" ] || return 0
   if [ $(( now - ${last[$n]:-0} )) -lt 1800 ]; then return 0; fi
   systemctl restart "$unit"
   echo "$(date -u +%FT%TZ) $n: restarted $unit after ${fails[$n]} failed checks" >> "$LOG" 2>/dev/null || true
