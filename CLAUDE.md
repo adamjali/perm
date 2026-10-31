@@ -1322,6 +1322,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026 (afternoon)".
 - **The morning page checks report a failing check's findings** (`clean` in `page_checks.py`): a tail of the last 12
   lines had hidden the phone sweep's 390px problem under clean 320px lines.
 - **Reviewed scanner findings carry `nosemgrep` with the reason on the line above**, so they stop reopening when lines move.
+  *(Not enough on its own: GitHub keeps the alert open until it's dismissed through the API; see Oct 31 2026.)*
 - **The law-firm and name reads of the employer map are sliced too** (afternoon): the 10:40 AM sweep hit the same 524
   on the LCA firm read. Timed on the server, the slowest slice is 41 s and the whole read 317 s. If a slice ever nears
   100 s, run the rebuild on the server, where no tunnel cuts it.
@@ -1650,3 +1651,19 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 28 2026 (night)".
   filing and the EIN are the owner's next steps.
 - **A dev server can serve a stale shared module** (the new pages with the old `@/lib/constants/about`): restart it before reading a
   render that contradicts the source.
+
+## Oct 31 2026 (night), in five lines
+
+- **A `nosemgrep` mark doesn't close a GitHub alert.** The mark reaches the uploaded SARIF as a suppression, but GitHub
+  keeps the alert open until it's dismissed through the API (`gh api -X PATCH .../code-scanning/alerts/N -f
+  state=dismissed -f dismissed_reason="false positive" -f dismissed_comment=...`, 280 characters at most). Mark the line
+  and dismiss the alert; fix for real where the pattern can go (the sitemap escape, `usesTag`, string-matched test names).
+- **The last-resort error page draws the site itself** (`src/app/global-error.tsx`, the busy page's palette, light and
+  dark) and names what failed in one line (`failedLine`: the message, and Next's digest for a server error), so a
+  screenshot says what to fix. A sign-in counts as activity for `isLikelySessionTimeout`.
+- **The tunnel restarts when Ubuntu updates cloudflared** (unattended-upgrades, about 2 AM Eastern): about 7 seconds of
+  Cloudflare's error page and a "tunnel down" email to the Cloudflare account's address. Left alone on purpose.
+- **A note bounced by DMARC from a forwarding mailbox is the forwarder, not us**: the firm's Microsoft 365 passed SPF,
+  DKIM and DMARC, then forwarded to Yahoo, which rejected it under our `p=reject`. Keep `p=reject`.
+- **The morning page checks' "found problems. 17 passed" hid a failed flow**: one translated case page (`/es`) failed and
+  four retried. The translated pages are being cut (English only).
