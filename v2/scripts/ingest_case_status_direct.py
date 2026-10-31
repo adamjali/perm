@@ -1608,6 +1608,53 @@ def fold_month_detail(
     return out
 
 
+MONTH_EMPLOYERS_TOP = 20   # the busiest employers carried per filing month
+
+
+def fold_month_employers(
+    rows: list[tuple[str, str, str | None, int, int]],
+    months: list[str],
+    top: int = MONTH_EMPLOYERS_TOP,
+) -> dict[str, dict]:
+    """Per filing month: the employers that filed the most PERM cases in it.
+
+    `rows` are (filing month, employer name, slug or None, cases, decided),
+    one per spelling. An employer is keyed by its slug where the nightly
+    rebuild resolved one, by its name otherwise, and a name-keyed row folds into
+    the slug row carrying the same spelling, as `employer_stage_rows` does.
+    The label is the busiest spelling. Pure, so it is tested.
+    """
+    out: dict[str, dict] = {}
+    for month in months:
+        by_key: dict[str, dict] = {}
+        for mo, name, slug, n, decided in rows:
+            name = (name or "").strip()
+            if mo != month or not name or name == TEST_FIXTURE_EMPLOYER:
+                continue
+            key = slug or f"name:{_norm_name(name)}"
+            row = by_key.setdefault(key, {"slug": slug or None, "filed": 0, "decided": 0, "_names": {}})
+            row["filed"] += int(n or 0)
+            row["decided"] += int(decided or 0)
+            row["_names"][name] = row["_names"].get(name, 0) + int(n or 0)
+        by_name = {_norm_name(nm): row for row in by_key.values() if row["slug"] for nm in row["_names"]}
+        for key in [k for k in by_key if k.startswith("name:")]:
+            target = by_name.get(key[len("name:"):])
+            if target is None:
+                continue
+            src = by_key.pop(key)
+            target["filed"] += src["filed"]
+            target["decided"] += src["decided"]
+            for nm, n in src["_names"].items():
+                target["_names"][nm] = target["_names"].get(nm, 0) + n
+        ranked = []
+        for row in by_key.values():
+            label = sorted(row["_names"].items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+            ranked.append({"name": label, "slug": row["slug"], "filed": row["filed"], "decided": row["decided"]})
+        ranked.sort(key=lambda r: (-r["filed"], r["name"].lower()))
+        out[month] = {"employers": len(ranked), "top": ranked[:top]}
+    return out
+
+
 def write_month_detail(db) -> None:
     """Precompute perm_docs['month_detail'] for the filing-month pages.
 
@@ -1646,6 +1693,16 @@ def write_month_detail(db) -> None:
         "FROM perm_case_status WHERE filing_date >= ? GROUP BY 1, 2",
         [first])]
     detail = fold_month_detail(decisions, letters, publishable, months)
+    # The busiest employers in each filing month, from the live table (every
+    # case, decided or not), the slug from whichever case table holds it.
+    by_employer = [(str(mo), str(nm or ""), sl or None, int(n), int(d or 0)) for mo, nm, sl, n, d in query_rows(
+        db,
+        "SELECT substr(c.filing_date, 1, 7), c.employer_name, COALESCE(l.employer_slug, p.employer_slug), "
+        "       COUNT(*), SUM(c.is_final) "
+        f"FROM perm_case_status c {_slug_join()} WHERE c.filing_date >= ? GROUP BY 1, 2, 3",
+        [first])]
+    for month, emp in fold_month_employers(by_employer, months).items():
+        detail[month]["employers"] = emp
     stamp = int(time.time() * 1000)
     doc = {
         "asOf": max(publishable),

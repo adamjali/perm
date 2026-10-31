@@ -38,6 +38,8 @@ import { monthEndDate, type MonthEnd } from "@/lib/caseEstimateInputs";
 import { monthMakeup, type MonthMakeup } from "@/lib/monthMakeup";
 import { dolDecisions, weekOnWeek, type MonthDetail } from "@/lib/monthDetail";
 import { getMonthDetail } from "@/lib/db/monthDetail";
+import { keepLinkableSlugs } from "@/lib/db/entityLinks";
+import { MonthEmployers } from "@/components/queue/MonthEmployers";
 import { getMonthDays } from "@/lib/db/filingDay";
 import { MonthDays } from "@/components/queue/MonthDays";
 import { easternDay } from "@convex/lib/time";
@@ -196,6 +198,13 @@ export default async function CohortPage({
     : null;
   const liveRows = seedPage?.rows ?? [];
 
+  // The month's busiest employers, linked only where the employer's page exists.
+  const topEmployers = detail?.employers
+    ? (await keepLinkableSlugs(detail.employers.top.map((e) => ({ ...e, employerSlug: e.slug })))).map(
+        ({ employerSlug, ...e }) => ({ ...e, slug: employerSlug ?? null }),
+      )
+    : [];
+
   const split = groupByStage(backlog.statuses);
   const label = formatMonth(month) ?? month;
   const dolMonth = estimator.frontier?.analystQueueMonth ?? null;
@@ -243,6 +252,8 @@ export default async function CohortPage({
           </div>
         </section>
       ) : null}{" "}
+
+      {detail?.employers ? <MonthEmployers label={label} top={topEmployers} total={detail.employers.total} /> : null}{" "}
 
       {/* What most visitors to a month page want next: their own case, and
           an email when DOL gets to their month. */}

@@ -15,6 +15,15 @@ export interface DayDecisions {
   withdrawn: number;
 }
 
+/** One of the employers that filed the most in the month (`fold_month_employers`). */
+export interface MonthEmployer {
+  name: string;
+  /** The employer page's slug, or null when no page is known. */
+  slug: string | null;
+  filed: number;
+  decided: number;
+}
+
 export interface MonthDetail {
   /** Newest day the series stands behind, `YYYY-MM-DD`. */
   asOf: string;
@@ -26,6 +35,8 @@ export interface MonthDetail {
   frontFrom: number;
   /** Initial -> [cases, decided]; "#" holds names that don't start with a letter. */
   letters: Record<string, [number, number]>;
+  /** The busiest employers that filed in the month, and how many employers filed in all; null before the sweep writes them. */
+  employers: { total: number; top: MonthEmployer[] } | null;
 }
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -52,8 +63,21 @@ export function parseMonthDetail(json: string, month: string): MonthDetail | nul
   for (const [k, v] of Object.entries((m.letters as Record<string, unknown>) ?? {})) {
     if (/^([A-Z]|#)$/.test(k) && Array.isArray(v)) letters[k] = [int(v[0]), int(v[1])];
   }
+  const e = m.employers as Record<string, unknown> | undefined;
+  const top = e && Array.isArray(e.top)
+    ? (e.top as Record<string, unknown>[])
+        .filter((r) => typeof r.name === "string" && r.name.trim() !== "")
+        .map((r) => ({
+          name: (r.name as string).trim(),
+          slug: typeof r.slug === "string" && /^[a-z0-9-]+$/.test(r.slug) ? r.slug : null,
+          filed: int(r.filed),
+          decided: Math.min(int(r.decided), int(r.filed)),
+        }))
+        .filter((r) => r.filed > 0)
+    : null;
+  const employers = top && top.length > 0 ? { total: Math.max(int(e!.employers), top.length), top } : null;
   const frontDay = Number.isInteger(m.frontDay) && (m.frontDay as number) >= 1 && (m.frontDay as number) <= 31 ? (m.frontDay as number) : null;
-  return { asOf, frontDays: int(doc.frontDays) || 5, days, frontDay, frontFrom: int(m.frontFrom), letters };
+  return { asOf, frontDays: int(doc.frontDays) || 5, days, frontDay, frontFrom: int(m.frontFrom), letters, employers };
 }
 
 const decided = (d: DayDecisions) => d.certified + d.denied + d.withdrawn;

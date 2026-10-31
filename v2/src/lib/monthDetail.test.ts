@@ -15,6 +15,14 @@ const doc = JSON.stringify({
       ],
       frontDay: 10, frontFrom: 1952,
       letters: { A: [1000, 600], Z: [400, 100], "#": [3, 1], ab: [1, 1] },
+      employers: {
+        employers: 5311,
+        top: [
+          { name: "Amazon Dev Center U.S., Inc.", slug: "amazon-dev-center-u-s-inc", filed: 764, decided: 563 },
+          { name: "  ", slug: "blank", filed: 9, decided: 0 },
+          { name: "Odd Slug LLC", slug: "../etc", filed: 40, decided: 80 },
+        ],
+      },
     },
   },
 });
@@ -25,6 +33,22 @@ describe("parseMonthDetail", () => {
     expect(m.days.map((d) => d.date)).toEqual(["2026-09-25", "2026-09-30", "2026-10-07"]);
     expect(m.frontDay).toBe(10);
     expect(m.letters).toEqual({ A: [1000, 600], Z: [400, 100], "#": [3, 1] });
+  });
+
+  it("reads the month's busiest employers, dropping blank names and slugs that aren't page slugs", () => {
+    const m = parseMonthDetail(doc, "2025-12")!;
+    expect(m.employers).toEqual({
+      total: 5311,
+      top: [
+        { name: "Amazon Dev Center U.S., Inc.", slug: "amazon-dev-center-u-s-inc", filed: 764, decided: 563 },
+        { name: "Odd Slug LLC", slug: null, filed: 40, decided: 40 },
+      ],
+    });
+  });
+
+  it("has no employers for a document written before they were", () => {
+    const old = JSON.stringify({ asOf: "2026-10-07", months: { "2025-12": { days: [], letters: {} } } });
+    expect(parseMonthDetail(old, "2025-12")!.employers).toBeNull();
   });
 
   it("is null for a month it doesn't carry, or a broken document", () => {

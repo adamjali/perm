@@ -47,6 +47,25 @@ def main() -> int:
     check("initials are letters, anything else is '#'",
           dec["letters"] == {"A": [100, 60], "Z": [80, 10], "#": [5, 1]}, str(dec["letters"]))
     check("a month not carried is ignored", "2024-01" not in out)
+
+    rows = [
+        ("2025-12", "AMAZON DEV CENTER U.S., INC.", "amazon-dev-center-u-s-inc", 600, 100),
+        ("2025-12", "Amazon Dev Center U.S., Inc.", "amazon-dev-center-u-s-inc", 163, 20),
+        ("2025-12", "amazon dev center u.s., inc.", None, 4, 0),      # discovered since the rebuild
+        ("2025-12", "Cognizant Technology Solutions US Corp", "cognizant", 500, 500),
+        ("2025-12", "Small Shop LLC", None, 2, 1),
+        ("2025-12", csd.TEST_FIXTURE_EMPLOYER, None, 9, 0),             # DOL's own test record
+        ("2025-11", "Cognizant Technology Solutions US Corp", "cognizant", 7, 7),
+    ]
+    emp = csd.fold_month_employers(rows, months, top=2)
+    dec_e = emp["2025-12"]
+    check("one row per employer, a slug-less spelling folded into its slug row",
+          dec_e["top"][0] == {"name": "AMAZON DEV CENTER U.S., INC.", "slug": "amazon-dev-center-u-s-inc",
+                               "filed": 767, "decided": 120}, str(dec_e["top"][0]))
+    check("ranked by filings, cut at the top, every employer counted",
+          [r["slug"] for r in dec_e["top"]] == ["amazon-dev-center-u-s-inc", "cognizant"] and dec_e["employers"] == 3,
+          str(dec_e))
+    check("each month on its own", emp["2025-11"]["top"][0]["filed"] == 7 and emp["2025-11"]["employers"] == 1)
     print(f"\n  {len(FAILURES)} failure(s)")
     return 1 if FAILURES else 0
 
