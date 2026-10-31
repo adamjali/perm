@@ -24,8 +24,11 @@ interface BandLook {
   caption: string;
 }
 
-/** How each step's band looks. A step with calculators and no look here fails the page's build (it renders statically). */
-const LOOK: Partial<Record<DataGroup, BandLook>> = {
+/**
+ * How each step's band looks. A step with calculators and no look here fails the page's build (it renders statically),
+ * and `calculator-tour.test.ts` fails first.
+ */
+export const LOOK: Partial<Record<DataGroup, BandLook>> = {
   "Your case": {
     lead: "Where your case is and its dates in, every step to the green card out, with the fees, and which category fits.",
     picture: CALCULATOR_SHOTS.plan,
@@ -67,6 +70,12 @@ const LOOK: Partial<Record<DataGroup, BandLook>> = {
     picture: DATA_SHOTS.wages,
     url: "permtracker.app/tools/salary-explorer",
     caption: "Captured October 21, 2026.",
+  },
+  "Students and OPT": {
+    lead: "An F-1 student's status between OPT and the H-1B, and the unemployment days OPT allows, each from its regulation.",
+    picture: CALCULATOR_SHOTS.capgap,
+    url: "permtracker.app/tools/cap-gap-calculator",
+    caption: "Captured October 31, 2026. Sample dates: OPT ending June 10, 2026, an H-1B start of October 1, filed April 1.",
   },
   "Other visas": {
     lead: "A green card case runs alongside the H-1B clock. These count the six years and an offer's chance in the lottery.",

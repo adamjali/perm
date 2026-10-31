@@ -97,6 +97,29 @@
     },
     "alt": "The H-1B six-year limit for status that began October 1, 2021: six years end September 30, 2027, 344 days left, and a PERM filed March 2, 2026 meets the 365-day rule."
   },
+  "calculators/capgap": {
+    "capture": {
+      "url": "/tools/cap-gap-calculator",
+      "clip": "fromm:Cap-gap and OPT days",
+      "maxHeight": 1150,
+      "fill": [
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 1)",
+          "text": "2026-06-10"
+        },
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 2)",
+          "text": "2026-10-01"
+        },
+        {
+          "sel": ":nth-match(main input[type=\"date\"], 3)",
+          "text": "2026-04-01"
+        }
+      ]
+    },
+    "alt": "The cap-gap calculator for OPT ending June 10, 2026, an H-1B start of October 1, 2026 and a petition filed April 1, 2026: the student's status and OPT work authorization run until April 1, 2027 while the petition is pending.",
+    "captured": "2026-10-31"
+  },
   "data/cases": {
     "capture": {
       "url": "/perm-cases",

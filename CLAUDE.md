@@ -1817,6 +1817,12 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   off and exactly right 44% of the time; the pace since 2014 32 days, the last year's pace 28. No simple forecast
   beats holding still, which is why /visa-bulletin doesn't predict. A line with history and no movement counts as a
   pace of zero (`pace_or_still`): dropping those months would have graded the guesses only on lines that moved.
+- **Four pushes failed the deploy's Build step (4:20 to 5:35 PM EDT Oct 31) and nothing said so**: the new "Students and
+  OPT" group had a calculator and no band look, and `/calculators` throws at prerender on that by design. `pnpm check`
+  and the suite were green; only the build renders the page. The band has its picture now (`calculators/capgap`), and
+  `src/components/tools/__tests__/calculator-tour.test.ts` fails on a missing look. **After every push, read the
+  Oracle run's Build step** (`gh run list --workflow oracle-deploy.yml`): a held push still builds, and a red build
+  is a red night deploy.
 - **SAM.gov exclusions aren't loaded**: api.sam.gov answered an empty 404 to every exclusions path tried (v1 to v4),
   with the api.data.gov key, DEMO_KEY and none, from the server and the Mac (Oct 31 2026). It likely wants a key
   from a SAM.gov account, which is the owner's to make.
