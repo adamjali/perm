@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-cron@dispatch-convex-backup
 [Timer]
-OnCalendar=*-*-* 07:50:00 UTC
+OnCalendar=*-*-* 03:50:00 America/New_York
 Persistent=true
 Unit=permtracker-cron@dispatch-convex-backup.service
 [Install]

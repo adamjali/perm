@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-cron@prune-uscis
 [Timer]
-OnCalendar=*-*-* 09:20:00 UTC
+OnCalendar=*-*-* 05:20:00 America/New_York
 Persistent=true
 Unit=permtracker-cron@prune-uscis.service
 [Install]

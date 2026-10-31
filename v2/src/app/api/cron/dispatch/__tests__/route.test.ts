@@ -193,7 +193,7 @@ describe("the server's timers agree with the job table", () => {
   );
 
   /** A job's cron expression as the OnCalendar line its timer must carry. */
-  function onCalendar(cron: string): string {
+  function onCalendar(cron: string, zone: string): string {
     const [min, hour, dom, mon, dow] = cron.split(" ");
     expect([dom, mon], `${cron}: only minute, hour and weekday are used`).toEqual(["*", "*"]);
     // A single value or one range ("12-22", "1-5"): systemd writes a range as "12..22".
@@ -201,15 +201,15 @@ describe("the server's timers agree with the job table", () => {
       v === "*" ? "*" : String(v).split("-").map((x) => x.padStart(2, "0")).join("..");
     const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const day = dow === "*" ? "" : `${String(dow).split("-").map((d) => names[Number(d)]).join("..")} `;
-    return `${day}*-*-* ${pad(hour)}:${pad(min)}:00 UTC`;
+    return `${day}*-*-* ${pad(hour)}:${pad(min)}:00 ${zone}`;
   }
 
   it("has one timer per job, at the job's schedule", () => {
     for (const [name, job] of Object.entries(CRON_JOBS)) {
-      expect(timers.get(`dispatch-${name}`), `timer for ${name}`).toBe(onCalendar(job.schedule));
+      expect(timers.get(`dispatch-${name}`), `timer for ${name}`).toBe(onCalendar(job.schedule, job.zone));
     }
     for (const [name, job] of Object.entries(HOUSEKEEPING_JOBS)) {
-      expect(timers.get(name), `timer for housekeeping ${name}`).toBe(onCalendar(job.schedule));
+      expect(timers.get(name), `timer for housekeeping ${name}`).toBe(onCalendar(job.schedule, job.zone));
     }
     expect(timers.size, "a timer for a job that is in neither table").toBe(
       Object.keys(CRON_JOBS).length + Object.keys(HOUSEKEEPING_JOBS).length,

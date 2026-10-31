@@ -34,8 +34,8 @@ ET = ZoneInfo("America/New_York")
 # site, so a cold page cache meets crawlers more than visitors.
 NIGHT_HOURS = range(1, 5)
 # Eastern clock time the night run starts (the server's
-# permtracker-cron@dispatch-night-deploy timer, 06:00 UTC: 2 AM EDT, 1 AM EST).
-NIGHT_RUN = "about 2 AM Eastern (1 AM in winter)"
+# permtracker-cron@dispatch-night-deploy timer, 2 AM Eastern all year since Oct 31 2026).
+NIGHT_RUN = "about 2 AM Eastern"
 
 # The files a site build reads: oracle-deploy.yml's `paths`, entry for entry
 # (test_deploy_plan.py holds them equal), read as GitHub reads them: in order,

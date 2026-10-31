@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-cron@dispatch-case-status-full
 [Timer]
-OnCalendar=*-*-* 08:10:00 UTC
+OnCalendar=*-*-* 04:10:00 America/New_York
 Persistent=true
 Unit=permtracker-cron@dispatch-case-status-full.service
 [Install]

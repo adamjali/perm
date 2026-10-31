@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-cron@dispatch-pwd-daily
 [Timer]
-OnCalendar=*-*-* 09:40:00 UTC
+OnCalendar=*-*-* 05:40:00 America/New_York
 Persistent=true
 Unit=permtracker-cron@dispatch-pwd-daily.service
 [Install]

@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-cron@dispatch-processing-times
 [Timer]
-OnCalendar=*-*-* 07:00:00 UTC
+OnCalendar=*-*-* 03:00:00 America/New_York
 Persistent=true
 Unit=permtracker-cron@dispatch-processing-times.service
 [Install]

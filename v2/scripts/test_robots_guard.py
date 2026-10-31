@@ -167,6 +167,60 @@ Crawl-delay: 30
     check("a caller's header dict is its own copy",
           gov.headers_for("https://www.dol.gov/x") is gov.BROWSER_HEADERS, False)
 
+    # A reply cut off part way is unreadable, not an error. reginfo.gov's
+    # robots.txt redirect ended mid-body every half hour on Oct 31 2026, and the
+    # uncaught IncompleteRead stopped the whole rule watch.
+    import http.client
+
+    class CutOff:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            raise http.client.IncompleteRead(b"x" * 35289)
+
+    saved_open = urllib.request.urlopen
+    urllib.request.urlopen = lambda *a, **k: CutOff()
+    try:
+        try:
+            got = gov._robots_text("https://www.reginfo.gov")
+        except Exception as exc:  # the defect: it raised
+            got = f"raised {type(exc).__name__}"
+        check("a cut-off robots.txt reads as unreadable", got, None)
+
+        # And a file whose body is cut off is asked again, not given up on.
+        calls = {"n": 0}
+
+        class Whole(CutOff):
+            def read(self):
+                return b"the whole file"
+
+        def flaky(*a, **k):
+            calls["n"] += 1
+            return CutOff() if calls["n"] == 1 else Whole()
+
+        urllib.request.urlopen = flaky
+        gov._ROBOTS["https://example.gov"] = None
+        saved_sleep = gov.time.sleep
+        gov.time.sleep = lambda s: None
+        try:
+            try:
+                body = gov.fetch("https://example.gov/file.xlsx")
+            except Exception as exc:  # the defect: it raised on the first cut-off
+                body = f"raised {type(exc).__name__}"
+        finally:
+            gov.time.sleep = saved_sleep
+            gov._ROBOTS.pop("https://example.gov", None)
+        check("a cut-off file is fetched again", body, b"the whole file")
+        check("on the second try", calls["n"], 2)
+    finally:
+        urllib.request.urlopen = saved_open
+
     print(f"{N} checks")
     for f in FAILS:
         print("FAIL", f)

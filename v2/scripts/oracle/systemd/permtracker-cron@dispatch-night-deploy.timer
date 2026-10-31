@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-cron@dispatch-night-deploy (the site goes live once a night)
 [Timer]
-OnCalendar=*-*-* 06:00:00 UTC
+OnCalendar=*-*-* 02:00:00 America/New_York
 # Not Persistent: a night missed while the server was down waits for the next
 # night, rather than shipping in the middle of the day when the server returns.
 Persistent=false

@@ -2,6 +2,8 @@
 Description=Schedule for permtracker-cron@dispatch-processing-times-hourly
 # DOL's processing times and the visa bulletin, hourly through the weekday (8 AM to 6 PM Eastern in
 # daylight time), so a new DOL month or bulletin reaches the site and its alerts within the hour.
+# UTC on purpose, unlike the other dispatch timers: Convex reads DOL at :10 and sweeps the bulletin
+# at :25 after each pass, and Convex schedules only in UTC (src/app/api/cron/dispatch/jobs.ts).
 [Timer]
 OnCalendar=Mon..Fri *-*-* 12..22:05:00 UTC
 Persistent=true

@@ -20,8 +20,15 @@ export interface CronJob {
   workflow: string;
   /** `workflow_dispatch` inputs; omitted for workflows that take none. */
   inputs?: Record<string, string>;
-  /** When it runs, as a UTC cron expression; its timer's OnCalendar must match. */
+  /**
+   * When it runs, as a cron expression read in `zone`; its timer's OnCalendar
+   * must match. Eastern time unless a reason says otherwise: on UTC a job runs
+   * an hour earlier on Eastern clocks every November, and lands on what it was
+   * spaced to miss (the 4:10 AM sweep on the 3:15 AM backup).
+   */
   schedule: string;
+  /** The clock `schedule` is read on. */
+  zone: "America/New_York" | "UTC";
   /** What the job is, for the log line and the docs. */
   description: string;
 }
@@ -40,82 +47,97 @@ export const RECENT_RUN_WINDOW_MS = 20 * MS_PER_MINUTE;
 export const CRON_JOBS: Record<string, CronJob> = {
   "processing-times": {
     workflow: "processing-times-ingest.yml",
-    schedule: "0 7 * * *",
+    schedule: "0 3 * * *",
+    zone: "America/New_York",
     description: "DOL processing times, daily",
   },
   "case-status-full": {
     workflow: "case-status-direct.yml",
     inputs: { mode: "full" },
-    schedule: "10 8 * * *",
+    schedule: "10 4 * * *",
+    zone: "America/New_York",
     description: "every PERM case against DOL, plus the discovery walk, daily",
   },
   "pwd-daily": {
     workflow: "pwd-status-direct.yml",
     inputs: { mode: "pending" },
-    schedule: "40 9 * * *",
+    schedule: "40 5 * * *",
+    zone: "America/New_York",
     description: "pending PWD and LCA cases against DOL, daily",
   },
   "ingest-health": {
     workflow: "ingest-health.yml",
-    schedule: "0 10 * * *",
+    schedule: "0 6 * * *",
+    zone: "America/New_York",
     description: "freshness, frontier, backfill and lookup-demand check, daily",
   },
   "pwd-weekly-full": {
     workflow: "pwd-status-direct.yml",
     inputs: { mode: "full" },
-    schedule: "40 10 * * 0",
+    schedule: "40 6 * * 0",
+    zone: "America/New_York",
     description: "the rolling-window PWD and LCA re-check, Sundays",
   },
   "pwd-active": {
     workflow: "pwd-status-direct.yml",
     inputs: { mode: "active" },
-    schedule: "10 19 * * 1-5",
+    schedule: "10 15 * * 1-5",
+    zone: "America/New_York",
     description: "the PERM wage requests DOL is working, a weekday-afternoon pass, so today's determinations show today",
   },
   "processing-times-hourly": {
     workflow: "processing-times-ingest.yml",
     inputs: { quick: "true" },
     schedule: "5 12-22 * * 1-5",
+    // UTC on purpose: Convex reads DOL at :10 and sweeps the bulletin at :25 after
+    // each of these passes, and Convex schedules only in UTC. In winter the
+    // pass runs 7 AM to 5 PM Eastern; 9 and 5 o'clock, the rule watch's hours,
+    // are inside either way.
+    zone: "UTC",
     description: "DOL's processing times and the visa bulletin only, hourly through the weekday",
   },
   "case-status-midday": {
     workflow: "case-status-direct.yml",
     inputs: { mode: "pending" },
-    schedule: "40 14 * * 1-5",
+    schedule: "40 10 * * 1-5",
+    zone: "America/New_York",
     description: "pending PERM cases against DOL, a weekday morning pass between the night and afternoon ones",
   },
   "case-status-pending": {
     workflow: "case-status-direct.yml",
     inputs: { mode: "pending" },
-    schedule: "40 19 * * *",
+    schedule: "40 15 * * *",
+    zone: "America/New_York",
     description: "pending PERM cases against DOL, the afternoon pass",
   },
   "daily-monitor": {
     workflow: "daily-monitor.yml",
-    schedule: "30 11 * * *",
+    schedule: "30 7 * * *",
+    zone: "America/New_York",
     description: "the morning operator report: health, bills, runs, traffic, emailed to the admin",
   },
   // The evening newsworthy check (scripts/newsworthy.py): emails the owner
-  // only when something moved since the morning report. 00:30 UTC is 8:30 PM
-  // EDT and 7:30 PM EST.
+  // only when something moved since the morning report, at 8:30 PM Eastern.
   "newsworthy-evening": {
     workflow: "newsworthy.yml",
-    schedule: "30 0 * * *",
+    schedule: "30 20 * * *",
+    zone: "America/New_York",
     description: "what moved since the morning report, emailed to the owner only when something did, nightly",
   },
   "convex-backup": {
     workflow: "convex-backup.yml",
-    schedule: "50 7 * * *",
+    schedule: "50 3 * * *",
+    zone: "America/New_York",
     description: "a full Convex export, sealed on the runner and copied to R2 by the server, nightly",
   },
   // The site goes live once a night (scripts/deploy_plan.py): a push outside
   // 1 to 5 AM Eastern builds and stops, and this run ships main if anything
-  // the site is built from changed since the live commit. 06:00 UTC is 2 AM
-  // EDT and 1 AM EST, inside the window either way.
+  // the site is built from changed since the live commit, at 2 AM Eastern.
   "night-deploy": {
     workflow: "oracle-deploy.yml",
     inputs: { when: "night" },
-    schedule: "0 6 * * *",
+    schedule: "0 2 * * *",
+    zone: "America/New_York",
     description: "ships main to the site if it changed since the live commit, nightly",
   },
 };
@@ -163,20 +185,29 @@ export const CRON_PATH_PREFIX = "/api/cron/dispatch/";
 export interface HousekeepingJob {
   /** The route the timer calls: /api/cron/<name>, which permtracker-cron builds. */
   path: string;
-  /** When it runs, as a UTC cron expression; its timer's OnCalendar must match. */
+  /**
+   * When it runs, as a cron expression read in `zone`; its timer's OnCalendar
+   * must match. Eastern time unless a reason says otherwise: on UTC a job runs
+   * an hour earlier on Eastern clocks every November, and lands on what it was
+   * spaced to miss (the 4:10 AM sweep on the 3:15 AM backup).
+   */
   schedule: string;
+  /** The clock `schedule` is read on. */
+  zone: "America/New_York" | "UTC";
   description: string;
 }
 
 export const HOUSEKEEPING_JOBS: Record<string, HousekeepingJob> = {
   "prune-uscis": {
     path: "/api/cron/prune-uscis",
-    schedule: "20 9 * * *",
+    schedule: "20 5 * * *",
+    zone: "America/New_York",
     description: "delete USCIS case-status rows nobody has looked up for twelve months (privacy policy, section 18)",
   },
   scorecard: {
     path: "/api/cron/scorecard",
-    schedule: "0 12 * * *",
+    schedule: "0 8 * * *",
+    zone: "America/New_York",
     description: "record today's sampled predictions, grade the decided ones, rewrite the scorecard summaries",
   },
 };

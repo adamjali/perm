@@ -18,6 +18,7 @@ empty cells in a way that silently shifts columns.
 """
 from __future__ import annotations
 
+import http.client
 import re
 import time
 import urllib.error
@@ -98,7 +99,10 @@ def _robots_text(origin: str) -> str | None:
     An unreadable file counts as no rules. That's Google's convention for a
     4xx (www.dol.gov answers 403 to robots.txt itself, from this laptop and the
     server alike, while serving its disclosure files), and a 5xx or a dropped
-    connection shouldn't fail a monthly load on its own.
+    connection shouldn't fail a monthly load on its own. A reply cut off part way
+    (http.client.IncompleteRead, which isn't an OSError) is unreadable too:
+    reginfo.gov's robots.txt redirect did that every half hour on Oct 31 2026,
+    and the uncaught error stopped the whole rule watch.
     """
     try:
         req = urllib.request.Request(f"{origin}/robots.txt", headers=headers_for(origin))
@@ -106,7 +110,7 @@ def _robots_text(origin: str) -> str | None:
             if resp.status != 200:
                 return None
             return resp.read().decode("utf-8", errors="replace")
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError):
         return None
 
 
@@ -215,6 +219,13 @@ def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) 
             if exc.code not in RETRYABLE_STATUS or attempt == attempts:
                 raise
             log(f"  HTTP {exc.code} (attempt {attempt}/{attempts}); waiting {delay}s")
+            time.sleep(delay)
+            delay *= BACKOFF_FACTOR
+        except http.client.IncompleteRead as exc:
+            # The answer was cut off part way: worth asking again, like a throttle.
+            if attempt == attempts:
+                raise
+            log(f"  reply cut off after {len(exc.partial):,} bytes (attempt {attempt}/{attempts}); waiting {delay}s")
             time.sleep(delay)
             delay *= BACKOFF_FACTOR
     raise SystemExit("unreachable")
