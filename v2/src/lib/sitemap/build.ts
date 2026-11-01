@@ -397,6 +397,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     // shut.
     { url: `${base}/policy-changes`, lastModified: at("/policy-changes"), images: [`${base}/og/policy-changes.jpg`] },
     { url: `${base}/debarments`, lastModified: at("/debarments"), images: [`${base}/og/debarments.jpg`] },
+    { url: `${base}/debarments/settlements`, lastModified: at("/debarments/settlements"), images: [`${base}/og/settlements.jpg`] },
     { url: `${base}/perm-case-statuses`, lastModified: at("/perm-case-statuses"), images: [`${base}/og/perm-case-statuses.jpg`] },
     { url: `${base}/glossary`, lastModified: at("/glossary"), images: [`${base}/og/glossary.jpg`] },
     { url: `${base}/estimate-scorecard`, lastModified: at("/estimate-scorecard"), images: [`${base}/og/estimate-scorecard.jpg`] },

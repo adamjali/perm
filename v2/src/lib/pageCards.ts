@@ -20,6 +20,7 @@ export const PAGE_CARD_ALT = {
   developers: "The PERM Tracker API and MCP server: federal PERM, prevailing wage, H-1B and visa bulletin records as JSON and as tools for AI assistants.",
   "api-terms": "API Terms: keys, limits, attribution and what you may build with the PERM Tracker API.",
   "debarments": "Debarred from PERM, H-1B, H-2A and H-2B. Every employer and agent DOL has barred from the programs, from DOL's own lists.",
+  "settlements": "Visa sponsor settlements and suspensions: every Justice Department settlement with an H-1B, H-2A or PERM sponsor since June 2025, on a time line by program.",
   "email-preferences": "Email preferences. Turn any PERM Tracker alert off from one page, no account needed.",
   "estimate-scorecard": "PERM estimate scorecard. Every decision-date estimate this site made for a real case, recorded before the outcome and scored against DOL's decision.",
   "glossary": "PERM and green card glossary. Every term this site uses, where it comes from, and where on the site it meets real data.",

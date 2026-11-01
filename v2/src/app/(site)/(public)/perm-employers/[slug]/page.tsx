@@ -103,6 +103,7 @@ import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
 import { EmployerFollow } from "@/components/employers/EmployerFollow";
 import { employerMoves } from "@/lib/employerStages";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
+import { EnforcementNotice } from "@/components/entities/EnforcementNotice";
 import { debarmentsForSlug } from "@/lib/db/debarments";
 import { warnForSlug } from "@/lib/db/warn";
 import { whdForSlug } from "@/lib/db/whd";
@@ -319,6 +320,7 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
         pending={pending}
         notices={
           <>
+            <EnforcementNotice slug={slug} />{" "}
             <DebarmentNotice rows={debarments} pageName={record.name} today={new Date().toISOString().slice(0, 10)} />{" "}
             <WarnNoticeBand rows={warn} pageName={record.name} />{" "}
             <WageHourCases summary={whd} pageName={record.name} />
@@ -611,6 +613,7 @@ export default async function EmployerPage({
           cases={live.cases}
           notices={
             <>
+              <EnforcementNotice slug={slug} />{" "}
               <DebarmentNotice rows={liveDebarments} pageName={live.record.name} today={new Date().toISOString().slice(0, 10)} />{" "}
               <WarnNoticeBand rows={liveWarn} pageName={live.record.name} />{" "}
               <WageHourCases summary={liveWhd} pageName={live.record.name} />
@@ -899,6 +902,7 @@ export default async function EmployerPage({
             {/* The doubt goes ABOVE the figures it qualifies: a debarment
                 changes how every figure should be read, and a rate on too few
                 cases must not read as more certain than the warning about it. */}
+            <EnforcementNotice slug={canonicalSlug} className="mb-6" />{" "}
             <DebarmentNotice rows={debarments} pageName={row.name} today={today} className="mb-6" />{" "}
             <ReliabilityBand
               reliability={reliability}

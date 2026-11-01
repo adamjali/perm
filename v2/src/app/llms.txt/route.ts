@@ -69,6 +69,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Every employer, attorney and agent barred from PERM, H-1B, H-2A or H-2B filings, with the period and the violation as DOL published them.",
   },
   {
+    path: "/debarments/settlements",
+    label: "Visa sponsor settlements and suspensions",
+    blurb:
+      "Every Justice Department settlement with an H-1B, H-2A or PERM sponsor since June 2025 (OpenAI, Cloudera and Instacart among them), DOL's suspension of Cloudera's PERM processing and the 24 months without PERM it agreed to, each beside what DOL's case record shows for the company.",
+  },
+  {
     path: "/perm-employers/under-review",
     label: "PERM employers with cases on hold, at RFI or under appeal",
     blurb:

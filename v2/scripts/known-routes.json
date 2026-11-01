@@ -24,6 +24,7 @@
   "/contact",
   "/corrections",
   "/debarments",
+  "/debarments/settlements",
   "/email-preferences",
   "/estimate-scorecard",
   "/faq",

@@ -296,6 +296,7 @@ const OTHER_PAGES: readonly SitePage[] = [
   { href: "/accessibility", name: "Accessibility" },
   { href: "/login", name: "Sign in" },
   { href: "/signup", name: "Sign up" },
+  { href: "/debarments/settlements", name: "Settlements and suspensions" },
   { href: "/perm-employers/browse", name: "Browse A to Z" },
   { href: "/perm-attorneys/browse", name: "Browse A to Z" },
   { href: "/perm-wages/browse", name: "Browse A to Z" },

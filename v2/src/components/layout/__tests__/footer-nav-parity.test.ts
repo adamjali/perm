@@ -44,6 +44,7 @@ const REACHED_FROM_PARENT: Record<string, string> = {
   "/perm-wages/browse": "the A to Z link on the wages list",
   "/visa-bulletin/family": "a tab on the visa bulletin page",
   "/visa-bulletin/categories": "a tab on the visa bulletin page",
+  "/debarments/settlements": "the band on the debarments page, and every settled employer's page",
 };
 
 describe("every page is reachable, under one name", () => {

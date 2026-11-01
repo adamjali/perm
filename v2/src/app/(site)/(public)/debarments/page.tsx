@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ScalesIcon } from "@phosphor-icons/react/ssr";
 import { FinePrint } from "@/components/data/FinePrint";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -15,6 +17,7 @@ import {
   type DebarmentProgram,
 } from "@/lib/db/debarments";
 import { withSocialCard } from "@/lib/socialCard";
+import { enforcementTotals } from "@/lib/enforcement/actions";
 import { formatInt } from "@/lib/format";
 import { shortDate } from "@convex/lib/months";
 
@@ -58,6 +61,7 @@ export default async function DebarmentsPage() {
   // Counted, not assumed: a debarment whose start date has not arrived is
   // neither in force nor ended, and must never be described as ended.
   const upcoming = all.filter((d) => phase(d, today) === "upcoming").length;
+  const totals = enforcementTotals();
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
@@ -94,6 +98,18 @@ export default async function DebarmentsPage() {
             {summary?.pdfDate ? ` OFLC's document was last modified ${day(summary.pdfDate)}.` : ""}
             {summary?.h1bEffective ? ` The H-1B list is effective as of ${day(summary.h1bEffective)}.` : ""}
           </p>{" "}
+          <Link
+            href="/debarments/settlements"
+            className="mt-6 flex max-w-3xl items-start gap-3 border-2 border-border bg-tint p-4 hover:border-foreground focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ScalesIcon className="mt-0.5 size-6 shrink-0" aria-hidden="true" />
+            <span>
+              <span className="block font-heading text-lg font-bold">Settlements and suspensions these lists don&apos;t show</span>{" "}
+              <span className="block text-base text-soft">
+                {`${totals.settlements} Justice Department settlements with visa sponsors since ${shortDate(totals.first)}, and Cloudera's agreement to file no PERM for 24 months, each beside DOL's record for the company.`}
+              </span>
+            </span>
+          </Link>{" "}
           <DebarmentBrowser
             rows={all.map((d) => ({ ...d, phase: phase(d, today) }))}
             sections={ORDER.map((program) => ({

@@ -113,6 +113,23 @@
   "from": "PERM (permanent labor certification)"
  },
  {
+  "slug": "settlements",
+  "path": "/debarments/settlements",
+  "title": "Visa sponsor settlements and suspensions",
+  "label": "Every DOJ settlement with a visa sponsor since June 2025, by program, and Cloudera's bar on PERM.",
+  "shot": "settlements.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1320
+  ],
+  "viewport": 1440,
+  "maxWidth": 1180,
+  "mask": "figures",
+  "from": "Every settlement, by day"
+ },
+ {
   "slug": "wage-violations",
   "path": "/wage-violations",
   "title": "H-1B, H-2A and H-2B wage violations",
