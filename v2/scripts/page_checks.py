@@ -66,9 +66,9 @@ def checks(base: str, extra: list[str] | None = None) -> list[dict]:
         # typed into the copy with no date beside them go stale when DOL's next file loads.
         {"key": "figures", "title": "Figures typed into the copy", "cmd": [py, "scripts/audit_staleness.py"], "limit": 300},
         {"key": "axe", "title": "Accessibility (axe, WCAG AA)", "cmd": ["node", "scripts/audit_axe.mjs", base, *pages], "limit": 900},
-        {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *pages], "limit": 600,
+        {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *pages], "limit": 900,
          # A page with nothing wrong prints a line too; the report keeps the lines with findings.
-         "clean": r"overflow=0px\s+small=0\s+taps=0\s*$"},
+         "clean": r"overflow=0px\s+small=0\s+taps=0(\s+\([\d.]+ s\))?\s*$"},
         {
             "key": "flows",
             "title": "Browser flows (Playwright)",

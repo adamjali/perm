@@ -97,11 +97,16 @@ try {
     const ctx = await browser.newContext({ viewport: { width, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
     for (const p of paths) {
-      const ok = await page.goto(base + p, { waitUntil: "networkidle", timeout: 120000 }).then(() => true, (e) => (console.log(`${width} ${p} load failed: ${String(e).slice(0, 80)}`), false));
+      // Load, then up to 8 s for the network to go quiet. Waiting for quiet alone cost 2 minutes a width on a
+      // page that keeps a request open, and the deploy's sweep ran out of its 10 minutes (Nov 1 2026).
+      const t0 = Date.now();
+      const ok = await page.goto(base + p, { waitUntil: "load", timeout: 90000 }).then(() => true, (e) => (console.log(`${width} ${p} load failed: ${String(e).slice(0, 80)}`), false));
       if (!ok) { bad++; continue; }
+      await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
+      const secs = ((Date.now() - t0) / 1000).toFixed(1);
       const r = await page.evaluate(measure, width);
       if (r.overflow > 0 || r.smallN || r.tapsN) bad++;
-      console.log(`${width} ${p}  overflow=${r.overflow}px  small=${r.smallN}  taps=${r.tapsN}`);
+      console.log(`${width} ${p}  overflow=${r.overflow}px  small=${r.smallN}  taps=${r.tapsN}  (${secs} s)`);
       for (const c of r.culprit) console.log(`    wide: ${c}`);
       for (const s of r.small) console.log(`    small: ${s}`);
       for (const t of r.taps) console.log(`    tap: ${t}`);

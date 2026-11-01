@@ -20,6 +20,12 @@ def main() -> int:
         failures.append(f"a failing phone sweep's report keeps the page with the finding (got {r['tail']})")
     if any("taps=0" in ln for ln in r["tail"]):
         failures.append("a failing phone sweep's report leaves out the clean pages")
+    # Nov 1 2026: each line ends with the page's load time; a clean line with it is still clean.
+    timed = [f"390 /page-{i}  overflow=0px  small=0  taps=0  (3.{i} s)" for i in range(4)] + ["390 /bad  overflow=12px  small=0  taps=0  (4.0 s)"]
+    script_t = "import sys\n" + "".join(f"print({ln!r})\n" for ln in timed) + "sys.exit(1)\n"
+    rt = pc.run({**phone, "cmd": [sys.executable, "-c", script_t]})
+    if any("overflow=0px" in ln for ln in rt["tail"]) or not any("/bad" in ln for ln in rt["tail"]):
+        failures.append(f"a clean line that carries its load time is left out of the report (got {rt['tail']})")
     clean = pc.run({**phone, "cmd": [sys.executable, "-c", "import sys\nprint('320 / overflow=0px  small=0  taps=0')\nsys.exit(1)\n"]})
     if not clean["tail"]:
         failures.append("a failure with no finding lines still reports what it printed")
