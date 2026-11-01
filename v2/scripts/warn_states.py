@@ -2449,8 +2449,18 @@ def load_nevada(f: str | None) -> list[dict]:
         except LookupError as exc:
             print(f"  Nevada {y}: {exc}", flush=True)
             continue
+        try:
+            rows = parse_nevada(copy.data, masters[y])
+        except ValueError as exc:
+            # The parser reads the layout Nevada has used since 2023; an older year's file in another layout
+            # (2021's raised this, Nov 1 2026, and kept 2023 to 2026 out) is named and left out. The newest
+            # year breaking still fails the state: that is a layout change to fix.
+            if y == max(masters):
+                raise
+            print(f"  Nevada {y}: {exc}; that year is left out", flush=True)
+            continue
         captured.append(copy.captured)
-        out.extend(parse_nevada(copy.data, masters[y]))
+        out.extend(rows)
     note_source("NV", captured_note(captured))
     return reassign(out)
 

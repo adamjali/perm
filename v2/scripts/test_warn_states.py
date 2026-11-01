@@ -727,6 +727,35 @@ def main() -> int:
     check("WarnNotices2026.pdf" in ws.LA_YEAR.format(year=2026) and all("{year}" in c for c in ws.NM_CANDIDATES),
           "Louisiana and New Mexico ask for each year's file by its own name", f)
 
+    # Nevada: an older year's file in another layout is left out; the newest year breaking still fails.
+    from types import SimpleNamespace as NS
+    saved = (ws.archive_copy, ws.nv_masters, ws.parse_nevada, ws.years_to_read, ws.pause, ws.reassign)
+    try:
+        ws.archive_copy = lambda url, accept=None, newest=12: NS(data=b"%PDF", captured="2026-10-05", url=url)
+        ws.nv_masters = lambda text: {2021: "u2021", 2026: "u2026"}
+        ws.years_to_read = lambda st: [2026, 2021]
+        ws.pause = lambda *a, **k: None
+        ws.reassign = lambda rows: rows
+        row = {"notice_date": "2026-03-01"}
+
+        def parse(data, url):
+            if url == "u2021":
+                raise ValueError("no dated rows in Nevada's file")
+            return [row]
+        ws.parse_nevada = parse
+        check(ws.load_nevada(None) == [row], "an older Nevada year that won't parse is left out", f)
+
+        def parse_newest_broken(data, url):
+            raise ValueError("no dated rows in Nevada's file")
+        ws.parse_nevada = parse_newest_broken
+        try:
+            ws.load_nevada(None)
+            check(False, "the newest Nevada year breaking still fails the state", f)
+        except ValueError:
+            check(True, "the newest Nevada year breaking still fails the state", f)
+    finally:
+        ws.archive_copy, ws.nv_masters, ws.parse_nevada, ws.years_to_read, ws.pause, ws.reassign = saved
+
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 
