@@ -34,7 +34,8 @@ import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { queryStatic } from "@/lib/convexStatic";
-import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, ArrowSquareOutIcon, CurrencyDollarIcon, HourglassMediumIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
+import { averageTrend, queueMoveTrend } from "@/lib/dolTrends";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -388,6 +389,8 @@ export default async function PermProcessingTimesPage() {
             {analystAvg?.calendarDays !== null && analystAvg?.calendarDays !== undefined ? (
               <Figure
                 label="Average to a determination"
+                icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
+                trend={averageTrend(history)}
                 value={`${analystAvg.calendarDays} days`}
                 note={[
                   daysAsApproxMonths(analystAvg.calendarDays),
@@ -401,6 +404,8 @@ export default async function PermProcessingTimesPage() {
             {audit?.priorityDate ? (
               <Figure
                 label="Audit review queue"
+                icon={<MagnifyingGlassIcon weight="bold" className="text-primary-text" />}
+                trend={queueMoveTrend(history, (h) => ({ month: h.permQueues.find((q) => /audit review/i.test(q.queue))?.priorityDate, asOf: h.permAsOf }))}
                 value={formatMonth(audit.priorityDate) ?? audit.raw}
                 note="Audited cases sit in their own queue, behind the main one."
               />
@@ -409,6 +414,8 @@ export default async function PermProcessingTimesPage() {
             {pwdPerm?.oewsReceiptDate ? (
               <Figure
                 label="Prevailing wage (PERM)"
+                icon={<CurrencyDollarIcon weight="bold" className="text-primary-text" />}
+                trend={queueMoveTrend(history, (h) => ({ month: h.pwdQueues.find((q) => /^perm\b/i.test(q.program.trim()))?.oewsReceiptDate, asOf: h.pwdAsOf }))}
                 value={formatMonth(pwdPerm.oewsReceiptDate) ?? pwdPerm.oewsReceiptDate}
                 note={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.${
                   pwdLine ? ` Our check of ${longDate(pwdLine.asOf)}: requests filed ${longDate(pwdLine.day)} being decided.` : ""
