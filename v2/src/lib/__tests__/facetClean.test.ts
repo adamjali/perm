@@ -20,6 +20,11 @@ describe("cleanPapers", () => {
     expect(out.map((r) => r.label)).toEqual(["The Seattle Times", "Seattle Weekly", "Star", "Stars"]);
   });
 
+  it("drops a form note the filer typed after the name, and joins the bare name", () => {
+    const out = cleanPapers([row("The San Bernardino Sun; See Box E.5", 202), row("The San Bernardino Sun", 3)]);
+    expect(out).toEqual([{ key: "the san bernardino sun; see box e.5", label: "The San Bernardino Sun", code: null, n: 205, certified: 205, denied: 0 }]);
+  });
+
   it("joins 'The' and a bracketed publisher with the bare name", () => {
     const out = cleanPapers([row("The Mercury News (Bay Area News Group)", 5), row("Mercury News", 4)]);
     expect(out).toHaveLength(1);

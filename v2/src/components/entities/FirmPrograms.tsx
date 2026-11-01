@@ -29,7 +29,7 @@ function Column({ label, noun, line }: { label: string; noun: string; line: Firm
   const to = monthYear(line.lastDecided);
   return (
     <div>
-      <h3 className="text-sm font-bold text-muted-foreground">{label}</h3>{" "}
+      <h4 className="text-sm font-bold text-muted-foreground">{label}</h4>{" "}
       <p className="mt-2">
         <span className="font-heading text-3xl font-bold tabular-nums">{formatInt(line.filings)}</span>{" "}
         <span className="text-sm text-muted-foreground">
@@ -74,14 +74,16 @@ export function FirmPrograms({ name, data, className = "mt-10" }: { name: string
   if (!data || (!data.lca && !data.pwd && !data.seasonal)) return null;
   return (
     <section className={`${className}`}>
-      <h2 className="font-heading text-xl font-bold">Beyond PERM: its other work for clients</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
-        DOL names the law firm or agent on each H-1B labor condition application, prevailing wage request and H-2A,
-        H-2B and CW-1 application it publishes.
-        These are the ones that name {name}
+      <h3 className="font-heading text-lg font-bold">Its other work for clients</h3>{" "}
+      <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+        The H-1B LCAs, wage requests and H-2A, H-2B and CW-1 applications in DOL&apos;s files that name {name}
         {data.spellings > 1 ? `, under ${formatInt(data.spellings)} spellings of its name` : ""}.
       </p>{" "}
-      <div className="mt-5 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+      <div
+        className={`mt-4 grid grid-cols-1 gap-8 [&>*]:min-w-0 ${
+          [data.lca, data.pwd, data.seasonal].filter(Boolean).length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"
+        }`}
+      >
         {data.lca ? <Column label="H-1B LCAs" noun="LCAs filed for clients" line={data.lca} /> : null}{" "}
         {data.pwd ? <Column label="Prevailing wage requests" noun="wage requests" line={data.pwd} /> : null}{" "}
         {data.seasonal ? <Column label="H-2A, H-2B and CW-1" noun="applications" line={data.seasonal} /> : null}

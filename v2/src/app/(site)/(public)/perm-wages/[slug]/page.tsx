@@ -481,7 +481,7 @@ export default async function OccupationPage({
           </div>
         </section>
       ) : null}{" "}
-      <PwdToPerm links={pwdLinks} who={displayTitle(row)} className="mt-12" />{" "}
+      <PwdToPerm links={pwdLinks} who={displayTitle(row)} className="mt-8 max-w-2xl border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6" />{" "}
       {socGroup(row.code) ? (
         <ul className="mt-6 space-y-2 text-base">
           <li>

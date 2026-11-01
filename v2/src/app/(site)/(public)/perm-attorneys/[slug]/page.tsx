@@ -395,7 +395,7 @@ export default async function AttorneyPage({
           benchmarking a competitor and a beneficiary checking their own firm
           both arrive with, and it is a fact rather than an opinion. */}
       {hasPractice ? (
-        <Chapter id="practice" title="The practice" dek="Who they file for, what the jobs are and where the work sits, from the employer, occupation and worksite on their own applications.">
+        <Chapter id="practice" title="The practice">
           <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
             {facets.employer ? (
               <PartyMix
@@ -415,7 +415,7 @@ export default async function AttorneyPage({
             lead={facets.recruit_lead}
             className="mt-4"
           />{" "}
-          <PwdToPerm links={pwdLinks} who={row.name} className="mt-12" />
+          <PwdToPerm links={pwdLinks} who={row.name} className="mt-8 max-w-2xl border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6" />
         </Chapter>
       ) : null}
 
@@ -430,11 +430,10 @@ export default async function AttorneyPage({
         title="Against other firms"
         dek={
           <>
-            Where it sits among {formatInt(kindTotal)} firms. The{" "}
+            Among {formatInt(kindTotal)} firms.{" "}
             <Link href={BASE} className="link">
-              full ranking
-            </Link>{" "}
-            sorts every column.
+              The full ranking
+            </Link>
           </>
         }
       >
@@ -455,18 +454,19 @@ export default async function AttorneyPage({
           inCohortNote="The line marks this one. Approval rates pile up against 100%, so read the ties in the label rather than the position of the line."
           outOfCohortNote={`This firm has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
         />
-        {band ? (
-          <SizeBandNote band={band} subjectMedianDays={row.medianDays} subject="firms" unit="cases" className="mt-10" />
-        ) : null}
-        <RankLadder
-          rank={row.rank}
-          kindTotal={kindTotal}
-          above={near.above}
-          below={near.below}
-          hrefBase={BASE}
-          unit="cases"
-          className="mt-10"
-        />
+        {/* The wait against the firms ranked nearest, and the two either side by volume, side by side. */}
+        <div className="mt-8 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-2">
+          {band ? <SizeBandNote band={band} subjectMedianDays={row.medianDays} subject="firms" unit="cases" /> : null}{" "}
+          <RankLadder
+            rank={row.rank}
+            kindTotal={kindTotal}
+            above={near.above}
+            below={near.below}
+            hrefBase={BASE}
+            unit="cases"
+            className="border-2 border-border bg-card p-5 shadow-hard-sm"
+          />
+        </div>
         <PeerList
           heading={
             peersAreLocal ? `Other ${where} firms at this volume` : "Firms at this volume"

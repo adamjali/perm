@@ -109,7 +109,7 @@ export function LiveQueueBand({
               </p>{" "}
               <p className="mt-1 font-heading text-5xl font-bold leading-none tabular-nums max-sm:text-[2.5rem]">
                 {formatInt(waiting)}
-              </p>
+              </p>{" "}
               {oldest ? (
                 <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-soft">
                   The oldest was filed{" "}

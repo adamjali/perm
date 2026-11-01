@@ -366,7 +366,7 @@ export function RankLadder({
 
   return (
     <section className={className}>
-      <h2 className="font-heading text-lg font-bold">Where this sits in the ranking</h2>{" "}
+      <h3 className="font-heading text-lg font-bold">Where this sits in the ranking</h3>{" "}
       <p className="mt-2 text-base leading-relaxed text-muted-foreground">
         Ranked {formatInt(rank)} of {formatInt(kindTotal)} by volume: {formatInt(above_)} filed at
         least as many {unit}, and {formatInt(below_)} filed no more.

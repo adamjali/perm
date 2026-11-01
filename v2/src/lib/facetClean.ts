@@ -13,6 +13,9 @@ import type { FacetRow } from "@/lib/db/entityDetail";
  * names no paper or no city at all.
  */
 
+/** A cross-reference the filer typed after the paper's name ("The San Bernardino Sun; See Box E.5"). */
+const FORM_NOTE = /\s*[;,]\s*see\b.*$/i;
+
 /** A row that names no paper: the filer's note, or a placeholder. */
 const NOT_A_PAPER = /^\s*(note\b|n\/?a\b|none\b|not applicable|see\b|tbd\b)/i;
 
@@ -48,13 +51,14 @@ export function cleanPapers(rows: readonly FacetRow[]): FacetRow[] {
   const groups: { key: string; row: FacetRow; top: number }[] = [];
   for (const r of [...rows].sort((x, y) => y.n - x.n)) {
     if (NOT_A_PAPER.test(r.label)) continue;
-    const key = letters(r.label);
+    const label = r.label.replace(FORM_NOTE, "").trim();
+    const key = letters(label);
     if (!key) continue;
     const into = groups.find((g) => g.key === key || (key.length >= 10 && g.key.length >= 10 && oneEditApart(g.key, key)));
     if (into) {
       into.row = { ...into.row, n: into.row.n + r.n, certified: into.row.certified + r.certified, denied: into.row.denied + r.denied };
     } else {
-      groups.push({ key, row: { ...r }, top: r.n });
+      groups.push({ key, row: { ...r, label }, top: r.n });
     }
   }
   return groups.map((g) => g.row).sort((x, y) => y.n - x.n);
