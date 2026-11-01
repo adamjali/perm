@@ -129,13 +129,15 @@ jobs:
       # A state whose site is down that day is named in the run's note and its
       # own freshness row is the alarm; a parse that breaks turns the run partial.
       # Texas's own site challenges scripts, so its automatic source is the state's
-      # open data portal.
+      # open data portal. The four states read only through the Internet Archive
+      # (Louisiana, New Mexico, Missouri, Nevada) are the server's: the Archive
+      # throttles GitHub's shared runners with 429s and answers the server.
       - name: WARN notices
         if: always() && inputs.quick != 'true'
         working-directory: v2
         timeout-minutes: 35
         run: |
-          python3 scripts/ingest_warn.py \
+          python3 scripts/ingest_warn.py --runner github \
             || python3 scripts/record_ingest_failure.py --script ingest_warn.py --note "WARN notices failed"
 
       # The OFLC program-debarments PDF (PERM, H-2A, H-2B) and the Wage and

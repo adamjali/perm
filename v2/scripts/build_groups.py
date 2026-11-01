@@ -75,6 +75,11 @@ SCHEMA = [
          PRIMARY KEY (kind, slug)
        )""",
     "CREATE INDEX IF NOT EXISTS idx_pg_kind_total ON perm_groups(kind, total)",
+    # Every column the list pages read (SUMMARY_COLS in src/lib/db/groups.ts), so listing a kind reads this
+    # index alone. The table's rows carry each group's detail JSON, about 3.5 KB a city: listing the 3,058
+    # cities read 10.8 MB of rows and took 1.4 s from disk (Nov 1 2026), for columns a few KB hold.
+    "CREATE INDEX IF NOT EXISTS idx_pg_kind_summary ON perm_groups"
+    "(kind, total, slug, key, label, certified, denied, withdrawn, median_wage, fy_from, fy_to)",
 ]
 
 

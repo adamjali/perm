@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule for permtracker-uscis@warn-archive
+# Layoff notices from the four states read only through the Internet Archive, once a day after the
+# morning's sweeps; each state walks its whole history once a week on its own weekday.
+[Timer]
+OnCalendar=*-*-* 11:20:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@warn-archive.service
+
+[Install]
+WantedBy=timers.target

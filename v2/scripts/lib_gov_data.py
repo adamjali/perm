@@ -58,7 +58,10 @@ CONTACT_HEADERS = {
     "User-Agent": "PERMTracker/1.0 (+https://permtracker.app; support@permtracker.app)",
     "Accept": "*/*",
 }
-CONTACT_HOSTS = ("www.bls.gov", "download.bls.gov", "data.bls.gov", "api.bls.gov")
+# The Internet Archive too (Nov 1 2026): the WARN readers, which read its copies of state sites that turn
+# scripts away so that nothing poses as a browser, had been asking the Archive itself in a browser's
+# clothes. It answers a named client the same, and asks automated clients to say who they are.
+CONTACT_HOSTS = ("www.bls.gov", "download.bls.gov", "data.bls.gov", "api.bls.gov", "web.archive.org", "archive.org")
 
 
 def headers_for(url: str) -> dict[str, str]:

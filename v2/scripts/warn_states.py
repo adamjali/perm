@@ -2105,6 +2105,10 @@ def load_rhode_island(f: str | None) -> list[dict]:
 LA_PAGE = "https://www.laworks.net/Downloads/Downloads_WFD.asp"
 LA_FOLDER = "laworks.net/Downloads/WFD/WarnNotices"
 LA_FILE = re.compile(r"^WarnNotices(20\d\d)\.pdf$", re.I)
+# Each year's file by the name Louisiana has used since 2007, asked for exactly. The Archive answers an
+# exact address in about 1 to 2 s; the search of the whole folder took 24 s and is the request it turns
+# away with a 503 when busy (measured from the server, Nov 1 2026). The search stays as the fallback.
+LA_YEAR = "https://www.laworks.net/Downloads/WFD/WarnNotices{year}.pdf"
 SMALL_NUMBERS = {w: i for i, w in enumerate(
     "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
     "seventeen eighteen nineteen twenty".split())}
@@ -2164,24 +2168,39 @@ def parse_louisiana(data, source_url: str = LA_PAGE) -> list[dict]:
 def load_louisiana(f: str | None) -> list[dict]:
     if f:
         return parse_louisiana(read(f))
-    files: dict[int, str] = {}
-    for url in archive_index(LA_FOLDER, LA_FILE.pattern):
-        m = LA_FILE.match(urllib.parse.unquote(url.rsplit("/", 1)[-1]))
-        files[int(m[1])] = url
-    years = [y for y in years_to_read("LA") if y in files]
-    if not years:
-        raise ValueError("the Internet Archive's index lists no Louisiana WARN file for the years read")
+    files: dict[int, str] = {y: LA_YEAR.format(year=y) for y in years_to_read("LA")}
     out: list[dict] = []
     captured: list[str] = []
-    for y in years:
+    missed: list[int] = []
+    for y in files:
         try:
             copy = archive_copy(files[y], is_pdf)
-        except LookupError as exc:
-            print(f"  Louisiana {y}: {exc}", flush=True)
+        except LookupError:
+            missed.append(y)
             continue
         captured.append(copy.captured)
         out.extend(parse_louisiana(copy.data, plain_url(files[y])))
         pause()
+    if missed:
+        # A year's file under another name: the folder's own index, asked only when an exact name missed.
+        indexed: dict[int, str] = {}
+        for url in archive_index(LA_FOLDER, LA_FILE.pattern):
+            m = LA_FILE.match(urllib.parse.unquote(url.rsplit("/", 1)[-1]))
+            indexed[int(m[1])] = url
+        for y in missed:
+            if y not in indexed or indexed[y] == files[y]:
+                print(f"  Louisiana {y}: the Internet Archive holds no copy of its file", flush=True)
+                continue
+            try:
+                copy = archive_copy(indexed[y], is_pdf)
+            except LookupError as exc:
+                print(f"  Louisiana {y}: {exc}", flush=True)
+                continue
+            captured.append(copy.captured)
+            out.extend(parse_louisiana(copy.data, plain_url(indexed[y])))
+            pause()
+    if not captured:
+        raise ValueError("the Internet Archive holds no copy of any Louisiana year read")
     note_source("LA", captured_note(captured))
     return reassign(out)
 
@@ -2193,6 +2212,13 @@ def load_louisiana(f: str | None) -> list[dict]:
 NM_PAGE = "https://www.dws.nm.gov/Rapid-Response"
 NM_FOLDER = "dws.nm.gov/Portals/0/"
 NM_FILE = re.compile(r"^(20\d\d)[ _]WARN\.pdf$", re.I)
+# A year's file under both folders and both spellings, asked for exactly (see LA_YEAR for why).
+NM_CANDIDATES = [
+    "https://www.dws.nm.gov/Portals/0/DM/Business/{year}_WARN.pdf",
+    "https://www.dws.nm.gov/Portals/0/DM/Business/{year}%20WARN.pdf",
+    "https://www.dws.nm.gov/Portals/0/{year}_WARN.pdf",
+    "https://www.dws.nm.gov/Portals/0/{year}%20WARN.pdf",
+]
 
 
 def parse_new_mexico(data, source_url: str = NM_PAGE) -> list[dict]:
@@ -2217,6 +2243,21 @@ def parse_new_mexico(data, source_url: str = NM_PAGE) -> list[dict]:
 def load_new_mexico(f: str | None) -> list[dict]:
     if f:
         return parse_new_mexico(read(f))
+    exact: dict[int, list[str]] = {y: [c.format(year=y) for c in NM_CANDIDATES] for y in years_to_read("NM")}
+    out: list[dict] = []
+    captured: list[str] = []
+    for y, urls in exact.items():
+        try:
+            copy = newest_copy(urls, is_pdf)
+        except LookupError:
+            continue
+        captured.append(copy.captured)
+        out.extend(parse_new_mexico(copy.data, plain_url(copy.url)))
+        pause()
+    if captured:
+        note_source("NM", captured_note(captured))
+        return reassign(out)
+    # No exact name answered: the folder's own index, the route before Nov 1 2026.
     files: dict[int, list[str]] = {}
     for url in archive_index(NM_FOLDER, r"WARN"):
         m = NM_FILE.match(urllib.parse.unquote(url.rsplit("/", 1)[-1]))
@@ -2605,9 +2646,12 @@ STATES: dict[str, dict] = {
     # between good captures of the state's file or page.
     "mn": {"name": "Minnesota", "page": MN_PAGE, "days": 60, "snapshot": True, "load": load_minnesota},
     "ri": {"name": "Rhode Island", "page": RI_PAGE, "days": 120, "snapshot": True, "load": load_rhode_island},
-    "la": {"name": "Louisiana", "page": LA_PAGE, "days": 70, "snapshot": True, "load": load_louisiana},
-    "nm": {"name": "New Mexico", "page": NM_PAGE, "days": 200, "snapshot": True, "load": load_new_mexico},
-    "mo": {"name": "Missouri", "page": MO_PAGE, "days": 70, "snapshot": True, "load": load_missouri},
-    "nv": {"name": "Nevada", "page": NV_PAGE, "days": 120, "snapshot": True, "load": load_nevada},
+    # "runner": "server": read only through the Internet Archive, which answers the server's own address
+    # and throttles GitHub's shared runners with 429s (every daily run from Oct 25 to Nov 1 2026). The
+    # server's permtracker-uscis@warn-archive job reads these; the daily GitHub run skips them.
+    "la": {"name": "Louisiana", "page": LA_PAGE, "days": 70, "snapshot": True, "runner": "server", "load": load_louisiana},
+    "nm": {"name": "New Mexico", "page": NM_PAGE, "days": 200, "snapshot": True, "runner": "server", "load": load_new_mexico},
+    "mo": {"name": "Missouri", "page": MO_PAGE, "days": 70, "snapshot": True, "runner": "server", "load": load_missouri},
+    "nv": {"name": "Nevada", "page": NV_PAGE, "days": 120, "snapshot": True, "runner": "server", "load": load_nevada},
     "wv": {"name": "West Virginia", "page": WV_PAGE, "days": 90, "snapshot": True, "load": load_west_virginia},
 }

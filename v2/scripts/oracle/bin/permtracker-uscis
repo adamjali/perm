@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -20,6 +20,13 @@ case "$job" in
     # months not held and names any the Archive won't serve in its own run row, so a busy Archive costs
     # a month's wait, never this job's status.
     timeout 30m python3 scripts/ingest_i485_inventory.py --archive || true ;;
+  # Layoff notices from the four states read only through the Internet Archive (Louisiana, New Mexico,
+  # Missouri, Nevada; Nov 1 2026). The Archive throttles GitHub's shared runners (HTTP 429 on every daily run
+  # from Oct 25) and answers this server, so these four are read here and GitHub's run skips them. A state the
+  # Archive refuses that day is a warning in the run row and its own freshness row is the alarm; only a parse
+  # that broke fails the unit.
+  warn-archive)
+    timeout 40m nice -n 10 python3 scripts/ingest_warn.py --runner server || { rc=1; fail "ingest_warn.py:server" "exited non-zero or ran past 40m"; } ;;
   # DOL's own notice on FLAG (a maintenance window), read every 15 minutes so
   # the site can say why statuses are late (Oct 27 2026). It writes its own run row.
   # A FLAG that doesn't answer is a "partial" run row and exit 0 (the script

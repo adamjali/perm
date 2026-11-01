@@ -1570,7 +1570,10 @@ def perf_verdict(doc: dict | None, now_ms: int) -> dict:
     db = doc.get("database") or {}
     if db.get("top"):
         t = db["top"][0]
-        lines.append(f"Database: {db.get('totalSeconds')} s of statements in the hour. Costliest: {t['runs']:,} runs "
+        # A reading in a new hourly window of the database's stats covers that window alone (permtracker-perf).
+        since = et_time(dt.datetime.fromtimestamp(db["since"] / 1000, dt.timezone.utc).isoformat()) if db.get("since") else None
+        span = f"since {since}" if since else "in the hour"
+        lines.append(f"Database: {db.get('totalSeconds')} s of statements {span}. Costliest: {t['runs']:,} runs "
                      f"at {t['meanMs']} ms: {t['sql'][:80]}")
     status = "fail" if fails else "warn" if warns else "ok"
     summary = (fails + warns)[0] if fails or warns else (

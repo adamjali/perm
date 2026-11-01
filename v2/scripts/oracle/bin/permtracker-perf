@@ -267,17 +267,31 @@ def db_snapshot(port: int = 9097) -> dict[str, dict]:
     )
     with urllib.request.urlopen(req, timeout=20) as r:
         d = json.load(r)
-    return {s["query"]: {"count": s["count"], "ms": s["elapsed_ms"], "rows": s["rows_read"]}
-            for s in d.get("queries", {}).get("stats", [])}
+    q = d.get("queries", {})
+    snap = {s["query"]: {"count": s["count"], "ms": s["elapsed_ms"], "rows": s["rows_read"]}
+            for s in q.get("stats", [])}
+    snap[WINDOW] = {"id": q.get("id"), "since": int(q["created_at"]) * 1000 if q.get("created_at") else None}
+    return snap
+
+
+# sqld keeps its per-statement stats in a window that starts again each hour (`queries.id`, from its
+# `created_at`, on the hour), not as totals since it started. Until Nov 1 2026 this subtracted one
+# hour's window from the last as if they were totals, and the hour's database time read -143 s.
+WINDOW = "__window__"
 
 
 def db_delta(now: dict[str, dict], prev: dict[str, dict] | None) -> tuple[list[dict], bool]:
-    """Per statement, what the hour added. sqld's counts are cumulative since
-    it started; a count that went down means it restarted, so the whole
-    current count is the hour's (and the second value says so)."""
-    restarted = False
+    """Per statement, what ran since the last reading. Within one window that's the difference; in a new
+    window (or after sqld restarted, a count going down) the current window's figures are taken whole, from
+    the window's start, and the second value says so."""
+    same_window = bool(now.get(WINDOW, {}).get("id")) and now.get(WINDOW, {}).get("id") == (prev or {}).get(WINDOW, {}).get("id")
+    restarted = not same_window and prev is not None
+    if not same_window:
+        prev = None
     out = []
     for q, s in now.items():
+        if q == WINDOW:
+            continue
         p = (prev or {}).get(q)
         if p and s["count"] >= p["count"]:
             d = {"count": s["count"] - p["count"], "ms": s["ms"] - p["ms"], "rows": s["rows"] - p["rows"]}
@@ -658,7 +672,8 @@ def main() -> int:
         "pages": pages,
         "preloads": pre,
         "database": None if db is None else {"statements": len(db), "totalSeconds": db_total,
-                                             "sinceRestart": restarted, "top": db[:8]},
+                                             "sinceRestart": restarted, "top": db[:8],
+                                             "since": (snap or {}).get(WINDOW, {}).get("since") if restarted else None},
         "profile": prof,
         "warnings": warnings,
         "errors": errors,

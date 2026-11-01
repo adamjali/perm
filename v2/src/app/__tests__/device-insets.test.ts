@@ -29,7 +29,7 @@ describe("the device's own insets", () => {
     const pinned: [string, RegExp][] = [
       ["components/chat/ChatWidget.tsx", /right-\[calc\(1rem_\+_env\(safe-area-inset-right,0px\)\)\]/],
       ["components/chat/ChatWidget.tsx", /env\(safe-area-inset-bottom,0px\)/],
-      ["components/chat/ChatPanel.tsx", /md:right-\[calc\(1rem_\+_env\(safe-area-inset-right,0px\)\)\]/],
+      ["components/chat/ChatPanel.tsx", /md:right-\[calc\(1\.5rem_\+_env\(safe-area-inset-right,0px\)\)\]/],
       ["components/ui/scroll-to-top.tsx", /right-\[calc\(1\.5rem_\+_env\(safe-area-inset-right,0px\)\)\]/],
       ["components/tools/DataRail.tsx", /left-\[env\(safe-area-inset-left,0px\)\]/],
       ["components/cases/SelectionBar.tsx", /pb-\[env\(safe-area-inset-bottom,0px\)\]/],

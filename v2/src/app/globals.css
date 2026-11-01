@@ -1376,9 +1376,22 @@ html.dark {
   scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 
-/* Global cursor pointer styles */
+/* Global cursor pointer styles. The pointer means "a click does something", so it comes from what a
+   thing is, never from being focusable: a scroll area takes the keyboard on purpose (ScrollBox, the
+   chat's conversation, the review rows) and a click on it does nothing. Until Nov 1 2026 a
+   [tabindex] selector here put the pointer over all of them. */
 button,
 [role="button"],
+[role="link"],
+[role="tab"],
+[role="menuitem"],
+[role="menuitemradio"],
+[role="menuitemcheckbox"],
+[role="option"],
+[role="switch"],
+[role="checkbox"],
+[role="radio"],
+[role="slider"],
 [type="button"],
 [type="submit"],
 [type="reset"],
@@ -1387,7 +1400,6 @@ label[for],
 select,
 summary,
 [onclick],
-[tabindex]:not([tabindex="-1"]),
 input[type="checkbox"],
 input[type="radio"],
 .clickable {

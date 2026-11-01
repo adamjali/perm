@@ -718,6 +718,15 @@ def main() -> int:
             leaked.append(name)
     check(not leaked, f"no fixture carries an email address or a phone number (found in {leaked})", f)
 
+    # The states read only through the Internet Archive load on the server (the Archive throttles GitHub's
+    # shared runners); every other state stays on GitHub's daily run. Nov 1 2026.
+    server = {st for st, cfg in ws.STATES.items() if cfg.get("runner") == "server"}
+    check(server == {"la", "nm", "mo", "nv"}, f"the server reads exactly the four Archive-only states ({sorted(server)})", f)
+    check(all(cfg.get("runner", "github") in ("github", "server") for cfg in ws.STATES.values()),
+          "every state's runner is github or server", f)
+    check("WarnNotices2026.pdf" in ws.LA_YEAR.format(year=2026) and all("{year}" in c for c in ws.NM_CANDIDATES),
+          "Louisiana and New Mexico ask for each year's file by its own name", f)
+
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 

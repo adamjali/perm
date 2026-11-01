@@ -395,8 +395,12 @@ ARCHIVE_OFFLINE = b"Internet Archive: Temporarily Offline"
 # down for the rest of the run, and so does the run spending ARCHIVE_BUDGET_S
 # on it, so a bad day at the Archive costs one state's row a day's freshness,
 # never the whole WARN step its time limit.
-ARCHIVE_GAP_S = 4.0
-ARCHIVE_WAITS = (30, 90)
+# Nov 1 2026: the Archive refused the server after about a dozen requests in a few minutes and served it
+# again a few minutes later, so requests go 6 s apart and a refusal waits a minute, then four, or the wait
+# the Archive names (Retry-After), before the state's run gives up for the day.
+ARCHIVE_GAP_S = 6.0
+ARCHIVE_WAITS = (60, 240)
+ARCHIVE_RETRY_AFTER_MAX_S = 300
 ARCHIVE_BUDGET_S = 900
 _archive = {"last": 0.0, "spent": 0.0, "down": "", "optional": False}
 
@@ -457,6 +461,9 @@ def _archive_read(url: str) -> bytes:
                 if exc.code not in (429, 502, 503, 504):
                     raise
                 reason = f"refusing (HTTP {exc.code})"
+                named = (exc.headers or {}).get("Retry-After", "") if hasattr(exc, "headers") else ""
+                if wait is not None and str(named).strip().isdigit():
+                    wait = max(wait, min(int(str(named).strip()), ARCHIVE_RETRY_AFTER_MAX_S))
             except (urllib.error.URLError, ConnectionError, TimeoutError) as exc:
                 reason = f"unreachable ({type(exc).__name__})"
             if wait is None:

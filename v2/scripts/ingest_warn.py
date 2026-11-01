@@ -809,6 +809,8 @@ def main() -> int:
     ap.add_argument("--parse-only", action="store_true",
                     help="no database at all: fetch, parse and print what each state yields")
     ap.add_argument("--state", choices=[*STATES, "all"], default="all")
+    ap.add_argument("--runner", choices=["all", "github", "server"], default="all",
+                    help="only the states read where this runs (a state's \"runner\", github unless it says server)")
     ap.add_argument("--from-file", help="parse this file instead of fetching; needs --state")
     ap.add_argument("--detail-cap", type=int, default=warn_states.JC_DETAIL_CAP,
                     help="notice pages a job-center state may ask for in this run")
@@ -818,6 +820,13 @@ def main() -> int:
     warn_states.JC_DETAIL_CAP = a.detail_cap
     started = time.time()
     wanted = list(STATES) if a.state == "all" else [a.state]
+    if a.runner != "all":
+        wanted = [st for st in wanted if STATES[st].get("runner", "github") == a.runner]
+    # The run's own name: the server's share is recorded apart, so its run and GitHub's never stand for
+    # each other in the health check, and only a run of every state stamps the dataset-wide row.
+    script = ("ingest_warn.py" if a.runner != "server" else "ingest_warn.py:server") if a.state == "all" \
+        else f"ingest_warn.py:{a.state}"
+    every_state = a.state == "all" and a.runner != "server"
     db = None if a.parse_only else Database()
     warn_states.HELD["lookup"] = held_lookup(db) if db is not None else None
     parsed: dict[str, list[dict]] = {}
@@ -838,7 +847,6 @@ def main() -> int:
     if not parsed:
         if quiet and not failed:
             # Every state asked answered that it has nothing new: a clean run with nothing to write.
-            script = "ingest_warn.py" if a.state == "all" else f"ingest_warn.py:{a.state}"
             note = f"nothing new: {', '.join(STATES[st]['name'] for st in quiet)}"
             if unreachable:
                 note += f"; site down or refusing: {', '.join(STATES[st]['name'] for st in unreachable)}"
@@ -894,7 +902,7 @@ def main() -> int:
     # The dataset-wide row speaks for every state, so only an all-states run may
     # write it: a `--state tx` run that stamped it would move the whole
     # dataset's as_of to whatever one state happened to hold.
-    if a.state == "all":
+    if every_state:
         stamp_freshness(db, DATASET, as_of=max(stamp_date(r["notice_date"]) for r in every), source=CA_PAGE,
                         cadence="Weekly", note=note, max_age_days=MAX_AGE_DAYS)
     if pruned:
@@ -902,7 +910,6 @@ def main() -> int:
     # A one-state run is recorded under its own name, with no space, so a clean load of one state
     # can't supersede the full run's failure (check_ingest_health clears a bare filename's failure
     # with any later clean "<filename> --mode" run).
-    script = "ingest_warn.py" if a.state == "all" else f"ingest_warn.py:{a.state}"
     record_run(db, script, status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
     log(f"wrote {written}; {note}")
     return 0

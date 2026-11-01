@@ -93,9 +93,11 @@ def test_tail() -> None:
 
 def test_db() -> None:
     print("the database's hour")
-    prev = {"SELECT a": {"count": 10, "ms": 100.0, "rows": 50}, "SELECT b": {"count": 5, "ms": 50.0, "rows": 5}}
+    # Two readings inside one of sqld's hourly windows.
+    same = {perf.WINDOW: {"id": "w0", "since": 0}}
+    prev = {"SELECT a": {"count": 10, "ms": 100.0, "rows": 50}, "SELECT b": {"count": 5, "ms": 50.0, "rows": 5}, **same}
     now = {"SELECT a": {"count": 30, "ms": 2100.0, "rows": 150}, "SELECT b": {"count": 5, "ms": 50.0, "rows": 5},
-           "SELECT c": {"count": 2, "ms": 10.0, "rows": 2}}
+           "SELECT c": {"count": 2, "ms": 10.0, "rows": 2}, **same}
     rows, restarted = perf.db_delta(now, prev)
     by = {r["sql"]: r for r in rows}
     check("the hour's runs and time are the difference", by["SELECT a"]["runs"] == 20 and by["SELECT a"]["totalS"] == 2.0)
@@ -103,9 +105,23 @@ def test_db() -> None:
     check("a new statement counts whole", by["SELECT c"]["runs"] == 2)
     check("costliest first", rows[0]["sql"] == "SELECT a")
     check("no restart", restarted is False)
-    rows, restarted = perf.db_delta({"SELECT a": {"count": 3, "ms": 9.0, "rows": 3}}, prev)
+    rows, restarted = perf.db_delta({"SELECT a": {"count": 3, "ms": 9.0, "rows": 3}, **same}, prev)
     check("a lower count means the database restarted, and the count is taken whole",
           restarted is True and rows[0]["runs"] == 3)
+    # sqld's stats start again each hour: a reading in a new window takes that window whole, never a
+    # difference across windows (Nov 1 2026: the hour read -143 s of database time).
+    w1 = {**prev, perf.WINDOW: {"id": "w1", "since": 1}}
+    w2 = {"SELECT a": {"count": 12, "ms": 30.0, "rows": 12}, perf.WINDOW: {"id": "w2", "since": 2}}
+    rows, fresh = perf.db_delta(w2, w1)
+    by = {r["sql"]: r for r in rows}
+    check("a new window is taken whole, never subtracted from the last",
+          fresh is True and by["SELECT a"]["runs"] == 12 and by["SELECT a"]["totalS"] == 0.03)
+    w2b = {"SELECT a": {"count": 20, "ms": 50.0, "rows": 20}, perf.WINDOW: {"id": "w2", "since": 2}}
+    rows, fresh = perf.db_delta(w2b, w2)
+    check("two readings in one window are differenced", fresh is False and rows[0]["runs"] == 8)
+    check("no negative time from a window rolling over",
+          all(r["totalS"] >= 0 for r in perf.db_delta({"SELECT a": {"count": 30, "ms": 5.0, "rows": 3},
+                                                         perf.WINDOW: {"id": "w3", "since": 3}}, w2b)[0]))
 
 
 def test_source_maps() -> None:
