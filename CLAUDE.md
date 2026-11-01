@@ -1893,3 +1893,19 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   `v2/scripts/oracle/README.md`.
 - **Playwright's own browsers don't install on macOS 12** ("does not support chromium on mac12"); this Mac's checks use
   its Chrome, as `playwright.config.ts` and the check scripts already do.
+- **The chat panel stops 1rem under the header and rises over a bottom bar** (`ChatPanel.tsx`, `--site-header-h`,
+  `--bottom-bar-h`): its height took 7rem off the screen and it reached 32px over the header on a 756px window.
+- **The pointer comes from clickable roles, never from `tabindex`** (`globals.css`, `pointer-cursor.test.ts`): every
+  keyboard-scrollable box (the chat's conversation, `ScrollBox`) showed a pointer that did nothing.
+- **Layoff notices from the four Archive-only states load on the server** (`permtracker-uscis@warn-archive`, 11:20 AM ET,
+  `ingest_warn.py --runner server`; GitHub runs `--runner github`): the Archive answered GitHub's shared runners 429 on
+  every daily run from Oct 25. The reader names itself to the Archive (it had posed as Chrome 126: `CONTACT_HOSTS` in
+  `lib_gov_data.py`), waits 6 s between requests and a minute, then four, after a refusal, and Louisiana and New Mexico
+  ask for each year's file by name (the folder search took 24 s and is what the Archive refuses when busy). An older
+  Nevada year in another layout is skipped, never the whole state.
+- **`perm_groups` has an index of the list pages' columns** (`idx_pg_kind_summary`): listing 3,058 cities read 10.8 MB of
+  detail rows (1,357 ms cold), 48 ms after.
+- **Cold reads are memory, not queries**: the same read took 1,357 ms cold and 54 ms warm while sqld held 3.9 GB plus
+  1.6 GB of swap. sqld runs with `MALLOC_ARENA_MAX=2` (the databases' drop-in) and `permtracker-db-refresh`.
+- **sqld's statement stats are per hourly window**, never totals: `permtracker-perf` takes a new window whole (it had
+  subtracted windows and printed -143 s of database time).
