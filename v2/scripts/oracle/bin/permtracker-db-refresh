@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""Restart the database in the night's quiet hour once its own memory has grown past a line.
+
+WHY. The database server (sqld) holds more memory every day it runs. It started on
+Oct 21 2026 at 12:56 PM EDT and by Nov 1 held 4.1 GB in memory and 1.4 GB more in
+swap: about 200 to 260 MB a day, read from the morning report's memory figures
+(58% of 12 GB on Oct 21, 76% on Oct 28 with the retired 3.2 GB RAM lock, 64% on Nov 1
+without it). The server's swap was 3.8 of 4 GB full, and the morning report warned on
+swap moving. A restart gives the memory back: a cleanly stopped sqld starts in seconds.
+
+So, once a night at 1:35 AM Eastern (nothing scheduled runs then: the evening jobs are
+done, the night deploy starts at 2, the backups at 3:15, the sweep at 4:10), this job
+reads sqld's own memory (in memory plus in swap) and restarts it only when that passes
+DB_REFRESH_LIMIT_MB (4096 by default), then waits up to 5 minutes for a read and a
+write to answer. A restart it can't confirm fails the unit, which the alarm emails at
+once. It never restarts during a deploy, and never more than once a night (the timer).
+
+    permtracker-db-refresh            # check, and restart if over the line
+    permtracker-db-refresh --dry-run  # say what it would do, change nothing
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.request
+
+UNIT = "permtracker-db"
+PORT = 8080
+LIMIT_MB = int(os.environ.get("DB_REFRESH_LIMIT_MB", "4096"))
+WAIT_S = 300
+DEPLOYING = "/srv/permtracker/health/deploying"
+RO_TOKEN = "/srv/permtracker/secrets/db_ro.jwt"
+RW_TOKEN = "/srv/permtracker/secrets/db_rw.jwt"
+
+
+def memory_mb(status_text: str) -> int:
+    """sqld's own memory from /proc/<pid>/status: what it holds in RAM plus what it pushed to swap.
+    File-backed pages (the database file read through the cache) aren't counted: the kernel frees those."""
+    kb = 0
+    for line in status_text.splitlines():
+        key, _, rest = line.partition(":")
+        if key in ("RssAnon", "VmSwap"):
+            kb += int(rest.split()[0])
+    return kb // 1024
+
+
+def decide(mb: int, limit: int, deploying: bool) -> tuple[bool, str]:
+    if deploying:
+        return False, f"a deploy is running; sqld holds {mb:,} MB, left for tomorrow night"
+    if mb < limit:
+        return False, f"sqld holds {mb:,} MB, under the {limit:,} MB line: nothing to do"
+    return True, f"sqld holds {mb:,} MB, over the {limit:,} MB line: restarting it"
+
+
+def deploying_now(now: float) -> bool:
+    try:
+        return now - os.stat(DEPLOYING).st_mtime < 1200
+    except OSError:
+        return False
+
+
+def answers(sql_requests: list[dict], token_file: str) -> bool:
+    """True when sqld runs every statement: Hrana answers 200 with an error result when it can't."""
+    try:
+        token = open(token_file).read().strip()
+        body = json.dumps({"requests": [*sql_requests, {"type": "close"}]}).encode()
+        req = urllib.request.Request(f"http://127.0.0.1:{PORT}/v2/pipeline", data=body,
+                                     headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            out = r.read().decode()
+        return '"type":"error"' not in out and '"type":"ok"' in out
+    except Exception:  # noqa: BLE001 (a database starting up refuses in several ways)
+        return False
+
+
+def read_ok() -> bool:
+    return answers([{"type": "execute", "stmt": {"sql": "SELECT 1"}}], RO_TOKEN)
+
+
+def write_ok() -> bool:
+    # Takes the write lock and lets it go: writes nothing, but proves a write could run.
+    return answers([{"type": "execute", "stmt": {"sql": "BEGIN IMMEDIATE"}},
+                    {"type": "execute", "stmt": {"sql": "ROLLBACK"}}], RW_TOKEN)
+
+
+def main_pid() -> int:
+    out = subprocess.run(["systemctl", "show", "-p", "MainPID", "--value", UNIT],
+                         capture_output=True, text=True, check=False).stdout.strip()
+    return int(out or 0)
+
+
+def main() -> int:
+    dry = "--dry-run" in sys.argv
+    pid = main_pid()
+    if not pid:
+        # Not running is the watchdog's to restart; this job only refreshes a running one.
+        print(f"{UNIT} isn't running; the watchdog restarts it")
+        return 1
+    with open(f"/proc/{pid}/status") as fh:
+        mb = memory_mb(fh.read())
+    go, why = decide(mb, LIMIT_MB, deploying_now(time.time()))
+    print(why)
+    if not go or dry:
+        return 0
+    subprocess.run(["systemctl", "restart", UNIT], check=True)
+    started = time.monotonic()
+    while time.monotonic() - started < WAIT_S:
+        if read_ok() and write_ok():
+            after = memory_mb(open(f"/proc/{main_pid()}/status").read())
+            print(f"restarted: reads and writes answer after {time.monotonic() - started:.0f} s; sqld now holds {after:,} MB")
+            return 0
+        time.sleep(5)
+    print(f"::error::{UNIT} was restarted and hasn't answered a read and a write in {WAIT_S} s", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

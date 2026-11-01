@@ -253,12 +253,14 @@ const savedBoard = cache(async (): Promise<BoardDoc | null> => {
   return coverage && saved.computedAt < coverage.checkedAt ? null : saved;
 });
 
+// A saved half with no span is read again live: a copy written on a weekend by the code before
+// Nov 1 2026 had none, and the planner dropped the wage request from every plan until the next sweep.
 export const getPermBoard = cache(async (): Promise<PermBoard | null> => {
   const saved = await savedBoard();
-  return saved ? saved.perm : readPermBoard();
+  return saved?.perm?.span ? saved.perm : readPermBoard();
 });
 
 export const getPwdBoard = cache(async (): Promise<PwdBoard | null> => {
   const saved = await savedBoard();
-  return saved ? saved.pwd : readPwdBoard();
+  return saved?.pwd?.span ? saved.pwd : readPwdBoard();
 });

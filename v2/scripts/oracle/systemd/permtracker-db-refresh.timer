@@ -1,0 +1,7 @@
+[Unit]
+Description=Database memory refresh, 1:35 AM Eastern: after the evening jobs, before the 2 AM night deploy, the 3:15 AM backup and the 4:10 AM sweep
+[Timer]
+OnCalendar=*-*-* 01:35:00 America/New_York
+Persistent=false
+[Install]
+WantedBy=timers.target

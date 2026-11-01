@@ -15,7 +15,7 @@ vi.mock("../sweepCoverage", () => ({ getSweepCoverage: () => coverage() }));
 vi.mock("../decisionPace", () => ({ OBSERVED_SOURCE: "sweep-observed" }));
 vi.mock("../rfi", () => ({ DIRECT_EVENT_SOURCE: "dol-direct" }));
 
-const SAVED_PERM = { day: "2026-10-26", span: null, flow: { filed: 1, decided: 2, change: -1, trend: "shrinking", from: "2026-09-27", to: "2026-10-26" }, movesDay: [], movesWeek: [], weekBefore: null, monthBefore: null };
+const SAVED_PERM = { day: "2026-10-26", span: { n: 544, middle: "2026-01-19", from: "2026-01-09", to: "2026-01-29" }, flow: { filed: 1, decided: 2, change: -1, trend: "shrinking", from: "2026-09-27", to: "2026-10-26" }, movesDay: [], movesWeek: [], weekBefore: null, monthBefore: null };
 
 beforeEach(() => {
   vi.resetModules();
@@ -32,8 +32,16 @@ describe("the saved board", () => {
     doc.mockResolvedValue({ perm: SAVED_PERM, pwd: null, computedAt: 2_000 });
     const { getPermBoard, getPwdBoard } = await load();
     expect(await getPermBoard()).toEqual(SAVED_PERM);
-    expect(await getPwdBoard()).toBeNull();
     expect(rows).not.toHaveBeenCalled();
+    // The saved wage-request half is empty, so that one half is read live.
+    expect(await getPwdBoard()).toBeNull();
+  });
+
+  it("reads a half again live when its saved copy has no span", async () => {
+    doc.mockResolvedValue({ perm: { ...SAVED_PERM, span: null }, pwd: null, computedAt: 2_000 });
+    const { getPermBoard } = await load();
+    await getPermBoard();
+    expect(rows).toHaveBeenCalled();
   });
 
   it("reads live when the saved copy is older than the newest sweep", async () => {

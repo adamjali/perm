@@ -1,0 +1,8 @@
+[Unit]
+Description=PERM Tracker: restart the database in the quiet hour once its own memory passes 4 GB (bin/permtracker-db-refresh)
+After=permtracker-db.service
+[Service]
+Type=oneshot
+# Root: it restarts a system service. It reads two token files the watchdog reads.
+ExecStart=/usr/local/bin/permtracker-db-refresh
+TimeoutStartSec=15m
