@@ -54,7 +54,8 @@ import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getBacklogMatrix } from "@/lib/db/backlog";
 import { getPermBoard } from "@/lib/db/board";
 import { rulerOf } from "@/lib/board";
-import type { HeroWait } from "@/components/home/HeroSection";
+import type { HeroTrends, HeroWait } from "@/components/home/HeroSection";
+import { backlogTrend, dayTrend, waitTrend } from "@/lib/homeTrends";
 import { homeMonths } from "@/lib/homeMonths";
 import { easternDay } from "@convex/lib/time";
 import { PermPulse } from "@/components/pulse/PermPulse";
@@ -125,6 +126,20 @@ function liveWait(board: Awaited<ReturnType<typeof getPermBoard>>): HeroWait | n
   return ruler && board ? { days: ruler.waitedDays, on: board.day } : null;
 }
 
+/** Each hero figure's direction: the wait against a month before, the line's 30-day flow, the day against its weekday. */
+function heroTrends(
+  board: Awaited<ReturnType<typeof getPermBoard>>,
+  day: ReturnType<typeof pulseHeadline>,
+): HeroTrends {
+  const now = liveWait(board);
+  const before = board?.monthBefore?.span ? rulerOf(board.monthBefore.span, board.monthBefore.day) : null;
+  return {
+    wait: now ? waitTrend(now.days, before?.waitedDays) : undefined,
+    pending: backlogTrend(board?.flow),
+    decided: day ? dayTrend(day.day.date, day.changePct) : undefined,
+  };
+}
+
 export default async function HomePage() {
   // Two independent federal sources with two different as-of stamps, and they
   // must not be conflated: the processing-times snapshot is DOL's weekly queue
@@ -185,6 +200,7 @@ export default async function HomePage() {
           their films. */}
       <HeroSection
         wait={liveWait(permBoard)}
+        trends={heroTrends(permBoard, lastDay)}
         months={months}
         board={{
           frontierMonth: analyst?.priorityDate ?? null,

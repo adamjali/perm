@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { TrendChip, type FigureTrend } from "@/components/data/FigureRow";
 import { ABOUT_ONE_LINER } from "@/lib/constants/about";
 import Link from "next/link";
 import { FolderSimpleIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
@@ -59,6 +60,8 @@ export interface HeroSectionProps {
   wait?: HeroWait | null;
   /** The chart's months, from `homeMonths`. Empty draws no chart. */
   months?: readonly HomeMonth[];
+  /** Which way each figure moved; a missing one draws no chip. */
+  trends?: HeroTrends;
 }
 
 /** The live wait: days, and the DOL working day it was read on. */
@@ -71,6 +74,15 @@ export interface HeroWait {
 export interface HeroFigure {
   label: string;
   value: string;
+  /** Which way it moved, and whether that's good for someone waiting. */
+  trend?: FigureTrend;
+}
+
+/** Each figure's direction, computed by the page from what it already reads (`src/lib/homeTrends.ts`). */
+export interface HeroTrends {
+  wait?: FigureTrend;
+  pending?: FigureTrend;
+  decided?: FigureTrend;
 }
 
 /** "2026-10-05" -> "Oct 5": a date, never a weekday ("Decided Mon" read as "decided month"). */
@@ -86,11 +98,11 @@ const WAITING_FILL = `${WAITING_SWATCH} border-t-2 border-data-warn-ink`;
 /** "about 9½ months" as a figure's value: "9½ months". */
 const waitValue = (days: number) => aboutMonths(days).replace(/^about /, "");
 
-export function heroFigures(board: HeroBoard | undefined, wait: HeroWait | null): HeroFigure[] {
+export function heroFigures(board: HeroBoard | undefined, wait: HeroWait | null, trends: HeroTrends = {}): HeroFigure[] {
   const rows: HeroFigure[] = [];
-  if (wait && wait.days > 0) rows.push({ label: `Cases decided ${boardDay(wait.on)} waited`, value: waitValue(wait.days) });
-  if (board?.pending != null) rows.push({ label: "PERM cases waiting", value: formatInt(board.pending) });
-  if (board?.lastDay) rows.push({ label: `Decided on ${boardDay(board.lastDay.date)}`, value: formatInt(board.lastDay.total) });
+  if (wait && wait.days > 0) rows.push({ label: `Cases decided ${boardDay(wait.on)} waited`, value: waitValue(wait.days), trend: trends.wait });
+  if (board?.pending != null) rows.push({ label: "PERM cases waiting", value: formatInt(board.pending), trend: trends.pending });
+  if (board?.lastDay) rows.push({ label: `Decided on ${boardDay(board.lastDay.date)}`, value: formatInt(board.lastDay.total), trend: trends.decided });
   if (board?.pwdPending) rows.push({ label: "Wage requests waiting", value: formatInt(board.pwdPending) });
   return rows;
 }
@@ -123,8 +135,8 @@ export function monthColumns(months: readonly HomeMonth[]): Column[] {
   });
 }
 
-export function HeroSection({ wait = null, board, months = [] }: HeroSectionProps) {
-  const figures = heroFigures(board, wait);
+export function HeroSection({ wait = null, board, months = [], trends = {} }: HeroSectionProps) {
+  const figures = heroFigures(board, wait, trends);
   const front = board?.frontierMonth ? formatMonth(board.frontierMonth.slice(0, 7)) : null;
   const columns = monthColumns(months);
 
@@ -162,7 +174,12 @@ export function HeroSection({ wait = null, board, months = [] }: HeroSectionProp
                 {" "}
                 <div className="border-l-4 border-primary pl-3">
                   <dt className="text-sm text-soft">{f.label}</dt>{" "}
-                  <dd className="m-0 mt-0.5 font-heading text-xl font-bold tabular-nums sm:text-[1.75rem]">{f.value}</dd>
+                  <dd className="m-0 mt-0.5 font-heading text-xl font-bold tabular-nums sm:text-[1.75rem]">{f.value}</dd>{" "}
+                  {f.trend ? (
+                    <dd className="m-0 mt-1">
+                      <TrendChip trend={f.trend} />
+                    </dd>
+                  ) : null}
                 </div>
               </Fragment>
             ))}
