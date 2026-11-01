@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Fragment } from "react";
+import { HourglassMediumIcon, SealCheckIcon, TrayIcon, UsersIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -39,6 +40,7 @@ import {
   type Slot,
 } from "@/lib/uscisForms";
 import { monthsLabel, quarterLabel } from "@/lib/uscisQuarterlyShape";
+import { approvalMoved, countMoved, medianMoved } from "@/lib/uscisTrends";
 
 // The workbook changes four times a year; the quarterly ingest's new quarter is
 // picked up within a week, as on the hub.
@@ -173,18 +175,38 @@ export default async function UscisFormPage({ params }: { params: Promise<{ form
               <Figure
                 tone="lime"
                 label={`Median, ${slotShort(leadNow.slot)}`}
+                icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
+                trend={medianMoved(lead.points)}
                 value={monthsPhrase(leadNow.row.medianMonths)}
                 note={lines.length > 1 ? lead.line.label : "Half were decided sooner"}
               />
             ) : null}{" "}
             {newest?.pending != null ? (
-              <Figure label="Waiting at the quarter's end" value={formatInt(newest.pending)} note={`Every ${page.form} line, ${slotShort(newest.slot)}`} />
+              <Figure
+                label="Waiting at the quarter's end"
+                icon={<UsersIcon weight="bold" className="text-primary-text" />}
+                trend={countMoved(totals, newest, "pending")}
+                value={formatInt(newest.pending)}
+                note={`Every ${page.form} line, ${slotShort(newest.slot)}`}
+              />
             ) : null}{" "}
             {newest?.received != null ? (
-              <Figure label="Received in the quarter" value={formatInt(newest.received)} note={slotShort(newest.slot)} />
+              <Figure
+                label="Received in the quarter"
+                icon={<TrayIcon weight="bold" className="text-primary-text" />}
+                trend={countMoved(totals, newest, "received")}
+                value={formatInt(newest.received)}
+                note={slotShort(newest.slot)}
+              />
             ) : null}{" "}
             {share !== null && newest ? (
-              <Figure label="Approved, of those decided" value={formatShare(share)} note={`${formatInt(newest.approved ?? 0)} approved, ${formatInt(newest.denied ?? 0)} denied`} />
+              <Figure
+                label="Approved, of those decided"
+                icon={<SealCheckIcon weight="bold" className="text-primary-text" />}
+                trend={approvalMoved(totals, newest)}
+                value={formatShare(share)}
+                note={`${formatInt(newest.approved ?? 0)} approved, ${formatInt(newest.denied ?? 0)} denied`}
+              />
             ) : null}
           </FigureRow>{" "}
           <PageSection

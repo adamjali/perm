@@ -3,6 +3,7 @@
  * written by scripts/build_quarter_report.py, and the pointer perm_docs['quarter_report'] to the
  * newest. Plain module: the article parts and their tests read it.
  */
+import type { FigureTrend } from "@/components/data/FigureRow";
 import { MONTH_NAMES } from "@convex/lib/months";
 
 export interface QuarterRef {
@@ -66,4 +67,33 @@ export function changeWords(now: number, before: number): string {
   if (Math.abs(r) < 0.005) return "about the same";
   const pct = Math.abs(r) >= 0.1 ? Math.round(Math.abs(r) * 100) : Math.round(Math.abs(r) * 1000) / 10;
   return `${r > 0 ? "up" : "down"} ${pct}%`;
+}
+
+const BEFORE = "last quarter";
+
+/** A count against the quarter before, as a chip: volume is information, never good or bad. */
+export function quarterCountMoved(now: number, before: number): FigureTrend | undefined {
+  if (before <= 0) return undefined;
+  const words = changeWords(now, before);
+  if (words === "about the same") return { text: `About the same as ${BEFORE}`, dir: "level", tone: "neutral" };
+  return { text: `${words[0]!.toUpperCase()}${words.slice(1)} on ${BEFORE}`, dir: now > before ? "up" : "down", tone: "info" };
+}
+
+/** The certified share against the quarter before, in points: higher is good. */
+export function quarterShareMoved(now: number | null, before: number | null): FigureTrend | undefined {
+  if (now === null || before === null) return undefined;
+  const d = Math.round((now - before) * 1000) / 10;
+  if (d === 0) return { text: `The same as ${BEFORE}`, dir: "level", tone: "neutral" };
+  const n = Math.abs(d);
+  return { text: `${n} point${n === 1 ? "" : "s"} ${d > 0 ? "higher" : "lower"} than ${BEFORE}`, dir: d > 0 ? "up" : "down", tone: d > 0 ? "good" : "bad" };
+}
+
+/** The median days from filing to certification against the quarter before: fewer is good; within 3 days is level. */
+export function quarterDaysMoved(now: number | null, before: number | null): FigureTrend | undefined {
+  if (now === null || before === null) return undefined;
+  const d = Math.round(now - before);
+  if (Math.abs(d) < 3) return { text: `About the same as ${BEFORE}`, dir: "level", tone: "neutral" };
+  return d < 0
+    ? { text: `${-d} days quicker than ${BEFORE}`, dir: "down", tone: "good" }
+    : { text: `${d} days longer than ${BEFORE}`, dir: "up", tone: "bad" };
 }

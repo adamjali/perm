@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CalendarCheckIcon, GaugeIcon, HourglassMediumIcon } from "@phosphor-icons/react/ssr";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { withSocialCard } from "@/lib/socialCard";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -28,6 +29,11 @@ import { queueLead, statusShift } from "@/lib/backlogMonths";
 import { SinceDay } from "@/components/queue/SinceDay";
 import { easternDay } from "@convex/lib/time";
 import { getEstimatorData } from "@/lib/db/estimate";
+import { getPermBoard } from "@/lib/db/board";
+import { getProcessingTimesHistory } from "@/lib/db/processingTimes";
+import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
+import { queueMoveTrend } from "@/lib/dolTrends";
+import { backlogTrend } from "@/lib/homeTrends";
 import { getAlphabet } from "@/lib/db/alphabet";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { MoreText } from "@/components/data/MoreText";
@@ -91,7 +97,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 export default async function PermQueuePage() {
-  const [census, estimator, alphabet, pastDays, ebSplit, reviewByDay] = await Promise.all([
+  const [census, estimator, alphabet, pastDays, ebSplit, reviewByDay, permBoard, dolHistory] = await Promise.all([
     getBacklogCensus(),
     getEstimatorData(),
     // Its own document and its own writer, so a missing one is a missing
@@ -109,6 +115,9 @@ export default async function PermQueuePage() {
       console.warn("[perm-queue] the line by day is unreadable", e);
       return [] as { date: string; value: number }[];
     }),
+    // The cards' directions: the homepage's own 30-day flow, and DOL's kept readings.
+    getPermBoard().catch(() => null),
+    getProcessingTimesHistory(24).catch(() => []),
   ]);
 
   // The whole line at the end of the newest replayed day before today, for "since".
@@ -222,17 +231,22 @@ export default async function PermQueuePage() {
         <FigureRow>
           <Figure
             label="Still waiting"
+            icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
+            trend={backlogTrend(permBoard?.flow)}
             value={formatInt(census.pending)}
             note={`PERM cases, across ${census.months.length} filing months`}
           />
           <Figure
             tone="lime"
             label="DOL is working"
+            icon={<CalendarCheckIcon weight="bold" className="text-primary-text" />}
+            trend={dolMonth ? queueMoveTrend(dolHistory, (h) => ({ month: analystReviewQueue(h.permQueues)?.priorityDate, asOf: h.permAsOf })) : undefined}
             value={dolMonth ? (formatMonth(dolMonth) ?? dolMonth) : "Not published"}
             note={dolAsOf ? `DOL's own position, as of ${dolAsOf}` : "DOL printed no readable month"}
           />
           <Figure
             label="Months cleared a month"
+            icon={<GaugeIcon weight="bold" className="text-primary-text" />}
             value={advance ? `${advance.rate.toFixed(1)}` : "Not measurable"}
             note={advance ? `filing months DOL cleared per month, to ${formatMonth(advance.toMonth) ?? advance.toMonth}` : "too few months to measure"}
           />

@@ -3,11 +3,19 @@ import { withSocialCard } from "@/lib/socialCard";
 import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeftIcon, ArrowRightIcon, CaretDownIcon } from "@phosphor-icons/react/ssr";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CalendarCheckIcon,
+  CaretDownIcon,
+  FlagCheckeredIcon,
+  HourglassMediumIcon,
+  UsersIcon,
+} from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { Figure, FigureRow } from "@/components/data/FigureRow";
+import { Figure, FigureRow, type FigureTrend } from "@/components/data/FigureRow";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
@@ -25,6 +33,10 @@ import {
 import { statusShift } from "@/lib/backlogMonths";
 import { SinceDay } from "@/components/queue/SinceDay";
 import { getEstimatorData } from "@/lib/db/estimate";
+import { getProcessingTimesHistory } from "@/lib/db/processingTimes";
+import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
+import { queueMoveTrend } from "@/lib/dolTrends";
+import { waitingTrend } from "@/lib/homeTrends";
 import { getLiveRemainderSummary, listLiveCases } from "@/lib/db/liveCases";
 import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
@@ -145,7 +157,7 @@ export default async function CohortPage({
   // review" living on this page, and the day those two disagree the queue
   // board and the calculator start quoting different frontiers for one thing.
   // The extra reads are three indexed lookups an hour per month page.
-  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail, monthDays, rangeCoverage, pastDay] = await Promise.all([
+  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail, monthDays, rangeCoverage, pastDay, dolHistory] = await Promise.all([
     getMonthBacklog(month),
     getPendingBefore(month),
     getAdjacentMonths(month),
@@ -168,6 +180,8 @@ export default async function CohortPage({
         console.warn("[perm-queue/month] the past day is unreadable", e);
         return null;
       }),
+    // DOL's kept readings, for how its month moved (the queue page's own chip).
+    getProcessingTimesHistory(24).catch(() => []),
   ]);
   if (!backlog || backlog.total === 0) notFound();
   const makeup = monthMakeup(backlog.statuses);
@@ -220,7 +234,17 @@ export default async function CohortPage({
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Filed {label}
         </h1>{" "}
-        <MonthHeadline makeup={makeup} label={label} end={end} month={month} dolMonth={dolMonth} dolAsOfIso={estimator.frontier?.asOf ?? null} ahead={ahead} />{" "}
+        <MonthHeadline
+          makeup={makeup}
+          label={label}
+          end={end}
+          month={month}
+          dolMonth={dolMonth}
+          dolAsOfIso={estimator.frontier?.asOf ?? null}
+          ahead={ahead}
+          waitingMoved={waitingTrend(makeup.inLine + makeup.outside, pastDay?.month?.pending, pastDay?.day)}
+          dolMoved={dolMonth ? queueMoveTrend(dolHistory, (h) => ({ month: analystReviewQueue(h.permQueues)?.priorityDate, asOf: h.permAsOf })) : undefined}
+        />{" "}
         {since && pastDay ? <SinceDay className="mt-6" shift={since} since={pastDay.day} hrefFor={(status) => statusCasesHref(status, month)} /> : null}{" "}
         <SourceNote compact className="mt-4" />
       </header>{" "}
@@ -536,6 +560,8 @@ function MonthHeadline({
   dolMonth,
   dolAsOfIso,
   ahead,
+  waitingMoved,
+  dolMoved,
 }: {
   makeup: MonthMakeup;
   label: string;
@@ -546,6 +572,10 @@ function MonthHeadline({
   dolAsOfIso: string | null;
   /** Cases filed before this month still undecided at their last check. */
   ahead: number;
+  /** How the month's waiting count moved since the census's newest earlier day. */
+  waitingMoved?: FigureTrend;
+  /** How DOL's month moved over about a month of its readings. */
+  dolMoved?: FigureTrend;
 }) {
   const pct = m.total ? m.decided / m.total : 0;
   const parts = [
@@ -594,21 +624,36 @@ function MonthHeadline({
       <FigureRow className="mt-6">
         <Figure
           label="Still waiting"
+          icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
+          trend={waitingMoved}
           value={formatInt(m.inLine + m.outside)}
           note={`${formatInt(m.inLine)} in DOL's line, ${formatInt(m.outside)} outside it`}
         />{" "}
         {dolMonth ? (
-          <Figure tone="lime" label="DOL is working" value={formatMonth(dolMonth) ?? dolMonth} note={dolPlace(month, dolMonth, dolAsOfIso)} />
+          <Figure
+            tone="lime"
+            label="DOL is working"
+            icon={<CalendarCheckIcon weight="bold" className="text-primary-text" />}
+            trend={dolMoved}
+            value={formatMonth(dolMonth) ?? dolMonth}
+            note={dolPlace(month, dolMonth, dolAsOfIso)}
+          />
         ) : null}{" "}
         {end?.kind === "estimate" ? (
           <Figure
             label="The line reaches this month's end"
+            icon={<FlagCheckeredIcon weight="bold" className="text-primary-text" />}
             value={shortDate(end.date) ?? end.date}
             note={`${monthDay(end.early) ?? end.early} to ${monthDay(end.late) ?? end.late}, at DOL's recent pace`}
           />
         ) : null}{" "}
         {dolMonth && month > dolMonth && ahead > 0 ? (
-          <Figure label="Filed earlier, still waiting" value={formatInt(ahead)} note="ahead of this month" />
+          <Figure
+            label="Filed earlier, still waiting"
+            icon={<UsersIcon weight="bold" className="text-primary-text" />}
+            value={formatInt(ahead)}
+            note="ahead of this month"
+          />
         ) : null}
       </FigureRow>
     </div>

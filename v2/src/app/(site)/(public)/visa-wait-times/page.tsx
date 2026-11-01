@@ -11,6 +11,7 @@
 
 import type { Metadata } from "next";
 import { Fragment } from "react";
+import { CalendarCheckIcon, HourglassMediumIcon, ProhibitIcon, TimerIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -24,6 +25,7 @@ import { getVisaWaits } from "@/lib/db/visaWaits";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { FEATURED, WAIT_COLUMNS, cellKey, monthSlots, waitBarDays, waitWords, type WaitCell } from "@/lib/visaWaits";
+import { isQuickWork, postWaitMoved, quickMoved } from "@/lib/visaWaitTrends";
 
 const TITLE = "Visa Appointment Wait Times by Consulate";
 const DESCRIPTION =
@@ -96,7 +98,7 @@ export default async function VisaWaitTimesPage() {
   const indiaShown = india.filter((c) => waitBarDays(c) !== null);
   const indiaLong = [...indiaShown].sort((a, b) => (waitBarDays(b) ?? 0) - (waitBarDays(a) ?? 0))[0] ?? null;
   const indiaShort = [...indiaShown].sort((a, b) => (waitBarDays(a) ?? 0) - (waitBarDays(b) ?? 0))[0] ?? null;
-  const quick = work.filter((c) => c.kind === "same_day" || (c.bound === "under" && (c.days ?? 99) <= 15)).length;
+  const quick = work.filter(isQuickWork).length;
   const noFigure = work.filter((c) => waitBarDays(c) === null).length;
   const slots = monthSlots(data.readings);
   const posts = [...byPost.keys()].sort((a, b) => a.localeCompare(b));
@@ -111,13 +113,40 @@ export default async function VisaWaitTimesPage() {
           own table, as it updated it on {readingDate}.
         </p>
       </header>{" "}
-      <FigureRow className="mt-8">
+      <p className="mt-8 text-sm font-semibold text-soft">Work visas (H, L, O, P and Q): the next interview</p>{" "}
+      <FigureRow className="mt-2">
         {indiaLong ? (
-          <Figure tone="lime" label="Longest work-visa wait in India" value={waitWords(indiaLong)} note={indiaLong.post} />
+          <Figure
+            tone="lime"
+            label="Longest wait in India"
+            icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
+            trend={postWaitMoved(data.history, indiaLong.post, indiaLong, reading)}
+            value={waitWords(indiaLong)}
+            note={indiaLong.post}
+          />
         ) : null}{" "}
-        {indiaShort ? <Figure label="Shortest in India" value={waitWords(indiaShort)} note={indiaShort.post} /> : null}{" "}
-        <Figure label="Consulates with a work-visa interview within 15 days" value={`${quick} of ${work.length}`} note={`As of ${readingDate}`} />{" "}
-        <Figure label="With no work-visa figure" value={String(noFigure)} note="State printed NA" />
+        {indiaShort ? (
+          <Figure
+            label="Shortest in India"
+            icon={<TimerIcon weight="bold" className="text-primary-text" />}
+            trend={postWaitMoved(data.history, indiaShort.post, indiaShort, reading)}
+            value={waitWords(indiaShort)}
+            note={indiaShort.post}
+          />
+        ) : null}{" "}
+        <Figure
+          label="An interview within 15 days"
+          icon={<CalendarCheckIcon weight="bold" className="text-primary-text" />}
+          trend={quickMoved(data.history, quick, reading)}
+          value={`${quick} of ${work.length}`}
+          note={`consulates, as of ${readingDate}`}
+        />{" "}
+        <Figure
+          label="No figure printed"
+          icon={<ProhibitIcon weight="bold" className="text-primary-text" />}
+          value={String(noFigure)}
+          note="State printed NA"
+        />
       </FigureRow>{" "}
       <PageSection
         id="work"

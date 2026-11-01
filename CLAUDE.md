@@ -1958,3 +1958,12 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   issues and five alert emails on Nov 1, every file still served. Now the route looks for the file in `shared/`: there,
   one warning issue for all of them; missing on the server too, an error naming the file. Every other report groups by
   its message with numbers and addresses taken out.
+- **Every page with summary cards says which way each figure moved, from what the site keeps** (afternoon): the queue
+  (the homepage's 30-day backlog flow, DOL's month from its kept readings), a filing month (still waiting against the
+  census's day before, `waitingTrend`), USCIS's form pages (against the quarter before, skipping quarters not held,
+  `src/lib/uscisTrends.ts`), visa waits (against State's previous reading, in State's own figures, "at least" when one
+  side is a "< 0.5 Month" bound, `src/lib/visaWaitTrends.ts`), the law firm rankings (`yearOnYear`) and each quarterly
+  post (the quarter before as the chip, the year before as the note). Volume is information, never good or bad. The
+  job-code and cap-exempt pages hold one snapshot, so they show no direction.
+- **The phone sweep counts a field's wrapping label as its target**, as it did for checkboxes: a 44px labelled search
+  box holds a 42px input, and tapping the label focuses it (WCAG 2.5.8 measures what answers the tap).

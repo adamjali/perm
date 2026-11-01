@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { backlogTrend, dayTrend, waitTrend } from "@/lib/homeTrends";
+import { backlogTrend, dayTrend, waitTrend, waitingTrend } from "@/lib/homeTrends";
 
 describe("waitTrend", () => {
   it("calls a shorter wait good, a longer one bad, and a week either way level", () => {
@@ -26,5 +26,15 @@ describe("dayTrend", () => {
     expect(dayTrend("2026-10-30", -30)).toMatchObject({ text: "30% below a typical Friday", tone: "bad" });
     expect(dayTrend("2026-10-30", 4)?.text).toBe("Near a typical Friday");
     expect(dayTrend("2026-10-30", null)).toBeUndefined();
+  });
+});
+
+describe("waitingTrend", () => {
+  it("calls fewer waiting good, more information, and none level, dated by the census day", () => {
+    expect(waitingTrend(900, 941, "2026-10-31")).toEqual({ text: "41 fewer since Oct 31", dir: "down", tone: "good" });
+    expect(waitingTrend(950, 941, "2026-10-31")).toMatchObject({ text: "9 more since Oct 31", tone: "info" });
+    expect(waitingTrend(941, 941, "2026-10-31")?.dir).toBe("level");
+    expect(waitingTrend(941, null, "2026-10-31")).toBeUndefined();
+    expect(waitingTrend(941, 900, null)).toBeUndefined();
   });
 });

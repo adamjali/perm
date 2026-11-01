@@ -28,3 +28,17 @@ describe("changeWords", () => {
     expect(changeWords(0, 0)).toBe("about the same");
   });
 });
+
+describe("the quarter's chips", () => {
+  it("calls volume information, a higher share good and a shorter wait good", async () => {
+    const { quarterCountMoved, quarterDaysMoved, quarterShareMoved } = await import("@/lib/quarterReport");
+    expect(quarterCountMoved(112, 100)).toEqual({ text: "Up 12% on last quarter", dir: "up", tone: "info" });
+    expect(quarterCountMoved(100, 100)?.dir).toBe("level");
+    expect(quarterCountMoved(5, 0)).toBeUndefined();
+    expect(quarterShareMoved(0.95, 0.93)).toEqual({ text: "2 points higher than last quarter", dir: "up", tone: "good" });
+    expect(quarterShareMoved(0.92, 0.93)).toMatchObject({ text: "1 point lower than last quarter", tone: "bad" });
+    expect(quarterDaysMoved(400, 420)).toEqual({ text: "20 days quicker than last quarter", dir: "down", tone: "good" });
+    expect(quarterDaysMoved(421, 420)?.dir).toBe("level");
+    expect(quarterDaysMoved(null, 420)).toBeUndefined();
+  });
+});

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CurrencyDollarIcon, FilesIcon, HourglassMediumIcon, SealCheckIcon, StampIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows } from "@/components/data/BarRows";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
@@ -7,7 +8,10 @@ import { formatDollars, formatInt, formatShare } from "@/lib/format";
 import {
   changeWords,
   quarterMonths,
+  quarterCountMoved,
+  quarterDaysMoved,
   quarterName,
+  quarterShareMoved,
   type QuarterReport,
   type RankedEntry,
 } from "@/lib/quarterReport";
@@ -25,30 +29,50 @@ export type QuarterPart = "headline" | "outcomes" | "employers" | "firms" | "job
 
 const LIST_LINK = "link py-[10px] sm:py-0";
 
+/** Both comparisons in words, for a ranked row's hover tip. */
 function beforeNote(r: QuarterReport, now: number, prior: number, yearAgo: number): string {
   return `${changeWords(now, prior)} on ${quarterMonths(r.prior)}, ${changeWords(now, yearAgo)} on a year before`;
+}
+
+/** The year-ago comparison under a figure; the quarter before is its chip. */
+function yearAgoNote(now: number, yearAgo: number): string {
+  return `${changeWords(now, yearAgo)} on a year before`;
 }
 
 function Headline({ r }: { r: QuarterReport }) {
   const t = r.figures.this;
   const p = r.figures.prior;
   const y = r.figures.yearAgo;
-  const pts = (a: number | null, b: number | null) => (a === null || b === null ? null : Math.round((a - b) * 1000) / 10);
-  const shareMove = pts(t.certifiedShare, p.certifiedShare);
   return (
     <FigureRow className="not-prose prose-reset my-8">
-      <Figure tone="lime" label="Decisions" value={formatInt(t.total)} note={beforeNote(r, t.total, p.total, y.total)} />{" "}
+      <Figure
+        tone="lime"
+        label="Decisions"
+        icon={<StampIcon weight="bold" className="text-primary-text" />}
+        trend={quarterCountMoved(t.total, p.total)}
+        value={formatInt(t.total)}
+        note={yearAgoNote(t.total, y.total)}
+      />{" "}
       <Figure
         label="Certified, of those decided"
+        icon={<SealCheckIcon weight="bold" className="text-primary-text" />}
+        trend={quarterShareMoved(t.certifiedShare, p.certifiedShare)}
         value={t.certifiedShare === null ? "None" : formatShare(t.certifiedShare)}
-        note={shareMove === null ? undefined : shareMove === 0 ? "the same as the quarter before" : `${Math.abs(shareMove)} point${Math.abs(shareMove) === 1 ? "" : "s"} ${shareMove > 0 ? "higher" : "lower"} than the quarter before`}
       />{" "}
       <Figure
         label="Days from filing to certification"
+        icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
+        trend={quarterDaysMoved(t.medianDays, p.medianDays)}
         value={t.medianDays === null ? "None" : formatInt(t.medianDays)}
         note={t.p90Days === null ? "the median" : `the median; one in ten took ${formatInt(t.p90Days)} or more`}
       />{" "}
-      <Figure label="Offered wage, certified cases" value={t.medianWage === null ? "None" : formatDollars(t.medianWage)} note="the median, a year" />
+      <Figure
+        label="Offered wage, certified cases"
+        icon={<CurrencyDollarIcon weight="bold" className="text-primary-text" />}
+        trend={t.medianWage !== null && p.medianWage !== null ? quarterCountMoved(t.medianWage, p.medianWage) : undefined}
+        value={t.medianWage === null ? "None" : formatDollars(t.medianWage)}
+        note="the median, a year"
+      />
     </FigureRow>
   );
 }
@@ -137,8 +161,20 @@ function Programs({ r }: { r: QuarterReport }) {
   const lca = (k: "this" | "prior" | "yearAgo") => r.programs[k].lca.n;
   return (
     <FigureRow className="not-prose prose-reset my-8">
-      <Figure label="Wage requests DOL determined" value={formatInt(pw("this"))} note={beforeNote(r, pw("this"), pw("prior"), pw("yearAgo"))} />{" "}
-      <Figure label="H-1B LCAs DOL certified" value={formatInt(lca("this"))} note={beforeNote(r, lca("this"), lca("prior"), lca("yearAgo"))} />
+      <Figure
+        label="Wage requests DOL determined"
+        icon={<CurrencyDollarIcon weight="bold" className="text-primary-text" />}
+        trend={quarterCountMoved(pw("this"), pw("prior"))}
+        value={formatInt(pw("this"))}
+        note={yearAgoNote(pw("this"), pw("yearAgo"))}
+      />{" "}
+      <Figure
+        label="H-1B LCAs DOL certified"
+        icon={<FilesIcon weight="bold" className="text-primary-text" />}
+        trend={quarterCountMoved(lca("this"), lca("prior"))}
+        value={formatInt(lca("this"))}
+        note={yearAgoNote(lca("this"), lca("yearAgo"))}
+      />
     </FigureRow>
   );
 }

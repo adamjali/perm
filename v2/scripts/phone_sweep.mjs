@@ -62,11 +62,15 @@ function measure(w) {
   }
   const taps = [];
   for (const el of document.querySelectorAll("main a, main button, main summary, main select, main input")) {
-    // A checkbox's target is its label; a button out of the tab order inside a field
-    // whose own control is full size is a shortcut (WCAG 2.5.8's equivalent-control exception).
+    // A field's target is the label around it, which a tap anywhere focuses (a search box drawn
+    // as a 44px labelled box holds a 42px input); a checkbox's is its label, wrapped or by id. A
+    // button out of the tab order inside a field whose own control is full size is a shortcut
+    // (WCAG 2.5.8's equivalent-control exception).
     const label = el.matches("input[type=checkbox], input[type=radio]")
       ? el.closest("label") ?? (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null)
-      : null;
+      : el.matches("input, select, textarea")
+        ? el.closest("label")
+        : null;
     // Nothing a person can reach (a form's hidden honeypot, an inert copy) is a tap target.
     if (el.closest('[aria-hidden="true"], [inert]')) continue;
     const b = (label ?? el).getBoundingClientRect();

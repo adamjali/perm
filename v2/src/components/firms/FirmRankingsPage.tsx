@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
+import { BuildingsIcon, FilesIcon, ScalesIcon, TrophyIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows, StackedBar, type BarRow } from "@/components/data/BarRows";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -18,6 +19,7 @@ import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { SITE_URL } from "@/lib/constants/site";
 import { getFirmRanks, getFirmRanksSummary } from "@/lib/db/firmRanks";
 import { firstThatFits } from "@/lib/describe";
+import { yearOnYear } from "@/lib/yearOnYear";
 import {
   BARS_SHOWN,
   NATION,
@@ -205,6 +207,7 @@ async function Ranking({ program, state, summary }: { program: FirmProgram; stat
   const fy = shownYear(summary, program);
   if (fy === null) return null;
   const totals = summary.programs[program]?.years?.[String(fy)]?.places?.[state];
+  const lastYear = summary.programs[program]?.years?.[String(fy - 1)]?.places?.[state];
   const list = await getFirmRanks(program, fy, state);
   const place = state === NATION ? "the country" : placeName(state);
   const p = PROGRAM[program];
@@ -231,10 +234,32 @@ async function Ranking({ program, state, summary }: { program: FirmProgram; stat
       lede={`October ${fy - 1} to September ${fy}, counted ${p.countedAt}.`}
     >
       <FigureRow>
-        <Figure tone="lime" label={`The busiest firm`} value={formatInt(top.filings)} note={top.name} />{" "}
-        <Figure label={`${p.noun[0]!.toUpperCase()}${p.noun.slice(1)} naming a firm`} value={formatInt(totals.filings)} />{" "}
-        <Figure label="Law firms that filed them" value={formatInt(totals.firms)} />{" "}
-        <Figure label="Naming no law firm" value={formatInt(totals.unnamed)} note="The employer filed it itself" />
+        <Figure
+          tone="lime"
+          label="The busiest firm"
+          icon={<TrophyIcon weight="bold" className="text-primary-text" />}
+          value={formatInt(top.filings)}
+          note={top.name}
+        />{" "}
+        <Figure
+          label={`${p.noun[0]!.toUpperCase()}${p.noun.slice(1)} naming a firm`}
+          icon={<FilesIcon weight="bold" className="text-primary-text" />}
+          trend={yearOnYear(totals.filings, lastYear?.filings, fy - 1)}
+          value={formatInt(totals.filings)}
+        />{" "}
+        <Figure
+          label="Law firms that filed them"
+          icon={<ScalesIcon weight="bold" className="text-primary-text" />}
+          trend={yearOnYear(totals.firms, lastYear?.firms, fy - 1)}
+          value={formatInt(totals.firms)}
+        />{" "}
+        <Figure
+          label="Naming no law firm"
+          icon={<BuildingsIcon weight="bold" className="text-primary-text" />}
+          trend={yearOnYear(totals.unnamed, lastYear?.unnamed, fy - 1)}
+          value={formatInt(totals.unnamed)}
+          note="The employer filed it itself"
+        />
       </FigureRow>{" "}
       <Split program={program} totals={totals} fy={fy} place={place} />{" "}
       <BarRows label={`The busiest law firms by ${p.noun}, FY${fy}, ${place}`} rows={bars(program, list)} className="mt-8" />{" "}
