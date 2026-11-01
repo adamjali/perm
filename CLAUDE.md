@@ -1939,3 +1939,16 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
 - **States and cities share one box** on the employer page (`PlaceMix`); the program ledger has column headings and
   "too few" where it said "under the floor"; the year chart labels every year and its total up to 12 years and opens
   a long run at its newest end.
+- **Summary cards say which way, and whether that's good** (owner, Nov 1: "good bad increasing decreasing ... those are
+  good insights"). `Figure` takes an `icon` and a `trend` (`FigureTrend`: text, up/down/level, good/bad/info/neutral),
+  drawn as `TrendChip`: ink words on a soft fill, the arrow in the matching -ink (4.3:1 or more, both themes).
+  Entity cards: approval against the field's rate, the wait against the field's median (within 5% is "near"), filings
+  year on year (`yearTrend`, the last two complete fiscal years, never a partial one). Processing times: DOL's average
+  against the month before, and the audit and wage-request queues against about a month earlier
+  (`src/lib/dolTrends.ts`, from the readings this site keeps). A change in volume is "info", never good or bad.
+- **The live tracker's own total is gone** from the queue card ("who cares how many total they have in my live
+  tracker"): the card shows what is waiting, where it stands and the oldest filing.
+- **The phone sweep waits for load plus at most 8 s**, prints each page's time, and has 15 minutes: waiting for the
+  network to go quiet cost 2 minutes a width on a page that keeps a request open, and the deploy's sweep ran out.
+- **A deploy run stopped by SIGTERM (exit 143) mid-check** isn't a finding: b3a68437's run was cut 2:40 into its axe
+  pass with every earlier check green. Read the step's lines before treating a red run as a defect.
