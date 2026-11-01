@@ -33,8 +33,15 @@ if (!base || paths.length === 0) throw new Error("usage: audit_axe.mjs <base-url
 
 const results = [];
 let serious = 0;
-// The Mac's own Chrome here; installed Chrome by its channel anywhere else (GitHub's runners carry it).
-const browser = await chromium.launch(process.platform === "darwin" ? { executablePath: CHROME, headless: true } : { channel: "chrome", headless: true });
+// The Mac's own Chrome here; installed Chrome by its channel anywhere else (GitHub's runners carry it),
+// or Playwright's own Chromium where no Chrome is built (the deploy's ARM runner: PT_BROWSER=chromium).
+const browser = await chromium.launch(
+  process.platform === "darwin"
+    ? { executablePath: CHROME, headless: true }
+    : process.env.PT_BROWSER === "chromium"
+      ? { headless: true }
+      : { channel: "chrome", headless: true },
+);
 try {
   for (const path of paths) {
     for (const scheme of ["light", "dark"]) {

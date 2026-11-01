@@ -70,7 +70,12 @@ function measure(w) {
     // Nothing a person can reach (a form's hidden honeypot, an inert copy) is a tap target.
     if (el.closest('[aria-hidden="true"], [inert]')) continue;
     const b = (label ?? el).getBoundingClientRect();
-    const inline = getComputedStyle(el).display === "inline" && el.closest("p, li, dd, td");
+    // WCAG 2.5.8's inline exception: a link set in a sentence, which a paragraph, a list item or a
+    // cell holds, or any block whose own text runs around the link (a FinePrint note's source line).
+    const sentence = (e) =>
+      e.closest("p, li, dd, td") ||
+      [...(e.parentElement?.childNodes ?? [])].some((n) => n !== e && n.nodeType === 3 && n.textContent.trim().length > 1);
+    const inline = getComputedStyle(el).display === "inline" && sentence(el);
     const shortcut = el.tabIndex === -1 && [...(el.parentElement?.querySelectorAll("input") ?? [])].some((i) => i.getBoundingClientRect().height >= 43);
     if (b.width > 0 && b.height > 0 && b.height < 43 && !inline && !shortcut) taps.push(`${el.tagName.toLowerCase()} ${Math.round(b.height)}px "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30)}"`);
   }
@@ -78,8 +83,15 @@ function measure(w) {
 }
 
 let bad = 0;
-// The Mac's own Chrome here; installed Chrome by its channel anywhere else (GitHub's runners carry it).
-const browser = await chromium.launch(process.platform === "darwin" ? { executablePath: CHROME, headless: true } : { channel: "chrome", headless: true });
+// The Mac's own Chrome here; installed Chrome by its channel anywhere else (GitHub's runners carry it),
+// or Playwright's own Chromium where no Chrome is built (the deploy's ARM runner: PT_BROWSER=chromium).
+const browser = await chromium.launch(
+  process.platform === "darwin"
+    ? { executablePath: CHROME, headless: true }
+    : process.env.PT_BROWSER === "chromium"
+      ? { headless: true }
+      : { channel: "chrome", headless: true },
+);
 try {
   for (const width of WIDTHS) {
     const ctx = await browser.newContext({ viewport: { width, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });

@@ -60,3 +60,44 @@ describe("the saved board", () => {
     ]);
   });
 });
+
+describe("the reading day", () => {
+  // Noon Eastern on each day, so every stamp lands on its own DOL day.
+  const FRI = Date.parse("2026-10-30T16:00:00Z");
+  const SAT = Date.parse("2026-10-31T16:00:00Z");
+
+  it("is DOL's last full working day, so a Saturday's few stragglers don't blank the wage-request span", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-01T13:00:00Z"));
+    try {
+      doc.mockResolvedValue(null);
+      rows.mockImplementation(async (sql: string) => {
+        if (sql.includes("SELECT e.changed_at AS t")) return [{ t: FRI, n: 60 }, { t: SAT, n: 3 }];
+        if (sql.includes("SELECT s.filing_date AS f")) return Array.from({ length: 60 }, () => ({ f: "2026-07-20" }));
+        if (sql.includes("COUNT(*)")) return [{ n: 100 }];
+        return [];
+      });
+      const { getPwdBoard } = await load();
+      const board = await getPwdBoard();
+      expect(board?.day).toBe("2026-10-30");
+      expect(board?.span).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("is DOL's last full working day on the PERM side too", async () => {
+    doc.mockResolvedValue(null);
+    rows.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM daily_decisions"))
+        return [
+          { date: "2026-10-31", total: 4 },
+          { date: "2026-10-30", total: 600 },
+        ];
+      if (sql.includes("SELECT s.filing_date AS f")) return Array.from({ length: 60 }, () => ({ f: "2026-01-19" }));
+      return [];
+    });
+    const { getPermBoard } = await load();
+    expect((await getPermBoard())?.day).toBe("2026-10-30");
+  });
+});

@@ -407,7 +407,11 @@ HISTORY_PAUSE_S = 2.0
 # so an employer string here matches the one the entity tables were built on.
 NAME_LEN = 80
 SOC_LEN = 10
-FRESHNESS_MAX_AGE_DAYS = 120
+# How old the newest quarter's file may get before the next one is late. Measured Nov 1 2026 from the
+# Internet Archive's first capture of each PERM file: DOL posted a quarter 62 to 125 days after it ended
+# (FY2025 Q3 by Aug 31, Q4 by Dec 24, FY2026 Q1 by Apr 27, Q2 by Aug 3), so the newest file is up to
+# 92 + 125 = 217 days old the day the next appears. At 120 every quarter read "stale" for weeks.
+FRESHNESS_MAX_AGE_DAYS = 220
 
 
 def table_ddl(table: str) -> list[str]:

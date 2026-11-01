@@ -122,7 +122,9 @@ def main() -> int:
     if not sm:
         print("FAIL: could not read the sitemap; nothing to crawl", file=sys.stderr)
         return 2
-    urls = [u for u in re.findall(r"<loc>([^<]+)</loc>", sm)]
+    # Each page on the site being checked: a build checked before it ships lists the live
+    # site's address in its sitemap.
+    urls = [base + ("/" + u.split("/", 3)[3] if u.count("/") >= 3 else "/") for u in re.findall(r"<loc>([^<]+)</loc>", sm)]
     # One per route shape, so a 33-article set does not crowd out the data pages.
     seen_shape: set[str] = set()
     sources: list[str] = []

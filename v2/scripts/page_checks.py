@@ -50,21 +50,23 @@ PAGES = [
 ]
 
 
-def checks(base: str) -> list[dict]:
+def checks(base: str, extra: list[str] | None = None) -> list[dict]:
+    """`extra`: more pages for the checks that read a list (a push's changed pages, before it ships)."""
     py = sys.executable
+    pages = list(dict.fromkeys([*PAGES, *(extra or [])]))
     return [
         {"key": "glued", "title": "Words run together", "cmd": [py, "scripts/audit_glued_text.py", "--base", base], "limit": 600},
         {"key": "hidden", "title": "Content hidden until scripts run", "cmd": [py, "scripts/audit_ssr_visibility.py", "--base", base, "--limit", "150"], "limit": 600},
-        {"key": "headings", "title": "Headings", "cmd": [py, "scripts/audit_headings.py", "--base", base], "limit": 600},
+        {"key": "headings", "title": "Headings", "cmd": [py, "scripts/audit_headings.py", "--base", base, *(["--pages", *pages] if extra else [])], "limit": 600},
         {"key": "pages", "title": "Titles, descriptions, canonicals, dates", "cmd": [py, "scripts/audit_all_pages.py", "--base", base], "limit": 900},
         {"key": "links", "title": "Internal links", "cmd": [py, "scripts/audit_internal_links.py", "--base", base, "--pages", "40"], "limit": 900},
         # Who made each page, when it changed, its sources and how to report a mistake (E-E-A-T).
-        {"key": "trust", "title": "Authorship, dates, sources and corrections", "cmd": [py, "scripts/audit_trust.py", "--base", base], "limit": 900},
+        {"key": "trust", "title": "Authorship, dates, sources and corrections", "cmd": [py, "scripts/audit_trust.py", "--base", base, *(["--pages", *pages] if extra else [])], "limit": 900},
         # Not a page check, but it needs the public database's credentials, which this job has: figures
         # typed into the copy with no date beside them go stale when DOL's next file loads.
         {"key": "figures", "title": "Figures typed into the copy", "cmd": [py, "scripts/audit_staleness.py"], "limit": 300},
-        {"key": "axe", "title": "Accessibility (axe, WCAG AA)", "cmd": ["node", "scripts/audit_axe.mjs", base, *PAGES], "limit": 900},
-        {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *PAGES], "limit": 600,
+        {"key": "axe", "title": "Accessibility (axe, WCAG AA)", "cmd": ["node", "scripts/audit_axe.mjs", base, *pages], "limit": 900},
+        {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *pages], "limit": 600,
          # A page with nothing wrong prints a line too; the report keeps the lines with findings.
          "clean": r"overflow=0px\s+small=0\s+taps=0\s*$"},
         {
@@ -118,9 +120,13 @@ def main() -> int:
     ap.add_argument("--base", default="https://permtracker.app")
     ap.add_argument("--out", default=None)
     ap.add_argument("--only", default="", help="comma-separated keys")
+    ap.add_argument("--pages-file", default=None, help="more pages for the list checks, one path per line")
     args = ap.parse_args()
     wanted = {k for k in args.only.split(",") if k}
-    todo = [c for c in checks(args.base.rstrip("/")) if not wanted or c["key"] in wanted]
+    extra = []
+    if args.pages_file:
+        extra = [ln.strip() for ln in Path(args.pages_file).read_text().splitlines() if ln.strip().startswith("/")]
+    todo = [c for c in checks(args.base.rstrip("/"), extra) if not wanted or c["key"] in wanted]
     if wanted and len(todo) != len(wanted):
         print(f"unknown check key(s): {sorted(wanted - {c['key'] for c in todo})}", file=sys.stderr)
         return 2

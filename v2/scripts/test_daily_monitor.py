@@ -98,6 +98,14 @@ def security_section_says_what_is_open() -> None:
     check(dm.security_verdict([], [dep], [], now)["status"] == "fail", "a high Dependabot alert fails")
     low = {"security_advisory": {"severity": "low"}, "dependency": {"package": {"name": "braces"}}}
     check(dm.security_verdict([], [low], [], now)["status"] == "warn", "a low Dependabot alert warns")
+    # An alert for an advisory accepted on purpose is a line until its date, then warns again.
+    gid = next(iter(dm.ACCEPTED_ADVISORIES))
+    held = {"security_advisory": {"severity": "moderate", "ghsa_id": gid}, "dependency": {"package": {"name": "glob"}}}
+    inside = dm.security_verdict([], [held], [], dt.datetime(2026, 10, 1, 12, tzinfo=dt.timezone.utc))
+    check(inside["status"] == "ok" and any(gid in ln and "accepted until" in ln for ln in inside["lines"]),
+          f"an accepted advisory's alert is a line inside its date ({inside})")
+    past = dm.security_verdict([], [held], [], dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc))
+    check(past["status"] == "warn", "the same alert warns once its date has passed")
     unread = dm.security_verdict("HTTP 403", [], [], now)
     check(unread["status"] == "warn" and "couldn't be read (HTTP 403)" in unread["summary"],
           "a list the token can't read warns, never reads as zero")

@@ -78,6 +78,13 @@ def fetch(url: str, timeout: int = 30) -> tuple[int, str]:
         return 0, f"__ERROR__ {e}"
 
 
+def on_base(url: str, base: str) -> str:
+    """The same path on the site being checked: a build checked before it ships lists the live
+    site's address in its sitemap, and reading those would check the live site instead."""
+    path = "/" + url.split("/", 3)[3] if url.count("/") >= 3 else "/"
+    return base.rstrip("/") + path
+
+
 def sitemap_urls(base: str) -> list[str]:
     status, body = fetch(f"{base}/sitemap.xml")
     if status != 200:
@@ -88,7 +95,7 @@ def sitemap_urls(base: str) -> list[str]:
     if urls and all(u.rstrip("/").endswith(".xml") for u in urls):
         out: list[str] = []
         for child in urls:
-            _, cb = fetch(child)
+            _, cb = fetch(on_base(child, base))
             out.extend(re.findall(r"<loc>([^<]+)</loc>", cb))
         urls = out
     return sorted(set(urls))
@@ -129,7 +136,7 @@ def main() -> int:
 
     def check(u: str):
         path = "/" + u.split("/", 3)[3] if u.count("/") >= 3 else "/"
-        status, body = fetch(u)
+        status, body = fetch(on_base(u, base))
         return u, path, status, body
 
     findings: list[str] = []

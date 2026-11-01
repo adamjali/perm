@@ -90,7 +90,7 @@ function ProgramBlock({ p, first, last }: { p: WhdBoardProgram; first: number; l
         partialKey="Cases still being concluded"
         className="mt-6"
       />{" "}
-      <h3 className="mt-8 font-heading text-lg font-bold">The largest back wages</h3>{" "}
+      <h3 className="mt-8 font-heading text-lg font-bold">The largest {p.program} back wages</h3>{" "}
       <ol className="mt-2 divide-y divide-border/40 border-y-2 border-border">
         {p.top.map((r) => (
           <Fragment key={r.caseId}>

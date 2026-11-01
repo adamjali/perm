@@ -425,6 +425,17 @@ def security_verdict(scanning, dependabot, prs, now: dt.datetime, audit: dict | 
     if isinstance(dependabot, str):
         warns.append(f"Dependabot alerts couldn't be read ({dependabot}).")
     elif dependabot:
+        # An alert for an advisory accepted on purpose, inside its date, is a line, as it is in the audit
+        # below: both name the same GHSA, and only one of them turned the section amber until Nov 1 2026.
+        today = now.date().isoformat()
+        held = [a for a in dependabot
+                if ACCEPTED_ADVISORIES.get(str((a.get("security_advisory") or {}).get("ghsa_id", "")), ("", ""))[1] >= today]
+        for a in held:
+            gid = str((a.get("security_advisory") or {}).get("ghsa_id", ""))
+            why, until = ACCEPTED_ADVISORIES[gid]
+            lines.append(f"Dependabot: {gid} accepted until {until}: {why}")
+        dependabot = [a for a in dependabot if a not in held]
+    if isinstance(dependabot, list) and dependabot:
         severe = [a for a in dependabot
                   if str((a.get("security_advisory") or {}).get("severity", "")).lower() in SEVERE]
         named = ", ".join(sorted({str(((a.get("dependency") or {}).get("package") or {}).get("name", "?"))

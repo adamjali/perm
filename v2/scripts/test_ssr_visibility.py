@@ -47,6 +47,11 @@ def main() -> int:
     check(before_h1(switch) == 0, "a switch's hidden native input is not hidden content")
     visible_input = '<body><input type="text" style="opacity:0"/><h1>Case</h1></body>'
     check(before_h1(visible_input) == 1, "an input hidden without aria-hidden still counts")
+    # A build checked before it ships lists the live site in its sitemap: every page is read from --base.
+    check(av.on_base("https://permtracker.app/perm-queue/2026-01", "http://127.0.0.1:3000")
+          == "http://127.0.0.1:3000/perm-queue/2026-01", "a sitemap page is read from the base")
+    check(av.on_base("https://permtracker.app", "http://127.0.0.1:3000/") == "http://127.0.0.1:3000/",
+          "the homepage is read from the base")
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
 

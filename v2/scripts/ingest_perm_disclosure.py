@@ -52,6 +52,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_wage import ANNUALIZE, PERM_BAND  # noqa: E402
 from lib_recruitment import COLUMNS as RECRUITMENT_COLUMNS, recruitment_fields  # noqa: E402
 
+# How old the newest quarter may get before the next is late: the same measurement as
+# ingest_flag_disclosure.FRESHNESS_MAX_AGE_DAYS (DOL posts all its quarterly files together).
+FRESHNESS_MAX_AGE_DAYS = 220
+
 PERFORMANCE_PAGE = "https://www.dol.gov/agencies/eta/foreign-labor/performance"
 EXCEL_EPOCH = date(1899, 12, 30)  # 1900 date system, including its leap-year bug
 
@@ -1473,7 +1477,7 @@ def main() -> int:
     stamp_freshness(db, "perm-cases",
                     as_of=str(db.scalar("SELECT max(decision_date) FROM perm_cases"))[:10],
                     source="DOL quarterly disclosure files (flag.dol.gov)", cadence="Quarterly",
-                    note=f"{len(seen):,} decided cases", max_age_days=135)
+                    note=f"{len(seen):,} decided cases", max_age_days=FRESHNESS_MAX_AGE_DAYS)
 
     return 0
 

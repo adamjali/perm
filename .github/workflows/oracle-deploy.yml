@@ -65,7 +65,7 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: v2
@@ -228,6 +228,51 @@ jobs:
           fi
           tar --zstd -cf "$RUNNER_TEMP/release.tar.zst" -C "$S" .
           echo "release: $(du -h "$RUNNER_TEMP/release.tar.zst" | cut -f1), server at ${S#.next/standalone}"
+
+      # The pages checked before they can go live: the same checks the morning
+      # report runs on the live site (scripts/page_checks.py), run here on the
+      # exact build this job ships, the pages this push changed added to their
+      # list. Until Nov 1 2026 they ran only the morning after, so each day's new
+      # work shipped its small rendered defects (a duplicate heading, a 40px link,
+      # a planner step gone) and turned the report red; 5 of 7 mornings from
+      # Oct 26. A failure here stops the deploy before the server is touched, and
+      # a push outside the night window shows it the same day.
+      - name: Install the page checks' browser
+        if: steps.plan.outputs.build == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Check the built site's pages before it can ship
+        if: steps.plan.outputs.build == 'true'
+        timeout-minutes: 30
+        env:
+          DATABASE_URL: http://127.0.0.1:18080
+          DATABASE_LCA_URL: ${{ vars.ORACLE_DB_LCA == 'on' && 'http://127.0.0.1:18082' || '' }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
+          WITHHELD_EMPLOYERS: ${{ secrets.WITHHELD_EMPLOYERS }}
+          BEFORE: ${{ env.SINCE }}
+          PT_BROWSER: chromium
+        run: |
+          S=$(dirname "$(find .next/standalone -name server.js -not -path '*/node_modules/*' | head -1)")
+          (cd "$S" && PORT=3000 HOSTNAME=127.0.0.1 node server.js > "$RUNNER_TEMP/site.log" 2>&1 &)
+          for i in $(seq 1 60); do
+            curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ | grep -q 200 && break
+            sleep 2
+          done
+          curl -s -o /dev/null -w 'the built site answered HTTP %{http_code}\n' http://127.0.0.1:3000/
+          : > "$RUNNER_TEMP/changed.txt"
+          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            node scripts/gsc_queue.mjs --since "$BEFORE" --indexnow-list 2>/dev/null | head -30 > "$RUNNER_TEMP/changed.txt" || :
+          fi
+          echo "changed pages added to the checks: $(grep -c . "$RUNNER_TEMP/changed.txt" || true)"
+          code=0
+          python3 scripts/page_checks.py --base http://127.0.0.1:3000 --pages-file "$RUNNER_TEMP/changed.txt" \
+            --only glued,hidden,headings,pages,trust,axe,phone,flows || code=$?
+          pkill -f "node server.js" || :
+          if [ "$code" != 0 ]; then
+            echo "::error::a page check failed on this build, so it won't ship; the findings are above"
+            tail -40 "$RUNNER_TEMP/site.log" || :
+            exit 1
+          fi
 
       # The build runs while the test suite does (test.yml, about 4 minutes in
       # three parts); nothing reaches the server until the suite has passed

@@ -105,7 +105,9 @@ async function readPermBoard(): Promise<PermBoard | null> {
     [OBSERVED_SOURCE],
   );
   const worked = series.filter((d) => Number(d.total) > 0);
-  const last = worked[0];
+  // The reading day is DOL's last full working day: a weekend's or a holiday's few stragglers
+  // are too few to say where DOL is working, and drew no span at all.
+  const last = worked.find((d) => Number(d.total) >= SPAN_MIN_DECISIONS) ?? worked[0];
   if (!last) return null;
   const day = String(last.date);
   const bounds = dolDayBounds(day);
@@ -192,7 +194,9 @@ async function readPwdBoard(): Promise<PwdBoard | null> {
   // The day in progress is withheld: its overnight batch hasn't landed.
   const today = dolDayOf(Date.now());
   const worked = [...byDay].filter(([d, n]) => d < today && n > 0).sort(([a], [b]) => (a < b ? 1 : -1));
-  const last = worked[0];
+  // As on the PERM side: a Saturday's handful (Oct 31 2026) drew no span, and the planner then
+  // dropped the wage request from every plan, so the reading day needs a full day's decisions.
+  const last = worked.find(([, n]) => n >= SPAN_MIN_DECISIONS) ?? worked[0];
   if (!last) return null;
   const [day] = last;
   const from30 = isoMinus(day, 29);

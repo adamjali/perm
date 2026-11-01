@@ -20,7 +20,8 @@ export default defineConfig({
       name: "chromium",
       // The installed Chrome rather than Playwright's own download, which is
       // not installed here (and WebKit can't be on macOS 12).
-      use: { ...devices["Desktop Chrome"], channel: "chrome" },
+      // PT_BROWSER=chromium: Playwright's own Chromium, where no Chrome is built (the deploy's ARM runner).
+      use: { ...devices["Desktop Chrome"], channel: process.env.PT_BROWSER === "chromium" ? undefined : "chrome" },
     },
   ],
 
