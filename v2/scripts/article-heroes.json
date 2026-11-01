@@ -807,6 +807,17 @@
   "credit": "Screenshot of permtracker.app, October 17, 2026",
   "alt": "The EB-2 India final action cutoff, a fiscal year at a time, from every visa bulletin"
  },
+ "guides/employer-barred-from-perm": {
+  "capture": {
+   "url": "/debarments/settlements",
+   "clip": "h:Cloudera, the one barred from PERM",
+   "width": 1000,
+   "fit": "contain",
+   "css": "section[aria-labelledby=cloudera] > div { padding-bottom: 10px !important; }"
+  },
+  "credit": "Screenshot of permtracker.app, November 1, 2026",
+  "alt": "Cloudera's case on a time line: DOL's suspension, the settlement, and the 24 months it agreed to file no PERM application"
+ },
  "guides/employer-suspended-from-perm": {
   "capture": {
    "url": "/perm-employers/under-review",

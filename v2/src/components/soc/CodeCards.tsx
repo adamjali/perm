@@ -26,9 +26,11 @@ function Card({ code, summary, total, top, pay }: { code: TitleCode; summary: Co
         </div>{" "}
         <span className="shrink-0 font-mono text-base font-bold tabular-nums">{formatShareOf(code.filings, total)}</span>
       </div>{" "}
-      <h3 className="mt-3 font-heading text-xl font-bold leading-snug">
-        <Link href={codeHref(code.soc, code.slug)} className="link">
-          <span className="whitespace-nowrap font-mono">{code.soc}</span> {code.codeTitle}
+      <h3 className="mt-2 font-heading text-xl font-bold leading-snug">
+        <Link href={codeHref(code.soc, code.slug)} className="link inline-flex min-h-11 items-center">
+          <span>
+            <span className="whitespace-nowrap font-mono">{code.soc}</span> {code.codeTitle}
+          </span>
         </Link>
       </h3>{" "}
       <p className="mt-3 text-base leading-relaxed">{summary.description}</p>{" "}

@@ -120,6 +120,16 @@ def drop_orphan_end(im: Image.Image) -> Image.Image:
         else:
             blocks.append([start, y])
 
+    def closes_box(b: list[int]) -> bool:
+        """The line is a box's bottom edge when the box's side edges run down to it: the rows just
+        above carry ink at both of the line's ends (Nov 1 2026: a framed chart lost its bottom edge)."""
+        cols = np.flatnonzero(ink[b[0] : b[1]].any(axis=0))
+        if b[0] < 12 or cols.size < 2:
+            return False
+        above = ink[b[0] - 12 : b[0]]
+        left, right = cols[0], cols[-1]
+        return bool(above[:, max(0, left - 2) : left + 3].any(axis=1).all() and above[:, max(0, right - 2) : right + 3].any(axis=1).all())
+
     def is_rule(b: list[int]) -> bool:
         """A thin line across most of the width: a section rule, not the edge of a box."""
         return b[1] - b[0] <= 10 and ink[b[0] : b[1]].mean(axis=1).max() > 0.55
@@ -129,6 +139,9 @@ def drop_orphan_end(im: Image.Image) -> Image.Image:
 
     cut = h
     for _ in range(3):
+        # A picture that ends on a box's own bottom edge ends where it should.
+        if blocks and closes_box(blocks[-1]):
+            break
         kept = list(blocks)
         if blocks and is_rule(blocks[-1]):
             blocks.pop()
