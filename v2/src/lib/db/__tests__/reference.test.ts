@@ -34,6 +34,36 @@ describe("reference reads", () => {
     expect(got?.version).toBe("31.0");
   });
 
+  it("describes each code once, from its own .00 occupation, with its top tasks and zone", async () => {
+    rows.mockResolvedValueOnce([
+      { soc7: "15-1211", onet_code: "15-1211.00", title: "Computer Systems Analysts", description: " Analyze systems. Perform. ", job_zone: "4", bright: null, detail: JSON.stringify({ tasks: ["a", "b", "c", "d"] }) },
+      { soc7: "15-1211", onet_code: "15-1211.01", title: "Health Informatics Specialists", description: "Apply.", job_zone: "5", bright: null, detail: "{}" },
+      { soc7: "39-9011", onet_code: "39-9011.00", title: "Childcare Workers", description: "Attend to children.", job_zone: "2", bright: null, detail: "{not json" },
+    ]);
+    one.mockResolvedValueOnce({ json: JSON.stringify({ jobZones: { "4": { name: "Job Zone Four: Considerable Preparation Needed" }, "2": { name: "Job Zone 1-2: Very Little to Some Preparation Needed" } } }) });
+    const got = await ref.codeSummaries(["15-1211.00", "15-1211", "39-9011", "junk"]);
+    expect(rows.mock.calls[0]![1]).toEqual(["15-1211", "39-9011"]);
+    expect(got.get("15-1211")).toMatchObject({ onetCode: "15-1211.00", description: "Analyze systems. Perform.", tasks: ["a", "b", "c"], zoneLabel: "4", zoneName: "Considerable preparation needed" });
+    expect(got.get("39-9011")).toMatchObject({ tasks: [], zoneLabel: "1-2", zoneName: "Very little to some preparation needed" });
+  });
+
+  it("answers no descriptions before the table exists, and throws on any other failure", async () => {
+    rows.mockRejectedValueOnce(new Error("SQLITE_ERROR: no such table: onet_occupations"));
+    expect((await ref.codeSummaries(["15-1252"])).size).toBe(0);
+    rows.mockRejectedValueOnce(new Error("fetch failed"));
+    await expect(ref.codeSummaries(["15-1252"])).rejects.toThrow("fetch failed");
+    expect((await ref.codeSummaries([])).size).toBe(0);
+  });
+
+  it("takes a description's first sentence, past an abbreviation, and cuts a long one at a word", () => {
+    expect(ref.firstSentence("Research and develop software. Analyze needs.")).toBe("Research and develop software.");
+    expect(ref.firstSentence("Enforce U.S. laws at the border. More.")).toBe("Enforce U.S. laws at the border.");
+    const long = ref.firstSentence(`Plan ${"and run ".repeat(40)}the work.`, 60);
+    expect(long.length).toBeLessThanOrEqual(63);
+    expect(long.endsWith("...")).toBe(true);
+    expect(long).not.toMatch(/ \.\.\.$/);
+  });
+
   it("reads a city's counties and wage-area count, and a table loaded before they existed", async () => {
     one.mockResolvedValueOnce({
       place_name: "New York city", lat: 40.66, lon: -73.94, county_name: "Kings County", county_basis: "nearest",

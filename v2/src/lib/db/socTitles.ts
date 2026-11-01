@@ -16,6 +16,7 @@ import { titleKey } from "@/lib/socTitleKey";
 import { SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 import { rows } from "./client";
 import { doc } from "./publicData";
+import { codeSummaries, firstSentence } from "./reference";
 
 /**
  * The job code finder's reads: soc_titles and the two docs scripts/build_soc_titles.py writes.
@@ -251,7 +252,7 @@ export async function findSoc(raw: string, limit = 5): Promise<SocSearch> {
   const codes = codesDoc?.codes ?? new Map<string, SocCode>();
   if (parsed.kind === "empty") return { query, code: null, titles: [], codes: [] };
   if (parsed.kind === "code") {
-    return { query, code: answerForCode(parsed.soc, codes), titles: [], codes: [] };
+    return withSummaries({ query, code: answerForCode(parsed.soc, codes), titles: [], codes: [] });
   }
   const index = await keyIndex();
   // The exact key first, so "Software Engineer" can't lose to a closer-spelled rarer title.
@@ -270,5 +271,34 @@ export async function findSoc(raw: string, limit = 5): Promise<SocSearch> {
     .filter((a): a is TitleAnswer => a !== null)
     .slice(0, limit);
   const codeHits = codeIndexFor(codes).search(parsed.text, { limit: 3, min: 0.8 }).map((h) => answerForCode(h.item.soc, codes));
-  return { query, code: null, titles, codes: codeHits };
+  return withSummaries({ query, code: null, titles, codes: codeHits });
+}
+
+/**
+ * Each answered code gets O*NET's first sentence, so a reader picking a code sees what it covers. The line is
+ * an addition: when the read fails the search still answers, without it, and the failure is logged.
+ */
+async function withSummaries(search: SocSearch): Promise<SocSearch> {
+  const filed = search.titles.flatMap((t) => t.codes.filter((c) => c.filings > 0).slice(0, 4));
+  const socs = [...filed.map((c) => c.soc), ...(search.code ? [search.code.soc] : []), ...search.codes.map((c) => c.soc)];
+  if (!socs.length) return search;
+  const got = await codeSummaries(socs, 0).catch((e: unknown) => {
+    console.error("[soc] code descriptions failed", e);
+    return null;
+  });
+  if (!got?.size) return search;
+  const line = (soc: string) => {
+    const d = got.get(soc)?.description;
+    return d ? firstSentence(d) : undefined;
+  };
+  const named = <T extends { soc: string; summary?: string }>(c: T): T => {
+    const summary = line(c.soc);
+    return summary ? { ...c, summary } : c;
+  };
+  return {
+    ...search,
+    code: search.code ? named(search.code) : null,
+    titles: search.titles.map((t) => ({ ...t, codes: t.codes.map((c) => (c.filings > 0 ? named(c) : c)) })),
+    codes: search.codes.map(named),
+  };
 }

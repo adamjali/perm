@@ -58,6 +58,8 @@ export interface TitleCode {
   spellings: [string, number][];
   /** For a code BLS retired in 2018: the codes it became. */
   becameCodes: string[];
+  /** O*NET's first sentence for the code, when the finder looked it up. */
+  summary?: string;
 }
 
 export interface TitleAnswer {
@@ -79,6 +81,8 @@ export interface CodeAnswer {
   filings: number;
   /** For a 2010 code: the 2018 codes it became, with their titles. */
   became: { soc: string; title: string; slug: string | null }[];
+  /** O*NET's first sentence for the code, when the finder looked it up. */
+  summary?: string;
 }
 
 /** The codes in a soc_codes doc's compact rows: [soc, title, zone, perm, pwd, lca, slug, titles]. */
@@ -198,6 +202,11 @@ export function mergeJobChoices<T extends { soc: string; name: string }>(text: s
 }
 
 /** Where a code goes when it's picked: its occupation page, else the wage tool set to it. */
+/** O*NET merges Job Zones 1 and 2 and stores the pair as 2, so "2" is shown as "1-2". */
+export function zoneLabelOf(zone: number | null | undefined): string | null {
+  return zone == null ? null : zone === 2 ? "1-2" : String(zone);
+}
+
 export function codeHref(soc: string, slug: string | null): string {
   return slug ? `/perm-wages/${slug}` : `/tools/wage-levels?soc=${encodeURIComponent(socGroup(soc) ?? soc)}`;
 }

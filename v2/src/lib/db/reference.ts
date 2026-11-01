@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { one, rows } from "./client";
 import { socGroup } from "@/lib/socCode";
+import { zoneLabelOf } from "@/lib/socFinder";
 import { predecessorsOf, SOC_2018_FIRST_WAGE_YEAR } from "@/lib/socCrosswalk";
 import { HOURS_PER_YEAR } from "@/lib/wageFormat";
 
@@ -92,6 +93,94 @@ export const onetForSoc = cache(async (code: string): Promise<OnetForSoc | null>
   }
   return { occupations, zones, version };
 });
+
+/** O*NET's Job Zone names and the database version, from the doc the O*NET loader writes. Never throws. */
+export const onetReference = cache(async (): Promise<{ zones: Record<string, JobZone>; version: string | null }> => {
+  const ref = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'onet_reference'").catch(() => null);
+  try {
+    const doc = ref ? (JSON.parse(String(ref.json)) as { jobZones?: Record<string, JobZone>; version?: string }) : {};
+    return { zones: doc.jobZones ?? {}, version: doc.version ?? null };
+  } catch {
+    return { zones: {}, version: null };
+  }
+});
+
+/** One SOC code's O*NET description, for setting codes side by side. */
+export interface CodeSummary {
+  soc: string;
+  /** The O*NET occupation it comes from: the code's own `.00` where O*NET has one. */
+  onetCode: string;
+  title: string;
+  description: string;
+  /** O*NET's tasks, most important first, at most `taskCount`. */
+  tasks: string[];
+  jobZone: number | null;
+  /** The zone as O*NET names it: "4", or "1-2" (O*NET merges the first two zones and files them as 2). */
+  zoneLabel: string | null;
+  /** "Considerable preparation needed", from O*NET's Job Zone name. */
+  zoneName: string | null;
+}
+
+
+/** The first sentence of an O*NET description, for a one-line answer. Pure. */
+export function firstSentence(text: string, max = 170): string {
+  const t = (text ?? "").trim();
+  // A period after a lone capital is an abbreviation's ("U.S."), not a sentence's end.
+  const end = t.search(/(?<!\b[A-Z])\.(?=\s|$)/);
+  const one = end > 0 ? t.slice(0, end + 1) : t;
+  if (one.length <= max) return one;
+  const cut = one.slice(0, max);
+  return `${cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:]$/, "")}...`;
+}
+
+/**
+ * O*NET's description of each code, read in one query: the code's own occupation (`15-1252.00`), or its first
+ * specialty when O*NET has no `.00` for it. A code O*NET doesn't describe is absent. A deployment without the
+ * table answers empty; any other failure throws, so a page keeps its last good render.
+ */
+export async function codeSummaries(socs: string[], taskCount = 3): Promise<Map<string, CodeSummary>> {
+  const codes = [...new Set(socs.map((c) => socGroup(c)).filter((c): c is string => Boolean(c)))].slice(0, 40);
+  const out = new Map<string, CodeSummary>();
+  if (!codes.length) return out;
+  const none = (e: unknown): [] => {
+    if (String(e).includes("no such table")) return [];
+    throw e;
+  };
+  const [got, reference] = await Promise.all([
+    rows<OnetRow & { soc7: string }>(
+      `SELECT soc7, onet_code, title, description, job_zone, bright, detail FROM onet_occupations
+       WHERE soc7 IN (${codes.map(() => "?").join(",")}) ORDER BY soc7, onet_code`,
+      codes,
+    ).catch(none),
+    onetReference(),
+  ]);
+  const zones = reference.zones;
+  for (const r of got) {
+    const soc = String(r.soc7);
+    // Rows come in code order, so the first one seen is the `.00` when O*NET has it.
+    if (out.has(soc)) continue;
+    let tasks: string[] = [];
+    try {
+      tasks = ((JSON.parse(String(r.detail)) as { tasks?: string[] }).tasks ?? []).slice(0, taskCount);
+    } catch {
+      tasks = [];
+    }
+    const jobZone = num(r.job_zone);
+    const zone = jobZone != null ? zones[String(jobZone)] : undefined;
+    const zoneName = zone?.name.replace(/^Job Zone [\w-]+: /, "").trim() || null;
+    out.set(soc, {
+      soc,
+      onetCode: String(r.onet_code),
+      title: String(r.title),
+      description: String(r.description ?? "").trim(),
+      tasks,
+      jobZone,
+      zoneLabel: zoneLabelOf(jobZone),
+      zoneName: zoneName ? zoneName.charAt(0).toUpperCase() + zoneName.slice(1).toLowerCase() : null,
+    });
+  }
+  return out;
+}
 
 /* --------------------------------------------------------------- BLS OEWS */
 

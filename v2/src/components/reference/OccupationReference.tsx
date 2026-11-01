@@ -5,6 +5,7 @@ import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
 import { SocCodeText } from "@/components/data/SocCodeText";
 import { FigurePlate } from "@/components/tools/FigurePlate";
+import { OnetCredit } from "./OnetCredit";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { formatDollars, formatInt } from "@/lib/format";
 import type { FacetRow } from "@/lib/db/entityDetail";
@@ -370,23 +371,7 @@ export async function OccupationReference({
               })}
             </p>
           ) : null}
-          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            This section includes information from the{" "}
-            <a href="https://www.onetcenter.org/database.html" className="link" rel="noopener">
-              {`O*NET${onet?.version ? ` ${onet.version}` : ""} Database`}
-            </a>{" "}
-            and O*NET OnLine by the U.S. Department of Labor, Employment and Training Administration (USDOL/ETA), used
-            under the{" "}
-            <a href="https://creativecommons.org/licenses/by/4.0/" className="link" rel="noopener license">
-              CC BY 4.0 license
-            </a>
-            . O*NET® is a trademark of USDOL/ETA. PERM Tracker has modified some of this information (the shares are
-            rounded and only the top tasks are shown);{" "}
-            <Link href="/methodology#onet" className="link">
-              what changed
-            </Link>
-            . USDOL/ETA has not approved, endorsed, or tested these modifications.
-          </p>
+          <OnetCredit className="mt-6" version={onet?.version} note="the shares are rounded and only the top tasks are shown" />
         </section>
       ) : null}
     </>

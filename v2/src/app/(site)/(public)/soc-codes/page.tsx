@@ -93,7 +93,7 @@ export default async function SocCodesPage() {
         </SearchParamsBoundary>
       </section>{" "}
       {top.length ? (
-        <PageSection id="titles" title="The most filed job titles" lede="Each with the code employers used most for it, and a page of its own.">
+        <PageSection id="titles" title="The most filed job titles">
           <ul className="grid grid-cols-1 gap-[2px] border-2 border-border bg-border sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
             {top.map((p, i) => (
               <li key={p.slug} className={i >= 10 ? "hidden bg-card sm:block" : "bg-card"}>
@@ -117,7 +117,7 @@ export default async function SocCodesPage() {
         <PageSection
           id="groups"
           title="Every code, by group"
-          lede={`The ${groups.length} groups BLS sorts jobs into, each with its share of the filings. Open one to see its codes.`}
+          lede={`BLS's ${groups.length} job groups, by share of filings.`}
         >
           <div className="border-2 border-border bg-card">
             {groups.map((g) => (

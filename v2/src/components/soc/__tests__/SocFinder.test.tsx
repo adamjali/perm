@@ -50,6 +50,15 @@ describe("SocFinder", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("says what each code covers in O*NET's words, under its name", async () => {
+    params.q = "data scientist";
+    const answer = found("data scientist", "Data Scientist", "data-scientist");
+    answer.titles[0]!.codes[0] = { ...answer.titles[0]!.codes[0]!, summary: "Develop and implement methods to analyze data." } as (typeof answer.titles)[0]["codes"][0];
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(answer))));
+    render(<SocFinder examples={[]} />);
+    expect(await screen.findByText("Develop and implement methods to analyze data.")).toBeInTheDocument();
+  });
+
   it("dims the earlier answer while the next one loads", async () => {
     params.q = "data scientist";
     let release: () => void = () => {};

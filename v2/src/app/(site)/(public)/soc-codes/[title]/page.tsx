@@ -1,7 +1,7 @@
 /**
  * One job title's SOC code: the codes employers filed it under in DOL's files, each with its
- * share, BLS's national pay for each and its O*NET Job Zone, so a title filed two ways shows
- * what the choice means. A page for every title with 50+ filings (scripts/build_soc_titles.py).
+ * share, BLS's national pay for each, and O*NET's description and tasks for each side by side,
+ * so a title filed two ways shows what the choice means. A page for every title with 50+ filings (scripts/build_soc_titles.py).
  */
 
 import type { Metadata } from "next";
@@ -14,16 +14,17 @@ import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { SocCodeText } from "@/components/data/SocCodeText";
 import { PageSection } from "@/components/data/PageSection";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { CodeCards } from "@/components/soc/CodeCards";
 import { SocSources } from "@/components/soc/SocSources";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import { FaqList } from "@/components/tools/FaqList";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { firstThatFits } from "@/lib/describe";
-import { marketPayNational } from "@/lib/db/reference";
+import { codeSummaries, marketPayNational, onetReference } from "@/lib/db/reference";
 import { getSocCodes, getSocTitle } from "@/lib/db/socTitles";
 import { formatDollars, formatInt, formatShareOf } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { codeHref, type TitleAnswer, type TitleCode } from "@/lib/socFinder";
+import { codeHref, zoneLabelOf, type TitleAnswer, type TitleCode } from "@/lib/socFinder";
 import { keyOfSlug } from "@/lib/socTitleKey";
 import { finderHref, DEFAULT_FILTERS } from "@/lib/sponsorFinder";
 import { withSocialCard } from "@/lib/socialCard";
@@ -85,7 +86,7 @@ function codeRow(c: TitleCode, total: number, pay: number | null): BarRow {
   ].filter(Boolean);
   const notes = [
     pay ? `BLS median ${formatDollars(pay)} a year` : null,
-    c.zone ? `Job Zone ${c.zone}` : null,
+    c.zone ? `Job Zone ${zoneLabelOf(c.zone)}` : null,
     c.becameCodes.length ? `a 2010 code, now ${c.becameCodes.join(" or ")}` : null,
   ].filter(Boolean);
   return {
@@ -110,7 +111,11 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
   const filed = filedCodes(a);
   const onetOnly = a.codes.filter((c) => c.filings === 0);
   const top = filed[0] ?? null;
-  const pays = await Promise.all(filed.slice(0, 8).map((c) => marketPayNational(c.soc).catch(() => null)));
+  const [pays, summaries, onet] = await Promise.all([
+    Promise.all(filed.slice(0, 8).map((c) => marketPayNational(c.soc).catch(() => null))),
+    codeSummaries(filed.slice(0, 12).map((c) => c.soc)),
+    onetReference(),
+  ]);
   const payOf = new Map(filed.slice(0, 8).map((c, i) => [c.soc, pays[i]?.median ?? null]));
   const spellings = top?.spellings ?? [];
   const faqs = [
@@ -142,7 +147,7 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
           {payOf.get(top.soc) ? (
             <Figure label="BLS median pay for the code" value={formatDollars(payOf.get(top.soc)!)} note="a year, nationally" />
           ) : null}{" "}
-          {top.zone ? <Figure label="O*NET Job Zone" value={String(top.zone)} note="of 5: how much preparation it takes" /> : null}
+          {top.zone ? <Figure label="O*NET Job Zone" value={zoneLabelOf(top.zone) ?? ""} note="of 5: how much preparation it takes" /> : null}
         </FigureRow>
       ) : null}{" "}
       {filed.length ? (
@@ -167,6 +172,7 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
           ))}
         </p>
       ) : null}{" "}
+      <CodeCards title={a.title} codes={filed.slice(0, 12)} summaries={summaries} total={a.total} payOf={payOf} version={onet.version} />{" "}
       {spellings.length > 1 && top ? (
         <PageSection id="spellings" title="How employers wrote it" lede={`The commonest spellings filed under ${top.soc}.`}>
           <ul className="flex flex-wrap gap-2">
