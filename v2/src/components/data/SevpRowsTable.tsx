@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { ROW_LINK } from "@/components/entities/caseRows";
 import { formatInt } from "@/lib/format";
 
 /**
@@ -55,7 +56,7 @@ export function SevpRowsTable({
             <tr key={r.rank} className="border-b border-border last:border-b-0">
               <td className="px-3 py-2 font-mono text-sm">{r.rank}{" "}</td>
               <th scope="row" className="px-3 py-2 font-normal">
-                <Link href={`/perm-employers?q=${encodeURIComponent(r.employer)}`} className="link">
+                <Link href={`/perm-employers?q=${encodeURIComponent(r.employer)}`} className={ROW_LINK}>
                   {r.employer}
                 </Link>{" "}
                 {/* The counts sit to the right, off a phone's screen; the

@@ -330,7 +330,7 @@ export function LiveCaseBrowser({
                           ask DOL live, so a bare link is seconds of silence. */}
                       <PendingLink
                         href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                        className="link"
+                        className="link max-sm:inline-flex max-sm:min-h-11 max-sm:items-center"
                       >
                         {r.caseNumber}
                       </PendingLink>
@@ -342,7 +342,7 @@ export function LiveCaseBrowser({
                       {r.employerSlug ? (
                         <Link
                           href={entityHref("employer", r.employerSlug)}
-                          className="link"
+                          className="link max-sm:inline-flex max-sm:min-h-11 max-sm:items-center"
                         >
                           {r.employerName}
                         </Link>
