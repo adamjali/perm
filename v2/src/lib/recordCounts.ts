@@ -11,6 +11,8 @@
  * out, rather than printing a dash beside a date.
  */
 
+import type { FigureTrend } from "@/components/data/FigureRow";
+
 export interface RecordDocs {
   /** perm_docs['cases_meta']: the published PERM files. */
   casesMeta: string | null;
@@ -35,6 +37,8 @@ export interface RecordFigure {
   asOf: string;
   /** What the date means: "through" for a file's last decision, "checked" for a sweep. */
   asOfKind: "through" | "checked" | "newest";
+  /** How the figure moved since an earlier one, when the page holds it. */
+  trend?: FigureTrend;
 }
 
 function parse(json: string | null): Record<string, unknown> | null {

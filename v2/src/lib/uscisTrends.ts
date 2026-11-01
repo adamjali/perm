@@ -10,19 +10,52 @@ import { approvedShare, slotShort, type FormTotal, type LinePoint } from "@/lib/
 
 const monthsWords = (m: number) => (m === 1 ? "1 month" : `${m.toFixed(1).replace(/\.0$/, "")} months`);
 
-/** The lead line's median against the quarter before; within 0.15 months is level. */
+/** Median months against an earlier figure named `label`; within 0.15 months is level, shorter is good. */
+export function monthsVs(now: number | null | undefined, before: number | null | undefined, label: string): FigureTrend | undefined {
+  if (now == null || before == null) return undefined;
+  const d = now - before;
+  if (Math.abs(d) < 0.15) return { text: `Level with ${label}`, dir: "level", tone: "neutral" };
+  const n = Math.round(Math.abs(d) * 10) / 10;
+  return d < 0
+    ? { text: `${monthsWords(n)} quicker than ${label}`, dir: "down", tone: "good" }
+    : { text: `${monthsWords(n)} slower than ${label}`, dir: "up", tone: "bad" };
+}
+
+/**
+ * A count against an earlier one named `label`, as a percentage; within 2% is
+ * level. `good` says which way helps someone waiting: "fewer" (people in line),
+ * "more" (approvals), or null for information (applications received).
+ */
+export function countVs(now: number | null | undefined, before: number | null | undefined, label: string, good: "fewer" | "more" | null): FigureTrend | undefined {
+  if (now == null || before == null || before <= 0) return undefined;
+  const pct = (now - before) / before;
+  if (Math.abs(pct) < 0.02) return { text: `Level with ${label}`, dir: "level", tone: "neutral" };
+  const up = pct > 0;
+  return {
+    text: `${Math.round(Math.abs(pct) * 100)}% ${up ? "more" : "fewer"} than ${label}`,
+    dir: up ? "up" : "down",
+    tone: good === null ? "info" : (good === "more") === up ? "good" : "bad",
+  };
+}
+
+/** The newest point before quarter `fy` `quarter` that `match` accepts. */
+export function pointBefore<T extends { fy: number; quarter: number }>(points: readonly T[], fy: number, quarter: number, match: (p: T) => boolean): T | undefined {
+  const at = fy * 4 + quarter;
+  let best: T | undefined;
+  for (const p of points) {
+    const i = p.fy * 4 + p.quarter;
+    if (i < at && match(p) && (!best || i > best.fy * 4 + best.quarter)) best = p;
+  }
+  return best;
+}
+
+/** The lead line's median against the quarter before that has one. */
 export function medianMoved(points: readonly LinePoint[]): FigureTrend | undefined {
   const held = points.filter((p) => p.row?.medianMonths != null);
   const now = held.at(-1);
   const before = held.at(-2);
   if (!now || !before) return undefined;
-  const d = now.row!.medianMonths! - before.row!.medianMonths!;
-  const then = slotShort(before.slot);
-  if (Math.abs(d) < 0.15) return { text: `Level with ${then}`, dir: "level", tone: "neutral" };
-  const n = Math.round(Math.abs(d) * 10) / 10;
-  return d < 0
-    ? { text: `${monthsWords(n)} quicker than ${then}`, dir: "down", tone: "good" }
-    : { text: `${monthsWords(n)} slower than ${then}`, dir: "up", tone: "bad" };
+  return monthsVs(now.row!.medianMonths, before.row!.medianMonths, slotShort(before.slot));
 }
 
 /** The total before `newest` that carries `key`, skipping quarters without it. */
@@ -32,18 +65,11 @@ function previous(totals: readonly FormTotal[], newest: FormTotal, key: "pending
   return undefined;
 }
 
-/** A count against the quarter before, as a percentage; within 2% is level. */
+/** A form's count against the quarter before that carries it: fewer waiting is good, received is information. */
 export function countMoved(totals: readonly FormTotal[], newest: FormTotal | null, key: "pending" | "received"): FigureTrend | undefined {
-  const now = newest?.[key];
   const before = newest ? previous(totals, newest, key) : undefined;
-  const then = before?.[key];
-  if (now == null || before == null || then == null || then <= 0) return undefined;
-  const pct = (now - then) / then;
-  const label = slotShort(before.slot);
-  if (Math.abs(pct) < 0.02) return { text: `Level with ${label}`, dir: "level", tone: "neutral" };
-  const words = `${Math.round(Math.abs(pct) * 100)}% ${pct < 0 ? "fewer" : "more"} than ${label}`;
-  if (key === "received") return { text: words, dir: pct < 0 ? "down" : "up", tone: "info" };
-  return { text: words, dir: pct < 0 ? "down" : "up", tone: pct < 0 ? "good" : "bad" };
+  if (!newest || !before) return undefined;
+  return countVs(newest[key], before[key], slotShort(before.slot), key === "pending" ? "fewer" : null);
 }
 
 /** The share approved against the quarter before, in points; within 1 point is level. */

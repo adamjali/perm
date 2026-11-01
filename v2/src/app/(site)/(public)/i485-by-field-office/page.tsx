@@ -28,6 +28,8 @@ import { PageBasics } from "@/components/data/PageBasics";
 import { RecordStrip } from "@/components/home/RecordStrip";
 import { BarRows, QuarterlyEmpty, type BarRow } from "@/components/data/BarRows";
 import { OfficeTable } from "@/components/uscis/OfficeTable";
+import { countVs } from "@/lib/uscisTrends";
+import { slotShort } from "@/lib/uscisForms";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { getI485Offices } from "@/lib/db/uscisQuarterly";
 import {
@@ -125,7 +127,16 @@ export default async function I485ByFieldOfficePage() {
 
   const ledgerCandidates: Array<RecordFigure | null> = data && total
     ? [
-        total.empPending !== null ? { href: "#busiest", value: total.empPending, label: "employment-based I-485 applications pending, every office", asOf: data.quarterEnd, asOfKind: "through" as const } : null,
+        total.empPending !== null
+          ? {
+              href: "#busiest",
+              value: total.empPending,
+              label: "employment-based I-485 applications pending, every office",
+              asOf: data.quarterEnd,
+              asOfKind: "through" as const,
+              trend: data.previous ? countVs(total.empPending, data.previous.empPendingByCode.ALL, slotShort(data.previous), "fewer") : undefined,
+            }
+          : null,
         total.empApproved !== null ? { href: "#service-centers", value: total.empApproved, label: "employment-based I-485 approvals in the quarter", asOf: data.quarterEnd, asOfKind: "through" as const } : null,
         total.empDenied !== null ? { href: "#service-centers", value: total.empDenied, label: "employment-based denials in the quarter", asOf: data.quarterEnd, asOfKind: "through" as const } : null,
         total.empReceived !== null ? { href: "#every-office", value: total.empReceived, label: "employment-based applications received", asOf: data.quarterEnd, asOfKind: "through" as const } : null,

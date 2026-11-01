@@ -39,6 +39,7 @@ import {
   getHistoricalMedians,
   getUscisFormHistory,
   getUscisFormQuarter,
+  type UscisFormHistoryPoint,
   type UscisFormRow,
 } from "@/lib/db/uscisQuarterly";
 import { monthsLabel, quarterLabel } from "@/lib/uscisQuarterlyShape";
@@ -50,7 +51,8 @@ import { PostedI140History } from "@/components/uscis/PostedI140History";
 import { formatAsOf } from "@/lib/dolFormat";
 import { SITE_URL } from "@/lib/constants/site";
 import { ScrollBox } from "@/components/ui/scroll-box";
-import { FORM_PAGES } from "@/lib/uscisForms";
+import { FORM_PAGES, slotShort } from "@/lib/uscisForms";
+import { monthsVs, pointBefore } from "@/lib/uscisTrends";
 
 const TITLE = "USCIS Processing Times by Form (Median)";
 const DESCRIPTION =
@@ -260,10 +262,16 @@ export default async function UscisProcessingTimesPage() {
   const i765aos = pick(forms, { form: "I-765", contains: "Adjustment" });
   const i131ap = pick(forms, { form: "I-131", contains: "Advance Parole" });
 
+  // A median against the same line's quarter before, from the histories the page reads anyway.
+  const medianBefore = (history: readonly UscisFormHistoryPoint[], row: UscisFormRow) => {
+    if (!quarter) return undefined;
+    const prev = pointBefore(history, quarter.fy, quarter.quarter, (p) => p.title === row.title && p.medianMonths !== null);
+    return prev ? monthsVs(row.medianMonths, prev.medianMonths, slotShort(prev)) : undefined;
+  };
   const ledgerCandidates: Array<RecordFigure | null> = quarter
     ? [
-        i140?.medianMonths !== null && i140 ? { href: "#green-card-forms", value: i140.medianMonths!, label: "months to decide an I-140, the median that quarter", asOf: quarter.quarterEnd, asOfKind: "through" as const } : null,
-        i485eb?.medianMonths !== null && i485eb ? { href: "#green-card-forms", value: i485eb.medianMonths!, label: "months for an employment-based I-485", asOf: quarter.quarterEnd, asOfKind: "through" as const } : null,
+        i140?.medianMonths !== null && i140 ? { href: "#green-card-forms", value: i140.medianMonths!, label: "months to decide an I-140, the median that quarter", asOf: quarter.quarterEnd, asOfKind: "through" as const, trend: medianBefore(i140History, i140) } : null,
+        i485eb?.medianMonths !== null && i485eb ? { href: "#green-card-forms", value: i485eb.medianMonths!, label: "months for an employment-based I-485", asOf: quarter.quarterEnd, asOfKind: "through" as const, trend: medianBefore(i485History, i485eb) } : null,
         i765aos?.medianMonths !== null && i765aos ? { href: "#green-card-forms", value: i765aos.medianMonths!, label: "months for a work permit filed with a pending I-485", asOf: quarter.quarterEnd, asOfKind: "through" as const } : null,
         i131ap?.medianMonths !== null && i131ap ? { href: "#green-card-forms", value: i131ap.medianMonths!, label: "months for advance parole", asOf: quarter.quarterEnd, asOfKind: "through" as const } : null,
         quarter.total?.pending != null ? { href: "#every-form", value: quarter.total.pending, label: "applications and petitions pending at USCIS, every form", asOf: quarter.quarterEnd, asOfKind: "through" as const } : null,

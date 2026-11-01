@@ -1967,3 +1967,10 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   job-code and cap-exempt pages hold one snapshot, so they show no direction.
 - **The phone sweep counts a field's wrapping label as its target**, as it did for checkboxes: a 44px labelled search
   box holds a 42px input, and tapping the label focuses it (WCAG 2.5.8 measures what answers the tap).
+- **A ledger row can carry the same chip** (`RecordFigure.trend`, drawn under the label by `RecordStrip`): USCIS's
+  medians on `/uscis-processing-times` (the same line's quarter before, `pointBefore`, `monthsVs`), the I-485 offices'
+  total pending and the four awaiting-visa counts (`countVs`, where fewer waiting is good). One rule per kind of figure
+  lives in `src/lib/uscisTrends.ts`, so a card and a ledger row about one median can't disagree.
+- **A drawn window's address is decoration** (`AppWindow`, `aria-hidden`): the fluid attorney hero draws it at about
+  4px on a phone, and the phone sweep's small-text rule skips hidden decoration as its tap rule does. The 6ccfc880
+  build's check stopped on it.

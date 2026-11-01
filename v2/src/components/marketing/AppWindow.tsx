@@ -134,7 +134,10 @@ export function AppWindow({
                 </Fragment>
               ))}
             </span>{" "}
+            {/* The address is part of the drawing: the picture's alt names the page, and the fluid
+                window draws it as small as the window (about 4px on a phone). */}
             <span
+              aria-hidden="true"
               className={cn(
                 "truncate font-mono text-muted-foreground",
                 fluid ? "text-[1.05cqw] leading-[1.45]" : "text-sm",

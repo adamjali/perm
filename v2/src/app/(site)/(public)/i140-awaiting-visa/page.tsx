@@ -32,6 +32,8 @@ import { PageBasics } from "@/components/data/PageBasics";
 import { RecordStrip } from "@/components/home/RecordStrip";
 import { BarRows, QuarterlyEmpty, StackedBar, type BarRow } from "@/components/data/BarRows";
 import type { RecordFigure } from "@/lib/recordCounts";
+import { formatMonth } from "@/lib/dolFormat";
+import { countVs } from "@/lib/uscisTrends";
 import { getEbAwaitingVisa, getI140ClassCountry } from "@/lib/db/uscisQuarterly";
 import {
   AWAITING_CATEGORY_LABELS,
@@ -132,12 +134,17 @@ export default async function I140AwaitingVisaPage() {
   const indiaEb2Share = table ? shareOf(table, "India", "EB2") : null;
   const indiaEb2 = table?.cells.India?.EB2 ?? null;
 
+  const prevCell = (country: string, category: string) =>
+    awaiting?.previous?.cells.find((c) => c.country === country && c.category === category)?.count ?? null;
+  const prevLabel = awaiting?.previous ? (formatMonth(awaiting.previous.asOf) ?? awaiting.previous.asOf) : "";
+  const moved = (now: number | null, country: string, category: string) =>
+    awaiting?.previous && now !== null ? countVs(now, prevCell(country, category), prevLabel, "fewer") : undefined;
   const ledgerCandidates: Array<RecordFigure | null> = awaiting && table
     ? [
-        totalAll !== null ? { href: "#by-country", value: totalAll, label: "approved petitions waiting for a visa number, every category", asOf: awaiting.asOf, asOfKind: "newest" as const } : null,
-        india !== null ? { href: "#by-country", value: india, label: "of them for beneficiaries born in India", asOf: awaiting.asOf, asOfKind: "newest" as const } : null,
-        indiaEb2 !== null ? { href: "#by-country", value: indiaEb2, label: `India-born in EB-2 alone${indiaEb2Share !== null ? `, ${Math.round(indiaEb2Share * 100)}% of the category` : ""}`, asOf: awaiting.asOf, asOfKind: "newest" as const } : null,
-        china !== null ? { href: "#by-country", value: china, label: "for beneficiaries born in China", asOf: awaiting.asOf, asOfKind: "newest" as const } : null,
+        totalAll !== null ? { href: "#by-country", value: totalAll, label: "approved petitions waiting for a visa number, every category", asOf: awaiting.asOf, asOfKind: "newest" as const, trend: moved(totalAll, "TOTAL", "TOTAL") } : null,
+        india !== null ? { href: "#by-country", value: india, label: "of them for beneficiaries born in India", asOf: awaiting.asOf, asOfKind: "newest" as const, trend: moved(india, "India", "TOTAL") } : null,
+        indiaEb2 !== null ? { href: "#by-country", value: indiaEb2, label: `India-born in EB-2 alone${indiaEb2Share !== null ? `, ${Math.round(indiaEb2Share * 100)}% of the category` : ""}`, asOf: awaiting.asOf, asOfKind: "newest" as const, trend: moved(indiaEb2, "India", "EB2") } : null,
+        china !== null ? { href: "#by-country", value: china, label: "for beneficiaries born in China", asOf: awaiting.asOf, asOfKind: "newest" as const, trend: moved(china, "China", "TOTAL") } : null,
       ]
     : [];
   const ledger = ledgerCandidates.filter((f): f is RecordFigure => f !== null);

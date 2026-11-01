@@ -56,7 +56,8 @@ function measure(w) {
   const small = [];
   for (const el of document.querySelectorAll("main p, main li, main td, main th, main dd, main dt, main span, main a, main button, main label, main summary")) {
     if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
-    if (el.closest("svg") || el.getBoundingClientRect().width === 0) continue;
+    // A drawing's own text (a drawn window's address) is hidden from readers and drawn to scale.
+    if (el.closest('svg, [aria-hidden="true"], [inert]') || el.getBoundingClientRect().width === 0) continue;
     const fs = parseFloat(getComputedStyle(el).fontSize);
     if (fs < 14) small.push(`${el.tagName.toLowerCase()} ${fs}px "${el.textContent.trim().slice(0, 30)}"`);
   }

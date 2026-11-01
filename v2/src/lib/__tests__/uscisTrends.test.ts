@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { approvalMoved, countMoved, medianMoved } from "@/lib/uscisTrends";
+import { approvalMoved, countMoved, countVs, medianMoved, monthsVs, pointBefore } from "@/lib/uscisTrends";
 import type { FormTotal, LinePoint } from "@/lib/uscisForms";
 
 const slot = (fy: number, quarter: number, gap = false) => ({ fy, quarter, gap });
@@ -40,5 +40,21 @@ describe("approvalMoved", () => {
     expect(approvalMoved(t, t[1]!)).toEqual({ text: "3 points above FY26 Q2", dir: "up", tone: "good" });
     const u = [total(2026, 2, { approved: 93, denied: 7 }), total(2026, 3, { approved: 92, denied: 8 })];
     expect(approvalMoved(u, u[1]!)).toEqual({ text: "1 point below FY26 Q2", dir: "down", tone: "bad" });
+  });
+});
+
+describe("countVs, monthsVs and pointBefore", () => {
+  it("tones a count by which way helps someone waiting", () => {
+    expect(countVs(120, 100, "March 2026", "fewer")).toEqual({ text: "20% more than March 2026", dir: "up", tone: "bad" });
+    expect(countVs(120, 100, "FY26 Q2", "more")).toMatchObject({ tone: "good" });
+    expect(countVs(80, 100, "FY26 Q2", null)).toMatchObject({ text: "20% fewer than FY26 Q2", tone: "info" });
+    expect(countVs(80, 0, "FY26 Q2", null)).toBeUndefined();
+    expect(monthsVs(6.2, 6.9, "FY26 Q2")).toMatchObject({ text: "0.7 months quicker than FY26 Q2", tone: "good" });
+  });
+  it("finds the newest earlier quarter that matches", () => {
+    const pts = [{ fy: 2025, quarter: 4, t: "a" }, { fy: 2026, quarter: 1, t: "b" }, { fy: 2026, quarter: 2, t: "a" }, { fy: 2026, quarter: 3, t: "a" }];
+    expect(pointBefore(pts, 2026, 3, (p) => p.t === "a")).toEqual({ fy: 2026, quarter: 2, t: "a" });
+    expect(pointBefore(pts, 2026, 2, (p) => p.t === "a")).toEqual({ fy: 2025, quarter: 4, t: "a" });
+    expect(pointBefore(pts, 2025, 4, () => true)).toBeUndefined();
   });
 });

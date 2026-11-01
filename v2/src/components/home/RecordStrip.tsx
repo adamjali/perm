@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DatabaseIcon } from "@phosphor-icons/react/ssr";
 
+import { TrendChip } from "@/components/data/FigureRow";
 import { cn } from "@/lib/utils";
 
 import type { RecordFigure } from "@/lib/recordCounts";
@@ -69,6 +70,12 @@ export function RecordStrip({
               <Link href={f.href} className="link">
                 {f.label}
               </Link>
+              {f.trend ? (
+                <>
+                  {" "}
+                  <TrendChip trend={f.trend} className="mt-1.5 flex w-fit" />
+                </>
+              ) : null}
             </dd>{" "}
             <dd className="col-start-2 font-mono text-sm text-muted-foreground sm:col-start-auto sm:whitespace-nowrap sm:text-right">
               {asOfLine(f)}
