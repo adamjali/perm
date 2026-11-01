@@ -1,9 +1,8 @@
-import { Fragment } from "react";
 import Link from "next/link";
 
 import type { FlagCaseRow } from "@/lib/db/flagCases";
 import { seasonalForm } from "@/lib/seasonalForms";
-import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
+import { FilingRows } from "@/components/entities/FilingRows";
 
 /**
  * One employer's H-2A and H-2B filings, newest first, from DOL's live record.
@@ -29,30 +28,16 @@ export function SeasonalFilings({
   return (
     <section className={`${className}`}>
       <h2 className="font-heading text-xl font-bold">Seasonal work: H-2A, H-2B and CW-1</h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-        Filed by {name}, as DOL&apos;s case-status service shows them.
-      </p>{" "}
-      <ul className="mt-4 divide-y divide-border/60">
-        {rows.map((r) => (
-          <Fragment key={r.caseNumber}>
-            {" "}
-            <li className={CASE_ROW}>
-              <Link
-                href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                className={CASE_ROW_LINK}
-              >
-                {r.caseNumber}
-              </Link>{" "}
-              <span className="text-sm font-bold">{seasonalForm(r.caseNumber)?.label ?? "H-2A, H-2B or CW-1 filing"}</span>{" "}
-              {r.jobTitle ? <span className="text-soft">{r.jobTitle}</span> : null}{" "}
-              <span className="ml-auto font-mono text-sm font-bold text-muted-foreground">
-                {r.filingDate ? `${r.filingDate} · ` : ""}
-                {r.status}
-              </span>
-            </li>
-          </Fragment>
-        ))}
-      </ul>{" "}
+      <p className="mt-1 text-sm text-muted-foreground">As DOL&apos;s case-status service shows them.</p>{" "}
+      <FilingRows
+        className="mt-4"
+        rows={rows.map((r) => ({
+          caseNumber: r.caseNumber,
+          job: [seasonalForm(r.caseNumber)?.label ?? "H-2A, H-2B or CW-1 filing", r.jobTitle].filter(Boolean).join(": "),
+          date: r.filingDate,
+          status: r.status,
+        }))}
+      />{" "}
       <p className="mt-3 text-sm">
         <Link
           href={`/seasonal-cases?q=${encodeURIComponent(name)}`}

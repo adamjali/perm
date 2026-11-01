@@ -59,11 +59,16 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const totals = series.map((y) => y.certified + y.denied + y.withdrawn);
   const max = Math.max(...totals, 1);
   const total = totals.reduce((a, b) => a + b, 0);
+  // Up to 12 years, every bar carries its year and its total; past that, every other year is named.
+  const labelled = series.length <= 12;
+  // About 44px a year: a few years fit a phone without scrolling, a long run scrolls from its newest end.
+  const minWidth = Math.max(240, series.length * 44);
   return (
-    <div className="bg-sage p-5 sm:p-6 border-2 border-border">
-      <ChartTips label="PERM decisions by fiscal year" scroll="">
+    <div className="border-2 border-border bg-sage p-5">
+      <ChartTips label="PERM decisions by fiscal year" scroll="" startAtEnd>
         <div
-          className="flex h-48 min-w-[640px] items-end gap-1.5 border-b-2 border-border"
+          className="flex h-44 items-end gap-1.5 border-b-2 border-border"
+          style={{ minWidth: `${minWidth}px` }}
           role="img"
           aria-label={`Decisions by fiscal year, FY${first} to FY${last}, ${formatInt(total)} in all. The table below has every figure.`}
         >
@@ -75,7 +80,13 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
                 className="flex h-full flex-1 flex-col justify-end"
                 data-tip={yearTip(y)}
               >
-                <span className="flex w-full flex-col-reverse" style={{ height: `${(t / max) * 100}%` }}>
+                {/* Each year's total sits on its bar while the years are few enough to read them; the table has every figure. */}
+                {labelled && t > 0 ? (
+                  <span aria-hidden="true" className="mb-1 text-center font-mono text-sm font-bold tabular-nums">
+                    {`${formatInt(t)} `}
+                  </span>
+                ) : null}
+                <span className="flex w-full flex-col-reverse" style={{ height: `calc(${(t / max) * 100}% - ${labelled ? "1.75rem" : "0px"})` }}>
                   {(["certified", "denied", "withdrawn"] as const).map((k) =>
                     y[k] > 0 ? (
                       <span
@@ -90,17 +101,17 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
             );
           })}
         </div>
-        <div className="mt-2 flex min-w-[640px] gap-1.5" aria-hidden="true">
+        <div className="mt-2 flex gap-1.5" style={{ minWidth: `${minWidth}px` }} aria-hidden="true">
           {series.map((y) => (
             <span key={y.fy} className="flex-1 text-center font-mono text-sm tabular-nums text-muted-foreground">
               {/* The space sits inside the label, so the axis never reads as one run. */}
-              {(y.fy - first) % 2 === 0 || y.fy === last ? `FY${String(y.fy).slice(2)} ` : " "}
+              {labelled || (y.fy - first) % 2 === 0 || y.fy === last ? `FY${String(y.fy).slice(2)} ` : " "}
             </span>
           ))}
         </div>
       </ChartTips>
 
-      <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+      <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
         {(["certified", "denied", "withdrawn"] as const).map((k) => (
           <Fragment key={k}>
             {" "}

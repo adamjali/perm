@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ON_HOLD, pendingSentence, sponsorSentence, whereTheyStand } from "@/lib/pendingSnippet";
+import { ON_HOLD, pendingSentence, profileLine, whereTheyStand } from "@/lib/pendingSnippet";
 
 const counts = (pending: number, hold = 0) => ({
   pending,
@@ -44,16 +44,20 @@ describe("whereTheyStand", () => {
   });
 });
 
-describe("sponsorSentence", () => {
-  it("answers from the year's filings and names the newest", () => {
-    expect(sponsorSentence("Adobe Inc.", 412, "2026-10-02")).toBe(
-      "Adobe Inc. sponsors green cards: it filed 412 PERM cases in the last 12 months, the newest on October 2, 2026.",
+describe("profileLine", () => {
+  it("says the year and the queue in one sentence, without repeating the name the heading carries", () => {
+    expect(profileLine(1698, "2026-10-30", counts(1368))).toBe(
+      "Sponsors green cards: 1,698 PERM cases filed in the last 12 months, the newest on October 30, 2026, and 1,368 waiting with DOL.",
     );
-    expect(sponsorSentence("Acme", 1, null)).toBe("Acme sponsors green cards: it filed 1 PERM case in the last 12 months.");
+    expect(profileLine(412, "2026-10-02", counts(218, 216))).toBe(
+      "Sponsors green cards: 412 PERM cases filed in the last 12 months, the newest on October 2, 2026, and 218 waiting with DOL, 216 of them on hold.",
+    );
   });
 
-  it("says nothing without a filing in the year: that isn't proof it won't sponsor", () => {
-    expect(sponsorSentence("Acme", 0, "2026-10-02")).toBeNull();
-    expect(sponsorSentence("Acme", null)).toBeNull();
+  it("keeps whichever half it has", () => {
+    expect(profileLine(1, null, null)).toBe("Sponsors green cards: 1 PERM case filed in the last 12 months.");
+    expect(profileLine(0, null, counts(3))).toBe("3 PERM cases waiting with DOL.");
+    expect(profileLine(null, null, counts(1, 1))).toBe("1 PERM case waiting with DOL, on hold.");
+    expect(profileLine(0, "2026-10-02", null)).toBeNull();
   });
 });

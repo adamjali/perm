@@ -29,7 +29,10 @@ export function EmployerPrograms({
   logFrom = null,
   searchHref,
   spellings = null,
+  heading = true,
 }: {
+  /** False inside a chapter that already names the part ("Every program"). */
+  heading?: boolean;
   name: string;
   /** Null on a page for an employer with no PERM record: the ledger then shows the programs it does file. */
   perm: ProgramLine | null;
@@ -49,22 +52,30 @@ export function EmployerPrograms({
   const lines: ProgramLine[] = [...(perm ? [perm] : []), ...(pwd ? [pwd] : []), ...(lca ? [lca] : []), ...(seasonal ? [seasonal] : [])];
   const gap = wageGap(perm, lca);
   return (
-    <section className="mt-10">
-      <h2 className="font-heading text-xl font-bold">Across DOL&apos;s programs</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base text-soft">
-        {perm ? "The wage request, the PERM and the H-1B labor condition application" : "Each program it files"}
-        {perm && seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
-      </p>{" "}
-      <dl className="mt-4 max-w-3xl border-t-2 border-border">
+    <section className={heading ? "mt-10" : undefined}>
+      {heading ? (
+        <>
+          <h2 className="font-heading text-xl font-bold">Across DOL&apos;s programs</h2>{" "}
+          <p className="mt-2 max-w-3xl text-base text-soft">
+            {perm ? "The wage request, the PERM and the H-1B labor condition application" : "Each program it files"}
+            {perm && seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
+          </p>
+        </>
+      ) : null}{" "}
+      <div aria-hidden="true" className={`${heading ? "mt-4 " : ""}hidden gap-x-4 border-b-2 border-border pb-1.5 text-sm text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_7rem_7rem_12rem]`}>
+        <span>Program</span> <span className="text-right">Published</span> <span className="text-right">Pending</span>{" "}
+        <span className="text-right">Median wage</span>
+      </div>{" "}
+      <dl className={`${heading ? "sm:mt-0 mt-4" : ""} border-t-2 border-border sm:border-t-0`}>
         {lines.map((l) => (
           <div
             key={l.program}
-            className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem] sm:items-baseline sm:gap-x-4"
+            className="grid grid-cols-3 items-baseline gap-x-3 gap-y-1 border-b border-border/60 py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_12rem] sm:gap-x-4"
           >
-            <dt className="text-base font-bold">{PROGRAM_TITLE[l.program]}</dt>{" "}
+            <dt className="col-span-3 text-base font-bold sm:col-span-1">{PROGRAM_TITLE[l.program]}</dt>{" "}
             <dd className="tabular-nums sm:text-right">
               <span className="font-heading text-lg font-bold">{formatInt(l.published)}</span>{" "}
-              <span className="text-sm text-muted-foreground">published</span>
+              <span className="text-sm text-muted-foreground sm:sr-only">published</span>
             </dd>{" "}
             <dd className="tabular-nums sm:text-right">
               {l.pending === null ? (
@@ -72,7 +83,7 @@ export function EmployerPrograms({
               ) : (
                 <>
                   <span className="font-heading text-lg font-bold">{formatInt(l.pending)}</span>{" "}
-                  <span className="text-sm text-muted-foreground">pending</span>
+                  <span className="text-sm text-muted-foreground sm:sr-only">pending</span>
                 </>
               )}
             </dd>{" "}
@@ -83,21 +94,21 @@ export function EmployerPrograms({
                     <span className="font-heading text-lg font-bold">
                       ${l.medianHourlyWage.toFixed(2)}
                     </span>{" "}
-                    <span className="text-sm text-muted-foreground">an hour, median, n={formatInt(l.wageN)}</span>
+                    <span className="text-sm text-muted-foreground">an hour, of {formatInt(l.wageN)}</span>
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">
-                    {l.wageN > 0 ? `${formatInt(l.wageN)} hourly wage${l.wageN === 1 ? "" : "s"}, under the floor` : "no hourly wage published"}
+                    {l.wageN > 0 ? `${formatInt(l.wageN)} hourly wage${l.wageN === 1 ? "" : "s"}, too few` : "none published"}
                   </span>
                 )
               ) : l.medianAnnualWage !== null && l.wageN >= WAGE_FLOOR ? (
                 <>
                   <span className="font-heading text-lg font-bold">{formatDollars(l.medianAnnualWage)}</span>{" "}
-                  <span className="text-sm text-muted-foreground">median, n={formatInt(l.wageN)}</span>
+                  <span className="text-sm text-muted-foreground">of {formatInt(l.wageN)}</span>
                 </>
               ) : (
                 <span className="text-sm text-muted-foreground">
-                  {l.wageN > 0 ? `${formatInt(l.wageN)} wage${l.wageN === 1 ? "" : "s"}, under the floor` : "no wage published"}
+                  {l.wageN > 0 ? `${formatInt(l.wageN)} wage${l.wageN === 1 ? "" : "s"}, too few` : "none published"}
                 </span>
               )}
             </dd>
@@ -120,16 +131,16 @@ export function EmployerPrograms({
           .
         </p>
       ) : null}{" "}
-      <p className="mt-3 max-w-3xl text-sm text-soft">
-        <Link href={searchHref} className="link">
-          Every case across these programs
-        </Link>{" "}
-        is in the search.
+      <p className="mt-3 text-sm">
+        <Link href={searchHref} className="link font-semibold">
+          Every case across these programs, in the case search
+        </Link>
       </p>{" "}
       <FinePrint summary="How these are counted" className="mt-1">
         <p>
           Medians are of the published rows with a usable wage, annualised from
-          whatever unit the filing quoted, and withheld under {WAGE_FLOOR} wages.
+          whatever unit the filing quoted, and withheld under {WAGE_FLOOR} wages
+          (&ldquo;too few&rdquo;).
           {" "}DOL publishes no employer number, so filings are matched by the employer&apos;s legal name
           {spellings && spellings > 1 ? `, read under the ${formatInt(spellings)} spellings DOL's files use for it` : ""}
           ; another employer with the same legal name would be counted here too.{" "}

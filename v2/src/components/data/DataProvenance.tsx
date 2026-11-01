@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils";
 import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
- * Where a page's figures came from, rendered beside them: one line per
- * dataset with its source, the date the data runs to and how often it
- * refreshes, read from the registry the ingests maintain.
- *
- * What each dataset INCLUDES (decided cases only, pending included, no wage)
- * is a longer sentence per dataset, so it sits in one fold under the lines.
- * It stays in the page either way, for search engines and for anyone who
- * opens it.
+ * Where a page's figures came from, rendered beside them: one visible line
+ * naming each dataset and the date it runs to, read from the registry the
+ * ingests maintain. Each source's full name, its cadence and what it INCLUDES
+ * (decided cases only, pending included, no wage) fold under "The sources in
+ * full", beside the citation (Nov 1 2026: source text is the lowest priority
+ * on a page, so it waits behind one line). A dataset that has stopped
+ * refreshing is the exception and stays in the open. Folded text stays in
+ * the page, for search engines and for anyone who opens it.
  *
  * Every data page also says how its figures are counted and how to report a
  * mistake, the same line an article ends with (Oct 28 2026, E-E-A-T:
@@ -31,6 +31,8 @@ export async function DataProvenance({ datasets, className }: { datasets: string
     .map((d) => all[d])
     .filter((r): r is DatasetFreshness => r !== undefined);
   if (rows.length === 0) return null;
+  const stale = rows.filter((r) => r.stale);
+  const fresh = rows.filter((r) => !r.stale);
   const covered = rows.flatMap((r) => {
     const text = coverageFor(r.dataset);
     return text ? [{ dataset: r.dataset, text }] : [];
@@ -39,20 +41,23 @@ export async function DataProvenance({ datasets, className }: { datasets: string
     // A source can be a bare web address with no spaces; on a phone it must wrap
     // anywhere or it pushes the whole page sideways (a State URL did, Oct 5 2026).
     <div data-provenance className={cn(className ?? "mt-6 border-t-2 border-border pt-3", "[overflow-wrap:anywhere]")}>
-      {rows.map((r) => (
-        // Keyed Fragment with a leading space: array items render with nothing
-        // between them, so two lines would otherwise read as one run of text.
+      {/* A dataset that has stopped refreshing is said in the open: it changes how the figures read. */}
+      {stale.map((r) => (
         <Fragment key={r.dataset}>
           {" "}
-          {r.stale ? <StaleLine r={r} /> : (
-            <p className="text-sm text-muted-foreground">
-              <span className="font-bold text-soft">{label(r.dataset)}:</span> {r.source}
-              {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
-            </p>
-          )}
+          <StaleLine r={r} />
         </Fragment>
       ))}{" "}
+      {/* One line: what each dataset runs to, how the figures are counted, how to report a mistake. */}
       <p className="text-sm text-muted-foreground">
+        {fresh.map((r, i) => (
+          <Fragment key={r.dataset}>
+            {i > 0 ? " · " : ""}
+            <span className="font-semibold text-soft">{label(r.dataset)}</span>
+            {r.asOf ? ` through ${fmt(r.asOf)}` : ""}
+          </Fragment>
+        ))}
+        {fresh.length > 0 ? ". " : ""}
         <Link href="/methodology" className="link">
           How these figures are counted
         </Link>
@@ -66,16 +71,35 @@ export async function DataProvenance({ datasets, className }: { datasets: string
         </Link>
         .
       </p>{" "}
-      {covered.length > 0 ? (
-        <FinePrint summary={covered.length === 1 ? "What this data includes" : "What each source includes"} className="mt-1">
-          {covered.map((c) => (
-            <p key={c.dataset}>
-              <span className="font-bold text-soft">{label(c.dataset)}:</span> {c.text}
-            </p>
-          ))}
-        </FinePrint>
-      ) : null}{" "}
-      <CiteThis dataThrough={latest(rows)} />
+      {/* The rest folds, side by side: each source by name with its cadence and what it includes, and the citation. */}
+      <div className="flex flex-wrap items-start gap-x-6">
+        {fresh.length > 0 || covered.length > 0 ? (
+          <FinePrint summary="The sources in full" className="mt-1">
+            {/* Keyed Fragments with a space: mapped paragraphs otherwise reach a text extractor as one run. */}
+            {fresh.map((r) => (
+              <Fragment key={r.dataset}>
+                {" "}
+                <p>
+                  <span className="font-bold text-soft">{label(r.dataset)}:</span> {r.source}
+                  {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
+                </p>
+              </Fragment>
+            ))}{" "}
+            {covered.length > 0 ? (
+              <p className="pt-1 font-bold text-soft">{covered.length === 1 ? "What this data includes" : "What each source includes"}</p>
+            ) : null}{" "}
+            {covered.map((c) => (
+              <Fragment key={`c-${c.dataset}`}>
+                {" "}
+                <p>
+                  <span className="font-bold text-soft">{label(c.dataset)}:</span> {c.text}
+                </p>
+              </Fragment>
+            ))}
+          </FinePrint>
+        ) : null}{" "}
+        <CiteThis dataThrough={latest(rows)} />
+      </div>
     </div>
   );
 }

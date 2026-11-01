@@ -24,7 +24,7 @@ function pending(over: Partial<EntityPending> = {}): EntityPending {
 }
 
 describe("LiveQueueBand", () => {
-  it("states the pending count against the tracker's own denominator", () => {
+  it("states the pending count, and not the tracker's total", () => {
     const { container } = render(
       <LiveQueueBand pending={pending()} subject="sponsor" asOf="2026-08-26" />,
     );
@@ -34,9 +34,9 @@ describe("LiveQueueBand", () => {
     expect(
       screen.getByText("Waiting on a decision", { selector: "p" }),
     ).toBeInTheDocument();
-    // The denominator is never dropped: 1,768 alone is a size, "1,768 of
-    // 1,769" is the fact that everything they filed is still in the queue.
-    expect(screen.getByText(/of 1,769 tracked cases/)).toBeInTheDocument();
+    // The tracker's own total isn't printed (owner, Nov 1 2026): the reader came
+    // for what is waiting, and "of 1,769 tracked" told them nothing they could use.
+    expect(screen.queryByText(/1,769/)).not.toBeInTheDocument();
   });
 
   it("names the stage and explains it, rather than printing a status code", () => {
@@ -83,7 +83,7 @@ describe("LiveQueueBand", () => {
 
   it("carries the tracker's own as-of date, not the disclosure files'", () => {
     render(<LiveQueueBand pending={pending()} subject="sponsor" asOf="2026-08-26" />);
-    expect(screen.getByText(/Live case tracker, as of August 26, 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/DOL's case-status service, as of August 26, 2026/)).toBeInTheDocument();
   });
 
   it("gives each stage its true share even when one stage swamps the rest", () => {
@@ -110,13 +110,11 @@ describe("LiveQueueBand", () => {
     expect(screen.getByText("1%")).toBeInTheDocument();
   });
 
-  it("never invites the reader to subtract the two corpora", () => {
+  it("never sets a total beside the waiting count to subtract from", () => {
     render(<LiveQueueBand pending={pending()} subject="sponsor" asOf="2026-08-26" />);
-    // The caption has to say which denominator applies, because a sponsor's
-    // pending count routinely exceeds its lifetime decided filings: the
-    // tracker sees cases filed after the last disclosure file was cut.
-    expect(
-      screen.getByText(/never against the lifetime\s+filings above/),
-    ).toBeInTheDocument();
+    // The two corpora have different as-of dates, and a sponsor's pending count
+    // can exceed its lifetime decided filings, so no second total is printed.
+    expect(screen.queryByText(/tracked/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/lifetime/)).not.toBeInTheDocument();
   });
 });

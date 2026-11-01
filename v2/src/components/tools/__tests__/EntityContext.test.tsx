@@ -363,7 +363,7 @@ describe("RankLadder", () => {
 });
 
 describe("DisclosureNote", () => {
-  it("names the years the files cover and links the methodology", () => {
+  it("names the years the files cover, leaving the method link to the source line under it", () => {
     render(
       <DisclosureNote
         sourceFiles={["PERM_Disclosure_Data_FY2026_Q3.xlsx", "PERM_Disclosure_Data_FY2025_Q4.xlsx"]}
@@ -372,10 +372,8 @@ describe("DisclosureNote", () => {
     );
     expect(screen.getByText(/disclosure files for fiscal years 2025 to 2026, through the third quarter of 2026/)).toBeInTheDocument();
     expect(screen.getByText(/259,489 decided cases/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /how each figure is built/i })).toHaveAttribute(
-      "href",
-      "/methodology",
-    );
+    // DataProvenance, under this line on every page that has it, links the methodology once.
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("still states a window when the file list is empty", () => {

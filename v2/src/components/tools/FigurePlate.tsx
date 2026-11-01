@@ -46,7 +46,8 @@ export function FigurePlate({ title, subject, caption, source, tone = "paper", i
     <figure
       id={id}
       className={cn(
-        "relative m-0 border-2 border-border shadow-hard",
+        // A column, so a plate stretched to its row's height grows its drawing, not a gap under the caption.
+        "relative m-0 flex flex-col border-2 border-border shadow-hard",
         ink ? "dark border-black bg-[#141414] text-foreground" : "bg-card text-foreground",
         className,
       )}
@@ -68,7 +69,7 @@ export function FigurePlate({ title, subject, caption, source, tone = "paper", i
         {subject ? <span className={cn("text-sm", ink ? "text-white/75" : "text-soft")}>{subject}</span> : null}
       </div>
 
-      <div className="px-4 py-5 sm:px-5 sm:py-6">{children}</div>
+      <div className="flex-1 px-4 py-5 sm:px-5 sm:py-6">{children}</div>
 
       {caption || source ? (
         <figcaption

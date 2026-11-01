@@ -1,4 +1,5 @@
 import { BarRows, type BarRow } from "@/components/data/BarRows";
+import { FinePrint } from "@/components/data/FinePrint";
 import type { PwdLinks } from "@/lib/db/pwdLinks";
 import { formatInt, formatShareOf } from "@/lib/format";
 import { monthYear } from "@convex/lib/months";
@@ -45,30 +46,32 @@ export function PwdToPerm({
   return (
     <section aria-labelledby={headingId} className={className}>
       <h3 id={headingId} className="font-heading text-lg font-bold">
-        From the wage determination to the PERM
+        Wage determination to PERM filing
       </h3>{" "}
       <BarRows
         label="Median days from the wage determination to the PERM's filing"
-        className="mt-4 max-w-3xl"
+        className="mt-4"
         rows={[gapRow("mine", name, mine), gapRow("all", "Every PERM case", all, "blue")]}
       />{" "}
       {mine.quiet && all.quiet ? (
         <>
-          <p className="mt-6 text-base font-semibold">Filed within two weeks of the quiet period&apos;s end</p>{" "}
+          <p className="mt-5 text-base font-semibold">Filed within two weeks of the quiet period&apos;s end</p>{" "}
           <BarRows
             label="Share filed within 14 days of the quiet period's end"
             max={100}
-            className="mt-3 max-w-3xl"
+            className="mt-3"
             rows={[quickRow("mine", name, mine.quiet), quickRow("all", "Every PERM case", all.quiet, "blue")]}
           />
         </>
       ) : null}{" "}
-      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-soft">
-        Decided PERM cases that name their wage request, for wage requests DOL determined from {from} to {to}, early
-        enough that their PERMs have been decided
-        {mine.clients !== null ? `; ${formatInt(mine.clients)} employers among them` : ""}. The quiet period ends 30 days
-        after the last recruitment step, the first day a PERM may be filed.
-      </p>
+      <FinePrint summary="How these are counted" className="mt-2">
+        <p>
+          Decided PERM cases that name their wage request, for wage requests DOL determined from {from} to {to}, early
+          enough that their PERMs have been decided
+          {mine.clients !== null ? `; ${formatInt(mine.clients)} employers among them` : ""}. The quiet period ends 30
+          days after the last recruitment step, the first day a PERM may be filed.
+        </p>
+      </FinePrint>
     </section>
   );
 }

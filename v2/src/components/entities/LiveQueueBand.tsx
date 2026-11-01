@@ -51,8 +51,9 @@ const STAGE_BAR: Record<CaseStatusTint, string> = {
  * different as-of dates, and a sponsor's pending count routinely exceeds its
  * lifetime filings because the mirror sees cases filed after the last
  * disclosure file was cut. Setting them in one row of stat cards would invite
- * a subtraction that means nothing. `tracked` is the mirror's own denominator
- * and is the only figure `pending` may be read against.
+ * a subtraction that means nothing. The mirror's own total (`tracked`) isn't
+ * printed either (owner, Nov 1 2026: the reader came for what is waiting);
+ * it only decides whether the card draws at all.
  */
 
 /** Whole months between an ISO date and today, or null if unparseable. */
@@ -92,27 +93,11 @@ export function LiveQueueBand({
 
   const biggest = stages[0]?.n ?? 0;
   const months = oldest ? monthsSince(oldest) : null;
-  const decided = Math.max(0, tracked - waiting);
 
   return (
     <FigurePlate
-      title="In the queue right now"
-      subject={`${formatInt(tracked)} cases in the live tracker`}
-      caption={
-        waiting > 0 ? (
-          <>
-            From DOL&apos;s live status of {formatInt(tracked)} of this {subject}&apos;s
-            cases: read this share against {formatInt(tracked)}, never against the
-            lifetime filings above.
-          </>
-        ) : (
-          <>
-            All {formatInt(tracked)} of this {subject}&apos;s cases in DOL&apos;s live
-            status are decided: nothing of theirs is in the queue.
-          </>
-        )
-      }
-      source={asOf ? `Live case tracker, as of ${longDate(asOf)}` : "Live case tracker"}
+      title="Waiting at DOL now"
+      source={asOf ? `DOL's case-status service, as of ${longDate(asOf)}` : "DOL's case-status service"}
       className={className}
     >
       {waiting > 0 ? (
@@ -122,16 +107,12 @@ export function LiveQueueBand({
               <p className="text-sm font-bold text-muted-foreground">
                 Waiting on a decision
               </p>{" "}
-              <p className="mt-1 font-heading text-5xl font-bold leading-none tabular-nums">
+              <p className="mt-1 font-heading text-5xl font-bold leading-none tabular-nums max-sm:text-[2.5rem]">
                 {formatInt(waiting)}
-              </p>{" "}
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                of {formatInt(tracked)} tracked cases. The other {formatInt(decided)} have
-                been decided.
               </p>
               {oldest ? (
                 <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-soft">
-                  The oldest one still waiting was filed{" "}
+                  The oldest was filed{" "}
                   <span className="font-bold">{longDate(oldest)}</span>
                   {months != null && months >= 1 ? (
                     <>
@@ -145,7 +126,7 @@ export function LiveQueueBand({
 
             <div>
               <p className="mb-3 border-b border-border/40 pb-1.5 text-sm font-bold text-muted-foreground">
-                Where those {formatInt(waiting)} are standing
+                Where they stand
               </p>
               <ChartTips label={`Where those ${formatInt(waiting)} cases are standing`}>
               <dl className="space-y-4">
@@ -162,7 +143,7 @@ export function LiveQueueBand({
                     {/* One group per stage, as a <dl> allows: the name, its
                         count, and its rule and meaning as a second description. */}
                     <div
-                      data-tip={`${s.status}\n${formatInt(s.n)} waiting\n${share >= 0.5 ? `${share.toFixed(0)}%` : "Under 1%"} of the ${formatInt(waiting)} waiting`}
+                      data-tip={`${s.status}\n${formatInt(s.n)} waiting\n${share >= 0.5 ? `${share.toFixed(0)}%` : "Under 1%"} of the ${formatInt(waiting)} waiting${meaning ? `\n${meaning}` : ""}`}
                       className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
                     >
                       <dt className="text-sm font-bold">
@@ -187,40 +168,46 @@ export function LiveQueueBand({
                             width: `${biggest > 0 ? Math.max(2, (s.n / biggest) * 100) : 0}%`,
                           }}
                         />
-                        {meaning ? (
-                          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                            {meaning}
-                          </p>
-                        ) : null}
                       </dd>
                     </div>
                     </Fragment>
                   );
                 })}
               </dl>
-              </ChartTips>
+              </ChartTips>{" "}
+              {/* What each stage means, folded: the bars and counts are the answer, and the names are DOL's. */}
+              {stages.some((s) => statusMeaning(s.status)) ? (
+                <details className="mt-4 text-sm">
+                  <summary className="inline-flex min-h-11 cursor-pointer items-center font-semibold text-muted-foreground hover:text-foreground">
+                    What these stages mean
+                  </summary>
+                  <ul className="mt-1 space-y-2 leading-relaxed text-muted-foreground">
+                    {stages.map((s) => {
+                      const meaning = statusMeaning(s.status);
+                      return meaning ? (
+                        <Fragment key={s.status}>
+                          {" "}
+                          <li>{`${s.status}: ${meaning}`}</li>
+                        </Fragment>
+                      ) : null;
+                    })}
+                  </ul>
+                </details>
+              ) : null}
             </div>
           </div>
 
-          <p className="mt-6 border-t-2 border-border pt-4 text-sm leading-relaxed text-muted-foreground">
-            None of this changes one case&apos;s wait: DOL works one national
-            line.{" "}
-            <Link
-              href="/perm-processing-times"
-              className={cn(
-                "font-bold link",
-                "hover:text-primary",
-              )}
-            >
-              Where DOL is working now
-            </Link>{" "}
-            is the figure that does.
+          <p className="mt-5 border-t-2 border-border pt-4 text-sm leading-relaxed text-muted-foreground">
+            Every case waits in DOL&apos;s one national line:{" "}
+            <Link href="/perm-processing-times" className="font-bold link">
+              where DOL is working now
+            </Link>
+            .
           </p>
         </>
       ) : (
         <p className="max-w-2xl text-base leading-relaxed text-soft">
-          Nothing for this {subject} is waiting on a decision. All{" "}
-          {formatInt(tracked)} of their cases in the live tracker are closed.
+          Nothing for this {subject} is waiting on a decision: every case of theirs in DOL&apos;s live record is decided.
         </p>
       )}
     </FigurePlate>

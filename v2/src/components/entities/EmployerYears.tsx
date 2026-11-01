@@ -3,6 +3,8 @@ import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 import type { EmployerYear, HistoryCase } from "@/lib/db/employerHistory";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { shortDate } from "@convex/lib/months";
+import { CASE_STATUS_FILL, caseStatusTint } from "@/lib/statusTone";
 
 import { YearBars, fillYears } from "./YearBars";
 
@@ -40,24 +42,23 @@ export function EmployerYears({
     .reduce((a, y) => a + y.certified + y.denied + y.withdrawn, 0);
 
   return (
-    <section className={cn("mt-12", className)}>
+    <section className={className}>
       {showChart && peak ? (
         <>
-          <h2 className="font-heading text-2xl font-bold">
+          <h3 className="font-heading text-lg font-bold">
             Year by year since {first}
-          </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base text-muted-foreground">
+          </h3>{" "}
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             {formatInt(total)} PERM decisions from FY{first} to FY{last}, busiest in
             FY{peak.fy} with{" "}
             {formatInt(peak.certified + peak.denied + peak.withdrawn)}.
           </p>
-          <div className="mt-6">
+          <div className="mt-4">
             <YearBars
               years={series}
               note={
                 <>
-                  Fiscal years, October to September. A year filed under
-                  another name is missing, not zero.
+                  Fiscal years, October to September.
                   {lastYearPartial ? ` FY${last} is partial: ${lastYearPartial}.` : ""}
                 </>
               }
@@ -67,16 +68,14 @@ export function EmployerYears({
       ) : null}
 
       {cases.length > 0 ? (
-        <div className="mt-6 border-2 p-5 sm:p-6 bg-card border-border">
+        <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
           <h3 className="font-heading text-lg font-bold">
             Decided in FY2016 to FY2023
           </h3>{" "}
           <p className="mt-1 text-sm text-muted-foreground">
             {cases.length < historyTotal
               ? `The ${formatInt(cases.length)} most recent of ${formatInt(historyTotal)}.`
-              : `All ${formatInt(cases.length)}.`}{" "}
-            Case numbers from these years start with A-; look one up for
-            DOL&apos;s full record.
+              : `All ${formatInt(cases.length)}.`}
           </p>
           <CaseTable cases={cases.slice(0, SHOWN_CASES)} />{" "}
           {cases.length > SHOWN_CASES ? (
@@ -131,8 +130,10 @@ function CaseTable({ cases, head = true }: { cases: HistoryCase[]; head?: boolea
                   {c.caseNumber}
                 </a>{" "}
               </td>
-              <td className="py-1.5 pr-4">{c.decisionDate ?? "n/a"} </td>
-              <td className="py-1.5 pr-4 capitalize">{c.status} </td>
+              <td className="py-1.5 pr-4">{shortDate(c.decisionDate) ?? "n/a"} </td>
+              <td className="py-1.5 pr-4">
+                <span className={cn("px-1.5 py-0.5 font-semibold capitalize", CASE_STATUS_FILL[caseStatusTint(c.status)])}>{c.status}</span>{" "}
+              </td>
               <td className="py-1.5 pr-4">
                 {c.jobTitle ?? "n/a"}
                 {c.state ? `, ${c.state}` : ""}{" "}

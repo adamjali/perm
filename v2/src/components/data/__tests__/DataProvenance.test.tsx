@@ -99,11 +99,14 @@ describe("DataProvenance", () => {
     await renderProvenance({
       "perm-cases": row({ dataset: "perm-cases", cadence: "Quarterly", source: "flag.dol.gov" }),
     });
-    const fold = screen.getByText("What this data includes").closest("details");
+    const fold = screen.getByText("The sources in full").closest("details");
     expect(fold).not.toBeNull();
     expect(fold).not.toHaveAttribute("open");
     // In the DOM while shut, so search engines and screen readers still get it.
     expect(fold).toHaveTextContent(/Decided PERM cases only/);
+    expect(fold).toHaveTextContent("What this data includes");
+    // The visible line names the dataset and its date; the source's full name waits in the fold.
+    expect(fold).toHaveTextContent(/flag\.dol\.gov/);
   });
 
   it("names the fold for several sources when there are several", async () => {
@@ -114,10 +117,10 @@ describe("DataProvenance", () => {
     expect(screen.getByText("What each source includes")).toBeInTheDocument();
   });
 
-  it("draws no fold when no dataset has a coverage sentence", async () => {
+  it("says nothing about coverage when no dataset has a coverage sentence", async () => {
     await renderProvenance({ "not-a-dataset": row({ dataset: "not-a-dataset" }) });
-    // The one fold left is the citation, which every source block carries.
-    expect(screen.getAllByRole("group")).toHaveLength(1);
+    // Two folds: the sources in full, and the citation every source block carries.
+    expect(screen.getAllByRole("group")).toHaveLength(2);
     expect(screen.getByText("Cite this page")).toBeInTheDocument();
     expect(screen.queryByText(/includes$/)).not.toBeInTheDocument();
   });

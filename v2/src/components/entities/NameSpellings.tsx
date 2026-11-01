@@ -56,12 +56,12 @@ export function NameSpellings({
 
   return (
     <section
-      className={cn("bg-sage p-6 sm:p-8 border-2 shadow-hard-sm border-border", className)}
+      className={cn("border-2 border-border bg-sage p-5 shadow-hard-sm", className)}
     >
-      <h2 className="font-heading text-xl font-bold">
+      <h3 className="font-heading text-lg font-bold">
         What this rank counts, and what it doesn&apos;t
-      </h2>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
+      </h3>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         DOL prints the name that went on the form, so one {subject} can appear
         under several.{" "}
         {absorbed > 0 ? (

@@ -9,6 +9,8 @@ import { BarRows } from "@/components/data/BarRows";
 import { LEAD_BANDS } from "@/lib/recruitmentRecord";
 import { PlateLabel } from "@/components/tools/FigurePlate";
 import type { FacetRow } from "@/lib/db/entityDetail";
+import { cleanPapers, realCities } from "@/lib/facetClean";
+import { ROW_LINK } from "@/components/entities/caseRows";
 import { stateName } from "@/lib/usStateNames";
 import { cn } from "@/lib/utils";
 import { formatApprovalRate, formatInt, formatShareOf } from "@/lib/format";
@@ -63,7 +65,7 @@ function Shell({
   className?: string;
 }) {
   return (
-    <section className={cn("bg-card p-5 sm:p-6 border-2 border-border", className)}>
+    <section className={cn("flex h-full flex-col border-2 border-border bg-card p-5 shadow-hard-sm", className)}>
       {/* The spaces are load-bearing, not formatting. Without them the title
           welds to the first row and the last row welds to the note - "What the
           jobs are||Software Developers", "15-2051.01111||These are the 6
@@ -76,9 +78,12 @@ function Shell({
           is counted; the panel itself carries the reading, so the note waits
           behind one line instead of standing under every panel. */}
       {note ? (
-        <FinePrint summary="How this is counted" className="mt-3 border-t border-border/40 pt-1">
-          <p>{note}</p>
-        </FinePrint>
+        // mt-auto: in a row of boxes stretched to one height, every note sits on the same line.
+        <div className="mt-auto pt-3">
+          <FinePrint summary="How this is counted" className="border-t border-border/40 pt-1">
+            <p>{note}</p>
+          </FinePrint>
+        </div>
       ) : null}
     </section>
   );
@@ -274,10 +279,7 @@ export function PartyMix({
               >
                 <span className="min-w-0 flex-1">
                   {r.key ? (
-                    <Link
-                      href={`${hrefBase}/${r.key}`}
-                      className="link leading-snug"
-                    >
+                    <Link href={`${hrefBase}/${r.key}`} className={`${ROW_LINK} leading-snug`}>
                       {r.label}
                     </Link>
                   ) : (
@@ -303,7 +305,7 @@ export function PartyMix({
  * (`PRIMARY_WORKSITE_CITY`), grouped across the spellings filers typed.
  */
 export function CityMix({
-  rows,
+  rows: given,
   total,
   className,
 }: {
@@ -311,6 +313,7 @@ export function CityMix({
   total: number;
   className?: string;
 }) {
+  const rows = realCities(given);
   if (rows.length === 0) return null;
   const top = rows[0]?.n ?? 0;
   const shown = rows.reduce((a, r) => a + r.n, 0);
@@ -349,6 +352,87 @@ export function CityMix({
         ))}
       </ul>
       </ChartTips>
+    </Shell>
+  );
+}
+
+/**
+ * The states and the cities in one box: where the jobs are, at both grains.
+ * An employer page shows both, and two half-empty boxes side by side read as
+ * two answers to one question. The states are chips (few, short), the cities
+ * bars (the question is how concentrated).
+ */
+export function PlaceMix({
+  states,
+  cities: givenCities,
+  total,
+  className,
+}: {
+  states: FacetRow[];
+  cities: FacetRow[];
+  total: number;
+  className?: string;
+}) {
+  const cities = realCities(givenCities);
+  if (states.length === 0 && cities.length === 0) return null;
+  const top = cities[0]?.n ?? 0;
+  const inStates = states.reduce((a, r) => a + r.n, 0);
+  const inCities = cities.reduce((a, r) => a + r.n, 0);
+  return (
+    <Shell
+      title="Where the jobs are"
+      note={
+        <>
+          The worksite on the application, which is where the job is and not where the company is headquartered.{" "}
+          {states.length > 0
+            ? `${states.length === 1 ? "This state covers" : `These ${states.length} states cover`} ${formatInt(inStates)} of ${formatInt(total)} filings`
+            : ""}
+          {states.length > 0 && cities.length > 0 ? "; " : ""}
+          {cities.length > 0
+            ? `${cities.length === 1 ? "this city" : `these ${cities.length} cities`} ${formatInt(inCities)}`
+            : ""}
+          . Volume by state across everyone is on the{" "}
+          <Link href="/perm-by-state" className="link">
+            state map
+          </Link>
+          .
+        </>
+      }
+      className={className}
+    >
+      {states.length > 0 ? (
+        <ul className="flex flex-wrap gap-2">
+          {states.map((r) => (
+            <Fragment key={r.key ?? r.label}>
+              {" "}
+              <li className="border-2 border-border bg-sage px-3 py-1">
+                <span className="text-sm font-bold">{r.key ? stateName(r.key) : r.label}</span>{" "}
+                <span className="ml-1 font-mono text-sm font-bold tabular-nums">{formatInt(r.n)}</span>
+              </li>
+            </Fragment>
+          ))}
+        </ul>
+      ) : null}{" "}
+      {cities.length > 0 ? (
+        <ChartTips label="Filings by worksite city" className={states.length > 0 ? "mt-4" : undefined}>
+          <ul className="space-y-2.5">
+            {cities.map((r) => (
+              <Fragment key={r.key ?? r.label}>
+                {" "}
+                <li data-tip={`${r.label}\n${formatInt(r.n)} of ${formatInt(total)} filings${approvedNote(r).replace(" · ", "\n")}`}>
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
+                    <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(r.n)}</span>
+                  </span>{" "}
+                  <span className="mt-1 block h-2 w-full bg-sage" aria-hidden="true">
+                    <span className="block h-full bg-primary" style={{ width: `${top > 0 ? Math.max(2, (r.n / top) * 100) : 0}%` }} />
+                  </span>
+                </li>
+              </Fragment>
+            ))}
+          </ul>
+        </ChartTips>
+      ) : null}
     </Shell>
   );
 }
@@ -441,20 +525,23 @@ export function RecruitmentMix({
   lead?: FacetRow[];
   className?: string;
 }) {
-  if (!papers.length && !steps.length && !lead.length) return null;
+  const paperRows = cleanPapers(papers);
+  if (!paperRows.length && !steps.length && !lead.length) return null;
   // Every case with a first step and a filing date falls in exactly one band.
   const recorded = lead.reduce((a, r) => a + r.n, 0);
   const byBand = new Map(lead.map((r) => [r.key, r.n]));
+  // As many columns as boxes, so two boxes share the row instead of leaving a third of it empty.
+  const boxes = (paperRows.length ? 1 : 0) + (steps.length ? 1 : 0) + (recorded > 0 ? 1 : 0);
   return (
-    <div className={cn("grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-3", className)}>
-      {papers.length ? (
+    <div className={cn("grid grid-cols-1 gap-4 [&>*]:min-w-0", boxes >= 3 ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-2", className)}>
+      {paperRows.length ? (
         <Shell
           title="Newspapers it advertised in"
           note="The newspaper or professional journal named for each case's two print ads, one count per paper per case, however the filer spelled it."
         >
           <BarRows
             label="Cases by newspaper"
-            rows={papers.map((r) => ({ key: r.key ?? r.label, label: r.label, value: r.n, text: `${formatInt(r.n)} cases` }))}
+            rows={paperRows.map((r) => ({ key: r.key ?? r.label, label: r.label, value: r.n, text: `${formatInt(r.n)} cases` }))}
           />
         </Shell>
       ) : null}{" "}
@@ -479,22 +566,72 @@ export function RecruitmentMix({
           title="How long before filing it began"
           note="Days from the first recruitment step to the filing. 20 C.F.R. § 656.17(e) puts the job order and ads 30 to 180 days before filing."
         >
-          <BarRows
-            label="Cases by days from first step to filing"
-            rows={LEAD_BANDS.map((b) => ({
-              key: b.id,
-              label: b.label,
-              value: byBand.get(b.id) ?? 0,
-              text: formatShareOf(byBand.get(b.id) ?? 0, recorded),
-            }))}
-          />
+          <LeadColumns byBand={byBand} recorded={recorded} />
         </Shell>
       ) : null}{" "}
-      <p className="text-base lg:col-span-3">
-        <Link href="/perm-recruitment" className="link">
+      <p className="col-span-full text-sm">
+        <Link href="/perm-recruitment" className="link font-semibold">
           Where every PERM employer recruits
         </Link>
       </p>
     </div>
+  );
+}
+
+/** A band's short name under its column: the day range alone, the axis says "days". */
+function bandTick(b: (typeof LEAD_BANDS)[number]): string {
+  if (b.to == null) return `${b.from}+`;
+  if (b.from === 0) return `<${b.to + 1}`;
+  return `${b.from}-${b.to}`;
+}
+
+/**
+ * Days from the first recruitment step to filing, as one column per band, with
+ * the 30-to-180-day window the regulation allows shaded behind the columns
+ * inside it. Columns, not bar rows: seven bands read as one distribution, and
+ * the shading shows at a glance how much of the filing sits inside the rule.
+ */
+function LeadColumns({ byBand, recorded }: { byBand: Map<string | null, number>; recorded: number }) {
+  const counts = LEAD_BANDS.map((b) => byBand.get(b.id) ?? 0);
+  const top = Math.max(1, ...counts);
+  const inWindow = (b: (typeof LEAD_BANDS)[number]) => b.from >= 30 && b.to != null && b.to <= 180;
+  return (
+    <ChartTips label="Cases by days from first step to filing">
+      <div className="grid h-40 grid-cols-7 items-end gap-1" aria-hidden="true">
+        {LEAD_BANDS.map((b, i) => {
+          const n = counts[i]!;
+          return (
+            <span
+              key={b.id}
+              data-tip={`${b.label}\n${n === 0 ? "none" : `${formatInt(n)} ${n === 1 ? "case" : "cases"}, ${formatShareOf(n, recorded)}`}`}
+              className={cn("flex h-full flex-col justify-end px-0.5", inWindow(b) ? "bg-sage" : "")}
+            >
+              <span className="mb-1 text-center font-mono text-sm font-bold tabular-nums">
+                {n === 0 ? "0" : formatShareOf(n, recorded).replace("under ", "<").replace("over ", ">")}
+              </span>{" "}
+              <span
+                className={cn("block w-full", n > 0 ? "bg-primary" : "")}
+                style={{ height: `calc(${(n / top) * 100}% - 1.75rem)`, minHeight: n > 0 ? "2px" : 0 }}
+              />
+            </span>
+          );
+        })}
+      </div>
+      <div className="mt-1 grid grid-cols-7 gap-1 border-t-2 border-border pt-1" aria-hidden="true">
+        {LEAD_BANDS.map((b) => (
+          <span key={b.id} className="text-center font-mono text-sm tabular-nums text-muted-foreground">
+            {`${bandTick(b)} `}
+          </span>
+        ))}
+      </div>
+      <p className="mt-1.5 text-sm text-muted-foreground" aria-hidden="true">
+        Days before filing. <span className="inline-block size-3 border border-input bg-sage align-middle" /> The 30 to 180 days the rule allows.
+      </p>
+      <ul className="sr-only">
+        {LEAD_BANDS.map((b, i) => (
+          <li key={b.id}>{`${b.label}: ${counts[i] === 0 ? "none" : `${formatInt(counts[i]!)} cases, ${formatShareOf(counts[i]!, recorded)}`}. `}</li>
+        ))}
+      </ul>
+    </ChartTips>
   );
 }

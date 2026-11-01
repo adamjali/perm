@@ -18,12 +18,11 @@
 
 import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
-import { Fragment } from "react";
 import Link from "next/link";
 import { hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
-import { pendingSentence, sponsorSentence, whereTheyStand } from "@/lib/pendingSnippet";
+import { pendingSentence, profileLine, whereTheyStand } from "@/lib/pendingSnippet";
 import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
@@ -31,7 +30,6 @@ import {
   DisclosureNote,
   LimitsPanel,
   PeerList,
-  RankLadder,
   ReliabilityBand,
   entityTitle,
   rateReliability,
@@ -39,6 +37,7 @@ import {
 import {
   EntityStatCards,
   FieldPositionPlate,
+  yearTrend,
   approvalCard,
   certifiedCard,
   entityStanding,
@@ -69,7 +68,7 @@ import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
 import { WorkerMix } from "@/components/entities/WorkerMix";
-import { CityMix, IndustryMix, OccupationMix, PartyMix, RecruitmentMix, StateMix } from "@/components/entities/FilingMakeup";
+import { IndustryMix, OccupationMix, PartyMix, PlaceMix, RecruitmentMix } from "@/components/entities/FilingMakeup";
 import {
   absorbedCount,
   entityFacets,
@@ -130,8 +129,9 @@ import { groupIndustries } from "@/components/entities/FilingMakeup";
 import { HOLD_STATUS } from "@/lib/employerStages";
 import { phase } from "@/lib/db/debarments";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
-import { monthDay, monthYear, shortDate } from "@convex/lib/months";
-import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
+import { fiscalYearOf, monthDay, monthYear, shortDate } from "@convex/lib/months";
+import { FilingRows } from "@/components/entities/FilingRows";
+import { ROW_LINK } from "@/components/entities/caseRows";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
 
 /**
@@ -148,6 +148,8 @@ import { caseSearchHref } from "@/lib/caseSearchPlan";
  */
 /** Newest live filings shown on the page; the case search holds the rest. */
 const RECENT_LIVE_SHOWN = 8;
+/** One look for a part of a chapter that stands as its own box. */
+const CARD = "border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6";
 
 /** "Oct 8", or "Nov 1, 2027" when the year isn't this one. */
 function recentDay(iso: string): string {
@@ -761,6 +763,9 @@ export default async function EmployerPage({
       })
     : null;
 
+  // DOL's newest file ends inside a fiscal year unless it runs to September 30, so that year is partial.
+  const partialFy = disclosedThrough && !/-09-30$/.test(disclosedThrough.slice(0, 10)) ? fiscalYearOf(disclosedThrough.slice(0, 10)) : null;
+
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
 
@@ -873,14 +878,9 @@ export default async function EmployerPage({
       {/* Most people who land here work for this sponsor and came for their
           own case, so the way to it sits beside the name, before the figures. */}
       <ProfileHeader
-        eyebrow={`PERM sponsor, #${formatInt(row.rank)} of ${formatInt(kindTotal)} by filings`}
+        eyebrow="PERM sponsor"
         name={row.name}
-        answer={[
-          sponsorSentence(row.name, row.recent12m, newestFiled(recentLive)),
-          pendingSentence(row.name, pending),
-        ]
-          .filter(Boolean)
-          .join(" ") || null}
+        answer={profileLine(row.recent12m, newestFiled(recentLive), pending)}
         facts={facts}
         tags={tags}
         aside={
@@ -908,7 +908,7 @@ export default async function EmployerPage({
             <section aria-label="Its record in five figures">
             <EntityStatCards
               cards={[
-                volumeCard("Filings", row, kindTotal),
+                { ...volumeCard("Filings", row, kindTotal), trend: yearTrend(years, partialFy) },
                 certifiedCard(row),
                 approvalCard(reliability, baselineDenialPct),
                 // The program table's own median (perm_cases), so the two figures can't disagree.
@@ -923,13 +923,12 @@ export default async function EmployerPage({
 
       <ChapterNav items={chapters} className="mt-10" />
 
-      <Chapter id="now" title="Right now" dek="DOL's live record of its cases, read every day, and what it has done to them as a group.">
+      <Chapter id="now" title="Right now">
         {/* The live queue first: every figure in the header comes from decided
             cases, and this is the only part that sees a case still waiting. */}
-        <div className="grid grid-cols-1 gap-x-8 [&>*]:min-w-0 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
-          {pending ? (
-            <LiveQueueBand pending={pending} subject="sponsor" asOf={mirrorAsOf} className="mt-8" />
-          ) : null}{" "}
+        {/* The two boxes stretch to one height, so their ends line up across the row. */}
+        <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          {pending ? <LiveQueueBand pending={pending} subject="sponsor" asOf={mirrorAsOf} /> : null}{" "}
           <EmployerFollow
             slug={canonicalSlug}
             name={row.name}
@@ -939,6 +938,7 @@ export default async function EmployerPage({
             asOf={stagesDoc?.asOf ?? null}
             docMissing={!stagesDoc}
             showPending={!pending}
+            className=""
           />
         </div>
 
@@ -947,44 +947,24 @@ export default async function EmployerPage({
             with publication; until then the case number carries the reader
             to its own live status. */}
         {recentLive.length > 0 ? (
-          <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" aria-labelledby="latest-live">
-            <h3 id="latest-live" className="font-heading text-xl font-bold">
-              Its newest filings
-            </h3>{" "}
-            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-              Filed since DOL&apos;s last quarterly file, so the wage and law firm aren&apos;t published yet.
-            </p>{" "}
-            <ul className="mt-4 divide-y divide-border/60">
-              {/* Keyed Fragment + space: mapped siblings glue their text for every extractor. */}
-              {recentLive.slice(0, RECENT_LIVE_SHOWN).map((c) => (
-                <Fragment key={c.caseNumber}>
-                  {" "}
-                  <li className={CASE_ROW}>
-                    <Link
-                      href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                      className={CASE_ROW_LINK}
-                    >
-                      {c.caseNumber}
-                    </Link>{" "}
-                    {c.jobTitle ? <span className="text-muted-foreground">{c.jobTitle}</span> : null}{" "}
-                    <span className="ml-auto text-sm text-muted-foreground">
-                      {c.filingDate ? `filed ${c.filingDate}` : ""}
-                      {c.status ? ` · ${c.status}` : ""}
-                    </span>
-                  </li>
-                </Fragment>
-              ))}
-            </ul>{" "}
-            <p className="mt-3 text-sm">
-              {recentLive.length > RECENT_LIVE_SHOWN ? `The ${RECENT_LIVE_SHOWN} newest. ` : ""}
-              <Link
-                href={caseSearchHref({ q: row.name })}
-                className="link"
-              >
-                Every filing by this employer
-              </Link>{" "}
-              is in the case search, live and published together.
-            </p>{" "}
+          <section className="mt-6 border-2 border-border bg-card p-5 shadow-hard sm:p-6" aria-labelledby="latest-live">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+              <h3 id="latest-live" className="font-heading text-xl font-bold">
+                Its newest filings
+              </h3>{" "}
+              <Link href={caseSearchHref({ q: row.name })} className={`${ROW_LINK} text-sm font-semibold`}>
+                Every filing in the case search
+              </Link>
+            </div>{" "}
+            <FilingRows
+              className="mt-4"
+              rows={recentLive.slice(0, RECENT_LIVE_SHOWN).map((c) => ({
+                caseNumber: c.caseNumber,
+                job: c.jobTitle,
+                date: c.filingDate,
+                status: c.status,
+              }))}
+            />{" "}
             <FromDolLive />
           </section>
         ) : null}{" "}
@@ -992,8 +972,10 @@ export default async function EmployerPage({
       </Chapter>
 
       <Chapter id="wait" title="How long it takes">
-        <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} className="mt-8" />{" "}
-        <PwdToPerm links={pwdLinks} who={row.name} className="mt-12" />
+        <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-2">
+          <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} level={3} className={CARD} />{" "}
+          <PwdToPerm links={pwdLinks} who={row.name} className={CARD} />
+        </div>
       </Chapter>
 
       <Chapter id="programs" title="Every program">
@@ -1017,6 +999,7 @@ export default async function EmployerPage({
           logFrom={stagesDoc?.logFrom ?? null}
           searchHref={caseSearchHref({ q: row.name })}
           spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
+          heading={false}
         />{" "}
         {/* The two filings that come BEFORE a PERM, from the same daily DOL
             check: the wage request and, for H-1B holders, the LCA. Five each,
@@ -1034,15 +1017,22 @@ export default async function EmployerPage({
         title="Against other sponsors"
         dek={
           <>
-            Where it sits among {formatInt(kindTotal)} sponsors. The{" "}
+            Among {formatInt(kindTotal)} sponsors.{" "}
             <Link href={BASE} className="link">
-              full ranking
-            </Link>{" "}
-            sorts every column.
+              The full ranking
+            </Link>
           </>
         }
       >
-        <SponsorProfile parts={sponsor?.parts ?? []} facts={(sponsor?.facts ?? []).filter((f) => f.id === "dependent" || f.id === "willful")} />{" "}
+        {/* Where it ranks, and its wait against the sponsors either side, side by side at one height. */}
+        <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-2">
+          <SponsorProfile
+            parts={sponsor?.parts ?? []}
+            facts={(sponsor?.facts ?? []).filter((f) => f.id === "dependent" || f.id === "willful")}
+            className={CARD}
+          />{" "}
+          {band ? <SizeBandNote band={band} subjectMedianDays={row.medianDays} subject="sponsors" unit="filings" /> : null}
+        </div>{" "}
         {/* Where does this sponsor sit in the field? A stat card states a
             number; only the distribution says whether that number is unusual. */}
         <FieldPositionPlate
@@ -1061,62 +1051,47 @@ export default async function EmployerPage({
           }
           outOfCohortNote={`This sponsor has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
         />{" "}
-        {band ? (
-          <SizeBandNote band={band} subjectMedianDays={row.medianDays} subject="sponsors" unit="filings" className="mt-10" />
-        ) : null}{" "}
-        <RankLadder
-          rank={row.rank}
-          kindTotal={kindTotal}
-          above={near.above}
-          below={near.below}
-          hrefBase={BASE}
-          unit="filings"
-          className="mt-10"
-        />{" "}
-        <PeerList
-          heading="Sponsors filing at the same rate"
-          note={<>Ranked either side of this one: they file about as many PERM cases.</>}
-          items={near.peers}
-          hrefBase={BASE}
-          unit="filings"
-          className="mt-12"
-        />{" "}
-        {similar.occupation && similar.sponsors.length > 0 ? (
+        {/* The peers either side carry the rank's neighbours, so no separate ladder. */}
+        <div className="mt-8 grid grid-cols-1 gap-x-10 gap-y-8 [&>*]:min-w-0 lg:grid-cols-2">
           <PeerList
-            heading="Sponsors hiring for the same work"
-            note={
-              <>
-                The employers filing the most PERM cases for{" "}
-                <Link
-                  href={entityHref("occupation", similar.occupation.slug)}
-                  className="link"
-                >
-                  {similar.occupation.label}
-                </Link>
-                , the occupation this sponsor files for most.
-              </>
-            }
-            items={similar.sponsors}
+            heading="Sponsors filing at the same rate"
+            note={<>Ranked either side of this one: they file about as many PERM cases.</>}
+            items={near.peers}
             hrefBase={BASE}
             unit="filings"
-            className="mt-12"
-          />
-        ) : null}
+          />{" "}
+          {similar.occupation && similar.sponsors.length > 0 ? (
+            <PeerList
+              heading="Sponsors hiring for the same work"
+              note={
+                <>
+                  The employers filing the most PERM cases for{" "}
+                  <Link href={entityHref("occupation", similar.occupation.slug)} className="link">
+                    {similar.occupation.label}
+                  </Link>
+                  , its main job.
+                </>
+              }
+              items={similar.sponsors}
+              hrefBase={BASE}
+              unit="filings"
+            />
+          ) : null}
+        </div>
       </Chapter>
 
       {hasWork ? (
         <Chapter
           id="work"
           title="What they file, and where"
-          dek="A rank says how much. It says nothing about what the work is, which is the part a job offer from this sponsor turns on."
         >
-          <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
-            {facets.occupation ? (
-              <OccupationMix rows={facets.occupation} total={row.total} className="lg:row-span-2" />
-            ) : null}
+          {/* Two even columns: every box in a row is stretched to the row's height and keeps its note on one line. */}
+          <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2">
+            {facets.occupation ? <OccupationMix rows={facets.occupation} total={row.total} /> : null}
             {facets.industry ? <IndustryMix rows={facets.industry} /> : null}
-            {facets.state ? <StateMix rows={facets.state} total={row.total} /> : null}
-            {facets.city ? <CityMix rows={facets.city} total={row.total} /> : null}
+            {facets.state || facets.city ? (
+              <PlaceMix states={facets.state ?? []} cities={facets.city ?? []} total={row.total} />
+            ) : null}
             {facets.attorney ? (
               <PartyMix
                 rows={facets.attorney}
@@ -1140,7 +1115,7 @@ export default async function EmployerPage({
         <Chapter
           id="records"
           title="Federal records"
-          dek="What other agencies' own records hold under this employer's name: each matched by name, and by city where the name alone could be another company."
+          dek="Matched by name, and by city where a name alone could be another company."
         >
           <WageHourCases summary={whd} pageName={row.name} level={3} />{" "}
           <SafetyInspections summary={osha} pageName={row.name} level={3} />{" "}
@@ -1162,9 +1137,8 @@ export default async function EmployerPage({
       ) : null}
 
       <Chapter id="notes" title="Notes on these numbers">
-        <NameSpellings variants={variants} absorbed={absorbed} subject="sponsor" hrefBase={BASE} rank={row.rank} className="mt-8" />{" "}
+        <NameSpellings variants={variants} absorbed={absorbed} subject="sponsor" hrefBase={BASE} rank={row.rank} className="mb-6" />{" "}
         <LimitsPanel
-          className="mt-10"
           items={[
             wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "they" }),
             {
@@ -1223,7 +1197,7 @@ export default async function EmployerPage({
             },
           ]}
         />{" "}
-        <DisclosureNote sourceFiles={stats?.sourceFiles ?? []} uniqueCases={stats?.uniqueCases ?? null} className="mt-8" />{" "}
+        <DisclosureNote sourceFiles={stats?.sourceFiles ?? []} uniqueCases={stats?.uniqueCases ?? null} className="mt-5" />{" "}
         <DataProvenance datasets={pending ? ["perm-cases", "entities", "perm-case-status"] : ["perm-cases", "entities"]} />
       </Chapter>
     </div>

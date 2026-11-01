@@ -5,6 +5,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { StatusRibbon, ribbonLegend, ribbonParts } from "@/components/employers/StatusRibbon";
 import { longDate, type EmployerMove, type EmployerStageRow } from "@/lib/employerStages";
 import { formatInt } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 /**
  * Follow an employer: what its pending cases look like today, what DOL has
@@ -45,6 +46,7 @@ export function EmployerFollow({
   asOf,
   docMissing = false,
   showPending = true,
+  className,
 }: {
   slug: string;
   name: string;
@@ -62,12 +64,14 @@ export function EmployerFollow({
   docMissing?: boolean;
   /** False where the page already draws its pending cases (the employer page's queue band). */
   showPending?: boolean;
+  /** Replaces the default top margin, as inside a grid where the row sets the spacing. */
+  className?: string;
 }) {
   const parts = row ? ribbonParts(row) : null;
   const legend = parts ? ribbonLegend(parts) : [];
   const shown = moves.slice(0, RAIL_SHOWN);
   return (
-    <section id="follow" className="mt-10 scroll-mt-28 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
+    <section id="follow" className={cn("flex scroll-mt-28 flex-col border-2 border-border bg-card p-5 shadow-hard sm:p-6", className ?? "mt-10")}>
       <h2 className="font-heading text-xl font-bold">Follow {name}</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         An email when DOL moves its cases as a group: five or more on or off hold in a day, or a batch decided well above its usual pace.
@@ -104,7 +108,7 @@ export function EmployerFollow({
         </p>
       )}{" "}
 
-      <div className="mt-7">
+      <div className="mt-6">
         <p className="text-base font-bold">What DOL has done to its cases as a group</p>{" "}
         {docMissing ? (
           <p className="mt-2 text-base text-soft">
@@ -140,8 +144,11 @@ export function EmployerFollow({
         ) : null}
       </div>{" "}
 
-      <div className="mt-7 border-t-2 border-border pt-6">
-        <EmployerFollowForm slug={slug} source="employer-page" />
+      {/* The form sits at the foot of the box, so beside a taller card it stays level with that card's end. */}
+      <div className="mt-auto pt-6">
+        <div className="border-t-2 border-border pt-5">
+          <EmployerFollowForm slug={slug} source="employer-page" />
+        </div>
       </div>
     </section>
   );

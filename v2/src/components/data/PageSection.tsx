@@ -27,16 +27,16 @@ export function PageSection({
 }) {
   const headingId = id ? `${id}-title` : undefined;
   return (
-    <section id={id} aria-labelledby={headingId} className={cn("relative mt-12 border-t-4 border-border pt-8 sm:mt-16", className)}>
+    <section id={id} aria-labelledby={headingId} className={cn("relative mt-10 border-t-4 border-border pt-6 sm:mt-14 sm:pt-7", className)}>
       <span aria-hidden="true" className="absolute -top-1 left-0 h-1 w-16 bg-primary" />
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h2 id={headingId} className="font-heading text-2xl font-bold sm:text-3xl">
+        <h2 id={headingId} className="font-heading text-2xl font-bold sm:text-[1.75rem]">
           {title}
         </h2>{" "}
         {aside ?? null}
       </div>{" "}
       {lede ? <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">{lede}</p> : null}{" "}
-      <div className="mt-6">{children}</div>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }

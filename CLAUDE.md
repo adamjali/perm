@@ -853,7 +853,7 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
 - **Googlebot crawls 25,000 to 45,000 pages a day since Oct 13** (about 3,500 before) and meets the 12-at-once search
   limit: 15 to 19% refused on its busiest days, which is Search Console's "Server error (5xx)". Each deploy starts
   the page cache empty, and Oct 16 to 17 had ten between 10:35 PM and 3:12 AM. Batch deploys at night.
-- **Employer pages answer "does it sponsor green cards"** from the year's filings (`sponsorSentence`), and say nothing
+- **Employer pages answer "does it sponsor green cards"** from the year's filings (`sponsorSentence`; `profileLine` since Nov 1 2026), and say nothing
   when the year holds none: that isn't proof an employer won't sponsor.
 - **40 new articles and 10 refreshed**, each with its own picture; three practice templates went live the same morning
   for the attorney to review on the site (owner's call). A capture can be fitted whole (`"fit": "contain"`); capture data pages at 1000 wide
@@ -1909,3 +1909,33 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   1.6 GB of swap. sqld runs with `MALLOC_ARENA_MAX=2` (the databases' drop-in) and `permtracker-db-refresh`.
 - **sqld's statement stats are per hourly window**, never totals: `permtracker-perf` takes a new window whole (it had
   subtracted windows and printed -143 s of database time).
+
+## Nov 1 2026 (afternoon): the employer page, tidied against a rival's
+
+The owner set permtrack.app's Stoughton Trailers page beside ours: ours holds more, theirs read cleaner. Nothing was
+removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed, mostly in shared parts:
+
+- **A bar's figure sits on its label's line** (`BarRows`, 23 pages): it sat in a separate column and floated away from
+  its bar. The bar runs full width under both.
+- **Chapters are slightly tighter** (`PageSection`: h2 28px, less space between parts), the header's H1 40px and its
+  facts an aligned two-column grid, the figure cards a little smaller (`FigureRow`, site-wide).
+- **The line under an employer's name doesn't repeat it** (`profileLine` in `src/lib/pendingSnippet.ts`, which replaced
+  `sponsorSentence`; `pendingSentence` still names the employer because it stands alone in search results).
+- **Boxes in one row stretch to one height** and keep their "How this is counted" fold on one line (`Shell` in
+  `FilingMakeup.tsx` is a column with the fold at its foot; the queue card and the follow box; the two wait cards).
+- **Filings are an aligned table** (`FilingRows`): case number, job, wage, day, status as a tinted chip. On a phone two
+  lines: the case number and its day, then the job and its status; a case number never breaks. The newest PERM
+  filings, wage requests and LCAs, the live-only employer page and the seasonal list all use it.
+- **Every comparison part sits a heading level under its chapter** (h3): peer lists, limits, spellings, the worker mix,
+  the year chart. The peer lists are ranked rows, two side by side on the employer page; its rank ladder is gone
+  because the peers either side are the same neighbours (the firm page keeps its ladder: its peers are often local).
+- **Sources are one line on every data page** (`DataProvenance`): each dataset and the day it runs to, the methodology
+  and the corrections links. The full source names, cadences and what each includes fold under "The sources in full",
+  beside "Cite this page". A dataset that stopped refreshing stays in the open.
+- **Typed fields are tidied before they're listed** (`src/lib/facetClean.ts`): one newspaper typed several ways is one
+  row (spacing, case, a stray letter on a long name), a note typed where the paper goes is dropped, and a street
+  address in the worksite city field isn't a city. Counts are summed, never dropped.
+- **The lead time before filing is seven columns** with the 30-to-180-day window the rule allows shaded behind them.
+- **States and cities share one box** on the employer page (`PlaceMix`); the program ledger has column headings and
+  "too few" where it said "under the floor"; the year chart labels every year and its total up to 12 years and opens
+  a long run at its newest end.

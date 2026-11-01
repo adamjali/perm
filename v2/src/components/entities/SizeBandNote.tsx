@@ -1,4 +1,4 @@
-import { ChartTips } from "@/components/data/ChartTips";
+import { BarRows, type BarRow } from "@/components/data/BarRows";
 import type { SizeBand } from "@/lib/db/entityDetail";
 import { FinePrint } from "@/components/data/FinePrint";
 import { cn } from "@/lib/utils";
@@ -46,59 +46,35 @@ export function SizeBandNote({
       ? `${formatInt(band.minTotal)} ${unit} each`
       : `between ${formatInt(band.minTotal)} and ${formatInt(band.maxTotal)} ${unit}`;
 
-  return (
-    <section
-      className={cn("bg-sage p-5 sm:p-6 border-2 shadow-hard-sm border-border", className)}
-    >
-      <p className="text-sm font-bold text-muted-foreground">
-        Against the {subject} ranked nearest
-      </p>{" "}
-      {/* DRAWN, NOT WRITTEN: the two medians as bars on one
-          scale, the range in one line, the method behind "Why no rate". Not
-          "at a similar rate": rank is dense at the tail and sparse at the
-          head, so the range is printed and the reader judges how alike they
-          are. */}
-      <p className="mt-2 max-w-3xl text-base text-soft">
-        The {formatInt(band.n)} {subject} ranked nearest filed {range}.
-      </p>{" "}
-      <ChartTips label="Median wait, this one against those ranked nearest" className="mt-4 max-w-xl">
-      <dl className="space-y-3">
-        {[
+  const rows: BarRow[] = [
+    {
+      key: "band",
+      label: `The ${formatInt(band.n)} ranked nearest`,
+      sub: `filed ${range}`,
+      value: band.medianDays,
+      text: `${formatInt(band.medianDays)} days`,
+      tone: "blue",
+      tip: `The ${formatInt(band.n)} ${subject} ranked nearest\nMedian wait ${formatInt(band.medianDays)} days\nFiled ${range}`,
+    },
+    ...(subjectMedianDays != null
+      ? [
           {
-            k: `Their median wait`,
-            v: band.medianDays,
-            strong: false,
-            tip: `The ${formatInt(band.n)} ${subject} ranked nearest\nMedian wait ${formatInt(band.medianDays)} days\nFiled ${range}`,
-          },
-          ...(subjectMedianDays != null
-            ? [
-                {
-                  k: "This one",
-                  v: Math.round(subjectMedianDays),
-                  strong: true,
-                  tip: `This one\nMedian wait ${formatInt(Math.round(subjectMedianDays))} days${
-                    delta == null || delta === 0 ? "" : `\n${formatInt(Math.abs(delta))} days ${delta > 0 ? "behind" : "ahead of"} them`
-                  }`,
-                },
-              ]
-            : []),
-        ].map((row) => {
-          const max = Math.max(band.medianDays ?? 1, subjectMedianDays ?? 0, 1);
-          return (
-            <div key={row.k} data-tip={row.tip} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3">
-              <dt className="text-sm font-bold text-soft">{row.k}</dt>{" "}
-              <dd className="m-0 h-4 border-input bg-background border">
-                <span
-                  className={cn("block h-full", row.strong ? "bg-primary" : "bg-chart-blue")}
-                  style={{ width: `${Math.max(2, ((row.v ?? 0) / max) * 100)}%` }}
-                />
-              </dd>{" "}
-              <dd className="m-0 font-mono text-sm font-bold tabular-nums">{formatInt(row.v ?? 0)} days</dd>
-            </div>
-          );
-        })}
-      </dl>
-      </ChartTips>{" "}
+            key: "this",
+            label: "This one",
+            value: Math.round(subjectMedianDays),
+            text: `${formatInt(Math.round(subjectMedianDays))} days`,
+          } satisfies BarRow,
+        ]
+      : []),
+  ];
+  return (
+    <section className={cn("flex flex-col border-2 border-border bg-card p-5 shadow-hard-sm", className)}>
+      {/* DRAWN, NOT WRITTEN: the two medians as bars on one scale, the range
+          under the band's bar, the method behind "Why no rate". Not "at a
+          similar rate": rank is dense at the tail and sparse at the head, so
+          the range is printed and the reader judges how alike they are. */}
+      <h3 className="font-heading text-lg font-bold">Against the {subject} ranked nearest</h3>{" "}
+      <BarRows label="Median wait, this one against those ranked nearest" className="mt-4" rows={rows} />{" "}
       <p className="mt-3 text-base text-soft">
         {delta == null
           ? "This one has too few decided cases to place against them."
@@ -106,13 +82,15 @@ export function SizeBandNote({
             ? "Exactly where this one sits."
             : `This one sits ${formatInt(Math.abs(delta))} days ${delta > 0 ? "behind" : "ahead of"} them.`}
       </p>{" "}
-      <FinePrint summary="Why no approval rate" className="mt-1">
-        <p>
-          A band is a slice of the volume ranking rather than a population
-          picked for having enough decided cases, so a band rate would be solid
-          at the top of the list and noise at the bottom, under one heading.
-        </p>
-      </FinePrint>
+      <div className="mt-auto pt-2">
+        <FinePrint summary="Why no approval rate">
+          <p>
+            A band is a slice of the volume ranking rather than a population
+            picked for having enough decided cases, so a band rate would be solid
+            at the top of the list and noise at the bottom, under one heading.
+          </p>
+        </FinePrint>
+      </div>
     </section>
   );
 }

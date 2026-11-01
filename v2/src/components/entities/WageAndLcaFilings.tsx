@@ -5,7 +5,8 @@ import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { FromDolLive } from "@/components/entities/FromDolLive";
 import type { UnifiedFlagRow } from "@/lib/flagMerge";
 import { formatWage } from "@/lib/wageFormat";
-import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
+import { FilingRows } from "@/components/entities/FilingRows";
+import { ROW_LINK } from "@/components/entities/caseRows";
 
 /**
  * One employer's newest wage requests and H-1B LCAs, two columns of five.
@@ -31,60 +32,46 @@ export function WageAndLcaFilings({
   className?: string;
 }) {
   if (wageReqs.length === 0 && lcas.length === 0) return null;
+  const lists = [
+    { label: "Wage requests", all: "All wage requests", rows: wageReqs, href: `/pwd-cases?q=${encodeURIComponent(name)}` },
+    { label: "H-1B LCAs", all: "All H-1B LCAs", rows: lcas, href: `/lca-cases?q=${encodeURIComponent(name)}` },
+  ];
   return (
     <section className={`${className}`}>
       <h2 className="font-heading text-xl font-bold">{heading}</h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-        Filed by {name}, newest first. Decided ones carry the wage from DOL&apos;s quarterly files.
-      </p>{" "}
-      <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 [&>*]:min-w-0">
-        {[
-          { label: "Wage requests", all: "All wage requests", rows: wageReqs, href: `/pwd-cases?q=${encodeURIComponent(name)}` },
-          { label: "H-1B LCAs", all: "All H-1B LCAs", rows: lcas, href: `/lca-cases?q=${encodeURIComponent(name)}` },
-        ].map((col) => (
-          <Fragment key={col.label}>
-            {" "}
-            <div>
-              <h3 className="text-sm font-bold text-muted-foreground">{col.label}</h3>{" "}
-              {col.rows.length > 0 ? (
-                <ul className="mt-2 divide-y divide-border/60">
-                  {col.rows.map((r) => (
-                    <Fragment key={r.caseNumber}>
-                      {" "}
-                      <li className={CASE_ROW}>
-                        <Link
-                          href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                          className={CASE_ROW_LINK}
-                        >
-                          {r.caseNumber}
-                        </Link>{" "}
-                        {r.jobTitle ? <span className="text-soft">{r.jobTitle}</span> : null}{" "}
-                        {formatWage(r.wage, r.wageUnit) ? (
-                          <span className="font-mono text-sm font-bold">
-                            {formatWage(r.wage, r.wageUnit)}
-                            <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
-                          </span>
-                        ) : null}{" "}
-                        <span className="ml-auto font-mono text-sm font-bold text-muted-foreground">
-                          {r.date ? `${r.date} · ` : ""}
-                          {r.status}
-                        </span>
-                      </li>
-                    </Fragment>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">None confirmed yet.</p>
-              )}{" "}
-              <p className="mt-2 text-sm">
-                <Link href={col.href} className="link">
-                  {col.all} by this employer
-                </Link>
-              </p>
-            </div>
-          </Fragment>
-        ))}
-      </div>{" "}
+      {lists.map((list) => (
+        <Fragment key={list.label}>
+          {" "}
+          <div className="mt-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+              <h3 className="text-base font-bold">{list.label}</h3>{" "}
+              <Link href={list.href} className={`${ROW_LINK} text-sm font-semibold`}>
+                {list.all} by this employer
+              </Link>
+            </div>{" "}
+            {list.rows.length > 0 ? (
+              <FilingRows
+                className="mt-2"
+                withWage
+                rows={list.rows.map((r) => ({
+                  caseNumber: r.caseNumber,
+                  job: r.jobTitle,
+                  date: r.date,
+                  status: r.status,
+                  wage: formatWage(r.wage, r.wageUnit) ? (
+                    <>
+                      {formatWage(r.wage, r.wageUnit)}
+                      <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
+                    </>
+                  ) : null,
+                }))}
+              />
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">None in DOL&apos;s live record yet.</p>
+            )}
+          </div>
+        </Fragment>
+      ))}{" "}
       <FromDolLive />
     </section>
   );

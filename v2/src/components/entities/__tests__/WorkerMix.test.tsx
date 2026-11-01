@@ -19,16 +19,16 @@ describe("WorkerMix", () => {
         }}
       />,
     );
-    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Who they sponsored, FY2016 to FY2023");
+    expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent("Who they sponsored, FY2016 to FY2023");
     expect(screen.getByText("Country of citizenship")).toBeInTheDocument();
     expect(screen.getByText("Visa held when filed")).toBeInTheDocument();
     expect(screen.queryByText("Schools")).not.toBeInTheDocument();
     expect(screen.getByText("India")).toBeInTheDocument();
-    expect(screen.getByText(/the form in use since mid-2023 doesn.t carry them/)).toBeInTheDocument();
+    expect(screen.getByText(/the one in use since mid-2023 doesn.t/)).toBeInTheDocument();
   });
 
   it("titles an occupation's section by the jobs, not a sponsor", () => {
     render(<WorkerMix subject="occupation" facets={{ education: [{ key: "Master's", label: "Master's", n: 9 }] }} />);
-    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Who filled these jobs, FY2016 to FY2023");
+    expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent("Who filled these jobs, FY2016 to FY2023");
   });
 });

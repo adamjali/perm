@@ -7,7 +7,7 @@ import type { LiveCaseRow } from "@/lib/db/cases";
 import type { LiveEmployerRecord } from "@/lib/db/liveEmployers";
 import { formatInt } from "@/lib/format";
 import { longDate } from "@convex/lib/months";
-import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
+import { FilingRows } from "@/components/entities/FilingRows";
 
 /**
  * An employer's page when DOL has never published a thing about them.
@@ -192,44 +192,24 @@ export function UnpublishedEmployer({
 
       {follow}{" "}
       {wait}{" "}
-      <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
+      <section className="mt-10 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-bold">
           {listed === total
             ? `All ${formatInt(total)} ${total === 1 ? "case" : "cases"}`
             : `The newest ${formatInt(listed)} of ${formatInt(total)} cases`}
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
-          DOL&apos;s live record carries the case number, the job title and the
-          status. The wage, the law firm and the worksite state arrive with
-          publication, which is why they are missing here rather than blank.
-          Each number links to its own live status.
-        </p>
-        <ul className="mt-4 divide-y divide-border/60">
-          {cases.map((c) => (
-            <Fragment key={c.caseNumber}>{" "}
-            <li className={CASE_ROW}>
-              <Link
-                href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                className={CASE_ROW_LINK}
-              >
-                {c.caseNumber}
-              </Link>{" "}
-              {c.jobTitle ? (
-                <span className="text-muted-foreground">{c.jobTitle}</span>
-              ) : null}{" "}
-              <span className="ml-auto text-sm text-muted-foreground">
-                {c.filingDate ? `filed ${c.filingDate}` : ""}
-                {c.status ? ` · ${c.status}` : ""}
-              </span>
-            </li>
-            </Fragment>
-          ))}
-        </ul>{" "}
+        <p className="mt-1 text-sm text-muted-foreground">
+          The wage, the law firm and the worksite arrive with DOL&apos;s quarterly files.
+        </p>{" "}
+        <FilingRows
+          className="mt-4"
+          rows={cases.map((c) => ({ caseNumber: c.caseNumber, job: c.jobTitle, date: c.filingDate, status: c.status }))}
+        />{" "}
         {/* The source-level glue gate does not carry `ul` in its tag list, so
             this pair reached the DOM as "...ANALYST REVIEWDOL live case
             record..." with the source check green. Caught by the RENDERED
             audit, which is why that one is the authoritative gate. */}
-        <p className="mt-5 border-t-2 border-border pt-3 text-sm font-bold text-muted-foreground">
+        <p className="mt-4 border-t-2 border-border pt-3 text-sm text-muted-foreground">
           {asOf
             ? `DOL live case record, as of ${longDate(asOf) ?? asOf}`
             : "DOL live case record"}

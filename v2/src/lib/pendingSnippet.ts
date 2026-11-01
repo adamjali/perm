@@ -35,16 +35,27 @@ export function whereTheyStand(counts: PendingCounts): string {
 }
 
 /**
- * Whether an employer sponsors green cards now, answered from its own record:
- * "Adobe Inc. sponsors green cards: it filed 412 PERM cases in the last 12
- * months, the newest on October 2, 2026." People search the question in those
- * words, and PERM is the step an employer files to sponsor one. Null when the
- * twelve-month count is missing or zero: no filings in a year isn't proof an
- * employer won't sponsor, so the page says nothing rather than "no".
+ * The line under an employer's name: whether it sponsors green cards now,
+ * answered from its own record, and its queue, in one sentence. People search
+ * the question in those words, and PERM is the step an employer files to
+ * sponsor one. No filings in a year isn't proof an employer won't sponsor, so
+ * that half says nothing rather than "no". The heading already names the
+ * employer, so this line doesn't; the sentence above keeps the name because it
+ * stands alone in a search result.
  */
-export function sponsorSentence(name: string, recent12m: number | null, newestFiled?: string | null): string | null {
-  if (!recent12m || recent12m <= 0) return null;
-  const newest = newestFiled ? longDate(newestFiled) : null;
-  const count = `${formatInt(recent12m)} PERM case${recent12m === 1 ? "" : "s"}`;
-  return `${name} sponsors green cards: it filed ${count} in the last 12 months${newest ? `, the newest on ${newest}` : ""}.`;
+export function profileLine(recent12m: number | null, newestFiled: string | null, counts: PendingCounts | null): string | null {
+  const year =
+    recent12m && recent12m > 0
+      ? `${formatInt(recent12m)} PERM case${recent12m === 1 ? "" : "s"} filed in the last 12 months${newestFiled ? `, the newest on ${longDate(newestFiled)}` : ""}`
+      : null;
+  let queue: string | null = null;
+  if (counts && counts.pending > 0) {
+    const p = counts.pending;
+    const hold = counts.stages.find((s) => s.status === ON_HOLD)?.n ?? 0;
+    const held = hold <= 0 ? "" : hold >= p ? (p === 1 ? ", on hold" : ", all of them on hold") : `, ${formatInt(hold)} of them on hold`;
+    queue = `${formatInt(p)}${year ? "" : ` PERM case${p === 1 ? "" : "s"}`} waiting with DOL${held}`;
+  }
+  if (year && queue) return `Sponsors green cards: ${year}, and ${queue}.`;
+  if (year) return `Sponsors green cards: ${year}.`;
+  return queue ? `${queue}.` : null;
 }

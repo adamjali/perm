@@ -54,19 +54,19 @@ export function ProfileHeader({
   figures?: ReactNode;
 }) {
   return (
-    <header className="pt-8 sm:pt-10">
+    <header className="pt-6 sm:pt-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start [&>*]:min-w-0">
         <div>
           <p className="text-sm text-muted-foreground">{eyebrow}</p>{" "}
           <h1
             translate="no"
-            className="mt-2 font-heading text-4xl font-bold leading-tight [overflow-wrap:anywhere] sm:text-5xl"
+            className="mt-1.5 font-heading text-3xl font-bold leading-tight [overflow-wrap:anywhere] sm:text-[2.5rem]"
           >
             {name}
           </h1>{" "}
-          {answer ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground">{answer}</p> : null}{" "}
+          {answer ? <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground sm:text-[1.0625rem]">{answer}</p> : null}{" "}
           {tags.length > 0 ? (
-            <ul aria-label="What stands out now" className="mt-3 flex flex-wrap gap-x-5">
+            <ul aria-label="What stands out now" className="mt-4 flex flex-wrap gap-x-3 gap-y-2">
               {tags.map((t) => (
                 <Fragment key={t.text}>
                   {" "}
@@ -84,10 +84,10 @@ export function ProfileHeader({
             </ul>
           ) : null}{" "}
           {facts.length > 0 ? (
-            <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+            <dl className="mt-5 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
               {facts.map((f) => (
                 <div key={f.label} className="min-w-0">
-                  <dt className="text-sm font-semibold">{f.label}</dt>{" "}
+                  <dt className="text-sm text-muted-foreground">{f.label}</dt>{" "}
                   <dd className="text-base font-semibold [overflow-wrap:anywhere]">
                     {f.href ? (
                       <Link href={f.href} className="link">
@@ -105,7 +105,7 @@ export function ProfileHeader({
         </div>{" "}
         {aside ? <div>{aside}</div> : null}
       </div>{" "}
-      {figures ? <div className="mt-10">{figures}</div> : null}
+      {figures ? <div className="mt-8">{figures}</div> : null}
     </header>
   );
 }

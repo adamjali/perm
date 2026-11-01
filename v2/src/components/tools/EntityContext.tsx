@@ -287,32 +287,33 @@ export function PeerList({
   if (items.length === 0) return null;
   return (
     <section className={className}>
-      <h2 className="font-heading text-2xl font-bold">{heading}</h2>{" "}
+      <h3 className="font-heading text-lg font-bold">{heading}</h3>{" "}
       {wordCount(note) > 28 ? (
-        <MoreText gist={firstSentence(plainText(note))} className="mt-2">
-          <p className="text-base leading-relaxed text-muted-foreground">{note}</p>
+        <MoreText gist={firstSentence(plainText(note))} size="sm" className="mt-1">
+          <p className="text-sm leading-relaxed text-muted-foreground">{note}</p>
         </MoreText>
       ) : (
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">{note}</p>
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{note}</p>
       )}{" "}
-      <ul className="mt-5 grid list-none grid-cols-1 gap-4 p-0 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
+      {/* One row per peer: its rank, its name, its count. A row, not a card, so six of them read as one ranked list. */}
+      <ul className="mt-3 list-none divide-y divide-border/60 border-y-2 border-border p-0">
         {items.map((p) => (
           // React renders array items with nothing between them, so the
-          // separator has to be part of each iteration or every card's text
+          // separator has to be part of each iteration or every row's text
           // glues to the next one for anything walking the DOM.
           <Fragment key={p.slug}>
             {" "}
             <li className="min-w-0">
               <Link
                 href={`${hrefBase}/${p.slug}`}
-                className="flex h-full min-h-[44px] flex-col border-2 p-4 no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary shadow-hard-sm lift border-border bg-card hover:bg-accent"
+                className="group grid min-h-11 grid-cols-[3.5rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-0.5 py-2 no-underline hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]"
               >
-                <span className="text-sm font-bold text-muted-foreground">
-                  #{formatInt(p.rank)}
-                  {p.state ? ` · ${p.state}` : ""}
+                <span className="font-mono text-sm tabular-nums text-muted-foreground">#{formatInt(p.rank)}</span>{" "}
+                <span className="min-w-0 text-base font-semibold leading-snug group-hover:underline">
+                  {p.name}
+                  {p.state ? <span className="font-normal text-muted-foreground">{` · ${p.state}`}</span> : null}
                 </span>{" "}
-                <span className="mt-1 text-base font-bold leading-snug">{p.name}</span>{" "}
-                <span className="mt-2 font-mono text-sm tabular-nums text-muted-foreground">
+                <span className="col-start-2 whitespace-nowrap font-mono text-sm tabular-nums text-muted-foreground sm:col-start-3 sm:text-right">
                   {formatInt(p.total)} {unit}
                   {p.denied > 0 ? ` · ${formatInt(p.denied)} denied` : " · none denied"}
                 </span>
@@ -420,13 +421,13 @@ export function LimitsPanel({
     <details
       className={cn("group border-border bg-tint border", className)}
     >
-      <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-6 py-4">
-        <h2 className="font-heading text-xl font-bold">What these numbers don&apos;t say</h2>{" "}
+      <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-5 py-3">
+        <h3 className="font-heading text-lg font-bold">What these numbers don&apos;t say</h3>{" "}
         <span className="shrink-0 text-sm font-bold text-muted-foreground">
           {items.length} notes
         </span>
       </summary>{" "}
-      <dl className="grid grid-cols-1 gap-5 border-t-2 border-border px-6 py-5 [&>*]:min-w-0 md:grid-cols-2">
+      <dl className="grid grid-cols-1 gap-5 border-t-2 border-border px-5 py-4 [&>*]:min-w-0 md:grid-cols-2">
         {items.map((i) => (
           <Fragment key={i.head}>
             {" "}
@@ -461,18 +462,12 @@ export function DisclosureNote({
 }) {
   const files = sourceFiles.length ? describeDisclosureFiles(sourceFiles) : "";
   return (
-    // ONE LINE: the window and the method link, no panel.
+    // ONE LINE: the window, no panel. The method link is in the source line under it.
     <p className={cn("max-w-3xl text-sm leading-relaxed text-soft", className)}>
       <span className="font-bold text-foreground">The window these figures cover: </span>
       {files ? `DOL's PERM disclosure files for ${files}` : "DOL's PERM disclosure files"}
       {uniqueCases ? `, ${formatInt(uniqueCases)} decided cases` : ""}. Nothing pending
-      is counted here.{" "}
-      <Link
-        href="/methodology"
-        className="link"
-      >
-        How each figure is built
-      </Link>
+      is counted here.
     </p>
   );
 }

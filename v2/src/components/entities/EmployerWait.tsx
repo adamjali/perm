@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BarRows } from "@/components/data/BarRows";
+import { FinePrint } from "@/components/data/FinePrint";
 import type { FieldWait, FiledToday } from "@/lib/db/employerWait";
 import type { WaitSummary } from "@/lib/waitSummary";
 import { formatInt } from "@/lib/format";
@@ -24,8 +25,11 @@ export function EmployerWait({
   mine,
   field,
   today,
+  level = 2,
   className,
 }: {
+  /** The heading's level: 3 inside a page's own chapter. */
+  level?: 2 | 3;
   name: string;
   mine: WaitSummary;
   field: FieldWait | null;
@@ -54,47 +58,43 @@ export function EmployerWait({
     });
   }
   const gap = mine.p50 !== null && field?.p50 != null ? mine.p50 - field.p50 : null;
+  const Heading = level === 3 ? "h3" : "h2";
+  const verdict =
+    mine.p50 === null
+      ? `${mine.n === 0 ? "None" : `Only ${formatInt(mine.n)}`} of their cases ${mine.n === 1 ? "was" : "were"} decided in the last ${field?.windowDays ?? 90} days, too few for a median of their own.`
+      : gap !== null && Math.abs(gap) <= 14
+        ? "About the same as everyone: DOL works one national line in filing order."
+        : gap !== null && gap > 14
+          ? `${formatInt(gap)} days longer than everyone's, which usually means audits or requests for information in the mix.`
+          : gap !== null
+            ? `${formatInt(-gap)} days shorter than everyone's over this window.`
+            : null;
   return (
-    <section
-      aria-labelledby="wait-h"
-      className={className}
-    >
-      <h2 id="wait-h" className="font-heading text-xl font-bold">
-        How long their cases are taking
-      </h2>{" "}
-      {rows.length > 0 ? <BarRows label="Median days to a decision, this employer against every employer" className="mt-5 max-w-3xl" rows={rows} /> : null}{" "}
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
-        {mine.p50 === null
-          ? `${mine.n === 0 ? "None" : `Only ${formatInt(mine.n)}`} of their cases ${mine.n === 1 ? "was" : "were"} decided in the last ${field?.windowDays ?? 90} days, too few for a median of their own. `
-          : gap !== null && Math.abs(gap) <= 14
-            ? "About the same as everyone: DOL works one national line in filing order. "
-            : gap !== null && gap > 14
-              ? `${formatInt(gap)} days longer than everyone's, which usually means audits or requests for information in the mix. `
-              : gap !== null
-                ? `${formatInt(-gap)} days shorter than everyone's over this window. `
-                : ""}
-        Filing to decision, over decisions we watched DOL make; withdrawals left out.
-      </p>{" "}
+    <section aria-labelledby="wait-h" className={className}>
+      <Heading id="wait-h" className="font-heading text-lg font-bold">
+        Filing to decision
+      </Heading>{" "}
+      {rows.length > 0 ? <BarRows label="Median days to a decision, this employer against every employer" className="mt-4" rows={rows} /> : null}{" "}
+      {verdict ? <p className="mt-3 text-base leading-relaxed text-soft">{verdict}</p> : null}{" "}
       {today ? (
-        <p className="mt-4 max-w-2xl border-t-2 border-border pt-4 text-base leading-relaxed text-soft">
-          <b className="font-bold text-foreground">Filed today:</b> a new case joins the same line as anyone&apos;s
-          {today.casesAhead !== null ? <>, behind {formatInt(today.casesAhead)} cases</> : null}, and would be decided around{" "}
-          <b className="font-bold text-foreground">{day(today.estimatedDate)}</b>
+        <p className="mt-4 border-l-4 border-primary bg-sage px-4 py-3 text-base leading-relaxed">
+          <b className="font-bold">Filed today:</b> decided around{" "}
+          <b className="font-bold">{day(today.estimatedDate)}</b>
           {today.earliestDate && today.latestDate ? (
             <>
               {" "}
-              (between {day(today.earliestDate)} and {day(today.latestDate)})
+              ({day(today.earliestDate)} to {day(today.latestDate)})
             </>
           ) : null}
-          .{" "}
-          <Link
-            href="/tools/perm-timeline-calculator"
-            className="link"
-          >
+          {today.casesAhead !== null ? <>, behind {formatInt(today.casesAhead)} cases in the same line as anyone&apos;s</> : null}.{" "}
+          <Link href="/tools/perm-timeline-calculator" className="link">
             Estimate another date
           </Link>
         </p>
-      ) : null}
+      ) : null}{" "}
+      <FinePrint summary="How this is counted" className="mt-2">
+        <p>Filing to decision, over decisions this site watched DOL make in the last {field?.windowDays ?? 90} days; withdrawals left out.</p>
+      </FinePrint>
     </section>
   );
 }

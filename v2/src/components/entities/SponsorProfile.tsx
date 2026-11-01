@@ -25,15 +25,12 @@ export function SponsorProfile({
   if (parts.length === 0 && facts.length === 0) return null;
   return (
     <section className={className} aria-labelledby="sponsor-profile">
-      <h2 id="sponsor-profile" className="font-heading text-xl font-bold">
-        How it compares with other sponsors
-      </h2>{" "}
-      <p className="mt-2 max-w-3xl text-base text-soft">
-        Each figure ranked only among sponsors with enough cases for it to mean something. No single score: they
-        measure different things.
-      </p>
+      <h3 id="sponsor-profile" className="font-heading text-lg font-bold">
+        How it ranks
+      </h3>{" "}
+
       {parts.length ? (
-        <ul className="mt-4 grid max-w-4xl grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-border pt-4 sm:grid-cols-2 [&>*]:min-w-0">
+        <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 [&>*]:min-w-0">
           {parts.map((p) => {
             const at = Math.min(100, Math.max(0, p.pct * 100));
             return (
@@ -65,7 +62,7 @@ export function SponsorProfile({
         </ul>
       ) : null}{" "}
       {facts.length ? (
-        <div className="mt-6 max-w-3xl border-2 p-4 bg-card border-border">
+        <div className="mt-5 border-t-2 border-border pt-3">
           <h3 className="text-sm font-bold">Also on its record</h3>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-base">
             {facts.map((f, i) => (

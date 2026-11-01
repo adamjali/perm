@@ -28,8 +28,8 @@ function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
   const top = rows[0]?.n ?? 0;
   return (
     <section >
-      <h3 className="font-heading text-lg font-bold">{title}</h3>{" "}
-      <ChartTips label={`${title}, FY2016 to FY2023 cases`} className="mt-4">
+      <h4 className="text-base font-bold">{title}</h4>{" "}
+      <ChartTips label={`${title}, FY2016 to FY2023 cases`} className="mt-3">
       <ul className="space-y-2.5">
         {rows.map((r, i) => (
           <Fragment key={r.key}>
@@ -67,15 +67,14 @@ export function WorkerMix({
   const panels = PANELS.filter((p) => (facets[p.facet]?.length ?? 0) > 0);
   if (panels.length === 0) return null;
   return (
-    <section className={cn("mt-12", className)}>
-      <h2 className="font-heading text-2xl font-bold">
+    <section className={cn("mt-10", className)}>
+      <h3 className="font-heading text-lg font-bold">
         {subject === "employer" ? "Who they sponsored, FY2016 to FY2023" : "Who filled these jobs, FY2016 to FY2023"}
-      </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-        From DOL&apos;s old form; the form in use since mid-2023 doesn&apos;t carry
-        them. Top six of each.
+      </h3>{" "}
+      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+        DOL&apos;s old form recorded the worker; the one in use since mid-2023 doesn&apos;t. Top six of each.
       </p>
-      <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 [&>*]:min-w-0 md:grid-cols-2 xl:grid-cols-3">
         {panels.map((p) => (
           <Panel key={p.facet} title={p.title} rows={facets[p.facet]!} />
         ))}

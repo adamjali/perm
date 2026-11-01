@@ -14,7 +14,14 @@ import type { FieldDistribution } from "@/lib/db/entities";
 import type { FacetRow } from "@/lib/db/entityDetail";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
-import { Figure, FigureRow } from "@/components/data/FigureRow";
+import {
+  CheckCircleIcon,
+  CurrencyDollarIcon,
+  FilesIcon,
+  HourglassMediumIcon,
+  SealCheckIcon,
+} from "@phosphor-icons/react/ssr";
+import { Figure, FigureRow, type FigureTrend } from "@/components/data/FigureRow";
 import {
   rateReliability,
   type RateReliability,
@@ -32,6 +39,8 @@ export interface EntityStanding {
   inCohort: boolean;
   /** Its median days minus the field's, or null when either is missing. */
   daysDelta: number | null;
+  /** The field's median days, the yardstick daysDelta is measured against. */
+  fieldDays: number | null;
   /** Too few decided cases for the median to mean much. */
   thinMedian: boolean;
 }
@@ -59,6 +68,7 @@ export function entityStanding(
     reliability,
     inCohort: reliability.tier !== "withheld",
     daysDelta: row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null,
+    fieldDays,
     thinMedian: reliability.decided < MIN_DECIDED_FOR_MEDIAN,
   };
 }
@@ -71,21 +81,62 @@ export interface StatCard {
   k: string;
   v: string;
   sub: string;
+  /** What the figure is, as one icon before its label. */
+  icon?: keyof typeof CARD_ICON;
+  /** The figure against its yardstick: the field, or the year before. */
+  trend?: FigureTrend;
 }
+
+/** One icon per kind of figure, the same on every entity page. */
+const CARD_ICON = {
+  filings: FilesIcon,
+  certified: SealCheckIcon,
+  approval: CheckCircleIcon,
+  wage: CurrencyDollarIcon,
+  days: HourglassMediumIcon,
+} as const;
 
 /** The entity's headline figures, one plain row. The page places it, below its ReliabilityBand. */
 export function EntityStatCards({ cards: given }: { cards: (StatCard | null)[] }) {
   const cards = given.filter((c): c is StatCard => c !== null);
   return (
     <FigureRow>
-      {cards.map((d) => (
-        <Fragment key={d.k}>
-          {" "}
-          <Figure label={d.k} value={d.v} note={d.sub || undefined} />
-        </Fragment>
-      ))}
+      {cards.map((d) => {
+        const Icon = d.icon ? CARD_ICON[d.icon] : null;
+        return (
+          <Fragment key={d.k}>
+            {" "}
+            <Figure
+              label={d.k}
+              value={d.v}
+              note={d.sub || undefined}
+              icon={Icon ? <Icon weight="bold" className="text-primary-text" /> : undefined}
+              trend={d.trend}
+            />
+          </Fragment>
+        );
+      })}
     </FigureRow>
   );
+}
+
+/**
+ * How a count moved from one complete fiscal year to the next, as a chip:
+ * "Up 127% in FY2025". A change in volume is neither good nor bad, so it
+ * draws in the information colour. Null without two complete years, or when
+ * the earlier year is too small for a share to mean anything (under 20).
+ */
+export function yearTrend(years: readonly { fy: number; certified: number; denied: number; withdrawn: number }[], partialFy: number | null): FigureTrend | undefined {
+  const done = years.filter((y) => y.fy !== partialFy).sort((a, b) => a.fy - b.fy);
+  const last = done[done.length - 1];
+  const prev = done[done.length - 2];
+  if (!last || !prev || prev.fy !== last.fy - 1) return undefined;
+  const a = prev.certified + prev.denied + prev.withdrawn;
+  const b = last.certified + last.denied + last.withdrawn;
+  if (a < 20) return undefined;
+  const pct = Math.round(((b - a) / a) * 100);
+  if (Math.abs(pct) < 5) return { text: `About level in FY${last.fy}`, dir: "level", tone: "neutral" };
+  return { text: `${pct > 0 ? "Up" : "Down"} ${Math.abs(pct)}% in FY${last.fy}`, dir: pct > 0 ? "up" : "down", tone: "info" };
 }
 
 /** The filing count, with the rank when the kind's size is known. */
@@ -98,22 +149,33 @@ export function volumeCard(
     k: label,
     v: formatInt(row.total),
     sub: kindTotal > 0 ? `#${formatInt(row.rank)} of ${formatInt(kindTotal)}` : "",
+    icon: "filings",
   };
 }
 
 export function certifiedCard(row: { certified: number; denied: number }): StatCard {
-  return { k: "Certified", v: formatInt(row.certified), sub: `${formatInt(row.denied)} denied` };
+  return { k: "Certified", v: formatInt(row.certified), sub: `${formatInt(row.denied)} denied`, icon: "certified" };
 }
 
 /** The approval rate, or the reason it's withheld, beside the field's. */
 export function approvalCard(reliability: RateReliability, baselineDenialPct: number): StatCard {
+  const field = 100 - baselineDenialPct;
+  if (reliability.ratePct == null) {
+    return { k: "Approval", v: "Not shown", sub: `withheld: ${formatInt(reliability.decided)} decided`, icon: "approval" };
+  }
+  // Against the field's rate: within half a point is level, above is good, below is bad.
+  const gap = reliability.ratePct - field;
+  const fieldText = `${field.toFixed(1)}%`;
+  const trend: FigureTrend =
+    Math.abs(gap) < 0.5
+      ? { text: `Level with the field's ${fieldText}`, dir: "level", tone: "neutral" }
+      : { text: `${gap > 0 ? "Above" : "Below"} the field's ${fieldText}`, dir: gap > 0 ? "up" : "down", tone: gap > 0 ? "good" : "bad" };
   return {
     k: "Approval",
-    v: reliability.ratePct == null ? "Not shown" : `${reliability.ratePct.toFixed(1)}%`,
-    sub:
-      reliability.ratePct == null
-        ? `withheld: ${formatInt(reliability.decided)} decided`
-        : `field ${(100 - baselineDenialPct).toFixed(1)}%`,
+    v: `${reliability.ratePct.toFixed(1)}%`,
+    sub: `of ${formatInt(reliability.decided)} decided`,
+    icon: "approval",
+    trend,
   };
 }
 
@@ -124,23 +186,29 @@ export function medianWageCard(medianAnnualWage: number | null): StatCard | null
     k: "Median wage",
     v: formatDollars(medianAnnualWage),
     sub: "offered, per year",
+    icon: "wage",
   };
 }
 
 /** Median days to decision, against the field's when the sample can carry it. */
 export function medianDaysCard(medianDays: number | null, standing: EntityStanding): StatCard {
-  const { reliability, daysDelta, thinMedian } = standing;
-  return {
+  const { reliability, daysDelta, thinMedian, fieldDays } = standing;
+  const card: StatCard = {
     k: "Median days",
     v: medianDays == null ? "—" : formatInt(Math.round(medianDays)),
-    sub: thinMedian
-      ? `middle of ${formatInt(reliability.decided)} decided`
-      : daysDelta == null
-        ? ""
-        : Math.round(daysDelta) === 0
-          ? "at the field median"
-          : `${formatInt(Math.abs(Math.round(daysDelta)))} ${daysDelta > 0 ? "slower" : "faster"} than the field`,
+    sub: thinMedian ? `middle of ${formatInt(reliability.decided)} decided` : "days, filing to decision",
+    icon: "days",
   };
+  if (thinMedian || daysDelta == null) return card;
+  // Days against the field's median: within 5% of it is level; slower is bad, faster good.
+  const d = Math.round(daysDelta);
+  const base = fieldDays && fieldDays > 0 ? fieldDays : medianDays ?? 0;
+  const level = d === 0 || (base > 0 && Math.abs(d) / base < 0.05);
+  const field = fieldDays ? `the field's ${formatInt(Math.round(fieldDays))}` : "the field";
+  card.trend = level
+    ? { text: `Near ${field}`, dir: "level", tone: "neutral" }
+    : { text: `${formatInt(Math.abs(d))} ${d > 0 ? "slower" : "faster"} than ${field}`, dir: d > 0 ? "up" : "down", tone: d > 0 ? "bad" : "good" };
+  return card;
 }
 
 // ============================================================================
@@ -197,7 +265,7 @@ export function FieldPositionPlate({
         </>
       }
       source="DOL PERM disclosure files"
-      className="mt-10"
+      className="mt-8"
     >
       <div className={`grid [&>*]:min-w-0 grid-cols-1 gap-8 ${first ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         {first}

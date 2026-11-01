@@ -105,23 +105,24 @@ export function BarRows({
               </span>
             </li>
           ) : (
-          <li data-tip={barRowTip(r)} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
-            <div className="min-w-0">
-              <p className="text-base font-semibold leading-snug">{r.label}</p>{" "}
-              {r.sub ? <p className="text-sm text-muted-foreground">{r.sub}</p> : null}
-              <div className="mt-1.5 h-2.5 w-full bg-sage" aria-hidden="true">
-                {r.value !== null ? (
-                  <div
-                    className={cn("h-full", BAR_TONE[r.tone ?? "primary"])}
-                    style={{ width: `${width}%` }}
-                  />
-                ) : null}
-              </div>
+          <li data-tip={barRowTip(r)}>
+            {/* The figure sits on its label's line, flush right, and the bar runs the full width under both:
+                every track is the same length, so the bars compare, and no figure floats away from its row. */}
+            <div className="flex items-baseline justify-between gap-x-4">
+              <p className="min-w-0 text-base font-semibold leading-snug">{r.label}</p>{" "}
+              <span className="shrink-0 whitespace-nowrap text-right font-mono text-sm font-bold tabular-nums sm:text-base">
+                {r.value === null ? (r.nullText ?? "withheld") : r.text}
+              </span>
+            </div>{" "}
+            {r.sub ? <p className="text-sm text-muted-foreground">{r.sub}</p> : null}
+            <div className="mt-1.5 h-2.5 w-full bg-sage" aria-hidden="true">
+              {r.value !== null ? (
+                <div
+                  className={cn("h-full", BAR_TONE[r.tone ?? "primary"])}
+                  style={{ width: `${width}%` }}
+                />
+              ) : null}
             </div>
-            {/* One width for every row's figure, so every bar's track is the same length and the bars compare. */}
-            <span className="min-w-[7rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums">
-              {r.value === null ? (r.nullText ?? "withheld") : r.text}
-            </span>
           </li>
           )}
           </Fragment>
