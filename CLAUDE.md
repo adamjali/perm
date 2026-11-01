@@ -1870,3 +1870,26 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   otherwise; a history chart per I-140 subtype credits the project. GitHub's release list stops at 1,000 (page 11
   answers 422), so the full load reads `git ls-remote --tags`. The health check warns when the typed fallback differs
   from the newest posting (`check_posted_vs_typed`).
+
+## Nov 1 2026: the page checks run before a build ships, and why the morning report was never green
+
+- **The morning's rendered page checks run on the build before it can ship** (`oracle-deploy.yml`, "Check the built
+  site's pages before it can ship"): the job starts the exact build it's about to ship on the runner and runs
+  `page_checks.py` on it (glued text, hidden content, headings, titles and dates, trust, axe, phone widths, the
+  browser flows), the pages the push changed added to their list (`--pages-file`). A failure stops the deploy before
+  the server is touched; a push in the day shows it the same day. Playwright's own Chromium there (`PT_BROWSER=chromium`:
+  no Chrome is built for ARM). Until then they ran only on the live site the morning after, so each day's new work
+  shipped its small rendered defects and turned the report red: 5 of 7 mornings from Oct 26. About 9 minutes a run.
+- **The two crawling checks read every sitemap page from `--base`** (`audit_ssr_visibility.py`, `audit_internal_links.py`):
+  a build's sitemap names the live site, and they had read the live site instead of the build.
+- **The board reads DOL's last full working day** (50+ decisions, `SPAN_MIN_DECISIONS`) on both halves, and a saved half
+  with no span is read again live: a Saturday's handful of wage determinations (Oct 31) drew no span, and the planner
+  dropped the wage request from every plan.
+- **The quarterly files' staleness budget is 220 days**, measured from the Internet Archive's first captures: DOL posted a
+  quarter 62 to 125 days after it ended, so at 120 every quarter read "stale" for weeks.
+- **An alert for an advisory accepted on purpose is a line until its date** in the morning report's security section.
+- **`permtracker-db-refresh` (1:35 AM Eastern) restarts sqld once its own memory passes 4 GB**: it grows about 200 to
+  260 MB a day (4.1 GB in RAM plus 1.4 GB in swap after 11 days, the server's swap 3.8 of 4 GB). Runbook:
+  `v2/scripts/oracle/README.md`.
+- **Playwright's own browsers don't install on macOS 12** ("does not support chromium on mac12"); this Mac's checks use
+  its Chrome, as `playwright.config.ts` and the check scripts already do.
