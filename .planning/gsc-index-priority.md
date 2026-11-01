@@ -1751,3 +1751,31 @@ Still to request, only after the 2 AM EST run on Sun Nov 1 ships c93dc295 or lat
 5. `/perm-queue/2026-01` (the month's busiest employers).
 6. `/` and `/perm-decision-activity` (the pulse's week against the week before).
 Then `gsc_queue.mjs --since d6e63ee7` for anything else.
+
+## Queue after the Nov 1 night deploy (dab0676a, live 2:00 AM EST Sun Nov 1)
+
+Every Oct 31 commit is live (release `dab0676a...-413`). Each page below was read back live at about 3:15 AM EST
+(status 200 on the new build, glued text 0). The sitemap index was resubmitted at 3:27 AM EST. Search Console
+reads it as "Success", last read Nov 1. It still shows 312,439 discovered pages.
+
+Request in this order, after inspecting each. Skip any page Google crawled after 2:00 AM EST Nov 1.
+
+New pages:
+1. `/wage-violations`
+2. `/tools/cspa-age-calculator`
+3. `/tools/cap-gap-calculator`
+
+Changed pages, most important first:
+4. `/perm-employers/costco-wholesale-corporation` (a sample of the new "Federal records" chapter: wage cases, OSHA,
+   SAM.gov, trade petitions, PPP loans)
+5. `/pwd-cases` (opens with the board)
+6. `/perm-processing-times` (wait by decided month)
+7. `/uscis-processing-times` (USCIS's posted times, history since 2022)
+8. `/tools/h1b-six-year-limit` (the 240-day rule)
+9. `/` and `/today`
+10. `/visa-bulletin/categories/eb2-india` (behind by years, USCIS's chart)
+11. `/tools/priority-date-calculator` (the I-485 answer) and `/tools/green-card-line` (the measured wait)
+12. `/perm-rfi-audit`, `/perm-queue/2026-01`, `/perm-decision-activity`
+
+The rest of `gsc_queue.mjs --since 32180fe3` is shared components or wording only (the legal-name pages done
+Oct 31, tools pages that got a picture band). The sitemap's lastmod carries those.
