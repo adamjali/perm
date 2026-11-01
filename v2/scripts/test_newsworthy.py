@@ -196,6 +196,18 @@ def main() -> int:
           "Source: CourtListener." in words, str(words))
     check("a BALCA decision names BALCA",
           'BALCA decided "Acme Farms LLC, 2026-TLC-00012" on Oct 23, 2026. Source: OALJ\'s caselists.' in words, str(words))
+    doj = {"document_number": "ier-1465571", "publication_date": "2026-10-26", "type": "Justice Department action",
+           "title": "Settlement with LanceSoft, Inc.", "agencies": '["Justice Department"]',
+           "source": "doj", "first_seen_at": seen}
+    ocaho = {"document_number": "ocaho-2026B00044", "publication_date": "2026-10-25", "type": "Justice Department action",
+             "title": "United States v. Cloudera, Inc. (OCAHO case 2026B00044)", "agencies": '["Justice Department"]',
+             "source": "doj", "first_seen_at": seen}
+    words = [nw.line(i) for i in nw.newsworthy(nw.Inputs(documents=[doj, ocaho]), morning, now)]
+    check("a DOJ settlement names the Justice Department",
+          'The Justice Department posted "Settlement with LanceSoft, Inc." on Oct 26, 2026. '
+          "Source: the Justice Department's releases and IER's settlements list." in words, str(words))
+    check("an OCAHO case is dated by its newest order",
+          any(w.startswith('OCAHO\'s newest order in "United States v. Cloudera') for w in words), str(words))
     shared = json.loads((HERE / "fixtures" / "bill_numbers.json").read_text())["cases"]
     check("bill numbers match the site's", all(nw.bill_number(k) == v for k, v in shared.items()),
           str({k: nw.bill_number(k) for k in shared}))

@@ -50,7 +50,11 @@ export function ActionList({
                 </p>
               </div>{" "}
               <div>
-                <h3 className="font-heading text-xl font-bold leading-snug">{a.company}</h3>{" "}
+                <h3 className="font-heading text-xl font-bold leading-snug">
+                  {a.company}
+                  {/* One company can have several actions; the kind and day keep each heading its own. */}
+                  <span className="sr-only">{`, ${KIND[a.kind].toLowerCase()}, ${shortDate(a.date)}`}</span>
+                </h3>{" "}
                 {a.place ? <p className="text-sm text-muted-foreground">{a.place}</p> : null}{" "}
                 <p className="mt-2 text-base leading-relaxed">{a.conduct}</p>{" "}
                 {a.civilPenalty || a.backPay ? (

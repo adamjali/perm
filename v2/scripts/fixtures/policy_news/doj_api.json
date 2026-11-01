@@ -1,0 +1,90 @@
+{
+ "metadata": {
+  "responseInfo": {
+   "status": 200
+  },
+  "resultset": {
+   "count": "60",
+   "pagesize": "50",
+   "page": 0
+  },
+  "executionTime": 1.7449679374694824
+ },
+ "results": [
+  {
+   "attachment": "",
+   "body": "<p>The U.S. Department of Justice\u2019s Civil Rights Division (CRT) and the U.S. Department of Labor (DOL) today announced a coordinated enforcement <a href=\"/crt/media/1465571/dl?inline\" data-entity-type=\"media\" data-entity-uuid=\"78bc2f3e-26ba-48ec-b660-befc5fdead8d\" data-entity-substitution=\"media_download_inline\" title=\"Settlement Agreement - Cloudera\">resolution</a> with Cloudera Inc., a Santa Clara, California-based data management company, following allegations that the company discriminated against qualified U.S. workers during recruitment conducted under the Permanent Labor Certification (PERM) program.</p><p>\u201cThere are no exceptions: the Justice Department will hold accountable employers who discriminate against U.S. workers,\u201d said Assistant Attorney General Harmeet K. Dhillon of the Justice Department\u2019s Civil Rights Division. \u201cThis substantial settlement, in partnership with DOL, sends a strong signal to employers that the federal government will work together to ensure employers treat U.S. workers fairly.\u201d</p><p>As part of the resolution, Cloudera will be barred from participating in the PERM program for two years, one of the most significant sanctions available for DOL to protect the integrity of the employment-based immigration system and safeguard opportunities for U.S. workers. The debarment follows DOL\u2019s <a href=\"https://www.dol.gov/index.php/newsroom/releases/eta/eta20260512\">earlier suspension</a> of Cloudera\u2019s PERM processing and reflects DOL\u2019s commitment to aggressively enforcing labor certification requirements when employers fail to provide U.S. workers a fair opportunity to compete for jobs.</p><p>The settlement also resolves <a href=\"/opa/pr/civil-rights-division-sues-cloudera-excluding-us-workers-applying-high-paying-technology\" data-entity-type=\"node\" data-entity-uuid=\"9c5db2b5-82f1-45fe-9076-429815dbed58\" data-entity-substitution=\"canonical\" title=\"Civil Rights Division Sues Cloudera for Excluding U.S. Workers from Applying to High-Paying Technology Jobs\">a lawsuit</a> DOJ filed in April of this year, alleging that Cloudera violated the Immigration and Nationality Act (INA) by discriminating against U.S. workers when recruiting and hiring for seven positions under the PERM process. Under the terms of the settlement with the Justice Department, Cloudera will establish a back-pay fund of $1.4 million to compensate qualified U.S. workers who tried to apply for the jobs at issue but were not given fair consideration. Cloudera also will pay $600,000 in civil penalties to the United States.</p><p>In addition to the two-year debarment, Cloudera will be subject to compliance obligations designed to ensure future adherence to federal labor and anti-discrimination laws. These measures include enhanced monitoring, revised PERM compliance procedures, and reporting requirements intended to prevent future violations.</p><p>This debarment and compliance framework establish an important enforcement precedent and strengthen future efforts to protect U.S. workers. The PERM program allows employers to sponsor aliens for permanent residence only after demonstrating that qualified U.S. workers were provided a genuine opportunity to apply and that no qualified, willing, and available U.S. workers could be found. Employers who evade these requirements undermine both program integrity and the interests of U.S. workers. This resolution is one of many examples of coordinated federal enforcement designed to ensure employers comply with labor market protections established by Congress.</p><p>This settlement is also the fourteenth settlement since DOJ re-launched its Protecting U.S. Workers Initiative in 2025 to enforce the INA\u2019s prohibition on citizenship status discrimination against companies that illegally discriminate against U.S. workers in favor of those with temporary employment visas. Under these settlements, DOJ obtains civil penalties for each violation and will continue to appropriately seek the maximum penalty permitted by law. The settlements also involve awards of back pay, when warranted, and require employers to conduct comprehensive training for relevant staff and recruiters and cease restricting consideration for job opportunities based on workers\u2019 citizenship status without a lawful reason.</p><p>For information about additional settlements under the Protecting U.S. Workers Initiative, visit IER\u2019s <a href=\"/crt/settlements-and-lawsuits\" data-entity-type=\"node\" data-entity-uuid=\"0c843205-d591-4eb6-8624-e73d62d27ac1\" data-entity-substitution=\"canonical\" title=\"Settlements and Lawsuits\">website</a>.</p><p>For informal assistance, the public can call IER\u2019s free <a href=\"/crt/immigrant-and-employee-rights-section-hotline\" data-entity-type=\"node\" data-entity-uuid=\"69fb1d19-a337-422f-9b75-3e52b22f2d75\" data-entity-substitution=\"canonical\" title=\"Immigrant and Employee Rights Section Hotline\">hotline</a>&nbsp;at 1-800-255-7688 for workers or at 1-800-255-8155 for employers (1-800-237-2515, TTY for hearing impaired) between 9am and 5pm Eastern Time, Monday through Friday; sign up for a live webinar or watch an on-demand&nbsp;<a href=\"/crt/webinars\" data-entity-type=\"node\" data-entity-uuid=\"e8d5d84a-4ba5-4503-bffa-9ef11f8d7158\" data-entity-substitution=\"canonical\" title=\"Webinars\">presentation</a>; email&nbsp;<a href=\"mailto:IER@usdoj.gov\">IER@usdoj.gov</a>;&nbsp;or visit <a href=\"https://www.justice.gov/ier\">www.justice.gov/ier</a>.&nbsp;</p>",
+   "changed": "<time datetime=\"2026-10-20T10:53:50-04:00\">1792508030</time>\n",
+   "component": [
+    {
+     "uuid": "da7df438-b3e4-4b73-9250-9974ae754efc",
+     "name": "Civil Rights Division"
+    }
+   ],
+   "created": "<time datetime=\"2026-10-16T13:29:01-04:00\">1792171741</time>\n",
+   "date": "1792152000",
+   "image": "",
+   "number": "26-1166",
+   "teaser": "",
+   "title": "U.S. Departments of Justice and Labor Secure Settlement with Cloudera, Enforce Two-Year PERM Debarment &amp; Back Pay Following Discrimination Against U.S. Workers",
+   "topic": [
+    {
+     "uuid": "62c17bd6-c911-4dd2-bb4d-53b5e9880759",
+     "name": "Civil Rights"
+    }
+   ],
+   "url": "https://www.justice.gov/opa/pr/us-departments-justice-and-labor-secure-settlement-cloudera-enforce-two-year-perm-debarment",
+   "uuid": "8bbdd98b-7b1e-4c09-bbc7-f5d689a6deb8"
+  },
+  {
+   "attachment": "",
+   "body": "<p>Earlier today, Kevaughn Wellington and Ky-Mani Straker, each former United States Postal Service (USPS) employees, were sentenced by&nbsp;United States District Judge&nbsp;Diane Gujarati to prison for their participation in a fraudulent scheme through which they sold, for their own financial gain, United States Treasury checks issued by the United States Department of the Treasury.&nbsp; Wellington and others stole the Treasury checks from the&nbsp;USPS mail facility located at John F. Kennedy International Airport (the JFK Mail Facility), where the defendants were previously employed.&nbsp;</p><p>Wellington was sentenced to 60 months\u2019 imprisonment and was ordered to forfeit $100,000, and Straker was sentenced to 12 months\u2019 imprisonment and was ordered to forfeit $57,945.56.&nbsp; The defendants were further ordered to pay $405,696.98 in restitution.&nbsp; The defendants each previously pleaded guilty to stealing government funds and conspiring to steal government funds.</p><p>Joseph Nocella, Jr., United States Attorney for the Eastern District of New York; Ketty Larco-Ward, Inspector in Charge, United States Postal Inspection Service, New York (USPIS); Matthew M. Modafferi, Special Agent in Charge, United States Postal Service, Office of Inspector General, Northeast Area Field Office (USPS-OIG); Michael L.J. Carpenter, Special Agent in Charge, United States Treasury Inspector General for Tax Administration (TIGTA); Jessica S. Tisch, Commissioner, New York City Police Department (NYPD); and Matt McCool, Special Agent in Charge, U.S. Secret Service, New York Field Office (USSS), announced the sentences.</p><p>\u201cThe former postal workers abused their positions of trust at the JFK Mail Facility to fraudulently obtain Treasury checks intended for the well-being of hard-working individuals to whom the funds were owed, and kept the proceeds for themselves,\u201d stated United States Attorney Nocella.&nbsp; \u201cOur Office is committed to holding accountable individuals who use taxpayer funds to line their own pockets, and today they paid the price for their greed and disregard of the law.\u201d&nbsp;</p><p>\u201cThe defendants abused their position as USPS employees and turned their employment into a multimillion-dollar criminal enterprise&nbsp;to steal from innocent American taxpayers. Today\u2019s sentence makes it very clear that&nbsp;postal inspectors will investigate and bring to justice anyone who takes advantage of the U.S. Mail,\u201d stated USPIS Inspector in Charge Ketty Larco-Ward.</p><p>\u201cThe U.S. Postal Service Office of Inspector General is committed to upholding the highest standards of integrity throughout the Postal Service and its workforce. The special agents of the USPS OIG will vigorously investigate those who choose to steal U.S Mail and defraud the American public. The sentence imposed on the defendants will serve as a reminder that there are severe consequences when individuals commit crimes targeting the U.S Mail. The USPS OIG is thankful for the great longstanding relationships we have developed with our law enforcement partners and the U.S. Attorney\u2019s Office to combat mail theft,\u201d stated USPS-OIG Special Agent in Charge Modafferi.</p><p>\u201cThe Treasury Inspector General for Tax Administration (TIGTA) aggressively investigates individuals who attempt to exploit U.S Treasury refund checks meant for hard working taxpayers for their own private gain,\u201d stated TIGTA Special Agent in Charge Carpenter. \u201cTIGTA's mission is to protect the integrity of our nation's tax administration system.&nbsp; We are committed to working with our law enforcement partners to ensure that those who violate federal laws are prosecuted to the fullest extent possible.\u201d</p><p>\u201cThese defendants undermined the public\u2019s trust in our mail system by stealing more than $4 million in Treasury checks meant for people who were expecting those funds,\u201d stated NYPD Commissioner Tisch.&nbsp; \u201cWe rely on the integrity of the postal network, and today\u2019s sentencing holds these fraudsters accountable for their illegal and selfish acts.&nbsp; Because of the work of our investigators, law enforcement partners, and the U.S. Attorney\u2019s Office for the Eastern District of New York, we have dismantled this fraudulent operation.\u201d</p><p>\u201cThe defendants' brazen selfishness not only violated the public trust, but directly harmed the citizens they were supposed to serve by illegally siphoning funds -- resources those people were relying on -- for their own personal gain,\u201d stated USSS Special Agent in Charge McCool.&nbsp; \u201cThe U.S. Secret Service is committed to preserving this nation\u2019s financial integrity and was proud to have had a role in holding these defendants accountable. I commend the work of the United States Postal Inspection Service, the New York Police Department, the U.S. Attorney\u2019s Office for the Eastern District of New York and our many other law enforcement partners for bringing justice in this case.\u201d</p><p>From approximately June 2021 through August 2023, the defendants engaged in a scheme to steal and sell Treasury checks mailed for distribution through the JFK Mail Facility.&nbsp; Wellington, who was employed at the facility as a mail clerk, worked with others to steal parcels containing Treasury checks.&nbsp; Then, together with Straker and others, Wellington sold the stolen Treasury checks for a portion of the face value of each check.&nbsp; As part of the scheme, Wellington stole\u2014and conspired with Straker to sell\u2014over 125 Treasury checks valued at more than $4 million, including checks intended to be individuals\u2019 Social Security benefits, COVID relief and tax refunds.&nbsp; In addition to selling stolen Treasury checks, Straker falsely endorsed and deposited stolen Treasury checks into a bank account and withdrew the proceeds for his own financial gain. Law enforcement uncovered over 350 videos and images from Wellington\u2019s phone depicting Treasury checks that were not addressed to him or Straker.</p><p>The government\u2019s case is being ",
+   "changed": "<time datetime=\"2026-04-17T17:03:15-04:00\">1776459795</time>\n",
+   "component": [
+    {
+     "uuid": "552e5cc8-8b6c-48ac-894a-01aa6309f287",
+     "name": "USAO - New York, Eastern"
+    }
+   ],
+   "created": "<time datetime=\"2026-04-14T16:34:58-04:00\">1776198898</time>\n",
+   "date": "1776168000",
+   "image": "",
+   "number": "",
+   "teaser": "",
+   "title": "Two Former Postal Workers Sentenced for Theft of U.S. Treasury Checks Valued at More Than $4 Million from Kennedy Airport Mail Facility",
+   "topic": [
+    {
+     "uuid": "77a2d846-a826-49db-a31a-c5db747e9ad3",
+     "name": "Financial Fraud"
+    }
+   ],
+   "url": "https://www.justice.gov/usao-edny/pr/two-former-postal-workers-sentenced-theft-us-treasury-checks-valued-more-4-million",
+   "uuid": "171d9600-edbd-442f-8472-cd7602df6524"
+  },
+  {
+   "attachment": "",
+   "body": "<p>The Justice Department settled claims under the Fair Housing Act.</p>",
+   "changed": "<time datetime=\"2026-10-20T10:53:50-04:00\">1792508030</time>\n",
+   "component": [
+    {
+     "uuid": "da7df438-b3e4-4b73-9250-9974ae754efc",
+     "name": "Civil Rights Division"
+    }
+   ],
+   "created": "<time datetime=\"2026-10-16T13:29:01-04:00\">1792171741</time>\n",
+   "date": "1792152000",
+   "image": "",
+   "number": "26-9999",
+   "teaser": "",
+   "title": "Civil Rights Division Reaches Settlement With Landlord Over Housing Discrimination",
+   "topic": [
+    {
+     "uuid": "62c17bd6-c911-4dd2-bb4d-53b5e9880759",
+     "name": "Civil Rights"
+    }
+   ],
+   "url": "https://www.justice.gov/opa/pr/housing-example",
+   "uuid": "8bbdd98b-7b1e-4c09-bbc7-f5d689a6deb8"
+  }
+ ]
+}

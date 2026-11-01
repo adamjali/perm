@@ -21,6 +21,8 @@ export const USCIS_TYPE = "USCIS announcement";
 export const PM_TYPE = "Policy Manual update";
 export const DOL_TYPE = "DOL news release";
 export const STATE_TYPE = "State Department visa news";
+/** A Justice Department release, IER settlement or OCAHO case about a work-visa sponsor (ingest_doj_enforcement.py). */
+export const DOJ_TYPE = "Justice Department action";
 export const PRESIDENTIAL_TYPE = "Presidential Document";
 /** A bill or joint resolution in Congress (`scripts/ingest_congress_bills.py`). */
 export const BILL_TYPE = "Bill";
@@ -30,7 +32,7 @@ export const BALCA_TYPE = "BALCA decision";
 export const DECISION_TYPES: readonly string[] = [COURT_TYPE, BALCA_TYPE];
 
 /** Posts an agency made on its own site, which aren't Register documents. */
-export const ANNOUNCEMENT_TYPES: readonly string[] = [OFLC_TYPE, USCIS_TYPE, PM_TYPE, DOL_TYPE, STATE_TYPE];
+export const ANNOUNCEMENT_TYPES: readonly string[] = [OFLC_TYPE, USCIS_TYPE, PM_TYPE, DOL_TYPE, STATE_TYPE, DOJ_TYPE];
 
 export interface FeedDoc extends PolicyNotice {
   /** Corrections the Register published to this document, newest first. */

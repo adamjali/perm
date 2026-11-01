@@ -46,6 +46,11 @@ describe("the enforcement list", () => {
     expect(barEnds("2026-05-12", 6)).toBe("2026-11-12");
   });
 
+  it("tells one company's actions apart by kind and day, which the list's headings carry", () => {
+    const keys = ENFORCEMENT_ACTIONS.map((a) => `${a.company}|${a.kind}|${a.date}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
   it("shortens a company to the name people know", () => {
     expect(shortName("Maplebear, Inc. d/b/a Instacart")).toBe("Instacart");
     expect(shortName("OpenAI OpCo, LLC and Statsig, Inc.")).toBe("OpenAI");

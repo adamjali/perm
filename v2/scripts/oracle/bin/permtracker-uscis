@@ -186,6 +186,10 @@ case "$job" in
     step 4m ingest_white_house.py
     step 6m ingest_uscis_news.py
     step 8m ingest_state_news.py
+    # The Justice Department's releases on work-visa sponsors, IER's settlements
+    # list and OCAHO's orders (Nov 1 2026). DOJ asks 10 seconds between
+    # requests; the reader reads the two lists at most every 6 hours.
+    step 4m ingest_doj_enforcement.py
     # api.data.gov (regulations.gov comment counts, congress.gov bills): every
     # run with the site's key (DATA_GOV_API_KEY, uscis.env, since Oct 27 2026);
     # without it, DEMO_KEY's 50 requests a day allow only the 7:07 AM and

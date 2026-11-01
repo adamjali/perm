@@ -305,6 +305,7 @@ DOC_SOURCES = {
     "congress": "congress.gov",
     "courtlistener": "CourtListener",
     "balca": "OALJ's caselists",
+    "doj": "the Justice Department's releases and IER's settlements list",
 }
 
 # Congress's printed bill numbers (convex/lib/billNumber.ts, held to the same
@@ -338,9 +339,20 @@ def _agency(d: dict) -> str:
     return " and ".join(seen[:2]) or "an agency"
 
 
+# A title's closing period goes, unless it ends an abbreviation ("Inc.", "U.S.").
+_KEEP_STOP = re.compile(r"\b(?:Inc|Co|Corp|Ltd|Jr|Sr|[A-Z])\.$")
+
+
+def _title(raw: str) -> str:
+    t = (raw or "").strip()
+    while t.endswith(".") and not _KEEP_STOP.search(t):
+        t = t[:-1].rstrip()
+    return t
+
+
 def document_sentence(d: dict) -> str:
     """One document in words, by where it came from. Pure."""
-    t = f'"{(d.get("title") or "").strip().rstrip(".")}"'
+    t = f'"{_title(d.get("title") or "")}"'
     src, status = d.get("source"), d.get("status")
     kind = (d.get("action") or "").strip().rstrip(".")
     if status == "public-inspection" or src == "public-inspection":
@@ -364,6 +376,10 @@ def document_sentence(d: dict) -> str:
         return f"A federal court ({_agency(d)}) decided {t} on {day_label(d.get('publication_date'))}."
     if src == "balca":
         return f"BALCA decided {t} on {day_label(d.get('publication_date'))}."
+    if src == "doj":
+        if (d.get("document_number") or "").startswith("ocaho-"):
+            return f"OCAHO's newest order in {t} is dated {day_label(d.get('publication_date'))}."
+        return f"The Justice Department posted {t} on {day_label(d.get('publication_date'))}."
     if src == "congress":
         number = bill_number(d.get("document_number") or "") or "A bill"
         action = (d.get("action") or "").strip().rstrip(".")

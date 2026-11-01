@@ -108,6 +108,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Federal court opinions that turn on PERM labor certification, H-1B, H-2A, H-2B, I-140 or employment-based green cards, from CourtListener's archive, with a person named in a caption shown by initials. State courts, criminal cases and petitions for review of removal orders are left out.",
   "policy-notices-balca":
     "BALCA's decisions as OALJ lists them: every en banc PERM decision, and prevailing wage, H-2A and H-2B appeals decided since October 2024, with a sole proprietor shown by initials. OALJ keeps no list of ordinary PERM panel decisions, and its lists run weeks to months behind.",
+  "policy-notices-doj":
+    "The Justice Department's actions against work-visa sponsors since January 2025: Civil Rights Division releases that name H-1B, H-2A, PERM or a job held for a visa worker, the Immigrant and Employee Rights Section's settlements that have no release, and OCAHO cases the government brought against a company IER names. Document-demand settlements and every case about a person are left out.",
   "policy-notices-state":
     "The State Department's visa news on work and immigrant visas, from its own newsroom. Visitor-only, diversity-lottery, passport and adoption items are left out.",
   "policy-notices-uscis-pm":
@@ -290,6 +292,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "policy-notices-uscis": "USCIS news and alerts",
   "policy-notices-uscis-pm": "USCIS Policy Manual updates",
   "policy-notices-state": "State Department visa news",
+  "policy-notices-doj": "Justice Department actions",
   "policy-comments": "Comment counts from regulations.gov",
   "policy-notices-congress": "Bills in Congress",
   "policy-notices-courts": "Federal court opinions",

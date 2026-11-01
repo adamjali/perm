@@ -233,6 +233,7 @@ const NOTICE_KIND: Record<string, string> = {
   "Policy Manual update": "USCIS Policy Manual",
   "DOL news release": "DOL",
   "State Department visa news": "State Department",
+  "Justice Department action": "Justice Department",
   Bill: "Bill in Congress",
   "Court opinion": "Court opinion",
   "BALCA decision": "BALCA",
