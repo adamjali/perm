@@ -1978,3 +1978,8 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   takes the board's 30-day flow. The LCA list's "In DOL's case-status service" (every LCA this site had confirmed) is
   gone: a count of our own tracking says nothing to a reader. A dev server can keep an old copy of a changed component
   for minutes; a component test is the proof that doesn't wait on it.
+- **A change to a shared part puts every page using it on the pre-ship check, and older defects there surface**: the
+  list header's chip pulled in `/pwd-cases` (its "Is DOL keeping up?" rows nested a div inside a definition list's row
+  since Oct 31, an axe failure) and the country, industry and city indexes (their busiest-list names were 20px links on
+  a phone since Oct 15). Both fixed: each `CatchingUp` row is one dt and two dd in a grid, and the names take
+  `py-3` on a phone. The morning's live checks hadn't covered those pages.

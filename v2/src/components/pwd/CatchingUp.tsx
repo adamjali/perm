@@ -48,34 +48,32 @@ export function CatchingUp({ day, week, noun }: { day: FlowSpan; week: FlowSpan;
         <span>{v.text}</span>
       </p>{" "}
       <p className="mt-1 text-sm text-muted-foreground">{when}</p>{" "}
+      {/* Each row is one dt and two dd in a grid: the label, the figure, and the bar under them (a
+          definition list may hold only dt and dd inside its row div). */}
       <dl className="mt-3 space-y-3">
         {bars.map((b) => (
-          <div key={b.label}>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-base">{b.label}</dt>{" "}
-              <dd className="font-heading text-2xl font-bold tabular-nums">{formatInt(b.value)}</dd>
-            </div>{" "}
-            <div className="mt-1 h-3 w-full bg-muted" aria-hidden="true">
+          <div key={b.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
+            <dt className="text-base">{b.label}</dt>{" "}
+            <dd className="font-heading text-2xl font-bold tabular-nums">{formatInt(b.value)}</dd>{" "}
+            <dd className="col-span-2 mt-1 h-3 w-full bg-muted" aria-hidden="true">
               <div className={cn("h-full border-r-2", b.fill)} style={{ width: `${(b.value / top) * 100}%` }} />
-            </div>
+            </dd>
           </div>
         ))}
         {gap > 0 ? (
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-base">The gap</dt>{" "}
-              <dd className={cn("font-heading text-2xl font-bold tabular-nums", toneText)}>
-                {v.tone === "good" ? "+" : "-"}
-                {formatInt(gap)}
-              </dd>
-            </div>{" "}
-            <div className="relative mt-1 h-3 w-full bg-muted" aria-hidden="true">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
+            <dt className="text-base">The gap</dt>{" "}
+            <dd className={cn("font-heading text-2xl font-bold tabular-nums", toneText)}>
+              {v.tone === "good" ? "+" : "-"}
+              {formatInt(gap)}
+            </dd>{" "}
+            <dd className="relative col-span-2 mt-1 h-3 w-full bg-muted" aria-hidden="true">
               <div
                 data-testid="flow-gap"
                 className={cn("absolute inset-y-0 border-2", v.tone === "good" ? "border-data-good-ink" : "border-data-bad-ink")}
                 style={{ left: `${(Math.min(f.out, f.filed) / top) * 100}%`, width: `${(gap / top) * 100}%` }}
               />
-            </div>
+            </dd>
           </div>
         ) : null}
       </dl>{" "}

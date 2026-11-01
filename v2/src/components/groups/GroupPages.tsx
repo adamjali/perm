@@ -188,9 +188,10 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
                         // long name took the whole row and the bar vanished.
                         className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_5rem] [&>*]:min-w-0"
                       >
+                        {/* 44px to tap on a phone, where the name sits alone on its line. */}
                         <Link
                           href={`${path}/${r.slug}`}
-                          className="link col-span-2 truncate text-sm sm:col-span-1"
+                          className="link col-span-2 block truncate py-3 text-sm leading-5 sm:col-span-1 sm:py-0"
                         >
                           {r.label}
                         </Link>{" "}
