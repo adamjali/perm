@@ -244,6 +244,9 @@ export const queryCases = query({
     // Aggregation
     countOnly: v.optional(v.boolean()),
     limit: v.optional(v.number()),
+    // "updated": most recently changed first; "created": newest case first (the default order). Asked for on
+    // Oct 31 2026: "which case changed most recently?" got "my tools don't track that" while every case carries it.
+    sortBy: v.optional(v.union(v.literal("updated"), v.literal("created"))),
 
     // Bulk operation mode - returns minimal data for bulk operations
     // When true, returns only _id, employerName, beneficiaryIdentifier, calendarSyncEnabled
@@ -365,6 +368,12 @@ export const queryCases = query({
         cases: minimalCases,
         accountTruncated,
       };
+    }
+
+    if (args.sortBy === "updated") {
+      filteredCases = [...filteredCases].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+    } else if (args.sortBy === "created") {
+      filteredCases = [...filteredCases].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
     }
 
     // Apply limit for regular queries (not idsOnly)

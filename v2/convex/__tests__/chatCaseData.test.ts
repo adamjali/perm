@@ -210,6 +210,28 @@ describe("queryCases", () => {
       expect(getCases(result).length).toBe(3);
     });
 
+    it("orders by when a case last changed when asked (sortBy updated)", async () => {
+      const t = createTestContext();
+      const asUser = await createAuthenticatedContext(t, "Test User");
+      await asUser.run(async (ctx) => {
+        // Created oldest to newest; the middle one changed last, so neither creation order puts it first.
+        for (const [name, created, updated] of [["Old", 1_000, 3_000], ["Middle", 2_000, 9_000], ["New", 3_000, 5_000]] as const) {
+          await ctx.db.insert("cases", {
+            ...createCaseData({ employerName: name }),
+            createdAt: created,
+            updatedAt: updated,
+            userId: asUser.userId,
+          });
+        }
+      });
+
+      const changed = await asUser.query(api.chatCaseData.queryCases, { sortBy: "updated", limit: 1 });
+      expect(changed.count).toBe(3);
+      expect(getCases(changed).map((c) => c.employerName)).toEqual(["Middle"]);
+      const created = await asUser.query(api.chatCaseData.queryCases, { sortBy: "created" });
+      expect(getCases(created).map((c) => c.employerName)).toEqual(["New", "Middle", "Old"]);
+    });
+
     it("excludes deleted cases (deletedAt set)", async () => {
       const t = createTestContext();
       const asUser = await createAuthenticatedContext(t, "Test User");

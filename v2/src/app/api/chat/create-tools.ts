@@ -179,7 +179,8 @@ export async function publicRecord(read: () => Promise<ReadResult<unknown>>): Pr
 
 const QUERY_CASES_DESCRIPTION = `Query the user's PERM cases with flexible filters and field projection.
 Use for: listing/counting cases, finding by employer/beneficiary/status, deadline inquiries, RFI/RFE tracking, professional occupation cases.
-Parameters: caseStatus, progressStatus, hasRfi/hasRfe, hasOverdueDeadline, deadlineWithinDays, searchText, isProfessionalOccupation, countOnly, limit.`;
+Parameters: caseStatus, progressStatus, hasRfi/hasRfe, hasOverdueDeadline, deadlineWithinDays, searchText, isProfessionalOccupation, countOnly, limit, sortBy.
+Every case carries updatedAt (when it last changed): for "which case changed most recently?" use sortBy "updated" with limit 1.`;
 
 const SEARCH_KNOWLEDGE_DESCRIPTION = `Search the PERM knowledge base for regulatory information, deadlines, and procedures.
 Use for: PERM regulation questions, deadline rules, process questions, CFR lookups.

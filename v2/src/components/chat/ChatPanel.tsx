@@ -228,6 +228,8 @@ export function ChatPanel({
   }, [lastUserId, stick]);
 
   const isProcessing = status === 'submitted' || status === 'streaming';
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const noticeId = useId();
   const errorText = chatErrorText(error ?? undefined);
   // Actions in the interrupted reply already ran; Try again carries on from
   // them (useChatWithPersistence retry) and the panel says so.
@@ -272,7 +274,8 @@ export function ChatPanel({
         'inset-0 md:inset-auto',
         // Desktop: positioned bottom-right
         'md:bottom-[calc(5rem_+_env(safe-area-inset-bottom,0px))] md:right-[calc(1rem_+_env(safe-area-inset-right,0px))]',
-        'md:w-[380px] md:h-[560px] md:max-h-[80vh]',
+        // Roomier from Oct 31 2026 (owner: "too small and cramped"): wider, and as tall as the screen allows.
+        'md:w-[min(30rem,calc(100vw-2rem))] lg:w-[32rem] md:h-[min(52rem,calc(100dvh-7rem))]',
         'flex flex-col',
         'bg-background border-2 border-black md:shadow-hard-lg',
         'overflow-hidden'
@@ -287,6 +290,18 @@ export function ChatPanel({
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
+          {/* The not-legal-advice note, folded behind an icon (owner, Oct 31 2026: it took three lines). */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setNoticeOpen((o) => !o)}
+            className="h-11 w-11 md:h-8 md:w-8"
+            aria-label="About these answers"
+            aria-expanded={noticeOpen}
+            aria-controls={noticeId}
+          >
+            <InfoIcon className="h-4 w-4" />
+          </Button>
           {onOpenHistory && (
             <Button
               variant="ghost"
@@ -310,8 +325,13 @@ export function ChatPanel({
         </div>
       </div>
 
-      {/* What the assistant may do: three labelled, coloured modes and a line
-          saying what the chosen one means. */}
+      {noticeOpen ? (
+        <div id={noticeId}>
+          <NotLegalAdviceNotice variant="chat" className="border-t-0 border-b-2" />
+        </div>
+      ) : null}
+
+      {/* What the assistant may do: three labelled, coloured modes; each one's meaning is its tooltip. */}
       {onActionModeChange && (
         <ActionModeToggle
           mode={actionMode}
@@ -496,8 +516,6 @@ export function ChatPanel({
         </AnimatePresence>
       </div>
 
-      {/* Not-legal-advice disclaimer — quiet footnote above the composer */}
-      <NotLegalAdviceNotice variant="chat" />
 
       {/* Input Area */}
       <ChatInput

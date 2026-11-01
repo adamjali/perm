@@ -87,7 +87,9 @@ export function ReviewCard({
           ) : null}
         </blockquote>
       ) : (
-        <p className={cn("mt-4 flex-1 text-muted-foreground", compact ? "text-base" : "text-lg")}>Rated without words.</p>
+        // A rating left without words shows its stars and nothing in the words' place (owner, Oct 31 2026: "dont say
+        // that just leave it blank"); the spacer keeps the name at the card's foot.
+        <div className="mt-4 flex-1" aria-hidden="true" />
       )}{" "}
       <figcaption className="mt-5 border-t-2 border-border pt-3">
         <span className="font-heading text-base font-bold">{r.name}</span>{" "}

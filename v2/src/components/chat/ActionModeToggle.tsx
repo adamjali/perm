@@ -11,8 +11,10 @@
  * - Auto (`auto`, amber): it changes cases right away; a deletion still asks
  *
  * Each option has its icon and its words; the chosen one fills with its
- * colour, and a line under the strip says what that mode means, edged in the
- * same colour. The words carry the meaning, so nothing rests on colour alone.
+ * colour. What each mode means is its button's tooltip, and a change is read
+ * out to screen readers; the line under the strip that said it is gone (owner,
+ * Oct 31 2026: "you def dont need that", the panel was cramped). The words
+ * carry the meaning, so nothing rests on colour alone.
  * A radiogroup: Left and Right (or Up and Down) move the choice.
  *
  * @module components/chat/ActionModeToggle
@@ -45,25 +47,22 @@ export interface ActionModeToggleProps {
 
 const MODE_CONFIG: Record<
   ActionMode,
-  { icon: typeof EyeSlashIcon; label: string; fill: string; edge: string }
+  { icon: typeof EyeSlashIcon; label: string; fill: string }
 > = {
   off: {
     icon: EyeSlashIcon,
     label: "Read only",
     fill: "bg-[#141414] text-white dark:bg-white dark:text-black",
-    edge: "border-l-[#141414] dark:border-l-white",
   },
   confirm: {
     icon: ShieldCheckIcon,
     label: "Ask first",
     fill: "bg-primary text-black",
-    edge: "border-l-primary",
   },
   auto: {
     icon: LightningIcon,
     label: "Auto",
     fill: "bg-data-warn text-black",
-    edge: "border-l-data-warn",
   },
 };
 
@@ -104,7 +103,7 @@ export function ActionModeToggle({ mode, onChange, disabled = false, className }
   );
 
   return (
-    <div className={cn("border-b-2 border-border bg-muted px-3 py-2.5", className)}>
+    <div className={cn("border-b-2 border-border bg-muted px-3 py-2", className)}>
       <div
         role="radiogroup"
         aria-label="What the assistant may do"
@@ -123,6 +122,7 @@ export function ActionModeToggle({ mode, onChange, disabled = false, className }
               type="button"
               role="radio"
               aria-checked={on}
+              title={ACTION_MODE_NOTICE[m]}
               tabIndex={on ? 0 : -1}
               disabled={disabled}
               onClick={() => choose(m)}
@@ -139,10 +139,7 @@ export function ActionModeToggle({ mode, onChange, disabled = false, className }
           );
         })}
       </div>{" "}
-      <p
-        aria-live="polite"
-        className={cn("mt-2 border-l-4 pl-2 text-sm leading-snug text-foreground", MODE_CONFIG[mode].edge)}
-      >
+      <p aria-live="polite" className="sr-only">
         {ACTION_MODE_NOTICE[mode]}
       </p>
     </div>

@@ -1836,6 +1836,11 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   designations only, never people or vessels, joined by name AND a city the sponsor's own PERM filings name (or a
   national sponsor): the name rule alone joined 11 on Oct 31, of which 5 weren't certain by hand ("Maverick Services"
   in Clarksville against a Houston sponsor); the city test keeps the 6 that were.
+- **The chat panel has room** (owner, Oct 31 2026, "too small and cramped"): 30 to 32 rem wide and as tall as the screen
+  allows; the not-legal-advice note folds behind the ⓘ in its title bar; each mode's meaning is its button's tooltip
+  (still announced to screen readers); a finished tool step is one line with its inputs folded. The case query takes
+  `sortBy` ("updated" / "created"): "which case changed most recently?" had got "my tools don't track that".
+  A wordless rating shows its stars and nothing in the words' place (no "Rated without words.").
 - **Sponsor pages have a "Federal records" chapter** (shown only when it holds something): Wage and Hour cases, OSHA
   inspections, SAM.gov exclusions, TAA petitions and PPP loans, each section an h3 under the chapter's h2 (WHD and
   OSHA take `level={3}` there and default to h2 where they stand alone). They had sat under "Right now", whose dek
@@ -1850,7 +1855,9 @@ Teardown (permtrack.app, PERM Update, ImmiLane and eight more): `~/.claude/expla
   `permtracker-uscis@ppp` on the 4th, 3:30 AM): thirteen CSVs (5.2 GB, SBA's Sep 30 2024 snapshot) listed on
   data.sba.gov/dataset/ppp-foia, read one at a time into /var/tmp. Joined by name and city; a person's loan (sole
   proprietor, self-employed, contractor) is skipped unless the name carries a company form word; a blank borrower
-  state takes the project's. Race, ethnicity, gender and veteran columns are never read. **E-Verify isn't loaded**
+  state takes the project's. Race, ethnicity, gender and veteran columns are never read. First load Oct 31 2026, 8:20 PM
+  EDT: 11,468,210 loans, 38,526 named like a sponsor, **31,513 kept on 22,058 pages**; 12 of 12 random joins checked by
+  hand were the same legal name in the same city. **E-Verify isn't loaded**
   (USCIS's robots.txt bars its search and export) **and SEC headcount isn't either** (376 of 20,537 companies report
   `dei:EntityNumberOfEmployees`, and sponsors carry no EIN to match on).
 - **USCIS's posted processing times, every posting since March 2022** (`scripts/ingest_uscis_posted_times.py`, table

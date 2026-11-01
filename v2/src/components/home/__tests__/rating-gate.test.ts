@@ -68,7 +68,7 @@ describe("the review rating", () => {
     expect(html).toContain("See all 2 reviews");
   });
 
-  it("shows a rating left without words as its stars and name, with no empty quote", () => {
+  it("shows a rating left without words as its stars and name, blank where the words go", () => {
     const html = renderToStaticMarkup(
       React.createElement(ReviewsLine, {
         rating: { value: "4.5", count: "2", best: "5", worst: "1" },
@@ -76,7 +76,7 @@ describe("the review rating", () => {
       }),
     );
     expect(html).toMatch(/>Lee<\/span>/);
-    expect(html).toContain("Rated without words.");
+    expect(html).not.toContain("Rated without words.");
     expect(html).not.toContain("<blockquote");
   });
 

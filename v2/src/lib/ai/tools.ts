@@ -246,6 +246,13 @@ export const QueryCasesInputSchema = z.object({
     .optional()
     .describe('Maximum number of cases to return. Default: 100. Use smaller values for overview questions'),
 
+  sortBy: z
+    .enum(['updated', 'created'])
+    .optional()
+    .describe(
+      'Order of the cases returned: "updated" = most recently changed first (each case carries updatedAt), "created" = newest case first. Use "updated" with a small limit for "which case changed most recently?"'
+    ),
+
   idsOnly: z
     .boolean()
     .optional()
@@ -321,6 +328,7 @@ export const queryCasesTool = tool({
 - fields: Specific fields to return (array of field names)
 - countOnly: Return only count, not case data (default: false)
 - limit: Max cases to return (default: 100)
+- sortBy: "updated" (most recently changed first) or "created" (newest first)
 - idsOnly: IMPORTANT for bulk operations! Returns minimal data for bulkCalendarSync, bulkUpdateStatus, etc.
 
 ## OUTPUT FORMAT:
@@ -333,6 +341,7 @@ export const queryCasesTool = tool({
 - "Count PWD cases": { caseStatus: "pwd", countOnly: true }
 - "Cases due in 7 days": { deadlineWithinDays: 7 }
 - "Find ACME Corp": { searchText: "ACME Corp" }
+- "Which case changed most recently?": { sortBy: "updated", limit: 1, fields: ["employerName", "positionTitle", "updatedAt"] }
 - "Professional occupation cases": { isProfessionalOccupation: true }
 - "Count professional cases": { isProfessionalOccupation: true, countOnly: true }
 - "Sync all cases to calendar" (bulk): { idsOnly: true } (use result for bulkCalendarSync)

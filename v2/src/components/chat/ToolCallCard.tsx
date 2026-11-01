@@ -3,8 +3,8 @@
 /**
  * ToolCallCard Component
  *
- * Displays tool invocations in chat.
- * Shows tool name, icon, input summary, and result summary.
+ * Displays tool invocations in chat. A finished step is one line (name and result) with its inputs folded under
+ * it; a running step, or one waiting for an OK, shows the full card.
  *
  * Design: the site's calm look
  * - 2px black borders
@@ -94,55 +94,78 @@ export function ToolCallCard({
   const duration =
     startTime && executedAt ? `${executedAt - startTime}ms` : executedAt ? '' : '';
 
+  // A finished step is one line, what it did and what it found, with its inputs folded under it (owner, Oct 31
+  // 2026: the cards were "too small and cramped"). A running step or one waiting for an OK keeps the full card.
+  if (status !== 'pending') {
+    const outcome = wasDenied
+      ? 'Action denied by user'
+      : status === 'error'
+        ? (result ? summarizeToolResult(tool, result) : '') || 'Error occurred'
+        : resultSummary;
+    return (
+      <details
+        className={cn(
+          'group border-l-4 bg-card',
+          status === 'success' && 'border-l-primary',
+          status === 'error' && !wasDenied && 'border-l-destructive',
+          wasDenied && 'border-l-muted-foreground opacity-60',
+        )}
+      >
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-2 text-sm md:min-h-9 [&::-webkit-details-marker]:hidden">
+          <span className={cn('flex-shrink-0', toolColor)}>
+            <ToolIcon tool={tool} className="h-4 w-4" />
+          </span>{" "}
+          <span className="min-w-0 truncate">
+            <span className="font-medium">{displayName}</span>
+            {outcome ? (
+              <span className={cn(status === 'error' && !wasDenied ? 'text-destructive' : 'text-muted-foreground')}>
+                {` · ${outcome}`}
+              </span>
+            ) : null}
+          </span>{" "}
+          <span className="ml-auto flex-shrink-0">
+            <StatusIcon status={status} isDenied={wasDenied} />
+          </span>
+        </summary>
+        {argSummary.length > 0 || duration ? (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 pb-2 pl-8">
+            {argSummary.map(({ key, value }) => (
+              <span key={key} className="font-mono text-sm min-w-0 [overflow-wrap:anywhere]">
+                <span className="text-muted-foreground">{key}:</span> <span className="text-foreground">{value}</span>
+              </span>
+            ))}
+            {duration ? <span className="font-mono text-sm text-muted-foreground">{duration}</span> : null}
+          </div>
+        ) : null}
+      </details>
+    );
+  }
+
+  // Running, or waiting for an OK: the full card.
   return (
     <motion.div
       initial={false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={springConfig}
       className={cn(
-        // Base styles
-        'relative overflow-hidden',
-        'border-2 border-l-[6px] border-black',
-        'bg-card shadow-hard-sm',
-        // The state's colour on a thick left edge, as on the permission card:
-        // lime done, red failed, amber waiting for your OK, grey cancelled.
-        status === 'success' && 'border-l-primary',
-        status === 'error' && !wasDenied && 'border-l-destructive',
-        wasDenied && 'border-l-muted-foreground opacity-60',
-        status === 'pending' && isAwaitingConfirmation && 'border-l-data-warn'
+        'relative overflow-hidden border-2 border-l-[6px] border-black bg-card shadow-hard-sm',
+        // Amber while it waits for your OK, as on the permission card.
+        isAwaitingConfirmation && 'border-l-data-warn',
       )}
     >
-
       <div className="p-3 space-y-2">
-        {/* Header: Icon, Name, Status, Duration */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {/* Tool Icon */}
             <div className={cn('flex-shrink-0', toolColor)}>
               <ToolIcon tool={tool} className="h-4 w-4" />
             </div>
-
-            {/* Tool Name */}
-            <span className="font-mono text-sm font-medium truncate">
-              {displayName}
-            </span>
+            <span className="font-mono text-sm font-medium truncate">{displayName}</span>
           </div>
-
-          {/* Status indicator + Duration */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Duration badge */}
-            {duration && status === 'success' && (
-              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5">
-                {duration}
-              </span>
-            )}
-
-            {/* Status icon */}
             <StatusIcon status={status} isDenied={wasDenied} />
           </div>
         </div>
 
-        {/* Arguments summary (inline) */}
         {argSummary.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {argSummary.map(({ key, value }) => (
@@ -156,55 +179,10 @@ export function ToolCallCard({
           </div>
         )}
 
-        {/* Result summary or loading message */}
         <div className="flex items-center gap-1.5">
-          {status === 'pending' && (
-            <motion.span
-              initial={false}
-              animate={{ opacity: 1 }}
-              className={cn(
-                "text-sm italic",
-                isAwaitingConfirmation
-                  ? "text-data-warn-ink"
-                  : "text-muted-foreground"
-              )}
-            >
-              {isAwaitingConfirmation ? 'Awaiting confirmation...' : loadingMessage}
-            </motion.span>
-          )}
-
-          {status === 'success' && resultSummary && (
-            <motion.span
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, ...springConfig }}
-              className="text-sm font-medium text-primary-text"
-            >
-              {resultSummary}
-            </motion.span>
-          )}
-
-          {status === 'error' && !wasDenied && (
-            <motion.span
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, ...springConfig }}
-              className="text-sm font-medium text-destructive"
-            >
-              {result ? summarizeToolResult(tool, result) || 'Error occurred' : 'Error occurred'}
-            </motion.span>
-          )}
-
-          {wasDenied && (
-            <motion.span
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, ...springConfig }}
-              className="text-sm text-muted-foreground"
-            >
-              Action denied by user
-            </motion.span>
-          )}
+          <span className={cn('text-sm italic', isAwaitingConfirmation ? 'text-data-warn-ink' : 'text-muted-foreground')}>
+            {isAwaitingConfirmation ? 'Awaiting confirmation...' : loadingMessage}
+          </span>
         </div>
       </div>
     </motion.div>

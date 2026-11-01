@@ -36,9 +36,9 @@ describe("ReviewCard", () => {
     expect(container.querySelector("blockquote")?.hasAttribute("data-nosnippet")).toBe(true);
   });
 
-  it("says a rating left without words, with no empty quote", () => {
+  it("leaves a rating without words blank: no quote and no placeholder line", () => {
     const { container } = render(<ReviewCard review={{ ...review, text: "" }} />);
-    expect(screen.getByText("Rated without words.")).toBeTruthy();
+    expect(screen.queryByText("Rated without words.")).toBeNull();
     expect(container.querySelector("blockquote")).toBeNull();
   });
 
@@ -47,7 +47,7 @@ describe("ReviewCard", () => {
     expect(screen.getByText("Case alert reader")).toBeTruthy();
     expect(screen.getByText("Rated from an alert email")).toBeTruthy();
     expect(screen.getByText("October 2026")).toBeTruthy();
-    expect(screen.getByText("Rated without words.")).toBeTruthy();
+    expect(screen.queryByText("Rated without words.")).toBeNull();
   });
 
   it("says nothing of the kind on a written review", () => {
