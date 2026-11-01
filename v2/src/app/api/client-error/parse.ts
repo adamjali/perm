@@ -47,3 +47,28 @@ export function parseClientError(body: unknown): ClientErrorReport | null {
     stack: typeof b.stack === "string" ? b.stack.slice(0, 1500) : null,
   };
 }
+
+/**
+ * The message with what changes between reports taken out (addresses, build
+ * hashes, numbers), so one kind of error is one Sentry issue. Before this a
+ * failed download of chunk 6020 and one of chunk 8174 were two issues and two
+ * alert emails, as was the same chunk in two builds (Nov 1 2026: five in a day).
+ */
+export function groupingKey(message: string): string {
+  return message
+    .replace(/https?:\/\/\S+/g, "<url>")
+    .replace(/\b[0-9a-f]{8,}\b/gi, "<hash>")
+    .replace(/\d+/g, "#")
+    .slice(0, 160);
+}
+
+/**
+ * The build file a ChunkLoadError names, as its path under /_next/static/, or
+ * null. Only a plain file name in chunks/ or css/ passes, so the route can look
+ * for it on disk without the message choosing where to look.
+ */
+export function chunkFileOf(message: string): string | null {
+  const m = /\/_next\/static\/((?:chunks|css)\/(?:[\w-]+\/)*[\w.-]+\.(?:js|css))(?:[?\s)]|$)/.exec(message);
+  if (!m || m[1]!.includes("..")) return null;
+  return /chunk/i.test(message) ? m[1]! : null;
+}

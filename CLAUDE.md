@@ -1952,3 +1952,9 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   network to go quiet cost 2 minutes a width on a page that keeps a request open, and the deploy's sweep ran out.
 - **A deploy run stopped by SIGTERM (exit 143) mid-check** isn't a finding: b3a68437's run was cut 2:40 into its axe
   pass with every earlier check green. Read the step's lines before treating a red run as a defect.
+- **A build file that didn't download is one quiet Sentry issue when the server has the file**
+  (`src/app/api/client-error/route.ts`, `chunkFileOf` and `groupingKey` in `parse.ts`). The error screens' reports (since
+  Oct 31) put the chunk number and build in the message, so five downloads that failed on visitors' phones opened five
+  issues and five alert emails on Nov 1, every file still served. Now the route looks for the file in `shared/`: there,
+  one warning issue for all of them; missing on the server too, an error naming the file. Every other report groups by
+  its message with numbers and addresses taken out.
