@@ -15,6 +15,8 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/db/pwdCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { longDate } from "@convex/lib/months";
+import { getPwdBoard } from "@/lib/db/board";
+import { backlogTrend } from "@/lib/homeTrends";
 
 /**
  * Prevailing wage requests, findable by employer before the PERM exists.
@@ -53,13 +55,15 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function PwdCasesPage() {
-  const [summary, disclosure, times, line, dayData, nowDocs] = await Promise.all([
+  const [summary, disclosure, times, line, dayData, nowDocs, pwdBoard] = await Promise.all([
     getPwdSummary(),
     getPwdDisclosureSummary(),
     getProcessingTimes().catch(() => null),
     getPwdLine(),
     getPwdDayData().catch(() => null),
     getPwdNowDocs(),
+    // The board's 30-day filed-against-decided count, for which way the line moved.
+    getPwdBoard().catch(() => null),
   ]);
   // DOL's own position in the PERM wage-request line: the month it is issuing
   // determinations on, from its processing-times page.
@@ -85,6 +89,7 @@ export default async function PwdCasesPage() {
           {
             label: "Waiting at DOL now",
             value: summary ? formatInt(summary.pending) : "—",
+            trend: backlogTrend(pwdBoard?.flow),
             note: "From DOL's case-status service",
           },
           {

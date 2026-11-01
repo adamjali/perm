@@ -1974,3 +1974,7 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
 - **A drawn window's address is decoration** (`AppWindow`, `aria-hidden`): the fluid attorney hero draws it at about
   4px on a phone, and the phone sweep's small-text rule skips hidden decoration as its tap rule does. The 6ccfc880
   build's check stopped on it.
+- **A list page's header figure can carry the chip too** (`IndexFigure.trend`): wage requests' "Waiting at DOL now"
+  takes the board's 30-day flow. The LCA list's "In DOL's case-status service" (every LCA this site had confirmed) is
+  gone: a count of our own tracking says nothing to a reader. A dev server can keep an old copy of a changed component
+  for minutes; a component test is the proof that doesn't wait on it.

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { TrendChip, type FigureTrend } from "@/components/data/FigureRow";
 
 /**
  * The top of a list page: what the list is, its headline figures, and the
@@ -21,6 +22,8 @@ export interface IndexFigure {
   value: string;
   href?: string;
   note?: string;
+  /** How the figure moved, drawn as the cards' chip. */
+  trend?: FigureTrend;
 }
 
 export function IndexHeader({
@@ -56,6 +59,13 @@ export function IndexHeader({
                       f.value
                     )}
                   </dd>{" "}
+                  {f.trend ? (
+                    <>
+                      <dd className="mt-1.5">
+                        <TrendChip trend={f.trend} />
+                      </dd>{" "}
+                    </>
+                  ) : null}
                   {f.note ? <dd className="mt-0.5 text-sm text-soft">{f.note}</dd> : null}
                 </div>
               ))}

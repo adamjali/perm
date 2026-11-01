@@ -60,11 +60,6 @@ export default async function LcaCasesPage() {
               ? { note: `Published through ${longDate(disclosure?.latestDecision ?? null)}` }
               : {}),
           },
-          {
-            label: "In DOL's case-status service",
-            value: summary ? formatInt(summary.total) : "—",
-            note: "Every LCA this site has confirmed there",
-          },
         ]}
         aside={
           <IndexLookup
