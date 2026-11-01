@@ -191,8 +191,8 @@ export function ratingWords(score: number): { title: string; ask: string } {
 }
 
 /**
- * After the tap: thanks in words that match the score, a review link for a 4
- * or a 5, the note box until they've written one (with the choice to leave
+ * After the tap: thanks in words that match the score, a review link for every
+ * score (first for a 4 or a 5, after the note box otherwise), the note box until they've written one (with the choice to leave
  * their address off it), and what comes next for a decided case.
  */
 export function ratingThanksPage(opts: {

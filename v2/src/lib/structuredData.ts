@@ -277,7 +277,8 @@ export interface RatingFields {
  * and the visible text can't disagree.
  *
  * Google may still decline a rich result off two reviews, which costs
- * nothing. Raising APP_RATING.count as reviews arrive needs no other change.
+ * nothing. APP_RATING is only the fallback now: the live count comes from the
+ * site's own reviews (`getSiteReviews`, src/lib/reviews/read.ts).
  */
 export const MIN_REVIEWS_TO_ADVERTISE = 2;
 

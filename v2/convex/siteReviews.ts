@@ -55,7 +55,7 @@ export const NOTE_WINDOW_MS = 2 * MS_PER_HOUR;
 export const NOTE_KEEP_MS = 90 * MS_PER_DAY;
 /** The owner's "reviews are waiting" email: at most one a day. */
 const NOTICE_LIMIT = { limit: 1, windowMs: MS_PER_DAY };
-/** The most reviews the public read hands back; the page shows them twelve at a time. */
+/** The most reviews the public read hands back; the page's rows hold the newest 36 and its full list 12 a page. */
 const PUBLIC_READ = 500;
 const ADMIN_READ = 100;
 /** Declined reviews scrubbed per run; the daily run reschedules itself while a full batch remains. */
@@ -181,6 +181,23 @@ async function countShown(ctx: QueryCtx): Promise<number[]> {
   return stars;
 }
 
+/**
+ * Move one shown review from one star count to another. A missing tally is made from the table, which
+ * already holds the new score, so it's made once and not moved again: two `adjustTally` calls there
+ * would count the review twice.
+ */
+async function moveInTally(ctx: MutationCtx, from: number, to: number): Promise<void> {
+  const row = await ctx.db.query("siteReviewTally").withIndex("by_key", (q) => q.eq("key", "shown")).unique();
+  if (!row) {
+    await ctx.db.insert("siteReviewTally", { key: "shown", stars: await countShown(ctx), updatedAt: Date.now() });
+    return;
+  }
+  const stars = [...row.stars];
+  if (from >= 1 && from <= 5) stars[from - 1] = Math.max(0, (stars[from - 1] ?? 0) - 1);
+  if (to >= 1 && to <= 5) stars[to - 1] = (stars[to - 1] ?? 0) + 1;
+  await ctx.db.patch(row._id, { stars, updatedAt: Date.now() });
+}
+
 /** Move one review into or out of the tally. A missing tally is first made from the table, so it starts right. */
 async function adjustTally(ctx: MutationCtx, rating: number, delta: 1 | -1): Promise<void> {
   if (rating < 1 || rating > 5) return;
@@ -249,8 +266,7 @@ export async function queueAlertRating(
   if (mine.rating === args.score || mine.status === "declined") return;
   await ctx.db.patch(mine._id, { rating: args.score });
   if (isShown(mine)) {
-    await adjustTally(ctx, mine.rating, -1);
-    await adjustTally(ctx, args.score, 1);
+    await moveInTally(ctx, mine.rating, args.score);
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
   }
 }
@@ -670,17 +686,26 @@ export const refreshPages = internalAction({
  * is never copied in again. Reschedules itself while a full batch remains.
  */
 export const scrubDeclined = internalMutation({
-  args: {},
+  // `after`: the createdAt a stopped run reached. Declined rows are read oldest first and wiped rows stay
+  // declined, so without it every run would look at the same first 1,000 and never reach the newer ones.
+  args: { after: v.optional(v.number()) },
   returns: v.object({ scrubbed: v.number(), notes: v.number() }),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const now = Date.now();
     const cutoff = now - DECLINED_KEEP_MS;
     let scrubbed = 0;
     let looked = 0;
     let more = false;
-    for await (const r of ctx.db.query("siteReviews").withIndex("by_status_created", (q) => q.eq("status", "declined"))) {
+    let reached: number | undefined;
+    for await (const r of ctx.db
+      .query("siteReviews")
+      .withIndex("by_status_created", (q) => q.eq("status", "declined").gte("createdAt", args.after ?? 0))) {
       looked += 1;
-      if (looked > SCRUB_BATCH * 5) break;
+      if (looked > SCRUB_BATCH * 5) {
+        more = true;
+        break;
+      }
+      reached = r.createdAt;
       if (r.scrubbedAt !== undefined || r.reviewedAt === undefined || r.reviewedAt > cutoff) continue;
       await ctx.db.patch(r._id, { text: "", name: "", email: undefined, scrubbedAt: now });
       scrubbed += 1;
@@ -704,7 +729,7 @@ export const scrubDeclined = internalMutation({
     }
     if (notes > 0) log.info("private review notes deleted", { notes });
     // A full batch of either: one more run, scheduled once.
-    if (more) await ctx.scheduler.runAfter(0, internal.siteReviews.scrubDeclined, {});
+    if (more) await ctx.scheduler.runAfter(0, internal.siteReviews.scrubDeclined, reached !== undefined ? { after: reached } : {});
     return { scrubbed, notes };
   },
 });

@@ -239,6 +239,29 @@ describe("approving, declining and the public read", () => {
 });
 
 describe("keeping nothing longer than needed", () => {
+  it("reaches a declined review behind more than 1,000 already wiped, carrying on where a run stopped", async () => {
+    // Arrange: 1,001 wiped rows first, then one old enough to wipe.
+    vi.useFakeTimers();
+    const t = createTestContext();
+    const now = Date.now();
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 1001; i++) {
+        await ctx.db.insert("siteReviews", { rating: 1, text: "", name: "", status: "declined", declineReason: "spam", source: "site", createdAt: 10 + i, reviewedAt: 1, scrubbedAt: 2 });
+      }
+    });
+    const late = await t.run((ctx) =>
+      ctx.db.insert("siteReviews", { rating: 1, text: "Late spam.", name: "Late", email: "l@example.com", status: "declined", declineReason: "spam", source: "site", createdAt: 5000, reviewedAt: now - DECLINED_KEEP_MS - 1000 }),
+    );
+    // Act: the daily run, then the run it schedules.
+    await t.mutation(internal.siteReviews.scrubDeclined, {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    // Assert
+    const row = await t.run((ctx) => ctx.db.get(late));
+    expect(row).toMatchObject({ text: "", name: "" });
+    expect(row?.email).toBeUndefined();
+    vi.useRealTimers();
+  }, 60_000);
+
   it("deletes a declined review's words, name and address 90 days after the decision, keeping its rating and reason", async () => {
     const t = createTestContext();
     const now = Date.now();

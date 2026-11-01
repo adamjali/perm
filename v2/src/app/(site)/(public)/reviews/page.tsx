@@ -86,7 +86,7 @@ export default async function ReviewsPage() {
             <p className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
               <ReviewStars value={Number(rating.value)} className="size-6" />{" "}
               <span className="font-heading text-xl font-bold">{`${rating.value} out of 5`}</span>{" "}
-              <a href="#said" className="link inline-flex min-h-11 items-center text-base">{`from ${count} ${count === 1 ? "review" : "reviews"}`}</a>
+              <a href="#said" className="link inline-flex min-h-11 items-center text-base">{`from ${count} ${count === 1 ? "rating" : "ratings"}`}</a>
             </p>
           ) : null}{" "}
           <p className="mx-auto mt-4 max-w-xl text-center text-lg leading-relaxed text-soft">

@@ -1,7 +1,7 @@
 /**
  * The site's reviews, read from the Senja widget's own script (owner's call, Oct 23 2026: "real now use senja
- * widget auto update"). Pure: no fetching here, so it can be tested on a saved script. The fetch is in
- * `src/lib/reviews/senja.ts`.
+ * widget auto update"). Pure: no fetching here, so it can be tested on a saved script. The fetch is
+ * `importFromSenja` in `convex/siteReviews.ts`.
  *
  * Senja builds the widget script with every published review inside it as one JSON array (`[{"id":...,
  * "rating":...,"text":...,"customer":{"name":...},"date":...}, ...]`) and rebuilds it within minutes of a new

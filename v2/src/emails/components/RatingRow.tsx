@@ -7,9 +7,9 @@ import { MONO_STACK, SANS_STACK } from "./QueueStamp";
  * score. Numbers in boxes render the same in every mail client; stars and faces
  * need images or emoji, which some clients block or redraw.
  *
- * A link never records anything by itself: mail scanners open every link in a
- * message, so the box opens a page with the score picked and the reader's tap
- * there records it (convex/alertRatings.ts, `/case-alert/rate`). The boxes are 44px squares, the tap
+ * Opening a box saves its score (since Oct 24 2026, `/case-alert/rate` in convex/http.ts). Mail scanners
+ * open every link in a message, so `convex/alertRatings.ts` sets aside an open that comes with a fetcher's
+ * browser line or beside a different score within a minute. The boxes are 44px squares, the tap
  * floor, and five of them with their gaps measure 244px, which fits the
  * narrowest content column the layout has (256px at 320 wide).
  */
@@ -39,7 +39,7 @@ export function RatingRow({
         {question}
       </Text>
       <Text className="em-text-secondary" style={styles.hint}>
-        Pick a number. The page it opens sends it, with a note if you like.
+        Pick a number. One tap saves it, and the page it opens lets you add a few words.
       </Text>
       <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={styles.table}>
         <tbody>

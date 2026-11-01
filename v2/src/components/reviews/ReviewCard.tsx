@@ -25,6 +25,15 @@ export interface ReviewCardData {
   viaAlert?: boolean;
 }
 
+/**
+ * A reviewer's "->" kept on one line. Inter draws it as one arrow, and a phone broke it between its two
+ * characters ("RFI -" then "> Analyst Review", Nov 1 2026); a word joiner (U+2060, invisible) between them
+ * stops the break and changes nothing the reviewer wrote.
+ */
+export function keepArrows(text: string): string {
+  return text.replace(/-(?=>)/g, "-\u2060").replace(/<(?=-)/g, "<\u2060");
+}
+
 const CLAMP: Record<number, string> = { 5: "line-clamp-5", 6: "line-clamp-6", 8: "line-clamp-[8]" };
 
 export function ReviewCard({
@@ -72,8 +81,8 @@ export function ReviewCard({
       {r.text ? (
         <blockquote data-nosnippet="" className={cn("mt-4 flex-1 [overflow-wrap:anywhere]", compact ? "text-base" : "text-lg", "leading-relaxed")}>
           <QuotesIcon weight="fill" className="mb-1 size-6 text-primary" aria-hidden="true" />
-          <span ref={words} className={cn("block whitespace-pre-line", open ? "" : CLAMP[lines])}>
-            {r.text}
+          <span ref={words} dir="auto" className={cn("block whitespace-pre-line", open ? "" : CLAMP[lines])}>
+            {keepArrows(r.text)}
           </span>{" "}
           {cut || open ? (
             <button
@@ -92,7 +101,7 @@ export function ReviewCard({
         <div className="mt-4 flex-1" aria-hidden="true" />
       )}{" "}
       <figcaption className="mt-5 border-t-2 border-border pt-3">
-        <span className="font-heading text-base font-bold">{r.name}</span>{" "}
+        <span dir="auto" className="font-heading text-base font-bold [overflow-wrap:anywhere]">{r.name}</span>{" "}
         {r.viaAlert ? <span className="block text-sm text-muted-foreground">Rated from an alert email</span> : null}{" "}
         {r.day ? <span className="block text-sm text-muted-foreground">{r.day}</span> : null}
       </figcaption>

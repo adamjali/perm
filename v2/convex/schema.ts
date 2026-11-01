@@ -1552,9 +1552,10 @@ export default defineSchema({
   /**
    * How useful a subscriber found their case alerts, sent from the 1-to-5 row
    * in the last alert (the one that says the case is decided). One row per
-   * address and case: a second rating replaces the first. Written only by
-   * `alertRatings.record`, behind a signed link, and only for an address that
-   * really watched that case.
+   * address and case: a second rating replaces the first. Written by
+   * `alertRatings.recordClick` (a box opened from the email, saved on open) and
+   * `alertRatings.record` (a tap or a note on the page), behind a signed link,
+   * and only for an address that really watched that case.
    */
   alertRatings: defineTable({
     /**

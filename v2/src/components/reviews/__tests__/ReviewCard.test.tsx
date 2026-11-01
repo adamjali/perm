@@ -55,3 +55,13 @@ describe("ReviewCard", () => {
     expect(screen.queryByText("Rated from an alert email")).toBeNull();
   });
 });
+
+describe("keepArrows", () => {
+  it("keeps a typed arrow's two characters together and leaves the words as typed", async () => {
+    const { keepArrows } = await import("../ReviewCard");
+    const out = keepArrows("RFI -> Analyst Review <- back");
+    expect(out).toBe("RFI -⁠> Analyst Review <⁠- back");
+    expect(out.replace(/⁠/g, "")).toBe("RFI -> Analyst Review <- back");
+    expect(keepArrows("a - b > c")).toBe("a - b > c");
+  });
+});

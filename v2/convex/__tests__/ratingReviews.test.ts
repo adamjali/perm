@@ -106,6 +106,21 @@ describe("a rating from an alert email", () => {
     expect((await reviews(t))[0]).toMatchObject({ rating: 3, status: "approved" });
   });
 
+  it("counts a changed score once when the tally has to be made first", async () => {
+    // Arrange: the rating posted, and no tally row yet (a fresh deployment, or one removed by hand).
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 5);
+    await t.run(async (ctx) => {
+      const r = (await ctx.db.query("siteReviews").first())!;
+      await ctx.db.patch(r._id, { status: "approved" });
+    });
+    // Act
+    await rate(t, 3);
+    // Assert: one review, counted once, at its new score.
+    expect(await tally(t)).toEqual([0, 0, 1, 0, 0]);
+  });
+
   it("isn't queued for someone who already wrote a review", async () => {
     const t = createTestContext();
     await watching(t);
