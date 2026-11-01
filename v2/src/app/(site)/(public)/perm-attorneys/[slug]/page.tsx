@@ -67,6 +67,7 @@ import { debarmentsForSlug, phase } from "@/lib/db/debarments";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { OccupationMix, PartyMix, RecruitmentMix, StateMix } from "@/components/entities/FilingMakeup";
+import { FilingsSearch } from "@/components/entities/FilingsSearch";
 import {
   absorbedCount,
   entityFacets,
@@ -396,6 +397,14 @@ export default async function AttorneyPage({
           both arrive with, and it is a fact rather than an opinion. */}
       {hasPractice ? (
         <Chapter id="practice" title="The practice">
+          <FilingsSearch
+            subject={`${row.name}'s`}
+            fixed={{ firm: row.slug }}
+            ask="q"
+            jobs={facets.occupation ?? []}
+            states={facets.state ?? []}
+            className="mb-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6"
+          />{" "}
           <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
             {facets.employer ? (
               <PartyMix
@@ -404,9 +413,16 @@ export default async function AttorneyPage({
                 title="Who they file for"
                 note="The employers named on the most applications from this firm."
                 hrefBase="/perm-employers"
+                filingsHref={(r) => caseSearchHref({ firm: row.slug, q: r.label })}
               />
             ) : null}
-            {facets.occupation ? <OccupationMix rows={facets.occupation} total={row.total} /> : null}
+            {facets.occupation ? (
+              <OccupationMix
+                rows={facets.occupation}
+                total={row.total}
+                filingsHref={(r) => (r.key ? caseSearchHref({ firm: row.slug, occupation: r.key }) : null)}
+              />
+            ) : null}
             {facets.state ? <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" /> : null}
           </div>{" "}
           <RecruitmentMix

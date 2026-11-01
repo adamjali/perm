@@ -62,6 +62,7 @@ import { EmployerWait } from "@/components/entities/EmployerWait";
 import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/db/employerWait";
 import { getPwdLinks } from "@/lib/db/pwdLinks";
 import { getEmployerSize } from "@/lib/db/decidedTimeline";
+import { sizeNote } from "@/lib/employerSize";
 import { PwdToPerm } from "@/components/entities/PwdToPerm";
 import { similarSponsors } from "@/lib/db/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
@@ -69,6 +70,7 @@ import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
 import { WorkerMix } from "@/components/entities/WorkerMix";
 import { IndustryMix, OccupationMix, PartyMix, PlaceMix, RecruitmentMix } from "@/components/entities/FilingMakeup";
+import { FilingsSearch } from "@/components/entities/FilingsSearch";
 import {
   absorbedCount,
   entityFacets,
@@ -845,9 +847,9 @@ export default async function EmployerPage({
         : null,
     topIndustry ? { label: "Industry", value: topIndustry.label, note: `NAICS ${topIndustry.codes[0]}` } : null,
     size?.employees
-      ? { label: "Employees", value: formatInt(size.employees), note: size.since ? `In business since ${size.since}` : "On its newest application" }
+      ? { label: "Employees", value: formatInt(size.employees), note: sizeNote(size) }
       : size?.since
-        ? { label: "In business since", value: String(size.since), note: "On its newest application" }
+        ? { label: "In business since", value: String(size.since), note: "As its filings give it" }
         : null,
   ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
 
@@ -1085,9 +1087,23 @@ export default async function EmployerPage({
           id="work"
           title="What they file, and where"
         >
+          <FilingsSearch
+            subject={`${row.name}'s`}
+            fixed={{ q: row.name }}
+            ask="title"
+            jobs={facets.occupation ?? []}
+            states={facets.state ?? []}
+            className="mb-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6"
+          />{" "}
           {/* Two even columns: every box in a row is stretched to the row's height and keeps its note on one line. */}
           <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2">
-            {facets.occupation ? <OccupationMix rows={facets.occupation} total={row.total} /> : null}
+            {facets.occupation ? (
+              <OccupationMix
+                rows={facets.occupation}
+                total={row.total}
+                filingsHref={(r) => (r.key ? caseSearchHref({ q: row.name, occupation: r.key }) : null)}
+              />
+            ) : null}
             {facets.industry ? <IndustryMix rows={facets.industry} /> : null}
             {facets.state || facets.city ? (
               <PlaceMix states={facets.state ?? []} cities={facets.city ?? []} total={row.total} />
@@ -1099,6 +1115,7 @@ export default async function EmployerPage({
                 title="Who files for them"
                 note="The law firm named on the application."
                 hrefBase="/perm-attorneys"
+                filingsHref={(r) => (r.key ? caseSearchHref({ q: row.name, firm: r.key }) : null)}
               />
             ) : null}
           </div>{" "}

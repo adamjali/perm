@@ -89,16 +89,34 @@ function Shell({
   );
 }
 
+/**
+ * A row's filing count, linked to those filings when the page knows where they are: "3,420 filings" on
+ * Microsoft's page opens Microsoft's Software Developers filings in the case search. 44px on a phone.
+ */
+function Count({ row, href, bare = false }: { row: FacetRow; href?: (row: FacetRow) => string | null; bare?: boolean }) {
+  const text = bare ? formatInt(row.n) : `${formatInt(row.n)} filings`;
+  const to = href?.(row);
+  if (!to) return <>{text}</>;
+  return (
+    <Link href={to} className={ROW_LINK} aria-label={`${formatInt(row.n)} filings for ${row.label}, case by case`}>
+      {text}
+    </Link>
+  );
+}
+
 /** The dominant occupation, set large, with the rest compact beneath it. */
 export function OccupationMix({
   rows,
   total,
   className,
+  filingsHref,
 }: {
   rows: FacetRow[];
   /** The entity's own filing count, so the lead's share has a denominator. */
   total: number;
   className?: string;
+  /** Where a job's count leads: this entity's filings for that job, case by case. */
+  filingsHref?: (row: FacetRow) => string | null;
 }) {
   const lead = rows[0];
   if (!lead) return null;
@@ -136,7 +154,7 @@ export function OccupationMix({
       </p>{" "}
       <p className="mt-1.5 font-mono text-sm tabular-nums text-muted-foreground">
         {lead.code ? <>SOC {lead.code} &middot; </> : null}
-        {formatInt(lead.n)} filings
+        <Count row={lead} href={filingsHref} />
         {leadShare >= 1 ? `, ${leadShare.toFixed(0)}% of everything they file` : null}
         {approvedNote(lead)}
       </p>
@@ -163,8 +181,8 @@ export function OccupationMix({
                 <span className="font-mono text-sm tabular-nums text-muted-foreground">
                   {r.code ? (
                     <span className="mr-2 font-normal text-muted-foreground">{r.code}</span>
-                  ) : null}
-                  {formatInt(r.n)}
+                  ) : null}{" "}
+                  <Count row={r} href={filingsHref} bare />
                 </span>
               </li>
             </Fragment>
@@ -246,6 +264,7 @@ export function PartyMix({
   note,
   hrefBase,
   className,
+  filingsHref,
 }: {
   rows: FacetRow[];
   total: number;
@@ -254,6 +273,8 @@ export function PartyMix({
   /** e.g. "/perm-attorneys". */
   hrefBase: string;
   className?: string;
+  /** Where a row's count leads: the filings this page and that row share, case by case. */
+  filingsHref?: (row: FacetRow) => string | null;
 }) {
   if (rows.length === 0) return null;
   const shown = rows.reduce((a, r) => a + r.n, 0);
@@ -286,7 +307,7 @@ export function PartyMix({
                     <span className="font-bold leading-snug">{r.label}</span>
                   )}{" "}
                   <span className="mt-0.5 block font-mono text-sm tabular-nums text-muted-foreground">
-                    {formatInt(r.n)} filings
+                    <Count row={r} href={filingsHref} />
                     {approvedNote(r)}
                   </span>
                 </span>

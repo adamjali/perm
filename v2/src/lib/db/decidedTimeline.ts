@@ -2,6 +2,8 @@ import "server-only";
 
 import type { DecidedRecord } from "@/lib/decidedTimeline";
 
+import { typicalEmployerSize, SIZE_SAMPLE, type EmployerSize, type EmployerSizeRow } from "@/lib/employerSize";
+
 import { one, rows } from "./client";
 
 /**
@@ -101,14 +103,13 @@ export async function getPermsNamingPwd(pwdNumber: string): Promise<PermNamingPw
  * began. On `idx_pc_emp_dec`, newest first, so it reads back only as far as the first application
  * that filled them in. Null when none did.
  */
-export async function getEmployerSize(slug: string): Promise<DecidedTimelineRead["employer"] & { asOf: string | null } | null> {
-  const r = await one<Record<string, unknown>>(
+export async function getEmployerSize(slug: string): Promise<(EmployerSize & { asOf: string | null }) | null> {
+  const found = await rows<EmployerSizeRow & { decision_date: unknown }>(
     `SELECT emp_payroll, emp_year, decision_date FROM perm_cases
       WHERE employer_slug = ? AND (emp_payroll IS NOT NULL OR emp_year IS NOT NULL)
-      ORDER BY decision_date DESC LIMIT 1`,
+      ORDER BY decision_date DESC LIMIT ${SIZE_SAMPLE}`,
     [slug],
   );
-  if (!r) return null;
-  const facts = employerFacts(r.emp_payroll, r.emp_year);
-  return facts.employees || facts.since ? { ...facts, asOf: str(r.decision_date) } : null;
+  const size = typicalEmployerSize(found);
+  return size ? { ...size, asOf: str(found[0]?.decision_date) } : null;
 }

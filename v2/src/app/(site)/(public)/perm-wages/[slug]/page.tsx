@@ -56,6 +56,7 @@ import { getLadderByYear, getOccupationStateLadders } from "@/lib/db/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PartyMix, PlaceMix, RecruitmentMix } from "@/components/entities/FilingMakeup";
+import { FilingsSearch } from "@/components/entities/FilingsSearch";
 import { WorkerMix } from "@/components/entities/WorkerMix";
 import { workerFacets } from "@/lib/db/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/db/entityDetail";
@@ -450,6 +451,14 @@ export default async function OccupationPage({
         id="who"
         title="Who files it"
       >
+      <FilingsSearch
+        subject={displayTitle(row)}
+        fixed={{ occupation: row.slug }}
+        ask="q"
+        employers={facets.employer ?? []}
+        states={facets.state ?? []}
+        className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6"
+      />{" "}
       {facets.employer || facets.attorney || facets.state || facets.city ? (
         <section className="mt-6">
           <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
@@ -460,6 +469,7 @@ export default async function OccupationPage({
                 title="Sponsors filing it"
                 note="The employers with the most applications under this code."
                 hrefBase="/perm-employers"
+                filingsHref={(r) => caseSearchHref({ q: r.label, occupation: row.slug })}
               />
             ) : null}
             {facets.attorney ? (
@@ -469,6 +479,7 @@ export default async function OccupationPage({
                 title="Firms filing it"
                 note="The law firms named on the most applications under this code."
                 hrefBase="/perm-attorneys"
+                filingsHref={(r) => (r.key ? caseSearchHref({ firm: r.key, occupation: row.slug }) : null)}
               />
             ) : null}
             {facets.state || facets.city ? (
