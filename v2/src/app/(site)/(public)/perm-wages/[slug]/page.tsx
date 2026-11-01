@@ -55,7 +55,7 @@ import { getDisclosureSummary, getFreshness } from "@/lib/db/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/db/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { CityMix, PartyMix, RecruitmentMix, StateMix } from "@/components/entities/FilingMakeup";
+import { PartyMix, PlaceMix, RecruitmentMix } from "@/components/entities/FilingMakeup";
 import { WorkerMix } from "@/components/entities/WorkerMix";
 import { workerFacets } from "@/lib/db/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/db/entityDetail";
@@ -449,7 +449,6 @@ export default async function OccupationPage({
       <Chapter
         id="who"
         title="Who files it"
-        dek="The sponsors and firms with the most PERM filings under this code, the places the work sits, and who the workers were."
       >
       {facets.employer || facets.attorney || facets.state || facets.city ? (
         <section className="mt-6">
@@ -472,16 +471,16 @@ export default async function OccupationPage({
                 hrefBase="/perm-attorneys"
               />
             ) : null}
-            {facets.state ? (
-              <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" />
+            {facets.state || facets.city ? (
+              <PlaceMix states={facets.state ?? []} cities={facets.city ?? []} total={row.total} />
             ) : null}
-            {facets.city ? (
-              <CityMix rows={facets.city} total={row.total} className="lg:col-span-2" />
-            ) : null}
+            {/* Beside the places, so the row's two boxes end level. */}
+            <PwdToPerm links={pwdLinks} who={displayTitle(row)} className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6" />
           </div>
         </section>
-      ) : null}{" "}
-      <PwdToPerm links={pwdLinks} who={displayTitle(row)} className="mt-8 max-w-2xl border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6" />{" "}
+      ) : (
+        <PwdToPerm links={pwdLinks} who={displayTitle(row)} className="mt-8 max-w-2xl border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6" />
+      )}{" "}
       {socGroup(row.code) ? (
         <ul className="mt-6 space-y-2 text-base">
           <li>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -107,6 +108,8 @@ export async function OccupationReference({
     ),
   ].filter((b): b is PayBand => b !== null);
   const levelYear = areas.map((_, i) => newestLevels(i)?.year).find((y) => y != null) ?? null;
+  // BLS publishes no figure for some areas; a column empty in every row is left out.
+  const anyBlsMedian = bands.some((b) => b.median != null);
   const main = onet?.occupations[0] ?? null;
   const zone = main?.jobZone != null ? onet?.zones[String(main.jobZone)] : undefined;
   const series = national?.series ?? areaPay[0]?.series ?? null;
@@ -139,7 +142,7 @@ export async function OccupationReference({
               <thead>
                 <tr className="border-b-2 border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Area{" "}</th>
-                  <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
+                  {anyBlsMedian ? <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th> : null}
                   {LEVELS.map((l) => (
                     <th key={l} className="py-2 pr-4 text-right font-bold">
                       {`Level ${l}`}{" "}
@@ -151,7 +154,9 @@ export async function OccupationReference({
                 {bands.map((b) => (
                   <tr key={b.key} className="border-b border-border/60">
                     <td className="py-2 pr-4">{b.label}{" "}</td>
-                    <td className="py-2 pr-4 text-right tabular-nums">{b.median != null ? formatDollars(b.median) : "—"}{" "}</td>
+                    {anyBlsMedian ? (
+                      <td className="py-2 pr-4 text-right tabular-nums">{b.median != null ? formatDollars(b.median) : "—"}{" "}</td>
+                    ) : null}
                     {LEVELS.map((l, i) => (
                       <td key={l} className="py-2 pr-4 text-right tabular-nums">
                         {b.levels?.[i] != null ? formatDollars(b.levels[i] as number) : b.key === "us" ? "" : "—"}{" "}
@@ -175,44 +180,73 @@ export async function OccupationReference({
       ) : null}
 
       {busiest && history.length >= 2 ? (
-        <section className="mt-10 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="occ-dol-years">
-          <h2 id="occ-dol-years" className="font-heading text-xl font-bold sm:text-2xl">
+        <section className="mt-10 border-2 border-border bg-sage p-5 shadow-hard-sm sm:p-6" aria-labelledby="occ-dol-years">
+          <h3 id="occ-dol-years" className="font-heading text-lg font-bold">
             DOL&apos;s levels for this job in {busiest.name}, year by year
-          </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
-            Each July DOL resets the four levels from BLS&apos;s newest survey. A determination keeps the figures of
-            the year it was issued in.
+          </h3>{" "}
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Each July DOL resets the four levels from BLS&apos;s newest survey; a determination keeps its year&apos;s.
           </p>
-          <ScrollBox label="DOL wage levels by wage year" className="mt-4">
-            <table className="w-full min-w-[34rem] text-left text-base">
-              <caption className="sr-only">DOL wage levels by wage year, {busiest.name}{" "}</caption>
-              <thead>
-                <tr className="border-b-2 border-border text-sm text-muted-foreground">
-                  <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
-                  {LEVELS.map((l) => (
-                    <th key={l} className="py-2 pr-4 text-right font-bold">
-                      {`Level ${l}`}{" "}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[...history].sort((a, b) => b.wageYear - a.wageYear || (a.asCode ?? "").localeCompare(b.asCode ?? "")).map((y, i) => (
-                  <tr key={`${y.wageYear}-${y.asCode ?? ""}`} className={i === 0 ? "border-b border-border/60 font-bold" : "border-b border-border/60"}>
-                    <td className="py-2 pr-4 tabular-nums">
-                      {wageYearLabel(y.wageYear)}
-                      {y.asCode ? <span className="block text-sm font-normal text-muted-foreground">as {y.asCode}, {y.asTitle}</span> : null}{" "}
-                    </td>
-                    {y.yearly.map((v, j) => (
-                      <td key={j} className="py-2 pr-4 text-right tabular-nums">
-                        {v != null ? formatDollars(v) : j === 0 && y.label ? y.label : "—"}{" "}
-                      </td>
+          {(() => {
+            const years = [...history].sort((a, b) => b.wageYear - a.wageYear || (a.asCode ?? "").localeCompare(b.asCode ?? ""));
+            // The newest four years show; the rest fold under one line, in a table with the same columns.
+            const SHOWN = 4;
+            const table = (rows: typeof years, head: boolean, label: string) => (
+              <ScrollBox label={label} className="mt-3">
+                <table className="w-full min-w-[34rem] table-fixed text-left text-base">
+                  <caption className="sr-only">{label}, {busiest.name}{" "}</caption>
+                  <colgroup>
+                    <col className="w-[28%]" />
+                    {LEVELS.map((l) => (
+                      <col key={l} />
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollBox>
+                  </colgroup>
+                  {head ? (
+                    <thead>
+                      <tr className="border-b-2 border-border text-sm text-muted-foreground">
+                        <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
+                        {LEVELS.map((l) => (
+                          <th key={l} className="py-2 pr-4 text-right font-bold">
+                            {`Level ${l}`}{" "}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                  ) : null}
+                  <tbody>
+                    {rows.map((y) => (
+                      <tr key={`${y.wageYear}-${y.asCode ?? ""}`} className={y === years[0] ? "border-b border-border/60 font-bold" : "border-b border-border/60"}>
+                        <td className="py-2 pr-4 tabular-nums">
+                          {wageYearLabel(y.wageYear)}
+                          {y.asCode ? <span className="block text-sm font-normal text-muted-foreground">as {y.asCode}, {y.asTitle}</span> : null}{" "}
+                        </td>
+                        {y.yearly.map((v, j) => (
+                          <td key={j} className="py-2 pr-4 text-right tabular-nums">
+                            {v != null ? formatDollars(v) : j === 0 && y.label ? y.label : "—"}{" "}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollBox>
+            );
+            return (
+              <>
+                {table(years.slice(0, SHOWN), true, "DOL wage levels by wage year")}{" "}
+                {years.length > SHOWN ? (
+                  // A plain fold, not FinePrint: its indented note text would shift the table's columns.
+                  <details className="group mt-1">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+                      <CaretRightIcon aria-hidden="true" weight="bold" className="size-3.5 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />
+                      {`The ${years.length - SHOWN} earlier years, back to ${wageYearLabel(years[years.length - 1]!.wageYear)}`}
+                    </summary>
+                    {table(years.slice(SHOWN), false, "Earlier DOL wage levels by wage year")}
+                  </details>
+                ) : null}
+              </>
+            );
+          })()}
           {history.some((y) => y.asCode) ? (
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
               <SocCodeText text={predecessorNote(soc) ?? ""} />

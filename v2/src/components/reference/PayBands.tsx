@@ -162,6 +162,10 @@ export function PayBands({
   const domain = bandDomain(bands);
   if (!domain || !bands.length) return null;
   const perRow = scale === "auto" && !sharedScaleFits(bands);
+  // Each legend key shows only when some row draws its mark: BLS publishes no spread for some areas.
+  const anyBlock = bands.some((b) => b.p25 != null && b.p75 != null);
+  const anyMedian = bands.some((b) => b.median != null);
+  const anySpread = bands.some((b) => b.p10 != null && b.p90 != null);
   const anyLevels = bands.some((b) => (b.levels ?? []).some((v) => v != null));
   const anyPerm = bands.some((b) => b.perm != null);
   return (
@@ -190,16 +194,22 @@ export function PayBands({
         </div>
       )}
       <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-4 w-8 border-2 border-data-good-ink bg-chart-green" /> middle
-          half of pay (BLS)
-        </li>{" "}
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-5 w-[3px] bg-data-good-ink" /> median
-        </li>{" "}
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-1 w-8 bg-chart-yellow" /> 10th to 90th percentile
-        </li>{" "}
+        {anyBlock ? (
+          <li className="flex items-center gap-2">
+            <span aria-hidden="true" className="inline-block h-4 w-8 border-2 border-data-good-ink bg-chart-green" /> middle
+            half of pay (BLS)
+          </li>
+        ) : null}{" "}
+        {anyMedian ? (
+          <li className="flex items-center gap-2">
+            <span aria-hidden="true" className="inline-block h-5 w-[3px] bg-data-good-ink" /> median
+          </li>
+        ) : null}{" "}
+        {anySpread ? (
+          <li className="flex items-center gap-2">
+            <span aria-hidden="true" className="inline-block h-1 w-8 bg-chart-yellow" /> 10th to 90th percentile
+          </li>
+        ) : null}{" "}
         {anyLevels ? (
           <li className="flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-data-info" /> DOL&apos;s Levels I to IV, left
