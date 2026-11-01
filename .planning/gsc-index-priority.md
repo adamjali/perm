@@ -1779,3 +1779,35 @@ Changed pages, most important first:
 
 The rest of `gsc_queue.mjs --since 32180fe3` is shared components or wording only (the legal-name pages done
 Oct 31, tools pages that got a picture band). The sitemap's lastmod carries those.
+
+### Round, Sunday Nov 1 2026 (about 1:02 to 1:52 PM EST)
+
+What's live is 002b6051 (release 416, the board fix shipped this morning). Everything from Oct 31 went live with the
+2:00 AM EST run. Google had already crawled most of the queue on its own after the sitemap was resubmitted at 3:27 AM.
+
+Requested (7, no quota stop), each with Google's last crawl:
+- `/tools/h1b-six-year-limit`: Oct 28, 1:37 AM (before the 240-day rule).
+- `/today`: Oct 28, 4:58 PM. Its Discovery block read "Sitemaps: Temporary processing error"; the sitemap index itself
+  reads Success.
+- `/visa-bulletin/categories/eb2-india`: Oct 30, 11:43 PM.
+- `/tools/priority-date-calculator`: Oct 29, 5:31 PM.
+- `/tools/green-card-line`: Oct 11, 7:08 PM.
+- `/perm-rfi-audit`: Oct 27, 12:37 PM.
+- `/perm-queue/2026-01`: Oct 31, 9:49 AM.
+
+Skipped, crawled after the 2:00 AM deploy: `/wage-violations` (4:31 AM), `/tools/cspa-age-calculator` (12:25 PM),
+`/tools/cap-gap-calculator` (4:32 AM), `/pwd-cases` (10:49 AM), `/uscis-processing-times` (8:04 AM),
+`/perm-decision-activity` (9:49 AM). All indexed.
+
+Held for tomorrow on purpose: `/perm-employers/costco-wholesale-corporation`, `/perm-processing-times` and `/`. Each
+changes again with the 2 AM EST run on Mon Nov 2 (the tidied employer page, the processing-times cards that say
+which way DOL moved, the homepage figures that say which way they moved), so a request today would spend a crawl on
+a version that's gone by morning.
+
+Still to request, only after the 2 AM EST run on Mon Nov 2 ships 06e82319 or later (check
+`ssh permtracker 'sudo permtracker-deploy status'`), each whose Google copy predates that deploy:
+1. `/perm-employers/costco-wholesale-corporation` and `/perm-employers/stoughton-trailers-llc` (the tidied employer page).
+2. `/perm-processing-times` and `/` (cards and hero figures with their direction).
+3. A law firm and a job page on the same parts: `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`,
+   `/perm-wages/software-developers`.
+Then `node scripts/gsc_queue.mjs --since 002b6051` for anything else.
