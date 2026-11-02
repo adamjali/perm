@@ -33,6 +33,8 @@ export const lca = makeFlagProgram({
   disclosureDocKey: "flag_disclosure_summary_lca",
   // A broad name ("Am": 168,861 LCAs) is read newest-first (BROAD_NAME_ROWS).
   disclosureByDateIndex: "lca_cases_recv",
+  // A name with a job title tests the title on the index ("EMC" and one title: 15 s became 0.03 s).
+  disclosureByTitleIndex: "lca_cases_emp_title",
 });
 
 export const normaliseLcaCaseNumber = lca.normalise;

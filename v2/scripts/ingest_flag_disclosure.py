@@ -531,6 +531,11 @@ def index_ddl(table: str) -> list[str]:
         # index the search stops at its 200 in 0.6 s. Created on production by
         # hand that evening (56 s).
         f"CREATE INDEX IF NOT EXISTS {table}_recv ON {table} (received_date, employer_slug)",
+        # A name with a job title (`disclosureByTitleIndex`): the title is in the index, so the search tests it
+        # without opening each filing. "EMC" holds 2,204 LCAs and 37 under one title; newest-first walked every LCA
+        # in the file for them (15 to 20 s under load, Sentry 59, Nov 1 2026), this index answers in 0.03 s.
+        # Created on production by hand on Nov 2 2026.
+        f"CREATE INDEX IF NOT EXISTS {table}_emp_title ON {table} (employer_slug, received_date, job_title)",
     ] if table == "lca_cases" else [])
 
 

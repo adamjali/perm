@@ -58,6 +58,11 @@ export interface FlagProgramConfig {
    * Only `lca_cases` has one: it's the table big enough to need it.
    */
   disclosureByDateIndex?: string;
+  /**
+   * An index on the disclosure table's (employer_slug, received_date, job_title), read when a name search carries
+   * a job title: it tests the title without opening each filing. Only `lca_cases` has one.
+   */
+  disclosureByTitleIndex?: string;
 }
 
 /**
@@ -624,7 +629,21 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       params.push(config.defaultVisaClass);
     }
     let index = `${disclosureTable}_emp`;
-    if (config.disclosureByDateIndex) {
+    const titled = narrowingClauses("received_date", { title: args.title });
+    if (titled.conds.length && config.disclosureByTitleIndex) {
+      // A JOB TITLE COUNTS ITS MATCHES, NOT THE NAME'S FILINGS. EMC holds 2,204 LCAs, past the line, so the name
+      // alone sent the read newest-first, and with only 37 of them matching the title it walked every LCA in the
+      // file: 15 to 20 s under load, twice past the deadline (Sentry 59, Nov 1 2026). The title index holds the
+      // title, so the count and a small read touch only the name's own entries (0.03 s). Many matches still go
+      // newest-first, where the walk finds its page early.
+      index = config.disclosureByTitleIndex;
+      const counted = await one<{ n: number | string }>(
+        `SELECT COUNT(*) AS n FROM (SELECT 1 FROM ${disclosureTable} INDEXED BY ${index} ` +
+          `WHERE ${[scope.where, ...titled.conds].join(" AND ")} LIMIT ${BROAD_NAME_ROWS + 1})`,
+        [...scope.args, ...titled.params],
+      );
+      if (Number(counted?.n) > BROAD_NAME_ROWS && config.disclosureByDateIndex) index = config.disclosureByDateIndex;
+    } else if (config.disclosureByDateIndex) {
       const counted = await one<{ n: number | string }>(
         `SELECT COUNT(*) AS n FROM (SELECT 1 FROM ${disclosureTable} INDEXED BY ${disclosureTable}_emp ` +
           `WHERE ${scope.where} LIMIT ${BROAD_NAME_ROWS + 1})`,

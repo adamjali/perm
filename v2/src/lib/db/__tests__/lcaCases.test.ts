@@ -83,3 +83,35 @@ describe("the published LCA file: a broad name is read newest-first (Sentry 59)"
     expect(rows.mock.calls[0]![0]).toContain("INDEXED BY lca_cases_emp");
   });
 });
+
+describe("the published LCA file: a name with a job title counts the title's matches (Sentry 59, Nov 2 2026)", () => {
+  it("counts the matches on the title index, which holds the title, at most one past the line", async () => {
+    one.mockResolvedValueOnce({ n: 37 });
+    await searchLcaDisclosed({ text: "EMC", title: "Senior Principal Software Engineer" });
+    const [sql, args] = one.mock.calls[0]!;
+    expect(sql).toContain("FROM lca_cases INDEXED BY lca_cases_emp_title WHERE employer_slug >= ? AND employer_slug < ? AND job_title LIKE ?");
+    expect(sql).toContain(`LIMIT ${BROAD_NAME_ROWS + 1}`);
+    expect(args).toEqual(["emc", "emd", "%Senior Principal Software Engineer%"]);
+  });
+
+  it("reads a few matches on the title index", async () => {
+    // EMC holds 2,204 LCAs, more than the line, so the name alone went newest-first and walked every LCA in the
+    // file looking for 37 matches: 15 to 20 s under load. The title index reads EMC's own entries (0.03 s).
+    one.mockResolvedValueOnce({ n: 37 });
+    await searchLcaDisclosed({ text: "EMC", title: "Senior Principal Software Engineer" });
+    expect(one).toHaveBeenCalledTimes(1);
+    expect(rows.mock.calls[0]![0]).toContain("FROM lca_cases INDEXED BY lca_cases_emp_title WHERE");
+  });
+
+  it("reads many matches newest-first, where the walk stops early", async () => {
+    one.mockResolvedValueOnce({ n: BROAD_NAME_ROWS + 1 });
+    await searchLcaDisclosed({ text: "Am", title: "Software Engineer" });
+    expect(rows.mock.calls[0]![0]).toContain("FROM lca_cases INDEXED BY lca_cases_recv WHERE");
+  });
+
+  it("falls back to the title index when the count can't be read", async () => {
+    one.mockResolvedValueOnce(null);
+    await searchLcaDisclosed({ text: "EMC", title: "Engineer" });
+    expect(rows.mock.calls[0]![0]).toContain("INDEXED BY lca_cases_emp_title");
+  });
+});
