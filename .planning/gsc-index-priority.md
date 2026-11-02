@@ -1811,3 +1811,30 @@ Still to request, only after the 2 AM EST run on Mon Nov 2 ships 06e82319 or lat
 3. A law firm and a job page on the same parts: `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`,
    `/perm-wages/software-developers`.
 Then `node scripts/gsc_queue.mjs --since 002b6051` for anything else.
+
+## Round of Mon Nov 2 2026, 12:20 PM EST
+
+What's live is 3422fc35 (release 445, 4:29 AM EST), which carries the tidied employer pages, the job-code work and
+the opening sentence naming PERM Tracker in every guide and post (38602fba, live 3:33 AM EST). Eleven commits wait for
+the 2:00 AM EST run on Tue Nov 3 (the date leads, the optional review name and others), so pages they touch were left
+alone: `/`, `/about`, `/faq`, `/for-attorneys`, `/perm-case-status`, `/perm-processing-times`, `/perm-queue`,
+`/perm-rfi-audit` and four guides (`node scripts/gsc_queue.mjs --since 3422fc35` lists all 13).
+
+Requested (4, then Quota Exceeded on the fifth):
+- `/debarments/settlements`: unknown to Google.
+- `/guides/employer-barred-from-perm`: crawled Nov 2, 1:30 AM, before its opening sentence went live.
+- `/perm-employers/costco-wholesale-corporation`: crawled Nov 1, 10:39 PM, before the tidied page.
+- `/perm-employers/stoughton-trailers-llc`: crawled Nov 1, 4:21 AM.
+
+Refused by the quota: `/guides/check-perm-case-status` (crawled Oct 29, 8:23 AM).
+
+Skipped, crawled after the morning deploys: `/guides/perm-job-description-from-soc-code` (9:31 AM),
+`/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp` (6:37 AM), `/perm-wages/software-developers` (10:26 AM).
+
+Next round, after the Tue Nov 3 2:00 AM EST run (check `ssh permtracker 'sudo permtracker-deploy status'`):
+1. `/guides/check-perm-case-status`, then the most-read guides and posts, each crawled before 3:33 AM EST Nov 2
+   (the opening sentence): `/blog/perm-processing-times-2026`, `/blog/what-is-perm-labor-certification`,
+   `/guides/complete-perm-filing-guide`.
+2. `/soc-codes` and `/soc-codes/software-engineer`.
+3. The pages tonight's run changes: `/perm-queue`, `/perm-processing-times`, `/faq`, `/perm-case-status`, `/`.
+Then `node scripts/gsc_queue.mjs --since 3422fc35` for anything else.
