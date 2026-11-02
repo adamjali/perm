@@ -114,8 +114,8 @@ export default function ComparePage() {
           {/* The answer first (Google: say which suits which use; Ahrefs: never crown yourself). */}
           <p className="mt-4 text-lg leading-relaxed">
             The {trackers.length} sites here track PERM cases or the green card steps around them. They differ most in
-            where their data comes from and which DOL programs they cover, so the best one depends on what you need: the
-            table below says who each one suits.
+            where their data comes from and which DOL programs they cover, so the best one depends on what you need. The
+            table says who each one suits.
           </p>{" "}
           <p className="mt-3 text-base leading-relaxed text-soft">
             PERM Tracker made this page and is one of the sites on it. We chose the questions. Every mark on another

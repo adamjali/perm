@@ -251,19 +251,19 @@ export default async function VisaBulletinPage() {
       <JsonLdScript schema={faqSchema} />
 
       <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
-        The {monthLabel(next)} visa bulletin, from the last {series.length}
+        The {monthLabel(next)} visa bulletin, and every {monthName(targetMonth)} before it
       </h1>{" "}
       {/* The answer to a search for "visa bulletin" first: the bulletin that's out, with its cutoffs a
           click away, then the picture of what it moved (owner, Oct 28 2026: pictures, not text). */}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed">
-        The newest bulletin is {monthLabel(last.bulletinMonth)}&apos;s:{" "}
+        The newest bulletin is {monthLabel(last.bulletinMonth)}&apos;s, with{" "}
         <Link href="/visa-bulletin/categories" className="link">
           every cutoff it prints
         </Link>
         .{" "}
         <span className="text-soft">
-          Below, what it moved, then what every earlier {monthName(targetMonth)} bulletin did across {series.length}{" "}
-          bulletins since {monthLabel(series[0]!.bulletinMonth)}. Measured, not predicted.
+          Then what it moved, and what each earlier {monthName(targetMonth)} bulletin did, from {series.length}{" "}
+          bulletins since {monthLabel(series[0]!.bulletinMonth)}.
         </span>
       </p>{" "}
       <UscisChartNote charts={uscisCharts} className="mt-6" />

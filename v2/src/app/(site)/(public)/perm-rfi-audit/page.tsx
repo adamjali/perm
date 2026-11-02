@@ -283,7 +283,7 @@ export default async function PermRfiAuditPage() {
           title="What happens after an RFI"
           lede={
             <>
-              The most reassuring true number on this page.
+              How the cases that got an RFI ended. Most were certified.
             </>
           }
           more={

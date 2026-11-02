@@ -1983,3 +1983,31 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   since Oct 31, an axe failure) and the country, industry and city indexes (their busiest-list names were 20px links on
   a phone since Oct 15). Both fixed: each `CatchingUp` row is one dt and two dd in a grid, and the names take
   `py-3` on a phone. The morning's live checks hadn't covered those pages.
+
+## Nov 1 2026 (evening): settlements, DOJ's actions in the feed, and what each SOC code covers
+
+- **`/debarments/settlements`** sets each Justice Department settlement with a work-visa sponsor since June 2025 (15),
+  DOJ's Cloudera lawsuit and DOL's Cloudera suspension beside DOL's live record for each company
+  (`src/lib/enforcement/actions.ts`, a hand-kept list read from each agreement, checked against DOJ's lists;
+  `getSponsorRecords`). A settled employer's own page says what DOJ and DOL did (`EnforcementNotice`). DOL's debarment
+  lists can't show these: Cloudera's 24 months are a promise in its settlement, not a 656.31(f) notice.
+- **One company can have several actions**, so each action's heading carries its kind and day for screen readers: the
+  build's heading check stopped 0d447585 on Cloudera's three identical headings.
+- **DOJ in the policy feed** (`scripts/ingest_doj_enforcement.py`, source `doj`, every 30 minutes on the server, the two
+  lists every 6 hours, 10 s between requests as DOJ's robots.txt asks): Civil Rights Division releases that name H-1B,
+  H-2A, PERM or a job held for a visa worker, IER's settlements with no release, and OCAHO cases the government brought
+  against a company IER names. IER's summaries for Natsoft and Galent never say "visa", so the reader can't tell them
+  from a citizens-only ad; both are on the hand-kept list from their agreements.
+- **DOL's newsroom can be walked back to a day** (`ingest_dol_news.py --back-to`, the workflow's `dol_news_back_to`
+  input). Walked to Jan 1 2026 once: 273 releases, 5 kept, among them the May 12 Cloudera release.
+- **The evening check names new debarments**: `debarments.first_seen_at` (an upsert keeps it; rows held before Nov 1
+  read 0) and its titles keep an abbreviation's period ("Inc.").
+- **What each SOC code covers** (`CodeCards` on `/soc-codes/<title>`, Sabrina's ask): O*NET's description, three main
+  tasks, the Job Zone and BLS's median, a card per code the title is filed under; the finder shows O*NET's first
+  sentence under each code (`codeSummaries`, `firstSentence`). O*NET stores its merged first zones as 2: they read
+  "1-2" everywhere (`zoneLabelOf`). One credit line, `OnetCredit`, with the database version.
+- **The header builder kept cutting a framed box's bottom edge** (`drop_orphan_end` took it for a stray rule); a picture
+  that ends on its own box's edge now ends there (`scripts/test_article_heroes.py`).
+- **Guides**: `/guides/employer-barred-from-perm` (new) and the suspension guide's "How the last suspension ended".
+- **Search an employer's, job's or firm's filings from its own page** (`FilingsSearch`, a GET form into `/case-search`
+  with the page's own subject fixed), and the headcount line reads the newest 50 filings (`src/lib/employerSize.ts`).

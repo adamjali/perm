@@ -24,7 +24,7 @@ export interface Topic {
 
 export const TOPICS: Record<Exclude<ContentType, "changelog">, readonly Topic[]> = {
   guides: [
-    { id: "start", label: "Start here", blurb: "The whole process in one place, and how to use this site.", picture: "topic-start" },
+    { id: "start", label: "Start here", blurb: "The steps to a green card, and how this site follows each one.", picture: "topic-start" },
     { id: "case-status", label: "Your case status", blurb: "Finding the case number, reading DOL's status, and what each status means.", picture: "topic-case-status" },
     { id: "queue", label: "Timing and the queue", blurb: "How DOL works through cases, and how far to trust a date.", picture: "topic-queue" },
     { id: "deadlines", label: "Deadlines and recruitment", blurb: "The dates a PERM case runs on, and the recruitment that has to fit inside them.", picture: "topic-deadlines" },

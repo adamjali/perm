@@ -77,7 +77,7 @@ export function CaseLookupForm({
   source,
   action = "/perm-case-status",
   placeholder = "G-100-26125-868956",
-  help = "It's on your ETA-9089 receipt. It goes into the page's address, so you can bookmark the result.",
+  help = "It's on your ETA-9089 receipt.",
   buttonLabel = CHECK_LABEL,
   hiddenFields,
   names = false,

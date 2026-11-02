@@ -360,7 +360,7 @@ export default async function PermQueuePage() {
           The wall, by filing month
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
-          Each bar is one filing month&rsquo;s cases still waiting, in the colours above. Tap a month for its own page.
+          Each bar is one filing month&rsquo;s cases still waiting, in the colours above. Open a month to see its cases day by day.
         </p>{" "}
 
         {since && sinceDay ? <SinceDay className="mt-5" shift={since} since={sinceDay} hrefFor={(status) => statusCasesHref(status)} /> : null}{" "}

@@ -109,9 +109,9 @@ export default async function PwdCalculatorPage() {
           What the determination is worth when it lands
         </h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          The queue above says roughly when yours is coming. This says how much
-          time it buys you when it does, which is not the same for everyone and
-          is not a fixed number of days.
+          How long a determination stays valid depends on the month DOL issues
+          it, so the time it gives you to recruit and file differs from case to
+          case.
         </p>
         <PwdValidityWindow className="mt-6" />
       </section>

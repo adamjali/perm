@@ -44,7 +44,7 @@ const SECTIONS: TourSection[] = [
     facts: [
       "Coloured by stage: wage determination, recruitment, ETA 9089, I-140",
       "Dates too close to tell apart share one numbered square",
-      "Three months to two years at a glance, opened at today",
+      "Three months to two years of deadlines, opened at today",
     ],
     surface: "timeline",
     url: "permtracker.app/timeline",
@@ -54,7 +54,7 @@ const SECTIONS: TourSection[] = [
     id: "cases",
     short: "Cases",
     title: "Each case on a card",
-    lead: "Stage, next deadline and days left at a glance, with filters, sorting, search and bulk actions.",
+    lead: "Each case's stage, next deadline and days left, with filters, sorting, search and bulk actions.",
     facts: [
       "Sorted by the next deadline unless you choose otherwise",
       "Import cases from a JSON file, export to CSV or JSON",
