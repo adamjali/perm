@@ -4,6 +4,8 @@ import { DecidedTimeline } from "@/components/tools/DecidedTimeline";
 import { StatusHistory } from "@/components/tools/StatusHistory";
 import type { StatusEvent } from "@/lib/statusHistory";
 import type { DecidedTimelineRead } from "@/lib/db/decidedTimeline";
+import type { EmployerWageRequests as FoundWageRequests } from "@/lib/employerWageRequests";
+import { EmployerWageRequests } from "@/components/tools/EmployerWageRequests";
 import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
@@ -95,6 +97,8 @@ const MIN_RATE_SAMPLE = 20;
 export interface CaseStatusResultProps {
   /** A decided case's own dates, wage request to decision (perm_cases joined to pwd_cases). */
   timeline?: DecidedTimelineRead | null;
+  /** A case DOL's file doesn't hold yet: the employer's wage requests for the same job (EmployerWageRequests). */
+  wageRequests?: FoundWageRequests | null;
   /** Every status change our checks saw for this case (perm_case_events). */
   history?: StatusEvent[] | null;
   result: CaseLookupResult;
@@ -174,6 +178,7 @@ export function CaseStatusResult({
   rfi = null,
   sameDay,
   timeline = null,
+  wageRequests = null,
   history = null,
   today,
 }: CaseStatusResultProps) {
@@ -312,6 +317,9 @@ export function CaseStatusResult({
 
       {decided ? <TheDecision decided={decided} duration={duration} cohort={cohort} wage={wage} /> : null}{" "}
       {decided ? <DecidedTimeline read={timeline} /> : null}{" "}
+      {!decided ? (
+        <EmployerWageRequests found={wageRequests} employerName={result.live?.employerName ?? null} jobTitle={result.live?.jobTitle ?? null} />
+      ) : null}{" "}
       <StatusHistory events={history} filedOn={filingDate} />
 
       {meaning && actionStage ? (

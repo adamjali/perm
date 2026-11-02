@@ -28,6 +28,9 @@ import { formatInt } from "@/lib/format";
 import { formatDay } from "@/lib/dolFormat";
 import { prettyStatus } from "@/components/queue/stages";
 import { getPermsNamingPwd, type PermNamingPwd } from "@/lib/db/decidedTimeline";
+import { getEmployerPermsForWageRequest } from "@/lib/db/employerWageRequests";
+import { EmployerPermCasesForWage } from "@/components/tools/EmployerWageRequests";
+import { WAGE_ISSUED_RE } from "@/lib/employerWageRequests";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -50,7 +53,7 @@ function sharePct(x: number): string {
 }
 
 
-const ISSUED = /^(DETERMINATION ISSUED|REDETERMINATION|CENTER DIRECTOR REVIEW)/;
+const ISSUED = WAGE_ISSUED_RE;
 
 /**
  * How long the determination is good for. `calculatePWDExpiration` is the
@@ -149,6 +152,28 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
     // Where DOL really is in the line, by our own daily check; DOL's table trails it by weeks.
     getPwdLine(),
   ]);
+  // No decided PERM names it yet: the employer's PERM cases for the same job, filed after it (one is very
+  // likely the one it supports). A failure only drops the section.
+  const likelyPerms =
+    perms.length === 0
+      ? await getEmployerPermsForWageRequest(
+          caseNumber,
+          row?.employerSlug ?? disclosed?.employerSlug ?? null,
+          row?.jobTitle ?? disclosed?.jobTitle ?? null,
+          {
+            status: row?.status ?? disclosed?.status ?? null,
+            decided: disclosed?.decisionDate ?? null,
+            filed: row?.filingDate ?? disclosed?.receivedDate ?? null,
+          },
+        ).catch(() => null)
+      : null;
+  const likelyPermsSection = (
+    <EmployerPermCasesForWage
+      found={likelyPerms}
+      employerName={row?.employerName ?? disclosed?.employerName ?? null}
+      jobTitle={row?.jobTitle ?? disclosed?.jobTitle ?? null}
+    />
+  );
 
   if (!row && disclosed) {
     // DOL's live endpoint has nothing (or did not answer) but the quarterly
@@ -172,6 +197,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           . Its live case system didn&apos;t return the number, so the record below is from the quarterly file.
         </AnswerPanel>
         <Determination d={disclosed} perms={perms} />
+        {likelyPermsSection}
         <PageSection title="The record">
           <RecordList
             rows={[
@@ -318,6 +344,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
       ) : null}
 
       {disclosed ? <Determination d={disclosed} perms={perms} /> : null}
+      {likelyPermsSection}
 
       {pending && !notPerm ? (
         <PageSection id="wage-queue" title="Where it sits in DOL's wage queue">
