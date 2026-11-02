@@ -2050,3 +2050,10 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   rendered from the code. The same link with no `r` checks the token and only shows the boxes: the safe live check.
 - **A Convex test timing out at 15 s under another session's load is the machine** (load average 70 on Nov 2): rerun
   the file alone before reading it as a defect.
+- **One person counts once even when a rating and a written review come apart** (c6df22d6, Convex live 1:59 PM EST):
+  the review page keeps the sealed link in the browser for a day (`src/lib/reviews/keptLink.ts`), so a reload no
+  longer loses it; the link decides who the reviewer is, whatever's typed; a written review takes its rating's place
+  in the queue at once (`supersededBy`), and declining or deleting it puts the rating back. With no link at all, a
+  rating with the same stars within 3 hours shows "Same person?" with a Merge button (`siteReviews.merge`).
+- **Reviews with words show before ratings alone** on the homepage and the reviews page's rows (`wordsFirst` in
+  `src/lib/reviews/rows.ts`), even when older.
