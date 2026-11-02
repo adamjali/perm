@@ -47,6 +47,11 @@ async function answerFor(slug: string): Promise<TitleAnswer | null> {
 
 const filedCodes = (a: TitleAnswer) => a.codes.filter((c) => c.filings > 0);
 
+/** "an" before a vowel sound as written ("an Accountant", "an HR Manager"), else "a". */
+function article(title: string): string {
+  return /^(?:[aeiou]|hr\b|mba\b|rn\b|it\b|sap\b|fp|x-?ray)/i.test(title) && !/^(?:u[nks]i|use|eu|one\b)/i.test(title) ? "an" : "a";
+}
+
 function describe(a: TitleAnswer): string {
   const [top, ...rest] = filedCodes(a);
   if (!top) return `The SOC codes O*NET lists for ${a.title}.`;
@@ -118,10 +123,14 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
   ]);
   const payOf = new Map(filed.slice(0, 8).map((c, i) => [c.soc, pays[i]?.median ?? null]));
   const spellings = top?.spellings ?? [];
+  const topSummary = top ? summaries.get(top.soc) : undefined;
   const faqs = [
-    { q: `What is the SOC code for ${a.title}?`, a: describe(a) + (top ? ` ${top.soc} is ${top.codeTitle}.` : "") },
+    { q: `What is the SOC code for ${a.title}?`, a: describe(a) },
+    ...(top && topSummary
+      ? [{ q: `What does ${article(a.title)} ${a.title} do?`, a: `O*NET describes ${top.soc} ${top.codeTitle}, the code it's filed under most, this way: ${topSummary.description}` }]
+      : []),
     {
-      q: `Which code should a ${a.title} job use?`,
+      q: `Which code should ${article(a.title)} ${a.title} job use?`,
       a: "The code follows the job's duties and requirements, not its title. DOL's National Prevailing Wage Center decides it on the wage request. When employers split a title between codes, the work decides which one fits.",
     },
   ];
