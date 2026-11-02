@@ -353,7 +353,7 @@ AL_CSV = "https://workforce.alabama.gov/documents/warn-list/"
 
 
 def parse_alabama(data: bytes) -> list[dict]:
-    if data.lstrip()[:1] == b"<":
+    if is_page(data):
         raise ValueError("not a CSV: Alabama answered with a page")
     out = []
     for r in csv_rows(data):
@@ -370,7 +370,25 @@ def parse_alabama(data: bytes) -> list[dict]:
 
 
 def load_alabama(f: str | None) -> list[dict]:
-    return parse_alabama(read(f) if f else get(AL_CSV, referer=AL_PAGE))
+    """The list's address answers a web page now and then instead of the CSV
+    (GitHub's runner, 3 AM Nov 2 2026; the same address served the CSV to a home
+    connection hours later). That is the site turning a script away, so it is
+    asked once more after a pause, and a second page reads as the site being
+    down: a warning, nothing written or pruned, and the state's freshness row
+    the alarm. A CSV that no longer parses still fails the run."""
+    if f:
+        return parse_alabama(read(f))
+    data = get(AL_CSV, referer=AL_PAGE)
+    if is_page(data):
+        pause(60)
+        data = get(AL_CSV, referer=AL_PAGE)
+        if is_page(data):
+            raise urllib.error.URLError("the list's address answered with a page twice, a minute apart")
+    return parse_alabama(data)
+
+
+def is_page(data: bytes) -> bool:
+    return data.lstrip()[:1] == b"<"
 
 
 # --- Ohio -------------------------------------------------------------------

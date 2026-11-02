@@ -386,6 +386,26 @@ def main() -> int:
     finally:
         ws.get, ws.pause, ws.full_history = real_get, real_pause, real_full
 
+    # Nov 2 2026: Alabama's CSV address answered GitHub's runner with a page. One more ask
+    # after a pause; a second page is the site refusing (a warning, the freshness row the
+    # alarm), never a broken parse. A page then the CSV reads the CSV.
+    real_get, real_pause = ws.get, ws.pause
+    ws.pause = lambda *a, **k: None
+    try:
+        asked: list[str] = []
+        ws.get = lambda url, **k: (asked.append(url), b"<!DOCTYPE html><html>Just a moment</html>")[1]
+        try:
+            ws.load_alabama(None)
+            check(False, "Alabama answering a page twice raises", f)
+        except Exception as e:  # noqa: BLE001
+            check(lw.is_unreachable(e), f"Alabama answering a page twice reads as the site down, not a broken read ({type(e).__name__})", f)
+        check(len(asked) == 2, f"Alabama is asked twice before it counts as down (asked {len(asked)})", f)
+        replies = [b"<html>busy</html>", b("al_warn.csv")]
+        ws.get = lambda url, **k: replies.pop(0)
+        check(len(ws.load_alabama(None)) == 6, "a page then the CSV reads the CSV", f)
+    finally:
+        ws.get, ws.pause = real_get, real_pause
+
     real_states = iw.STATES
     def boom(exc):
         def load(_):

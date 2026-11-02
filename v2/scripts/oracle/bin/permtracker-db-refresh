@@ -67,6 +67,8 @@ def answers(sql_requests: list[dict], token_file: str) -> bool:
     try:
         token = open(token_file).read().strip()
         body = json.dumps({"requests": [*sql_requests, {"type": "close"}]}).encode()
+        # sqld listens on this machine's loopback only, where TLS would add nothing.
+        # nosemgrep: python.lang.security.audit.insecure-transport.urllib.insecure-request-object.insecure-request-object
         req = urllib.request.Request(f"http://127.0.0.1:{PORT}/v2/pipeline", data=body,
                                      headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=20) as r:
