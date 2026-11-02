@@ -51,6 +51,15 @@ describe("groupingKey and chunkFileOf", () => {
     expect(chunkFileOf("Loading chunk 1 failed. (https://permtracker.app/_next/static/chunks/../../etc/passwd.js)")).toBeNull();
     expect(chunkFileOf("TypeError at https://permtracker.app/_next/static/chunks/6020-3a9f2417e1cf54eb.js:1")).toBeNull();
   });
+
+  it("reads a chunk under a route group or a dynamic segment, encoded or not", () => {
+    expect(chunkFileOf("ChunkLoadError: Loading chunk 6750 failed. (error: https://permtracker.app/_next/static/chunks/app/(site)/layout-7aeb3f007142a472.js?dpl=f7796f0-437)"))
+      .toBe("chunks/app/(site)/layout-7aeb3f007142a472.js");
+    expect(chunkFileOf("ChunkLoadError: Loading chunk 9 failed. (missing: https://permtracker.app/_next/static/chunks/app/(site)/(public)/perm-employers/%5Bslug%5D/page-0a1b2c3d4e5f6a7b.js)"))
+      .toBe("chunks/app/(site)/(public)/perm-employers/[slug]/page-0a1b2c3d4e5f6a7b.js");
+    expect(chunkFileOf("Loading chunk 1 failed. (https://permtracker.app/_next/static/chunks/app/%2E%2E/%2E%2E/etc/passwd.js)")).toBeNull();
+    expect(chunkFileOf("Loading chunk 1 failed. (https://permtracker.app/_next/static/chunks/app/%E0%A4/x.js)")).toBeNull();
+  });
 });
 
 describe("POST /api/client-error", () => {

@@ -80,7 +80,7 @@ export function TradeAdjustment({ rows, pageName }: { rows: TaaPetition[]; pageN
         losses, and the workers could get training and income support. A denial meant DOL didn&apos;t find that. The
         program stopped taking petitions on July 1 2022. Matched to this employer by name and city; different companies
         can share a name. From{" "}
-        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link">
+        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link -my-3 inline-flex min-h-11 items-center">
           DOL&apos;s TAA petition data
         </a>
         .

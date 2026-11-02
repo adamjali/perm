@@ -64,11 +64,21 @@ export function groupingKey(message: string): string {
 
 /**
  * The build file a ChunkLoadError names, as its path under /_next/static/, or
- * null. Only a plain file name in chunks/ or css/ passes, so the route can look
- * for it on disk without the message choosing where to look.
+ * null. Only a file in chunks/ or css/ passes, so the route can look for it on
+ * disk without the message choosing where to look. Folder names may carry
+ * Next's route groups and dynamic segments ("(site)", "[slug]", percent-encoded
+ * or not): a chunk under chunks/app/(site)/ had opened its own error issue
+ * (Nov 2 2026).
  */
 export function chunkFileOf(message: string): string | null {
-  const m = /\/_next\/static\/((?:chunks|css)\/(?:[\w-]+\/)*[\w.-]+\.(?:js|css))(?:[?\s)]|$)/.exec(message);
-  if (!m || m[1]!.includes("..")) return null;
-  return /chunk/i.test(message) ? m[1]! : null;
+  const m = /\/_next\/static\/((?:chunks|css)\/(?:[\w()[\]%@.-]+\/)*[\w.-]+\.(?:js|css))(?:[?\s)]|$)/.exec(message);
+  if (!m || !/chunk/i.test(message)) return null;
+  let file: string;
+  try {
+    file = decodeURIComponent(m[1]!);
+  } catch {
+    return null;
+  }
+  if (file.includes("..") || file.includes("\\") || !/^(?:chunks|css)\/[\w()[\]@.\/-]+$/.test(file)) return null;
+  return file;
 }

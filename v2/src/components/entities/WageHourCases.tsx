@@ -132,7 +132,7 @@ export function WageHourCases({
         agreed to pay, not what was paid; a case with no violations is still listed; counts loaded after October 1,
         2025 aren&apos;t directly comparable with earlier ones. Matched by the employer&apos;s legal name, so another
         company with the same name can be missed or, rarely, included.{" "}
-        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link">
+        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link -my-3 inline-flex min-h-11 items-center">
           DOL&apos;s Wage and Hour data
         </a>
         .

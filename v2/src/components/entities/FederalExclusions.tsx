@@ -67,7 +67,7 @@ export function FederalExclusions({ rows, pageName }: { rows: SamExclusion[]; pa
         An excluded firm can&apos;t receive federal contracts, certain subcontracts or certain kinds of federal assistance
         while the exclusion lasts. It isn&apos;t a finding about the firm&apos;s immigration filings. Different companies
         can share a name, so check the record itself in{" "}
-        <a href={SAM_SEARCH} rel="noopener noreferrer" target="_blank" className="link">
+        <a href={SAM_SEARCH} rel="noopener noreferrer" target="_blank" className="link -my-3 inline-flex min-h-11 items-center">
           SAM.gov&apos;s exclusions search
         </a>
         . From SAM.gov&apos;s daily public file of active exclusions.

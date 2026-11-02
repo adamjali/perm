@@ -144,7 +144,7 @@ export function SafetyInspections({
         inspection&apos;s citations can still be contested, settled or deleted; violations deleted by a settlement or a
         court aren&apos;t counted, and grouped violations count once; the penalty is the amount assessed now, which a
         settlement can lower. Inspections from October 2016 on.{" "}
-        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link">
+        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link -my-3 inline-flex min-h-11 items-center">
           OSHA&apos;s inspection data
         </a>
         .

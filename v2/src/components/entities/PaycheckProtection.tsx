@@ -61,7 +61,7 @@ export function PaycheckProtection({ rows, pageName }: { rows: PppLoan[]; pageNa
         The jobs are what the borrower reported when it applied, not a count SBA checked. A forgiven amount was paid by
         SBA, not by the borrower. Matched to this employer by name and city; different companies can share a
         name. From{" "}
-        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link">
+        <a href={DATASET_URL} rel="noopener noreferrer" target="_blank" className="link -my-3 inline-flex min-h-11 items-center">
           SBA&apos;s PPP loan data
         </a>
         , its release of September 30 2024.
