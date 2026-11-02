@@ -81,6 +81,7 @@ export const NEXT_PATHS = {
   certifiedGuide: "/guides/perm-certified-what-next",
   greenCardLine: "/tools/green-card-line",
   uscisTimes: "/uscis-processing-times",
+  i129Times: "/uscis-processing-times/i-129",
   denialGuide: "/guides/perm-denied-what-happens-next",
   appealGuide: "/guides/perm-appeal-reconsideration-balca",
   rfiSteps: "/perm-rfi-audit#step-by-step",
@@ -271,9 +272,11 @@ function lcaCertified(caseNumber: string): NextSteps {
       },
     ],
     button: null,
+    // The rating page shows these links without the steps above them, so each says what it's for on its own.
     links: [
+      ...(visa === "H-1B" ? [{ href: at(NEXT_PATHS.i129Times), text: "How long USCIS takes with an H-1B petition (Form I-129)" }] : []),
       { href: at(NEXT_PATHS.uscisLookup), text: "Look up a USCIS receipt number" },
-      { href: at(NEXT_PATHS.pwdGuide), text: "How to watch a prevailing wage request by its number" },
+      { href: at(NEXT_PATHS.pwdGuide), text: "If a green card follows: watching its wage request" },
     ],
   };
 }

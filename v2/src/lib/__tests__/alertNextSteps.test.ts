@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { decidedOnFromSeen, SEEN_NEXT_MORNING_BEFORE_HOUR as SCORE_HOUR } from "@/lib/scorecard/score";
 import { programOf } from "@/lib/flagCaseNumber";
+import { formPage } from "@/lib/uscisForms";
 import {
   alsoLinksFor,
   bulletinAlertUrl,
@@ -37,7 +38,13 @@ function pageFor(path: string): string | null {
     return existsSync(mdx) ? mdx : null;
   }
   const page = join(ROOT, "src/app/(site)/(public)", ...parts, "page.tsx");
-  return existsSync(page) ? page : null;
+  if (existsSync(page)) return page;
+  // A USCIS form's page is one template, so the form has to be one it serves.
+  if (parts[0] === "uscis-processing-times" && parts.length === 2 && formPage(parts[1]!)) {
+    const form = join(ROOT, "src/app/(site)/(public)/uscis-processing-times/[form]/page.tsx");
+    return existsSync(form) ? form : null;
+  }
+  return null;
 }
 
 const base: NextStepInput = {
@@ -132,6 +139,15 @@ describe("what comes next after a case alert", () => {
     expect(h1b).toContain("prevailing wage request");
     const e3 = words(nextStepsFor({ ...base, program: "lca", caseNumber: "I-203-26118-846661" }));
     expect(e3).toContain("The E-3 visa");
+  });
+
+  it("gives a certified H-1B LCA links that stand alone, as the rating page shows them without their steps", () => {
+    const links = (caseNumber: string) => nextStepsFor({ ...base, program: "lca", caseNumber })!.links;
+    const h1b = links("I-200-26118-846661");
+    expect(h1b.map((l) => l.href)).toContain(`https://permtracker.app${NEXT_PATHS.i129Times}`);
+    expect(h1b.find((l) => l.href.endsWith(NEXT_PATHS.pwdGuide))?.text).toMatch(/green card/i);
+    // An E-3 or H-1B1 may go through a consulate, so it isn't sent to USCIS's I-129 times.
+    expect(links("I-203-26118-846661").map((l) => l.href)).not.toContain(`https://permtracker.app${NEXT_PATHS.i129Times}`);
   });
 
   it("adds nothing it can't stand behind", () => {
