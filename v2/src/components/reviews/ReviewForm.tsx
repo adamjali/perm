@@ -203,7 +203,6 @@ export function ReviewForm() {
     const theName = formText(e.currentTarget, "name", name).trim();
     const theEmail = formText(e.currentTarget, "email", email).trim();
     if (!stars) return fail({ field: "rating", message: "Tap a star first" });
-    if (!theName) return fail({ field: "name", message: "Add a name to show with your review. A first name is fine." });
     setPhase("sending");
     setError(null);
     const url = convexSiteUrl("/review/submit");
@@ -364,7 +363,7 @@ export function ReviewForm() {
         </div>{" "}
         <div className="mt-6">
           <label htmlFor="review-name">
-            <span className={LABEL}>Your name</span> {hint("name", "(a first name is fine)")}
+            <span className={LABEL}>Your name</span> {hint("name", "(optional, a first name is fine)")}
           </label>{" "}
           <CharLimit max={REVIEW_NAME_MAX} aria-describedby={described("name")} {...invalid("name")}>
             <input
@@ -413,7 +412,7 @@ export function ReviewForm() {
           </label>
         </div>{" "}
         <p className="mt-8 text-base leading-relaxed text-muted-foreground">
-          Your review and name show on PERM Tracker once we&apos;ve read it. We don&apos;t show spam, abuse, other
+          Your review and your name, if you give one, show on PERM Tracker once we&apos;ve read it. We don&apos;t show spam, abuse, other
           people&apos;s personal details or reviews of something else, and never hold one back for its stars. No links,
           please. <Link href="/privacy" className="link">Privacy policy</Link>
         </p>{" "}

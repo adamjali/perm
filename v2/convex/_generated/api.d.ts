@@ -205,6 +205,7 @@ import type * as lib_sentry from "../lib/sentry.js";
 import type * as lib_serverDoor from "../lib/serverDoor.js";
 import type * as lib_serverWatch from "../lib/serverWatch.js";
 import type * as lib_siteReview from "../lib/siteReview.js";
+import type * as lib_socCode from "../lib/socCode.js";
 import type * as lib_spamCheck from "../lib/spamCheck.js";
 import type * as lib_supportEmailForward from "../lib/supportEmailForward.js";
 import type * as lib_suspension from "../lib/suspension.js";
@@ -461,6 +462,7 @@ declare const fullApi: ApiFromModules<{
   "lib/serverDoor": typeof lib_serverDoor;
   "lib/serverWatch": typeof lib_serverWatch;
   "lib/siteReview": typeof lib_siteReview;
+  "lib/socCode": typeof lib_socCode;
   "lib/spamCheck": typeof lib_spamCheck;
   "lib/supportEmailForward": typeof lib_supportEmailForward;
   "lib/suspension": typeof lib_suspension;

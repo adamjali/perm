@@ -107,7 +107,12 @@ export const submit = internalMutation({
       if (
         row.createdAt >= now - DUPLICATE_WINDOW_MS &&
         row.rating === args.rating &&
-        row.name === args.name &&
+        // A blank name was stored under its label, so without a name the address has to match too: two strangers'
+        // nameless fives a minute apart are two reviews.
+        (args.name
+          ? row.name === args.name
+          : (row.name === ALERT_READER_NAME || row.name === UNNAMED_REVIEWER) &&
+            (row.email ?? null) === (args.email ?? args.linkEmail ?? null)) &&
         row.text === args.text
       ) {
         log.info("duplicate review ignored", { rating: args.rating });
@@ -126,10 +131,11 @@ export const submit = internalMutation({
     }
     const email = args.email ?? args.linkEmail;
     const viaLink = args.linkEmail !== undefined && email === args.linkEmail;
+    const name = args.name || (await unnamedLabel(ctx, args.linkEmail, email));
     const reviewId = await ctx.db.insert("siteReviews", {
       rating: args.rating,
       text: args.text,
-      name: args.name,
+      name,
       ...(email ? { email, raterKey: await raterKeyFor(email) } : {}),
       status: "pending",
       source: "site",
@@ -224,6 +230,26 @@ async function noteWaiting(ctx: MutationCtx): Promise<void> {
 
 /** The name a rating from an alert email shows under: no person is named, ever. */
 export const ALERT_READER_NAME = "Case alert reader";
+
+/** The name a review left without one shows under when we don't know where the reviewer came from. */
+export const UNNAMED_REVIEWER = "Anonymous";
+
+/**
+ * The label for a review sent without a name (owner, Nov 2 2026: "if submit with none then put whatever approp if u
+ * know where came from like case alerts ... and if dk then anon"): someone who came through an alert email's link,
+ * or who watches a case at the address they gave, is a case alert reader; anyone else is anonymous.
+ */
+async function unnamedLabel(ctx: MutationCtx, linkEmail: string | undefined, email: string | undefined): Promise<string> {
+  if (linkEmail) return ALERT_READER_NAME;
+  if (email) {
+    const watch = await ctx.db
+      .query("caseStatusAlerts")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (watch?.confirmedAt) return ALERT_READER_NAME;
+  }
+  return UNNAMED_REVIEWER;
+}
 
 /** One key per address, sha256 of it lowercased: where a rating and a written review from one person meet. */
 export async function raterKeyFor(email: string): Promise<string> {

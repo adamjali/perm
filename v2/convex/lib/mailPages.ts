@@ -18,7 +18,8 @@
  */
 
 import { SITE_URL } from "./links";
-import type { ConfirmOffer } from "./alertNextSteps";
+import { nextStepsFor, type ConfirmOffer } from "./alertNextSteps";
+import { isProgramApproval, programOf } from "../../src/lib/flagCaseNumber";
 import {
   EMAIL_PREFERENCES_PATH,
   MAIL_KINDS,
@@ -230,16 +231,24 @@ export function ratingThanksPage(opts: {
     "Thanks for rating",
     `<style>${RATING_STYLE}</style><h1>${escapeHtml(words.title)}</h1><p class="muted">${escapeHtml(lead)}</p>${asks}
 <h2>What comes next</h2>
-${nextSteps(status)
+${nextSteps(status, caseNumber)
     .map((l) => `<p><a href="${l.href}">${escapeHtml(l.label)}</a></p>`)
     .join("\n")}
 <p><a href="${caseUrl}">Your case's page</a></p>`,
   );
 }
 
-/** What comes after the status the last alert reported. Exported for the test. */
-export function nextSteps(status: string | null): Array<{ href: string; label: string }> {
+/**
+ * What comes after the status the last alert reported, for the case's own program. An LCA or a wage request takes the
+ * alert email's own next steps (`nextStepsFor`): read by status alone, a certified LCA had been sent PERM's (Nov 2 2026).
+ */
+export function nextSteps(status: string | null, caseNumber = ""): Array<{ href: string; label: string }> {
   const s = (status ?? "").trim().toUpperCase();
+  const program = caseNumber ? programOf(caseNumber) : "perm";
+  if (program !== "perm") {
+    const next = nextStepsFor({ program, caseNumber, status: s, isFinal: true, approved: isProgramApproval(program, s) });
+    return (next?.links ?? []).map((l) => ({ href: l.href, label: l.text }));
+  }
   if (s === "CERTIFIED") {
     return [
       { href: `${SITE_URL}/guides/waiting-on-your-green-card`, label: "The steps after PERM, and how long each takes" },

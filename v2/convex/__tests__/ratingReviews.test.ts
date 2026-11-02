@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
-import { ALERT_READER_NAME, GLOBAL_PER_DAY, raterKeyFor } from "../siteReviews";
+import { ALERT_READER_NAME, GLOBAL_PER_DAY, UNNAMED_REVIEWER, raterKeyFor } from "../siteReviews";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 type T = ReturnType<typeof createTestContext>;
@@ -158,6 +158,30 @@ describe("a rating from an alert email", () => {
     const rows = await reviews(t);
     expect(rows.map((r) => r.source)).toEqual(["site"]);
     expect(await tally(t)).toEqual([0, 0, 0, 1, 0]);
+  });
+
+  it("labels a review sent without a name by where the reviewer came from (Nov 2 2026)", async () => {
+    // Arrange: one reviewer came through an alert email's link, one watches a case at the address they typed, one
+    // is a stranger.
+    const t = createTestContext();
+    await watching(t);
+    const base = { rating: 5, text: "", name: "", quick: false };
+    // Act
+    await t.mutation(internal.siteReviews.submit, { ...base, ip: "203.0.113.1", linkEmail: "linked@example.com" });
+    await t.mutation(internal.siteReviews.submit, { ...base, ip: "203.0.113.2", email: EMAIL });
+    await t.mutation(internal.siteReviews.submit, { ...base, ip: "203.0.113.3", email: "stranger@example.com" });
+    await t.mutation(internal.siteReviews.submit, { ...base, rating: 4, ip: "203.0.113.4", name: "Pat" });
+    // Assert
+    const names = (await reviews(t)).filter((r) => r.source === "site").map((r) => r.name);
+    expect(names).toEqual([ALERT_READER_NAME, ALERT_READER_NAME, UNNAMED_REVIEWER, "Pat"]);
+  });
+
+  it("stores a blank-name double send once", async () => {
+    const t = createTestContext();
+    const sent = { rating: 3, text: "Fine.", name: "", ip: "203.0.113.9", quick: false };
+    await t.mutation(internal.siteReviews.submit, sent);
+    await t.mutation(internal.siteReviews.submit, sent);
+    expect((await reviews(t)).length).toBe(1);
   });
 
   it("doesn't use up the review form's daily budget", async () => {

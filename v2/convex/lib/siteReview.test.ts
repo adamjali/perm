@@ -38,12 +38,16 @@ describe("checkReview", () => {
     expect(r.ok && r.review.text).toBe("First line.\n\nSecond line.\nThird.");
   });
 
-  it("refuses an overlong review, and a missing or overlong name, each naming its field", () => {
+  it("refuses an overlong review or name, each naming its field, and takes a blank or missing name", () => {
     const long = checkReview({ ...good, text: "x".repeat(REVIEW_TEXT_MAX + 1) });
     expect(!long.ok && long.field).toBe("text");
     expect(checkReview({ ...good, text: 42 }).ok).toBe(false);
+    // The name is optional (Nov 2 2026); the server gives a blank one its label.
     const blank = checkReview({ ...good, name: "   " });
-    expect(!blank.ok && blank.field).toBe("name");
+    expect(blank.ok && blank.review.name).toBe("");
+    const { name: _dropped, ...noName } = good;
+    expect(checkReview(noName).ok).toBe(true);
+    expect(checkReview({ ...good, name: 42 }).ok).toBe(false);
     expect(checkReview({ ...good, name: "x".repeat(REVIEW_NAME_MAX + 1) }).ok).toBe(false);
   });
 

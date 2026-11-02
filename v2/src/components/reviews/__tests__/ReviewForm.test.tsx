@@ -73,18 +73,20 @@ describe("ReviewForm", () => {
     }
   });
 
-  it("says a name is missing under the name box, marks the box invalid and points it at the message", async () => {
+  it("sends without a name: the name is optional (Nov 2 2026)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://test.convex.cloud");
+    const sent: Record<string, unknown>[] = [];
+    global.fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") sent.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return new Response(JSON.stringify({ ok: true, message: "Thanks.", reviewId: "rev1" }), { status: 200 });
+    }) as unknown as typeof fetch;
     render(<ReviewForm />);
+    expect(screen.getByText(/optional, a first name is fine/)).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("4 stars"));
     fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
-    await waitFor(() => expect(document.getElementById("review-error-name")?.textContent).toMatch(/Add a name/));
-    const box = screen.getByRole("textbox", { name: /Your name/ });
-    expect(box.getAttribute("aria-invalid")).toBe("true");
-    expect(box.getAttribute("aria-describedby") ?? "").toContain("review-error-name");
-    // Typing a name takes the error away.
-    fireEvent.change(box, { target: { value: "Pat" } });
+    await waitFor(() => expect(sent.length).toBe(1));
+    expect(sent[0]!.name).toBe("");
     expect(document.getElementById("review-error-name")).toBeNull();
-    expect(box.getAttribute("aria-invalid")).toBeNull();
   });
 });
 

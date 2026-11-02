@@ -77,19 +77,20 @@ export function checkReview(body: Record<string, unknown>): ReviewCheck {
   if (text !== undefined && text !== null && typeof text !== "string") {
     return { ok: false, field: "text", message: "That review couldn't be read. Please try again." };
   }
-  if (typeof name !== "string") return { ok: false, field: "name", message: "Add a name to show with your review." };
-  if ((typeof text === "string" && text.length > REVIEW_TEXT_MAX * 2) || name.length > REVIEW_NAME_MAX * 4) {
+  // The name is optional (owner, Nov 2 2026): left blank, the review is shown under a label (siteReviews.submit).
+  if (name !== undefined && name !== null && typeof name !== "string") {
+    return { ok: false, field: "name", message: "That name couldn't be read. Please try again." };
+  }
+  const rawName = typeof name === "string" ? name : "";
+  if ((typeof text === "string" && text.length > REVIEW_TEXT_MAX * 2) || rawName.length > REVIEW_NAME_MAX * 4) {
     return typeof text === "string" && text.length > REVIEW_TEXT_MAX * 2
       ? { ok: false, field: "text", message: `Keep the review under ${REVIEW_TEXT_MAX.toLocaleString("en-US")} characters.` }
       : { ok: false, field: "name", message: `Keep the name under ${REVIEW_NAME_MAX} characters.` };
   }
   const cleanText = tidyText(text ?? "");
-  const cleanName = name.normalize("NFC").replace(STRIP, "").trim().replace(/\s+/g, " ");
+  const cleanName = rawName.normalize("NFC").replace(STRIP, "").trim().replace(/\s+/g, " ");
   if (cleanText.length > REVIEW_TEXT_MAX) {
     return { ok: false, field: "text", message: `Keep the review under ${REVIEW_TEXT_MAX.toLocaleString("en-US")} characters.` };
-  }
-  if (cleanName.length === 0) {
-    return { ok: false, field: "name", message: "Add a name to show with your review. A first name is fine." };
   }
   if (cleanName.length > REVIEW_NAME_MAX) {
     return { ok: false, field: "name", message: `Keep the name under ${REVIEW_NAME_MAX} characters.` };
