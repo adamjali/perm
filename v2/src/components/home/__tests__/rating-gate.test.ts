@@ -119,3 +119,31 @@ describe("the newest reviews", () => {
     expect(html).toContain("See all 40 reviews");
   });
 });
+
+describe("the three reviews on the homepage", () => {
+  const review = (id: string, text: string, day: string) => ({
+    id,
+    rating: 5,
+    text,
+    name: id,
+    date: `${day}T12:00:00.000Z`,
+  });
+
+  it("shows a review with words before a newer rating with none (owner, Nov 2 2026)", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(ReviewsLine, {
+        rating: { value: "5.0", count: "4", best: "5", worst: "1" },
+        reviews: [
+          review("Rating-only", "", "2026-11-02"),
+          review("Newest-with-words", "Alerts came before my lawyer's email.", "2026-11-01"),
+          review("Older-with-words", "Found my case by the employer's name.", "2026-10-20"),
+          review("Oldest-with-words", "Clear and quick.", "2026-10-01"),
+        ],
+      }),
+    );
+    expect(html).toContain("Newest-with-words");
+    expect(html).toContain("Older-with-words");
+    expect(html).toContain("Oldest-with-words");
+    expect(html).not.toContain("Rating-only");
+  });
+});

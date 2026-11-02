@@ -5,7 +5,7 @@ import { CaretLeftIcon, CaretRightIcon, PauseIcon, PlayIcon } from "@phosphor-ic
 
 import { ReviewCard, type ReviewCardData } from "@/components/reviews/ReviewCard";
 
-import { DRIFT_FROM, IN_ROWS_MAX, dealRows, rowsFor } from "@/lib/reviews/rows";
+import { DRIFT_FROM, IN_ROWS_MAX, dealRows, rowsFor, wordsFirst } from "@/lib/reviews/rows";
 import { cn } from "@/lib/utils";
 
 /**
@@ -181,7 +181,7 @@ function DriftRow({
 }
 
 export function ReviewCarousel({ reviews }: { reviews: CarouselReview[] }) {
-  const shown = reviews.slice(0, IN_ROWS_MAX);
+  const shown = wordsFirst(reviews).slice(0, IN_ROWS_MAX);
   const rows = rowsFor(shown.length);
   const drifts = shown.length >= DRIFT_FROM;
   const [paused, setPaused] = useState(false);

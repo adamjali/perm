@@ -21,3 +21,13 @@ export function dealRows<T>(items: T[], rows: number): T[][] {
   items.forEach((item, i) => out[i % out.length]!.push(item));
   return out;
 }
+
+/**
+ * Reviews with words go first, then ratings with no words, each group in the order given (newest first), so a
+ * rating alone never takes the place of an older review someone wrote (owner, Nov 2 2026). The homepage's three
+ * and the rows here both take their reviews through this before cutting the list.
+ */
+export function wordsFirst<T extends { text: string }>(reviews: readonly T[]): T[] {
+  const said = reviews.filter((r) => r.text.trim() !== "");
+  return [...said, ...reviews.filter((r) => r.text.trim() === "")];
+}

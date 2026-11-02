@@ -6,6 +6,7 @@ import type { SiteReview } from "@/lib/reviews/senjaParse";
 import { buttonVariants } from "@/components/ui/button";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
 import { cardDay } from "@/lib/reviews/cardDay";
+import { wordsFirst } from "@/lib/reviews/rows";
 
 /**
  * The site's review rating, the newest reviews, and the link to leave one.
@@ -38,7 +39,7 @@ export function ReviewStars({ value, className = "size-5" }: { value: number; cl
   );
 }
 
-/** How many reviews the homepage shows: the newest. The count and "See all" cover every one. */
+/** How many reviews the homepage shows: the newest with words first (`wordsFirst`). The count and "See all" cover every one. */
 const SHOWN_REVIEWS = 3;
 /** The tiles' columns from a tablet up, by how many there are, so two never leave a third column empty. */
 const COLUMNS: Record<number, string> = { 1: "md:max-w-md", 2: "md:grid-cols-2", 3: "md:grid-cols-3" };
@@ -57,7 +58,7 @@ export function ReviewsLine({
 } = {}) {
   const advertise = shouldAdvertiseRating(rating.count);
   const count = Number(rating.count) || 0;
-  const newest = advertise ? reviews.slice(0, SHOWN_REVIEWS) : [];
+  const newest = advertise ? wordsFirst(reviews).slice(0, SHOWN_REVIEWS) : [];
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
