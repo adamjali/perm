@@ -127,6 +127,7 @@ never black-weight. Prose runs at 68 characters at most (`max-w-prose` or
 |---|---|---|
 | `Button`, `buttonVariants` | `ui/button.tsx` | default (lime, the main action), outline, secondary, ghost, destructive, link. 44px on touch. A working button keeps its label and width and shows a spinner. |
 | `choiceVariants({ on })` | `ui/choice.ts` | every row of choices (filters, views, tabs on a page): the chosen one has a green-ink edge on the tint and `aria-pressed`. |
+| step switch | `home/JobCodeTabs.tsx` | a few steps that each show one picture: one bar holding every choice, a single lime block that slides to the picked one, the rest plain and pressable (owner, Nov 2 2026: a column of cards, then a joined tab strip, didn't read as something you switch). Tabs pattern, left and right arrows. |
 | `.link` | `globals.css` | every text link: green ink, 1px underline, 2px on hover. Use `[&_a]:link` for links inside prose you don't render. |
 | `StatusBadge`, `ToneBadge` | `ui/badge.tsx` | a muted chip with a coloured square; DOL's status words as DOL prints them. |
 | `Input`, `Textarea`, `Switch`, `Checkbox` | `ui/` | 1px `--input` outline, 16px text at every width (iOS zooms below that). |
