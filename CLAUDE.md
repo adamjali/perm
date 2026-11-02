@@ -2011,3 +2011,23 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
 - **Guides**: `/guides/employer-barred-from-perm` (new) and the suspension guide's "How the last suspension ended".
 - **Search an employer's, job's or firm's filings from its own page** (`FilingsSearch`, a GET form into `/case-search`
   with the page's own subject fixed), and the headcount line reads the newest 50 filings (`src/lib/employerSize.ts`).
+
+## Nov 2 2026 (morning): every check green again, and where DOL is, by our own check first
+
+- **A name search with a job title reads `lca_cases_emp_title`** (employer_slug, received_date, job_title; built on
+  production first, 57 s; the loader carries it). "EMC" with one title passed the broad-name line, went newest-first and
+  walked every LCA for 37 matches: 15 to 20 s under load (Sentry 59). Now 0.02 s; Cognizant with a rare title 10.7 s to 0.04.
+- **A masked "Server Error" at sign-up is Convex Auth's "Account already exists"** (`isExistingAccountError`): the form
+  checks every other input first. Our own password rule throws a ConvexError so its words survive production (Sentry 2Q).
+- **Every surface naming the month DOL is deciding leads with our daily check** (`permLine`), DOL's table after it with
+  its own date: the queue page's lead and wall, the case answer, the FAQ, the wage figure on processing times, the RFI page.
+  Pages reading `getPermLine`/`getPermBoard` are on the sweep's refresh list (its test watches both reads).
+- **Each "Updated" day comes from its own source**: bulletin pages from the day this site first held the newest bulletin
+  (`bulletin` in pageDates, `bulletin_first_seen`), list and A to Z pages from DOL's files (`corpus`), never DOL's
+  processing-times stamp. A news feed's source line says when we checked it and its newest item (`isNewsFeed`).
+- **O*NET codes with no core task take their untyped ones** (13 codes, 13-2051 among them): production holds tasks for 922
+  of 1,016; the 94 without are "All Other" codes with no task list.
+- **`tour_shots.py --only` starts from the manifest on disk**: from a folder of three captures it had rewritten the
+  manifest with three pictures. The job-code pictures have phone versions now.
+- **Dependabot's own run goes red when a fix needs a major** (minimatch 11, glob 14, transitive): it can't bump them.
+  Override both once the release floor allows (Nov 3), then the alerts close.
