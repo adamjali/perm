@@ -58,6 +58,23 @@ describe("the job code finder's reads", () => {
     doc.mockResolvedValue(CODES_DOC);
   });
 
+  it("gives each row its occupation page from its SOC code, dotted or not, and null where there is none", async () => {
+    const got = await reads.withSocSlugs([
+      { caseNumber: "a", socCode: "15-1252.00" },
+      { caseNumber: "b", socCode: "15-2051" },
+      { caseNumber: "c", socCode: "99-9999.00" },
+      { caseNumber: "d", socCode: "" },
+    ]);
+    expect(got.map((r) => r.socSlug)).toEqual(["software-developers", "data-scientists", null, null]);
+    expect(got[0]).toMatchObject({ caseNumber: "a", socCode: "15-1252.00" });
+  });
+
+  it("returns the rows unlinked when the codes can't be read, so the table still renders", async () => {
+    doc.mockRejectedValue(new Error("database down"));
+    const got = await reads.withSocSlugs([{ socCode: "15-1252.00" }]);
+    expect(got).toEqual([{ socCode: "15-1252.00", socSlug: null }]);
+  });
+
   it("answers a typed code from the codes doc, with what a 2010 code became", async () => {
     const got = await reads.findSoc("15-1132");
     expect(got.code?.became.map((b) => b.soc)).toEqual(expect.arrayContaining(["15-1252"]));

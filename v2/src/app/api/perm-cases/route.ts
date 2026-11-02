@@ -20,6 +20,7 @@ import {
   listLiveCases,
 } from "@/lib/db/liveCases";
 import { INITIAL_RE } from "@/lib/employerInitial";
+import { withSocSlugs } from "@/lib/db/socTitles";
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 import { ISO_MONTH_RE } from "@convex/lib/months";
 
@@ -170,7 +171,7 @@ export async function GET(request: Request) {
     // (DOL names the firm at publication, so no live row carries one) and
     // ignores the status/state filters, whose vocabulary belongs to decided
     // cases; the client labels the strip accordingly.
-    const [rows, live] = await Promise.all([
+    const [found, live] = await Promise.all([
       searchCases({
         field,
         text,
@@ -181,6 +182,8 @@ export async function GET(request: Request) {
       }),
       field === "employer" ? searchLiveCases(text, narrow) : Promise.resolve([]),
     ]);
+    // Each row's job links to its occupation page.
+    const rows = await withSocSlugs(found);
     return NextResponse.json(
       { cases: rows, live },
       {
@@ -248,12 +251,13 @@ export async function GET(request: Request) {
 
   // numItems is clamped inside listCases (clampPageItems); passing it through
   // rather than re-clamping here keeps one definition of the ceiling.
-  const page = await listCases({
+  const listed = await listCases({
     filter,
     order,
     cursor: cursor ?? null,
     ...(Number.isFinite(rawItems) ? { numItems: Math.floor(rawItems) } : {}),
   });
+  const page = { ...listed, page: await withSocSlugs(listed.page) };
 
   return NextResponse.json(page, {
     headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },

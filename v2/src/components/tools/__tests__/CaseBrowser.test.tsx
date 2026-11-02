@@ -80,3 +80,68 @@ describe("CaseBrowser case lookup", () => {
     expect(usePublicQuery.mock.calls.map((c) => String(c[0])).some((u) => u.includes("action=lookup"))).toBe(false);
   });
 });
+
+describe("CaseBrowser links what has a page", () => {
+  const decided = {
+    caseNumber: "G-100-25001-123456",
+    status: "certified",
+    receivedDate: "2025-01-02",
+    decisionDate: "2026-01-05",
+    days: 368,
+    employerName: "Google LLC",
+    employerSlug: "google-llc",
+    state: "CA",
+    jobTitle: "Software Engineer",
+    socCode: "15-1252.00",
+    socTitle: "Software Developers",
+    socSlug: "software-developers",
+    attorneyName: "",
+    attorneySlug: "",
+    wage: 180000,
+  };
+  const live = {
+    caseNumber: "G-100-26200-654321",
+    filingDate: "2026-07-19",
+    status: "ANALYST REVIEW",
+    isFinal: false,
+    employerName: "Google LLC",
+    employerSlug: "google-llc",
+    jobTitle: "Data Scientist",
+  };
+
+  // One answer object per test, as the real hook returns: a new object on every render would set the table's
+  // state on every render and never settle.
+  const answer = (data: unknown) => {
+    const found = { data, failed: false };
+    const empty = { data: EMPTY_PAGE, failed: false };
+    const skip = { data: undefined, failed: false };
+    usePublicQuery.mockImplementation((url: string) => (url === "skip" ? skip : url.includes("action=search") ? found : empty));
+  };
+
+  beforeEach(() => {
+    search = "field=employer&q=google";
+    answer({ cases: [decided], live: [live] });
+  });
+
+  it("opens a decided case's own page from its number, as the live list does", () => {
+    render(<CaseBrowser meta={null} occupations={[]} />);
+    expect(screen.getByRole("link", { name: decided.caseNumber }).getAttribute("href")).toBe(
+      `/perm-case-status?case=${decided.caseNumber}`,
+    );
+  });
+
+  it("opens the occupation's page from the job, and the employer's from a live filing", () => {
+    render(<CaseBrowser meta={null} occupations={[]} />);
+    expect(screen.getByRole("link", { name: "Software Developers" }).getAttribute("href")).toBe("/perm-wages/software-developers");
+    const employers = screen.getAllByRole("link", { name: "Google LLC" }).map((a) => a.getAttribute("href"));
+    expect(employers.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(employers)).toEqual(new Set(["/perm-employers/google-llc"]));
+  });
+
+  it("leaves the job as text when it has no occupation page", () => {
+    answer({ cases: [{ ...decided, socSlug: null }], live: [] });
+    render(<CaseBrowser meta={null} occupations={[]} />);
+    expect(screen.queryByRole("link", { name: "Software Developers" })).toBeNull();
+    expect(screen.getByText("Software Developers")).toBeTruthy();
+  });
+});

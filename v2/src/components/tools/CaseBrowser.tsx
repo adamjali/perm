@@ -67,6 +67,8 @@ interface LiveHit {
   status: string | null;
   isFinal: boolean;
   employerName: string | null;
+  /** The employer's page, from the live table's own slug; null when the row has none. */
+  employerSlug?: string | null;
   jobTitle: string | null;
 }
 
@@ -82,6 +84,8 @@ export interface CaseRow {
   jobTitle: string;
   socCode: string;
   socTitle: string;
+  /** The occupation page (/perm-wages/<slug>) for the SOC code, from the server; null where there is none. */
+  socSlug?: string | null;
   attorneyName: string;
   attorneySlug: string;
   wage: number | null;
@@ -924,7 +928,13 @@ export function CaseBrowser({
                   >
                     {h.caseNumber}
                   </PendingLink>{" "}
-                  <span className="font-medium">{h.employerName}</span>{" "}
+                  {h.employerSlug ? (
+                    <Link href={entityHref("employer", h.employerSlug)} className="link font-medium">
+                      {h.employerName}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{h.employerName}</span>
+                  )}{" "}
                   {h.jobTitle ? (
                     <span className="text-muted-foreground">{h.jobTitle}</span>
                   ) : null}{" "}
@@ -1166,7 +1176,16 @@ function CaseTable({
             key={r.caseNumber}
             className="border-t border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:px-3 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
           >
-            <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap!">{r.caseNumber}{" "}</td>
+            <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap!">
+              {/* Every case number opens its own page, as in the live list: DOL's
+                  status today, the history our record holds and the alert box. */}
+              <PendingLink
+                href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
+                className="link max-sm:inline-flex max-sm:min-h-11 max-sm:items-center"
+              >
+                {r.caseNumber}
+              </PendingLink>
+            {" "}</td>
             <td className="whitespace-nowrap px-3 py-3">
               <CaseStatusChip status={STATUS_LABEL[r.status]} />
             {" "}</td>
@@ -1206,7 +1225,13 @@ function CaseTable({
             {" "}</td>
             <td className="whitespace-nowrap px-3 py-3 max-sm:hidden">{r.state || "—"}{" "}</td>
             <td className="px-3 py-3 max-sm:hidden">
-              {r.socTitle || r.socCode || "—"}
+              {r.socSlug && (r.socTitle || r.socCode) ? (
+                <Link href={`/perm-wages/${r.socSlug}`} className="link">
+                  {r.socTitle || r.socCode}
+                </Link>
+              ) : (
+                r.socTitle || r.socCode || "—"
+              )}
               {r.socCode ? (
                 <>
                   {" "}

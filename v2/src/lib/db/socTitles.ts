@@ -13,6 +13,7 @@ import {
   type TitleAnswer,
 } from "@/lib/socFinder";
 import { titleKey } from "@/lib/socTitleKey";
+import { socGroup } from "@/lib/socCode";
 import { SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 import { rows } from "./client";
 import { doc } from "./publicData";
@@ -52,6 +53,19 @@ export function getSocCodes(): Promise<SocCodesDoc | null> {
     if (codesCache?.value === value) codesCache = null;
   });
   return value;
+}
+
+/**
+ * Each row's occupation page (/perm-wages/<slug>) from its SOC code, dotted ("15-1252.00") or not, so a case
+ * table can link the job it names. Null where the code has no page; every row null when the codes can't be read,
+ * since a table that loses its links still beats one that fails.
+ */
+export async function withSocSlugs<T extends { socCode?: string | null }>(items: T[]): Promise<(T & { socSlug: string | null })[]> {
+  const codes = items.length ? await getSocCodes().catch(() => null) : null;
+  return items.map((t) => {
+    const group = t.socCode ? socGroup(t.socCode) : null;
+    return { ...t, socSlug: (group && codes?.codes.get(group)?.slug) || null };
+  });
 }
 
 export interface SocTitlePage {
