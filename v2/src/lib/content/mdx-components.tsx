@@ -342,8 +342,10 @@ export const mdxComponents: MDXComponents = {
     </code>
   ),
   pre: ({ children, ...props }) => (
+    // A code block wider than the column scrolls sideways, so it takes a tab stop: a keyboard can't scroll it otherwise.
     <pre
-      className="my-6 overflow-x-auto overscroll-x-none border border-border bg-[#0d1117] p-4 text-sm"
+      tabIndex={0}
+      className="my-6 overflow-x-auto overscroll-x-none border border-border bg-[#0d1117] p-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       {...props}
     >
       {children}

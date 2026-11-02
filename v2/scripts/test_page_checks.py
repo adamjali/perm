@@ -26,6 +26,13 @@ def main() -> int:
     rt = pc.run({**phone, "cmd": [sys.executable, "-c", script_t]})
     if any("overflow=0px" in ln for ln in rt["tail"]) or not any("/bad" in ln for ln in rt["tail"]):
         failures.append(f"a clean line that carries its load time is left out of the report (got {rt['tail']})")
+    # Nov 2 2026: each line also counts covered text; a clean line with covered=0 is still clean, and on that
+    # morning's deploy the clean lines filled the report and hid the finding.
+    covered = [f"390 /page-{i}  overflow=0px  small=0  taps=0  covered=0  (2.{i} s)" for i in range(4)] + ["390 /hid  overflow=0px  small=0  taps=0  covered=1  (2.9 s)"]
+    script_c = "import sys\n" + "".join(f"print({ln!r})\n" for ln in covered) + "sys.exit(1)\n"
+    rc = pc.run({**phone, "cmd": [sys.executable, "-c", script_c]})
+    if any("covered=0" in ln for ln in rc["tail"]) or not any("/hid" in ln for ln in rc["tail"]):
+        failures.append(f"a clean line that counts covered text is left out of the report (got {rc['tail']})")
     clean = pc.run({**phone, "cmd": [sys.executable, "-c", "import sys\nprint('320 / overflow=0px  small=0  taps=0')\nsys.exit(1)\n"]})
     if not clean["tail"]:
         failures.append("a failure with no finding lines still reports what it printed")

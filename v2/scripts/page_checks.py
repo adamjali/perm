@@ -68,7 +68,7 @@ def checks(base: str, extra: list[str] | None = None) -> list[dict]:
         {"key": "axe", "title": "Accessibility (axe, WCAG AA)", "cmd": ["node", "scripts/audit_axe.mjs", base, *pages], "limit": 900},
         {"key": "phone", "title": "Phone widths (overflow, text size, tap size)", "cmd": ["node", "scripts/phone_sweep.mjs", base, *pages], "limit": 900,
          # A page with nothing wrong prints a line too; the report keeps the lines with findings.
-         "clean": r"overflow=0px\s+small=0\s+taps=0(\s+\([\d.]+ s\))?\s*$"},
+         "clean": r"overflow=0px\s+small=0\s+taps=0(\s+covered=0)?(\s+\([\d.]+ s\))?\s*$"},
         {
             "key": "flows",
             "title": "Browser flows (Playwright)",

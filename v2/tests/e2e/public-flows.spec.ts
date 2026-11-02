@@ -86,7 +86,8 @@ test("a retired language page answers a permanent redirect to the English page",
 test("the search palette finds the new tools", async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto("/");
-  const input = page.getByRole("combobox").or(page.getByPlaceholder(/search/i)).first();
+  // The palette's own box: the homepage carries other comboboxes (the job-code finder) that are always on screen.
+  const input = page.getByRole("dialog", { name: "Search PERM Tracker" }).getByRole("combobox");
   // The shortcut does nothing until the page's script is listening (about 8 s on the dev server): press again
   // until the palette opens.
   await expect(async () => {
