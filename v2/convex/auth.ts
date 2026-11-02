@@ -1,7 +1,7 @@
 import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth, type ConvexAuthConfig } from "@convex-dev/auth/server";
-import { GenericId } from "convex/values";
+import { ConvexError, GenericId } from "convex/values";
 import { ResendOTP } from "./ResendOTP";
 import { ResendPasswordReset } from "./ResendPasswordReset";
 import { DataModel } from "./_generated/dataModel";
@@ -183,7 +183,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         // eslint-disable-next-line security/detect-possible-timing-attacks -- not a secret comparison: this is an existence check (=== undefined) for the reset-flow initial step, no constant-time guarantee needed
         if (password === undefined) return;
         if (password.length < 8) {
-          throw new Error("Password must be at least 8 characters");
+          // A ConvexError, so production shows this message instead of masking it as "Server Error".
+          throw new ConvexError("Password must be at least 8 characters");
         }
       },
     }),

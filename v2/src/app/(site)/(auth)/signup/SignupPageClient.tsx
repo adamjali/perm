@@ -28,6 +28,7 @@ import {
   isInvalidCodeError,
   isExpiredError,
   isBlockedResponseError,
+  isExistingAccountError,
   isMaskedServerError,
   isSecurityCheckExpired,
   blockedResponseMessage,
@@ -250,8 +251,10 @@ export function SignupPageClient() {
         toast.error("Please enter a valid email address.");
         return;
       }
-      if (lower.includes("already exists") || lower.includes("duplicate")) {
-        toast.error("An account with this email already exists. Try signing in instead.");
+      // Checked after the blocked, expired and validation answers above, which carry their own words.
+      if (isExistingAccountError(message)) {
+        authBreadcrumb("signup_existing_account");
+        toast.error("This email already has an account. Sign in, or enter the code we emailed you.");
         return;
       }
       if (isRateLimitError(message)) {

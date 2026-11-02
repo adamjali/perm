@@ -207,7 +207,7 @@ export function ResetPasswordPageClient() {
         toast.error(blockedResponseMessage(message));
       } else if (isExpiredError(message)) {
         toast.error("Reset code expired. Please request a new one.");
-      } else if (lower.includes("invalid password")) {
+      } else if (lower.includes("invalid password") || lower.includes("at least 8 characters")) {
         toast.error("Password doesn’t meet requirements. Must be at least 8 characters.");
       } else if (isInvalidCodeError(message) || isMaskedServerError(message)) {
         // Convex masks "Could not verify code" as a bare "Server Error".

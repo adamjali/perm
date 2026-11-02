@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   blockedResponseMessage,
   isBlockedResponseError,
+  isExistingAccountError,
   isInvalidCodeError,
   isMaskedServerError,
   isRateLimitError,
@@ -35,5 +36,15 @@ describe("auth error classification", () => {
     expect(isMaskedServerError("Internal Server Error page")).toBe(false);
     // The masked message carries no code wording, so the invalid-code check can't see it.
     expect(isInvalidCodeError(MASKED)).toBe(false);
+  });
+
+  it("reads a masked error at sign-up as an existing account, the one plain error the form can't rule out", () => {
+    // Convex Auth throws a plain "Account <email> already exists" (createAccountFromCredentials), which production
+    // hides behind the mask. The form checks every other input before it submits.
+    expect(isExistingAccountError(MASKED)).toBe(true);
+    expect(isExistingAccountError("Account someone@example.com already exists")).toBe(true);
+    expect(isExistingAccountError("duplicate account")).toBe(true);
+    expect(isExistingAccountError(CHALLENGE_PAGE)).toBe(false);
+    expect(isExistingAccountError("Network error")).toBe(false);
   });
 });

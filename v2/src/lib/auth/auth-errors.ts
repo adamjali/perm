@@ -62,6 +62,15 @@ export function isMaskedServerError(message: string): boolean {
   return MASKED_SERVER_RE.test(message);
 }
 
+/**
+ * True when a password sign-up met an account already on that address. Convex Auth throws a plain
+ * "Account <email> already exists", which production hides behind the mask, and the sign-up form checks every other
+ * input before it submits, so at that step the mask means this (Sentry 2Q: a second press after the code went out).
+ */
+export function isExistingAccountError(message: string): boolean {
+  return /already exists|duplicate/i.test(message) || isMaskedServerError(message);
+}
+
 /** What to tell the person when the auth reply wasn't JSON. */
 export function blockedResponseMessage(message: string): string {
   return /too many r/i.test(message)
