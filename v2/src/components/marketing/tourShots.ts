@@ -12,10 +12,10 @@ export type TourSurface =
   | "notifications"
   | "assistant"
   | "email"
-  | "job-suggestion"
-  | "job-card"
   | "timeline"
   | "job-code"
+  | "job-suggestion"
+  | "job-card"
 ;
 
 export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
@@ -73,14 +73,6 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     light: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1220 },
     dark: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1220 },
   },
-  "job-suggestion": {
-    light: { src: "/images/for-attorneys/job-suggestion-light.webp", width: 1768, height: 1290 },
-    dark: { src: "/images/for-attorneys/job-suggestion-dark.webp", width: 1768, height: 1290 },
-  },
-  "job-card": {
-    light: { src: "/images/for-attorneys/job-card-light.webp", width: 1632, height: 722 },
-    dark: { src: "/images/for-attorneys/job-card-dark.webp", width: 1632, height: 722 },
-  },
   "timeline": {
     light: { src: "/images/for-attorneys/timeline-light.webp", width: 1800, height: 866 },
     dark: { src: "/images/for-attorneys/timeline-dark.webp", width: 1800, height: 866 },
@@ -90,5 +82,19 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
   "job-code": {
     light: { src: "/images/for-attorneys/job-code-light.webp", width: 1800, height: 738 },
     dark: { src: "/images/for-attorneys/job-code-dark.webp", width: 1800, height: 738 },
+    narrowLight: { src: "/images/for-attorneys/job-code-light-phone.webp", width: 732, height: 946 },
+    narrowDark: { src: "/images/for-attorneys/job-code-dark-phone.webp", width: 732, height: 946 },
+  },
+  "job-suggestion": {
+    light: { src: "/images/for-attorneys/job-suggestion-light.webp", width: 1768, height: 1290 },
+    dark: { src: "/images/for-attorneys/job-suggestion-dark.webp", width: 1768, height: 1290 },
+    narrowLight: { src: "/images/for-attorneys/job-suggestion-light-phone.webp", width: 636, height: 2606 },
+    narrowDark: { src: "/images/for-attorneys/job-suggestion-dark-phone.webp", width: 636, height: 2606 },
+  },
+  "job-card": {
+    light: { src: "/images/for-attorneys/job-card-light.webp", width: 1632, height: 722 },
+    dark: { src: "/images/for-attorneys/job-card-dark.webp", width: 1632, height: 722 },
+    narrowLight: { src: "/images/for-attorneys/job-card-light-phone.webp", width: 564, height: 1308 },
+    narrowDark: { src: "/images/for-attorneys/job-card-dark-phone.webp", width: 564, height: 1308 },
   },
 };

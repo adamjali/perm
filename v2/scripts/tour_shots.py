@@ -18,6 +18,7 @@ manifest.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -47,10 +48,35 @@ def manifest_key(theme: str, phone: bool) -> str:
     return f"narrow{theme.title()}" if phone else theme
 
 
+ENTRY = re.compile(r'(\w+): \{ src: "([^"]+)", width: (\d+), height: (\d+) \}')
+
+
+def read_manifest(text: str) -> dict[str, dict[str, tuple[str, int, int]]]:
+    """The pictures the manifest on disk declares, in its order."""
+    shots: dict[str, dict[str, tuple[str, int, int]]] = {}
+    current: str | None = None
+    for line in text.splitlines():
+        head = re.match(r'\s*"([\w-]+)": \{\s*$', line)
+        if head:
+            current = head.group(1)
+            shots[current] = {}
+            continue
+        entry = ENTRY.search(line)
+        if current and entry:
+            shots[current][entry.group(1)] = (entry.group(2), int(entry.group(3)), int(entry.group(4)))
+    return shots
+
+
 def main(folder: str, only: set[str] | None = None) -> int:
     src = Path(folder)
     crops: dict[str, dict] = json.loads((src / "crops.json").read_text())
-    shots: dict[str, dict[str, tuple[str, int, int]]] = {}
+    # `--only` starts from the manifest on disk: a folder holding only the pictures being retaken would otherwise
+    # drop every other picture's entry (Nov 2 2026: retaking the three job-code pictures emptied the rest).
+    shots: dict[str, dict[str, tuple[str, int, int]]] = (
+        {k: v for k, v in read_manifest(MANIFEST.read_text()).items() if k not in only}
+        if only is not None and MANIFEST.exists()
+        else {}
+    )
     # picture -> {(theme, phone): entry}
     pictures: dict[str, dict[tuple[str, bool], dict]] = {}
     for key, entry in crops.items():

@@ -79,22 +79,35 @@ const CAPTURES = [
   {
     name: "job-code",
     story: "tour-app-pages--edit-case",
-    phone: false,
     act: [["clear", "#socCode"], ["focus", "#socCode"], ["wait", '[role="listbox"] [role="option"]']],
-    pictures: { "job-code": { wide: { from: "Position title", through: ['[role="listbox"]', 1], x: "#socCode", pad: 20, padBottom: 0 } } },
+    // A phone version of each, or the wide capture shrinks to unreadable text in a phone's column (Nov 2 2026).
+    pictures: {
+      "job-code": {
+        wide: { from: "Position title", through: ['[role="listbox"]', 1], x: "#socCode", pad: 20, padBottom: 0 },
+        phone: { from: "Position title", through: ['[role="listbox"]', 1], pad: 12, padBottom: 0 },
+      },
+    },
   },
   {
     name: "job-suggestion",
     story: "tour-app-pages--edit-case",
-    phone: false,
     act: [["click", "^Job description"], ["wait", "section[aria-label^='Suggested description']"]],
-    pictures: { "job-suggestion": { wide: { el: "section[aria-label^='Suggested description']", pad: 10 } } },
+    pictures: {
+      "job-suggestion": {
+        wide: { el: "section[aria-label^='Suggested description']", pad: 10 },
+        phone: { el: "section[aria-label^='Suggested description']", pad: 8 },
+      },
+    },
   },
   {
     name: "job-card",
     story: "tour-app-pages--case-detail",
-    phone: false,
-    pictures: { "job-card": { wide: { el: "section[aria-label^='SOC code']", pad: 16 } } },
+    pictures: {
+      "job-card": {
+        wide: { el: "section[aria-label^='SOC code']", pad: 16 },
+        phone: { el: "section[aria-label^='SOC code']", pad: 12 },
+      },
+    },
   },
   {
     name: "hero",

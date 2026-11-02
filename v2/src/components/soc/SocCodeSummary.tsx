@@ -76,8 +76,9 @@ export function SocCodeSummary({
         </div>
       </div>
       <p className="border-t-2 border-border px-4 py-3 text-sm leading-relaxed">
-        For this position&apos;s median wage, how other employers title it and how often DOL approves it, see{" "}
-        <CodePageLink profile={profile} newTab={newTab} />.
+        {/* Ends on the link: a period after its tap-sized box wrapped onto a line of its own on a phone. */}
+        For this position&apos;s median wage, how other employers title it and how often DOL approves it:{" "}
+        <CodePageLink profile={profile} newTab={newTab} />
       </p>
     </section>
   );
