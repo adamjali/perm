@@ -71,7 +71,7 @@ jobs:
       - name: Data script tests
         if: ${{ !cancelled() }}
         run: |
-          python3 -m pip install --quiet openpyxl pdfplumber
+          python3 -m pip install --quiet openpyxl pdfplumber numpy
           n=0; failed=0
           for t in scripts/test_*.py scripts/oracle/test_*.py; do
             n=$((n + 1))
