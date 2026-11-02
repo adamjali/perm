@@ -2031,3 +2031,22 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   manifest with three pictures. The job-code pictures have phone versions now.
 - **Dependabot's own run goes red when a fix needs a major** (minimatch 11, glob 14, transitive): it can't bump them.
   Override both once the release floor allows (Nov 3), then the alerts close.
+
+## Nov 2 2026 (afternoon): the review name is optional, and a rating email can be previewed without recording
+
+- **A review needs no name** (owner, Nov 2: "if dk then anon is fine"): `validateSiteReview` takes a blank or missing
+  name, and `submit` labels it from where the reader came, "Case alert reader" (`ALERT_READER_NAME`) when they came
+  through an alert email's link or watch a confirmed case, "Anonymous" (`UNNAMED_REVIEWER`) otherwise. A nameless
+  double send is one review only when the address matches too: two strangers' nameless fives are two reviews.
+- **The page after a 1 or 2 rating gives the case's own program's next steps** (`nextSteps(status, caseNumber)` in
+  `convex/lib/mailPages.ts`, through the alert email's `nextStepsFor`): an LCA had been offered PERM's.
+- **That page shows the links without the steps above them, so each link stands alone**: a certified H-1B LCA gets
+  USCIS's Form I-129 times first (`NEXT_PATHS.i129Times`; an E-3 or H-1B1 may go through a consulate, so it doesn't)
+  and "If a green card follows: watching its wage request". The next-steps test resolves a USCIS form's page through
+  its `[form]` template. Both went to Convex at 12:08 PM EST; the optional name reaches the form with the night run.
+- **A rating email can be previewed exactly, recording nothing**: a scored link (`/case-alert/rate?...&r=N`) saves the
+  pick on GET, so never open one. Point squares 3 to 5 at where the GET would send them, `/reviews?rating=N&t=<sealed
+  address>#write` (`sealEmail` with the production secret read on stdin), and 1 and 2 at a copy of `ratingThanksPage`
+  rendered from the code. The same link with no `r` checks the token and only shows the boxes: the safe live check.
+- **A Convex test timing out at 15 s under another session's load is the machine** (load average 70 on Nov 2): rerun
+  the file alone before reading it as a defect.
