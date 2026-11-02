@@ -62,6 +62,7 @@ import { monthDay, shortDate } from "@convex/lib/months";
 import { CaveatBox } from "@/components/ui/note";
 import { ISO_MONTH_RE } from "@convex/lib/months";
 import { statusCasesHref } from "@/components/queue/statusLinks";
+import { getPermLine } from "@/lib/db/permLine";
 import { getRangeCoverage } from "@/lib/db/rangeCoverage";
 
 /**
@@ -221,7 +222,10 @@ export default async function CohortPage({
 
   const split = groupByStage(backlog.statuses);
   const label = formatMonth(month) ?? month;
-  const dolMonth = estimator.frontier?.analystQueueMonth ?? null;
+  // Where DOL is: our own daily check first, DOL's table when the check can't say (lib/permLine.ts).
+  const line = await getPermLine().catch(() => null);
+  const dolMonth = line?.month ?? estimator.frontier?.analystQueueMonth ?? null;
+  const dolAsOfIso = line ? line.asOf : (estimator.frontier?.asOf ?? null);
   const isNoted = month === OCTOBER_2025.month;
   // An alert on a month DOL has already reached would fire at once, so the
   // form is offered only for a month still ahead of DOL.
@@ -240,7 +244,8 @@ export default async function CohortPage({
           end={end}
           month={month}
           dolMonth={dolMonth}
-          dolAsOfIso={estimator.frontier?.asOf ?? null}
+          dolAsOfIso={dolAsOfIso}
+          checked={Boolean(line)}
           ahead={ahead}
           waitingMoved={waitingTrend(makeup.inLine + makeup.outside, pastDay?.month?.pending, pastDay?.day)}
           dolMoved={dolMonth ? queueMoveTrend(dolHistory, (h) => ({ month: analystReviewQueue(h.permQueues)?.priorityDate, asOf: h.permAsOf })) : undefined}
@@ -543,9 +548,9 @@ function SiblingLink({
  * folded tables below carry, so the headline can't disagree with them.
  */
 /** Where DOL's line is against this month, in a few words: past it, on it, or months before it. */
-function dolPlace(month: string, dolMonth: string, asOfIso: string | null): string {
+function dolPlace(month: string, dolMonth: string, asOfIso: string | null, checked: boolean): string {
   const asOf = monthDay(asOfIso ?? "");
-  const by = asOf ? `, as of ${asOf}` : "";
+  const by = asOf ? (checked ? `, by our check on ${asOf}` : `, by DOL's table of ${asOf}`) : "";
   if (month < dolMonth) return `Past this month${by}`;
   if (month === dolMonth) return `This month${by}`;
   const gap = monthsMoved(dolMonth, month);
@@ -559,6 +564,7 @@ function MonthHeadline({
   month,
   dolMonth,
   dolAsOfIso,
+  checked,
   ahead,
   waitingMoved,
   dolMoved,
@@ -568,8 +574,10 @@ function MonthHeadline({
   end: MonthEnd | null;
   month: string;
   dolMonth: string | null;
-  /** DOL's own as-of day for its month, "YYYY-MM-DD". */
+  /** The day `dolMonth` was read, "YYYY-MM-DD": our check's day, or DOL's own as-of day. */
   dolAsOfIso: string | null;
+  /** Whether `dolMonth` is our own check (lib/permLine.ts) rather than DOL's table. */
+  checked: boolean;
   /** Cases filed before this month still undecided at their last check. */
   ahead: number;
   /** How the month's waiting count moved since the census's newest earlier day. */
@@ -636,7 +644,7 @@ function MonthHeadline({
             icon={<CalendarCheckIcon weight="bold" className="text-primary-text" />}
             trend={dolMoved}
             value={formatMonth(dolMonth) ?? dolMonth}
-            note={dolPlace(month, dolMonth, dolAsOfIso)}
+            note={dolPlace(month, dolMonth, dolAsOfIso, checked)}
           />
         ) : null}{" "}
         {end?.kind === "estimate" ? (

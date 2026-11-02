@@ -1,0 +1,4034 @@
+{
+  "/api/soc/13-2051": {
+    "soc": "13-2051",
+    "title": "Financial and Investment Analysts",
+    "description": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses.",
+    "tasks": [],
+    "jobZone": 4,
+    "zoneLabel": "4",
+    "zoneName": "Considerable preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/financial-and-investment-analysts",
+    "figures": {
+      "filings": 2800,
+      "decided": 2669,
+      "certified": 2623,
+      "approvalRate": 0.9827650805545148,
+      "medianWage": 136039
+    },
+    "codeFilings": 22589,
+    "titles": [
+      {
+        "title": "Financial Analyst",
+        "filings": 4428,
+        "share": 0.19602461375005534,
+        "href": "/soc-codes/financial-analyst"
+      },
+      {
+        "title": "Associate",
+        "filings": 2790,
+        "share": 0.12351144362300234,
+        "href": "/soc-codes/associate"
+      },
+      {
+        "title": "Analyst",
+        "filings": 1525,
+        "share": 0.06751073531364823,
+        "href": "/soc-codes/analyst"
+      },
+      {
+        "title": "Vice President",
+        "filings": 898,
+        "share": 0.03975386249944663,
+        "href": "/soc-codes/vice-president"
+      },
+      {
+        "title": "Investment Analyst",
+        "filings": 583,
+        "share": 0.02580902209039798,
+        "href": "/soc-codes/investment-analyst"
+      }
+    ]
+  },
+  "/api/soc/15-1243": {
+    "soc": "15-1243",
+    "title": "Database Architects",
+    "description": "Design strategies for enterprise databases, data warehouse systems, and multidimensional networks. Set standards for database operations, programming, query processes, and security. Model, design, and construct large relational databases or data warehouses. Create and optimize data models for warehouse infrastructure and workflow. Integrate new systems with existing warehouse structure and refine system performance and functionality.",
+    "tasks": [
+      "Develop and document database architectures.",
+      "Collaborate with system architects, software architects, design analysts, and others to understand business or industry requirements.",
+      "Develop database architectural strategies at the modeling, design and implementation stages to address business or industry requirements.",
+      "Design databases to support business applications, ensuring system scalability, security, performance, and reliability.",
+      "Develop data models for applications, metadata tables, views or related database structures.",
+      "Design database applications, such as interfaces, data transfer mechanisms, global temporary tables, data partitions, and function-based indexes to enable efficient access of the generic database structure."
+    ],
+    "jobZone": 4,
+    "zoneLabel": "4",
+    "zoneName": "Considerable preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/database-architects",
+    "figures": {
+      "filings": 1893,
+      "decided": 1818,
+      "certified": 1800,
+      "approvalRate": 0.9900990099009901,
+      "medianWage": 147472
+    },
+    "codeFilings": 18454,
+    "titles": [
+      {
+        "title": "Data Engineer",
+        "filings": 7935,
+        "share": 0.42998807846537335,
+        "href": "/soc-codes/data-engineer"
+      },
+      {
+        "title": "Data Architect",
+        "filings": 716,
+        "share": 0.03879917633033489,
+        "href": "/soc-codes/data-architect"
+      },
+      {
+        "title": "Data Analyst",
+        "filings": 500,
+        "share": 0.02709439687872548,
+        "href": "/soc-codes/data-analyst"
+      },
+      {
+        "title": "Database Architect",
+        "filings": 372,
+        "share": 0.020158231277771756,
+        "href": "/soc-codes/database-architect"
+      },
+      {
+        "title": "Database Administrator",
+        "filings": 295,
+        "share": 0.015985694158448034,
+        "href": "/soc-codes/database-administrator"
+      }
+    ]
+  },
+  "/api/soc/15-1252": {
+    "soc": "15-1252",
+    "title": "Software Developers",
+    "description": "Research, design, and develop computer and network software or specialized utility programs. Analyze user needs and develop software solutions, applying principles and techniques of computer science, engineering, and mathematical analysis. Update software or enhance existing software capabilities. May work with computer hardware engineers to integrate hardware and software systems, and develop specifications and performance requirements. May maintain databases within an application area, working individually or coordinating database development as part of a team.",
+    "tasks": [
+      "Analyze user needs and software requirements to determine feasibility of design within time and cost constraints.",
+      "Develop or direct software system testing or validation procedures, programming, or documentation.",
+      "Confer with systems analysts, engineers, programmers and others to design systems and to obtain information on project limitations and capabilities, performance requirements and interfaces.",
+      "Modify existing software to correct errors, adapt it to new hardware, or upgrade interfaces and improve performance.",
+      "Prepare reports or correspondence concerning project specifications, activities, or status.",
+      "Analyze information to determine, recommend, and plan installation of a new system or modification of an existing system."
+    ],
+    "jobZone": 4,
+    "zoneLabel": "4",
+    "zoneName": "Considerable preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/software-developers",
+    "figures": {
+      "filings": 76524,
+      "decided": 74024,
+      "certified": 73143,
+      "approvalRate": 0.9880984545552793,
+      "medianWage": 139128
+    },
+    "codeFilings": 623106,
+    "titles": [
+      {
+        "title": "Software Engineer",
+        "filings": 187752,
+        "share": 0.30131630894261974,
+        "href": "/soc-codes/software-engineer"
+      },
+      {
+        "title": "Software Developer",
+        "filings": 88740,
+        "share": 0.14241557616200132,
+        "href": "/soc-codes/software-developer"
+      },
+      {
+        "title": "Software Development Engineer",
+        "filings": 26902,
+        "share": 0.043174034594434973,
+        "href": "/soc-codes/software-development-engineer"
+      },
+      {
+        "title": "Software Engineering",
+        "filings": 16559,
+        "share": 0.026574932675981294,
+        "href": "/soc-codes/software-engineering"
+      },
+      {
+        "title": "Software Dev Engineer",
+        "filings": 11000,
+        "share": 0.017653497157786958,
+        "href": "/soc-codes/software-dev-engineer"
+      }
+    ]
+  },
+  "/api/soc/15-2031": {
+    "soc": "15-2031",
+    "title": "Operations Research Analysts",
+    "description": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy formulation, or other managerial functions. May collect and analyze data and develop decision support software, services, or products. May develop and supply optimal time, cost, or logistics networks for program evaluation, review, or implementation.",
+    "tasks": [
+      "Present the results of mathematical modeling and data analysis to management or other end users.",
+      "Define data requirements, and gather and validate information, applying judgment and statistical tests.",
+      "Perform validation and testing of models to ensure adequacy, and reformulate models, as necessary.",
+      "Prepare management reports defining and evaluating problems and recommending solutions.",
+      "Collaborate with others in the organization to ensure successful implementation of chosen problem solutions.",
+      "Formulate mathematical or simulation models of problems, relating constants and variables, restrictions, alternatives, conflicting objectives, and their numerical parameters."
+    ],
+    "jobZone": 5,
+    "zoneLabel": "5",
+    "zoneName": "Extensive preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/operations-research-analysts",
+    "figures": {
+      "filings": 1183,
+      "decided": 1112,
+      "certified": 1092,
+      "approvalRate": 0.9820143884892086,
+      "medianWage": 110000
+    },
+    "codeFilings": 18345,
+    "titles": [
+      {
+        "title": "Operations Research Analyst",
+        "filings": 1333,
+        "share": 0.07266285091305533,
+        "href": "/soc-codes/operations-research-analyst"
+      },
+      {
+        "title": "Program Manager",
+        "filings": 898,
+        "share": 0.048950667756881984,
+        "href": "/soc-codes/program-manager"
+      },
+      {
+        "title": "Business Analyst",
+        "filings": 822,
+        "share": 0.04480784955028618,
+        "href": "/soc-codes/business-analyst"
+      },
+      {
+        "title": "Consultant",
+        "filings": 749,
+        "share": 0.04082856364131916,
+        "href": "/soc-codes/consultant"
+      },
+      {
+        "title": "Associate",
+        "filings": 726,
+        "share": 0.039574816026165166,
+        "href": "/soc-codes/associate"
+      }
+    ]
+  },
+  "/api/soc/15-2041": {
+    "soc": "15-2041",
+    "title": "Statisticians",
+    "description": "Develop or apply mathematical or statistical theory and methods to collect, organize, interpret, and summarize numerical data to provide usable information. May specialize in fields such as biostatistics, agricultural statistics, business statistics, or economic statistics. Includes mathematical and survey statisticians.",
+    "tasks": [
+      "Analyze and interpret statistical data to identify significant differences in relationships among sources of information.",
+      "Evaluate the statistical methods and procedures used to obtain data to ensure validity, applicability, efficiency, and accuracy.",
+      "Report results of statistical analyses, including information in the form of graphs, charts, and tables.",
+      "Determine whether statistical methods are appropriate, based on user needs or research questions of interest.",
+      "Prepare data for processing by organizing information, checking for inaccuracies, and adjusting and weighting the raw data.",
+      "Develop and test experimental designs, sampling techniques, and analytical methods."
+    ],
+    "jobZone": 5,
+    "zoneLabel": "5",
+    "zoneName": "Extensive preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/statisticians",
+    "figures": {
+      "filings": 1136,
+      "decided": 1082,
+      "certified": 1075,
+      "approvalRate": 0.9935304990757856,
+      "medianWage": 119000
+    },
+    "codeFilings": 11576,
+    "titles": [
+      {
+        "title": "Data Scientist",
+        "filings": 1578,
+        "share": 0.1363165169315826,
+        "href": "/soc-codes/data-scientist"
+      },
+      {
+        "title": "Biostatistician",
+        "filings": 1014,
+        "share": 0.08759502418797512,
+        "href": "/soc-codes/biostatistician"
+      },
+      {
+        "title": "Statistical Programmer",
+        "filings": 794,
+        "share": 0.06859018659295094,
+        "href": "/soc-codes/statistical-programmer"
+      },
+      {
+        "title": "Data Engineer",
+        "filings": 510,
+        "share": 0.04405666897028335,
+        "href": "/soc-codes/data-engineer"
+      },
+      {
+        "title": "Data Analyst",
+        "filings": 480,
+        "share": 0.0414651002073255,
+        "href": "/soc-codes/data-analyst"
+      }
+    ]
+  },
+  "/api/soc/17-2071": {
+    "soc": "17-2071",
+    "title": "Electrical Engineers",
+    "description": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or scientific use.",
+    "tasks": [
+      "Design, implement, maintain, or improve electrical instruments, equipment, facilities, components, products, or systems for commercial, industrial, or domestic purposes.",
+      "Oversee project production efforts to assure projects are completed on time and within budget.",
+      "Direct or coordinate manufacturing, construction, installation, maintenance, support, documentation, or testing activities to ensure compliance with specifications, codes, or customer requirements.",
+      "Perform detailed calculations to compute and establish manufacturing, construction, or installation standards or specifications.",
+      "Operate computer-assisted engineering or design software or equipment to perform engineering tasks.",
+      "Confer with engineers, customers, or others to discuss existing or potential engineering projects or products."
+    ],
+    "jobZone": 4,
+    "zoneLabel": "4",
+    "zoneName": "Considerable preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/electrical-engineers",
+    "figures": {
+      "filings": 2460,
+      "decided": 2338,
+      "certified": 2307,
+      "approvalRate": 0.9867408041060736,
+      "medianWage": 113235
+    },
+    "codeFilings": 18722,
+    "titles": [
+      {
+        "title": "Electrical Engineer",
+        "filings": 4584,
+        "share": 0.24484563614998398,
+        "href": "/soc-codes/electrical-engineer"
+      },
+      {
+        "title": "Engineer",
+        "filings": 955,
+        "share": 0.05100950753124666,
+        "href": "/soc-codes/engineer"
+      },
+      {
+        "title": "Controls Engineer",
+        "filings": 523,
+        "share": 0.027935049674180108,
+        "href": "/soc-codes/controls-engineer"
+      },
+      {
+        "title": "RF Engineer",
+        "filings": 479,
+        "share": 0.025584873410960367,
+        "href": "/soc-codes/rf-engineer"
+      },
+      {
+        "title": "Silicon Engineering",
+        "filings": 384,
+        "share": 0.02051062920628138,
+        "href": "/soc-codes/silicon-engineering"
+      }
+    ]
+  },
+  "/api/soc/19-1042": {
+    "soc": "19-1042",
+    "title": "Medical Scientists, Except Epidemiologists",
+    "description": "Conduct research dealing with the understanding of human diseases and the improvement of human health. Engage in clinical investigation, research and development, or other related activities.",
+    "tasks": [
+      "Follow strict safety procedures when handling toxic materials to avoid contamination.",
+      "Evaluate effects of drugs, gases, pesticides, parasites, and microorganisms at various levels.",
+      "Plan and direct studies to investigate human or animal disease, preventive methods, and treatments for disease.",
+      "Prepare and analyze organ, tissue, and cell samples to identify toxicity, bacteria, or microorganisms or to study cell structure.",
+      "Conduct research to develop methodologies, instrumentation, and procedures for medical application, analyzing data and presenting findings to the scientific audience and general public.",
+      "Teach principles of medicine and medical and laboratory procedures to physicians, residents, students, and technicians."
+    ],
+    "jobZone": 5,
+    "zoneLabel": "5",
+    "zoneName": "Extensive preparation needed",
+    "onetVersion": "31.0",
+    "href": "/perm-wages/medical-scientists-except-epidemiologists",
+    "figures": {
+      "filings": 184,
+      "decided": 168,
+      "certified": 166,
+      "approvalRate": 0.9880952380952381,
+      "medianWage": 106340
+    },
+    "codeFilings": 13303,
+    "titles": [
+      {
+        "title": "Research Associate",
+        "filings": 1338,
+        "share": 0.10057881680823874,
+        "href": "/soc-codes/research-associate"
+      },
+      {
+        "title": "Scientist",
+        "filings": 1313,
+        "share": 0.09869954145681425,
+        "href": "/soc-codes/scientist"
+      },
+      {
+        "title": "Research Scientist",
+        "filings": 1278,
+        "share": 0.09606855596481996,
+        "href": "/soc-codes/research-scientist"
+      },
+      {
+        "title": "Research Fellow",
+        "filings": 870,
+        "share": 0.06539878222957228,
+        "href": "/soc-codes/research-fellow"
+      },
+      {
+        "title": "Postdoctoral Fellow",
+        "filings": 827,
+        "share": 0.06216642862512215,
+        "href": "/soc-codes/postdoctoral-fellow"
+      }
+    ]
+  },
+  "/api/soc?q=Clinical%20Research%20Scientist": {
+    "query": "Clinical Research Scientist",
+    "code": null,
+    "titles": [
+      {
+        "key": "clinical research scientist",
+        "title": "Clinical Research Scientist",
+        "total": 40,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "19-1042",
+            "codeTitle": "Medical Scientists, Except Epidemiologists",
+            "filings": 25,
+            "share": 0.625,
+            "perm": 0,
+            "pwd": 11,
+            "lca": 14,
+            "onet": true,
+            "slug": "medical-scientists-except-epidemiologists",
+            "zone": 5,
+            "spellings": [
+              [
+                "CLINICAL RESEARCH SCIENTIST",
+                20
+              ],
+              [
+                "SR CLINICAL RESEARCH SCIENTIST",
+                3
+              ],
+              [
+                "SENIOR CLINICAL RESEARCH SCIENTIST",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Conduct research dealing with the understanding of human diseases and the improvement of human health."
+          },
+          {
+            "soc": "17-2031",
+            "codeTitle": "Bioengineers and Biomedical Engineers",
+            "filings": 5,
+            "share": 0.125,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 5,
+            "onet": false,
+            "slug": "bioengineers-and-biomedical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CLINICAL RESEARCH SCIENTIST I",
+                3
+              ],
+              [
+                "STAFF CLINICAL RESEARCH SCIENTIST",
+                1
+              ],
+              [
+                "SR. CLINICAL RESEARCH SCIENTIST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Apply knowledge of engineering, biology, chemistry, computer science, and biomechanical principles to the design, development, and evaluation of biological..."
+          },
+          {
+            "soc": "11-9121",
+            "codeTitle": "Natural Sciences Managers",
+            "filings": 3,
+            "share": 0.075,
+            "perm": 0,
+            "pwd": 1,
+            "lca": 2,
+            "onet": false,
+            "slug": "natural-sciences-managers",
+            "zone": 5,
+            "spellings": [
+              [
+                "CLINICAL RESEARCH SCIENTIST",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Plan, direct, or coordinate activities in such fields as life sciences, physical sciences, mathematics, statistics, and research and development in these fields."
+          },
+          {
+            "soc": "19-1041",
+            "codeTitle": "Epidemiologists",
+            "filings": 3,
+            "share": 0.075,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 3,
+            "onet": false,
+            "slug": "epidemiologists",
+            "zone": 5,
+            "spellings": [
+              [
+                "CLINICAL RESEARCH SCIENTIST",
+                1
+              ],
+              [
+                "CLINICAL RESEARCH SCIENTIST I",
+                1
+              ],
+              [
+                "CLINICAL RESEARCH SCIENTIST II",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Investigate and describe the determinants and distribution of disease, disability, or health outcomes."
+          }
+        ]
+      }
+    ],
+    "codes": []
+  },
+  "/api/soc?q=Controls%20Engineer": {
+    "query": "Controls Engineer",
+    "code": null,
+    "titles": [
+      {
+        "key": "controls engineer",
+        "title": "Controls Engineer",
+        "total": 1318,
+        "slug": "controls-engineer",
+        "codes": [
+          {
+            "soc": "17-2071",
+            "codeTitle": "Electrical Engineers",
+            "filings": 523,
+            "share": 0.3968133535660091,
+            "perm": 69,
+            "pwd": 77,
+            "lca": 377,
+            "onet": true,
+            "slug": "electrical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS ENGINEER",
+                321
+              ],
+              [
+                "SENIOR CONTROLS ENGINEER",
+                74
+              ],
+              [
+                "CONTROLS ENGINEER II",
+                48
+              ],
+              [
+                "SR. CONTROLS ENGINEER",
+                17
+              ],
+              [
+                "LEAD CONTROLS ENGINEER",
+                13
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or..."
+          },
+          {
+            "soc": "17-2199",
+            "codeTitle": "Engineers, All Other",
+            "filings": 387,
+            "share": 0.2936267071320182,
+            "perm": 62,
+            "pwd": 106,
+            "lca": 219,
+            "onet": true,
+            "slug": "validation-engineer",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS ENGINEER",
+                255
+              ],
+              [
+                "SENIOR CONTROLS ENGINEER",
+                48
+              ],
+              [
+                "SR. CONTROLS ENGINEER",
+                21
+              ],
+              [
+                "CONTROLS ENGINEER II",
+                19
+              ],
+              [
+                "STAFF CONTROLS ENGINEER",
+                9
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All engineers not listed separately."
+          },
+          {
+            "soc": "17-2141",
+            "codeTitle": "Mechanical Engineers",
+            "filings": 161,
+            "share": 0.12215477996965099,
+            "perm": 19,
+            "pwd": 23,
+            "lca": 119,
+            "onet": false,
+            "slug": "mechanical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS ENGINEER",
+                104
+              ],
+              [
+                "SENIOR CONTROLS ENGINEER",
+                32
+              ],
+              [
+                "SR. CONTROLS ENGINEER",
+                8
+              ],
+              [
+                "CONTROLS ENGINEER II",
+                5
+              ],
+              [
+                "PRINCIPAL CONTROLS ENGINEER",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Perform engineering duties in planning and designing tools, engines, machines, and other mechanically functioning equipment."
+          },
+          {
+            "soc": "17-2112",
+            "codeTitle": "Industrial Engineers",
+            "filings": 113,
+            "share": 0.08573596358118361,
+            "perm": 15,
+            "pwd": 28,
+            "lca": 70,
+            "onet": false,
+            "slug": "industrial-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS ENGINEER",
+                80
+              ],
+              [
+                "SENIOR CONTROLS ENGINEER",
+                10
+              ],
+              [
+                "SR. CONTROLS ENGINEER",
+                5
+              ],
+              [
+                "CONTROLS ENGINEER II",
+                4
+              ],
+              [
+                "LEAD CONTROLS ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design, develop, test, and evaluate integrated systems for managing industrial production processes, including human work factors, quality control, inventory control..."
+          },
+          {
+            "soc": "17-2072",
+            "codeTitle": "Electronics Engineers, Except Computer",
+            "filings": 78,
+            "share": 0.05918057663125948,
+            "perm": 16,
+            "pwd": 22,
+            "lca": 40,
+            "onet": false,
+            "slug": "electronics-engineers-except-computer",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS ENGINEER",
+                39
+              ],
+              [
+                "SENIOR CONTROLS ENGINEER",
+                14
+              ],
+              [
+                "SR. CONTROLS ENGINEER",
+                10
+              ],
+              [
+                "CONTROLS ENGINEER II",
+                7
+              ],
+              [
+                "PRINCIPAL CONTROLS ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test electronic components and systems for commercial, industrial, military, or scientific use employing knowledge of electronic theory and..."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 27,
+            "share": 0.0204855842185129,
+            "perm": 2,
+            "pwd": 5,
+            "lca": 20,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS ENGINEER",
+                13
+              ],
+              [
+                "SENIOR CONTROLS ENGINEER",
+                4
+              ],
+              [
+                "CONTROLS ENGINEER 3",
+                2
+              ],
+              [
+                "STAFF CONTROLS ENGINEER",
+                2
+              ],
+              [
+                "CONTROLS ENGINEER I",
+                1
+              ]
+            ],
+            "becameCodes": []
+          },
+          {
+            "soc": "17-2041",
+            "codeTitle": "Chemical Engineers",
+            "filings": 0,
+            "share": null,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 0,
+            "onet": true,
+            "slug": "chemical-engineers",
+            "zone": 4,
+            "spellings": [],
+            "becameCodes": []
+          }
+        ]
+      },
+      {
+        "key": "manufacturing controls dev engineer",
+        "title": "Manufacturing Controls Dev Engineer",
+        "total": 209,
+        "slug": "manufacturing-controls-dev-engineer",
+        "codes": [
+          {
+            "soc": "17-2112",
+            "codeTitle": "Industrial Engineers",
+            "filings": 109,
+            "share": 0.5215311004784688,
+            "perm": 3,
+            "pwd": 14,
+            "lca": 92,
+            "onet": false,
+            "slug": "industrial-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "MANUFACTURING CONTROLS DEV ENGINEER",
+                39
+              ],
+              [
+                "SR MANUFACTURING CONTROLS DEV ENGINEER",
+                22
+              ],
+              [
+                "STAFF MANUFACTURING CONTROLS DEV ENGINEER",
+                16
+              ],
+              [
+                "SENIOR MANUFACTURING CONTROLS DEV ENGINEER",
+                10
+              ],
+              [
+                "SR. MANUFACTURING CONTROLS DEV ENGINEER",
+                9
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design, develop, test, and evaluate integrated systems for managing industrial production processes, including human work factors, quality control, inventory control..."
+          },
+          {
+            "soc": "17-2199",
+            "codeTitle": "Engineers, All Other",
+            "filings": 74,
+            "share": 0.35406698564593303,
+            "perm": 0,
+            "pwd": 15,
+            "lca": 59,
+            "onet": false,
+            "slug": "validation-engineer",
+            "zone": 4,
+            "spellings": [
+              [
+                "MANUFACTURING CONTROLS DEV ENGINEER",
+                46
+              ],
+              [
+                "STAFF MANUFACTURING CONTROLS DEV ENGINEER",
+                12
+              ],
+              [
+                "SR MANUFACTURING CONTROLS DEV ENGINEER",
+                8
+              ],
+              [
+                "SENIOR MANUFACTURING CONTROLS DEV ENGINEER",
+                3
+              ],
+              [
+                "SR. MANUFACTURING CONTROLS DEV ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All engineers not listed separately."
+          },
+          {
+            "soc": "17-2071",
+            "codeTitle": "Electrical Engineers",
+            "filings": 17,
+            "share": 0.08133971291866028,
+            "perm": 0,
+            "pwd": 2,
+            "lca": 15,
+            "onet": false,
+            "slug": "electrical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SR MANUFACTURING CONTROLS DEV ENGINEER",
+                7
+              ],
+              [
+                "SR. MANUFACTURING CONTROLS DEV. ENGINEER",
+                3
+              ],
+              [
+                "SR STAFF MANUFACTURING CONTROLS DEV ENGINEER",
+                2
+              ],
+              [
+                "STAFF MANUFACTURING CONTROLS DEV ENGINEER",
+                2
+              ],
+              [
+                "MANUFACTURING CONTROLS DEV ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or..."
+          },
+          {
+            "soc": "17-2141",
+            "codeTitle": "Mechanical Engineers",
+            "filings": 8,
+            "share": 0.03827751196172249,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 8,
+            "onet": false,
+            "slug": "mechanical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SR MANUFACTURING CONTROLS DEV ENGINEER",
+                5
+              ],
+              [
+                "STAFF MANUFACTURING CONTROLS DEV ENGINEER",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Perform engineering duties in planning and designing tools, engines, machines, and other mechanically functioning equipment."
+          }
+        ]
+      },
+      {
+        "key": "manufacturing controls development engineer",
+        "title": "Manufacturing Controls Development Engineer",
+        "total": 74,
+        "slug": "manufacturing-controls-development-engineer",
+        "codes": [
+          {
+            "soc": "17-2199",
+            "codeTitle": "Engineers, All Other",
+            "filings": 54,
+            "share": 0.7297297297297297,
+            "perm": 17,
+            "pwd": 26,
+            "lca": 11,
+            "onet": false,
+            "slug": "validation-engineer",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                24
+              ],
+              [
+                "MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                18
+              ],
+              [
+                "STAFF MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                9
+              ],
+              [
+                "SENIOR STAFF MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All engineers not listed separately."
+          },
+          {
+            "soc": "17-2112",
+            "codeTitle": "Industrial Engineers",
+            "filings": 18,
+            "share": 0.24324324324324326,
+            "perm": 2,
+            "pwd": 14,
+            "lca": 2,
+            "onet": false,
+            "slug": "industrial-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                12
+              ],
+              [
+                "STAFF MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                3
+              ],
+              [
+                "MANUFACTURING CONTROLS DEVELOPMENT ENGINEER",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design, develop, test, and evaluate integrated systems for managing industrial production processes, including human work factors, quality control, inventory control..."
+          }
+        ]
+      },
+      {
+        "key": "controls project engineer",
+        "title": "Controls Project Engineer",
+        "total": 66,
+        "slug": "controls-project-engineer",
+        "codes": [
+          {
+            "soc": "17-2071",
+            "codeTitle": "Electrical Engineers",
+            "filings": 31,
+            "share": 0.4696969696969697,
+            "perm": 6,
+            "pwd": 6,
+            "lca": 19,
+            "onet": false,
+            "slug": "electrical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS PROJECT ENGINEER",
+                24
+              ],
+              [
+                "SENIOR CONTROLS PROJECT ENGINEER",
+                5
+              ],
+              [
+                "SR. CONTROLS PROJECT ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or..."
+          },
+          {
+            "soc": "17-2112",
+            "codeTitle": "Industrial Engineers",
+            "filings": 11,
+            "share": 0.16666666666666666,
+            "perm": 3,
+            "pwd": 5,
+            "lca": 3,
+            "onet": false,
+            "slug": "industrial-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS PROJECT ENGINEER",
+                8
+              ],
+              [
+                "SENIOR CONTROLS PROJECT ENGINEER",
+                2
+              ],
+              [
+                "SR. CONTROLS PROJECT ENGINEER",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design, develop, test, and evaluate integrated systems for managing industrial production processes, including human work factors, quality control, inventory control..."
+          },
+          {
+            "soc": "17-2072",
+            "codeTitle": "Electronics Engineers, Except Computer",
+            "filings": 10,
+            "share": 0.15151515151515152,
+            "perm": 1,
+            "pwd": 1,
+            "lca": 8,
+            "onet": false,
+            "slug": "electronics-engineers-except-computer",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR CONTROLS PROJECT ENGINEER",
+                4
+              ],
+              [
+                "CONTROLS PROJECT ENGINEER",
+                3
+              ],
+              [
+                "CONTROLS PROJECT ENGINEER II",
+                2
+              ],
+              [
+                "SR. CONTROLS PROJECT ENGINEER",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test electronic components and systems for commercial, industrial, military, or scientific use employing knowledge of electronic theory and..."
+          },
+          {
+            "soc": "17-2199",
+            "codeTitle": "Engineers, All Other",
+            "filings": 10,
+            "share": 0.15151515151515152,
+            "perm": 1,
+            "pwd": 5,
+            "lca": 4,
+            "onet": false,
+            "slug": "validation-engineer",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS PROJECT ENGINEER",
+                7
+              ],
+              [
+                "CONTROLS PROJECT ENGINEER II",
+                2
+              ],
+              [
+                "SR. CONTROLS PROJECT ENGINEER",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All engineers not listed separately."
+          }
+        ]
+      },
+      {
+        "key": "controls systems engineer",
+        "title": "Controls Systems Engineer",
+        "total": 47,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "17-2071",
+            "codeTitle": "Electrical Engineers",
+            "filings": 22,
+            "share": 0.46808510638297873,
+            "perm": 3,
+            "pwd": 6,
+            "lca": 13,
+            "onet": false,
+            "slug": "electrical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS SYSTEMS ENGINEER",
+                8
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER II",
+                5
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER III",
+                3
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER IV",
+                3
+              ],
+              [
+                "SR. CONTROLS SYSTEMS ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or..."
+          },
+          {
+            "soc": "17-2141",
+            "codeTitle": "Mechanical Engineers",
+            "filings": 10,
+            "share": 0.2127659574468085,
+            "perm": 0,
+            "pwd": 3,
+            "lca": 7,
+            "onet": false,
+            "slug": "mechanical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS SYSTEMS ENGINEER",
+                8
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER II",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Perform engineering duties in planning and designing tools, engines, machines, and other mechanically functioning equipment."
+          },
+          {
+            "soc": "17-2112",
+            "codeTitle": "Industrial Engineers",
+            "filings": 5,
+            "share": 0.10638297872340426,
+            "perm": 0,
+            "pwd": 5,
+            "lca": 0,
+            "onet": false,
+            "slug": "industrial-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS SYSTEMS ENGINEER",
+                4
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER III",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design, develop, test, and evaluate integrated systems for managing industrial production processes, including human work factors, quality control, inventory control..."
+          },
+          {
+            "soc": "17-2199",
+            "codeTitle": "Engineers, All Other",
+            "filings": 4,
+            "share": 0.0851063829787234,
+            "perm": 1,
+            "pwd": 3,
+            "lca": 0,
+            "onet": false,
+            "slug": "validation-engineer",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR CONTROLS SYSTEMS ENGINEER",
+                2
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER",
+                1
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER I",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All engineers not listed separately."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 3,
+            "share": 0.06382978723404255,
+            "perm": 0,
+            "pwd": 2,
+            "lca": 1,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "CONTROLS SYSTEMS ENGINEER",
+                2
+              ],
+              [
+                "CONTROLS SYSTEMS ENGINEER IV",
+                1
+              ]
+            ],
+            "becameCodes": []
+          }
+        ]
+      }
+    ],
+    "codes": []
+  },
+  "/api/soc?q=Financial%20Analyst": {
+    "query": "Financial Analyst",
+    "code": null,
+    "titles": [
+      {
+        "key": "financial analyst",
+        "title": "Financial Analyst",
+        "total": 6140,
+        "slug": "financial-analyst",
+        "codes": [
+          {
+            "soc": "13-2051",
+            "codeTitle": "Financial and Investment Analysts",
+            "filings": 4428,
+            "share": 0.721172638436482,
+            "perm": 483,
+            "pwd": 972,
+            "lca": 2973,
+            "onet": true,
+            "slug": "financial-and-investment-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL ANALYST",
+                3062
+              ],
+              [
+                "SENIOR FINANCIAL ANALYST",
+                517
+              ],
+              [
+                "FINANCIAL ANALYST III",
+                297
+              ],
+              [
+                "FINANCIAL ANALYST II",
+                236
+              ],
+              [
+                "SR. FINANCIAL ANALYST",
+                123
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses."
+          },
+          {
+            "soc": "13-2011",
+            "codeTitle": "Accountants and Auditors",
+            "filings": 1011,
+            "share": 0.16465798045602606,
+            "perm": 133,
+            "pwd": 247,
+            "lca": 631,
+            "onet": false,
+            "slug": "accountants-and-auditors",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL ANALYST III",
+                335
+              ],
+              [
+                "FINANCIAL ANALYST II",
+                272
+              ],
+              [
+                "FINANCIAL ANALYST",
+                239
+              ],
+              [
+                "SENIOR FINANCIAL ANALYST",
+                103
+              ],
+              [
+                "SR. FINANCIAL ANALYST",
+                34
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Examine, analyze, and interpret accounting records to prepare financial statements, give advice, or audit and evaluate statements prepared by others."
+          },
+          {
+            "soc": "13-2099",
+            "codeTitle": "Financial Specialists, All Other",
+            "filings": 371,
+            "share": 0.060423452768729645,
+            "perm": 49,
+            "pwd": 62,
+            "lca": 260,
+            "onet": true,
+            "slug": "financial-specialists-all-other",
+            "zone": 5,
+            "spellings": [
+              [
+                "FINANCIAL ANALYST",
+                225
+              ],
+              [
+                "SENIOR FINANCIAL ANALYST",
+                66
+              ],
+              [
+                "FINANCIAL ANALYST II",
+                32
+              ],
+              [
+                "FINANCIAL ANALYST III",
+                22
+              ],
+              [
+                "SR. FINANCIAL ANALYST",
+                5
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "All financial specialists not listed separately."
+          },
+          {
+            "soc": "13-2031",
+            "codeTitle": "Budget Analysts",
+            "filings": 96,
+            "share": 0.015635179153094463,
+            "perm": 8,
+            "pwd": 19,
+            "lca": 69,
+            "onet": false,
+            "slug": "budget-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL ANALYST",
+                63
+              ],
+              [
+                "SENIOR FINANCIAL ANALYST",
+                19
+              ],
+              [
+                "FINANCIAL ANALYST II",
+                5
+              ],
+              [
+                "SR. FINANCIAL ANALYST",
+                4
+              ],
+              [
+                "FINANCIAL ANALYST I",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Examine budget estimates for completeness, accuracy, and conformance with procedures and regulations."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 76,
+            "share": 0.012377850162866449,
+            "perm": 8,
+            "pwd": 17,
+            "lca": 51,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL ANALYST",
+                42
+              ],
+              [
+                "SENIOR FINANCIAL ANALYST",
+                13
+              ],
+              [
+                "SR. FINANCIAL ANALYST",
+                9
+              ],
+              [
+                "LEAD FINANCIAL ANALYST",
+                3
+              ],
+              [
+                "FINANCIAL ANALYST II",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          },
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 0,
+            "share": null,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 0,
+            "onet": true,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [],
+            "becameCodes": []
+          }
+        ]
+      },
+      {
+        "key": "financial quantitative analyst",
+        "title": "Financial Quantitative Analyst",
+        "total": 339,
+        "slug": "financial-quantitative-analyst",
+        "codes": [
+          {
+            "soc": "13-2099",
+            "codeTitle": "Financial Specialists, All Other",
+            "filings": 321,
+            "share": 0.9469026548672567,
+            "perm": 40,
+            "pwd": 72,
+            "lca": 209,
+            "onet": true,
+            "slug": "financial-specialists-all-other",
+            "zone": 5,
+            "spellings": [
+              [
+                "FINANCIAL QUANTITATIVE ANALYST",
+                305
+              ],
+              [
+                "SENIOR FINANCIAL QUANTITATIVE ANALYST",
+                8
+              ],
+              [
+                "SR. FINANCIAL QUANTITATIVE ANALYST",
+                3
+              ],
+              [
+                "FINANCIAL QUANTITATIVE ANALYST II",
+                3
+              ],
+              [
+                "JUNIOR FINANCIAL QUANTITATIVE ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "All financial specialists not listed separately."
+          },
+          {
+            "soc": "13-2051",
+            "codeTitle": "Financial and Investment Analysts",
+            "filings": 10,
+            "share": 0.029498525073746312,
+            "perm": 2,
+            "pwd": 3,
+            "lca": 5,
+            "onet": false,
+            "slug": "financial-and-investment-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL QUANTITATIVE ANALYST",
+                10
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses."
+          }
+        ]
+      },
+      {
+        "key": "financial and investment analyst",
+        "title": "Financial and Investment Analyst",
+        "total": 174,
+        "slug": "financial-and-investment-analyst",
+        "codes": [
+          {
+            "soc": "13-2051",
+            "codeTitle": "Financial and Investment Analysts",
+            "filings": 169,
+            "share": 0.9712643678160919,
+            "perm": 15,
+            "pwd": 28,
+            "lca": 126,
+            "onet": false,
+            "slug": "financial-and-investment-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL AND INVESTMENT ANALYST",
+                154
+              ],
+              [
+                "FINANCIAL & INVESTMENT ANALYST",
+                8
+              ],
+              [
+                "SENIOR FINANCIAL AND INVESTMENT ANALYST",
+                4
+              ],
+              [
+                "FINANCIAL AND INVESTMENT ANALYST II",
+                2
+              ],
+              [
+                "SR FINANCIAL AND INVESTMENT ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses."
+          },
+          {
+            "soc": "13-2011",
+            "codeTitle": "Accountants and Auditors",
+            "filings": 4,
+            "share": 0.022988505747126436,
+            "perm": 1,
+            "pwd": 1,
+            "lca": 2,
+            "onet": false,
+            "slug": "accountants-and-auditors",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL AND INVESTMENT ANALYST",
+                2
+              ],
+              [
+                "FINANCIAL & INVESTMENT ANALYST",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Examine, analyze, and interpret accounting records to prepare financial statements, give advice, or audit and evaluate statements prepared by others."
+          }
+        ]
+      },
+      {
+        "key": "financial data analyst",
+        "title": "Financial Data Analyst",
+        "total": 129,
+        "slug": "financial-data-analyst",
+        "codes": [
+          {
+            "soc": "13-2051",
+            "codeTitle": "Financial and Investment Analysts",
+            "filings": 48,
+            "share": 0.37209302325581395,
+            "perm": 5,
+            "pwd": 13,
+            "lca": 30,
+            "onet": false,
+            "slug": "financial-and-investment-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL DATA ANALYST",
+                36
+              ],
+              [
+                "SENIOR FINANCIAL DATA ANALYST",
+                8
+              ],
+              [
+                "FINANCIAL DATA ANALYST I",
+                2
+              ],
+              [
+                "SR FINANCIAL DATA ANALYST",
+                1
+              ],
+              [
+                "LEAD FINANCIAL DATA ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses."
+          },
+          {
+            "soc": "13-2099",
+            "codeTitle": "Financial Specialists, All Other",
+            "filings": 40,
+            "share": 0.31007751937984496,
+            "perm": 3,
+            "pwd": 8,
+            "lca": 29,
+            "onet": false,
+            "slug": "financial-specialists-all-other",
+            "zone": 5,
+            "spellings": [
+              [
+                "FINANCIAL DATA ANALYST",
+                36
+              ],
+              [
+                "FINANCIAL / DATA ANALYST",
+                2
+              ],
+              [
+                "SENIOR FINANCIAL DATA ANALYST",
+                2
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "All financial specialists not listed separately."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 29,
+            "share": 0.2248062015503876,
+            "perm": 2,
+            "pwd": 5,
+            "lca": 22,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL DATA ANALYST",
+                26
+              ],
+              [
+                "SENIOR FINANCIAL DATA ANALYST",
+                2
+              ],
+              [
+                "FINANCIAL DATA ANALYST III",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          },
+          {
+            "soc": "15-2031",
+            "codeTitle": "Operations Research Analysts",
+            "filings": 5,
+            "share": 0.03875968992248062,
+            "perm": 0,
+            "pwd": 3,
+            "lca": 2,
+            "onet": false,
+            "slug": "operations-research-analysts",
+            "zone": 5,
+            "spellings": [
+              [
+                "FINANCIAL DATA ANALYST",
+                5
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+          },
+          {
+            "soc": "15-1299",
+            "codeTitle": "Computer Occupations, All Other",
+            "filings": 3,
+            "share": 0.023255813953488372,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 3,
+            "onet": false,
+            "slug": "computer-occupations-all-other-2",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL DATA ANALYST",
+                3
+              ]
+            ],
+            "becameCodes": []
+          }
+        ]
+      },
+      {
+        "key": "financial systems analyst",
+        "title": "Financial Systems Analyst",
+        "total": 66,
+        "slug": "financial-systems-analyst",
+        "codes": [
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 18,
+            "share": 0.2727272727272727,
+            "perm": 0,
+            "pwd": 3,
+            "lca": 15,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL SYSTEMS ANALYST",
+                9
+              ],
+              [
+                "SR. FINANCIAL SYSTEMS ANALYST",
+                5
+              ],
+              [
+                "SENIOR FINANCIAL SYSTEMS ANALYST",
+                4
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          },
+          {
+            "soc": "13-2051",
+            "codeTitle": "Financial and Investment Analysts",
+            "filings": 15,
+            "share": 0.22727272727272727,
+            "perm": 1,
+            "pwd": 4,
+            "lca": 10,
+            "onet": true,
+            "slug": "financial-and-investment-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL SYSTEMS ANALYST",
+                7
+              ],
+              [
+                "SENIOR FINANCIAL SYSTEMS ANALYST",
+                4
+              ],
+              [
+                "SR FINANCIAL SYSTEMS ANALYST",
+                2
+              ],
+              [
+                "SENIOR FINANCIAL SYSTEMS ANALYST II",
+                1
+              ],
+              [
+                "SR. FINANCIAL SYSTEMS ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses."
+          },
+          {
+            "soc": "15-1211",
+            "codeTitle": "Computer Systems Analysts",
+            "filings": 11,
+            "share": 0.16666666666666666,
+            "perm": 4,
+            "pwd": 1,
+            "lca": 6,
+            "onet": false,
+            "slug": "computer-systems-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL SYSTEMS ANALYST",
+                5
+              ],
+              [
+                "SENIOR FINANCIAL SYSTEMS ANALYST",
+                3
+              ],
+              [
+                "SR. FINANCIAL SYSTEMS ANALYST",
+                2
+              ],
+              [
+                "PRINCIPAL FINANCIAL SYSTEMS ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Analyze science, engineering, business, and other data processing problems to develop and implement solutions to complex applications problems, system administration..."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 6,
+            "share": 0.09090909090909091,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 6,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "FINANCIAL SYSTEMS ANALYST",
+                4
+              ],
+              [
+                "LEAD FINANCIAL SYSTEMS ANALYST",
+                1
+              ],
+              [
+                "SR. FINANCIAL SYSTEMS ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "13-2099",
+            "codeTitle": "Financial Specialists, All Other",
+            "filings": 3,
+            "share": 0.045454545454545456,
+            "perm": 1,
+            "pwd": 1,
+            "lca": 1,
+            "onet": false,
+            "slug": "financial-specialists-all-other",
+            "zone": 5,
+            "spellings": [
+              [
+                "FINANCIAL SYSTEMS ANALYST",
+                2
+              ],
+              [
+                "SENIOR FINANCIAL SYSTEMS ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ],
+            "summary": "All financial specialists not listed separately."
+          },
+          {
+            "soc": "15-2031",
+            "codeTitle": "Operations Research Analysts",
+            "filings": 3,
+            "share": 0.045454545454545456,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 3,
+            "onet": false,
+            "slug": "operations-research-analysts",
+            "zone": 5,
+            "spellings": [
+              [
+                "SENIOR FINANCIAL SYSTEMS ANALYST",
+                2
+              ],
+              [
+                "FINANCIAL SYSTEMS ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+          }
+        ]
+      }
+    ],
+    "codes": [
+      {
+        "soc": "13-2051",
+        "title": "Financial and Investment Analysts",
+        "known": true,
+        "zone": 4,
+        "slug": "financial-and-investment-analysts",
+        "filings": 22589,
+        "became": [
+          {
+            "soc": "13-2054",
+            "title": "Financial Risk Specialists",
+            "slug": "financial-risk-specialists"
+          }
+        ],
+        "summary": "Conduct quantitative analyses of information involving investment programs or financial data of public or private institutions, including valuation of businesses."
+      }
+    ]
+  },
+  "/api/soc?q=Firmware%20Engineer": {
+    "query": "Firmware Engineer",
+    "code": null,
+    "titles": [
+      {
+        "key": "firmware engineer",
+        "title": "Firmware Engineer",
+        "total": 1012,
+        "slug": "firmware-engineer",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 642,
+            "share": 0.6343873517786561,
+            "perm": 81,
+            "pwd": 237,
+            "lca": 324,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "FIRMWARE ENGINEER",
+                415
+              ],
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                65
+              ],
+              [
+                "SR. FIRMWARE ENGINEER",
+                40
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                32
+              ],
+              [
+                "FIRMWARE ENGINEER II",
+                28
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "17-2071",
+            "codeTitle": "Electrical Engineers",
+            "filings": 122,
+            "share": 0.12055335968379446,
+            "perm": 5,
+            "pwd": 24,
+            "lca": 93,
+            "onet": false,
+            "slug": "electrical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                34
+              ],
+              [
+                "FIRMWARE ENGINEER",
+                28
+              ],
+              [
+                "PRINCIPAL FIRMWARE ENGINEER",
+                14
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                11
+              ],
+              [
+                "FIRMWARE ENGINEER II",
+                9
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or..."
+          },
+          {
+            "soc": "17-2072",
+            "codeTitle": "Electronics Engineers, Except Computer",
+            "filings": 85,
+            "share": 0.08399209486166008,
+            "perm": 12,
+            "pwd": 24,
+            "lca": 49,
+            "onet": false,
+            "slug": "electronics-engineers-except-computer",
+            "zone": 4,
+            "spellings": [
+              [
+                "FIRMWARE ENGINEER",
+                37
+              ],
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                13
+              ],
+              [
+                "PRINCIPAL FIRMWARE ENGINEER",
+                12
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                6
+              ],
+              [
+                "SR. FIRMWARE ENGINEER",
+                6
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test electronic components and systems for commercial, industrial, military, or scientific use employing knowledge of electronic theory and..."
+          },
+          {
+            "soc": "17-2061",
+            "codeTitle": "Computer Hardware Engineers",
+            "filings": 66,
+            "share": 0.06521739130434782,
+            "perm": 4,
+            "pwd": 14,
+            "lca": 48,
+            "onet": false,
+            "slug": "computer-hardware-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "FIRMWARE ENGINEER",
+                39
+              ],
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                13
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                4
+              ],
+              [
+                "SR. FIRMWARE ENGINEER",
+                3
+              ],
+              [
+                "FIRMWARE ENGINEER 3",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test computer or computer-related equipment for commercial, industrial, military, or scientific use."
+          },
+          {
+            "soc": "15-1299",
+            "codeTitle": "Computer Occupations, All Other",
+            "filings": 38,
+            "share": 0.037549407114624504,
+            "perm": 1,
+            "pwd": 1,
+            "lca": 36,
+            "onet": true,
+            "slug": "computer-occupations-all-other-2",
+            "zone": 4,
+            "spellings": [
+              [
+                "FIRMWARE ENGINEER",
+                21
+              ],
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                7
+              ],
+              [
+                "SR. FIRMWARE ENGINEER",
+                3
+              ],
+              [
+                "FIRMWARE ENGINEER III",
+                2
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                2
+              ]
+            ],
+            "becameCodes": []
+          },
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 14,
+            "share": 0.01383399209486166,
+            "perm": 0,
+            "pwd": 3,
+            "lca": 11,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                7
+              ],
+              [
+                "FIRMWARE ENGINEER",
+                4
+              ],
+              [
+                "FIRMWARE ENGINEER II",
+                1
+              ],
+              [
+                "JUNIOR FIRMWARE ENGINEER",
+                1
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          },
+          {
+            "soc": "17-2199",
+            "codeTitle": "Engineers, All Other",
+            "filings": 13,
+            "share": 0.012845849802371542,
+            "perm": 2,
+            "pwd": 2,
+            "lca": 9,
+            "onet": false,
+            "slug": "validation-engineer",
+            "zone": 4,
+            "spellings": [
+              [
+                "FIRMWARE ENGINEER",
+                7
+              ],
+              [
+                "SENIOR FIRMWARE ENGINEER",
+                4
+              ],
+              [
+                "PRINCIPAL FIRMWARE ENGINEER",
+                1
+              ],
+              [
+                "STAFF FIRMWARE ENGINEER",
+                1
+              ]
+            ],
+            "becameCodes": []
+          }
+        ]
+      },
+      {
+        "key": "software development engineer firmware",
+        "title": "Software Development Engineer - Firmware",
+        "total": 341,
+        "slug": "software-development-engineer-firmware",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 264,
+            "share": 0.7741935483870968,
+            "perm": 26,
+            "pwd": 36,
+            "lca": 202,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER - FIRMWARE",
+                237
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER – FIRMWARE",
+                14
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER-FIRMWARE",
+                10
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER- FIRMWARE",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "17-2072",
+            "codeTitle": "Electronics Engineers, Except Computer",
+            "filings": 48,
+            "share": 0.14076246334310852,
+            "perm": 2,
+            "pwd": 2,
+            "lca": 44,
+            "onet": false,
+            "slug": "electronics-engineers-except-computer",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER - FIRMWARE",
+                45
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER – FIRMWARE",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test electronic components and systems for commercial, industrial, military, or scientific use employing knowledge of electronic theory and..."
+          },
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 10,
+            "share": 0.02932551319648094,
+            "perm": 2,
+            "pwd": 3,
+            "lca": 5,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER - FIRMWARE",
+                9
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER-FIRMWARE",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          },
+          {
+            "soc": "17-2071",
+            "codeTitle": "Electrical Engineers",
+            "filings": 8,
+            "share": 0.02346041055718475,
+            "perm": 1,
+            "pwd": 1,
+            "lca": 6,
+            "onet": false,
+            "slug": "electrical-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER - FIRMWARE",
+                8
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, test, or supervise the manufacturing and installation of electrical equipment, components, or systems for commercial, industrial, military, or..."
+          }
+        ]
+      },
+      {
+        "key": "software engineer manager embedded systems firmware",
+        "title": "Software Engineer Manager, Embedded Systems/Firmware",
+        "total": 53,
+        "slug": "software-engineer-manager-embedded-systems-firmware",
+        "codes": [
+          {
+            "soc": "11-3021",
+            "codeTitle": "Computer and Information Systems Managers",
+            "filings": 48,
+            "share": 0.9056603773584906,
+            "perm": 0,
+            "pwd": 48,
+            "lca": 0,
+            "onet": false,
+            "slug": "computer-and-information-systems-managers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER MANAGER, EMBEDDED SYSTEMS/FIRMWARE",
+                48
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Plan, direct, or coordinate activities in such fields as electronic data processing, information systems, systems analysis, and computer programming."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 5,
+            "share": 0.09433962264150944,
+            "perm": 0,
+            "pwd": 5,
+            "lca": 0,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER MANAGER, EMBEDDED SYSTEMS/FIRMWARE",
+                5
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          }
+        ]
+      },
+      {
+        "key": "engineer firmware",
+        "title": "Engineer, Firmware",
+        "total": 51,
+        "slug": "engineer-firmware",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 38,
+            "share": 0.7450980392156863,
+            "perm": 3,
+            "pwd": 7,
+            "lca": 28,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER, FIRMWARE",
+                9
+              ],
+              [
+                "STAFF ENGINEER, FIRMWARE",
+                5
+              ],
+              [
+                "SENIOR ENGINEER, FIRMWARE",
+                4
+              ],
+              [
+                "PRINCIPAL ENGINEER - FIRMWARE",
+                4
+              ],
+              [
+                "ENGINEER - FIRMWARE",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "17-2072",
+            "codeTitle": "Electronics Engineers, Except Computer",
+            "filings": 7,
+            "share": 0.13725490196078433,
+            "perm": 0,
+            "pwd": 1,
+            "lca": 6,
+            "onet": false,
+            "slug": "electronics-engineers-except-computer",
+            "zone": 4,
+            "spellings": [
+              [
+                "PRINCIPAL ENGINEER, FIRMWARE",
+                2
+              ],
+              [
+                "PRINCIPAL ENGINEER - FIRMWARE",
+                2
+              ],
+              [
+                "ENGINEER - FIRMWARE",
+                1
+              ],
+              [
+                "PRINCIPAL ENGINEER FIRMWARE",
+                1
+              ],
+              [
+                "SENIOR STAFF ENGINEER FIRMWARE",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test electronic components and systems for commercial, industrial, military, or scientific use employing knowledge of electronic theory and..."
+          },
+          {
+            "soc": "15-1221",
+            "codeTitle": "Computer and Information Research Scientists",
+            "filings": 3,
+            "share": 0.058823529411764705,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 3,
+            "onet": false,
+            "slug": "computer-and-information-research-scientists",
+            "zone": 5,
+            "spellings": [
+              [
+                "SENIOR ENGINEER, FIRMWARE",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Conduct research into fundamental computer and information science as theorists, designers, or inventors."
+          }
+        ]
+      },
+      {
+        "key": "engineer firmware verification engineering",
+        "title": "Engineer, Firmware Verification Engineering",
+        "total": 50,
+        "slug": "engineer-firmware-verification-engineering",
+        "codes": [
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 32,
+            "share": 0.64,
+            "perm": 1,
+            "pwd": 8,
+            "lca": 23,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                12
+              ],
+              [
+                "STAFF ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                11
+              ],
+              [
+                "ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                7
+              ],
+              [
+                "PRINCIPAL ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          },
+          {
+            "soc": "17-2072",
+            "codeTitle": "Electronics Engineers, Except Computer",
+            "filings": 11,
+            "share": 0.22,
+            "perm": 0,
+            "pwd": 1,
+            "lca": 10,
+            "onet": false,
+            "slug": "electronics-engineers-except-computer",
+            "zone": 4,
+            "spellings": [
+              [
+                "STAFF ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                7
+              ],
+              [
+                "ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                2
+              ],
+              [
+                "SENIOR ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, develop, or test electronic components and systems for commercial, industrial, military, or scientific use employing knowledge of electronic theory and..."
+          },
+          {
+            "soc": "17-2112",
+            "codeTitle": "Industrial Engineers",
+            "filings": 4,
+            "share": 0.08,
+            "perm": 1,
+            "pwd": 3,
+            "lca": 0,
+            "onet": false,
+            "slug": "industrial-engineers",
+            "zone": 4,
+            "spellings": [
+              [
+                "STAFF ENGINEER, FIRMWARE VERIFICATION ENGINEERING",
+                4
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design, develop, test, and evaluate integrated systems for managing industrial production processes, including human work factors, quality control, inventory control..."
+          }
+        ]
+      }
+    ],
+    "codes": []
+  },
+  "/api/soc?q=Operations%20Research%20Analyst": {
+    "query": "Operations Research Analyst",
+    "code": null,
+    "titles": [
+      {
+        "key": "operations research analyst",
+        "title": "Operations Research Analyst",
+        "total": 1455,
+        "slug": "operations-research-analyst",
+        "codes": [
+          {
+            "soc": "15-2031",
+            "codeTitle": "Operations Research Analysts",
+            "filings": 1333,
+            "share": 0.9161512027491409,
+            "perm": 103,
+            "pwd": 258,
+            "lca": 972,
+            "onet": false,
+            "slug": "operations-research-analysts",
+            "zone": 5,
+            "spellings": [
+              [
+                "OPERATIONS RESEARCH ANALYST",
+                1281
+              ],
+              [
+                "SENIOR OPERATIONS RESEARCH ANALYST",
+                24
+              ],
+              [
+                "OPERATIONS RESEARCH ANALYST II",
+                9
+              ],
+              [
+                "SR. OPERATIONS RESEARCH ANALYST",
+                8
+              ],
+              [
+                "JR. OPERATIONS RESEARCH ANALYST",
+                4
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 43,
+            "share": 0.029553264604810996,
+            "perm": 18,
+            "pwd": 23,
+            "lca": 2,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "OPERATIONS RESEARCH ANALYST",
+                41
+              ],
+              [
+                "OPERATIONS RESEARCH ANALYST II",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          },
+          {
+            "soc": "13-1111",
+            "codeTitle": "Management Analysts",
+            "filings": 15,
+            "share": 0.010309278350515464,
+            "perm": 3,
+            "pwd": 12,
+            "lca": 0,
+            "onet": false,
+            "slug": "management-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "OPERATIONS RESEARCH ANALYST",
+                15
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Conduct organizational studies and evaluations, design systems and procedures, conduct work simplification and measurement studies, and prepare operations and procedures..."
+          }
+        ]
+      },
+      {
+        "key": "operations research analysts",
+        "title": "Operations Research Analysts",
+        "total": 134,
+        "slug": "operations-research-analysts",
+        "codes": [
+          {
+            "soc": "15-2031",
+            "codeTitle": "Operations Research Analysts",
+            "filings": 127,
+            "share": 0.9477611940298507,
+            "perm": 2,
+            "pwd": 19,
+            "lca": 106,
+            "onet": false,
+            "slug": "operations-research-analysts",
+            "zone": 5,
+            "spellings": [
+              [
+                "OPERATIONS RESEARCH ANALYSTS",
+                125
+              ],
+              [
+                "OPERATIONS RESEARCH ANALYSTS II",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 5,
+            "share": 0.03731343283582089,
+            "perm": 2,
+            "pwd": 3,
+            "lca": 0,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "OPERATIONS RESEARCH ANALYSTS",
+                5
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          }
+        ]
+      },
+      {
+        "key": "analyst revenue management operations research",
+        "title": "Analyst, Revenue Management Operations Research",
+        "total": 10,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-2031",
+            "codeTitle": "Operations Research Analysts",
+            "filings": 10,
+            "share": 1,
+            "perm": 0,
+            "pwd": 4,
+            "lca": 6,
+            "onet": false,
+            "slug": "operations-research-analysts",
+            "zone": 5,
+            "spellings": [
+              [
+                "ANALYST, REVENUE MANAGEMENT OPERATIONS RESEARCH",
+                9
+              ],
+              [
+                "SR. ANALYST, REVENUE MANAGEMENT OPERATIONS RESEARCH",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+          }
+        ]
+      },
+      {
+        "key": "research operations analyst",
+        "title": "Research Operations Analyst",
+        "total": 9,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "19-4061",
+            "codeTitle": "Social Science Research Assistants",
+            "filings": 7,
+            "share": 0.7777777777777778,
+            "perm": 1,
+            "pwd": 3,
+            "lca": 3,
+            "onet": false,
+            "slug": "social-science-research-assistants",
+            "zone": 4,
+            "spellings": [
+              [
+                "RESEARCH OPERATIONS ANALYST",
+                4
+              ],
+              [
+                "RESEARCH OPERATIONS ANALYST II",
+                2
+              ],
+              [
+                "RESEARCH OPERATIONS ANALYST I",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Assist social scientists in laboratory, survey, and other social science research."
+          }
+        ]
+      },
+      {
+        "key": "operations research data analyst",
+        "title": "Operations Research Data Analyst",
+        "total": 6,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-2031",
+            "codeTitle": "Operations Research Analysts",
+            "filings": 6,
+            "share": 1,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 6,
+            "onet": false,
+            "slug": "operations-research-analysts",
+            "zone": 5,
+            "spellings": [
+              [
+                "OPERATIONS RESEARCH DATA ANALYST",
+                5
+              ],
+              [
+                "OPERATIONS RESEARCH / DATA ANALYST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+          }
+        ]
+      }
+    ],
+    "codes": [
+      {
+        "soc": "15-2031",
+        "title": "Operations Research Analysts",
+        "known": true,
+        "zone": 5,
+        "slug": "operations-research-analysts",
+        "filings": 18345,
+        "became": [],
+        "summary": "Formulate and apply mathematical modeling and other optimizing methods to develop and interpret information that assists management with decisionmaking, policy..."
+      }
+    ]
+  },
+  "/api/soc?q=Senior%20Data%20Engineer": {
+    "query": "Senior Data Engineer",
+    "code": null,
+    "titles": [
+      {
+        "key": "data engineer",
+        "title": "Data Engineer",
+        "total": 29641,
+        "slug": "data-engineer",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 9266,
+            "share": 0.31260753685773085,
+            "perm": 493,
+            "pwd": 979,
+            "lca": 7794,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER",
+                4521
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                1896
+              ],
+              [
+                "LEAD DATA ENGINEER",
+                441
+              ],
+              [
+                "PRINCIPAL DATA ENGINEER",
+                414
+              ],
+              [
+                "SR. DATA ENGINEER",
+                392
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 8234,
+            "share": 0.27779089774299115,
+            "perm": 411,
+            "pwd": 1144,
+            "lca": 6679,
+            "onet": true,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER",
+                4825
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                967
+              ],
+              [
+                "DATA ENGINEER II",
+                774
+              ],
+              [
+                "DATA ENGINEER III",
+                428
+              ],
+              [
+                "DATA ENGINEER I",
+                269
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          },
+          {
+            "soc": "15-1243",
+            "codeTitle": "Database Architects",
+            "filings": 7935,
+            "share": 0.26770351877467025,
+            "perm": 1205,
+            "pwd": 2780,
+            "lca": 3950,
+            "onet": true,
+            "slug": "database-architects",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER",
+                3719
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                1461
+              ],
+              [
+                "DATA ENGINEER II",
+                728
+              ],
+              [
+                "SR. DATA ENGINEER",
+                585
+              ],
+              [
+                "DATA ENGINEER III",
+                335
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design strategies for enterprise databases, data warehouse systems, and multidimensional networks."
+          },
+          {
+            "soc": "15-1242",
+            "codeTitle": "Database Administrators",
+            "filings": 1612,
+            "share": 0.054384130090077934,
+            "perm": 51,
+            "pwd": 124,
+            "lca": 1437,
+            "onet": true,
+            "slug": "database-administrators",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER",
+                838
+              ],
+              [
+                "DATA ENGINEER II",
+                353
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                163
+              ],
+              [
+                "DATA ENGINEER I",
+                62
+              ],
+              [
+                "SR. DATA ENGINEER",
+                60
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Administer, test, and implement computer databases, applying knowledge of database management systems."
+          },
+          {
+            "soc": "15-1299",
+            "codeTitle": "Computer Occupations, All Other",
+            "filings": 819,
+            "share": 0.02763064673931379,
+            "perm": 0,
+            "pwd": 2,
+            "lca": 817,
+            "onet": false,
+            "slug": "computer-occupations-all-other-2",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER",
+                503
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                67
+              ],
+              [
+                "DATA ENGINEER III",
+                58
+              ],
+              [
+                "LEAD DATA ENGINEER",
+                57
+              ],
+              [
+                "SR. DATA ENGINEER",
+                31
+              ]
+            ],
+            "becameCodes": []
+          },
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 510,
+            "share": 0.017205897236935327,
+            "perm": 36,
+            "pwd": 12,
+            "lca": 462,
+            "onet": true,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [
+              [
+                "DATA ENGINEER III",
+                288
+              ],
+              [
+                "DATA ENGINEER II",
+                65
+              ],
+              [
+                "DATA ENGINEER",
+                54
+              ],
+              [
+                "DATA ENGINEER I",
+                52
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                15
+              ]
+            ],
+            "becameCodes": []
+          },
+          {
+            "soc": "15-1211",
+            "codeTitle": "Computer Systems Analysts",
+            "filings": 361,
+            "share": 0.01217907627947775,
+            "perm": 112,
+            "pwd": 128,
+            "lca": 121,
+            "onet": false,
+            "slug": "computer-systems-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER",
+                182
+              ],
+              [
+                "SENIOR DATA ENGINEER",
+                56
+              ],
+              [
+                "SR. DATA ENGINEER",
+                28
+              ],
+              [
+                "LEAD DATA ENGINEER",
+                27
+              ],
+              [
+                "DATA ENGINEER III",
+                22
+              ]
+            ],
+            "becameCodes": []
+          }
+        ]
+      },
+      {
+        "key": "data engineer senior",
+        "title": "Data Engineer Senior",
+        "total": 153,
+        "slug": "data-engineer-senior",
+        "codes": [
+          {
+            "soc": "15-1243",
+            "codeTitle": "Database Architects",
+            "filings": 59,
+            "share": 0.38562091503267976,
+            "perm": 39,
+            "pwd": 12,
+            "lca": 8,
+            "onet": false,
+            "slug": "database-architects",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER SENIOR",
+                51
+              ],
+              [
+                "DATA ENGINEER, SENIOR",
+                7
+              ],
+              [
+                "DATA ENGINEER - SENIOR",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design strategies for enterprise databases, data warehouse systems, and multidimensional networks."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 52,
+            "share": 0.33986928104575165,
+            "perm": 3,
+            "pwd": 4,
+            "lca": 45,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER SENIOR",
+                42
+              ],
+              [
+                "DATA ENGINEER, SENIOR",
+                5
+              ],
+              [
+                "DATA ENGINEER - SENIOR",
+                2
+              ],
+              [
+                "DATA ENGINEER. SENIOR.",
+                1
+              ],
+              [
+                "DATA ENGINEER- SENIOR",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 28,
+            "share": 0.1830065359477124,
+            "perm": 11,
+            "pwd": 10,
+            "lca": 7,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER SENIOR",
+                22
+              ],
+              [
+                "DATA ENGINEER, SENIOR",
+                3
+              ],
+              [
+                "DATA ENGINEER - SENIOR",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          },
+          {
+            "soc": "15-1242",
+            "codeTitle": "Database Administrators",
+            "filings": 5,
+            "share": 0.032679738562091505,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 5,
+            "onet": false,
+            "slug": "database-administrators",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA ENGINEER SENIOR",
+                4
+              ],
+              [
+                "DATA ENGINEER, SENIOR",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Administer, test, and implement computer databases, applying knowledge of database management systems."
+          },
+          {
+            "soc": "13-2099",
+            "codeTitle": "Financial Specialists, All Other",
+            "filings": 3,
+            "share": 0.0196078431372549,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 3,
+            "onet": false,
+            "slug": "financial-specialists-all-other",
+            "zone": 5,
+            "spellings": [
+              [
+                "DATA ENGINEER SENIOR",
+                3
+              ]
+            ],
+            "becameCodes": [
+              "13-2054"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "software engineer data protection privacy engineering",
+        "title": "Senior Software Engineer,data Protection Privacy Engineering",
+        "total": 20,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 19,
+            "share": 0.95,
+            "perm": 0,
+            "pwd": 19,
+            "lca": 0,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR SOFTWARE ENGINEER,DATA PROTECTION PRIVACY ENGINEERING",
+                19
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          }
+        ]
+      },
+      {
+        "key": "software engineer cloud data engine multi positions",
+        "title": "Senior Software Engineer, Cloud Data Engine(Multi.positions)",
+        "total": 17,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-1243",
+            "codeTitle": "Database Architects",
+            "filings": 17,
+            "share": 1,
+            "perm": 16,
+            "pwd": 1,
+            "lca": 0,
+            "onet": false,
+            "slug": "database-architects",
+            "zone": 4,
+            "spellings": [
+              [
+                "SENIOR SOFTWARE ENGINEER, CLOUD DATA ENGINE(MULTI.POSITIONS)",
+                17
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design strategies for enterprise databases, data warehouse systems, and multidimensional networks."
+          }
+        ]
+      },
+      {
+        "key": "data senior engineer",
+        "title": "Data Senior Engineer",
+        "total": 15,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-1243",
+            "codeTitle": "Database Architects",
+            "filings": 6,
+            "share": 0.4,
+            "perm": 2,
+            "pwd": 4,
+            "lca": 0,
+            "onet": false,
+            "slug": "database-architects",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA SENIOR ENGINEER",
+                6
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Design strategies for enterprise databases, data warehouse systems, and multidimensional networks."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 6,
+            "share": 0.4,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 6,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA SENIOR ENGINEER",
+                6
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 3,
+            "share": 0.2,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 3,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "DATA SENIOR ENGINEER",
+                3
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          }
+        ]
+      }
+    ],
+    "codes": []
+  },
+  "/api/soc?q=Senior%20Statistician": {
+    "query": "Senior Statistician",
+    "code": null,
+    "titles": [
+      {
+        "key": "statistician",
+        "title": "Statistician",
+        "total": 464,
+        "slug": "statistician",
+        "codes": [
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 437,
+            "share": 0.9418103448275862,
+            "perm": 66,
+            "pwd": 54,
+            "lca": 317,
+            "onet": true,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [
+              [
+                "STATISTICIAN",
+                250
+              ],
+              [
+                "SENIOR STATISTICIAN",
+                50
+              ],
+              [
+                "STATISTICIAN II",
+                46
+              ],
+              [
+                "SR. STATISTICIAN",
+                19
+              ],
+              [
+                "STATISTICIAN I",
+                15
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop or apply mathematical or statistical theory and methods to collect, organize, interpret, and summarize numerical data to provide usable information."
+          },
+          {
+            "soc": "15-2051",
+            "codeTitle": "Data Scientists",
+            "filings": 18,
+            "share": 0.03879310344827586,
+            "perm": 5,
+            "pwd": 4,
+            "lca": 9,
+            "onet": false,
+            "slug": "data-scientists",
+            "zone": 4,
+            "spellings": [
+              [
+                "STATISTICIAN",
+                12
+              ],
+              [
+                "STATISTICIAN II",
+                3
+              ],
+              [
+                "SENIOR STATISTICIAN",
+                2
+              ],
+              [
+                "JUNIOR STATISTICIAN",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and implement a set of techniques or analytics applications to transform raw data into meaningful information using data-oriented programming languages and..."
+          }
+        ]
+      },
+      {
+        "key": "statistician senior",
+        "title": "Statistician Senior",
+        "total": 17,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 17,
+            "share": 1,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 17,
+            "onet": false,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [
+              [
+                "STATISTICIAN SENIOR",
+                16
+              ],
+              [
+                "STATISTICIAN - SENIOR",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop or apply mathematical or statistical theory and methods to collect, organize, interpret, and summarize numerical data to provide usable information."
+          }
+        ]
+      },
+      {
+        "key": "fair lending statistician",
+        "title": "Senior Fair Lending Statistician",
+        "total": 5,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 5,
+            "share": 1,
+            "perm": 1,
+            "pwd": 1,
+            "lca": 3,
+            "onet": false,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [
+              [
+                "SENIOR FAIR LENDING STATISTICIAN",
+                3
+              ],
+              [
+                "LEAD FAIR LENDING STATISTICIAN",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop or apply mathematical or statistical theory and methods to collect, organize, interpret, and summarize numerical data to provide usable information."
+          }
+        ]
+      },
+      {
+        "key": "statistician research",
+        "title": "Senior Statistician, Research",
+        "total": 8,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 8,
+            "share": 1,
+            "perm": 0,
+            "pwd": 1,
+            "lca": 7,
+            "onet": false,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [
+              [
+                "SENIOR STATISTICIAN, RESEARCH",
+                6
+              ],
+              [
+                "SENIOR STATISTICIAN - RESEARCH",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop or apply mathematical or statistical theory and methods to collect, organize, interpret, and summarize numerical data to provide usable information."
+          }
+        ]
+      },
+      {
+        "key": "biostatistician senior",
+        "title": "Biostatistician, Senior",
+        "total": 9,
+        "slug": null,
+        "codes": [
+          {
+            "soc": "15-2041",
+            "codeTitle": "Statisticians",
+            "filings": 9,
+            "share": 1,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 9,
+            "onet": false,
+            "slug": "statisticians",
+            "zone": 5,
+            "spellings": [
+              [
+                "BIOSTATISTICIAN, SENIOR",
+                9
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop or apply mathematical or statistical theory and methods to collect, organize, interpret, and summarize numerical data to provide usable information."
+          }
+        ]
+      }
+    ],
+    "codes": []
+  },
+  "/api/soc?q=Software%20Engineer%20II": {
+    "query": "Software Engineer II",
+    "code": null,
+    "titles": [
+      {
+        "key": "software engineer",
+        "title": "Software Engineer",
+        "total": 207778,
+        "slug": "software-engineer",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 187752,
+            "share": 0.9036182849002301,
+            "perm": 23921,
+            "pwd": 39277,
+            "lca": 124554,
+            "onet": true,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER",
+                110167
+              ],
+              [
+                "SENIOR SOFTWARE ENGINEER",
+                29381
+              ],
+              [
+                "SR. SOFTWARE ENGINEER",
+                8718
+              ],
+              [
+                "SOFTWARE ENGINEER III",
+                6595
+              ],
+              [
+                "STAFF SOFTWARE ENGINEER",
+                6205
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-1251",
+            "codeTitle": "Computer Programmers",
+            "filings": 5425,
+            "share": 0.02610959774374573,
+            "perm": 20,
+            "pwd": 26,
+            "lca": 5379,
+            "onet": false,
+            "slug": "computer-programmers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER",
+                4995
+              ],
+              [
+                "SENIOR SOFTWARE ENGINEER",
+                191
+              ],
+              [
+                "SR. SOFTWARE ENGINEER",
+                62
+              ],
+              [
+                "LEAD SOFTWARE ENGINEER",
+                42
+              ],
+              [
+                "SOFTWARE ENGINEER II",
+                35
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Create, modify, and test the code and scripts that allow computer applications to run."
+          },
+          {
+            "soc": "15-1299",
+            "codeTitle": "Computer Occupations, All Other",
+            "filings": 3733,
+            "share": 0.017966290945143373,
+            "perm": 22,
+            "pwd": 33,
+            "lca": 3678,
+            "onet": false,
+            "slug": "computer-occupations-all-other-2",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER",
+                2625
+              ],
+              [
+                "SENIOR SOFTWARE ENGINEER",
+                390
+              ],
+              [
+                "SR. SOFTWARE ENGINEER",
+                117
+              ],
+              [
+                "LEAD SOFTWARE ENGINEER",
+                115
+              ],
+              [
+                "SOFTWARE ENGINEER II",
+                103
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All computer occupations not listed separately."
+          },
+          {
+            "soc": "15-1132",
+            "codeTitle": "Software Developers, Applications",
+            "filings": 2194,
+            "share": 0.010559346995350808,
+            "perm": 2140,
+            "pwd": 0,
+            "lca": 54,
+            "onet": false,
+            "slug": "software-developers-applications",
+            "zone": null,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER",
+                1815
+              ],
+              [
+                "SENIOR SOFTWARE ENGINEER",
+                159
+              ],
+              [
+                "SR. SOFTWARE ENGINEER",
+                50
+              ],
+              [
+                "SOFTWARE ENGINEER II",
+                21
+              ],
+              [
+                "SOFTWARE ENGINEER III",
+                21
+              ]
+            ],
+            "becameCodes": [
+              "15-1252",
+              "15-1253"
+            ]
+          },
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 2134,
+            "share": 0.010270577250719518,
+            "perm": 285,
+            "pwd": 595,
+            "lca": 1254,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE ENGINEER",
+                1096
+              ],
+              [
+                "SENIOR SOFTWARE ENGINEER",
+                306
+              ],
+              [
+                "SR. SOFTWARE ENGINEER",
+                300
+              ],
+              [
+                "SOFTWARE ENGINEER II",
+                79
+              ],
+              [
+                "SOFTWARE ENGINEER III",
+                50
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          }
+        ]
+      },
+      {
+        "key": "software development engineer ii test",
+        "title": "Software Development Engineer Ii-Test",
+        "total": 143,
+        "slug": "software-development-engineer-ii-test",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 107,
+            "share": 0.7482517482517482,
+            "perm": 1,
+            "pwd": 2,
+            "lca": 104,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER II-TEST",
+                104
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER II - TEST",
+                2
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER II- TEST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 36,
+            "share": 0.2517482517482518,
+            "perm": 0,
+            "pwd": 2,
+            "lca": 34,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER II-TEST",
+                34
+              ],
+              [
+                "SOFTWARE DEVELOPMENT ENGINEER II - TEST",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          }
+        ]
+      },
+      {
+        "key": "engineer ii software",
+        "title": "Engineer II - Software",
+        "total": 123,
+        "slug": "engineer-ii-software",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 93,
+            "share": 0.7560975609756098,
+            "perm": 9,
+            "pwd": 25,
+            "lca": 59,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER II, SOFTWARE",
+                28
+              ],
+              [
+                "ENGINEER II - SOFTWARE",
+                19
+              ],
+              [
+                "PRINCIPAL ENGINEER II - SOFTWARE",
+                11
+              ],
+              [
+                "SENIOR ENGINEER II SOFTWARE",
+                9
+              ],
+              [
+                "SENIOR ENGINEER II, SOFTWARE",
+                4
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-1299",
+            "codeTitle": "Computer Occupations, All Other",
+            "filings": 13,
+            "share": 0.10569105691056911,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 13,
+            "onet": false,
+            "slug": "computer-occupations-all-other-2",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER II - SOFTWARE",
+                11
+              ],
+              [
+                "ENGINEER II, SOFTWARE",
+                1
+              ],
+              [
+                "PRINCIPAL ENGINEER II - SOFTWARE",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All computer occupations not listed separately."
+          },
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 7,
+            "share": 0.056910569105691054,
+            "perm": 1,
+            "pwd": 2,
+            "lca": 4,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER II - SOFTWARE",
+                3
+              ],
+              [
+                "ENGINEER II-SOFTWARE",
+                2
+              ],
+              [
+                "ENGINEER II, SOFTWARE",
+                2
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          }
+        ]
+      },
+      {
+        "key": "engineer ii software engineering",
+        "title": "Engineer II, Software Engineering",
+        "total": 102,
+        "slug": "engineer-ii-software-engineering",
+        "codes": [
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 84,
+            "share": 0.8235294117647058,
+            "perm": 8,
+            "pwd": 19,
+            "lca": 57,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER II, SOFTWARE ENGINEERING",
+                76
+              ],
+              [
+                "SR. ENGINEER II, SOFTWARE ENGINEERING",
+                4
+              ],
+              [
+                "SENIOR ENGINEER II, SOFTWARE ENGINEERING",
+                3
+              ],
+              [
+                "ENGINEER II SOFTWARE ENGINEERING",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          },
+          {
+            "soc": "15-1211",
+            "codeTitle": "Computer Systems Analysts",
+            "filings": 9,
+            "share": 0.08823529411764706,
+            "perm": 4,
+            "pwd": 4,
+            "lca": 1,
+            "onet": false,
+            "slug": "computer-systems-analysts",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER II, SOFTWARE ENGINEERING",
+                9
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Analyze science, engineering, business, and other data processing problems to develop and implement solutions to complex applications problems, system administration..."
+          },
+          {
+            "soc": "15-1299",
+            "codeTitle": "Computer Occupations, All Other",
+            "filings": 4,
+            "share": 0.0392156862745098,
+            "perm": 0,
+            "pwd": 0,
+            "lca": 4,
+            "onet": false,
+            "slug": "computer-occupations-all-other-2",
+            "zone": 4,
+            "spellings": [
+              [
+                "ENGINEER II, SOFTWARE ENGINEERING",
+                3
+              ],
+              [
+                "PRINCIPAL ENGINEER II, SOFTWARE ENGINEERING",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "All computer occupations not listed separately."
+          }
+        ]
+      },
+      {
+        "key": "software dev engineer ii test",
+        "title": "Software Dev Engineer Ii-Test",
+        "total": 95,
+        "slug": "software-dev-engineer-ii-test",
+        "codes": [
+          {
+            "soc": "15-1253",
+            "codeTitle": "Software Quality Assurance Analysts and Testers",
+            "filings": 77,
+            "share": 0.8105263157894737,
+            "perm": 0,
+            "pwd": 23,
+            "lca": 54,
+            "onet": false,
+            "slug": "software-quality-assurance-analysts-and-testers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEV ENGINEER II-TEST",
+                76
+              ],
+              [
+                "SOFTWARE DEV ENGINEER II - TEST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Develop and execute software tests to identify software problems and their causes."
+          },
+          {
+            "soc": "15-1252",
+            "codeTitle": "Software Developers",
+            "filings": 18,
+            "share": 0.18947368421052632,
+            "perm": 1,
+            "pwd": 12,
+            "lca": 5,
+            "onet": false,
+            "slug": "software-developers",
+            "zone": 4,
+            "spellings": [
+              [
+                "SOFTWARE DEV ENGINEER II-TEST",
+                17
+              ],
+              [
+                "SOFTWARE DEV ENGINEER II - TEST",
+                1
+              ]
+            ],
+            "becameCodes": [],
+            "summary": "Research, design, and develop computer and network software or specialized utility programs."
+          }
+        ]
+      }
+    ],
+    "codes": []
+  }
+}

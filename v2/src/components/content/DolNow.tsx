@@ -1,4 +1,5 @@
 import { averagePhrase, dolNow, dolPwdNow, pwdSentence, pwdWaitPhrase, queueSentence } from "@/lib/dolNow";
+import { getPermLine } from "@/lib/db/permLine";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getPwdLine } from "@/lib/db/pwdDayQueue";
 import { lineSentence, lineWait } from "@/lib/pwdLine";
@@ -19,6 +20,7 @@ import { longDate, monthDay } from "@convex/lib/months";
  *   pwdOtherMonth  "May 2026": wage requests that name another wage source than OEWS
  * Without DOL's figure a month reads "on the processing times page", never a guess.
  *
+ * The PERM month ("queue", "month") leads with our own daily check too (lib/permLine.ts).
  * The wage-request figures lead with our own daily check of DOL's case status
  * (src/lib/pwdLine.ts) whenever it can say where the line is: DOL's published
  * month trails it by weeks (Sep 30's table said June 2026 while DOL was deciding
@@ -35,8 +37,10 @@ export async function DolNow({
 }) {
   const t = await getProcessingTimes().catch(() => null);
   if (show === "average") return <span>{averagePhrase(dolNow(t))}</span>;
-  if (show === "queue") return <span>{queueSentence(dolNow(t))}</span>;
-  if (show === "month") return <span>{dolNow(t).frontier ?? NOT_READ}</span>;
+  // The month DOL is working leads with our own daily check (lib/permLine.ts), dated by it.
+  const permLine = show === "queue" || show === "month" ? await getPermLine().catch(() => null) : null;
+  if (show === "queue") return <span>{queueSentence(dolNow(t, permLine))}</span>;
+  if (show === "month") return <span>{dolNow(t, permLine).frontier ?? NOT_READ}</span>;
   if (show === "auditMonth") return <span>{dolNow(t).auditFrontier ?? NOT_READ}</span>;
   const pwd = dolPwdNow(t);
   if (show === "pwdOtherMonth") return <span>{pwd.otherFrontier ?? NOT_READ}</span>;

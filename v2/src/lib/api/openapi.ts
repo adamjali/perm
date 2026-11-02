@@ -131,7 +131,7 @@ export const ENDPOINTS: EndpointDoc[] = [
   {
     path: "/lookup/soc",
     summary:
-      "The SOC codes employers filed a job title under in DOL's PERM, prevailing wage and LCA files, with each code's share of the title's filings; or, for a code, its title, and for a 2010 code the 2018 codes it became. No key, under the same shared limits as the employer lookup.",
+      "The SOC codes employers filed a job title under in DOL's PERM, prevailing wage and LCA files, with each code's share of the title's filings; or, for a code, its title, O*NET's description and core tasks, the titles employers filed most under it, and its PERM approval rate and median offered wage (under the site's floors); for a 2010 code, the 2018 codes it became. No key, under the same shared limits as the employer lookup.",
     example: "/lookup/soc?q=data%20scientist",
     params: [{ name: "q", in: "query", required: true, description: "A job title or a SOC code (15-1252, 15-1252.00 or 151252), 2 to 80 characters." }],
     counted: false,

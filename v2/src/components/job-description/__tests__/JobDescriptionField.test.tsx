@@ -1,552 +1,263 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom/vitest';
-import { JobDescriptionField, type JobDescriptionTemplate } from '../JobDescriptionField';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom/vitest";
+import { useState } from "react";
+import { ConvexError } from "convex/values";
 
-// Mock the toast module
-vi.mock('@/lib/toast', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+import type { Id } from "@convex/_generated/dataModel";
+import type { JobDescriptionTemplate } from "@/hooks/useJobDescriptionTemplates";
+import type { SocProfile } from "@/lib/socProfile";
 
-// Mock motion/react to avoid animation issues in tests
-vi.mock('motion/react', () => ({
-  motion: {
-    div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+// The case form's job description section, the one editor inside it, and the suggestion from the SOC code.
 
-// Mock clipboard API at module level
-const mockWriteText = vi.fn().mockResolvedValue(undefined);
-Object.defineProperty(navigator, 'clipboard', {
-  value: { writeText: mockWriteText },
-  configurable: true,
-});
+const toast = { success: vi.fn(), error: vi.fn() };
+vi.mock("@/lib/toast", () => ({ toast }));
 
-// Test fixtures
-const createMockTemplate = (
-  overrides: Partial<JobDescriptionTemplate> = {}
-): JobDescriptionTemplate => ({
-  _id: `template_${Math.random().toString(36).slice(2, 9)}`,
-  name: 'Test Template',
-  description: 'Test description content',
-  usageCount: 0,
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-  ...overrides,
-});
-
-const defaultProps = {
-  inheritedPositionTitle: 'Software Engineer',
-  positionTitle: 'Software Engineer',
-  description: '',
-  onPositionTitleChange: vi.fn(),
-  onDescriptionChange: vi.fn(),
+const templates = {
   templates: [] as JobDescriptionTemplate[],
-  onLoadTemplate: vi.fn(),
-  onSaveAsNewTemplate: vi.fn().mockResolvedValue(undefined),
-  onUpdateTemplate: vi.fn().mockResolvedValue(undefined),
+  isLoading: false,
+  loadTemplate: vi.fn().mockResolvedValue(undefined),
+  saveAsNewTemplate: vi.fn(),
+  updateTemplate: vi.fn().mockResolvedValue(undefined),
+  hardDeleteTemplate: vi.fn(),
+};
+vi.mock("@/hooks/useJobDescriptionTemplates", () => ({ useJobDescriptionTemplates: () => templates }));
+
+const writeText = vi.fn().mockResolvedValue(undefined);
+Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+const { JobDescriptionField } = await import("../JobDescriptionField");
+const { JobDescriptionEditor } = await import("../JobDescriptionEditor");
+
+const TEMPLATE: JobDescriptionTemplate = {
+  _id: "template_a" as Id<"jobDescriptionTemplates">,
+  name: "Data Engineer",
+  description: "Build pipelines.",
+  usageCount: 2,
+  createdAt: 1,
+  updatedAt: 1,
 };
 
-describe('JobDescriptionField', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockWriteText.mockClear();
+const PROFILE: SocProfile = {
+  soc: "15-1252",
+  title: "Software Developers",
+  description: "Research, design, and develop software.",
+  tasks: ["Analyze user needs.", "Modify existing software.", "Confer with staff."],
+  jobZone: 4,
+  zoneLabel: "4",
+  zoneName: "Considerable preparation needed",
+  onetVersion: "31.0",
+  href: "/perm-wages/software-developers",
+  figures: { filings: 1005, decided: 1000, certified: 940, approvalRate: 0.94, medianWage: 150000 },
+  codeFilings: 2000,
+  titles: [],
+};
+
+/** The editor with its values held the way a form holds them. */
+function Editor({ start = "", startTitle = "Software Engineer", socCode, clearable = true }: { start?: string; startTitle?: string; socCode?: string; clearable?: boolean }) {
+  const [title, setTitle] = useState(startTitle);
+  const [text, setText] = useState(start);
+  const [templateId, setTemplateId] = useState<Id<"jobDescriptionTemplates"> | undefined>();
+  return (
+    <>
+      <JobDescriptionEditor
+        idPrefix="t"
+        inheritedPositionTitle="Software Engineer"
+        positionTitle={title}
+        description={text}
+        socCode={socCode}
+        templateId={templateId}
+        onPositionTitleChange={setTitle}
+        onDescriptionChange={setText}
+        onTemplateChange={setTemplateId}
+        clearable={clearable}
+      />
+      <output data-testid="text">{text}</output>
+      <output data-testid="template">{templateId ?? ""}</output>
+    </>
+  );
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  templates.templates = [];
+  templates.saveAsNewTemplate.mockResolvedValue("template_new");
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(PROFILE))));
+});
+afterEach(() => vi.unstubAllGlobals());
+
+describe("JobDescriptionField (the form's section)", () => {
+  const props = {
+    inheritedPositionTitle: "Software Engineer",
+    positionTitle: "Software Engineer",
+    onPositionTitleChange: vi.fn(),
+    onDescriptionChange: vi.fn(),
+    onTemplateChange: vi.fn(),
+  };
+
+  it("starts folded, says how long the text is, and opens on its heading", async () => {
+    render(<JobDescriptionField {...props} description="Build software." />);
+    expect(screen.queryByLabelText("Job description")).toBeNull();
+    expect(screen.getByText("15 characters")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Job description" }));
+    expect(screen.getByLabelText("Job description")).toHaveValue("Build software.");
   });
 
-  describe('expand/collapse behavior', () => {
-    it('renders collapsed by default', () => {
-      render(<JobDescriptionField {...defaultProps} />);
+  it("says a suggestion is waiting when the case has a code and no description", () => {
+    render(<JobDescriptionField {...props} description="" socCode="15-1252.00" />);
+    expect(screen.getByText("Suggested from 15-1252")).toBeInTheDocument();
+  });
+});
 
-      // Header should be visible
-      expect(screen.getByText('Job description')).toBeInTheDocument();
-
-      // Content should be hidden (textarea not visible)
-      expect(screen.queryByLabelText('Job description')).not.toBeInTheDocument();
-    });
-
-    it('expands when header is clicked', async () => {
-      render(<JobDescriptionField {...defaultProps} />);
-
-      // Click the header button
-      fireEvent.click(screen.getByRole('button', { expanded: false }));
-
-      // Content should now be visible
-      await waitFor(() => {
-        expect(screen.getByLabelText('Job description')).toBeInTheDocument();
-      });
-    });
-
-    it('collapses when header is clicked again', async () => {
-      render(<JobDescriptionField {...defaultProps} defaultExpanded />);
-
-      // Verify expanded
-      expect(screen.getByLabelText('Job description')).toBeInTheDocument();
-
-      // Click header to collapse
-      fireEvent.click(screen.getByRole('button', { expanded: true }));
-
-      // Wait for collapse animation
-      await waitFor(() => {
-        expect(screen.queryByLabelText('Job description')).not.toBeInTheDocument();
-      });
-    });
-
-    it('starts expanded when defaultExpanded is true', () => {
-      render(<JobDescriptionField {...defaultProps} defaultExpanded />);
-
-      // Content should be visible
-      expect(screen.getByLabelText('Job description')).toBeInTheDocument();
-    });
+describe("JobDescriptionEditor", () => {
+  it("saves a new template under the title and records it on the case", async () => {
+    render(<Editor start="Build pipelines." />);
+    await userEvent.click(screen.getByRole("button", { name: "Save template" }));
+    expect(templates.saveAsNewTemplate).toHaveBeenCalledWith("Software Engineer", "Build pipelines.");
+    await waitFor(() => expect(screen.getByTestId("template").textContent).toBe("template_new"));
   });
 
-  describe('character count display', () => {
-    it('shows character count when expanded', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          description="Hello World"
-          defaultExpanded
-        />
-      );
-
-      // Should show character count
-      expect(screen.getByText('11/50,000')).toBeInTheDocument();
-    });
-
-    it('shows character count in header when has content', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          description="Hello World"
-        />
-      );
-
-      // Even when collapsed, should show count if there's content
-      expect(screen.getByText('11/50,000')).toBeInTheDocument();
-    });
-
-    it('shows over-limit warning when description exceeds maxLength', () => {
-      const longDescription = 'x'.repeat(101);
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          description={longDescription}
-          maxLength={100}
-          defaultExpanded
-        />
-      );
-
-      // Should show warning message
-      expect(screen.getByText(/exceeds maximum length/i)).toBeInTheDocument();
-    });
-
-    it('does not show warning when under limit', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          description="Short description"
-          maxLength={100}
-          defaultExpanded
-        />
-      );
-
-      expect(screen.queryByText(/exceeds maximum length/i)).not.toBeInTheDocument();
-    });
+  it("updates the template whose name the title matches, whatever its case", async () => {
+    templates.templates = [{ ...TEMPLATE, name: "software engineer" }];
+    render(<Editor start="New words." />);
+    await userEvent.click(screen.getByRole("button", { name: "Update template" }));
+    expect(templates.updateTemplate).toHaveBeenCalledWith("template_a", "Software Engineer", "New words.");
   });
 
-  describe('copy to clipboard', () => {
-    it('copies description to clipboard when copy button is clicked', async () => {
-      const description = 'Test description to copy';
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          description={description}
-          defaultExpanded
-        />
-      );
-
-      // Click copy button
-      const copyButton = screen.getByRole('button', { name: /copy/i });
-      await userEvent.click(copyButton);
-
-      // Verify clipboard was called
-      expect(mockWriteText).toHaveBeenCalledWith(description);
-    });
-
-    it('disables copy button when description is empty', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          description=""
-          defaultExpanded
-        />
-      );
-
-      const copyButton = screen.getByRole('button', { name: /copy/i });
-      expect(copyButton).toBeDisabled();
-    });
+  it("asks before updating when the server already holds the name", async () => {
+    templates.saveAsNewTemplate.mockRejectedValue(new ConvexError("TEMPLATE_EXISTS:template_a"));
+    const { rerender } = render(<Editor start="Words." />);
+    await userEvent.click(screen.getByRole("button", { name: "Save template" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Template already exists" })).toBeInTheDocument();
+    templates.templates = [{ ...TEMPLATE, name: "Software Engineer" }];
+    rerender(<Editor start="Words." />);
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Update template" }));
+    expect(templates.updateTemplate).toHaveBeenCalledWith("template_a", "Software Engineer", "Words.");
   });
 
-  describe('save button dynamic label', () => {
-    it('shows "Save template" for new template names', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="New Unique Title"
-          description="Some description"
-          templates={[createMockTemplate({ name: 'Existing Template' })]}
-          defaultExpanded
-        />
-      );
-
-      // Should show "Save template" for new names
-      expect(screen.getByText('Save template')).toBeInTheDocument();
-    });
-
-    it('shows "Update template" when position title matches existing template', () => {
-      const existingTemplate = createMockTemplate({ name: 'Software Engineer' });
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Software Engineer"
-          description="Some description"
-          templates={[existingTemplate]}
-          defaultExpanded
-        />
-      );
-
-      // Should show "Update template" for existing names
-      expect(screen.getByText('Update template')).toBeInTheDocument();
-    });
-
-    it('shows "Update template" for case-insensitive match', () => {
-      const existingTemplate = createMockTemplate({ name: 'Software Engineer' });
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="software engineer" // Different case
-          description="Some description"
-          templates={[existingTemplate]}
-          defaultExpanded
-        />
-      );
-
-      // Should still show "Update template"
-      expect(screen.getByText('Update template')).toBeInTheDocument();
-    });
-
-    it('disables save button when position title is empty', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle=""
-          description="Some description"
-          defaultExpanded
-        />
-      );
-
-      const saveButton = screen.getByRole('button', { name: /save template/i });
-      expect(saveButton).toBeDisabled();
-    });
-
-    it('disables save button when description is empty', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Title"
-          description=""
-          defaultExpanded
-        />
-      );
-
-      const saveButton = screen.getByRole('button', { name: /save template/i });
-      expect(saveButton).toBeDisabled();
-    });
-
-    it('disables save button when over character limit', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Title"
-          description={'x'.repeat(101)}
-          maxLength={100}
-          defaultExpanded
-        />
-      );
-
-      const saveButton = screen.getByRole('button', { name: /save template/i });
-      expect(saveButton).toBeDisabled();
-    });
+  it("says a refusal in its own words, never a generic failure", async () => {
+    templates.saveAsNewTemplate.mockRejectedValue(new ConvexError("Job description is required"));
+    render(<Editor start="Words." />);
+    await userEvent.click(screen.getByRole("button", { name: "Save template" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Job description is required"));
   });
 
-  describe('template status badge', () => {
-    it('shows "New" badge when position title does not match any template', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Brand New Title"
-          description="Description"
-          templates={[createMockTemplate({ name: 'Other Template' })]}
-          defaultExpanded
-        />
-      );
-
-      // Should show "New" badge
-      expect(screen.getByText('New')).toBeInTheDocument();
-    });
-
-    it('shows "Existing" badge when position title matches a template', () => {
-      const existingTemplate = createMockTemplate({ name: 'Software Engineer' });
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Software Engineer"
-          description="Description"
-          templates={[existingTemplate]}
-          defaultExpanded
-        />
-      );
-
-      // Should show "Existing" badge
-      expect(screen.getByText('Existing')).toBeInTheDocument();
-    });
+  it("can't save a template without a title and words", () => {
+    render(<Editor start="" />);
+    expect(screen.getByRole("button", { name: "Save template" })).toBeDisabled();
   });
 
-  describe('loaded template indicator', () => {
-    it('shows "From template" badge when template is loaded and not modified', () => {
-      const template = createMockTemplate({ name: 'Test Template' });
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle={template.name}
-          description={template.description}
-          loadedTemplateId={template._id}
-          templates={[template]}
-        />
-      );
-
-      // Should show "From template" in header
-      expect(screen.getByText('From template')).toBeInTheDocument();
-    });
-
-    it('shows "Modified" badge when loaded template content is changed', () => {
-      const template = createMockTemplate({
-        name: 'Test Template',
-        description: 'Original description',
-      });
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle={template.name}
-          description="Modified description" // Different from template
-          loadedTemplateId={template._id}
-          templates={[template]}
-        />
-      );
-
-      // We need to simulate the originalContent state being set
-      // Since we can't directly test internal state, we test behavior
-      // The component tracks modification via originalContent state
-    });
+  it("loads a template's title and words, records it on the case and counts the use", async () => {
+    templates.templates = [TEMPLATE];
+    render(<Editor />);
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(await screen.findByText("Data Engineer"));
+    expect(screen.getByTestId("text").textContent).toBe("Build pipelines.");
+    expect(screen.getByTestId("template").textContent).toBe("template_a");
+    expect(templates.loadTemplate).toHaveBeenCalledWith(TEMPLATE);
+    expect(screen.getByText("From template")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Job description"), " More.");
+    expect(screen.getByText("Modified")).toBeInTheDocument();
   });
 
-  describe('clear button', () => {
-    it('is enabled when there is content', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Title"
-          description="Description"
-          defaultExpanded
-        />
-      );
-
-      const clearButton = screen.getByRole('button', { name: /clear/i });
-      expect(clearButton).not.toBeDisabled();
-    });
-
-    it('is disabled when there is no content', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle=""
-          description=""
-          defaultExpanded
-        />
-      );
-
-      const clearButton = screen.getByRole('button', { name: /clear/i });
-      expect(clearButton).toBeDisabled();
-    });
-
-    it('calls clear handlers when clicked', async () => {
-      const onPositionTitleChange = vi.fn();
-      const onDescriptionChange = vi.fn();
-      const setLoadedTemplateId = vi.fn();
-
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Title"
-          description="Description"
-          onPositionTitleChange={onPositionTitleChange}
-          onDescriptionChange={onDescriptionChange}
-          setLoadedTemplateId={setLoadedTemplateId}
-          defaultExpanded
-        />
-      );
-
-      const clearButton = screen.getByRole('button', { name: /clear/i });
-      await userEvent.click(clearButton);
-
-      expect(onPositionTitleChange).toHaveBeenCalledWith('');
-      expect(onDescriptionChange).toHaveBeenCalledWith('');
-      expect(setLoadedTemplateId).toHaveBeenCalledWith(undefined);
-    });
+  it("follows the position title until typed over, and follows it again from the button", async () => {
+    render(<Editor startTitle="" />);
+    const title = screen.getByLabelText("Position title for the job description");
+    await waitFor(() => expect(title).toHaveValue("Software Engineer"));
+    await userEvent.clear(title);
+    await userEvent.type(title, "Platform Engineer");
+    await userEvent.click(screen.getByRole("button", { name: "Use the case's position title again" }));
+    expect(title).toHaveValue("Software Engineer");
   });
 
-  describe('position title input', () => {
-    it('shows reset button when position title differs from inherited', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          inheritedPositionTitle="Software Engineer"
-          positionTitle="Custom Title"
-          description="Description"
-          defaultExpanded
-        />
-      );
-
-      // Find the position title input container
-      const positionInput = screen.getByLabelText(/position title for job description/i);
-      // The reset button is a sibling in the same container with RefreshCw icon
-      const inputContainer = positionInput.parentElement;
-      // There should be a button inside the container (the reset button)
-      const resetButton = inputContainer?.querySelector('button');
-      expect(resetButton).toBeInTheDocument();
-    });
-
-    it('does not show reset button when position title matches inherited', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          inheritedPositionTitle="Software Engineer"
-          positionTitle="Software Engineer"
-          description="Description"
-          defaultExpanded
-        />
-      );
-
-      // Find the position title input container
-      const positionInput = screen.getByLabelText(/position title for job description/i);
-      const inputContainer = positionInput.parentElement;
-      // Should not have a reset button when titles match
-      const resetButton = inputContainer?.querySelector('button');
-      expect(resetButton).not.toBeInTheDocument();
-    });
-
-    it('calls onPositionTitleChange with inherited title when reset is clicked', async () => {
-      const onPositionTitleChange = vi.fn();
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          inheritedPositionTitle="Original Title"
-          positionTitle="Custom Title"
-          description="Description"
-          onPositionTitleChange={onPositionTitleChange}
-          defaultExpanded
-        />
-      );
-
-      // Find and click the reset button
-      const positionInput = screen.getByLabelText(/position title for job description/i);
-      const inputContainer = positionInput.parentElement;
-      const resetButton = inputContainer?.querySelector('button');
-      expect(resetButton).toBeInTheDocument();
-
-      await userEvent.click(resetButton!);
-
-      expect(onPositionTitleChange).toHaveBeenCalledWith('Original Title');
-    });
+  it("shows the case's title while it follows, and writes nothing until it's typed over", async () => {
+    const onPositionTitleChange = vi.fn();
+    render(
+      <JobDescriptionEditor
+        idPrefix="q"
+        inheritedPositionTitle="Software Engineer"
+        positionTitle=""
+        description=""
+        onPositionTitleChange={onPositionTitleChange}
+        onDescriptionChange={vi.fn()}
+        onTemplateChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText("Position title for the job description")).toHaveValue("Software Engineer");
+    expect(onPositionTitleChange).not.toHaveBeenCalled();
   });
 
-  describe('loading state', () => {
-    it('disables all inputs when isLoading is true', () => {
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Title"
-          description="Description"
-          isLoading={true}
-          defaultExpanded
-        />
-      );
-
-      // Template selector should be disabled
-      const templateButton = screen.getByRole('combobox');
-      expect(templateButton).toBeDisabled();
-
-      // Position title input should be disabled
-      const positionInput = screen.getByLabelText(/position title for job description/i);
-      expect(positionInput).toBeDisabled();
-
-      // Description textarea should be disabled
-      const descriptionTextarea = screen.getByLabelText('Job description');
-      expect(descriptionTextarea).toBeDisabled();
-
-      // Buttons should be disabled
-      expect(screen.getByRole('button', { name: /copy/i })).toBeDisabled();
-      expect(screen.getByRole('button', { name: /clear/i })).toBeDisabled();
-    });
+  it("copies the words, and clears everything where the frame allows it", async () => {
+    templates.templates = [TEMPLATE];
+    render(<Editor start="Words." />);
+    await userEvent.click(screen.getByRole("button", { name: "Copy" }));
+    expect(writeText).toHaveBeenCalledWith("Words.");
+    await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByTestId("text").textContent).toBe("");
   });
 
-  describe('save template flow', () => {
-    it('calls onSaveAsNewTemplate when saving new template', async () => {
-      const onSaveAsNewTemplate = vi.fn().mockResolvedValue(undefined);
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="New template name"
-          description="Template description"
-          onSaveAsNewTemplate={onSaveAsNewTemplate}
-          templates={[]}
-          defaultExpanded
-        />
-      );
+  it("offers no Clear where the frame clears through its own save", () => {
+    render(<Editor start="Words." clearable={false} />);
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  });
+});
 
-      const saveButton = screen.getByRole('button', { name: /save template/i });
-      await userEvent.click(saveButton);
+describe("the suggestion from the SOC code", () => {
+  it("fills an empty description with O*NET's text and every ticked task, and Undo empties it again", async () => {
+    render(<Editor socCode="15-1252" />);
+    expect(await screen.findByRole("heading", { name: "Suggested from SOC 15-1252, Software Developers" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Confer with staff." }));
+    await userEvent.click(screen.getByRole("button", { name: "Use this description" }));
+    expect(screen.getByTestId("text").textContent).toBe(
+      "Research, design, and develop software.\n\n- Analyze user needs.\n- Modify existing software.",
+    );
+    const [, options] = toast.success.mock.calls.at(-1) as [string, { action: { onClick: () => void } }];
+    options.action.onClick();
+    await waitFor(() => expect(screen.getByTestId("text").textContent).toBe(""));
+  });
 
-      expect(onSaveAsNewTemplate).toHaveBeenCalledWith('New template name', 'Template description');
-    });
+  it("starts folded over words already there, adds after them, and asks before replacing them", async () => {
+    render(<Editor socCode="15-1252" start="Mine." />);
+    await userEvent.click(await screen.findByRole("button", { name: /Show the description from SOC 15-1252/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Add to the end" }));
+    expect(screen.getByTestId("text").textContent?.startsWith("Mine.\n\nResearch, design")).toBe(true);
 
-    it('calls onUpdateTemplate directly when name matches existing template', async () => {
-      const existingTemplate = createMockTemplate({ name: 'Existing Template' });
-      render(
-        <JobDescriptionField
-          {...defaultProps}
-          positionTitle="Existing Template"
-          description="New description"
-          templates={[existingTemplate]}
-          defaultExpanded
-        />
-      );
+    await userEvent.click(screen.getByRole("button", { name: /Show the description from SOC 15-1252/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Replace the description" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Replace" }));
+    expect(screen.getByTestId("text").textContent?.startsWith("Research, design")).toBe(true);
+  });
 
-      const updateButton = screen.getByRole('button', { name: /update template/i });
-      await userEvent.click(updateButton);
+  it("folds on Not now, and writes nothing about the job's requirements", async () => {
+    render(<Editor socCode="15-1252" />);
+    await screen.findByRole("heading", { name: /Suggested from SOC 15-1252/ });
+    expect(screen.getByText(/The filing states the employer's own duties and minimum requirements/)).toBeInTheDocument();
+    expect(screen.getByText(/Job Zone 4: considerable preparation needed/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.getByRole("button", { name: /Show the description from SOC 15-1252/ })).toBeInTheDocument();
+    expect(screen.getByTestId("text").textContent).toBe("");
+  });
 
-      await waitFor(() => {
-        expect(defaultProps.onUpdateTemplate).toHaveBeenCalledWith(
-          existingTemplate._id,
-          'Existing Template',
-          'New description'
-        );
-      });
-    });
+  it("shows the first tasks ticked and folds the rest unticked, so nothing goes in unseen", async () => {
+    const tasks = Array.from({ length: 9 }, (_, i) => `Task ${i + 1}.`);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ ...PROFILE, tasks }))));
+    render(<Editor socCode="15-1252" />);
+    await screen.findByRole("heading", { name: /Suggested from SOC 15-1252/ });
+    expect(screen.getAllByRole("checkbox")).toHaveLength(6);
+    await userEvent.click(screen.getByRole("button", { name: /3 more tasks/ }));
+    const boxes = screen.getAllByRole("checkbox");
+    expect(boxes).toHaveLength(9);
+    expect(boxes.filter((b) => b.getAttribute("aria-checked") === "true")).toHaveLength(6);
+    await userEvent.click(screen.getByRole("button", { name: "Use this description" }));
+    expect(screen.getByTestId("text").textContent).not.toContain("Task 7.");
+    expect(screen.getByTestId("text").textContent).toContain("Task 6.");
+  });
+
+  it("offers nothing without a code", () => {
+    render(<Editor />);
+    expect(screen.queryByText(/Suggested from SOC/)).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

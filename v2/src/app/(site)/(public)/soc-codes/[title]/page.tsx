@@ -133,6 +133,12 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
       q: `Which code should ${article(a.title)} ${a.title} job use?`,
       a: "The code follows the job's duties and requirements, not its title. DOL's National Prevailing Wage Center decides it on the wage request. When employers split a title between codes, the work decides which one fits.",
     },
+    // For the worker (Sabrina, Nov 1 2026: "to frame previous employment consistent with that position so previous
+    // experience qualifies"). 8 CFR 204.5(g)(1), read on eCFR's Oct 19 2026 edition.
+    {
+      q: `Can I use O*NET's tasks for ${article(a.title)} ${a.title} job to describe my past experience?`,
+      a: "Use them to see which of your past duties match the job. The letter itself still describes what you did: USCIS asks for letters from current or former employers with \"a specific description of the duties performed\" (8 CFR 204.5(g)(1)), so each one is written from your own work there.",
+    },
   ];
   const faqSchema = {
     "@context": "https://schema.org",

@@ -78,7 +78,6 @@ export function initializeFormData(
     caseNumber: base.caseNumber,
     internalCaseNumber: base.internalCaseNumber,
     employerFein: base.employerFein,
-    jobTitle: base.jobTitle,
     socCode: base.socCode,
     socTitle: base.socTitle,
     jobOrderState: base.jobOrderState,

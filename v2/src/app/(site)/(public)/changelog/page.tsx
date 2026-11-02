@@ -10,7 +10,8 @@ import { withSocialCard } from "@/lib/socialCard";
 import { getAllPosts } from "@/lib/content";
 import { generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
-import ChangelogTimeline from "@/components/content/ChangelogTimeline";
+import ChangelogListing from "@/components/content/ChangelogListing";
+import { sortPosts } from "@/lib/content/listing";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { SITE_URL } from "@/lib/constants/site";
 
@@ -58,7 +59,7 @@ export default function ChangelogPage() {
         {/* One dated history. The corrections log is one entry in it
             (`content/changelog/corrections.mdx`, category "Correction"), in
             the same shape as every release note. */}
-        <ChangelogTimeline posts={posts} />
+        <ChangelogListing posts={sortPosts(posts, "newest")} />
       </section>
     </>
   );

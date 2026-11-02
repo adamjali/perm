@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, resetRateLimit } from "../test-utils/convex";
 import { api } from "./_generated/api";
@@ -1676,6 +1677,66 @@ describe("Nothing a case is given is dropped", () => {
       jobDescriptionPositionTitle: "Senior Engineer",
       jobDescription: "Design and build data pipelines.",
     });
+    await finishScheduledFunctions(t);
+  });
+});
+
+describe("A case's job code", () => {
+  setupSchedulerTests();
+
+  const BASE = { employerName: "Acme Corp", beneficiaryIdentifier: "A. B.", positionTitle: "Software Engineer" };
+  const refusal = (p: Promise<unknown>) => p.then(() => null, (e: unknown) => e);
+
+  it("keeps a SOC code and its title on create, and both spellings of a code", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    await user.mutation(api.cases.create, { ...BASE, socCode: "15-1252", socTitle: "Software Developers" });
+    await user.mutation(api.cases.create, { ...BASE, beneficiaryIdentifier: "C. D.", socCode: "15-1252.00" });
+    const rows = await t.run(async (ctx) => ctx.db.query("cases").collect());
+    expect(rows.map((r) => r.socCode).sort()).toEqual(["15-1252", "15-1252.00"]);
+    expect(rows.find((r) => r.socCode === "15-1252")?.socTitle).toBe("Software Developers");
+    await finishScheduledFunctions(t);
+  });
+
+  it("refuses anything that isn't a SOC code, on create, update and import, with a sentence", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    const message = "SOC code must be a code such as 15-1252 or 15-1252.00.";
+    const created = await refusal(user.mutation(api.cases.create, { ...BASE, socCode: "Software Developers" }));
+    expect(created).toBeInstanceOf(ConvexError);
+    expect((created as ConvexError<string>).data).toBe(message);
+
+    const id = await user.mutation(api.cases.create, BASE);
+    const updated = await refusal(user.mutation(api.cases.update, { id, socCode: "15-125" }));
+    expect((updated as ConvexError<string>).data).toBe(message);
+
+    const imported = await refusal(user.mutation(api.cases.importCases, { cases: [{ ...BASE, beneficiaryIdentifier: "E. F.", socCode: "1512520" }] }));
+    expect((imported as ConvexError<string>).data).toBe(message);
+
+    // Empty means no code, and clearing one is allowed.
+    await user.mutation(api.cases.update, { id, socCode: "" });
+    await user.mutation(api.cases.update, { id, socCode: null, socTitle: null });
+    await finishScheduledFunctions(t);
+  });
+
+  it("caps the SOC title and the job description's own title like every other title", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    const long = "x".repeat(501);
+    const a = await refusal(user.mutation(api.cases.create, { ...BASE, socTitle: long }));
+    expect(String((a as ConvexError<string>).data)).toMatch(/^SOC title exceeds maximum length of 500/);
+    const b = await refusal(user.mutation(api.cases.create, { ...BASE, jobDescriptionPositionTitle: long }));
+    expect(String((b as ConvexError<string>).data)).toMatch(/^Job description position title exceeds/);
+    await finishScheduledFunctions(t);
+  });
+
+  it("imports an older export that still carries a second job title, dropping it", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    await user.mutation(api.cases.importCases, { cases: [{ ...BASE, jobTitle: "Senior Engineer" }] });
+    const row = await t.run(async (ctx) => (await ctx.db.query("cases").collect())[0]);
+    expect(row?.positionTitle).toBe("Software Engineer");
+    expect(row && "jobTitle" in row).toBe(false);
     await finishScheduledFunctions(t);
   });
 });

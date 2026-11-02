@@ -944,3 +944,18 @@ describe('Job description length in chat', () => {
     expect(UpdateJobDescriptionTemplateInputSchema.safeParse({ templateId: 't', description: over }).success).toBe(false);
   });
 });
+
+describe('the SOC code in the case tools', () => {
+  it('takes either spelling of a code and refuses anything else, on create and update', async () => {
+    const { CreateCaseInputSchema, UpdateCaseInputSchema } = await import('../tools');
+    const base = { employerName: 'Acme Corp', positionTitle: 'Software Engineer' };
+    for (const socCode of ['15-1252', '15-1252.00']) {
+      expect(CreateCaseInputSchema.safeParse({ ...base, socCode }).success, socCode).toBe(true);
+      expect(UpdateCaseInputSchema.safeParse({ caseId: 'x', socCode }).success, socCode).toBe(true);
+    }
+    for (const socCode of ['Software Developers', '15-125', '1512520']) {
+      expect(CreateCaseInputSchema.safeParse({ ...base, socCode }).success, socCode).toBe(false);
+      expect(UpdateCaseInputSchema.safeParse({ caseId: 'x', socCode }).success, socCode).toBe(false);
+    }
+  });
+});

@@ -13,6 +13,8 @@ vi.mock("@/lib/db/socTitles", () => ({
   findSoc: (...a: unknown[]) => findSoc(...a),
   getSocCodes: (...a: unknown[]) => getSocCodes(...a),
 }));
+const socProfile = vi.fn();
+vi.mock("@/lib/db/socProfile", () => ({ socProfile: (...a: unknown[]) => socProfile(...a) }));
 vi.mock("../usage", async (importOriginal) => {
   const real = await importOriginal<typeof import("../usage")>();
   return { ...real, countCall: (...a: unknown[]) => countCall(...a) };
@@ -49,6 +51,7 @@ beforeEach(() => {
   countCall.mockReset();
   findSoc.mockReset().mockResolvedValue(DS);
   getSocCodes.mockReset().mockResolvedValue(CODES);
+  socProfile.mockReset().mockResolvedValue(null);
 });
 
 describe("GET /v1/lookup/soc", () => {
@@ -76,5 +79,32 @@ describe("GET /v1/lookup/soc", () => {
     expect((await get("zzqx")).status).toBe(404);
     getSocCodes.mockResolvedValue(null);
     expect((await get("data scientist")).status).toBe(503);
+  });
+
+  it("answers a code with O*NET's text, the filed titles and its PERM figures, and stands without them", async () => {
+    const SWE = { query: "15-1252", code: { soc: "15-1252", title: "Software Developers", known: true, zone: 4, slug: "software-developers", filings: 2000, became: [] }, titles: [], codes: [] };
+    findSoc.mockResolvedValue(SWE);
+    socProfile.mockResolvedValue({
+      description: "Research, design, and develop software.",
+      tasks: ["Analyze user needs."],
+      zoneName: "Considerable preparation needed",
+      figures: { filings: 1005, decided: 1000, approvalRate: 0.9, medianWage: 150000 },
+      titles: [{ title: "Software Engineer", filings: 1000, share: 0.5, href: "/soc-codes/software-engineer" }],
+    });
+    const ok = await (await get("15-1252")).json();
+    expect(ok.data.code).toMatchObject({
+      description: "Research, design, and develop software.",
+      tasks: ["Analyze user needs."],
+      jobZoneName: "Considerable preparation needed",
+      perm: { approvalRate: 0.9, medianWage: 150000 },
+      filedTitles: [{ title: "Software Engineer", filings: 1000, share: 0.5 }],
+    });
+    socProfile.mockRejectedValue(new Error("down"));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await get("15-1252");
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.code).toMatchObject({ soc: "15-1252", description: null, perm: null, filedTitles: [] });
+    expect(logged).toHaveBeenCalled();
+    logged.mockRestore();
   });
 });

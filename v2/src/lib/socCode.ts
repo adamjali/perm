@@ -14,15 +14,10 @@
  * DOL publishes nothing finer for the other programs, so the site can't either.
  */
 
-const GROUP = /^(\d{2}-\d{4})/;
+import { socGroup } from "@convex/lib/socCode";
 
-/** A whole SOC code as a reader types it, `15-1252` or `15-1252.00`: what DOL's wage search takes. */
-export const SOC_CODE_RE = /^\d{2}-\d{4}$|^\d{2}-\d{4}\.\d{2}$/;
-
-/** `15-1252` from `15-1252.00`, `15-1252` or ` 15-1252.01 `; null when it isn't a SOC code. */
-export function socGroup(code: string | null | undefined): string | null {
-  return GROUP.exec((code ?? "").trim())?.[1] ?? null;
-}
+// The shape rule lives with the server's checks; every reader imports it from here.
+export { SOC_CODE_RE, isSocCode, socGroup } from "@convex/lib/socCode";
 
 /**
  * The same rule over a table's `soc_code` column, written once. The indexes

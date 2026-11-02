@@ -58,10 +58,8 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
     );
   }
 
-  // Newest first, the order the release notes already used.
-  const entries: Entry[] = posts
-    .map((post): Entry => ({ date: post.meta.date, key: post.slug, post }))
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  // In the order given: ChangelogListing sorts (newest first unless the reader picks another order).
+  const entries: Entry[] = posts.map((post): Entry => ({ date: post.meta.date, key: post.slug, post }));
 
   return (
     <ol className="relative max-w-3xl">

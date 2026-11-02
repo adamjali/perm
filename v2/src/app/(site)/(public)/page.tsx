@@ -23,6 +23,7 @@
  */
 
 import type { Metadata } from "next";
+import { getPwdSummary } from "@/lib/db/pwdCases";
 import { SectionDivider } from "@/components/home/SectionDivider";
 import { withSocialCard } from "@/lib/socialCard";
 import {
@@ -33,6 +34,7 @@ import {
   CTASection,
 } from "@/components/home";
 import { RoadSection } from "@/components/home/RoadSection";
+import { JobLookupBand } from "@/components/home/JobLookupBand";
 import {
   getFAQPageSchema,
   getHomepageRatingPartialSchema,
@@ -53,6 +55,7 @@ import { getObservedDays } from "@/lib/db/pulse";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getBacklogMatrix } from "@/lib/db/backlog";
 import { getPermBoard } from "@/lib/db/board";
+import { getPermLine } from "@/lib/db/permLine";
 import { rulerOf } from "@/lib/board";
 import type { HeroTrends, HeroWait } from "@/components/home/HeroSection";
 import { backlogTrend, dayTrend, waitTrend } from "@/lib/homeTrends";
@@ -148,7 +151,7 @@ export default async function HomePage() {
   // The pulse reads our own sweep's record, a third clock: it moves when the
   // sweep finishes, and /api/revalidate-sweep expires this page then. Either
   // read failing drops the band, never the page.
-  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog, permBoard] = await Promise.all([
+  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog, permBoard, line, pwdSummary] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
@@ -161,15 +164,21 @@ export default async function HomePage() {
     getBacklogMatrix().catch(() => []),
     // /today's board, saved by each sweep: the wait of the cases DOL decided on its last working day.
     getPermBoard().catch(() => null),
+    // Where DOL is by our own daily check, ahead of DOL's own table, which can sit unchanged for weeks.
+    getPermLine().catch(() => null),
+    // The wage requests still waiting, by our own check (DOL's table is a month or more older).
+    getPwdSummary().catch(() => null),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
     : undefined;
   const lastDay = pulseHeadline(observed);
-  const months = homeMonths(backlog, analyst?.priorityDate ?? null, easternDay().slice(0, 7));
-  const pwdPending = snapshot?.pwdPermBacklog?.length
-    ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
-    : null;
+  // The month DOL is deciding: our check first, DOL's own table when the check can't say (lib/permLine.ts).
+  const workingMonth = line?.month ?? analyst?.priorityDate ?? null;
+  const months = homeMonths(backlog, workingMonth, easternDay().slice(0, 7));
+  const pwdPending =
+    pwdSummary?.pending ??
+    (snapshot?.pwdPermBacklog?.length ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0) : null);
 
   const baseUrl = SITE_URL;
   const faqSchema = getFAQPageSchema(
@@ -203,7 +212,7 @@ export default async function HomePage() {
         trends={heroTrends(permBoard, lastDay)}
         months={months}
         board={{
-          frontierMonth: analyst?.priorityDate ?? null,
+          frontierMonth: workingMonth,
           lastDay: lastDay ? { date: lastDay.day.date, total: lastDay.day.total } : null,
           pending: record.find((f) => f.href === "/perm-case-status")?.value ?? null,
           checkedAt: coverage?.checkedAt ?? null,
@@ -213,8 +222,9 @@ export default async function HomePage() {
       <LiveDataBand>
         <PermPulse variant="charts" days={observed} checkedAt={coverage?.checkedAt ?? null} />
       </LiveDataBand>
-      <RoadSection pwdPending={pwdPending} frontierMonth={analyst?.priorityDate ?? null} />
+      <RoadSection pwdPending={pwdPending} frontierMonth={workingMonth} />
       <DataShelf figures={deriveFigures(disclosure)} />
+      <JobLookupBand />
       <AudienceBlocks />
       <AboutSection record={record} rating={siteReviews.rating} reviews={siteReviews.reviews} />
       <FAQSection />

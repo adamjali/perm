@@ -45,6 +45,7 @@ export interface CaseLookupResult {
     days: number | null;
     employerName: string | null;
     jobTitle: string | null;
+    socCode: string | null;
     socTitle: string | null;
     state: string | null;
     wage: number | null;
@@ -167,13 +168,13 @@ export async function lookupCase(
   const dec =
     (await one<Record<string, unknown>>(
       `SELECT status, received_date, decision_date, days, employer_name,
-              job_title, soc_title, state, wage
+              job_title, soc_code, soc_title, state, wage
          FROM perm_cases WHERE case_number = ?`,
       [caseNumber],
     )) ??
     (await one<Record<string, unknown>>(
       `SELECT status, received_date, decision_date, days, employer_name,
-              job_title, soc_title, state, wage
+              job_title, soc_code, soc_title, state, wage
          FROM perm_cases_history WHERE case_number = ?`,
       [caseNumber],
       // Only a missing table is "no record". Any other failure throws, and
@@ -324,6 +325,7 @@ export async function lookupCase(
           days: dec.days === null ? null : Number(dec.days),
           employerName: (dec.employer_name as string) ?? null,
           jobTitle: (dec.job_title as string) ?? null,
+          socCode: (dec.soc_code as string) ?? null,
           socTitle: (dec.soc_title as string) ?? null,
           state: (dec.state as string) ?? null,
           wage: dec.wage === null ? null : Number(dec.wage),

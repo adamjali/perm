@@ -12,6 +12,9 @@ import { cn } from "@/lib/utils";
  * 15-2051 from the codes employers filed it under (from /api/soc, the job code finder's reads), or
  * type the code itself. Every tool that asks for a job's code uses it, so they all find codes the
  * same way. An ARIA 1.2 combobox: arrows move, Enter picks, Escape closes.
+ *
+ * Given `suggestFrom` (the case form passes the position title), an empty box offers the codes employers
+ * filed that title under as soon as it's focused, before anything is typed.
  */
 
 export interface SocOption {
@@ -62,16 +65,30 @@ export function SocPicker({
   name = "soc",
   value,
   onChange,
+  onPick,
+  suggestFrom,
+  showPicked = true,
   className,
   placeholder = "Data scientist, or 15-2051",
+  "aria-describedby": describedBy,
+  "aria-invalid": invalid,
 }: {
   id: string;
   name?: string;
   /** The box's text: a code once one is picked. */
   value: string;
   onChange: (value: string) => void;
+  /** Called with the option picked, its code already in the seven-character form. */
+  onPick?: (option: SocOption) => void;
+  /** A job title whose codes an empty box offers on focus. */
+  suggestFrom?: string;
+  /** The picked code's name under the box; off where the page shows the code its own way. */
+  showPicked?: boolean;
   className?: string;
   placeholder?: string;
+  /** Set by FormField, which hands its hint and error to the box it wraps. */
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }) {
   const listId = useId();
   const [options, setOptions] = useState<SocOption[]>([]);
@@ -80,10 +97,14 @@ export function SocPicker({
   const [picked, setPicked] = useState<SocOption | null>(null);
   const [failed, setFailed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Leaving the box closes the list a moment later (so a click on an option lands first); coming back cancels it,
+  // or a list a quick answer has just opened would be shut by the old timer.
+  const closing = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asked = useRef("");
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
+    if (closing.current) clearTimeout(closing.current);
   }, []);
 
   function search(text: string) {
@@ -126,10 +147,23 @@ export function SocPicker({
   }
 
   function pick(o: SocOption) {
-    onChange(socGroup(o.soc) ?? o.soc);
-    setPicked(o);
+    const chosen = { ...o, soc: socGroup(o.soc) ?? o.soc };
+    onChange(chosen.soc);
+    setPicked(chosen);
     setOpen(false);
-    asked.current = o.soc;
+    asked.current = chosen.soc;
+    onPick?.(chosen);
+  }
+
+  /** On focus: reopen the last list, or, with the box empty, offer the codes for the title given. */
+  function focus() {
+    if (closing.current) clearTimeout(closing.current);
+    if (!value.trim() && suggestFrom && suggestFrom.trim().length >= MIN) {
+      if (asked.current === suggestFrom.trim() && options.length) setOpen(true);
+      else search(suggestFrom);
+      return;
+    }
+    if (options.length && !picked) setOpen(true);
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -159,8 +193,10 @@ export function SocPicker({
         value={value}
         onChange={(e) => type(e.target.value)}
         onKeyDown={onKeyDown}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        onFocus={() => options.length && !picked && setOpen(true)}
+        onBlur={() => {
+          closing.current = setTimeout(() => setOpen(false), 150);
+        }}
+        onFocus={focus}
         placeholder={placeholder}
         autoComplete="off"
         role="combobox"
@@ -168,6 +204,8 @@ export function SocPicker({
         aria-expanded={showList}
         aria-controls={listId}
         aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
         className={className}
       />{" "}
       {showList ? (
@@ -204,7 +242,7 @@ export function SocPicker({
           )}
         </ul>
       ) : null}{" "}
-      {picked ? (
+      {picked && showPicked ? (
         <p className="mt-1 text-sm text-soft" aria-live="polite">
           <span className="whitespace-nowrap font-mono">{picked.soc}</span> {picked.title}
         </p>

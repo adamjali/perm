@@ -1226,5 +1226,17 @@
   },
   "credit": "Screenshot of permtracker.app, October 29, 2026",
   "alt": "The SOC codes employers filed Data Scientist under on permtracker.app, each with its share of the filings, BLS pay and Job Zone"
+ },
+ "guides/perm-job-description-from-soc-code": {
+  "photo": {
+   "file": "us-employment-service-this-way-to-a-job-1943.jpg",
+   "focus": [
+    0.5,
+    0.45
+   ]
+  },
+  "credit": "Photo: Office of War Information, 1943, Library of Congress",
+  "source": "https://commons.wikimedia.org/wiki/File:Advertisement_of_the_United_States_Employment_Service,_8d16963v.jpg",
+  "alt": "A 1943 sign over a storefront that reads This Way to a Job, U.S. Employment Service"
  }
 }

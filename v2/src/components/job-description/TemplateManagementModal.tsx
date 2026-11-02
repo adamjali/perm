@@ -26,8 +26,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/lib/toast";
-import type { JobDescriptionTemplate } from "./JobDescriptionField";
-import { formatTemplateDate, copyToClipboard, isTemplateNameTaken } from "./shared";
+import type { JobDescriptionTemplate } from "@/hooks/useJobDescriptionTemplates";
+import { ConvexError } from "convex/values";
+import { formatTemplateDate, copyToClipboard, isTemplateNameTaken, templateErrorMessage } from "./shared";
 import { captureError } from "@/lib/sentry";
 
 // ============================================================================
@@ -44,9 +45,9 @@ export interface TemplateManagementModalProps {
   /** Callback when template is selected for use */
   onSelect?: (template: JobDescriptionTemplate) => void;
   /** Callback when template is permanently deleted */
-  onDelete?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
+  onDelete?: (id: JobDescriptionTemplate["_id"]) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Callback when template is updated */
-  onUpdate?: (id: string, name: string, description: string) => Promise<void>;
+  onUpdate?: (id: JobDescriptionTemplate["_id"], name: string, description: string) => Promise<void>;
 }
 
 // ============================================================================
@@ -90,7 +91,7 @@ export function TemplateManagementModal({
   const [editMode, setEditMode] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<JobDescriptionTemplate["_id"] | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -173,7 +174,7 @@ export function TemplateManagementModal({
     } catch (error) {
       console.error("[TemplateManagementModal] Update failed:", error);
       captureError(error);
-      toast.error(error instanceof Error ? error.message : "Failed to update template");
+      toast.error(templateErrorMessage(error));
     } finally {
       setIsProcessing(false);
     }
@@ -203,7 +204,7 @@ export function TemplateManagementModal({
     } catch (error) {
       console.error("[TemplateManagementModal] Delete failed:", error);
       captureError(error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete template");
+      toast.error(error instanceof ConvexError && typeof error.data === "string" ? error.data : "Couldn’t delete the template. Try again.");
     } finally {
       setIsProcessing(false);
     }

@@ -3,6 +3,7 @@ import { formatAsOf, formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
 import { aboutMonths, rulerOf, type DecidedSpan } from "@/lib/board";
 import { longDate } from "@convex/lib/months";
+import type { PermLine } from "@/lib/permLine";
 
 /**
  * DOL's two headline figures, worded for prose: how long its published average
@@ -14,14 +15,23 @@ import { longDate } from "@convex/lib/months";
  * A figure in prose now comes from the snapshot the processing-times page
  * reads, and always carries the date DOL published it, because a figure and
  * its date are one claim.
+ *
+ * THE MONTH IS OURS WHEN WE HAVE IT (Nov 2 2026). DOL's table can sit unchanged for weeks ("as of October 21"
+ * on Nov 2), so the month DOL is working comes from our own daily check of DOL's case status
+ * (lib/permLine.ts) when the caller passes it, dated by that check, and DOL's own table is named beside it
+ * when the two differ. The average is DOL's alone and keeps DOL's date.
  */
 export interface DolNow {
   /** DOL's average calendar days from filing to an analyst-review decision. */
   days: number | null;
   /** The month of decisions that average was measured on, "August 2026". */
   decidedIn: string | null;
-  /** The filing month analyst review is working, "December 2025". */
+  /** The filing month analyst review is working, "December 2025": by our own check when there is one. */
   frontier: string | null;
+  /** The day our check ran, "November 1, 2026", or null when `frontier` is DOL's own month. */
+  checkedOn: string | null;
+  /** The month DOL's own table names, "December 2025". */
+  dolFrontier: string | null;
   /** The filing month audited cases are being reviewed from, in their own line, "December 2025". */
   auditFrontier: string | null;
   /** The day DOL published these figures, "October 5, 2026". */
@@ -31,15 +41,20 @@ export interface DolNow {
 /** DOL's row for audited cases, worked in their own line. */
 const AUDIT_REVIEW = /audit review/i;
 
-export function dolNow(t: ProcessingTimesSnapshot | null): DolNow {
-  if (!t) return { days: null, decidedIn: null, frontier: null, auditFrontier: null, asOf: null };
+export function dolNow(t: ProcessingTimesSnapshot | null, line: PermLine | null = null): DolNow {
+  const ours = line ? formatMonth(line.month) : null;
+  const checkedOn = ours && line ? longDate(line.asOf) : null;
+  if (!t) return { days: null, decidedIn: null, frontier: ours, checkedOn, dolFrontier: null, auditFrontier: null, asOf: null };
   const avg = analystReviewAverage(t.permAverageDays ?? []);
   const queue = analystReviewQueue(t.permQueues ?? []);
   const audit = (t.permQueues ?? []).find((q) => AUDIT_REVIEW.test(q.queue));
+  const dolFrontier = formatMonth(queue?.priorityDate);
   return {
     days: avg?.calendarDays ?? null,
     decidedIn: formatMonth(avg?.month),
-    frontier: formatMonth(queue?.priorityDate),
+    frontier: ours ?? dolFrontier,
+    checkedOn,
+    dolFrontier,
     auditFrontier: formatMonth(audit?.priorityDate),
     asOf: formatAsOf(t.permAsOf),
   };
@@ -58,6 +73,14 @@ export function averagePhrase(n: DolNow): string {
 export function queueSentence(n: DolNow): string {
   if (n.days === null && n.frontier === null) {
     return "DOL's current queue month and average wait are on the processing times page, dated as DOL published them.";
+  }
+  if (n.checkedOn && n.frontier) {
+    const avg =
+      n.days !== null
+        ? ` DOL's published average from filing to a decision is ${n.days} days${n.decidedIn ? `, measured on the cases it decided in ${n.decidedIn}` : ""}${n.asOf ? `, as of ${n.asOf}` : ""}.`
+        : "";
+    const differs = n.dolFrontier && n.dolFrontier !== n.frontier ? ` DOL's own table${n.asOf ? `, dated ${n.asOf},` : ""} names ${n.dolFrontier}.` : "";
+    return `By our check of DOL's case status on ${n.checkedOn}, DOL's analyst review is working cases filed in ${n.frontier}.${avg}${differs}`;
   }
   const parts: string[] = [];
   if (n.frontier) parts.push(`DOL's analyst review is working cases filed in ${n.frontier}`);
@@ -80,7 +103,8 @@ export function queueSentence(n: DolNow): string {
 export function queueLine(n: DolNow): string {
   if (n.days === null || !n.frontier) return queueSentence(n);
   const when = n.asOf ? `, by DOL's figure of ${n.asOf}` : "";
-  return `About ${n.days} days from filing to a decision${when}. DOL is now deciding cases filed in ${n.frontier}.`;
+  const checked = n.checkedOn ? `, by our check of ${n.checkedOn}` : "";
+  return `About ${n.days} days from filing to a decision${when}. DOL is now deciding cases filed in ${n.frontier}${checked}.`;
 }
 
 /**
@@ -164,12 +188,12 @@ export interface DecidedReading {
  * waited (/today's board, the homepage's figure), then DOL's own month and average, dated. A part whose reading
  * is missing is left out, never typed. The lookup and the processing-times page answer the question with it.
  */
-export function howLongSentence(reading: DecidedReading | null, t: ProcessingTimesSnapshot | null): string {
+export function howLongSentence(reading: DecidedReading | null, t: ProcessingTimesSnapshot | null, line: PermLine | null = null): string {
   const ruler = reading?.span ? rulerOf(reading.span, reading.day) : null;
   const day = reading ? longDate(reading.day) : null;
   const waited =
     ruler && ruler.waitedDays > 0 && day ? `The PERM cases DOL decided on ${day} had waited ${aboutMonths(ruler.waitedDays)} from filing.` : null;
-  const n = dolNow(t);
+  const n = dolNow(t, line);
   const dol = n.days === null && n.frontier === null ? null : queueSentence(n);
   const parts = [waited, dol].filter((p): p is string => p !== null);
   return parts.length ? parts.join(" ") : "DOL's figures couldn't be read just now; DOL's own page, flag.dol.gov/processingtimes, has them.";

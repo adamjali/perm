@@ -52,7 +52,6 @@ import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { isRecruitmentComplete } from "@/lib/perm";
-import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import type { CaseDetailData } from "@/components/cases/detail/case-detail-types";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { formatCompactDate } from "@/components/cases/case-card.utils";
@@ -463,36 +462,20 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     }
   };
 
-  // Job description templates
-  const {
-    templates: jobDescTemplates,
-    loadTemplate: loadJobDescTemplate,
-    hardDeleteTemplate: hardDeleteJobDescTemplate,
-    updateTemplate: updateJobDescTemplate,
-    saveAsNewTemplate: saveAsNewJobDescTemplate,
-  } = useJobDescriptionTemplates();
-
-  const handleJobDescSave = async (positionTitle: string, description: string, templateId?: string) => {
-    try {
-      await updateMutation({
-        id: caseId,
-        jobDescriptionPositionTitle: positionTitle,
-        jobDescription: description,
-        ...(templateId ? { jobDescriptionTemplateId: templateId as Id<"jobDescriptionTemplates"> } : {}),
-      });
-      toast.success("Job description updated");
-    } catch (error) {
-      handleOperationError(error, { userMessage: "Couldn’t save the job description. Try again." });
-    }
+  // The job description's save and clear throw on failure: the card keeps its editor open with the words.
+  const handleJobDescSave = async (positionTitle: string, description: string, templateId?: Id<"jobDescriptionTemplates">) => {
+    await updateMutation({
+      id: caseId,
+      jobDescriptionPositionTitle: positionTitle,
+      jobDescription: description,
+      ...(templateId ? { jobDescriptionTemplateId: templateId } : {}),
+    });
+    toast.success("Job description updated");
   };
 
   const handleJobDescClear = async () => {
-    try {
-      await clearJobDescriptionMutation({ id: caseId });
-      toast.success("Job description cleared");
-    } catch (error) {
-      handleOperationError(error, { userMessage: "Couldn’t clear the job description. Try again." });
-    }
+    await clearJobDescriptionMutation({ id: caseId });
+    toast.success("Job description cleared");
   };
 
   // Which detail tab is open
@@ -652,15 +635,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             caseId={caseId}
             isMobile={isMobile}
             onSaveRecruitmentText={handleSaveRecruitmentText}
-            jobDescProps={{
-              templates: jobDescTemplates as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
-              onSave: handleJobDescSave,
-              onClear: handleJobDescClear,
-              onLoadTemplate: (t) => loadJobDescTemplate({ ...t, _id: t._id as Id<"jobDescriptionTemplates"> }),
-              onDeleteTemplate: (id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">),
-              onUpdateTemplate: (id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc),
-              onSaveAsNewTemplate: saveAsNewJobDescTemplate,
-            }}
+            jobDescProps={{ onSave: handleJobDescSave, onClear: handleJobDescClear }}
           />
         </TabPanel>
         <TabPanel id="recruitment" activeTab={activeTab}>

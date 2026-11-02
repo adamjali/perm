@@ -171,7 +171,7 @@ describe('prepareUpdatePayload', () => {
       'eta9089FilingDate', 'eta9089AuditDate', 'eta9089CertificationDate',
       'eta9089ExpirationDate', 'eta9089CaseNumber',
       'caseNumber', 'internalCaseNumber', 'employerFein',
-      'jobTitle', 'socCode', 'socTitle', 'jobOrderState',
+      'socCode', 'socTitle', 'jobOrderState',
       'jobDescription', 'jobDescriptionPositionTitle',
     ];
     for (const field of expectedFields) {

@@ -31,6 +31,7 @@
  */
 
 import type { Metadata } from "next";
+import { getPermLine } from "@/lib/db/permLine";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { queryStatic } from "@/lib/convexStatic";
@@ -137,7 +138,7 @@ const FAQ = [
 ];
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history, disclosure, estimator, board, permBoard, pwdLine, waitTrend] = await Promise.all([
+  const [snapshot, history, disclosure, estimator, board, permBoard, pwdLine, waitTrend, permLine] = await Promise.all([
     getProcessingTimes(),
     getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
@@ -156,8 +157,10 @@ export default async function PermProcessingTimesPage() {
     getPwdLine(),
     // How long each month's decisions waited: DOL's files, then our own sweep (build_wait_trends.py).
     getPermWaitTrend(),
+    // Where DOL really is in the PERM line, by our own daily check: its table can sit unchanged for weeks.
+    getPermLine().catch(() => null),
   ]);
-  const howLong = howLongSentence(permBoard, snapshot);
+  const howLong = howLongSentence(permBoard, snapshot, permLine);
   const faq = FAQ.map((f) => ({ ...f, answer: f.answer.replace(HOW_LONG_NOW, howLong) }));
   const afterPerm = board?.metrics.filter((m) => m.median !== null) ?? [];
 
@@ -337,7 +340,7 @@ export default async function PermProcessingTimesPage() {
         {/* The answer first, as DOL published it and dated: the sentence a search
             result or an AI answer quotes for "PERM processing time". */}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          {queueLine(dolNow(snapshot))}
+          {queueLine(dolNow(snapshot, permLine))}
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           {flagFreshness ? <FreshnessDots items={[flagFreshness]} /> : null}{" "}

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * Measure pages at phone widths: does the page scroll sideways, and if so which
- * element does it; text under 14px; standalone tap targets under 43px.
+ * element does it; text under 14px; standalone tap targets under 43px; and text a
+ * highlight covers (lib_covered_text.mjs), at the phone widths and, resized in
+ * place, at tablet and desktop widths too.
  *
  * One headless Chrome, pages loaded one after another, closed in `finally`
  * (never run two headless browsers at once on this Mac). For when the site's
@@ -24,6 +26,8 @@
  */
 import { chromium } from "playwright-core";
 
+import { coveredText } from "./lib_covered_text.mjs";
+
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const [base, ...paths] = process.argv.slice(2);
 if (!base || !paths.length) {
@@ -31,6 +35,8 @@ if (!base || !paths.length) {
   process.exit(2);
 }
 const WIDTHS = [390, 320];
+// Covered text depends on where lines break, so it's checked wider too: the 390 page is resized in place.
+const WIDE = [768, 1024, 1440];
 
 function measure(w) {
   const doc = document.documentElement;
@@ -110,11 +116,20 @@ try {
       await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
       const secs = ((Date.now() - t0) / 1000).toFixed(1);
       const r = await page.evaluate(measure, width);
-      if (r.overflow > 0 || r.smallN || r.tapsN) bad++;
-      console.log(`${width} ${p}  overflow=${r.overflow}px  small=${r.smallN}  taps=${r.tapsN}  (${secs} s)`);
+      const covered = (await page.evaluate(coveredText)).map((c) => `${width}: ${c}`);
+      if (width === WIDTHS[0]) {
+        for (const wide of WIDE) {
+          await page.setViewportSize({ width: wide, height: 900 });
+          covered.push(...(await page.evaluate(coveredText)).map((c) => `${wide}: ${c}`));
+        }
+        await page.setViewportSize({ width, height: 844 });
+      }
+      if (r.overflow > 0 || r.smallN || r.tapsN || covered.length) bad++;
+      console.log(`${width} ${p}  overflow=${r.overflow}px  small=${r.smallN}  taps=${r.tapsN}  covered=${covered.length}  (${secs} s)`);
       for (const c of r.culprit) console.log(`    wide: ${c}`);
       for (const s of r.small) console.log(`    small: ${s}`);
       for (const t of r.taps) console.log(`    tap: ${t}`);
+      for (const c of covered.slice(0, 6)) console.log(`    covered: ${c}`);
       if (process.env.SHOTS && width === 390) await page.screenshot({ path: `${process.env.SHOTS}/${p.replace(/\W+/g, "_") || "home"}-${width}.png` });
     }
     await ctx.close();

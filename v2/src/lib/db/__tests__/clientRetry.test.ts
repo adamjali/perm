@@ -142,6 +142,14 @@ describe("reads retry far-end pressure, which is not a network error", () => {
     expect(execute).toHaveBeenCalledTimes(3);
   });
 
+  it("gives a REFUSED connection a third try after a wait: the database is restarting", async () => {
+    const { rows } = await import("../client");
+    const refused = () => Object.assign(new TypeError("fetch failed"), { cause: new Error("connect ECONNREFUSED 127.0.0.1:8080") });
+    execute.mockRejectedValueOnce(refused()).mockRejectedValueOnce(refused()).mockResolvedValueOnce(OK);
+    await expect(rows("SELECT 1")).resolves.toEqual([]);
+    expect(execute).toHaveBeenCalledTimes(3);
+  });
+
   it("does NOT give a dropped connection a third attempt", async () => {
     // The extra attempt is for pressure only; widening it for every transient
     // error would just make a genuinely broken far end slower to report.

@@ -300,7 +300,6 @@ export default defineSchema({
 
     // Position info
     positionTitle: v.string(),
-    jobTitle: v.optional(v.string()),
     socCode: v.optional(v.string()),
     socTitle: v.optional(v.string()),
     jobOrderState: v.optional(v.string()), // 2-letter state code

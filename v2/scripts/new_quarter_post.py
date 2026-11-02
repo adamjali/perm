@@ -57,7 +57,7 @@ published: true
 
 {part("newer")}
 
-DOL publishes its PERM disclosure file every quarter, one row per case it decided. This note reads the file for <QuarterName quarter="{key}" /> case by case and sets it beside the quarter before and the same quarter a year earlier. Every figure comes from the file itself.
+DOL publishes its PERM disclosure file every quarter, one row per case it decided. This note reads the file for <QuarterName quarter="{key}" /> case by case and sets it beside the quarter before and the same quarter a year earlier. Every figure comes from the file itself. To search its cases yourself by employer, law firm, state or job, use PERM Tracker's free [case search](/case-search), which reads every file DOL has published together with its live record.
 
 {part("headline")}
 

@@ -84,7 +84,6 @@ export function toImportCaseArgs(c: Record<string, unknown>): ImportCaseArgs {
     caseNumber: pick("caseNumber"),
     internalCaseNumber: pick("internalCaseNumber"),
     employerFein: pick("employerFein"),
-    jobTitle: pick("jobTitle"),
     socCode: pick("socCode"),
     socTitle: pick("socTitle"),
     jobDescriptionPositionTitle: pick("jobDescriptionPositionTitle"),

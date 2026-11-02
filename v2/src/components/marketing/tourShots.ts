@@ -12,7 +12,10 @@ export type TourSurface =
   | "notifications"
   | "assistant"
   | "email"
+  | "job-suggestion"
+  | "job-card"
   | "timeline"
+  | "job-code"
 ;
 
 export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
@@ -63,17 +66,29 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/notifications-dark-phone.webp", width: 732, height: 1920 },
   },
   "assistant": {
-    light: { src: "/images/for-attorneys/assistant-light.webp", width: 760, height: 1120 },
-    dark: { src: "/images/for-attorneys/assistant-dark.webp", width: 760, height: 1120 },
+    light: { src: "/images/for-attorneys/assistant-light.webp", width: 1024, height: 1592 },
+    dark: { src: "/images/for-attorneys/assistant-dark.webp", width: 1024, height: 1592 },
   },
   "email": {
     light: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1220 },
     dark: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1220 },
+  },
+  "job-suggestion": {
+    light: { src: "/images/for-attorneys/job-suggestion-light.webp", width: 1768, height: 1290 },
+    dark: { src: "/images/for-attorneys/job-suggestion-dark.webp", width: 1768, height: 1290 },
+  },
+  "job-card": {
+    light: { src: "/images/for-attorneys/job-card-light.webp", width: 1632, height: 722 },
+    dark: { src: "/images/for-attorneys/job-card-dark.webp", width: 1632, height: 722 },
   },
   "timeline": {
     light: { src: "/images/for-attorneys/timeline-light.webp", width: 1800, height: 866 },
     dark: { src: "/images/for-attorneys/timeline-dark.webp", width: 1800, height: 866 },
     narrowLight: { src: "/images/for-attorneys/timeline-light-phone.webp", width: 1200, height: 1120 },
     narrowDark: { src: "/images/for-attorneys/timeline-dark-phone.webp", width: 1200, height: 1120 },
+  },
+  "job-code": {
+    light: { src: "/images/for-attorneys/job-code-light.webp", width: 1800, height: 778 },
+    dark: { src: "/images/for-attorneys/job-code-dark.webp", width: 1800, height: 778 },
   },
 };

@@ -98,7 +98,6 @@ export interface ExportedCase {
 
   // Position info
   positionTitle: string;
-  jobTitle?: string;
   socCode?: string;
   socTitle?: string;
   jobOrderState?: string;
@@ -223,7 +222,6 @@ export interface FullCaseData {
   employerFein?: string;
   beneficiaryIdentifier: string;
   positionTitle: string;
-  jobTitle?: string;
   socCode?: string;
   socTitle?: string;
   jobOrderState?: string;
@@ -351,7 +349,6 @@ function transformFullCaseForExport(caseData: FullCaseData): ExportedCase {
 
     // Position info
     positionTitle: caseData.positionTitle,
-    jobTitle: caseData.jobTitle,
     socCode: caseData.socCode,
     socTitle: caseData.socTitle,
     jobOrderState: caseData.jobOrderState,
@@ -478,141 +475,81 @@ function escapeCSVField(value: string | number | boolean | undefined | null): st
 }
 
 /**
- * Build CSV header row for full export.
+ * The full export's columns, in order: each is the ExportedCase field it holds, so the header and every row
+ * read one list and can't fall out of step.
  */
-function buildFullCSVHeader(): string {
-  const headers = [
-    "_id",
-    "employerName",
-    "beneficiaryIdentifier",
-    "positionTitle",
-    "caseStatus",
-    "progressStatus",
-    // Case numbers
-    "caseNumber",
-    "internalCaseNumber",
-    "pwdCaseNumber",
-    "eta9089CaseNumber",
-    "i140ReceiptNumber",
-    // PWD dates
-    "pwdFilingDate",
-    "pwdDeterminationDate",
-    "pwdExpirationDate",
-    "pwdWageAmount",
-    "pwdWageLevel",
-    // Recruitment
-    "jobOrderStartDate",
-    "jobOrderEndDate",
-    "sundayAdFirstDate",
-    "sundayAdSecondDate",
-    "sundayAdNewspaper",
-    "jobOrderState",
-    "noticeOfFilingStartDate",
-    "noticeOfFilingEndDate",
-    "additionalRecruitmentStartDate",
-    "additionalRecruitmentEndDate",
-    "recruitmentApplicantsCount",
-    "isProfessionalOccupation",
-    // ETA 9089
-    "eta9089FilingDate",
-    "eta9089AuditDate",
-    "eta9089CertificationDate",
-    "eta9089ExpirationDate",
-    "eta9089DenialDate",
-    "eta9089ReconsiderationDate",
-    "eta9089ReconsiderationDeniedDate",
-    "eta9089BalcaRequestDate",
-    // I-140
-    "i140FilingDate",
-    "i140ReceiptDate",
-    "i140ApprovalDate",
-    "i140DenialDate",
-    "i140Category",
-    "i140PremiumProcessing",
-    "i140ServiceCenter",
-    // Flags
-    "isFavorite",
-    "isPinned",
-    "calendarSyncEnabled",
-    "showOnTimeline",
-    // Metadata
-    "priorityLevel",
-    "closureReason",
-    "closedAt",
-    "createdAt",
-    "updatedAt",
-  ];
+const FULL_CSV_COLUMNS = [
+  "_id",
+  "employerName",
+  "beneficiaryIdentifier",
+  "positionTitle",
+  "socCode",
+  "socTitle",
+  "caseStatus",
+  "progressStatus",
+  // Case numbers
+  "caseNumber",
+  "internalCaseNumber",
+  "pwdCaseNumber",
+  "eta9089CaseNumber",
+  "i140ReceiptNumber",
+  // PWD dates
+  "pwdFilingDate",
+  "pwdDeterminationDate",
+  "pwdExpirationDate",
+  "pwdWageAmount",
+  "pwdWageLevel",
+  // Recruitment
+  "jobOrderStartDate",
+  "jobOrderEndDate",
+  "sundayAdFirstDate",
+  "sundayAdSecondDate",
+  "sundayAdNewspaper",
+  "jobOrderState",
+  "noticeOfFilingStartDate",
+  "noticeOfFilingEndDate",
+  "additionalRecruitmentStartDate",
+  "additionalRecruitmentEndDate",
+  "recruitmentApplicantsCount",
+  "isProfessionalOccupation",
+  // ETA 9089
+  "eta9089FilingDate",
+  "eta9089AuditDate",
+  "eta9089CertificationDate",
+  "eta9089ExpirationDate",
+  "eta9089DenialDate",
+  "eta9089ReconsiderationDate",
+  "eta9089ReconsiderationDeniedDate",
+  "eta9089BalcaRequestDate",
+  // I-140
+  "i140FilingDate",
+  "i140ReceiptDate",
+  "i140ApprovalDate",
+  "i140DenialDate",
+  "i140Category",
+  "i140PremiumProcessing",
+  "i140ServiceCenter",
+  // Flags
+  "isFavorite",
+  "isPinned",
+  "calendarSyncEnabled",
+  "showOnTimeline",
+  // Metadata
+  "priorityLevel",
+  "closureReason",
+  "closedAt",
+  "createdAt",
+  "updatedAt",
+] as const satisfies readonly (keyof ExportedCase)[];
 
-  return headers.join(",");
+/** The CSV header row for the full export. */
+function buildFullCSVHeader(): string {
+  return FULL_CSV_COLUMNS.join(",");
 }
 
-/**
- * Build CSV data row from full case data.
- */
+/** One CSV data row from a full case. */
 function buildFullCSVRow(caseData: ExportedCase): string {
-  const fields = [
-    escapeCSVField(caseData._id),
-    escapeCSVField(caseData.employerName),
-    escapeCSVField(caseData.beneficiaryIdentifier),
-    escapeCSVField(caseData.positionTitle),
-    escapeCSVField(caseData.caseStatus),
-    escapeCSVField(caseData.progressStatus),
-    // Case numbers
-    escapeCSVField(caseData.caseNumber),
-    escapeCSVField(caseData.internalCaseNumber),
-    escapeCSVField(caseData.pwdCaseNumber),
-    escapeCSVField(caseData.eta9089CaseNumber),
-    escapeCSVField(caseData.i140ReceiptNumber),
-    // PWD dates
-    escapeCSVField(caseData.pwdFilingDate),
-    escapeCSVField(caseData.pwdDeterminationDate),
-    escapeCSVField(caseData.pwdExpirationDate),
-    escapeCSVField(caseData.pwdWageAmount),
-    escapeCSVField(caseData.pwdWageLevel),
-    // Recruitment
-    escapeCSVField(caseData.jobOrderStartDate),
-    escapeCSVField(caseData.jobOrderEndDate),
-    escapeCSVField(caseData.sundayAdFirstDate),
-    escapeCSVField(caseData.sundayAdSecondDate),
-    escapeCSVField(caseData.sundayAdNewspaper),
-    escapeCSVField(caseData.jobOrderState),
-    escapeCSVField(caseData.noticeOfFilingStartDate),
-    escapeCSVField(caseData.noticeOfFilingEndDate),
-    escapeCSVField(caseData.additionalRecruitmentStartDate),
-    escapeCSVField(caseData.additionalRecruitmentEndDate),
-    escapeCSVField(caseData.recruitmentApplicantsCount),
-    escapeCSVField(caseData.isProfessionalOccupation),
-    // ETA 9089
-    escapeCSVField(caseData.eta9089FilingDate),
-    escapeCSVField(caseData.eta9089AuditDate),
-    escapeCSVField(caseData.eta9089CertificationDate),
-    escapeCSVField(caseData.eta9089ExpirationDate),
-    escapeCSVField(caseData.eta9089DenialDate),
-    escapeCSVField(caseData.eta9089ReconsiderationDate),
-    escapeCSVField(caseData.eta9089ReconsiderationDeniedDate),
-    escapeCSVField(caseData.eta9089BalcaRequestDate),
-    // I-140
-    escapeCSVField(caseData.i140FilingDate),
-    escapeCSVField(caseData.i140ReceiptDate),
-    escapeCSVField(caseData.i140ApprovalDate),
-    escapeCSVField(caseData.i140DenialDate),
-    escapeCSVField(caseData.i140Category),
-    escapeCSVField(caseData.i140PremiumProcessing),
-    escapeCSVField(caseData.i140ServiceCenter),
-    // Flags
-    escapeCSVField(caseData.isFavorite),
-    escapeCSVField(caseData.isPinned),
-    escapeCSVField(caseData.calendarSyncEnabled),
-    escapeCSVField(caseData.showOnTimeline),
-    // Metadata
-    escapeCSVField(caseData.priorityLevel),
-    escapeCSVField(caseData.closureReason),
-    escapeCSVField(caseData.closedAt),
-    escapeCSVField(caseData.createdAt),
-    escapeCSVField(caseData.updatedAt),
-  ];
-
-  return fields.join(",");
+  return FULL_CSV_COLUMNS.map((column) => escapeCSVField(caseData[column])).join(",");
 }
 
 // ============================================================================

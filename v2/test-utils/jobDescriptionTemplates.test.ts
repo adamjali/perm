@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTestContext, createAuthenticatedContext } from './convex';
+import { ConvexError } from 'convex/values';
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 
@@ -475,6 +476,18 @@ describe('jobDescriptionTemplates', () => {
       ).rejects.toThrow(/TEMPLATE_EXISTS|already exists/i);
     });
 
+    it('refuses a duplicate name with a sentence production shows (a ConvexError, not a hidden Error)', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+      await auth.mutation(api.jobDescriptionTemplates.create, { name: 'Template A', description: 'A' });
+      const b = await auth.mutation(api.jobDescriptionTemplates.create, { name: 'Template B', description: 'B' });
+      const refused = await auth
+        .mutation(api.jobDescriptionTemplates.update, { id: b, name: 'template a', description: 'B' })
+        .then(() => null, (e: unknown) => e);
+      expect(refused).toBeInstanceOf(ConvexError);
+      expect(String((refused as ConvexError<string>).data)).toBe('A template named "template a" already exists. Choose another name.');
+    });
+
     it('allows keeping the same name when updating', async () => {
       const t = createTestContext();
       const auth = await createAuthenticatedContext(t);
@@ -575,6 +588,18 @@ describe('jobDescriptionTemplates', () => {
 
       expect(template?.usageCount).toBe(3);
       expect(template?.lastUsedAt).toBeDefined();
+    });
+
+    it('leaves updatedAt alone: loading a template does not change it', async () => {
+      const t = createTestContext();
+      const auth = await createAuthenticatedContext(t);
+      const templateId = await createTestTemplate(auth);
+      const before = (await auth.query(api.jobDescriptionTemplates.get, { id: templateId }))?.updatedAt;
+      await new Promise((r) => setTimeout(r, 5));
+      await auth.mutation(api.jobDescriptionTemplates.recordUsage, { id: templateId });
+      const after = await auth.query(api.jobDescriptionTemplates.get, { id: templateId });
+      expect(after?.usageCount).toBe(1);
+      expect(after?.updatedAt).toBe(before);
     });
 
     it('throws error when recording usage of deleted template', async () => {

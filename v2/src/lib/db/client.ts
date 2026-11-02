@@ -148,6 +148,10 @@ const QUERY_DEADLINE_MS =
  * that error is raised here and means our own race gave up, not that the
  * server acted.
  */
+/** Nothing listening: the database is restarting, which takes a few seconds (a clean restart came back in 1). */
+const DATABASE_RESTARTING = /ECONNREFUSED/;
+const RESTART_WAIT_MS = 3000;
+
 const TRANSIENT_NETWORK =
   /other side closed|socket hang up|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EAI_AGAIN|ENOTFOUND|UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|fetch failed/i;
 
@@ -208,14 +212,21 @@ async function withDeadline<T>(
       // queries succeed in seconds minutes later. So pressure gets a third
       // attempt and a real wait between tries.
       const pressure = retryTransient && TRANSIENT_SQLITE.test(chain);
+      // A REFUSED CONNECTION IS A DATABASE RESTARTING: the nightly refresh restarts sqld at 1:35 AM Eastern once
+      // its memory passes 4 GB (permtracker-db-refresh), and a page read in that second was refused twice in the
+      // same instant (Sentry 5A, Nov 2 2026). It gets a third try after a short wait; a dropped socket on a
+      // database that's up keeps its single immediate retry.
+      const restarting = retryTransient && DATABASE_RESTARTING.test(chain);
       const retryable =
         chain.includes("database query deadline") ||
         (retryTransient && TRANSIENT_NETWORK.test(chain)) ||
         pressure;
-      const maxAttempts = pressure ? 3 : 2;
+      const maxAttempts = pressure || restarting ? 3 : 2;
       if (attempt >= maxAttempts || !retryable) throw e;
       if (pressure) {
         await new Promise((r) => setTimeout(r, attempt * 1500).unref?.());
+      } else if (restarting && attempt >= 2) {
+        await new Promise((r) => setTimeout(r, RESTART_WAIT_MS).unref?.());
       }
     }
   }

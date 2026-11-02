@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { getPermLine } from "@/lib/db/permLine";
 
 import { EmbedFrame, embedMetadata } from "@/components/embed/EmbedFrame";
 import { prettyStatus } from "@/components/queue/stages";
@@ -120,7 +121,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
   );
 }
 
-/** DOL's own position and average, dated, in two cells. Nothing when DOL's figures can't be read. */
+/** Where DOL is (by our check when we have it) and DOL's average, each dated, in two cells. Nothing when neither can be read. */
 function QueueNow({ now }: { now: DolNow | null }) {
   if (!now || (now.frontier === null && now.days === null)) return null;
   return (
@@ -139,7 +140,12 @@ function QueueNow({ now }: { now: DolNow | null }) {
           </div>
         ) : null}
       </dl>{" "}
-      {now.asOf ? <p className="border-t border-border px-3 py-2 text-sm text-muted-foreground">As DOL published them on {now.asOf}.</p> : null}
+      {now.asOf || now.checkedOn ? (
+        <p className="border-t border-border px-3 py-2 text-sm text-muted-foreground">
+          {now.checkedOn ? `The month by our check of DOL's case status on ${now.checkedOn}. ` : ""}
+          {now.asOf ? `${now.checkedOn ? "The average" : "As DOL published them"} on ${now.asOf}.` : ""}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -155,7 +161,9 @@ export default async function CaseStatusEmbed({
   const answer = typed ? await lookupForEmbed(typed, site).catch(() => null) : null;
   // Before anything is typed, where DOL stands: the frame carries a live figure
   // rather than a lone box. A failed read shows nothing, never a stale guess.
-  const now = typed ? null : dolNow(await getProcessingTimes().catch(() => null));
+  const now = typed
+    ? null
+    : dolNow(await getProcessingTimes().catch(() => null), await getPermLine().catch(() => null));
 
   return (
     <EmbedFrame slug="case-status">

@@ -152,6 +152,7 @@ interface NoteEntry {
 interface CaseDataForProjection extends CaseDataForDeadlines {
   _id: Id<"cases">;
   positionTitle: string;
+  socCode?: string;
   internalCaseNumber?: string;
   pwdCaseNumber?: string;
   eta9089CaseNumber?: string;
@@ -177,13 +178,14 @@ interface CaseDataForProjection extends CaseDataForDeadlines {
   updatedAt: number;
 }
 
-/** Every number a case carries, space-joined, for the case list's search. */
+/** Every number a case carries, space-joined, for the case list's search: its case numbers and its SOC code. */
 export function caseSearchNumbers(caseData: {
   caseNumber?: string;
   internalCaseNumber?: string;
   pwdCaseNumber?: string;
   eta9089CaseNumber?: string;
   i140ReceiptNumber?: string;
+  socCode?: string;
 }): string | undefined {
   const numbers = [
     caseData.caseNumber,
@@ -191,6 +193,7 @@ export function caseSearchNumbers(caseData: {
     caseData.pwdCaseNumber,
     caseData.eta9089CaseNumber,
     caseData.i140ReceiptNumber,
+    caseData.socCode,
   ].filter((n): n is string => typeof n === "string" && n.trim().length > 0);
   return numbers.length > 0 ? numbers.join(" ") : undefined;
 }
@@ -222,6 +225,7 @@ export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: st
     employerName: caseData.employerName,
     beneficiaryIdentifier: caseData.beneficiaryIdentifier,
     positionTitle: caseData.positionTitle,
+    socCode: caseData.socCode,
     caseStatus: caseData.caseStatus,
     progressStatus: caseData.progressStatus,
     nextDeadline: nextDeadline?.date,

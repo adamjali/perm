@@ -49,6 +49,7 @@ const HALVES: readonly Half[] = [
       "See where DOL's queue stands and when yours could be decided",
       "Free email alerts when your case moves or DOL reaches your month",
       "Search every filing by employer, law firm, worksite state and occupation",
+      "Look up a job's SOC code: what employers call it, what it pays and how often DOL approves it",
       "Processing times, wages, denial rates and the visa bulletin, from the government's own files",
     ],
     cta: { href: "/perm-case-status", label: "Check my case" },
@@ -61,6 +62,7 @@ const HALVES: readonly Half[] = [
     lede: ABOUT_TWO_HALVES.practice,
     items: [
       "Every deadline computed per case under 20 CFR 656",
+      "A SOC code beside each position title, with a starting job description from O*NET",
       "Change one date and every date after it recalculates",
       "Reminders by email and push, calendar sync and a weekly case summary",
       "Wage expiration, recruitment clocks, the ETA 9089 window, audit and RFI responses, the I-140 cutoff",

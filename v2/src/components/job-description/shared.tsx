@@ -1,42 +1,15 @@
 /**
  * Shared utilities, constants, and components for job description templates.
  *
- * This module centralizes common functionality used across JobDescriptionField,
- * TemplateManagementModal and TemplateSelector.
+ * Shared by the job description editor, the template list and the template manager.
  */
+
+import { ConvexError } from "convex/values";
 
 import { toast } from "@/lib/toast";
 import { FloppyDiskIcon, SparkleIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { ToneBadge } from "@/components/ui/badge";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-/**
- * Maximum character length for job descriptions: the server's own limit
- * (INPUT_LIMITS.LONG in convex/lib/validation.ts, cases and templates both).
- */
-export const JOB_DESCRIPTION_MAX_LENGTH = 50000;
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-/**
- * Job description template data structure.
- * Used for component props - uses string for _id for flexibility.
- */
-export interface JobDescriptionTemplateData {
-  _id: string;
-  name: string;
-  description: string;
-  usageCount: number;
-  lastUsedAt?: number;
-  createdAt: number;
-  updatedAt: number;
-}
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -88,26 +61,6 @@ export function formatTemplateDate(timestamp: number): string {
 }
 
 /**
- * Find a template by name (case-insensitive).
- *
- * @param templates - Array of templates to search
- * @param name - Name to search for
- * @returns Matching template or undefined
- *
- * @example
- * ```ts
- * const template = findTemplateByName(templates, "Software Engineer");
- * ```
- */
-export function findTemplateByName<T extends { name: string }>(
-  templates: T[],
-  name: string
-): T | undefined {
-  const nameLower = name.toLowerCase().trim();
-  return templates.find((t) => t.name.toLowerCase() === nameLower);
-}
-
-/**
  * Check if a template name is already taken.
  *
  * @param templates - Array of templates to check against
@@ -137,6 +90,15 @@ export function isTemplateNameTaken<T extends { _id: string; name: string }>(
   return templates.some(
     (t) => t.name.toLowerCase() === nameLower && t._id !== excludeId
   );
+}
+
+/**
+ * A template mutation's refusal as a sentence: a ConvexError carries its own words (a name already taken, or
+ * `TEMPLATE_EXISTS:<id>`, which the editor answers by offering to update); anything else is a fault.
+ */
+export function templateErrorMessage(error: unknown): string {
+  if (error instanceof ConvexError && typeof error.data === "string") return error.data;
+  return "Couldn't save the template. Try again.";
 }
 
 // ============================================================================

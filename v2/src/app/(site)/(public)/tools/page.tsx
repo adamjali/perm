@@ -16,12 +16,9 @@ import { buttonVariants } from "@/components/ui/button";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
-import {
-  analystReviewQueue,
-  analystReviewAverage,
-} from "@convex/lib/dolProcessingTimes";
 import { QueueTape } from "@/components/tools/QueueTape";
-import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getDolPosition } from "@/lib/db/dolPosition";
+import { longDate } from "@convex/lib/months";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { DataTour } from "@/components/tools/DataTour";
 
@@ -50,15 +47,9 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function ToolsPage() {
-  const snapshot = await getProcessingTimes();
-  const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
-  const analystAvg = snapshot
-    ? analystReviewAverage(snapshot.permAverageDays)
-    : undefined;
-  const pwd = snapshot?.pwdPermBacklog?.length
-    ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
-    : null;
-  const frontierMonth = analyst?.priorityDate ?? null;
+  // Where DOL is: the month and the wage requests by our own check, DOL's average by its date (lib/db/dolPosition.ts).
+  const where = await getDolPosition();
+  const dolAsOf = formatAsOf(where.dolAsOf);
 
   return (
     <>
@@ -78,31 +69,32 @@ export default async function ToolsPage() {
           <h1 className="font-heading text-3xl font-bold leading-tight sm:text-5xl">
             Live PERM data and free calculators
           </h1>{" "}
-          {formatAsOf(snapshot?.permAsOf) ? (
+          {where.checkedOn || dolAsOf ? (
             <p className="mt-3 text-base text-soft sm:text-lg">
-              DOL figures, as of {formatAsOf(snapshot?.permAsOf)}.
+              {where.checkedOn ? `Read from DOL's case status on ${longDate(where.checkedOn)}. ` : ""}
+              {dolAsOf ? `DOL's average as of ${dolAsOf}.` : ""}
             </p>
           ) : null}
         </div>{" "}
         {/* DOL's position in three figures, then the case box: a person
             holding a case number outranks every aggregate below. */}
-        {snapshot ? (
+        {where.month || where.averageDays !== null || where.pwdPending !== null ? (
           <section aria-label="Live DOL position">
             <FigureRow className="border-t-0 shadow-none">
               <Figure
                 tone="lime"
                 label="DOL is deciding cases filed"
-                value={formatMonth(frontierMonth) ?? "Not published"}
+                value={formatMonth(where.month) ?? "Not published"}
                 note="Analyst review, the queue nearly every case sits in."
               />
               <Figure
                 label="Average to a determination"
-                value={analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "Not published"}
+                value={where.averageDays !== null ? `${where.averageDays} days` : "Not published"}
                 note="Across cases DOL decided recently. An RFI or audit can make one case take longer."
               />
               <Figure
                 label="Wage requests pending"
-                value={pwd != null ? pwd.toLocaleString("en-US") : "Not published"}
+                value={where.pwdPending !== null ? where.pwdPending.toLocaleString("en-US") : "Not published"}
                 note="Prevailing wage, the stage before recruitment."
               />
             </FigureRow>
@@ -129,7 +121,7 @@ export default async function ToolsPage() {
       </section>
 
       {/* The queue as a tape: the one drawing that carries the mental model. */}
-      {frontierMonth ? (
+      {where.month ? (
         <section className="mt-10 border-2 border-border bg-tint p-5 sm:p-8">
           <h2 className="font-heading text-2xl font-bold">The queue, oldest first</h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
@@ -139,7 +131,7 @@ export default async function ToolsPage() {
             </Link>
             .
           </p>
-          <QueueTape frontierMonth={frontierMonth} className="mt-6" />
+          <QueueTape frontierMonth={where.month} className="mt-6" />
         </section>
       ) : null}
 

@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { getPermLine } from "@/lib/db/permLine";
 import type { Metadata } from "next";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -122,10 +123,12 @@ export default async function PermByTheNumbersPage() {
       getPwdLine(),
       getPermWaitTrend(),
     ]);
+  // Where DOL is in the line by our own check of DOL's records, dated by it; DOL's table is the fallback.
+  const permLine = await getPermLine().catch(() => null);
 
   // The waiting line, by DOL's own month.
   const { stages: lineStages } = groupByStage(census.statuses);
-  const dolMonth = snapshot ? analystReviewQueue(snapshot.permQueues)?.priorityDate?.slice(0, 7) ?? null : null;
+  const dolMonth = permLine?.month ?? (snapshot ? analystReviewQueue(snapshot.permQueues)?.priorityDate?.slice(0, 7) ?? null : null);
   const atRfi = census.statuses.find((s) => s.status === "RFI ISSUED")?.count ?? 0;
 
   // The newest working day DOL decided, and the thirty days before it.

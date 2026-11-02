@@ -19,6 +19,7 @@ const data: BadgeData = {
   analystReviewDays: 336.4,
   pwdMonths: { "perm-oews": "2026-05", "perm-survey": "2026-05", h1b: "2026-05", h2b: "2026-07", cw1: "2026-05" },
   dolAsOf: "2026-08-31",
+  pwdAsOf: "2026-08-15",
   counts: {
     "perm-decisions": { value: 373939, asOf: "2026-06-30" },
     "perm-pending": { value: 95432, asOf: "2026-09-08" },
@@ -44,7 +45,7 @@ const data: BadgeData = {
 
 /** Nothing published for anything. */
 const empty: BadgeData = {
-  permQueueMonths: {}, analystReviewDays: null, pwdMonths: {}, dolAsOf: null,
+  permQueueMonths: {}, analystReviewDays: null, pwdMonths: {}, dolAsOf: null, pwdAsOf: null,
   counts: {}, stages: {}, stagesTotal: null, bulletin: {},
 };
 
@@ -85,6 +86,12 @@ describe("badges", () => {
     // The date and the publisher are part of the claim, not decoration.
     expect(badgeSpec("perm-queue", data)?.alt).toContain("2026-08-31");
     expect(badgeSpec("bulletin-eb2-india", data)?.source).toContain("State");
+  });
+
+  it("dates a wage-request queue by DOL's wage table, never by the PERM table", () => {
+    expect(badgeSpec("pwd-h2b", data)?.alt).toContain("2026-08-15");
+    expect(badgeSpec("pwd-h2b", data)?.alt).not.toContain("2026-08-31");
+    expect(badgeSpec("perm-queue", data)?.alt).toContain("2026-08-31");
   });
 
   it("gives a stage its share of everything pending", () => {

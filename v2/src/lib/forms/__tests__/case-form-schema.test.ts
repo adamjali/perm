@@ -27,7 +27,6 @@ function createValidCaseFormData(
     caseNumber: undefined,
     internalCaseNumber: undefined,
     employerFein: undefined,
-    jobTitle: undefined,
     socCode: undefined,
     socTitle: undefined,
     jobOrderState: undefined,

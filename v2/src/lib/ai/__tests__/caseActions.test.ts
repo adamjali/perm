@@ -26,6 +26,7 @@ import {
   dateNeededFor,
   hashAction,
   prepareAction,
+  prepareCreateCase,
   prepareUpdateCase,
   runAction,
   toStoredMethod,
@@ -277,5 +278,34 @@ describe('small pieces', () => {
       date: '2026-07-29',
       description: 'Star',
     });
+  });
+});
+
+describe('prepareCreateCase keeps the job', () => {
+  it('copies the SOC code, its title and the job description into the new case', async () => {
+    fetchQuery.mockImplementation(async (fn: unknown) => {
+      if (is(fn, api.cases.previewCreate)) return { valid: true, errors: [], caseStatus: 'pwd', progressStatus: 'working' };
+      if (is(fn, api.cases.checkDuplicates)) return { duplicates: [] };
+      throw new Error('unexpected query');
+    });
+    const prepared = await prepareCreateCase(
+      {
+        employerName: 'Acme Corp',
+        positionTitle: 'Software Engineer',
+        socCode: '15-1252',
+        socTitle: 'Software Developers',
+        jobDescriptionPositionTitle: 'Software Engineer',
+        jobDescription: 'Develop software.\n\n- Analyze user needs.',
+      } as Parameters<typeof prepareCreateCase>[0],
+      'token',
+    );
+    const preview = fetchQuery.mock.calls.find(([fn]) => is(fn, api.cases.previewCreate))?.[1] as Record<string, unknown>;
+    expect(preview).toMatchObject({
+      socCode: '15-1252',
+      socTitle: 'Software Developers',
+      jobDescriptionPositionTitle: 'Software Engineer',
+      jobDescription: 'Develop software.\n\n- Analyze user needs.',
+    });
+    expect(prepared.kind).toBe('plan');
   });
 });

@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
 import { DeadlineDocket } from "@/components/home/DeadlineDocket";
+import { JobCodeSection } from "@/components/home/JobCodeSection";
 import { AppWindow } from "@/components/marketing/AppWindow";
 import { TOUR_SHOTS, type TourSurface } from "@/components/marketing/tourShots";
 import { TourStage } from "@/components/home/TourStage";
@@ -252,6 +253,7 @@ export function AttorneyTour() {
           />
         ))}
       </TourStage>
+      <JobCodeSection />
       <AssistantSection />
     </>
   );

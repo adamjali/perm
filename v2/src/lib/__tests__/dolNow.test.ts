@@ -60,6 +60,35 @@ const SEP_30_PWD = {
   ],
 } as unknown as ProcessingTimesSnapshot;
 
+// Our own check of Nov 1 2026: January 2026 is the oldest busy filing month DOL hasn't decided half of.
+const NOV_1 = { month: "2026-01", total: 14000, decided: 5900, asOf: "2026-11-01" };
+
+describe("DOL's figures, led by our own check (Nov 2 2026)", () => {
+  it("names the month by our check, dated by it, and keeps DOL's table for the average", () => {
+    const n = dolNow(OCT_5, NOV_1);
+    expect(n).toMatchObject({ frontier: "January 2026", checkedOn: "November 1, 2026", dolFrontier: "December 2025" });
+    expect(queueSentence(n)).toBe(
+      "By our check of DOL's case status on November 1, 2026, DOL's analyst review is working cases filed in January 2026. " +
+        "DOL's published average from filing to a decision is 336 days, measured on the cases it decided in August 2026, as of October 5, 2026. " +
+        "DOL's own table, dated October 5, 2026, names December 2025.",
+    );
+    expect(queueLine(n)).toBe(
+      "About 336 days from filing to a decision, by DOL's figure of October 5, 2026. DOL is now deciding cases filed in January 2026, by our check of November 1, 2026.",
+    );
+  });
+
+  it("says nothing more when DOL's table agrees", () => {
+    const n = dolNow(OCT_5, { ...NOV_1, month: "2025-12" });
+    expect(queueSentence(n)).not.toMatch(/own table/);
+    expect(queueSentence(n)).toMatch(/^By our check of DOL's case status on November 1, 2026/);
+  });
+
+  it("falls back to DOL's own month and date without our check", () => {
+    expect(dolNow(OCT_5, null)).toMatchObject({ frontier: "December 2025", checkedOn: null });
+    expect(queueSentence(dolNow(OCT_5, null))).toMatch(/^As of October 5, 2026, DOL's analyst review is working cases filed in December 2025/);
+  });
+});
+
 describe("DOL's figures in one short line", () => {
   it("leads with the average wait, then DOL's month, dated", () => {
     expect(queueLine(dolNow(OCT_5))).toBe(

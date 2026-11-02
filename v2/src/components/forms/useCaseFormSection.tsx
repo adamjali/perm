@@ -283,16 +283,21 @@ export function useFormSectionContextOptional(): FormSectionContextValue | null 
  * Provides all state and handlers needed for the basic info section.
  * Can use context OR fall back to props for backward compatibility.
  */
+/** The fields the basic info section shows: one shape for the hook's input and its answer. */
+export interface BasicInfoValues {
+  employerName: string;
+  beneficiaryIdentifier: string;
+  positionTitle: string;
+  caseNumber?: string;
+  internalCaseNumber?: string;
+  socCode?: string;
+  socTitle?: string;
+  caseStatus: CaseFormData["caseStatus"];
+  progressStatus: CaseFormData["progressStatus"];
+}
+
 interface BasicInfoSectionHookReturn {
-  values: {
-    employerName: string;
-    beneficiaryIdentifier: string;
-    positionTitle: string;
-    caseNumber?: string;
-    internalCaseNumber?: string;
-    caseStatus: CaseFormData["caseStatus"];
-    progressStatus: CaseFormData["progressStatus"];
-  };
+  values: BasicInfoValues;
   errors: Record<string, string>;
   onChange: (field: string, value: string) => void;
   onCaseStatusChange: ((value: string) => void) | undefined;
@@ -305,15 +310,7 @@ interface BasicInfoSectionHookReturn {
 }
 
 export function useBasicInfoSection(props?: {
-  values?: {
-    employerName: string;
-    beneficiaryIdentifier: string;
-    positionTitle: string;
-    caseNumber?: string;
-    internalCaseNumber?: string;
-    caseStatus: CaseFormData["caseStatus"];
-    progressStatus: CaseFormData["progressStatus"];
-  };
+  values?: BasicInfoValues;
   errors?: Record<string, string>;
   onChange?: (field: string, value: string) => void;
   onCaseStatusChange?: (value: string) => void;
@@ -334,6 +331,8 @@ export function useBasicInfoSection(props?: {
     positionTitle: context?.formData.positionTitle || "",
     caseNumber: context?.formData.caseNumber,
     internalCaseNumber: context?.formData.internalCaseNumber,
+    socCode: context?.formData.socCode,
+    socTitle: context?.formData.socTitle,
     caseStatus: context?.formData.caseStatus || "pwd",
     progressStatus: context?.formData.progressStatus || "working",
   };

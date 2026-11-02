@@ -90,7 +90,7 @@ function words(text: string): string {
  * "Acme Inc" finds "ACME, Inc.", "G-100-26282-123456" finds the number written
  * without its dashes, "acme devops" finds an Acme case whose title says
  * DevOps, and "gogle" finds Google (the site's one matcher, lib/fuzzy.ts).
- * Searches the employer, the worker, both job titles, the SOC title, every
+ * Searches the employer, the worker, the position title, the SOC title, every
  * case number the case carries, and the notes.
  */
 export function caseMatchesSearch(c: CaseDoc, query: string): boolean {
@@ -100,7 +100,6 @@ export function caseMatchesSearch(c: CaseDoc, query: string): boolean {
     c.employerName,
     c.beneficiaryIdentifier,
     c.positionTitle,
-    c.jobTitle,
     c.socTitle,
     c.caseNumber,
     c.internalCaseNumber,

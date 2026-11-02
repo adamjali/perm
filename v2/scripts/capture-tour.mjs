@@ -36,8 +36,11 @@ const PHONE = 398;
  * the page's end); `through: [selector, n]` ends it below the nth element a
  * selector matches; `pad` is the margin kept around it (`padTop` overrides it
  * above, for an element with something drawn over its top edge); `el` crops to the
- * first element a selector matches instead. No crop keeps the whole capture.
- * `phone: false` takes the wide capture only.
+ * first element a selector matches instead; `x: selector` narrows a crop to that element's width. No crop keeps
+ * the whole capture.
+ * `phone: false` takes the wide capture only. `act` runs steps on the story before the capture, in order:
+ * `["clear", selector]` empties a box, `["focus", selector]` focuses one (and keeps it focused),
+ * `["click", name]` presses the button whose name matches, `["wait", selector]` waits for an element.
  */
 const CAPTURES = [
   {
@@ -70,6 +73,28 @@ const CAPTURES = [
   // The email is drawn inside a frame, so it's ready when the frame's body has text, and its
   // headings can't be measured from outside: the crop keeps the message and drops the footer by height.
   { name: "email", story: "tour-app-pages--reminder-email", phone: false, themes: ["light"], frame: true, pictures: { email: { wide: { maxHeight: 610, pad: 0 } } } },
+  // The job code, three ways: the SOC box focused while empty offers the codes employers filed the position
+  // title under; the description the code suggests; and the code's card on the case page.
+  {
+    name: "job-code",
+    story: "tour-app-pages--edit-case",
+    phone: false,
+    act: [["clear", "#socCode"], ["focus", "#socCode"], ["wait", '[role="listbox"] [role="option"]']],
+    pictures: { "job-code": { wide: { from: "Position title", through: ['[role="listbox"]', 1], x: "#socCode", pad: 20 } } },
+  },
+  {
+    name: "job-suggestion",
+    story: "tour-app-pages--edit-case",
+    phone: false,
+    act: [["click", "^Job description"], ["wait", "section[aria-label^='Suggested description']"]],
+    pictures: { "job-suggestion": { wide: { el: "section[aria-label^='Suggested description']", pad: 10 } } },
+  },
+  {
+    name: "job-card",
+    story: "tour-app-pages--case-detail",
+    phone: false,
+    pictures: { "job-card": { wide: { el: "section[aria-label^='SOC code']", pad: 16 } } },
+  },
   {
     name: "hero",
     story: { wide: "home-attorney-hero-timeline--hero-timeline", phone: "home-attorney-hero-timeline--hero-timeline-phone" },
@@ -125,7 +150,17 @@ function measure([spec, rootSelector]) {
     bottom = el.getBoundingClientRect().bottom - r.top + pad;
   }
   if (spec.maxHeight) bottom = Math.min(bottom, top + spec.maxHeight);
-  return [0, Math.round(top), Math.round(r.width), Math.round(bottom)];
+  // `x` narrows the crop to an element's width (a form drawn in the middle of a wide page).
+  let left = 0;
+  let right = r.width;
+  if (spec.x) {
+    const el = root.querySelector(spec.x);
+    if (!el) throw new Error(`nothing matches ${spec.x}`);
+    const b = el.getBoundingClientRect();
+    left = Math.max(0, b.left - r.left - pad);
+    right = Math.min(r.width, b.right - r.left + pad);
+  }
+  return [Math.round(left), Math.round(top), Math.round(right), Math.round(bottom)];
 }
 
 const cropsFile = join(outDir, "crops.json");
@@ -158,11 +193,26 @@ try {
             { timeout: 240_000 },
           );
           await page.waitForFunction((t) => document.documentElement.classList.contains("dark") === (t === "dark"), theme, { timeout: 60_000 });
-          // Floating controls (the edit page's save bar, back-to-top) would land mid-picture in a full capture.
-          if (!cap.keepFixed) await page.addStyleTag({ content: "[data-floating],.fixed{display:none!important}" });
+          // Floating controls (the edit page's save bar, back-to-top) would land mid-picture in a full capture;
+          // the case form's save bar is sticky to the screen's foot, so it goes too.
+          if (!cap.keepFixed) await page.addStyleTag({ content: "[data-floating],.fixed,.sticky.bottom-0{display:none!important}" });
           await page.waitForTimeout(2000);
+          let focused = false;
+          for (const [step, target] of cap.act ?? []) {
+            if (step === "clear") await page.locator(target).first().fill("");
+            else if (step === "focus") {
+              // Blur first: a box `clear` just filled is already focused, and focusing it again fires nothing.
+              const box = page.locator(target).first();
+              await box.evaluate((el) => (el instanceof HTMLElement ? el.blur() : undefined));
+              await box.focus();
+              focused = true;
+            } else if (step === "click") await page.getByRole("button", { name: new RegExp(target) }).first().click();
+            else if (step === "wait") await page.locator(target).first().waitFor({ timeout: 60_000 });
+            else throw new Error(`unknown step ${step}`);
+            await page.waitForTimeout(600);
+          }
           // A panel that focuses its input on open would show the focus ring in the picture.
-          await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+          if (!focused) await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
           const el = page.locator(root);
           await el.screenshot({ path: join(outDir, `${file}.png`) });
           for (const [picture, specs] of Object.entries(cap.pictures)) {

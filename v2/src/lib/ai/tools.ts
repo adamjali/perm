@@ -14,6 +14,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { CASE_STATUSES, PROGRESS_STATUSES } from '@convex/lib/perm/statusTypes';
+import { isSocCode } from '@convex/lib/socCode';
 import { INPUT_LIMITS } from '@convex/lib/validation';
 
 /**
@@ -775,6 +776,12 @@ const ISODateString = z
     return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === d;
   }, 'Not a real calendar date');
 
+/** A SOC code in either spelling, the shape the server accepts (convex/lib/socCode.ts). */
+const SocCodeString = z.string().refine((c) => isSocCode(c), 'A SOC code looks like 15-1252 or 15-1252.00');
+
+/** A title-length text field, at the server's cap. */
+const ShortText = z.string().max(INPUT_LIMITS.SHORT);
+
 /** The recruitment method keys the case form uses (20 CFR 656.17(e)). */
 const RECRUITMENT_METHOD_KEYS = [
   'local_newspaper',
@@ -976,16 +983,17 @@ export const CreateCaseInputSchema = z.object({
   // Optional text fields
   internalCaseNumber: z.string().optional().describe('Internal case/matter number'),
   employerFein: z.string().optional().describe('Employer FEIN'),
-  socCode: z.string().optional().describe('SOC code'),
-  socTitle: z.string().optional().describe('SOC title'),
+  socCode: SocCodeString.optional().describe('SOC code, such as 15-1252'),
+  socTitle: ShortText.optional().describe('SOC title, such as "Software Developers"'),
   jobOrderState: z.string().optional().describe('State for job order (e.g., "CA")'),
+  jobDescriptionPositionTitle: ShortText.optional().describe('Position title for the job description'),
+  jobDescription: z.string().max(JOB_DESCRIPTION_MAX).optional().describe('Job description text'),
 });
 
 export type CreateCaseInput = z.infer<typeof CreateCaseInputSchema>;
 
 /** Text fields updateCase can clear (set to nothing). */
 export const CLEARABLE_CASE_FIELDS = [
-  'jobTitle',
   'caseNumber',
   'internalCaseNumber',
   'pwdCaseNumber',
@@ -1039,7 +1047,6 @@ export const UpdateCaseInputSchema = z.object({
   employerName: z.string().min(1).max(500).optional(),
   foreignWorkerId: z.string().max(500).optional().describe("The foreign worker's name or initials"),
   positionTitle: z.string().min(1).max(500).optional(),
-  jobTitle: z.string().max(500).optional(),
 
   // Stage
   caseStatus: CaseStatusEnum.optional().describe(
@@ -1117,10 +1124,10 @@ export const UpdateCaseInputSchema = z.object({
 
   // Job description and position
   jobDescription: z.string().max(JOB_DESCRIPTION_MAX).optional(),
-  jobDescriptionPositionTitle: z.string().max(500).optional(),
+  jobDescriptionPositionTitle: ShortText.optional(),
   employerFein: z.string().max(20).optional(),
-  socCode: z.string().max(20).optional(),
-  socTitle: z.string().max(500).optional(),
+  socCode: SocCodeString.optional(),
+  socTitle: ShortText.optional(),
 
   // RFI (DOL) and RFE (USCIS)
   addRfi: z

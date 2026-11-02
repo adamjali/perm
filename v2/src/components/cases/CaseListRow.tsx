@@ -77,7 +77,15 @@ export const CaseListRow = memo(function CaseListRow({
           {c.isSample ? <Badge className="shrink-0 border-dashed font-normal">Sample</Badge> : null}
         </p>{" "}
         <p className="truncate text-sm text-muted-foreground">
-          {[c.positionTitle, stage?.label].filter(Boolean).join(" · ")}
+          {c.positionTitle}
+          {c.socCode ? (
+            <>
+              {" "}
+              <span className="font-mono">{c.socCode}</span>
+            </>
+          ) : null}
+          {c.positionTitle && stage?.label ? " · " : ""}
+          {stage?.label}
         </p>
       </div>
       {open && c.nextDeadline ? (

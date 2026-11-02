@@ -93,4 +93,60 @@ describe("SocPicker", () => {
     await act(() => new Promise((r) => setTimeout(r, 400)));
     await waitFor(() => expect(fetchSpy).not.toHaveBeenCalled());
   });
+
+  it("offers the codes for the position title on focus, and hands back what was picked", async () => {
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify(DS)));
+    vi.stubGlobal("fetch", fetchSpy);
+    const picked = vi.fn();
+    function WithTitle() {
+      const [v, setV] = useState("");
+      return (
+        <>
+          <label htmlFor="soc">SOC code</label>
+          <SocPicker id="soc" value={v} onChange={setV} onPick={picked} suggestFrom="Data Scientist" showPicked={false} />
+          <output data-testid="value">{v}</output>
+        </>
+      );
+    }
+    render(<WithTitle />);
+    const box = screen.getByRole("combobox", { name: "SOC code" });
+    fireEvent.focus(box);
+    const list = await screen.findByRole("listbox", {}, { timeout: 2000 });
+    expect(String(fetchSpy.mock.calls[0]?.[0])).toBe("/api/soc?q=Data%20Scientist");
+    expect(list.querySelectorAll("[role=option]")).toHaveLength(2);
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(screen.getByTestId("value").textContent).toBe("15-2051");
+    expect(picked).toHaveBeenCalledWith(expect.objectContaining({ soc: "15-2051", title: "Data Scientists" }));
+    // The page shows the picked code its own way, so the picker's own line stays off.
+    expect(screen.queryByText("Data Scientists", { selector: "p" })).toBeNull();
+  });
+
+  it("keeps a list open that a quick answer brings in after leaving the box and coming straight back", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(DS))));
+    function WithTitle() {
+      const [v, setV] = useState("");
+      return <SocPicker id="soc" value={v} onChange={setV} suggestFrom="Data Scientist" />;
+    }
+    render(<WithTitle />);
+    const box = screen.getByRole("combobox");
+    fireEvent.blur(box);
+    fireEvent.focus(box);
+    await screen.findByRole("listbox", {}, { timeout: 2000 });
+    // Past the close-on-leave delay, the list is still there.
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("doesn't suggest over a code already in the box", async () => {
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify(DS)));
+    vi.stubGlobal("fetch", fetchSpy);
+    function Filled() {
+      const [v, setV] = useState("15-2041");
+      return <SocPicker id="soc" value={v} onChange={setV} suggestFrom="Data Scientist" />;
+    }
+    render(<Filled />);
+    fireEvent.focus(screen.getByRole("combobox"));
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });

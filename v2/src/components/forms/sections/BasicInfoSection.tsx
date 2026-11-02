@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { CaseStatus, ProgressStatus } from "@/lib/perm";
-import { useBasicInfoSection } from "@/components/forms/useCaseFormSection";
+import type { CaseStatus } from "@/lib/perm";
+import { useBasicInfoSection, type BasicInfoValues } from "@/components/forms/useCaseFormSection";
+import { SocCodeField } from "@/components/forms/sections/SocCodeField";
 import { CharLimit } from "@/components/ui/char-limit";
 import { INPUT_LIMITS } from "@convex/lib/validation";
 
@@ -21,15 +22,7 @@ export interface BasicInfoSectionProps {
   /**
    * Form field values (optional when using FormSectionProvider context)
    */
-  values?: {
-    employerName: string;
-    beneficiaryIdentifier: string;
-    positionTitle: string;
-    caseNumber?: string;
-    internalCaseNumber?: string;
-    caseStatus: CaseStatus;
-    progressStatus: ProgressStatus;
-  };
+  values?: BasicInfoValues;
 
   /**
    * Validation errors keyed by field name (optional when using context)
@@ -277,6 +270,15 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
               />
             </CharLimit>
           </FormField>
+
+          {/* SOC Code (Full Width): its codes come from the position title above */}
+          <SocCodeField
+            positionTitle={values.positionTitle}
+            socCode={values.socCode}
+            socTitle={values.socTitle}
+            error={errors?.socCode}
+            onChange={onChange}
+          />
         </div>
 
         {/* ========== STATUS FIELDS (Grouped) ========== */}

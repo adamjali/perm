@@ -598,6 +598,18 @@ describe("exportFullCasesCSV", () => {
     expect(header).toContain("i140FilingDate");
   });
 
+  it("carries the SOC code and title, each under its own heading", async () => {
+    exportFullCasesCSV([{ ...mockFullCaseData, socCode: "15-1252", socTitle: "Software Developers" } as typeof mockFullCaseData]);
+    const blob = (URL.createObjectURL as any).mock.calls[0][0] as Blob;
+    const [header, row] = (await blob.text()).split("\n");
+    const columns = header!.split(",");
+    const cells = row!.split(",");
+    expect(cells[columns.indexOf("socCode")]).toBe("15-1252");
+    expect(cells[columns.indexOf("socTitle")]).toBe("Software Developers");
+    // One cell per heading: the header and the row read one list.
+    expect(cells).toHaveLength(columns.length);
+  });
+
   it("should convert BigInt fields to numbers in CSV", async () => {
     exportFullCasesCSV([mockFullCaseWithLargeValues]);
 

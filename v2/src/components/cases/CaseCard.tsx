@@ -146,8 +146,14 @@ export const CaseCard = memo(function CaseCard({
               </Link>
             )}
           </h3>{" "}
-          <p className="truncate text-sm text-muted-foreground" title={role}>
+          <p className="truncate text-sm text-muted-foreground" title={c.socCode ? `${role}, SOC ${c.socCode}` : role}>
             {role}
+            {c.socCode ? (
+              <>
+                {" "}
+                <span className="font-mono">{c.socCode}</span>
+              </>
+            ) : null}
           </p>
         </div>
 

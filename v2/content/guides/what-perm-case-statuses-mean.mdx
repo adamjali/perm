@@ -2,7 +2,7 @@
 title: "What each PERM case status means"
 description: "DOL shows a PERM case one line of capitals and explains none of it. Analyst review, RFI, audit, certified, denied and the rest, and what follows each."
 date: "2026-09-03"
-updated: "2026-09-26"
+updated: "2026-11-02"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/what-perm-case-statuses-mean.webp"
 imageAlt: "Every status DOL prints on a PERM case, with how many cases sit at each one today"
@@ -17,7 +17,7 @@ published: true
 
 The Department of Labor shows a PERM case one line of status text in capitals and explains none of it. There is no official glossary, and of the sixteen strings the system can return, five have no published definition anywhere. Here is what the ones you are likely to see actually mean.
 
-The status is public and keyed on the case number. The [case status lookup](/perm-case-status) reads it from DOL's own system, refreshed daily, with no account needed.
+The status is public and keyed on the case number. PERM Tracker's free [case status lookup](/perm-case-status) reads it from DOL's own case-status service every day, pending cases included, and needs no account.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/what-perm-case-statuses-mean-dictionary.webp"
@@ -33,7 +33,7 @@ The status is public and keyed on the case number. The [case status lookup](/per
 
 The ordinary queue. The case is in line for a human analyst, nothing has been asked of the employer, and nothing changes until someone opens the file.
 
-Almost every pending case is here. At the last read, 90,124 of the 95,913 cases waiting on a decision were at analyst review, about 94% of them. DOL says its analysts are working November 2025 filings, and its own average from filing to determination is 336 calendar days.
+Almost every pending case is here. On November 1, 2026, 80,233 of the 87,415 PERM cases waiting on a decision were at analyst review, about 92% of them. <DolNow show="queue" />
 
 <ScreenshotFigure
   src="/images/content/figures/guides/what-perm-case-statuses-mean-what-cases-doing.webp"
@@ -51,7 +51,7 @@ The analyst wants something clarified before deciding. It is lighter than an aud
 
 Be careful with the deadline. The phrase "request for information" and the acronym RFI appear nowhere in 20 CFR part 656. The nearest hook is 656.20(d), which lets the certifying officer ask for supplemental information and sets no deadline. The 30 days that circulates online is the audit rule wearing the wrong label. The date printed on the letter is the one that counts.
 
-An RFI reads as bad news and mostly is not. Of the RFIs on record that reached a decision, 84% were certified, 1,799 of 2,152, and half of the ones that resolved did so within 33 days. Both describe a group of cases, not a schedule for any single one.
+An RFI reads as bad news, and most end well. Of the RFIs on record that had reached a decision by November 1, 2026, 85% were certified, 2,452 of 2,882. Half of the ones that resolved did so within 33 days. Both figures describe a group of cases. Neither is a schedule for any single one.
 
 ## Audit
 
@@ -59,7 +59,7 @@ A formal demand for the documentation behind the application: the recruitment re
 
 The deadline is 30 days from the date on the audit letter, not from the day it arrives. The officer may grant one discretionary extension of up to 30 days. Missing the date costs more than the application: under 656.20(a)(3) it counts as a failure to exhaust administrative remedies, and the appeal to BALCA is then not available.
 
-Audited cases wait in their own queue, which DOL publishes separately. As of late August 2026 it was working December 2025 filings.
+Audited cases wait in their own queue, which DOL publishes separately: its own table names <DolNow show="auditMonth" />.
 
 ## SUPERVISED RECRUITMENT
 
@@ -91,23 +91,23 @@ The employer withdrew the application and DOL will not decide it. DOL records no
 
 ## Where in a case's life each status shows up
 
-Each case is read once, so what can be measured is how old a case tends to be when it is found at a stage. The [RFI and audit page](/perm-rfi-audit) carries the current cohort sizes.
+Each case is read once, so what can be measured is how old a case tends to be when it's found at a stage. This is our scan of every pending case on November 1, 2026. The [RFI and audit page](/perm-rfi-audit) carries the current cohort sizes.
 
 | Status | Cases | Median days since filing | Middle 80% |
 |---|---|---|---|
-| Analyst review | 90,124 | 155 | 22 to 282 |
-| Application on hold | 1,855 | 181 | 157 to 198 |
-| RFI issued | 1,091 | 356 | 301 to 422 |
-| Reconsideration appeals | 2,340 | 433 | 378 to 552 |
-| BALCA appeals | 357 | 686 | 460 to 743 |
-| NORD issued | 121 | 691 | 657 to 735 |
+| Analyst review | 80,233 | 129 | 27 to 264 |
+| Application on hold | 2,880 | 276 | 72 to 305 |
+| RFI issued | 623 | 321 | 292 to 358 |
+| Reconsideration appeals | 2,632 | 527 | 404 to 689 |
+| NORD issued | 133 | 683 | 640 to 727 |
+| BALCA appeals | 898 | 859 | 684 to 1,081 |
 
 The ladder holds for a mechanical reason: a case cannot be at BALCA without first being filed, reviewed and denied. Read it as a map of where a status sits, not of how long a stage lasts.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/what-perm-case-statuses-mean-hold-months.webp"
   alt="PERM cases on hold by the month they were filed, most from January 2026"
-  caption="Where the cases on hold were filed: most in January 2026, a month DOL's normal queue hasn't reached."
+  caption="Where the cases on hold were filed: most in January 2026, a month DOL's normal queue hadn't reached on October 15, 2026."
   credit="Screenshot of permtracker.app, October 15, 2026"
   creditHref="/perm-rfi-audit/application-on-hold"
   aspectRatio={1600 / 1408}
@@ -120,7 +120,7 @@ On a case that has not been decided, you can leave an email address and get one 
 
 `IN PROCESS`, `APPLICATION ON HOLD`, `NORD ISSUED`, `DETERMINATION ISSUED` and `DENIED - BALCA DISMISSED` have no published definition, so nothing here invents one. NORD is not expanded, because no DOL or OFLC publication confirming what it stands for could be found. An acronym guessed from its shape is a plausible wrong answer, and those get acted on.
 
-Worth knowing about application on hold: 1,831 of the 1,855 cases carrying it belong to one employer, so a count that reads like a program-wide pattern is one company's filings.
+Worth knowing about application on hold: on November 1, 2026, 1,831 of the 2,880 cases carrying it belonged to one employer, so a count that reads like a program-wide pattern is mostly one company's filings.
 
 ## What this cannot tell you
 

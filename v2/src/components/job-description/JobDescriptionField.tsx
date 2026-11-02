@@ -1,507 +1,93 @@
 "use client";
 
-import * as React from "react";
-import { useState, useCallback, useEffect } from "react";
-import { ArrowsClockwiseIcon as RefreshCw, CaretDownIcon, CheckIcon, CopyIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
+import { useState } from "react";
+import { CaretDownIcon, SparkleIcon } from "@phosphor-icons/react";
+
+import type { Id } from "@convex/_generated/dataModel";
+import { formatInt } from "@/lib/format";
+import { socGroup } from "@/lib/socCode";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ConvexError } from "convex/values";
-import { TemplateSelector } from "./TemplateSelector";
-import { toast } from "@/lib/toast";
-import { JOB_DESCRIPTION_MAX_LENGTH, TemplateSaveButton, TemplateStatusBadge, TemplateTypeBadge } from "./shared";
+import { JobDescriptionEditor } from "./JobDescriptionEditor";
 
-/** Extract error message from ConvexError or plain Error */
-function getErrorMessage(error: unknown): string {
-  if (error instanceof ConvexError) {
-    const data = error.data;
-    return typeof data === "string" ? data : "Unknown error";
-  }
-  return error instanceof Error ? error.message : "Unknown error";
-}
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface JobDescriptionTemplate {
-  _id: string;
-  name: string;
-  description: string;
-  createdAt: number;
-  updatedAt: number;
-  usageCount: number;
-  lastUsedAt?: number;
-}
+export type { JobDescriptionTemplate } from "@/hooks/useJobDescriptionTemplates";
 
 export interface JobDescriptionFieldProps {
-  /** Current position title from form (inherited) */
+  /** The case's position title, which the description's title follows until it's edited. */
   inheritedPositionTitle: string;
-  /** Current job description position title (may differ from inherited) */
   positionTitle: string;
-  /** Current job description text */
   description: string;
-  /** Callback when position title changes */
+  /** The case's SOC code, for the suggested description. */
+  socCode?: string;
+  templateId?: Id<"jobDescriptionTemplates">;
   onPositionTitleChange: (value: string) => void;
-  /** Callback when description changes */
   onDescriptionChange: (value: string) => void;
-  /** Available templates */
-  templates: JobDescriptionTemplate[];
-  /** Currently loaded template ID (if any) */
-  loadedTemplateId?: string;
-  /** Callback to set the loaded template ID */
-  setLoadedTemplateId?: (id: string | undefined) => void;
-  /** Callback when template is loaded */
-  onLoadTemplate: (template: JobDescriptionTemplate) => void;
-  /** Callback when saving as new template */
-  onSaveAsNewTemplate: (name: string, description: string) => Promise<void>;
-  /** Callback when updating existing template */
-  onUpdateTemplate: (id: string, name: string, description: string) => Promise<void>;
-  /** Callback when permanently deleting a template */
-  onDeleteTemplate?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
-  /** Whether the field is in a loading state */
-  isLoading?: boolean;
-  /** Maximum character count for description */
-  maxLength?: number;
-  /** Whether section starts expanded */
+  onTemplateChange: (id: Id<"jobDescriptionTemplates"> | undefined) => void;
   defaultExpanded?: boolean;
-  /** Additional className */
   className?: string;
 }
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-// The server's limit, kept once in ./shared.
-const DEFAULT_MAX_LENGTH = JOB_DESCRIPTION_MAX_LENGTH;
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
-
 /**
- * JobDescriptionField Component
- *
- * Expandable job description field with template support.
- * Features:
- * - Inherits position title from form (editable independently)
- * - Template loading via dropdown
- * - Save as new / Update template options
- * - Copy to clipboard
- * - Character count
- * - Modified indicator when changed after loading template
- *
- * @example
- * ```tsx
- * <JobDescriptionField
- *   inheritedPositionTitle={formData.positionTitle}
- *   positionTitle={jobDescPositionTitle}
- *   description={jobDescription}
- *   onPositionTitleChange={setJobDescPositionTitle}
- *   onDescriptionChange={setJobDescription}
- *   templates={templates}
- *   onLoadTemplate={handleLoadTemplate}
- *   onSaveAsNewTemplate={handleSaveNew}
- *   onUpdateTemplate={handleUpdate}
- * />
- * ```
+ * The case form's job description section: a heading that opens and folds, around the one editor
+ * (`JobDescriptionEditor`), which the case page uses too. Folded, the heading says how long the text is, or,
+ * on a case with a SOC code and no description yet, that a suggestion is waiting inside.
  */
 export function JobDescriptionField({
   inheritedPositionTitle,
   positionTitle,
   description,
+  socCode,
+  templateId,
   onPositionTitleChange,
   onDescriptionChange,
-  templates,
-  loadedTemplateId,
-  setLoadedTemplateId,
-  onLoadTemplate,
-  onSaveAsNewTemplate,
-  onUpdateTemplate,
-  onDeleteTemplate,
-  isLoading = false,
-  maxLength = DEFAULT_MAX_LENGTH,
+  onTemplateChange,
   defaultExpanded = false,
   className,
 }: JobDescriptionFieldProps) {
-  // ============================================================================
-  // STATE
-  // ============================================================================
-
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [isCopied, setIsCopied] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [pendingUpdate, setPendingUpdate] = useState<{ name: string; description: string } | null>(null);
-
-  // Track whether JD position title auto-follows the inherited position title.
-  // Starts true when empty or matching inherited. Stops when user manually edits.
-  // Re-enabled by clicking the reset button or clearing.
-  const [isTrackingInherited, setIsTrackingInherited] = useState(
-    !positionTitle || positionTitle === inheritedPositionTitle
-  );
-
-  // Track if content has been modified since loading a template
-  const [originalContent, setOriginalContent] = useState<{
-    positionTitle: string;
-    description: string;
-  } | null>(null);
-
-  const isModified =
-    loadedTemplateId &&
-    originalContent &&
-    (positionTitle !== originalContent.positionTitle ||
-      description !== originalContent.description);
-
-  const loadedTemplate = templates.find((t) => t._id === loadedTemplateId);
-  const hasContent = positionTitle.trim() || description.trim();
-  const characterCount = description.length;
-  const isOverLimit = characterCount > maxLength;
-
-  // Check if position title matches an existing template (case-insensitive)
-  const matchingTemplate = templates.find(
-    (t) => t.name.toLowerCase() === positionTitle.trim().toLowerCase()
-  );
-  const isExistingTemplateName = !!matchingTemplate;
-  const canSaveTemplate = positionTitle.trim() && description.trim() && !isOverLimit;
-
-  // ============================================================================
-  // EFFECTS
-  // ============================================================================
-
-  // Auto-sync JD position title from inherited when tracking is active
-  useEffect(() => {
-    if (isTrackingInherited) {
-      onPositionTitleChange(inheritedPositionTitle);
-    }
-  }, [inheritedPositionTitle, isTrackingInherited, onPositionTitleChange]);
-
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
-
-  const handleCopy = useCallback(async () => {
-    if (!description) return;
-
-    try {
-      await navigator.clipboard.writeText(description);
-      setIsCopied(true);
-      toast.success("Copied to clipboard");
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      toast.error("Couldn’t copy. Select the text and copy it yourself.");
-    }
-  }, [description]);
-
-  const handleClear = useCallback(() => {
-    onPositionTitleChange("");
-    onDescriptionChange("");
-    setOriginalContent(null);
-    setIsTrackingInherited(true);
-    if (setLoadedTemplateId) {
-      setLoadedTemplateId(undefined);
-    }
-    toast.success("Job description cleared");
-  }, [onPositionTitleChange, onDescriptionChange, setLoadedTemplateId]);
-
-  const handleLoadTemplate = useCallback(
-    (template: JobDescriptionTemplate) => {
-      setIsTrackingInherited(false);
-      onLoadTemplate(template);
-      setOriginalContent({
-        positionTitle: template.name,
-        description: template.description,
-      });
-      toast.success(`Loaded template: ${template.name}`);
-    },
-    [onLoadTemplate]
-  );
-
-  // Handle save button click - either update existing or create new
-  const handleSaveClick = useCallback(async () => {
-    if (!canSaveTemplate || isSaving) return;
-
-    if (isExistingTemplateName && matchingTemplate) {
-      // Name matches a known template — update directly
-      setIsSaving(true);
-      try {
-        await onUpdateTemplate(matchingTemplate._id, positionTitle.trim(), description);
-        setOriginalContent({ positionTitle: positionTitle.trim(), description });
-        toast.success(`Template "${positionTitle.trim()}" updated`);
-      } catch (error) {
-        toast.error(getErrorMessage(error));
-      } finally {
-        setIsSaving(false);
-      }
-    } else {
-      // Attempt to create new template
-      setIsSaving(true);
-      try {
-        await onSaveAsNewTemplate(positionTitle.trim(), description);
-        toast.success(`Template "${positionTitle.trim()}" saved`);
-      } catch (error) {
-        const msg = getErrorMessage(error);
-        if (msg.startsWith("TEMPLATE_EXISTS:")) {
-          // Server found a duplicate the client didn’t know about — ask to update
-          setPendingUpdate({ name: positionTitle.trim(), description });
-        } else {
-          toast.error(msg || "Failed to save template");
-        }
-      } finally {
-        setIsSaving(false);
-      }
-    }
-  }, [canSaveTemplate, isSaving, isExistingTemplateName, matchingTemplate, positionTitle, description, onSaveAsNewTemplate, onUpdateTemplate]);
-
-  // Handle confirming update after server reports duplicate
-  const handleConfirmPendingUpdate = useCallback(async () => {
-    if (!pendingUpdate) return;
-    // Re-check templates for the matching ID
-    const match = templates.find(
-      (t) => t.name.toLowerCase() === pendingUpdate.name.toLowerCase()
-    );
-    if (!match) {
-      // Template may have been deleted in the meantime — retry create
-      setPendingUpdate(null);
-      try {
-        await onSaveAsNewTemplate(pendingUpdate.name, pendingUpdate.description);
-        toast.success(`Template "${pendingUpdate.name}" saved`);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save template");
-      }
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await onUpdateTemplate(match._id, pendingUpdate.name, pendingUpdate.description);
-      setOriginalContent({ positionTitle: pendingUpdate.name, description: pendingUpdate.description });
-      toast.success(`Template "${pendingUpdate.name}" updated`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update template");
-    } finally {
-      setIsSaving(false);
-      setPendingUpdate(null);
-    }
-  }, [pendingUpdate, templates, onUpdateTemplate, onSaveAsNewTemplate]);
-
-
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-
+  const code = socGroup(socCode);
+  const suggestionWaiting = Boolean(code) && !description.trim();
   return (
     <section className={cn("bg-tint", className)}>
       {/* The heading's button covers the header row, as on every form section */}
       <div className="relative flex min-h-12 items-center justify-between gap-4 p-4 hover:bg-muted/50 has-[:focus-visible]:bg-muted/50">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="font-heading text-lg font-bold">
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              aria-expanded={isExpanded}
-              className="text-left after:absolute after:inset-0 focus-visible:outline-none"
-            >
-              Job description
-            </button>
-          </h2>
-          {loadedTemplate && <TemplateStatusBadge isModified={!!isModified} />}
-        </div>
-
+        <h2 className="font-heading text-lg font-bold">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            aria-expanded={isExpanded}
+            className="text-left after:absolute after:inset-0 focus-visible:outline-none"
+          >
+            Job description
+          </button>
+        </h2>
         <div className="flex shrink-0 items-center gap-3">
-          {(isExpanded || hasContent) && (
-            <span className={cn("text-sm text-muted-foreground tabular-nums", isOverLimit && "font-medium text-destructive-text")}>
-              {characterCount.toLocaleString()}/{maxLength.toLocaleString()}
+          {!isExpanded && suggestionWaiting ? (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+              <SparkleIcon className="size-4 text-primary-text" aria-hidden="true" />
+              Suggested from {code}
             </span>
-          )}
-          <CaretDownIcon
-            className={cn("size-5 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
-            aria-hidden="true"
-          />
+          ) : description ? (
+            <span className="text-sm tabular-nums text-muted-foreground">{formatInt(description.length)} characters</span>
+          ) : null}
+          <CaretDownIcon className={cn("size-5 text-muted-foreground transition-transform", isExpanded && "rotate-180")} aria-hidden="true" />
         </div>
       </div>
-
-      {isExpanded && (
-            <div className="space-y-4 border-t border-border p-4">
-              {/* Template selector row */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <TemplateSelector
-                  templates={templates}
-                  selectedTemplateId={loadedTemplateId}
-                  onSelect={handleLoadTemplate}
-                  onDelete={onDeleteTemplate}
-                  onUpdate={onUpdateTemplate}
-                  disabled={isLoading}
-                />
-
-                {/* Copy button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopy}
-                        disabled={!description || isLoading}
-                        className="gap-1.5 min-h-[44px] min-w-[44px] border"
-                      >
-                        {isCopied ? (
-                          <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-primary-text" />
-                        ) : (
-                          <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
-                        )}
-                        <span className="hidden sm:inline">Copy</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Copy description to clipboard</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Clear button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleClear}
-                        disabled={!hasContent || isLoading}
-                        className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px] border"
-                      >
-                        <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline">Clear</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Clear job description</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-
-              {/* Position title input */}
-              <div className="space-y-2">
-                <Label htmlFor="job-desc-position" className="text-sm font-medium">
-                  Position title for job description
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="job-desc-position"
-                    value={positionTitle}
-                    onChange={(e) => {
-                      setIsTrackingInherited(false);
-                      onPositionTitleChange(e.target.value);
-                    }}
-                    placeholder="e.g., Software Engineer"
-                    disabled={isLoading}
-                    maxLength={200}
-                    className="min-h-[44px] border"
-                  />
-                  {positionTitle !== inheritedPositionTitle && positionTitle && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsTrackingInherited(true);
-                              onPositionTitleChange(inheritedPositionTitle);
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
-                          >
-                            <RefreshCw className="h-5 w-5 sm:h-4 sm:w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Reset to inherited title</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {isTrackingInherited
-                    ? "Auto-syncing from Position Title above. Edit to set a custom title."
-                    : "Custom title. Click the reset icon to re-sync with Position Title."}
-                </p>
-              </div>
-
-              {/* Description textarea - fewer rows on mobile for better UX */}
-              <div className="space-y-2">
-                <Label htmlFor="job-description" className="text-sm font-medium">
-                  Job description
-                </Label>
-                <Textarea
-                  id="job-description"
-                  value={description}
-                  onChange={(e) => onDescriptionChange(e.target.value)}
-                  placeholder="Enter the job description for PERM postings..."
-                  disabled={isLoading}
-                  className={cn(
-                    "resize-y min-h-[100px] sm:min-h-[120px] border",
-                    "rows-5 sm:rows-8", // Tailwind doesn’t support rows directly, handled via style
-                    isOverLimit && "border-destructive focus-visible:ring-destructive"
-                  )}
-                  style={{ minHeight: "min(120px, 30vh)" }} // Dynamic min height for mobile
-                />
-                {isOverLimit && (
-                  <p className="text-sm text-destructive">
-                    Description exceeds maximum length of {maxLength.toLocaleString()} characters
-                  </p>
-                )}
-              </div>
-
-              {/* Save template row - dynamic based on whether name exists */}
-              <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
-                <TemplateSaveButton
-                  isExisting={isExistingTemplateName}
-                  isSaving={isSaving}
-                  disabled={!canSaveTemplate || isLoading || isSaving}
-                  onClick={handleSaveClick}
-                />
-                {positionTitle.trim() && <TemplateTypeBadge isExisting={isExistingTemplateName} />}
-
-                <span className="text-sm text-muted-foreground ml-auto hidden sm:inline">
-                  Changes auto-save to case
-                </span>
-              </div>
-            </div>
-      )}
-
-      {/* Confirmation dialog when server finds existing template */}
-      <Dialog open={!!pendingUpdate} onOpenChange={(open) => { if (!open) setPendingUpdate(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Template already exists</DialogTitle>
-            <DialogDescription>
-              A template named &ldquo;{pendingUpdate?.name}&rdquo; already exists. Would you like to update it with the current content?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setPendingUpdate(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmPendingUpdate} disabled={isSaving}>
-              {isSaving ? "Updating..." : "Update template"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {isExpanded ? (
+        <div className="border-t border-border p-4">
+          <JobDescriptionEditor
+            idPrefix="case-form-jd"
+            inheritedPositionTitle={inheritedPositionTitle}
+            positionTitle={positionTitle}
+            description={description}
+            socCode={socCode}
+            templateId={templateId}
+            onPositionTitleChange={onPositionTitleChange}
+            onDescriptionChange={onDescriptionChange}
+            onTemplateChange={onTemplateChange}
+            clearable
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
-
-export default JobDescriptionField;

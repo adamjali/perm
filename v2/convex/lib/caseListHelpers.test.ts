@@ -1060,3 +1060,13 @@ describe("filterBySearch", () => {
     });
   });
 });
+
+describe("a case's SOC code on the list", () => {
+  it("rides on the card and is found by the list's search, with or without the dash", () => {
+    const card = projectCaseForCard(createMockCase({ socCode: "15-2041" }), "2026-11-02");
+    expect(card.socCode).toBe("15-2041");
+    expect(filterBySearch([card], "15-2041")).toHaveLength(1);
+    expect(filterBySearch([card], "152041")).toHaveLength(1);
+    expect(filterBySearch([projectCaseForCard(createMockCase(), "2026-11-02")], "15-2041")).toHaveLength(0);
+  });
+});

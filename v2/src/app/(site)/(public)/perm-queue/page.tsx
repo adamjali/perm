@@ -42,6 +42,8 @@ import { SITE_URL } from "@/lib/constants/site";
 import { EbSplit } from "@/components/queue/EbSplit";
 import { getEbSplit } from "@/lib/db/ebSplit";
 import { statusCasesHref } from "@/components/queue/statusLinks";
+import { getPermLine } from "@/lib/db/permLine";
+import { permLineNote } from "@/lib/permLine";
 
 /**
  * Where DOL's PERM queue stands right now, from a per-case scan.
@@ -97,7 +99,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 export default async function PermQueuePage() {
-  const [census, estimator, alphabet, pastDays, ebSplit, reviewByDay, permBoard, dolHistory] = await Promise.all([
+  const [census, estimator, alphabet, pastDays, ebSplit, reviewByDay, permBoard, dolHistory, line] = await Promise.all([
     getBacklogCensus(),
     getEstimatorData(),
     // Its own document and its own writer, so a missing one is a missing
@@ -118,6 +120,8 @@ export default async function PermQueuePage() {
     // The cards' directions: the homepage's own 30-day flow, and DOL's kept readings.
     getPermBoard().catch(() => null),
     getProcessingTimesHistory(24).catch(() => []),
+    // Where DOL is by our own daily check; DOL's table can sit unchanged for weeks (lib/permLine.ts).
+    getPermLine().catch(() => null),
   ]);
 
   // The whole line at the end of the newest replayed day before today, for "since".
@@ -241,8 +245,14 @@ export default async function PermQueuePage() {
             label="DOL is working"
             icon={<CalendarCheckIcon weight="bold" className="text-primary-text" />}
             trend={dolMonth ? queueMoveTrend(dolHistory, (h) => ({ month: analystReviewQueue(h.permQueues)?.priorityDate, asOf: h.permAsOf })) : undefined}
-            value={dolMonth ? (formatMonth(dolMonth) ?? dolMonth) : "Not published"}
-            note={dolAsOf ? `DOL's own position, as of ${dolAsOf}` : "DOL printed no readable month"}
+            value={line ? (formatMonth(line.month) ?? line.month) : dolMonth ? (formatMonth(dolMonth) ?? dolMonth) : "Not published"}
+            note={
+              line
+                ? permLineNote(line, { month: dolMonth, asOf: dolAsOf })
+                : dolAsOf
+                  ? `DOL's own position, as of ${dolAsOf}`
+                  : "DOL printed no readable month"
+            }
           />
           <Figure
             label="Months cleared a month"

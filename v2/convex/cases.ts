@@ -9,7 +9,7 @@ import schema from "./schema";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { rateLimiter } from "./rateLimitConfig";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
-import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
+import { validateCaseText } from "./lib/validation";
 import { readUserCases, USER_CASES_MAX } from "./lib/userCases";
 import { encryptToken, decryptToken, isEncryptedToken } from "./lib/crypto";
 import {
@@ -267,7 +267,6 @@ const caseUpdateArgs = {
   caseNumber: clearableText,
   internalCaseNumber: clearableText,
   employerFein: clearableText,
-  jobTitle: clearableText,
   socCode: clearableText,
   socTitle: clearableText,
   jobOrderState: clearableText,
@@ -461,14 +460,7 @@ export const create = mutation({
     await rateLimiter.limit(ctx, "caseCreate", { key: userId, throws: true });
 
     // Input length validation (PI1 — Processing Integrity)
-    validateInputLengths([
-      { value: args.employerName, name: "Employer Name", limit: INPUT_LIMITS.SHORT },
-      { value: args.positionTitle, name: "Position Title", limit: INPUT_LIMITS.SHORT },
-      { value: args.beneficiaryIdentifier, name: "Beneficiary Identifier", limit: INPUT_LIMITS.SHORT },
-      { value: args.jobDescription, name: "Job Description", limit: INPUT_LIMITS.LONG },
-      { value: args.recruitmentNotes, name: "Recruitment Notes", limit: INPUT_LIMITS.MEDIUM },
-      { value: args.recruitmentSummaryCustom, name: "Recruitment Summary", limit: INPUT_LIMITS.MEDIUM },
-    ]);
+    validateCaseText(args);
 
     const now = Date.now();
 
@@ -553,7 +545,6 @@ export const create = mutation({
       caseNumber: args.caseNumber,
       internalCaseNumber: args.internalCaseNumber,
       employerFein: await encryptFein(args.employerFein),
-      jobTitle: args.jobTitle,
       socCode: args.socCode,
       socTitle: args.socTitle,
       jobOrderState: args.jobOrderState,
@@ -856,14 +847,7 @@ export const update = mutation({
   args: caseUpdateArgs,
   handler: async (ctx, args) => {
     // Input length validation (PI1 — Processing Integrity)
-    validateInputLengths([
-      { value: args.employerName, name: "Employer Name", limit: INPUT_LIMITS.SHORT },
-      { value: args.positionTitle, name: "Position Title", limit: INPUT_LIMITS.SHORT },
-      { value: args.beneficiaryIdentifier, name: "Beneficiary Identifier", limit: INPUT_LIMITS.SHORT },
-      { value: typeof args.jobDescription === "string" ? args.jobDescription : undefined, name: "Job Description", limit: INPUT_LIMITS.LONG },
-      { value: args.recruitmentNotes, name: "Recruitment Notes", limit: INPUT_LIMITS.MEDIUM },
-      { value: args.recruitmentSummaryCustom, name: "Recruitment Summary", limit: INPUT_LIMITS.MEDIUM },
-    ]);
+    validateCaseText(args);
 
     const caseDoc = await ctx.db.get(args.id);
 
@@ -2120,7 +2104,6 @@ export const importCases = mutation({
             "caseNumber",
             "internalCaseNumber",
             "employerFein",
-            "jobTitle",
             "socCode",
             "socTitle",
             "jobOrderState",
@@ -2143,6 +2126,9 @@ export const importCases = mutation({
             "jobDescription",
           )
           .partial().fields,
+        // A second job title the case once carried beside the position title. No case held one on
+        // Nov 2 2026 and the field is gone, so an export file that still names it imports with it dropped.
+        jobTitle: v.optional(v.string()),
         // Additional Recruitment Methods (array of objects)
         additionalRecruitmentMethods: v.optional(
           v.array(
@@ -2224,14 +2210,7 @@ export const importCases = mutation({
     for (let i = 0; i < args.cases.length; i++) {
       const caseData = args.cases[i]!;
       // The same caps as create, so an imported file can't store more than the form can.
-      validateInputLengths([
-        { value: caseData.employerName, name: "Employer Name", limit: INPUT_LIMITS.SHORT },
-        { value: caseData.positionTitle, name: "Position Title", limit: INPUT_LIMITS.SHORT },
-        { value: caseData.beneficiaryIdentifier, name: "Beneficiary Identifier", limit: INPUT_LIMITS.SHORT },
-        { value: caseData.jobDescription, name: "Job Description", limit: INPUT_LIMITS.LONG },
-        { value: caseData.recruitmentNotes, name: "Recruitment Notes", limit: INPUT_LIMITS.MEDIUM },
-        { value: caseData.recruitmentSummaryCustom, name: "Recruitment Summary", limit: INPUT_LIMITS.MEDIUM },
-      ]);
+      validateCaseText(caseData);
       // Check for duplicate (same employer + beneficiary)
       const key = `${caseData.employerName.toLowerCase().trim()}|${caseData.beneficiaryIdentifier.toLowerCase().trim()}`;
       const existingCaseId = existingKeyMap.get(key);
@@ -2539,7 +2518,6 @@ export const importCases = mutation({
         caseNumber: caseData.caseNumber,
         internalCaseNumber: caseData.internalCaseNumber,
         employerFein: await encryptFein(caseData.employerFein),
-        jobTitle: caseData.jobTitle,
         socCode: caseData.socCode,
         socTitle: caseData.socTitle,
         jobOrderState: caseData.jobOrderState,

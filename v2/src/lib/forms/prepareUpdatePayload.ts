@@ -38,7 +38,7 @@ export const NULLABLE_FIELDS = new Set([
   'i140ApprovalDate', 'i140DenialDate', 'i140Category', 'i140ServiceCenter',
   // General case fields
   'caseNumber', 'internalCaseNumber', 'employerFein',
-  'jobTitle', 'socCode', 'socTitle', 'jobOrderState',
+  'socCode', 'socTitle', 'jobOrderState',
   // Job description
   'jobDescription', 'jobDescriptionPositionTitle',
 ]);

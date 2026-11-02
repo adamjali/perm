@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CaretRightIcon } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -23,6 +23,7 @@ import {
 } from "@/lib/db/reference";
 
 import { socGroup } from "@/lib/socCode";
+import { SHOWN_TASKS } from "@/lib/socProfile";
 import { predecessorNote } from "@/lib/socCrosswalk";
 import { PayBands, type PayBand } from "./PayBands";
 import { entityHref } from "@/lib/entityPayload";
@@ -37,7 +38,6 @@ import { entityHref } from "@/lib/entityPayload";
  */
 
 const LEVELS = ["I", "II", "III", "IV"] as const;
-
 /** Up to `n` metros (DOL wage areas) where this job's PERM filings sit, busiest first. */
 async function filingAreas(cities: FacetRow[], n: number) {
   const geo = await cityGeoMany(cities.map((c) => c.key ?? "").filter(Boolean));
@@ -319,10 +319,23 @@ export async function OccupationReference({
               <div>
                 <h3 className="font-heading text-lg font-bold">The work, most important first</h3>{" "}
                 <ol className="mt-3 list-decimal space-y-2 pl-6 text-base leading-relaxed">
-                  {main.tasks.map((t) => (
+                  {main.tasks.slice(0, SHOWN_TASKS).map((t) => (
                     <li key={t}>{t}{" "}</li>
                   ))}
                 </ol>
+                {main.tasks.length > SHOWN_TASKS ? (
+                  <details className="group mt-3">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-semibold [&::-webkit-details-marker]:hidden">
+                      <CaretDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />{" "}
+                      {main.tasks.length - SHOWN_TASKS} more tasks
+                    </summary>{" "}
+                    <ol start={SHOWN_TASKS + 1} className="mt-2 list-decimal space-y-2 pl-6 text-base leading-relaxed">
+                      {main.tasks.slice(SHOWN_TASKS).map((t) => (
+                        <li key={t}>{t}{" "}</li>
+                      ))}
+                    </ol>
+                  </details>
+                ) : null}
               </div>
             ) : null}{" "}
             <div className="space-y-8">

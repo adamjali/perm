@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SocCodeLink } from "@/components/soc/SocCodeLink";
 import { estimatePwdDay, estimatePwdQueue, monthInDolTable } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/db/estimate";
@@ -92,7 +93,7 @@ function Determination({ d, perms = [] }: { d: PwdDisclosedRow; perms?: readonly
                   value: (
                     <>
                       {d.socTitle ?? "Not given"}
-                      {d.socCode ? <span className="font-mono text-sm font-normal text-muted-foreground"> · {d.socCode}</span> : null}
+                      {d.socCode ? <span className="font-mono text-sm font-normal text-muted-foreground"> · <SocCodeLink code={d.socCode} /></span> : null}
                     </>
                   ),
                 },

@@ -118,7 +118,6 @@ export const FIELD_LABELS: Record<string, string> = {
   employerName: 'Employer',
   beneficiaryIdentifier: 'Foreign worker',
   positionTitle: 'Position title',
-  jobTitle: 'Job title',
   caseStatus: 'Stage',
   progressStatus: 'Progress',
   priorityLevel: 'Priority',
@@ -304,7 +303,6 @@ export function dateNeededFor(caseStatus: string, progressStatus?: string): stri
 const SCALAR_UPDATE_FIELDS = [
   'employerName',
   'positionTitle',
-  'jobTitle',
   'priorityLevel',
   'isProfessionalOccupation',
   'isFavorite',
@@ -726,6 +724,7 @@ export async function prepareCreateCase(params: CreateCaseInput, token: string):
     'eta9089FilingDate', 'eta9089CertificationDate', 'eta9089CaseNumber',
     'i140FilingDate', 'i140ReceiptNumber', 'i140Category', 'i140PremiumProcessing',
     'internalCaseNumber', 'employerFein', 'socCode', 'socTitle', 'jobOrderState',
+    'jobDescriptionPositionTitle', 'jobDescription',
   ];
   for (const f of copy) if (p[f] !== undefined) args[f] = p[f];
   if (params.additionalRecruitmentMethods?.length) {

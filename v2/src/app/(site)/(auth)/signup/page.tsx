@@ -3,11 +3,8 @@ import Link from "next/link";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
-import {
-  analystReviewQueue,
-  analystReviewAverage,
-} from "@convex/lib/dolProcessingTimes";
-import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getDolPosition } from "@/lib/db/dolPosition";
+import { longDate } from "@convex/lib/months";
 import { ProductShot } from "@/components/marketing/ProductShot";
 import { TOUR_SHOTS } from "@/components/marketing/tourShots";
 import { SignupPageClient } from "./SignupPageClient";
@@ -71,32 +68,23 @@ export const metadata: Metadata = {
  * one image element either way.
  */
 export default async function SignupPage() {
-  const snapshot = await getProcessingTimes();
-  const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
-  const analystAvg = snapshot
-    ? analystReviewAverage(snapshot.permAverageDays)
-    : undefined;
-  const pwdPending = snapshot?.pwdPermBacklog?.length
-    ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
-    : null;
+  // The month and the wage requests by our own check, DOL's average by its date (lib/db/dolPosition.ts).
+  const where = await getDolPosition();
 
   // A figure DOL did not publish is dropped rather than rendered as a dash.
   // The whole reason the panel is there is that the numbers are real.
   const figures = [
     {
       label: "Deciding cases filed",
-      value: formatMonth(analyst?.priorityDate ?? null),
+      value: formatMonth(where.month),
     },
     {
-      label: "Average to a determination",
-      value:
-        analystAvg?.calendarDays != null
-          ? `${analystAvg.calendarDays} days`
-          : null,
+      label: where.dolAsOf ? `DOL's average to a determination, as of ${formatAsOf(where.dolAsOf)}` : "DOL's average to a determination",
+      value: where.averageDays !== null ? `${where.averageDays} days` : null,
     },
     {
       label: "Wage requests pending",
-      value: pwdPending != null ? pwdPending.toLocaleString("en-US") : null,
+      value: where.pwdPending !== null ? where.pwdPending.toLocaleString("en-US") : null,
     },
   ].filter((f): f is { label: string; value: string } => Boolean(f.value));
 
@@ -139,7 +127,7 @@ export default async function SignupPage() {
         <div className="w-full max-w-lg lg:sticky lg:top-24">
           <p className="text-base font-semibold text-muted-foreground">
             Where DOL is
-            {snapshot?.permAsOf ? `, as of ${formatAsOf(snapshot.permAsOf)}` : null}
+            {where.checkedOn ? `, by our check on ${longDate(where.checkedOn)}` : where.dolAsOf ? `, as of ${formatAsOf(where.dolAsOf)}` : null}
           </p>{" "}
           {figures.length > 0 ? (
             <dl className="mt-6 space-y-5">

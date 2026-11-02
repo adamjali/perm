@@ -31,7 +31,6 @@ const FULL: FullCaseData = {
   employerFein: "12-3456789",
   beneficiaryIdentifier: "A. B.",
   positionTitle: "Engineer",
-  jobTitle: "Senior Engineer",
   socCode: "15-1252",
   socTitle: "Software Developers",
   jobOrderState: "CA",

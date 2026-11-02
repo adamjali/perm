@@ -44,6 +44,12 @@ describe("CaseCard - Rendering", () => {
     expect(screen.getByText("Jane Smith")).toBeInTheDocument();
   });
 
+  it("puts the job's SOC code beside the position title", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ positionTitle: "Senior Statistician", socCode: "15-2041" })} />);
+    const line = screen.getByTitle("Senior Statistician, SOC 15-2041");
+    expect(line).toHaveTextContent("Senior Statistician 15-2041");
+  });
+
   it("names the stage on its chip", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ caseStatus: "recruitment" })} />);
     expect(screen.getByText("Recruitment")).toBeInTheDocument();

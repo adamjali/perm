@@ -52,8 +52,10 @@ export interface BadgeData {
   permQueueMonths: Partial<Record<"analyst" | "audit" | "recon", string | null>>;
   analystReviewDays: number | null;
   pwdMonths: Partial<Record<"perm-oews" | "perm-survey" | "h1b" | "h2b" | "cw1", string | null>>;
-  /** DOL's as-of date for the processing-times table, ISO. */
+  /** DOL's as-of date for the PERM processing-times table, ISO. */
   dolAsOf: string | null;
+  /** DOL's own date on its wage-request table, ISO: a separate table, dated on its own (Sep 30 while PERM's read Oct 21). */
+  pwdAsOf: string | null;
 
   /** Counts of the record this site holds, keyed by badge id. */
   counts: Partial<Record<string, { value: number; asOf: string | null }>>;
@@ -106,14 +108,22 @@ const DOL = "Department of Labor";
 const STATE = "State Department";
 
 /** A DOL queue month, as "at Nov 2025". */
-function queueMonth(label: string, id: string, href: string, meaning: string, pick: (d: BadgeData) => string | null | undefined, what: string): BadgeDef {
+function queueMonth(
+  label: string,
+  id: string,
+  href: string,
+  meaning: string,
+  pick: (d: BadgeData) => string | null | undefined,
+  what: string,
+  dated: (d: BadgeData) => string | null = (d) => d.dolAsOf,
+): BadgeDef {
   return {
     id, group: "DOL queues", label, href, meaning,
     styles: ["shield", "card"],
     alt: (v) => `${what}: DOL is working ${v}`,
     resolve: (d) => {
       const m = shortMonth(pick(d));
-      return m ? { value: `at ${m}`, asOf: d.dolAsOf, source: DOL } : null;
+      return m ? { value: `at ${m}`, asOf: dated(d), source: DOL } : null;
     },
   };
 }
@@ -202,19 +212,19 @@ export const BADGE_DEFS: readonly BadgeDef[] = [
   },
   queueMonth("PERM wage", "pwd-queue", "/tools/pwd-calculator",
     "The month the National Prevailing Wage Center is working for PERM requests set on OEWS wages.",
-    (d) => d.pwdMonths["perm-oews"], "PERM prevailing wage requests on OEWS wages"),
+    (d) => d.pwdMonths["perm-oews"], "PERM prevailing wage requests on OEWS wages", (d) => d.pwdAsOf),
   queueMonth("PERM wage, survey", "pwd-perm-survey", "/tools/pwd-calculator",
     "The same queue for PERM requests set on an employer-provided survey instead of OEWS. It moves on its own.",
-    (d) => d.pwdMonths["perm-survey"], "PERM prevailing wage requests on an employer survey"),
+    (d) => d.pwdMonths["perm-survey"], "PERM prevailing wage requests on an employer survey", (d) => d.pwdAsOf),
   queueMonth("H-1B wage", "pwd-h1b", "/lca-cases",
     "The wage-request queue for H-1B, H-1B1 and E-3 petitions.",
-    (d) => d.pwdMonths.h1b, "H-1B prevailing wage requests"),
+    (d) => d.pwdMonths.h1b, "H-1B prevailing wage requests", (d) => d.pwdAsOf),
   queueMonth("H-2B wage", "pwd-h2b", "/tools/pwd-calculator",
     "The wage-request queue for H-2B seasonal labour.",
-    (d) => d.pwdMonths.h2b, "H-2B prevailing wage requests"),
+    (d) => d.pwdMonths.h2b, "H-2B prevailing wage requests", (d) => d.pwdAsOf),
   queueMonth("CW-1 wage", "pwd-cw1", "/tools/pwd-calculator",
     "The wage-request queue for CW-1, the Northern Mariana Islands transitional worker.",
-    (d) => d.pwdMonths.cw1, "CW-1 prevailing wage requests"),
+    (d) => d.pwdMonths.cw1, "CW-1 prevailing wage requests", (d) => d.pwdAsOf),
 
   // ---- The record -------------------------------------------------------
   recordCount("perm-decisions", "PERM decisions", "/case-search",

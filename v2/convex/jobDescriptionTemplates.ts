@@ -131,13 +131,13 @@ export const create = mutation({
     // Validate name
     const name = args.name.trim();
     if (!name) {
-      throw new Error("Template name (position title) is required");
+      throw new ConvexError("Template name (position title) is required");
     }
 
     // Validate description
     const description = args.description.trim();
     if (!description) {
-      throw new Error("Job description is required");
+      throw new ConvexError("Job description is required");
     }
 
     // Check for duplicate name (case-insensitive)
@@ -199,24 +199,24 @@ export const update = mutation({
 
     const template = await ctx.db.get(args.id);
     if (!template) {
-      throw new Error("Template not found");
+      throw new ConvexError("Template not found");
     }
     await verifyOwnership(ctx, template, "template");
 
     if (template.deletedAt !== undefined) {
-      throw new Error("Cannot update deleted template");
+      throw new ConvexError("Cannot update deleted template");
     }
 
     // Validate name
     const name = args.name.trim();
     if (!name) {
-      throw new Error("Template name (position title) is required");
+      throw new ConvexError("Template name (position title) is required");
     }
 
     // Validate description
     const description = args.description.trim();
     if (!description) {
-      throw new Error("Job description is required");
+      throw new ConvexError("Job description is required");
     }
 
     // Check for duplicate name (if name changed)
@@ -232,9 +232,7 @@ export const update = mutation({
         (t) => t._id !== args.id && t.name.toLowerCase() === name.toLowerCase()
       );
       if (duplicate) {
-        throw new Error(
-          `A template with the name "${name}" already exists. Please choose a different name.`
-        );
+        throw new ConvexError(`A template named "${name}" already exists. Choose another name.`);
       }
     }
 
@@ -269,12 +267,12 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     const template = await ctx.db.get(args.id);
     if (!template) {
-      throw new Error("Template not found");
+      throw new ConvexError("Template not found");
     }
     await verifyOwnership(ctx, template, "template");
 
     if (template.deletedAt !== undefined) {
-      throw new Error("Template already deleted");
+      throw new ConvexError("Template already deleted");
     }
 
     // Capture old state for audit
@@ -306,7 +304,7 @@ export const hardDelete = mutation({
   handler: async (ctx, args) => {
     const template = await ctx.db.get(args.id);
     if (!template) {
-      throw new Error("Template not found");
+      throw new ConvexError("Template not found");
     }
     await verifyOwnership(ctx, template, "template");
 
@@ -348,19 +346,18 @@ export const recordUsage = mutation({
   handler: async (ctx, args) => {
     const template = await ctx.db.get(args.id);
     if (!template) {
-      throw new Error("Template not found");
+      throw new ConvexError("Template not found");
     }
     await verifyOwnership(ctx, template, "template");
 
     if (template.deletedAt !== undefined) {
-      throw new Error("Cannot record usage of deleted template");
+      throw new ConvexError("Cannot record usage of deleted template");
     }
 
-    const now = Date.now();
+    // Loading a template doesn't change it, so its updatedAt stays: the template list sorts and dates by it.
     await ctx.db.patch(args.id, {
       usageCount: template.usageCount + 1,
-      lastUsedAt: now,
-      updatedAt: now,
+      lastUsedAt: Date.now(),
     });
 
     return { success: true };
@@ -387,7 +384,7 @@ export const internalCreate = internalMutation({
     const description = args.description.trim();
 
     if (!name || !description) {
-      throw new Error("Name and description are required");
+      throw new ConvexError("Name and description are required");
     }
 
     // Check for duplicate
@@ -401,7 +398,7 @@ export const internalCreate = internalMutation({
       (t) => t.name.toLowerCase() === name.toLowerCase()
     );
     if (duplicate) {
-      throw new Error(`Template "${name}" already exists`);
+      throw new ConvexError(`Template "${name}" already exists`);
     }
 
     const now = Date.now();

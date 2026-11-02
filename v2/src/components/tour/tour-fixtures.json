@@ -400,7 +400,6 @@
       "jobOrderEndDate": "2026-09-22",
       "jobOrderStartDate": "2026-08-24",
       "jobOrderState": "WA",
-      "jobTitle": "Senior Data Engineer",
       "noticeOfFilingEndDate": "2026-09-08",
       "noticeOfFilingStartDate": "2026-08-24",
       "positionTitle": "Senior Data Engineer",
@@ -445,7 +444,6 @@
       "jobOrderEndDate": "2026-08-25",
       "jobOrderStartDate": "2026-07-27",
       "jobOrderState": "VA",
-      "jobTitle": "Operations Research Analyst",
       "noticeOfFilingEndDate": "2026-08-10",
       "noticeOfFilingStartDate": "2026-07-27",
       "positionTitle": "Operations Research Analyst",
@@ -511,7 +509,6 @@
       "jobOrderEndDate": "2026-02-10",
       "jobOrderStartDate": "2026-01-12",
       "jobOrderState": "MA",
-      "jobTitle": "Senior Statistician",
       "notes": [
         {
           "category": "follow-up",
@@ -612,7 +609,6 @@
       "jobOrderEndDate": "2025-02-04",
       "jobOrderStartDate": "2025-01-06",
       "jobOrderState": "TX",
-      "jobTitle": "Software Engineer II",
       "noticeOfFilingEndDate": "2025-01-21",
       "noticeOfFilingStartDate": "2025-01-06",
       "positionTitle": "Software Engineer II",
@@ -676,7 +672,6 @@
       "jobOrderEndDate": "2025-11-04",
       "jobOrderStartDate": "2025-10-06",
       "jobOrderState": "MN",
-      "jobTitle": "Clinical Research Scientist",
       "noticeOfFilingEndDate": "2025-10-21",
       "noticeOfFilingStartDate": "2025-10-06",
       "positionTitle": "Clinical Research Scientist",
@@ -717,7 +712,6 @@
       "isPinned": false,
       "isProfessionalOccupation": false,
       "jobOrderState": "OH",
-      "jobTitle": "Controls Engineer",
       "positionTitle": "Controls Engineer",
       "priorityLevel": "normal",
       "progressStatus": "working",
@@ -751,7 +745,6 @@
       "isPinned": false,
       "isProfessionalOccupation": true,
       "jobOrderState": "CA",
-      "jobTitle": "Firmware Engineer",
       "positionTitle": "Firmware Engineer",
       "priorityLevel": "normal",
       "progressStatus": "filed",
@@ -809,7 +802,6 @@
       "jobOrderEndDate": "2024-12-17",
       "jobOrderStartDate": "2024-11-18",
       "jobOrderState": "NY",
-      "jobTitle": "Financial Analyst",
       "noticeOfFilingEndDate": "2024-12-03",
       "noticeOfFilingStartDate": "2024-11-18",
       "positionTitle": "Financial Analyst",
@@ -1425,7 +1417,6 @@
     "jobOrderEndDate": "2026-09-22",
     "jobOrderStartDate": "2026-08-24",
     "jobOrderState": "WA",
-    "jobTitle": "Senior Data Engineer",
     "noticeOfFilingEndDate": "2026-09-08",
     "noticeOfFilingStartDate": "2026-08-24",
     "positionTitle": "Senior Data Engineer",
@@ -1470,7 +1461,6 @@
     "jobOrderEndDate": "2026-08-25",
     "jobOrderStartDate": "2026-07-27",
     "jobOrderState": "VA",
-    "jobTitle": "Operations Research Analyst",
     "noticeOfFilingEndDate": "2026-08-10",
     "noticeOfFilingStartDate": "2026-07-27",
     "positionTitle": "Operations Research Analyst",
@@ -1536,7 +1526,6 @@
     "jobOrderEndDate": "2026-02-10",
     "jobOrderStartDate": "2026-01-12",
     "jobOrderState": "MA",
-    "jobTitle": "Senior Statistician",
     "notes": [
       {
         "category": "follow-up",
@@ -1637,7 +1626,6 @@
     "jobOrderEndDate": "2025-02-04",
     "jobOrderStartDate": "2025-01-06",
     "jobOrderState": "TX",
-    "jobTitle": "Software Engineer II",
     "noticeOfFilingEndDate": "2025-01-21",
     "noticeOfFilingStartDate": "2025-01-06",
     "positionTitle": "Software Engineer II",
@@ -1701,7 +1689,6 @@
     "jobOrderEndDate": "2025-11-04",
     "jobOrderStartDate": "2025-10-06",
     "jobOrderState": "MN",
-    "jobTitle": "Clinical Research Scientist",
     "noticeOfFilingEndDate": "2025-10-21",
     "noticeOfFilingStartDate": "2025-10-06",
     "positionTitle": "Clinical Research Scientist",
@@ -1742,7 +1729,6 @@
     "isPinned": false,
     "isProfessionalOccupation": false,
     "jobOrderState": "OH",
-    "jobTitle": "Controls Engineer",
     "positionTitle": "Controls Engineer",
     "priorityLevel": "normal",
     "progressStatus": "working",
@@ -1776,7 +1762,6 @@
     "isPinned": false,
     "isProfessionalOccupation": true,
     "jobOrderState": "CA",
-    "jobTitle": "Firmware Engineer",
     "positionTitle": "Firmware Engineer",
     "priorityLevel": "normal",
     "progressStatus": "filed",
@@ -1834,7 +1819,6 @@
     "jobOrderEndDate": "2024-12-17",
     "jobOrderStartDate": "2024-11-18",
     "jobOrderState": "NY",
-    "jobTitle": "Financial Analyst",
     "noticeOfFilingEndDate": "2024-12-03",
     "noticeOfFilingStartDate": "2024-11-18",
     "positionTitle": "Financial Analyst",
@@ -1887,7 +1871,9 @@
         "nextDeadlineLabel": "RFI due",
         "notes": "RFI in: DOL wants the recruitment report and a copy of the posted notice. Asked HR for the signed notice. | HR sent the signed notice of filing and the posting dates. Filed with the RFI documents. | F",
         "positionTitle": "Senior Statistician",
-        "progressStatus": "rfi_rfe"
+        "progressStatus": "rfi_rfe",
+        "searchNumbers": "15-2041",
+        "socCode": "15-2041"
       },
       {
         "_id": "000000000000000000000010012cases",
@@ -1915,7 +1901,9 @@
         "nextDeadline": "2026-10-15",
         "nextDeadlineLabel": "I-140 deadline",
         "positionTitle": "Software Engineer II",
-        "progressStatus": "working"
+        "progressStatus": "working",
+        "searchNumbers": "15-1252",
+        "socCode": "15-1252"
       },
       {
         "_id": "000000000000000000000010003cases",
@@ -1941,7 +1929,9 @@
         "nextDeadline": "2026-10-25",
         "nextDeadlineLabel": "Filing opens",
         "positionTitle": "Senior Data Engineer",
-        "progressStatus": "filed"
+        "progressStatus": "filed",
+        "searchNumbers": "15-1243",
+        "socCode": "15-1243"
       },
       {
         "_id": "000000000000000000000010006cases",
@@ -1967,7 +1957,9 @@
         "nextDeadline": "2027-01-23",
         "nextDeadlineLabel": "ETA window closes",
         "positionTitle": "Operations Research Analyst",
-        "progressStatus": "working"
+        "progressStatus": "working",
+        "searchNumbers": "15-2031",
+        "socCode": "15-2031"
       },
       {
         "_id": "000000000000000000000010018cases",
@@ -1990,7 +1982,9 @@
         "nextDeadline": "2027-06-30",
         "nextDeadlineLabel": "PWD expires",
         "positionTitle": "Controls Engineer",
-        "progressStatus": "working"
+        "progressStatus": "working",
+        "searchNumbers": "17-2071",
+        "socCode": "17-2071"
       },
       {
         "_id": "000000000000000000000010015cases",
@@ -2014,7 +2008,9 @@
         "isPinned": false,
         "isProfessionalOccupation": true,
         "positionTitle": "Clinical Research Scientist",
-        "progressStatus": "filed"
+        "progressStatus": "filed",
+        "searchNumbers": "19-1042",
+        "socCode": "19-1042"
       },
       {
         "_id": "000000000000000000000010021cases",
@@ -2033,7 +2029,9 @@
         "isPinned": false,
         "isProfessionalOccupation": true,
         "positionTitle": "Firmware Engineer",
-        "progressStatus": "filed"
+        "progressStatus": "filed",
+        "searchNumbers": "15-1252",
+        "socCode": "15-1252"
       }
     ],
     "pagination": {

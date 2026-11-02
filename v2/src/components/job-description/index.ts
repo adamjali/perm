@@ -1,21 +1,15 @@
 /**
- * Job Description Components
- *
- * Components for managing job descriptions and templates in PERM cases.
- *
- * @example
- * ```tsx
- * // In case form
- * import { JobDescriptionField } from '@/components/job-description';
- * ```
+ * Job description parts: the one editor (used by the case form and the case page), the form's folding
+ * section around it, the template list and manager, and the suggestion from a case's SOC code.
  */
 
-export { JobDescriptionField } from "./JobDescriptionField";
-export type {
-  JobDescriptionFieldProps,
-  JobDescriptionTemplate,
-} from "./JobDescriptionField";
+export { JobDescriptionEditor } from "./JobDescriptionEditor";
+export type { JobDescriptionEditorProps } from "./JobDescriptionEditor";
 
+export { JobDescriptionField } from "./JobDescriptionField";
+export type { JobDescriptionFieldProps, JobDescriptionTemplate } from "./JobDescriptionField";
+
+export { SocDescriptionSuggestion } from "./SocDescriptionSuggestion";
 
 export { TemplateSelector } from "./TemplateSelector";
 export type { TemplateSelectorProps } from "./TemplateSelector";
@@ -23,17 +17,11 @@ export type { TemplateSelectorProps } from "./TemplateSelector";
 export { TemplateManagementModal } from "./TemplateManagementModal";
 export type { TemplateManagementModalProps } from "./TemplateManagementModal";
 
-export { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
-export type { TemplateUpdateConfirmDialogProps } from "./TemplateUpdateConfirmDialog";
-
-// Shared utilities and components
 export {
-  JOB_DESCRIPTION_MAX_LENGTH,
   copyToClipboard,
   formatTemplateDate,
-  findTemplateByName,
   isTemplateNameTaken,
+  templateErrorMessage,
   TemplateStatusBadge,
   TemplateTypeBadge,
 } from "./shared";
-export type { JobDescriptionTemplateData } from "./shared";

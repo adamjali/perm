@@ -192,6 +192,14 @@ if any, is one scroll-scrubbed move the reader drives (a list that lights with i
 stack), with the finished layout under reduced motion and a simple stack on phones. The patterns and which fit this site:
 `~/.claude/explanations/20261021_details_so/RELEVANCE-PERMTRACKER.md`. The case box stays above the fold.
 
+**An article's picture is a photo first** (owner, Nov 2 2026, on three /blog cards side by side: "i prefer picture, or
+after that something with color, and then better than nothing is ... a screenshot"). For every header and listing card
+(`scripts/article-heroes.json`, `make_article_heroes.py`), in this order: a relevant photograph (the agency's building,
+a courthouse, people at the work the article is about; Wikimedia Commons, US government works, Openverse, or stock when
+it's relevant), credited in `imageCredit`; then a drawn or colourful picture in the site's palette; then a screenshot,
+only when the screen itself is what the article is about. Never an unrelated photo for colour, never an identifiable
+face without a licence that allows it, and every picture still unique to its article (`article-pictures.test.ts`).
+
 **A short clip beats a still where something happens** (owner, Oct 26 2026: "vids animations looping etc are really
 good too and preferred if approp relevant ... prob mostly shorter, like in the getting started guide"). A lookup
 answering, a date moving the deadlines behind it, a filter narrowing a list: record the real app doing it, a few seconds

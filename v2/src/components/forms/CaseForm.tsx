@@ -82,7 +82,6 @@ import {
 import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { initializeFormData, mapFieldToInputName } from "./case-form.helpers";
 import { JobDescriptionField } from "@/components/job-description";
-import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import { usePublishBottomBar } from "@/hooks/usePublishBottomBar";
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
@@ -288,28 +287,6 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
   const { sectionStates, toggleSection, openSection } = useSectionState(formData);
 
   // ============================================================================
-  // JOB DESCRIPTION TEMPLATES
-  // ============================================================================
-
-  const {
-    templates: jobDescTemplates,
-    isLoading: isTemplatesLoading,
-    loadedTemplateId: jobDescLoadedTemplateId,
-    setLoadedTemplateId: setJobDescLoadedTemplateId,
-    loadTemplate: loadJobDescTemplate,
-    saveAsNewTemplate: saveJobDescAsNewTemplate,
-    updateTemplate: updateJobDescTemplate,
-    hardDeleteTemplate: hardDeleteJobDescTemplate,
-  } = useJobDescriptionTemplates();
-
-  // Sync loadedTemplateId from initialData when editing
-  useEffect(() => {
-    if (mode === "edit" && initialData?.jobDescriptionTemplateId) {
-      setJobDescLoadedTemplateId(initialData.jobDescriptionTemplateId);
-    }
-  }, [mode, initialData?.jobDescriptionTemplateId, setJobDescLoadedTemplateId]);
-
-  // ============================================================================
   // AUTO STATUS
   // ============================================================================
 
@@ -434,27 +411,11 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
     [setValue]
   );
 
-  const handleLoadJobDescTemplate = useCallback(
-    async (template: { _id: string; name: string; description: string }) => {
-      await loadJobDescTemplate(template as Parameters<typeof loadJobDescTemplate>[0]);
-      setValue("jobDescriptionPositionTitle", template.name, { shouldDirty: true });
-      setValue("jobDescription", template.description, { shouldDirty: true });
+  const handleJobDescTemplateChange = useCallback(
+    (id: Id<"jobDescriptionTemplates"> | undefined) => {
+      setValue("jobDescriptionTemplateId", id, { shouldDirty: true });
     },
-    [loadJobDescTemplate, setValue]
-  );
-
-  const handleSaveJobDescAsNew = useCallback(
-    async (name: string, description: string) => {
-      await saveJobDescAsNewTemplate(name, description);
-    },
-    [saveJobDescAsNewTemplate]
-  );
-
-  const handleUpdateJobDescTemplate = useCallback(
-    async (id: string, name: string, description: string) => {
-      await updateJobDescTemplate(id as Parameters<typeof updateJobDescTemplate>[0], name, description);
-    },
-    [updateJobDescTemplate]
+    [setValue]
   );
 
   // ============================================================================
@@ -650,27 +611,15 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
 
         {/* Job Description Section */}
         <JobDescriptionField
-            inheritedPositionTitle={formData.positionTitle || ""}
-            positionTitle={formData.jobDescriptionPositionTitle || ""}
-            description={formData.jobDescription || ""}
-            onPositionTitleChange={handleJobDescPositionTitleChange}
-            onDescriptionChange={handleJobDescriptionChange}
-            templates={jobDescTemplates.map((t) => ({
-              _id: t._id,
-              name: t.name,
-              description: t.description,
-              createdAt: t.createdAt,
-              updatedAt: t.updatedAt,
-              usageCount: t.usageCount,
-            }))}
-            loadedTemplateId={jobDescLoadedTemplateId}
-            setLoadedTemplateId={(id) => setJobDescLoadedTemplateId(id as Id<"jobDescriptionTemplates"> | undefined)}
-            onLoadTemplate={handleLoadJobDescTemplate}
-            onSaveAsNewTemplate={handleSaveJobDescAsNew}
-            onUpdateTemplate={handleUpdateJobDescTemplate}
-            onDeleteTemplate={(id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">)}
-            isLoading={isTemplatesLoading}
-          />
+          inheritedPositionTitle={formData.positionTitle || ""}
+          positionTitle={formData.jobDescriptionPositionTitle || ""}
+          description={formData.jobDescription || ""}
+          socCode={formData.socCode}
+          templateId={formData.jobDescriptionTemplateId}
+          onPositionTitleChange={handleJobDescPositionTitleChange}
+          onDescriptionChange={handleJobDescriptionChange}
+          onTemplateChange={handleJobDescTemplateChange}
+        />
 
         {/* Notes Section */}
         <CollapsibleSection name="notes" title="Notes and settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} description="Case notes, journal entries, and preferences">

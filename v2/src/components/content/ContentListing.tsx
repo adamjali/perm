@@ -8,6 +8,10 @@
  * one topic and a search box that narrows by words. Both keep the sections,
  * so a card title is always an <h3> under its topic's <h2>. Each section's heading
  * row carries the topic's small drawing, decorative beside the heading that names it.
+ *
+ * Beside the search, a "For" filter (everyone, people waiting on a case, attorneys and HR) and a sort
+ * (lib/content/listing.ts), both in the address. Sorted any way but by topic, the articles are one list
+ * under one heading that says how it's sorted.
  */
 
 import * as React from "react";
@@ -20,6 +24,8 @@ import ContentSearch from "./ContentSearch";
 import { choiceVariants } from "@/components/ui/choice";
 import { SpotPicture } from "@/components/ui/spot-picture";
 import { clampPage, Pagination, usePageParam, useQueryParam } from "@/components/ui/pagination";
+import { SelectInput } from "@/components/forms/SelectInput";
+import { AUDIENCES, SORTS, audienceOf, forAudience, sortOf, sortPosts, sortedHeading } from "@/lib/content/listing";
 
 /** Articles a page (owner, Oct 21 2026: "pagination not endless scroll"). */
 export const PER_PAGE = 12;
@@ -35,6 +41,11 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
   // The topic and the page live in the address (?topic=queue&page=2), so a link can open one topic's articles.
   const [topicParam, setQuery] = useQueryParam("topic");
   const active = topics.some((t) => t.id === topicParam) ? topicParam : null;
+  const [sortParam] = useQueryParam("sort");
+  const [forParam] = useQueryParam("for");
+  const sort = sortOf(sortParam, "topic");
+  const audience = audienceOf(forParam);
+  const noun = type === "blog" ? "posts" : "guides";
   const [pageParam, setPage] = usePageParam();
   const top = React.useRef<HTMLDivElement>(null);
   // A new search or topic starts again at the first page.
@@ -47,25 +58,27 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
   // Words first; when no article holds them, the closest articles by title,
   // tags and description, so a misspelt search still lands somewhere.
   const { matches, closest } = React.useMemo(() => {
-    if (!search) return { matches: posts, closest: false };
+    const pool = sortPosts(forAudience(posts, audience), sort);
+    if (!search) return { matches: pool, closest: false };
     const q = search.toLowerCase();
-    const exact = posts.filter(
+    const exact = pool.filter(
       (p) =>
         p.meta.title.toLowerCase().includes(q) ||
         p.meta.description.toLowerCase().includes(q) ||
         p.meta.tags.some((t) => t.toLowerCase().includes(q)),
     );
     if (exact.length > 0 || search.trim().length < 3) return { matches: exact, closest: false };
-    const near = rankFuzzy(search, posts, (p) => [p.meta.title, ...p.meta.tags, p.meta.description], {
+    const near = rankFuzzy(search, pool, (p) => [p.meta.title, ...p.meta.tags, p.meta.description], {
       limit: 12,
     }).map((r) => r.item);
     return { matches: near, closest: near.length > 0 };
-  }, [posts, search]);
+  }, [posts, search, audience, sort]);
 
-  // Every matching article in reading order (topic by topic), then the page's twelve, still under their topics.
-  const ordered = topics
-    .filter((t) => !active || t.id === active)
-    .flatMap((t) => matches.filter((p) => p.meta.category === t.id));
+  // Every matching article in reading order (topic by topic, or as sorted), then the page's twelve.
+  const byTopic = sort === "topic";
+  const ordered = byTopic
+    ? topics.filter((t) => !active || t.id === active).flatMap((t) => matches.filter((p) => p.meta.category === t.id))
+    : matches.filter((p) => !active || p.meta.category === active);
   const shown = ordered.length;
   const pageCount = Math.max(1, Math.ceil(shown / PER_PAGE));
   const page = clampPage(pageParam, pageCount);
@@ -73,20 +86,23 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
   // page buttons); the ones off the current page are hidden. Measured live Oct 22 2026: cut to twelve, /guides linked
   // 29 of 86 guides and /blog 15 of 27.
   const onPage = new Set(ordered.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((p) => p.slug));
-  const sections = topics
-    .filter((t) => !active || t.id === active)
-    .map((t) => {
-      const list = matches.filter((p) => p.meta.category === t.id);
-      return { topic: t, posts: list, here: list.some((p) => onPage.has(p.slug)) };
-    })
-    .filter((s) => s.posts.length > 0);
-  const counts = new Map(topics.map((t) => [t.id, posts.filter((p) => p.meta.category === t.id).length]));
+  const sections = byTopic
+    ? topics
+        .filter((t) => !active || t.id === active)
+        .map((t) => {
+          const list = matches.filter((p) => p.meta.category === t.id);
+          return { topic: t, posts: list, here: list.some((p) => onPage.has(p.slug)) };
+        })
+        .filter((s) => s.posts.length > 0)
+    : [];
+  const audiencePosts = forAudience(posts, audience);
+  const counts = new Map(topics.map((t) => [t.id, audiencePosts.filter((p) => p.meta.category === t.id).length]));
 
   return (
     <div ref={top} id="articles" className="scroll-mt-28 space-y-10">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div role="group" aria-label="Topics" className="flex flex-wrap gap-2">
-          <TopicButton pressed={active === null} onClick={() => setActive(null)} label="All topics" count={posts.length} />{" "}
+          <TopicButton pressed={active === null} onClick={() => setActive(null)} label="All topics" count={audiencePosts.length} />{" "}
           {topics.map((t) => (
             <Fragment key={t.id}>
               {" "}
@@ -99,8 +115,26 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
             </Fragment>
           ))}
         </div>{" "}
-        <div className="w-full shrink-0 lg:max-w-xs">
-          <ContentSearch value={search} onChange={setSearch} />
+        <div className="grid w-full shrink-0 grid-cols-2 gap-x-3 gap-y-2 lg:w-[24rem] [&>*]:min-w-0">
+          <div className="col-span-2">
+            <ContentSearch value={search} onChange={setSearch} />
+          </div>{" "}
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            For
+            <SelectInput
+              value={audience}
+              onChange={(e) => setQuery({ for: e.target.value || null, page: null })}
+              options={AUDIENCES.map((a) => ({ value: a.id, label: a.label }))}
+            />
+          </label>{" "}
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Sort
+            <SelectInput
+              value={sort}
+              onChange={(e) => setQuery({ sort: e.target.value === "topic" ? null : e.target.value, page: null })}
+              options={SORTS.map((o) => ({ value: o.id, label: o.label }))}
+            />
+          </label>
         </div>
       </div>
 
@@ -108,6 +142,15 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
         <p role="status" className="border-l-4 border-primary bg-tint px-4 py-3 text-base">
           No article holds &ldquo;{search}&rdquo; exactly. These are the closest.
         </p>
+      ) : null}
+
+      {!byTopic && shown > 0 ? (
+        <section aria-labelledby="sorted-h">
+          <h2 id="sorted-h" className="mb-5 border-b-2 border-border pb-3 font-heading text-2xl font-bold sm:text-3xl">
+            {sortedHeading(shown, noun, sort)}
+          </h2>
+          <ContentGrid posts={ordered} headingLevel={3} shown={onPage} />
+        </section>
       ) : null}
 
       {sections.map(({ topic, posts: list, here }) => (
@@ -127,7 +170,7 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
 
       {shown === 0 ? (
         <p className="py-16 text-center text-base text-soft">
-          Nothing matches &ldquo;{search}&rdquo;. Try a shorter word, or show all topics.
+          {search ? <>Nothing matches &ldquo;{search}&rdquo;. Try a shorter word, or show all topics.</> : <>No {noun} here yet. Try another topic, or everyone.</>}
         </p>
       ) : (
         <Pagination
@@ -136,7 +179,7 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
           onPage={setPage}
           total={shown}
           perPage={PER_PAGE}
-          noun={search ? (closest ? `close to "${search}"` : `matching "${search}"`) : type === "blog" ? "posts" : "guides"}
+          noun={search ? (closest ? `close to "${search}"` : `matching "${search}"`) : noun}
           label={type === "blog" ? "Pages of posts" : "Pages of guides"}
           scrollTo={top}
           className="border-t-2 border-border pt-8"

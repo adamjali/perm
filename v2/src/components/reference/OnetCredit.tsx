@@ -4,9 +4,34 @@ import { cn } from "@/lib/utils";
 
 /**
  * The credit O*NET's licence asks for, wherever its words are shown (CC BY 4.0: attribution, the licence, and
- * a statement of what was changed). `note` names what this page changed.
+ * a statement of what was changed). `note` names what this page changed. `compact` gives one line naming the
+ * source, the licence and the change, with the full statement folded under it, for a panel inside a form.
  */
-export function OnetCredit({ version, note, className }: { version?: string | null; note: string; className?: string }) {
+export function OnetCredit({
+  version,
+  note,
+  compact = false,
+  className,
+}: {
+  version?: string | null;
+  note: string;
+  compact?: boolean;
+  className?: string;
+}) {
+  if (compact) {
+    return (
+      <details className={cn("max-w-3xl text-sm leading-relaxed text-muted-foreground", className)}>
+        <summary className="inline-flex min-h-11 cursor-pointer items-center">
+          From O*NET{version ? ` ${version}` : ""} by USDOL/ETA, under CC BY 4.0, modified ({note}).
+        </summary>
+        <FullCredit version={version} note={note} />
+      </details>
+    );
+  }
+  return <FullCredit version={version} note={note} className={className} />;
+}
+
+function FullCredit({ version, note, className }: { version?: string | null; note: string; className?: string }) {
   return (
     <p className={cn("max-w-3xl text-sm leading-relaxed text-muted-foreground", className)}>
       This section includes information from the{" "}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SocCodeLink } from "@/components/soc/SocCodeLink";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow } from "@/lib/db/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
@@ -62,7 +63,7 @@ function Disclosed({ d }: { d: LcaDisclosedRow }) {
                   value: (
                     <>
                       {d.socTitle ?? "Not given"}
-                      {d.socCode ? <span className="font-mono text-sm font-normal text-muted-foreground"> · {d.socCode}</span> : null}
+                      {d.socCode ? <span className="font-mono text-sm font-normal text-muted-foreground"> · <SocCodeLink code={d.socCode} /></span> : null}
                     </>
                   ),
                 },

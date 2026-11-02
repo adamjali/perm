@@ -20,8 +20,9 @@ describe("AttorneyTour on the server", () => {
     const at = IDS.map((id) => html.indexOf(`id="${id}"`));
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
-    // Six product headings, then the assistant's.
-    expect((html.match(/<h2 /g) ?? []).length).toBe(7);
+    // Six product headings, then the job code's and the assistant's.
+    expect((html.match(/<h2 /g) ?? []).length).toBe(8);
+    expect(html.indexOf('id="job-code"')).toBeGreaterThan(html.indexOf('id="calendar"'));
     for (const url of ["permtracker.app/timeline", "permtracker.app/cases", "permtracker.app/cases/juniper", "permtracker.app/cases/tidewater/edit", "permtracker.app/notifications", "permtracker.app/calendar"]) {
       expect(html).toContain(`>${url}<`);
     }

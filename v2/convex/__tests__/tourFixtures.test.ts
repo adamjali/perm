@@ -228,15 +228,15 @@ function professionalSteps(start: string) {
 /** What the attorney fills in besides the dates: the job, the wage, the steps. */
 const DETAILS: Record<string, Record<string, unknown>> = {
   "Northwind Analytics": {
-    jobTitle: "Senior Data Engineer", socCode: "15-1243", socTitle: "Database Architects", jobOrderState: "WA",
+    socCode: "15-1243", socTitle: "Database Architects", jobOrderState: "WA",
     pwdWageLevel: "Level III", pwdWageAmount: 151320, additionalRecruitmentMethods: professionalSteps("2026-08-24"),
   },
   "Tidewater Logistics": {
-    jobTitle: "Operations Research Analyst", socCode: "15-2031", socTitle: "Operations Research Analysts", jobOrderState: "VA",
+    socCode: "15-2031", socTitle: "Operations Research Analysts", jobOrderState: "VA",
     pwdWageLevel: "Level II", pwdWageAmount: 98093,
   },
   "Juniper Biologics": {
-    jobTitle: "Senior Statistician", socCode: "15-2041", socTitle: "Statisticians", jobOrderState: "MA",
+    socCode: "15-2041", socTitle: "Statisticians", jobOrderState: "MA",
     pwdWageLevel: "Level III", pwdWageAmount: 128410, additionalRecruitmentMethods: professionalSteps("2026-01-12"),
     jobDescriptionPositionTitle: "Senior Statistician",
     jobDescription:
@@ -245,22 +245,22 @@ const DETAILS: Record<string, Record<string, unknown>> = {
       "statistics or biostatistics and 3 years of experience in the job offered.",
   },
   "Cobalt Freight Systems": {
-    jobTitle: "Software Engineer II", socCode: "15-1252", socTitle: "Software Developers", jobOrderState: "TX",
+    socCode: "15-1252", socTitle: "Software Developers", jobOrderState: "TX",
     pwdWageLevel: "Level II", pwdWageAmount: 118997, additionalRecruitmentMethods: professionalSteps("2025-01-06"),
   },
   "Bellweather Health": {
-    jobTitle: "Clinical Research Scientist", socCode: "19-1042", socTitle: "Medical Scientists", jobOrderState: "MN",
+    socCode: "19-1042", socTitle: "Medical Scientists", jobOrderState: "MN",
     pwdWageLevel: "Level II", pwdWageAmount: 96637, additionalRecruitmentMethods: professionalSteps("2025-10-06"),
   },
   "Halcyon Robotics": {
-    jobTitle: "Controls Engineer", socCode: "17-2071", socTitle: "Electrical Engineers", jobOrderState: "OH",
+    socCode: "17-2071", socTitle: "Electrical Engineers", jobOrderState: "OH",
     pwdWageLevel: "Level II", pwdWageAmount: 92706,
   },
   "Meridian Microsystems": {
-    jobTitle: "Firmware Engineer", socCode: "15-1252", socTitle: "Software Developers", jobOrderState: "CA",
+    socCode: "15-1252", socTitle: "Software Developers", jobOrderState: "CA",
   },
   "Ashgrove Partners": {
-    jobTitle: "Financial Analyst", socCode: "13-2051", socTitle: "Financial and Investment Analysts", jobOrderState: "NY",
+    socCode: "13-2051", socTitle: "Financial and Investment Analysts", jobOrderState: "NY",
     pwdWageLevel: "Level II", pwdWageAmount: 104187, additionalRecruitmentMethods: professionalSteps("2024-11-18"),
   },
 };

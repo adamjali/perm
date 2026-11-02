@@ -102,6 +102,7 @@ export const getBadgeData = cache(async (): Promise<BadgeData> => {
       cw1: pwd(/^cw-?1$/i)?.oewsReceiptDate ?? null,
     },
     dolAsOf: snap?.permAsOf ?? null,
+    pwdAsOf: snap?.pwdAsOf ?? null,
     counts: countMap,
     stages: stageMap,
     stagesTotal,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SocCodeLink } from "@/components/soc/SocCodeLink";
 import { DecidedTimeline } from "@/components/tools/DecidedTimeline";
 import { StatusHistory } from "@/components/tools/StatusHistory";
 import type { StatusEvent } from "@/lib/statusHistory";
@@ -824,7 +825,16 @@ function TheDecision({
           <Figure
             label="Offered wage"
             value={money(decided.wage)}
-            note={decided.socTitle ?? "as filed"}
+            note={
+              decided.socCode ? (
+                <>
+                  {decided.socTitle ? `${decided.socTitle}, ` : ""}
+                  <SocCodeLink code={decided.socCode} className="font-mono" />
+                </>
+              ) : (
+                (decided.socTitle ?? "as filed")
+              )
+            }
           />
         ) : null}
         {decided.state ? (

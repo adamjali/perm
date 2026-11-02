@@ -162,7 +162,7 @@ export const ORGANIZATION_DESCRIPTION = `${ABOUT_ONE_LINER.replace(/\.$/, "")}, 
  */
 export const ABOUT_TWO_HALVES = {
   waiting:
-    "For anyone waiting on a case: look up any PERM, wage request, LCA, H-2A or H-2B number, pending ones included, see the federal record and where DOL's queue stands, get an estimate, set a free email alert for a status change, a queue milestone, a visa bulletin move or an employer's cases moving, and search every filing by employer, law firm, state and occupation. No account needed.",
+    "For anyone waiting on a case: look up any PERM, wage request, LCA, H-2A or H-2B number, pending ones included, see the federal record and where DOL's queue stands, get an estimate, set a free email alert for a status change, a queue milestone, a visa bulletin move or an employer's cases moving, search every filing by employer, law firm, state and occupation, and look up a job's SOC code with its pay and approval rate. No account needed.",
   practice:
-    "For attorneys, paralegals and HR teams: a free case-management app that computes every deadline per case under 20 CFR 656 (wage expiration, recruitment clocks, the ETA 9089 filing window, audit and RFI responses, the I-140 cutoff), with reminders, calendar sync, import and export, an AI assistant over your caseload, and client data encrypted and isolated per account.",
+    "For attorneys, paralegals and HR teams: a free case-management app that computes every deadline per case under 20 CFR 656 (wage expiration, recruitment clocks, the ETA 9089 filing window, audit and RFI responses, the I-140 cutoff), with reminders, calendar sync, each job's SOC code with a starting job description from O*NET, import and export, an AI assistant over your caseload, and client data encrypted and isolated per account.",
 } as const;

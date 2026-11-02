@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getPermLine } from "@/lib/db/permLine";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -218,8 +219,12 @@ export async function CaseStatusPage({ raw }: { raw: string | undefined }) {
   }
   const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
   // DOL's queue month and average, dated, in the "how long" answer; read on render, never typed.
-  const [times, permBoard] = await Promise.all([getProcessingTimes().catch(() => null), getPermBoard().catch(() => null)]);
-  const howLong = howLongSentence(permBoard, times);
+  const [times, permBoard, permLine] = await Promise.all([
+    getProcessingTimes().catch(() => null),
+    getPermBoard().catch(() => null),
+    getPermLine().catch(() => null),
+  ]);
+  const howLong = howLongSentence(permBoard, times, permLine);
   const faqs = FAQS.map((f) => ({ ...f, a: f.a.replace(HOW_LONG, howLong) }));
 
   const faqSchema = {

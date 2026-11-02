@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TemplateManagementModal } from "./TemplateManagementModal";
-import type { JobDescriptionTemplate } from "./JobDescriptionField";
+import type { JobDescriptionTemplate } from "@/hooks/useJobDescriptionTemplates";
 
 // ============================================================================
 // TYPES
@@ -33,9 +33,9 @@ export interface TemplateSelectorProps {
   /** Callback when template is selected */
   onSelect: (template: JobDescriptionTemplate) => void;
   /** Callback when template is permanently deleted */
-  onDelete?: (id: string) => Promise<{ success: boolean; clearedReferences: number }>;
+  onDelete?: (id: JobDescriptionTemplate["_id"]) => Promise<{ success: boolean; clearedReferences: number }>;
   /** Callback when template is updated */
-  onUpdate?: (id: string, name: string, description: string) => Promise<void>;
+  onUpdate?: (id: JobDescriptionTemplate["_id"], name: string, description: string) => Promise<void>;
   /** Whether the selector is disabled */
   disabled?: boolean;
   /** Additional className */

@@ -15,7 +15,7 @@ the top tasks). "O*NET" is a trademark and is used only as an adjective.
 WHAT'S KEPT, PER O*NET-SOC CODE: title, description, Job Zone, the Bright
 Outlook categories from O*NET OnLine, and in `detail`: the education shares
 (required level, each at 5% or more), up to eight titles workers report, the
-top six core tasks by rated importance, and up to six related occupations.
+top fifteen core tasks by rated importance, and up to six related occupations.
 One row per O*NET-SOC code (1,016 in release 31.0); `soc7` is the six-digit
 SOC code the site's occupation pages are keyed by. A SOC code can carry
 several O*NET codes (11-1011.00 and 11-1011.03); the page shows the `.00` one
@@ -61,7 +61,8 @@ DOC = "onet_reference"
 COLS = ("onet_code", "soc7", "title", "description", "job_zone", "bright", "detail")
 CODE = re.compile(r"^\d{2}-\d{4}\.\d{2}$")
 EDUCATION_FLOOR_PCT = 5.0
-TOP_TASKS = 6
+# Every core task the job description suggestion can offer (the pages show the first few and fold the rest).
+TOP_TASKS = 15
 TOP_TITLES = 8
 TOP_RELATED = 6
 # A release with fewer occupations than this is not the full database.

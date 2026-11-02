@@ -146,14 +146,17 @@ export function HeroSection({ wait = null, board, months = [], trends = {} }: He
     // `hero-ground` in globals.css.
     <section id="hero" className="hero-ground">
       <div className="mx-auto max-w-[1200px] px-4 pb-12 pt-8 sm:px-8 lg:pb-14 lg:pt-10">
-        <h1 className="max-w-4xl text-balance font-heading text-[2.125rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[2.75rem] lg:text-[3.25rem]">
+        {/* `isolate` makes the heading its own layer, so the month's lime (drawn by ::before at z-index -1) sits
+            behind every line's letters: drawn on the span itself, it covered the descenders of the line above
+            (the "g" of "deciding", Nov 2 2026). lib_covered_text.mjs checks every page for the same. */}
+        <h1 className="isolate max-w-4xl text-balance font-heading text-[2.125rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[2.75rem] lg:text-[3.25rem]">
           {/* The brand, small, inside the H1: the answer leads, and the name
               tells search engines whose site this is. */}
           <span className="mb-3 block text-base font-semibold tracking-normal text-soft">PERM Tracker</span>{" "}
           {front ? (
             <>
               DOL is deciding PERM cases filed in{" "}
-              <span className="whitespace-nowrap bg-primary px-2 text-primary-foreground [box-decoration-break:clone] shadow-hard">
+              <span className="relative whitespace-nowrap px-2 text-primary-foreground before:absolute before:inset-x-0 before:top-[0.06em] before:bottom-[-0.02em] before:-z-10 before:bg-primary before:shadow-hard before:content-['']">
                 {front}
               </span>
             </>

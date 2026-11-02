@@ -217,6 +217,8 @@ export interface CaseCardData {
   readonly employerName: string;
   readonly beneficiaryIdentifier: string;
   readonly positionTitle: string;
+  /** The job's SOC code (seven characters), shown beside the position title. */
+  readonly socCode?: string;
   readonly caseStatus: CaseStatus;
   readonly progressStatus: ProgressStatus;
   readonly nextDeadline?: string; // ISO date string (YYYY-MM-DD)
@@ -254,6 +256,7 @@ export function createCaseCardData(params: {
   employerName: string;
   beneficiaryIdentifier?: string; // Optional - falls back to empty string
   positionTitle: string;
+  socCode?: string;
   caseStatus: CaseStatus;
   progressStatus: ProgressStatus;
   nextDeadline?: string;
@@ -300,6 +303,7 @@ export function createCaseCardData(params: {
     employerName: params.employerName,
     beneficiaryIdentifier: params.beneficiaryIdentifier ?? "",
     positionTitle: params.positionTitle,
+    socCode: params.socCode,
     caseStatus: params.caseStatus,
     progressStatus: params.progressStatus,
     nextDeadline: params.nextDeadline,

@@ -6,6 +6,8 @@
  */
 import { z } from 'zod';
 import type { Id } from '@convex/_generated/dataModel';
+import { isSocCode } from '@convex/lib/socCode';
+import { INPUT_LIMITS } from '@convex/lib/validation';
 import {
   validateCase,
   validateProfessionalMethods,
@@ -169,12 +171,17 @@ export type RFEEntry = z.infer<typeof rfeEntrySchema>;
  * Main case form schema.
  * Matches the Convex cases table structure.
  */
+/** A title-length field at the server's own cap (INPUT_LIMITS.SHORT in convex/lib/validation.ts). */
+function shortText(label: string) {
+  return z.string().max(INPUT_LIMITS.SHORT, `${label} must be ${INPUT_LIMITS.SHORT} characters or less`);
+}
+
 export const caseFormSchema = z
   .object({
     // Required fields
-    employerName: z.string().min(1, 'Employer name is required').max(200, 'Employer name must be 200 characters or less'),
-    beneficiaryIdentifier: z.string().max(200, 'Beneficiary identifier must be 200 characters or less').optional().default(''),
-    positionTitle: z.string().min(1, 'Position title is required').max(200, 'Position title must be 200 characters or less'),
+    employerName: shortText('Employer name').min(1, 'Employer name is required'),
+    beneficiaryIdentifier: shortText('Foreign worker ID').optional().default(''),
+    positionTitle: shortText('Position title').min(1, 'Position title is required'),
     caseStatus: z.enum(CASE_STATUSES),
     progressStatus: z.enum(PROGRESS_STATUSES),
 
@@ -182,9 +189,8 @@ export const caseFormSchema = z
     caseNumber: z.string().max(50, 'Case number must be 50 characters or less').optional(),
     internalCaseNumber: z.string().max(50, 'Internal case number must be 50 characters or less').optional(),
     employerFein: z.string().max(20, 'FEIN must be 20 characters or less').optional(),
-    jobTitle: z.string().max(200, 'Job title must be 200 characters or less').optional(),
-    socCode: z.string().max(20, 'SOC code must be 20 characters or less').optional(),
-    socTitle: z.string().max(200, 'SOC title must be 200 characters or less').optional(),
+    socCode: z.string().refine((c) => !c.trim() || isSocCode(c), 'SOC code must be a code such as 15-1252').optional(),
+    socTitle: shortText('SOC title').optional(),
     jobOrderState: z.string().max(50, 'Job order state must be 50 characters or less').optional(),
     progressStatusOverride: z.boolean().optional(),
 
@@ -256,8 +262,11 @@ export const caseFormSchema = z
     showOnTimeline: z.boolean(),
 
     // Job Description (for PERM postings)
-    jobDescriptionPositionTitle: z.string().max(200, 'Job description position title must be 200 characters or less').optional(),
-    jobDescription: z.string().max(10000, 'Job description must be 10,000 characters or less').optional(),
+    jobDescriptionPositionTitle: shortText('Job description position title').optional(),
+    jobDescription: z
+      .string()
+      .max(INPUT_LIMITS.LONG, `Job description must be ${INPUT_LIMITS.LONG.toLocaleString('en-US')} characters or less`)
+      .optional(),
     jobDescriptionTemplateId: z.custom<Id<"jobDescriptionTemplates">>().optional(), // Template ID reference
   })
   .superRefine((data, ctx) => {
@@ -542,6 +551,10 @@ export const FIELD_LABELS: Record<string, string> = {
   // Required
   employerName: 'Employer Name',
   positionTitle: 'Position Title',
+  socCode: 'SOC code',
+  socTitle: 'SOC title',
+  jobDescriptionPositionTitle: 'Job description position title',
+  jobDescription: 'Job description',
   caseStatus: 'Case Status',
   progressStatus: 'Progress Status',
 

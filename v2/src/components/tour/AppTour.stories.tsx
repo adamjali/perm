@@ -18,6 +18,7 @@ import { TimelinePageClient } from "../../app/(authenticated)/timeline/TimelineP
 import { NotificationsPageClient } from "../../app/(authenticated)/notifications/NotificationsPageClient";
 import { SettingsPageClient } from "../../app/(authenticated)/settings/SettingsPageClient";
 import { TOUR_CASE_IDS, TourConvex } from "./fakeConvex";
+import { installTourFetch } from "./fakeFetch";
 import fixtures from "./tour-fixtures.json";
 
 /**
@@ -27,6 +28,8 @@ import fixtures from "./tour-fixtures.json";
  */
 
 const [, TIDEWATER, JUNIPER] = TOUR_CASE_IDS;
+
+installTourFetch();
 
 /**
  * The detail page reads its params with React's use(). A promise already

@@ -23,10 +23,23 @@ import { usePathname } from "next/navigation";
  * animation ends and leaves no transform behind, because a transform on an
  * ancestor would capture position:fixed children.
  *
+ * A section with a background of its own (a lime or ink band) keeps it painted and only its contents rise:
+ * fading the whole band showed the page's paper where the band would be, so the homepage's lime step divider
+ * hung over a blank gap until the closing band caught up (owner, Nov 2 2026: "footer loads weird and wonky
+ * and glitchy").
+ *
  * Off under reduced motion, and a section can opt out with `data-no-reveal`
  * (sticky bars, anything a reader jumps to by anchor).
  */
 const TARGETS = "main section, main figure, main [data-reveal-target]";
+
+/** Whether a section draws its own background, which fading it would leave as a hole in the page. */
+function paintsItself(el: HTMLElement): boolean {
+  const cs = getComputedStyle(el);
+  const color = cs.backgroundColor;
+  const transparent = color === "transparent" || /rgba?\([^)]*,\s*0\)$/.test(color) || /\/\s*0\)$/.test(color);
+  return !transparent || cs.backgroundImage !== "none";
+}
 
 export function AutoReveal() {
   const pathname = usePathname();
@@ -48,32 +61,37 @@ export function AutoReveal() {
     }
     if (picked.length === 0) return;
 
-    const held = new Map<Element, Animation>();
+    const held = new Map<Element, Animation[]>();
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
-          held.get(e.target)?.play();
+          for (const rise of held.get(e.target) ?? []) rise.play();
           io.unobserve(e.target);
         }
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
     );
     for (const el of picked) {
-      const rise = el.animate(
-        [
-          { opacity: 0, transform: "translateY(16px)" },
-          { opacity: 1, transform: "none" },
-        ],
-        { duration: 600, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
-      );
-      rise.pause(); // held on its first frame until the section arrives
-      held.set(el, rise);
+      // A band keeps its own colour on screen; its contents are what rise.
+      const parts = paintsItself(el) ? [...el.children].filter((c): c is HTMLElement => c instanceof HTMLElement) : [el];
+      const rises = parts.map((part) => {
+        const rise = part.animate(
+          [
+            { opacity: 0, transform: "translateY(16px)" },
+            { opacity: 1, transform: "none" },
+          ],
+          { duration: 600, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
+        );
+        rise.pause(); // held on its first frame until the section arrives
+        return rise;
+      });
+      held.set(el, rises);
       io.observe(el);
     }
     return () => {
       io.disconnect();
-      for (const rise of held.values()) rise.cancel();
+      for (const rises of held.values()) for (const rise of rises) rise.cancel();
     };
   }, [pathname]);
 
