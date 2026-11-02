@@ -27,11 +27,11 @@ describe("JobCodeTabs", () => {
   it("moves between steps by keyboard, wrapping at the ends", async () => {
     render(<JobCodeTabs steps={STEPS} label="Steps" />);
     screen.getByRole("tab", { name: /One/ }).focus();
-    await userEvent.keyboard("{ArrowUp}");
+    await userEvent.keyboard("{ArrowLeft}");
     expect(screen.getByRole("tab", { name: /Three/ })).toHaveFocus();
     await userEvent.keyboard("{Home}");
     expect(screen.getByRole("tab", { name: /One/ })).toHaveAttribute("aria-selected", "true");
-    await userEvent.keyboard("{ArrowDown}");
+    await userEvent.keyboard("{ArrowRight}");
     expect(screen.getByRole("tab", { name: /Two/ })).toHaveAttribute("aria-selected", "true");
   });
 });

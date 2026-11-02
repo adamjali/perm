@@ -24,7 +24,7 @@ export function JobLookupBox() {
           value={text}
           onChange={setText}
           onPick={(o) => router.push(`/soc-codes?q=${encodeURIComponent(o.soc)}`)}
-          placeholder="Software engineer, or 15-1252"
+          placeholder="Accountant, or 15-1252"
           className="flex h-12 w-full min-w-0 border-2 border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </div>{" "}

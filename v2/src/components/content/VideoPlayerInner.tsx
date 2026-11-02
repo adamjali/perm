@@ -41,7 +41,8 @@ export default function VideoPlayerInner({
   const Component = COMPONENTS[videoId];
 
   return (
-    <div className="aspect-video">
+    // Remotion draws its control buttons 25 to 37px; a minimum size holds them to the 44px tap floor.
+    <div className="aspect-video [&_button]:min-h-11 [&_button]:min-w-11">
       <Player
         component={Component}
         inputProps={{ brandColor: "#2ECC40" }}

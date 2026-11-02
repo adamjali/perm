@@ -88,7 +88,7 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/timeline-dark-phone.webp", width: 1200, height: 1120 },
   },
   "job-code": {
-    light: { src: "/images/for-attorneys/job-code-light.webp", width: 1800, height: 778 },
-    dark: { src: "/images/for-attorneys/job-code-dark.webp", width: 1800, height: 778 },
+    light: { src: "/images/for-attorneys/job-code-light.webp", width: 1800, height: 738 },
+    dark: { src: "/images/for-attorneys/job-code-dark.webp", width: 1800, height: 738 },
   },
 };

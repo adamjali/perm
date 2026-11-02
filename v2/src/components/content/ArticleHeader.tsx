@@ -93,7 +93,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
             {meta.imageCredit ? (
               <figcaption className="mt-2 text-sm text-muted-foreground">
                 {meta.imageSource ? (
-                  <a href={meta.imageSource} rel="noopener" target="_blank" className="underline-offset-4 hover:underline">
+                  <a href={meta.imageSource} rel="noopener" target="_blank" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
                     {meta.imageCredit}
                   </a>
                 ) : (

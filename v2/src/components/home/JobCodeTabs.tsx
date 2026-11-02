@@ -6,6 +6,7 @@ import { AppWindow, type WindowShots } from "@/components/marketing/AppWindow";
 import { cn } from "@/lib/utils";
 
 export interface JobCodeStep {
+  /** The step's name on the switch, a few words. */
   title: string;
   text: string;
   url: string;
@@ -14,10 +15,13 @@ export interface JobCodeStep {
 }
 
 /**
- * The job-code steps as tabs beside one app window: picking a step shows its capture, so three pictures take
- * one picture's room. A vertical tablist (WAI-ARIA's tabs pattern): arrow keys, Home and End move between
- * steps. Every panel is in the HTML; the ones not picked are `hidden`, so the window is as tall as the picture
- * shown (holding the tallest's room left a blank band under the shorter two).
+ * The job-code steps as one switch over one app window. All three choices sit in one
+ * bar, and a single lime block slides under the picked one (the site's mark for a
+ * pick), so the bar reads as a switch with the other positions open to press (owner,
+ * Nov 2 2026: cards in a column, then a joined tab strip, didn't read as something you
+ * switch). Picking a step shows its capture below, so three pictures take one
+ * picture's room. WAI-ARIA's tabs pattern: left and right arrows, Home and End move
+ * between steps. Every panel is in the HTML; the ones not picked are `hidden`.
  */
 export function JobCodeTabs({ steps, label }: { steps: JobCodeStep[]; label: string }) {
   const [active, setActive] = useState(0);
@@ -31,9 +35,7 @@ export function JobCodeTabs({ steps, label }: { steps: JobCodeStep[]; label: str
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const moves: Record<string, () => void> = {
-      ArrowDown: () => go(active + 1),
       ArrowRight: () => go(active + 1),
-      ArrowUp: () => go(active - 1),
       ArrowLeft: () => go(active - 1),
       Home: () => go(0),
       End: () => go(steps.length - 1),
@@ -46,8 +48,20 @@ export function JobCodeTabs({ steps, label }: { steps: JobCodeStep[]; label: str
   }
 
   return (
-    <div className="grid gap-10 [&>*]:min-w-0 lg:grid-cols-12 lg:items-start lg:gap-14">
-      <div role="tablist" aria-label={label} aria-orientation="vertical" onKeyDown={onKeyDown} className="flex flex-col gap-3 lg:col-span-5">
+    <div>
+      <div
+        role="tablist"
+        aria-label={label}
+        onKeyDown={onKeyDown}
+        className="relative grid border-2 border-foreground bg-tint p-1 [&>*]:min-w-0"
+        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+      >
+        {/* The switch's block: one width of a choice, slid to the picked one. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-1 left-1 border-2 border-foreground bg-primary shadow-hard-sm transition-transform duration-300 ease-out motion-reduce:transition-none"
+          style={{ width: `calc((100% - 0.5rem) / ${steps.length})`, transform: `translateX(${active * 100}%)` }}
+        />
         {steps.map((s, i) => {
           const on = i === active;
           return (
@@ -65,42 +79,32 @@ export function JobCodeTabs({ steps, label }: { steps: JobCodeStep[]; label: str
                 tabIndex={on ? 0 : -1}
                 onClick={() => setActive(i)}
                 className={cn(
-                  "flex min-h-11 w-full items-start gap-4 border-2 px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  on ? "border-foreground bg-card shadow-hard" : "border-border/60 hover:border-foreground hover:bg-card",
+                  "relative flex min-h-12 items-center justify-center gap-2 px-2 py-2 text-center font-heading text-sm leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:text-base",
+                  on ? "font-bold text-primary-foreground" : "font-semibold text-soft hover:bg-card hover:text-foreground",
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "grid size-9 shrink-0 place-items-center border-2 border-foreground font-mono text-base font-bold",
-                    on ? "bg-primary text-black" : "bg-background text-foreground",
-                  )}
-                >
+                <span aria-hidden="true" className="font-mono text-xs sm:text-sm">
                   {i + 1}
                 </span>{" "}
-                <span className="min-w-0">
-                  <span className="block font-heading text-lg font-bold leading-snug">{s.title}</span>{" "}
-                  {/* On a phone only the picked step says more, so the window stays near the steps. */}
-                  <span className={cn("mt-1 text-base leading-relaxed text-soft", on ? "block" : "hidden lg:block")}>{s.text}</span>
-                </span>
+                <span className="min-w-0">{s.title}</span>
               </button>
             </Fragment>
           );
         })}
       </div>{" "}
-      <div className="lg:col-span-7">
-        {steps.map((s, i) => (
-          <div
-            key={s.url + s.title}
-            role="tabpanel"
-            id={`job-code-panel-${i}`}
-            aria-labelledby={`job-code-tab-${i}`}
-            hidden={i !== active}
-          >
-            <AppWindow url={s.url} shots={s.shots} alt={s.alt} caption="Sample cases." />
-          </div>
-        ))}
-      </div>
+      {steps.map((s, i) => (
+        <div
+          key={s.url + s.title}
+          role="tabpanel"
+          id={`job-code-panel-${i}`}
+          aria-labelledby={`job-code-tab-${i}`}
+          hidden={i !== active}
+          className="pt-5"
+        >
+          <p className="max-w-2xl text-base leading-relaxed">{s.text}</p>{" "}
+          <AppWindow url={s.url} shots={s.shots} alt={s.alt} caption="Sample cases." className="mt-5" />
+        </div>
+      ))}
     </div>
   );
 }

@@ -35,7 +35,8 @@ const PHONE = 398;
  * (`from`) and the heading of the section after its last (`to`, left out for
  * the page's end); `through: [selector, n]` ends it below the nth element a
  * selector matches; `pad` is the margin kept around it (`padTop` overrides it
- * above, for an element with something drawn over its top edge); `el` crops to the
+ * above, for an element with something drawn over its top edge; `padBottom` below a `through` crop, for an
+ * open list that lies over the form under it); `el` crops to the
  * first element a selector matches instead; `x: selector` narrows a crop to that element's width. No crop keeps
  * the whole capture.
  * `phone: false` takes the wide capture only. `act` runs steps on the story before the capture, in order:
@@ -80,7 +81,7 @@ const CAPTURES = [
     story: "tour-app-pages--edit-case",
     phone: false,
     act: [["clear", "#socCode"], ["focus", "#socCode"], ["wait", '[role="listbox"] [role="option"]']],
-    pictures: { "job-code": { wide: { from: "Position title", through: ['[role="listbox"]', 1], x: "#socCode", pad: 20 } } },
+    pictures: { "job-code": { wide: { from: "Position title", through: ['[role="listbox"]', 1], x: "#socCode", pad: 20, padBottom: 0 } } },
   },
   {
     name: "job-suggestion",
@@ -147,7 +148,7 @@ function measure([spec, rootSelector]) {
     const [sel, n] = spec.through;
     const el = root.querySelectorAll(sel)[n - 1];
     if (!el) throw new Error(`fewer than ${n} of ${sel}`);
-    bottom = el.getBoundingClientRect().bottom - r.top + pad;
+    bottom = el.getBoundingClientRect().bottom - r.top + (spec.padBottom ?? pad);
   }
   if (spec.maxHeight) bottom = Math.min(bottom, top + spec.maxHeight);
   // `x` narrows the crop to an element's width (a form drawn in the middle of a wide page).
