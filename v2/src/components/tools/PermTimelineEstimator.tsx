@@ -820,7 +820,9 @@ export function PermTimelineEstimator({
                   {formatMonth(frontier.analystQueueMonth)}
                 </p>{" "}
                 <p className="mt-1 text-sm text-muted-foreground">
-                  DOL analyst review, as of {monthDay(frontier.asOf) ?? frontier.asOf}
+                  {frontier.from === "check"
+                    ? `DOL analyst review, by our check of ${monthDay(frontier.asOf) ?? frontier.asOf}`
+                    : `DOL analyst review, as of ${monthDay(frontier.asOf) ?? frontier.asOf}`}
                 </p>
               </div>
             ) : null}
@@ -869,8 +871,10 @@ export function PermTimelineEstimator({
           </p>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             DOL&apos;s analyst review queue is working{" "}
-            <strong>{formatMonth(frontier.analystQueueMonth)}</strong>, as of{" "}
-            {longDate(frontier.asOf) ?? frontier.asOf}.
+            <strong>{formatMonth(frontier.analystQueueMonth)}</strong>
+            {frontier.from === "check"
+              ? `, by our check of DOL's case status on ${longDate(frontier.asOf) ?? frontier.asOf}.`
+              : `, as of ${longDate(frontier.asOf) ?? frontier.asOf}.`}
             {estimate.monthsBehindFrontier !== null && estimate.monthsBehindFrontier > 0
               ? ` Your month is ${estimate.monthsBehindFrontier} further on.`
               : ""}

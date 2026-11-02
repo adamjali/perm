@@ -165,7 +165,8 @@ export default async function PermQueuePage() {
     })),
   );
   const newest = census.months.at(-1)?.month ?? null;
-  const dolMonth = estimator.frontier?.analystQueueMonth ?? null;
+  // DOL's own month only: our check stands in for it in the estimator once DOL stopped printing one (Oct 31 2026).
+  const dolMonth = estimator.frontier && estimator.frontier.from !== "check" ? estimator.frontier.analystQueueMonth : null;
   const dolAsOf = estimator.frontier ? formatAsOf(estimator.frontier.asOf) : null;
   const advance = estimator.frontierAdvance;
 

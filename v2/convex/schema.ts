@@ -1135,6 +1135,8 @@ export default defineSchema({
         month: v.union(v.string(), v.null()),
         calendarDays: v.union(v.number(), v.null()),
         raw: v.string(),
+        /** The window the average covers ("Last 30 Days"); DOL averages by window from Oct 31 2026, with no month. */
+        period: v.optional(v.string()),
       }),
     ),
 

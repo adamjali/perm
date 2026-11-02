@@ -376,8 +376,9 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
     byDay,
   });
 
-  const publishedFront = estimator?.frontier?.analystQueueMonth ?? null;
-  const publishedAsOf = estimator?.frontier?.asOf ?? null;
+  // DOL's own month only, never our check standing in for it (src/lib/db/estimate.ts).
+  const publishedFront = estimator?.frontier && estimator.frontier.from !== "check" ? estimator.frontier.analystQueueMonth : null;
+  const publishedAsOf = publishedFront ? (estimator?.frontier?.asOf ?? null) : null;
 
   const found = !!result && (result.live !== null || result.decided !== null);
   const parsed = parseCaseNumber(caseNumber);
@@ -477,12 +478,13 @@ async function Empty() {
     getLiveMirrorSize().catch(() => 0),
   ]);
   const front = findFront(backlog);
+  const dol = estimator?.frontier && estimator.frontier.from !== "check" ? estimator.frontier : null;
   return (
     <CaseStatusEmpty
       front={front?.month ?? null}
       wallTotal={front?.wallTotal ?? null}
-      publishedFront={estimator?.frontier?.analystQueueMonth ?? null}
-      publishedAsOf={estimator?.frontier?.asOf ?? null}
+      publishedFront={dol?.analystQueueMonth ?? null}
+      publishedAsOf={dol?.asOf ?? null}
       mirrorSize={mirrorSize || null}
     />
   );

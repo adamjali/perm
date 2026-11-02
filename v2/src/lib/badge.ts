@@ -50,6 +50,11 @@ export function groupDigits(n: number): string {
 export interface BadgeData {
   /** DOL processing times. */
   permQueueMonths: Partial<Record<"analyst" | "audit" | "recon", string | null>>;
+  /**
+   * Where DOL is in the PERM line by our daily read of DOL's own case index (lib/permLine.ts). The PERM queue
+   * badge shows it once DOL's page stopped printing a month (Oct 31 2026), with that source named.
+   */
+  permLine?: { month: string; asOf: string } | null;
   analystReviewDays: number | null;
   pwdMonths: Partial<Record<"perm-oews" | "perm-survey" | "h1b" | "h2b" | "cw1", string | null>>;
   /** DOL's as-of date for the PERM processing-times table, ISO. */
@@ -189,9 +194,19 @@ const BULLETIN_COUNTRIES: [string, string][] = [
 
 export const BADGE_DEFS: readonly BadgeDef[] = [
   // ---- DOL queues -------------------------------------------------------
-  queueMonth("PERM queue", "perm-queue", "/perm-queue",
-    "The filing month DOL's analysts are working through. The single number most people waiting on a PERM want.",
-    (d) => d.permQueueMonths.analyst, "PERM queue"),
+  {
+    ...queueMonth("PERM queue", "perm-queue", "/perm-queue",
+      "The filing month DOL's analysts are working through. The single number most people waiting on a PERM want.",
+      (d) => d.permQueueMonths.analyst, "PERM queue"),
+    // DOL's own month while its page prints one; since Oct 31 2026 it doesn't, and the month comes from our
+    // daily read of DOL's case index, named as such, like the stage counts.
+    resolve: (d) => {
+      const dol = shortMonth(d.permQueueMonths.analyst);
+      if (dol) return { value: `at ${dol}`, asOf: d.dolAsOf, source: DOL };
+      const ours = shortMonth(d.permLine?.month);
+      return ours && d.permLine ? { value: `at ${ours}`, asOf: d.permLine.asOf, source: "DOL's own case index, read daily" } : null;
+    },
+  },
   queueMonth("PERM audits", "perm-audits", "/perm-rfi-audit",
     "The filing month DOL is working in audit review, for cases audited rather than decided straight through.",
     (d) => d.permQueueMonths.audit, "PERM audit review"),

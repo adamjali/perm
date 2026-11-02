@@ -53,6 +53,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_db import ET, Database, query_rows, write_doc  # noqa: E402
+from lib_perm_line import line_on  # noqa: E402
 import ingest_case_status_direct as c  # noqa: E402
 
 FINAL = ("CERTIFIED", "DENIED", "WITHDRAWN")
@@ -93,8 +94,12 @@ def frontier_at(db: Database, t0: date) -> tuple[str | None, int | None]:
         return None, None
     j = json.loads(rows[0][0])
     month = next((q["priorityDate"] for q in j.get("permQueues", []) if q.get("queue") == "Analyst Review"), None)
+    # The 30-day figure in DOL's layout from Oct 31 2026, the month's before it: the first Analyst Review row.
     avg = next((a["calendarDays"] for a in j.get("permAverageDays", [])
                 if a.get("determination") == "Analyst Review"), None)
+    if month is None and not j.get("permQueues"):
+        # DOL's page prints no month from Oct 31 2026; our own check's month as the census stood on t0.
+        month = line_on(db, query_rows, t0.isoformat())
     return month, (int(avg) if avg else None)
 
 

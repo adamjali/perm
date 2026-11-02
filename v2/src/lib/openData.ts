@@ -116,7 +116,7 @@ export function bulletinRows(bulletins: readonly BulletinRecord[]): BulletinRow[
 export interface DolReading {
   permAsOf: string;
   permQueues: Array<{ queue: string; priorityDate: string | null; raw: string }>;
-  permAverageDays: Array<{ determination: string; month: string | null; calendarDays: number | null; raw: string }>;
+  permAverageDays: Array<{ determination: string; month: string | null; period?: string; calendarDays: number | null; raw: string }>;
   pwdAsOf: string | null;
   pwdQueues: Array<{ program: string; oewsReceiptDate: string | null; nonOewsReceiptDate: string | null }>;
   pwdPermBacklog: Array<{ receiptMonth: string; remainingRequests: number }>;
@@ -131,9 +131,15 @@ export interface DolRow {
   month: string;
   calendar_days: number | "";
   remaining_requests: number | "";
+  /**
+   * The window an average covers, as DOL prints it ("Last 30 Days"). From Oct 31 2026 DOL averages over windows
+   * instead of by month, so those rows have a blank month and this filled. Last, so files read before it existed
+   * keep their columns.
+   */
+  period: string;
 }
 
-const DOL_COLUMNS = ["as_of", "table", "row", "month", "calendar_days", "remaining_requests"] as const;
+const DOL_COLUMNS = ["as_of", "table", "row", "month", "calendar_days", "remaining_requests", "period"] as const;
 
 /**
  * One row per published value, oldest date first. A blank month means DOL
@@ -159,7 +165,7 @@ export function dolRows(readings: readonly DolReading[]): DolRow[] {
   for (const [asOf, r] of perm) {
     const rows: DolRow[] = [];
     for (const q of r.permQueues) {
-      rows.push({ as_of: asOf, table: "perm_queue", row: q.queue, month: q.priorityDate ?? "", calendar_days: "", remaining_requests: "" });
+      rows.push({ as_of: asOf, table: "perm_queue", row: q.queue, month: q.priorityDate ?? "", calendar_days: "", remaining_requests: "", period: "" });
     }
     for (const d of r.permAverageDays) {
       rows.push({
@@ -169,6 +175,7 @@ export function dolRows(readings: readonly DolReading[]): DolRow[] {
         month: d.month ?? "",
         calendar_days: d.calendarDays ?? "",
         remaining_requests: "",
+        period: d.period ?? "",
       });
     }
     blocks.push({ asOf, order: 0, rows });
@@ -176,11 +183,11 @@ export function dolRows(readings: readonly DolReading[]): DolRow[] {
   for (const [asOf, r] of pwd) {
     const rows: DolRow[] = [];
     for (const p of r.pwdQueues) {
-      rows.push({ as_of: asOf, table: "pwd_queue_oews", row: p.program, month: p.oewsReceiptDate ?? "", calendar_days: "", remaining_requests: "" });
-      rows.push({ as_of: asOf, table: "pwd_queue_non_oews", row: p.program, month: p.nonOewsReceiptDate ?? "", calendar_days: "", remaining_requests: "" });
+      rows.push({ as_of: asOf, table: "pwd_queue_oews", row: p.program, month: p.oewsReceiptDate ?? "", calendar_days: "", remaining_requests: "", period: "" });
+      rows.push({ as_of: asOf, table: "pwd_queue_non_oews", row: p.program, month: p.nonOewsReceiptDate ?? "", calendar_days: "", remaining_requests: "", period: "" });
     }
     for (const b of r.pwdPermBacklog) {
-      rows.push({ as_of: asOf, table: "pwd_perm_backlog", row: "PERM", month: b.receiptMonth, calendar_days: "", remaining_requests: b.remainingRequests });
+      rows.push({ as_of: asOf, table: "pwd_perm_backlog", row: "PERM", month: b.receiptMonth, calendar_days: "", remaining_requests: b.remainingRequests, period: "" });
     }
     blocks.push({ asOf, order: 1, rows });
   }
@@ -232,7 +239,7 @@ export function dolJson(readings: readonly DolReading[]): string {
     name: "DOL processing times history",
     ...LICENSE_BLOCK,
     source: "U.S. Department of Labor, FLAG processing times (flag.dol.gov/processingtimes)",
-    months: "YYYY-MM. Null where DOL printed --.",
+    months: "YYYY-MM. Null where DOL printed --, and on averages DOL gives over a window (period) from Oct 31 2026.",
     readings: sorted.map(({ fetchedAt, ...r }) => ({ ...r, recordedAt: isoOrNull(fetchedAt) })),
   });
 }

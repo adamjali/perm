@@ -5,6 +5,7 @@ import { cache } from "react";
 import type { BadgeData } from "@/lib/badge";
 import { cutoffLabel } from "@/lib/bulletinNext";
 import { getBulletinBoard } from "@/lib/db/bulletin";
+import { getPermLine } from "@/lib/db/permLine";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getRecordCounts } from "@/lib/db/recordCounts";
 import { getReviewStages } from "@/lib/db/rfi";
@@ -42,11 +43,12 @@ function normalise(values: number[]): number[] {
 }
 
 export const getBadgeData = cache(async (): Promise<BadgeData> => {
-  const [snap, counts, stages, board] = await Promise.all([
+  const [snap, counts, stages, board, line] = await Promise.all([
     getProcessingTimes().catch(() => null),
     getRecordCounts().catch(() => []),
     getReviewStages().catch(() => []),
     getBulletinBoard().catch(() => null),
+    getPermLine().catch(() => null),
   ]);
 
   const queue = (re: RegExp) => snap?.permQueues.find((q) => re.test(q.queue))?.priorityDate ?? null;
@@ -92,6 +94,7 @@ export const getBadgeData = cache(async (): Promise<BadgeData> => {
       audit: queue(/audit\s+review/i),
       recon: queue(/reconsideration/i),
     },
+    permLine: line ? { month: line.month, asOf: line.asOf } : null,
     analystReviewDays:
       snap?.permAverageDays.find((d) => /analyst\s+review/i.test(d.determination))?.calendarDays ?? null,
     pwdMonths: {

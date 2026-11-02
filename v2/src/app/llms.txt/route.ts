@@ -24,6 +24,7 @@ import { getAllPosts, latestPostDate } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { getDisclosureStats } from "@/lib/db/publicData";
+import { getPermLine } from "@/lib/db/permLine";
 import { DISAMBIGUATION, LIVE_SINCE, NOT_LEGAL_SERVICES, PRESS_EMAIL, SABRINA } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
@@ -534,9 +535,11 @@ function fmtMonth(iso: string | null): string {
 export async function GET() {
   const allPosts = getAllPosts();
 
-  const [disclosure, dol] = await Promise.all([
+  const [disclosure, dol, line] = await Promise.all([
     getDisclosureStats().catch(() => null),
     fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
+    // Where DOL is by our own daily check: the month once DOL's page stopped printing one (Oct 31 2026).
+    getPermLine().catch(() => null),
   ]);
 
   // The file changes when an article does and when DOL republishes.
@@ -590,11 +593,17 @@ export async function GET() {
       figures.push(
         `- DOL is issuing PERM determinations for cases filed in ${fmtMonth(analyst.priorityDate)} (as of ${dol.permAsOf}, from DOL's FLAG processing-times page).`,
       );
+    } else if (line) {
+      figures.push(
+        `- DOL is issuing PERM determinations for cases filed in ${fmtMonth(line.month)} (PERM Tracker's daily check of DOL's case-status service, ${line.asOf}; DOL's processing-times page has printed no filing month since October 31, 2026).`,
+      );
     }
     const avg = (dol.permAverageDays ?? [])[0];
     if (avg?.calendarDays) {
       figures.push(
-        `- Average calendar days from filing to determination: ${avg.calendarDays} (DOL's own published average for ${fmtMonth(avg.month)}).`,
+        `- Average calendar days from filing to determination: ${avg.calendarDays} (DOL's own published average for ${
+          avg.period ? `decisions issued in the ${avg.period.toLowerCase()}, as of ${dol.permAsOf}` : fmtMonth(avg.month)
+        }).`,
       );
     }
   }

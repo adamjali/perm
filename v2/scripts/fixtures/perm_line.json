@@ -1,0 +1,44 @@
+{
+  "about": "Census matrices and the month our own line names (lib/permLine.ts permLineFrom, scripts/lib_perm_line.py).",
+  "cases": [
+    {
+      "name": "the oldest busy month under half decided, after a busier decided one",
+      "matrix": [
+        { "month": "2025-11", "status": "CERTIFIED", "is_final": 1, "n": 900 },
+        { "month": "2025-11", "status": "ANALYST REVIEW", "is_final": 0, "n": 100 },
+        { "month": "2025-12", "status": "CERTIFIED", "is_final": 1, "n": 400 },
+        { "month": "2025-12", "status": "ANALYST REVIEW", "is_final": 0, "n": 600 },
+        { "month": "2026-01", "status": "ANALYST REVIEW", "is_final": 0, "n": 1000 }
+      ],
+      "month": "2025-12"
+    },
+    {
+      "name": "a thin month (under 100 cases) is skipped",
+      "matrix": [
+        { "month": "2025-10", "status": "CERTIFIED", "is_final": 1, "n": 500 },
+        { "month": "2025-11", "status": "ANALYST REVIEW", "is_final": 0, "n": 40 },
+        { "month": "2025-12", "status": "ANALYST REVIEW", "is_final": 0, "n": 700 }
+      ],
+      "month": "2025-12"
+    },
+    {
+      "name": "the first month on record is still mostly waiting: no line",
+      "matrix": [
+        { "month": "2025-12", "status": "ANALYST REVIEW", "is_final": 0, "n": 700 },
+        { "month": "2026-01", "status": "ANALYST REVIEW", "is_final": 0, "n": 800 }
+      ],
+      "month": null
+    },
+    {
+      "name": "exactly half decided is no longer being worked",
+      "matrix": [
+        { "month": "2025-11", "status": "CERTIFIED", "is_final": 1, "n": 300 },
+        { "month": "2025-12", "status": "CERTIFIED", "is_final": 1, "n": 100 },
+        { "month": "2025-12", "status": "ANALYST REVIEW", "is_final": 0, "n": 100 },
+        { "month": "2026-01", "status": "CERTIFIED", "is_final": 1, "n": 99 },
+        { "month": "2026-01", "status": "ANALYST REVIEW", "is_final": 0, "n": 101 }
+      ],
+      "month": "2026-01"
+    }
+  ]
+}

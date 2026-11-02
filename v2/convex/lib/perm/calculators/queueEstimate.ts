@@ -31,14 +31,19 @@ import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "../../time";
 // INPUT TYPES
 // ============================================================================
 
-/** DOL's own published position, scraped from flag.dol.gov/processingtimes. */
+/**
+ * Where DOL's analyst review is: DOL's own published position, scraped from flag.dol.gov/processingtimes, or,
+ * since DOL's page stopped printing a filing month on Oct 31 2026, our daily check of DOL's case status.
+ */
 export interface DolFrontier {
   /** Filing month the analyst-review queue is currently working, `YYYY-MM`. */
   analystQueueMonth: string;
   /** DOL's published average calendar days to determination, if readable. */
   officialAvgDays: number | null;
-  /** DOL's own as-of stamp, `YYYY-MM-DD`. Not our fetch time. */
+  /** DOL's own as-of stamp, `YYYY-MM-DD`, or our check's day when `from` is "check". Not our fetch time. */
   asOf: string;
+  /** Whose month it is: DOL's table ("dol", and when absent) or our daily check ("check"). */
+  from?: "dol" | "check";
 }
 
 /**

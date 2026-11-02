@@ -56,8 +56,13 @@ export interface PermQueueRow {
 export interface PermDeterminationRow {
   /** e.g. "Analyst Review", "Audit Review" */
   determination: string;
-  /** Month the average describes, as "YYYY-MM". Null when DOL prints "--". */
+  /**
+   * Month the average describes, as "YYYY-MM". Null when DOL prints "--", and always null from Oct 31 2026,
+   * when DOL began averaging over a window instead (`period`).
+   */
   month: string | null;
+  /** The window the average covers, as DOL prints it ("Last 30 Days"); only from Oct 31 2026. */
+  period?: string;
   /** Average calendar days. Null when DOL prints "--" (no determinations that month). */
   calendarDays: number | null;
   raw: string;
@@ -390,6 +395,13 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     throw new DolParseError(`no as-of date in PERM caption: "${permTable.caption}"`);
   }
 
+  // From Oct 31 2026 DOL prints no filing month for PERM. The captioned table became the average days to a
+  // determination over the last 30, 90 and 180 days, and the separate average-days table went away. Both
+  // layouts are read: a stored history spans them, and tests keep the old page.
+  if (permTable.headers.some((h) => /reporting period/i.test(h))) {
+    return parseWithoutQueue(htmlDoc, tables, permTable, permAsOf);
+  }
+
   const permQueues: PermQueueRow[] = permTable.rows
     .filter((cells) => cells.length >= 2 && cells[0]!.length > 0)
     .map((cells) => ({
@@ -433,6 +445,22 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     throw new DolParseError("PERM average-days table parsed to zero rows");
   }
 
+  const pwd = parsePwdSections(htmlDoc, tables);
+
+  return {
+    permAsOf,
+    permQueues,
+    permAverageDays,
+    ...pwd,
+    sourceUrl: SOURCE_URL,
+  };
+}
+
+/** The prevailing-wage half of the page, the same in both layouts. */
+function parsePwdSections(
+  htmlDoc: string,
+  tables: ParsedTable[],
+): Pick<DolProcessingTimesSnapshot, "pwdAsOf" | "pwdQueues" | "pwdPermBacklog" | "pwdReviews"> {
   // --- Prevailing wage queue. No caption, so anchor on the header signature. ---
   const pwdTable = requireByHeaders(
     tables,
@@ -510,14 +538,49 @@ export function parseProcessingTimes(htmlDoc: string): DolProcessingTimesSnapsho
     throw new DolParseError("PERM backlog table parsed to zero usable rows");
   }
 
+  return { pwdAsOf, pwdQueues, pwdPermBacklog, pwdReviews };
+}
+
+/**
+ * The layout from Oct 31 2026: one PERM table of Analyst Review averages by reporting period ("Last 30 Days",
+ * 300), with the label printed once in the middle row, and no filing month anywhere. DOL's note under it says
+ * the other queues (audit, supervised recruitment) aren't shown. An unreadable count or a missing Analyst
+ * Review label still throws: the average is the figure the pages print.
+ */
+function parseWithoutQueue(
+  htmlDoc: string,
+  tables: ParsedTable[],
+  permTable: ParsedTable,
+  permAsOf: string,
+): DolProcessingTimesSnapshot {
+  const rows = permTable.rows.filter((cells) => cells.length >= 3);
+  const labels = rows.map((cells) => cells[0]!.trim());
+  const firstLabel = labels.find((l) => l.length > 0) ?? "";
+  let label = firstLabel;
+  const permAverageDays: PermDeterminationRow[] = rows.map((cells, i) => {
+    // The label sits in one row of its group; rows above it take it too.
+    if (labels[i]) label = labels[i]!;
+    const period = cells[1]!.trim();
+    return {
+      determination: label,
+      month: null,
+      period,
+      calendarDays: requireCountCell(cells[2]!, `PERM average row "${period}"`),
+      raw: cells[2]!,
+    };
+  });
+  if (!permAverageDays.some((d) => /analyst review/i.test(d.determination))) {
+    throw new DolParseError(
+      "no Analyst Review row in the PERM averages table (found: " +
+        [...new Set(permAverageDays.map((d) => d.determination))].join(", ") +
+        ")",
+    );
+  }
   return {
     permAsOf,
-    permQueues,
+    permQueues: [],
     permAverageDays,
-    pwdAsOf,
-    pwdQueues,
-    pwdPermBacklog,
-    pwdReviews,
+    ...parsePwdSections(htmlDoc, tables),
     sourceUrl: SOURCE_URL,
   };
 }
@@ -553,7 +616,10 @@ export async function hashSnapshot(snapshot: DolProcessingTimesSnapshot): Promis
     // been unrecoverable. `textOf` has already collapsed whitespace by this
     // point, so this reacts to real wording changes, not reflowed markup.
     snapshot.permQueues.map((q) => [q.queue, q.priorityDate, q.raw]),
-    snapshot.permAverageDays.map((d) => [d.determination, d.month, d.calendarDays, d.raw]),
+    // `period` only where DOL prints one (Oct 31 2026 on), so the older layout hashes as it always did.
+    snapshot.permAverageDays.map((d) =>
+      d.period === undefined ? [d.determination, d.month, d.calendarDays, d.raw] : [d.determination, d.month, d.calendarDays, d.raw, d.period],
+    ),
     snapshot.pwdQueues.map((q) => [q.program, q.oewsReceiptDate, q.nonOewsReceiptDate]),
     snapshot.pwdPermBacklog.map((r) => [r.receiptMonth, r.remainingRequests]),
   ]);
@@ -592,6 +658,24 @@ export function analystReviewAverage(
   rows: readonly PermDeterminationRow[],
 ): PermDeterminationRow | undefined {
   return rows.find((d) => ANALYST_REVIEW.test(d.determination));
+}
+
+/**
+ * The analyst-review averages by window ("Last 30 Days", 300) in DOL's layout from Oct 31 2026, in DOL's order;
+ * empty for a reading in the older, month-based layout.
+ */
+export function analystReviewWindows(
+  rows: readonly PermDeterminationRow[],
+): (PermDeterminationRow & { period: string; calendarDays: number })[] {
+  return rows.filter(
+    (d): d is PermDeterminationRow & { period: string; calendarDays: number } =>
+      ANALYST_REVIEW.test(d.determination) && typeof d.period === "string" && d.calendarDays !== null,
+  );
+}
+
+/** "the last 30 days" from DOL's "Last 30 Days". */
+export function windowPhrase(period: string): string {
+  return `the ${period.trim().toLowerCase()}`;
 }
 
 export { SOURCE_URL as DOL_PROCESSING_TIMES_URL };

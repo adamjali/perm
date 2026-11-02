@@ -40,6 +40,7 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_db import Database, query_rows, record_run, write_doc  # noqa: E402
+from lib_perm_line import line_now  # noqa: E402
 
 SCRIPT = "build_straggler_rates.py"
 DOC = "straggler_rates"
@@ -53,19 +54,21 @@ ET = ZoneInfo("America/New_York")
 
 
 def frontier_month(db) -> str | None:
-    """DOL's own Analyst Review month, from its newest processing-times reading."""
+    """DOL's own Analyst Review month, from its newest processing-times reading; since DOL's page stopped printing
+    one (Oct 31 2026), the month our own daily check of its case status names (lib_perm_line)."""
     rows = query_rows(db, "SELECT json FROM processing_times ORDER BY perm_as_of DESC LIMIT 1", [])
-    if not rows or not rows[0][0]:
-        return None
-    try:
-        doc = json.loads(rows[0][0])
-    except ValueError:
-        return None
+    doc: dict = {}
+    if rows and rows[0][0]:
+        try:
+            doc = json.loads(rows[0][0])
+        except ValueError:
+            doc = {}
     for q in doc.get("permQueues") or []:
         if str(q.get("queue", "")).strip().lower() == "analyst review":
             m = str(q.get("priorityDate") or "")
             return m if len(m) == 7 and m[4] == "-" else None
-    return None
+    month, _ = line_now(db, query_rows)
+    return month
 
 
 def days_for(rate: float, share_decided: float) -> int | None:

@@ -15,6 +15,8 @@
 import { describe, it, expect } from "vitest";
 
 import FIXTURE from "./__fixtures__/flag-processingtimes-2026-08-20.html?raw";
+// DOL's page from Oct 31 2026 on: no PERM queue month, three averages by reporting period.
+import NOV_FIXTURE from "./__fixtures__/flag-processingtimes-2026-11-02.html?raw";
 
 import {
   parseProcessingTimes,
@@ -321,6 +323,56 @@ describe("failure policy", () => {
     // reported success, stored a snapshot, and silently sent zero alerts.
     const renamed = FIXTURE.replace(/Analyst Review/g, "Initial Screening");
     expect(() => parseProcessingTimes(renamed)).toThrow(/Analyst Review/);
+  });
+});
+
+describe("DOL's page from Oct 31 2026: averages by reporting period, no PERM month", () => {
+  const snapshot = parseProcessingTimes(NOV_FIXTURE);
+
+  it("reads DOL's own as-of date for each section", () => {
+    expect(snapshot.permAsOf).toBe("2026-10-31");
+    expect(snapshot.pwdAsOf).toBe("2026-09-30");
+  });
+
+  it("stores no PERM queue month, because DOL no longer prints one", () => {
+    expect(snapshot.permQueues).toEqual([]);
+    expect(analystReviewQueue(snapshot.permQueues)).toBeUndefined();
+  });
+
+  it("reads the three Analyst Review averages, each with its period and no month", () => {
+    expect(snapshot.permAverageDays).toEqual([
+      { determination: "Analyst Review", month: null, period: "Last 30 Days", calendarDays: 300, raw: "300" },
+      { determination: "Analyst Review", month: null, period: "Last 90 Days", calendarDays: 315, raw: "315" },
+      { determination: "Analyst Review", month: null, period: "Last 180 Days", calendarDays: 360, raw: "360" },
+    ]);
+  });
+
+  it("answers DOL's average with the last 30 days, the window nearest the month it used to print", () => {
+    expect(analystReviewAverage(snapshot.permAverageDays)).toMatchObject({ calendarDays: 300, period: "Last 30 Days" });
+  });
+
+  it("still reads the prevailing-wage queue and the PERM backlog", () => {
+    expect(snapshot.pwdQueues.find((q) => q.program === "PERM")).toEqual({
+      program: "PERM",
+      oewsReceiptDate: "2026-06",
+      nonOewsReceiptDate: "2026-06",
+    });
+    expect(snapshot.pwdPermBacklog[snapshot.pwdPermBacklog.length - 1]).toEqual({ receiptMonth: "2026-09", remainingRequests: 14519 });
+    expect(snapshot.pwdReviews.length).toBeGreaterThan(0);
+  });
+
+  it("throws when the Analyst Review row disappears from the averages", () => {
+    const renamed = NOV_FIXTURE.replace(/Analyst Review/g, "Initial Screening");
+    expect(() => parseProcessingTimes(renamed)).toThrow(/Analyst Review/);
+  });
+
+  it("throws when an average becomes unreadable", () => {
+    const reworded = NOV_FIXTURE.replace(">315<", ">about 315<");
+    expect(() => parseProcessingTimes(reworded)).toThrow(/unreadable count/);
+  });
+
+  it("hashes the new layout apart from the old, so the publication is stored", async () => {
+    expect(await hashSnapshot(snapshot)).not.toBe(await hashSnapshot(parseProcessingTimes(FIXTURE)));
   });
 });
 

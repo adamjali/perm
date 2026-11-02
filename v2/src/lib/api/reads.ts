@@ -257,6 +257,8 @@ export async function readQueue(): Promise<ReadResult<Record<string, unknown>>> 
         averageDays: pt.permAverageDays.map((a) => ({
           determination: a.determination,
           month: a.month,
+          // The window an average covers ("Last 30 Days"): DOL averages over windows, not months, from Oct 31 2026.
+          period: a.period ?? null,
           calendarDays: a.calendarDays,
         })),
       },

@@ -81,12 +81,12 @@ describe("open data: DOL processing times", () => {
   it("writes one row per published value, blank where DOL printed --", () => {
     const rows = dolRows([reading("2026-09-30")]);
     expect(rows).toEqual([
-      { as_of: "2026-09-30", table: "perm_queue", row: "Analyst Review", month: "2025-11", calendar_days: "", remaining_requests: "" },
-      { as_of: "2026-09-30", table: "perm_queue", row: "Audit Review", month: "", calendar_days: "", remaining_requests: "" },
-      { as_of: "2026-09-30", table: "perm_average_days", row: "Analyst Review", month: "2026-08", calendar_days: 336, remaining_requests: "" },
-      { as_of: "2026-09-30", table: "pwd_queue_oews", row: "PERM", month: "2025-10", calendar_days: "", remaining_requests: "" },
-      { as_of: "2026-09-30", table: "pwd_queue_non_oews", row: "PERM", month: "", calendar_days: "", remaining_requests: "" },
-      { as_of: "2026-09-30", table: "pwd_perm_backlog", row: "PERM", month: "2025-11", calendar_days: "", remaining_requests: 4210 },
+      { as_of: "2026-09-30", table: "perm_queue", row: "Analyst Review", month: "2025-11", calendar_days: "", remaining_requests: "", period: "" },
+      { as_of: "2026-09-30", table: "perm_queue", row: "Audit Review", month: "", calendar_days: "", remaining_requests: "", period: "" },
+      { as_of: "2026-09-30", table: "perm_average_days", row: "Analyst Review", month: "2026-08", calendar_days: 336, remaining_requests: "", period: "" },
+      { as_of: "2026-09-30", table: "pwd_queue_oews", row: "PERM", month: "2025-10", calendar_days: "", remaining_requests: "", period: "" },
+      { as_of: "2026-09-30", table: "pwd_queue_non_oews", row: "PERM", month: "", calendar_days: "", remaining_requests: "", period: "" },
+      { as_of: "2026-09-30", table: "pwd_perm_backlog", row: "PERM", month: "2025-11", calendar_days: "", remaining_requests: 4210, period: "" },
     ]);
   });
 
@@ -123,6 +123,25 @@ describe("open data: DOL processing times", () => {
     ]);
     expect(rows.filter((r) => r.table === "pwd_perm_backlog")).toHaveLength(1);
     expect(rows.filter((r) => r.table === "perm_average_days").map((r) => r.as_of)).toEqual(["2026-08-31", "2026-09-22"]);
+  });
+
+  it("writes DOL's averages over a window with the window, and a blank month (Oct 31 2026 on)", () => {
+    const windows = ["Last 30 Days", "Last 90 Days", "Last 180 Days"].map((period, i) => ({
+      determination: "Analyst Review",
+      month: null,
+      period,
+      calendarDays: [300, 315, 360][i]!,
+      raw: String([300, 315, 360][i]),
+    }));
+    const rows = dolRows([reading("2026-10-31", { permQueues: [], permAverageDays: windows })]);
+    expect(rows.filter((r) => r.table === "perm_average_days").map((r) => [r.month, r.calendar_days, r.period])).toEqual([
+      ["", 300, "Last 30 Days"],
+      ["", 315, "Last 90 Days"],
+      ["", 360, "Last 180 Days"],
+    ]);
+    expect(dolCsv([reading("2026-10-31", { permQueues: [], permAverageDays: windows })]).split("\r\n")[0]).toBe(
+      "as_of,table,row,month,calendar_days,remaining_requests,period",
+    );
   });
 
   it("never writes DOL's '--' as a cell a spreadsheet would treat as a formula", () => {

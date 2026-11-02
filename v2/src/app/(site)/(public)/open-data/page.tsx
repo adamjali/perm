@@ -84,9 +84,10 @@ const DOL_FIELDS: Array<[keyof DolRow, string]> = [
   ["as_of", "DOL's own as-of date for that reading, YYYY-MM-DD."],
   ["table", "perm_queue, perm_average_days, pwd_queue_oews, pwd_queue_non_oews or pwd_perm_backlog."],
   ["row", "The queue, determination or program DOL names on that line."],
-  ["month", "The month DOL printed, YYYY-MM; blank where DOL printed --."],
+  ["month", "The month DOL printed, YYYY-MM; blank where DOL printed --, and on an average over a window."],
   ["calendar_days", "Average days to a determination (perm_average_days only)."],
   ["remaining_requests", "Wage requests still pending from that month (pwd_perm_backlog only)."],
+  ["period", "The window an average covers, as DOL prints it (Last 30 Days); DOL's page since October 31, 2026."],
 ];
 
 export default async function OpenDataPage() {

@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { permLineFrom, permLineNote, permLineSentence } from "../permLine";
@@ -53,4 +56,21 @@ describe("the line's words", () => {
   it("stands alone when DOL's table can't be read", () => {
     expect(permLineNote(line, { month: null, asOf: null })).toBe("42% decided by our check of DOL's records on Nov 2.");
   });
+});
+
+describe("permLineFrom and scripts/lib_perm_line.py give the same month", () => {
+  // The shared fixture: the Python twin reads it in scripts/test_perm_line.py.
+  const fixture = JSON.parse(
+    readFileSync(join(process.cwd(), "scripts/fixtures/perm_line.json"), "utf8"),
+  ) as { cases: { name: string; matrix: { month: string; is_final: number; n: number }[]; month: string | null }[] };
+
+  it("reads at least the four shared cases", () => {
+    expect(fixture.cases.length).toBeGreaterThanOrEqual(4);
+  });
+
+  for (const c of fixture.cases) {
+    it(c.name, () => {
+      expect(permLineFrom(c.matrix, "2026-11-02")?.month ?? null).toBe(c.month);
+    });
+  }
 });

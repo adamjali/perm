@@ -51,6 +51,23 @@ check(b.frontier_month(fresh_db()) == "2025-12", "DOL's Analyst Review month is 
 check(b.frontier_month(fresh_db(front=None)) is None, "no reading, no frontier")
 check(b.measure(fresh_db(front=None), NOW) is None, "and no measurement without one")
 
+# DOL's layout from Oct 31 2026 prints no month: the month our own check names stands in.
+db = fresh_db(front=None)
+db.execute("INSERT INTO processing_times VALUES ('2026-10-31', ?)", [json.dumps(
+    {"permQueues": [], "permAverageDays": [{"determination": "Analyst Review", "month": None,
+                                            "period": "Last 30 Days", "calendarDays": 300}]})])
+db.script(["CREATE TABLE perm_docs (key TEXT PRIMARY KEY, json TEXT)"])
+db.execute("INSERT INTO perm_docs VALUES ('live_census', ?)", [json.dumps({"asOf": "2026-11-02", "matrix": [
+    {"month": "2025-12", "status": "CERTIFIED", "is_final": 1, "n": 900},
+    {"month": "2026-01", "status": "CERTIFIED", "is_final": 1, "n": 300},
+    {"month": "2026-01", "status": "ANALYST REVIEW", "is_final": 0, "n": 700},
+]})])
+check(b.frontier_month(db) == "2026-01", "with no month from DOL, the month our check names is the frontier")
+db2 = fresh_db(front=None)
+db2.execute("INSERT INTO processing_times VALUES ('2026-09-22', ?)", [json.dumps(
+    {"permQueues": [{"queue": "Analyst Review", "priorityDate": None}]})])
+check(b.frontier_month(db2) is None, "DOL printing -- in its month row stays no frontier")
+
 db = fresh_db()
 for i in range(10):                         # ten stragglers still pending all window
     case(db, f"G-100-25300-{i:06d}", "2025-10-27")

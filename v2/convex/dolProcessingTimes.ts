@@ -51,6 +51,8 @@ const permDeterminationRow = v.object({
   determination: v.string(),
   month: v.union(v.string(), v.null()),
   calendarDays: v.union(v.number(), v.null()),
+  /** The window the average covers ("Last 30 Days"), from Oct 31 2026. */
+  period: v.optional(v.string()),
   raw: v.string(),
 });
 
@@ -186,7 +188,14 @@ export const refresh = internalAction({
         // log and no error, so the feature could be entirely dead while every
         // dashboard stayed green. Silence is not an acceptable outcome for the
         // one value the whole product depends on.
-        if (!analyst) {
+        if (snapshot.permQueues.length === 0) {
+          // DOL stopped printing a PERM filing month on Oct 31 2026 (the page now averages over the last
+          // 30, 90 and 180 days). No month means no DOL frontier to sweep the PERM month alerts against;
+          // the averages and the wage-request frontiers below still store and still alert.
+          log.info("DOL printed no PERM queue month; PERM month alerts not swept from DOL", {
+            permAsOf: snapshot.permAsOf,
+          });
+        } else if (!analyst) {
           await recordError(
             ctx,
             "action",

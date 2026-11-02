@@ -44,6 +44,8 @@ import { currentMonthUtc, daysAsApproxMonths, daysBetween, formatAsOf, formatMon
 import {
   analystReviewQueue,
   analystReviewAverage,
+  analystReviewWindows,
+  windowPhrase,
 } from "@convex/lib/dolProcessingTimes";
 import { QueueAlertForm } from "./QueueAlertForm";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
@@ -172,6 +174,8 @@ export default async function PermProcessingTimesPage() {
   const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
   const audit = snapshot?.permQueues.find((q) => /audit review/i.test(q.queue));
   const analystAvg = snapshot ? analystReviewAverage(snapshot.permAverageDays) : undefined;
+  // DOL's layout from Oct 31 2026: averages over the last 30, 90 and 180 days, and no filing month.
+  const avgWindows = snapshot ? analystReviewWindows(snapshot.permAverageDays) : [];
   // The chart's input: one point per stored snapshot that carries an analyst
   // queue reading. `history` is newest-first from the query; the chart sorts.
   const historyPoints = history
@@ -188,6 +192,8 @@ export default async function PermProcessingTimesPage() {
   const pwdPerm = snapshot?.pwdQueues.find((q) => /^perm\b/i.test(q.program.trim()));
 
   const analystMonth = formatMonth(analyst?.priorityDate ?? null);
+  // Where the line is by our own daily check of DOL's case status: the lead once DOL stopped printing a month.
+  const ourMonth = permLine ? formatMonth(permLine.month) : null;
   const permAsOf = formatAsOf(snapshot?.permAsOf);
 
   // Two publications, two cadences, both named. A dot is only rendered for a
@@ -360,32 +366,57 @@ export default async function PermProcessingTimesPage() {
               tape of filing months and where it is on it. */}
           <section className="object mt-8 p-5 sm:p-7">
             <p className="text-sm font-semibold">The analyst review queue</p>{" "}
-            <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
-              {analystMonth
-                ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
-                : "DOL hasn’t published a filing month for the analyst review queue."}
-            </p>
-            {!analystMonth && analyst?.raw ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Its latest update prints{" "}
-                <span className="font-bold">&ldquo;{analyst.raw}&rdquo;</span> in that row.
-              </p>
-            ) : null}
-            {analyst?.priorityDate ? (
-              <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" monthsBehind={6} monthsAhead={10} />
-            ) : null}{" "}
-            <p className="mt-4 text-sm text-muted-foreground">
-              DOL&apos;s figure, as of {permAsOf}.{" "}
-              <a
-                href={DOL_SOURCE}
-                className="link"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Source
-                <ArrowSquareOutIcon className="ml-1 inline h-3 w-3" aria-hidden="true" />
-              </a>
-            </p>
+            {analystMonth || !ourMonth || !permLine ? (
+              <>
+                <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
+                  {analystMonth
+                    ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
+                    : "DOL hasn’t published a filing month for the analyst review queue."}
+                </p>
+                {!analystMonth && analyst?.raw ? (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Its latest update prints{" "}
+                    <span className="font-bold">&ldquo;{analyst.raw}&rdquo;</span> in that row.
+                  </p>
+                ) : null}
+                {analyst?.priorityDate ? (
+                  <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" monthsBehind={6} monthsAhead={10} />
+                ) : null}{" "}
+                <p className="mt-4 text-sm text-muted-foreground">
+                  DOL&apos;s figure, as of {permAsOf}.{" "}
+                  <a
+                    href={DOL_SOURCE}
+                    className="link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Source
+                    <ArrowSquareOutIcon className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                  </a>
+                </p>
+              </>
+            ) : (
+              <>
+                {/* DOL's page stopped printing a filing month on Oct 31 2026; our own daily check says where it is. */}
+                <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
+                  DOL is deciding PERM applications filed in {ourMonth}.
+                </p>{" "}
+                <QueueTape frontierMonth={permLine.month} className="mt-6" monthsBehind={6} monthsAhead={10} />{" "}
+                <p className="mt-4 text-sm text-muted-foreground">
+                  By our check of DOL&apos;s case status on {longDate(permLine.asOf) ?? permLine.asOf}. Since October
+                  31, 2026, DOL&apos;s own page prints the average days to a decision instead of a filing month.{" "}
+                  <a
+                    href={DOL_SOURCE}
+                    className="link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    DOL&apos;s page
+                    <ArrowSquareOutIcon className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                  </a>
+                </p>
+              </>
+            )}
           </section>
 
           <FigureRow className="mt-8">
@@ -395,12 +426,19 @@ export default async function PermProcessingTimesPage() {
                 icon={<HourglassMediumIcon weight="bold" className="text-primary-text" />}
                 trend={averageTrend(history)}
                 value={`${analystAvg.calendarDays} days`}
-                note={[
-                  daysAsApproxMonths(analystAvg.calendarDays),
-                  `for determinations DOL issued in ${formatMonth(analystAvg.month) ?? "the reported month"}.`,
-                ]
-                  .filter(Boolean)
-                  .join(", ")}
+                note={
+                  avgWindows.length > 0
+                    ? [
+                        `For decisions DOL issued in ${windowPhrase(avgWindows[0]!.period)}, ${daysAsApproxMonths(analystAvg.calendarDays) ?? `${analystAvg.calendarDays} days`}.`,
+                        ...avgWindows.slice(1).map((w) => `${w.period.charAt(0)}${w.period.slice(1).toLowerCase()}: ${w.calendarDays} days.`),
+                      ].join(" ")
+                    : [
+                        daysAsApproxMonths(analystAvg.calendarDays),
+                        `for determinations DOL issued in ${formatMonth(analystAvg.month) ?? "the reported month"}.`,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")
+                }
               />
             ) : null}
 
@@ -585,32 +623,61 @@ export default async function PermProcessingTimesPage() {
           <Chapter
             id="queues"
             title="Every queue DOL publishes"
-            dek={`DOL's own figures: the filing month each PERM queue is working, as of ${permAsOf}, and the wage requests still waiting${
+            dek={`DOL's own figures: ${
+              snapshot.permQueues.length > 0
+                ? "the filing month each PERM queue is working"
+                : "the average days to a PERM decision over each window"
+            }, as of ${permAsOf}, and the wage requests still waiting${
               snapshot?.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""
             }.`}
           >
-            <ScrollBox label="Where each DOL queue stands" className="mt-6">
-              <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
-                <thead className="bg-sage">
-                  <tr>
-                    <th scope="col" className="border-b-2 border-border p-3 font-bold">
-                      Queue
-                    {" "}</th>
-                    <th scope="col" className="border-b-2 border-border p-3 font-bold">
-                      Currently working
-                    {" "}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {snapshot.permQueues.map((q) => (
-                    <tr key={q.queue} className="border-b border-border/40 last:border-0">
-                      <td className="p-3 font-medium">{q.queue}{" "}</td>
-                      <td className="p-3 tabular-nums">{formatMonth(q.priorityDate) ?? q.raw}{" "}</td>
+            {snapshot.permQueues.length > 0 ? (
+              <ScrollBox label="Where each DOL queue stands" className="mt-6">
+                <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
+                  <thead className="bg-sage">
+                    <tr>
+                      <th scope="col" className="border-b-2 border-border p-3 font-bold">
+                        Queue
+                      {" "}</th>
+                      <th scope="col" className="border-b-2 border-border p-3 font-bold">
+                        Currently working
+                      {" "}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </ScrollBox>
+                  </thead>
+                  <tbody>
+                    {snapshot.permQueues.map((q) => (
+                      <tr key={q.queue} className="border-b border-border/40 last:border-0">
+                        <td className="p-3 font-medium">{q.queue}{" "}</td>
+                        <td className="p-3 tabular-nums">{formatMonth(q.priorityDate) ?? q.raw}{" "}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollBox>
+            ) : avgWindows.length > 0 ? (
+              <ScrollBox label="DOL's average days to a PERM decision" className="mt-6">
+                <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
+                  <thead className="bg-sage">
+                    <tr>
+                      <th scope="col" className="border-b-2 border-border p-3 font-bold">
+                        Decisions issued in{" "}
+                      </th>
+                      <th scope="col" className="border-b-2 border-border p-3 font-bold">
+                        Average from filing{" "}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {avgWindows.map((w) => (
+                      <tr key={w.period} className="border-b border-border/40 last:border-0">
+                        <td className="p-3 font-medium">{w.period}{" "}</td>
+                        <td className="p-3 tabular-nums">{w.calendarDays} days{" "}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollBox>
+            ) : null}
           {snapshot.pwdPermBacklog.length > 0 ? (
             <div className="mt-10">
               <h3 className="font-heading text-xl font-bold">

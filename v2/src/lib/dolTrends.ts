@@ -1,5 +1,5 @@
 import type { FigureTrend } from "@/components/data/FigureRow";
-import { analystReviewAverage } from "@convex/lib/dolProcessingTimes";
+import { analystReviewAverage, analystReviewWindows, windowPhrase } from "@convex/lib/dolProcessingTimes";
 import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
 import { formatMonth, formatMonthDay, monthsMoved } from "@/lib/dolFormat";
 
@@ -10,8 +10,21 @@ import { formatMonth, formatMonthDay, monthsMoved } from "@/lib/dolFormat";
  * good; a queue month moving forward is good; a month that held is level.
  */
 
-/** DOL's average days to a determination against the month before it. */
+/**
+ * DOL's average days to a determination against the month before it. From Oct 31 2026 DOL prints averages over
+ * the last 30, 90 and 180 days instead of by month, so the newest reading's 30-day figure is set against its own
+ * 90-day one: the recent decisions against the longer window, both DOL's.
+ */
 export function averageTrend(history: readonly ProcessingTimesSnapshot[]): FigureTrend | undefined {
+  const windows = history[0] ? analystReviewWindows(history[0].permAverageDays) : [];
+  if (windows.length >= 2) {
+    const [recent, longer] = windows as [(typeof windows)[number], (typeof windows)[number]];
+    const d = recent.calendarDays - longer.calendarDays;
+    const n = /\d+/.exec(longer.period)?.[0];
+    const vs = n ? `the ${n}-day average` : `the average over ${windowPhrase(longer.period)}`;
+    if (Math.abs(d) < 3) return { text: `About level with ${vs}`, dir: "level", tone: "neutral" };
+    return { text: `${Math.abs(d)} days ${d < 0 ? "shorter" : "longer"} than ${vs}`, dir: d < 0 ? "down" : "up", tone: d < 0 ? "good" : "bad" };
+  }
   const rows = history
     .map((s) => analystReviewAverage(s.permAverageDays))
     .filter((r): r is NonNullable<typeof r> & { month: string; calendarDays: number } => !!r?.month && r.calendarDays != null);

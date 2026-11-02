@@ -20,6 +20,8 @@ import {
 import { getDisclosureSummary, type Cohort, type FrontierPoint } from "./publicData";
 import { getLiveCensus, receivedByMonthFrom } from "./liveCensus";
 import { analystPositionOf, getProcessingTimes, getProcessingTimesHistory } from "./processingTimes";
+import { analystReviewAverage } from "@convex/lib/dolProcessingTimes";
+import { permLineFrom } from "@/lib/permLine";
 
 /**
  * How many recent observations set the headline pace.
@@ -36,6 +38,12 @@ export interface EstimatorData {
     analystQueueMonth: string;
     officialAvgDays: number | null;
     asOf: string;
+    /**
+     * Whose month it is: DOL's own table ("dol", and when absent), or our daily check of DOL's case status
+     * ("check"), which stands in since DOL's page stopped printing a month on Oct 31 2026. A page that says
+     * "DOL publishes" reads only "dol".
+     */
+    from?: "dol" | "check";
   } | null;
   cohorts: Cohort[];
   frontierHistory: FrontierPoint[];
@@ -98,17 +106,16 @@ export async function getEstimatorData(): Promise<EstimatorData> {
   let frontier: EstimatorData["frontier"] = null;
   if (snapshot) {
     const position = analystPositionOf(snapshot);
-    const avgRow = snapshot.permAverageDays.find((a) =>
-      a.determination.toLowerCase().includes("analyst"),
-    );
-    // No position is DOL printing "--". That is a real state, not a parse
-    // failure, and it means there is no frontier to position a case against.
+    // The 30-day average in DOL's layout from Oct 31 2026, the month's in the older one.
+    const avgRow = analystReviewAverage(snapshot.permAverageDays);
+    const officialAvgDays = avgRow && avgRow.calendarDays !== null ? avgRow.calendarDays : null;
+    // No position is DOL printing "--", or (from Oct 31 2026) DOL printing no month at all.
     if (position) {
-      frontier = {
-        analystQueueMonth: position.month,
-        officialAvgDays: avgRow && avgRow.calendarDays !== null ? avgRow.calendarDays : null,
-        asOf: position.asOf,
-      };
+      frontier = { analystQueueMonth: position.month, officialAvgDays, asOf: position.asOf, from: "dol" };
+    } else {
+      // Our own daily check of DOL's case status says where the line is, from the census already read here.
+      const line = census ? permLineFrom(census.matrix, census.asOf) : null;
+      if (line) frontier = { analystQueueMonth: line.month, officialAvgDays, asOf: line.asOf, from: "check" };
     }
   }
 

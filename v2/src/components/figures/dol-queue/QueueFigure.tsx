@@ -25,7 +25,8 @@ export async function QueueFigure() {
     backlog,
     pace: pace?.pace ?? null,
     dolMonth: estimator?.frontier?.analystQueueMonth ?? null,
-    dolAsOf: estimator?.frontier?.asOf ?? null,
+    // The caption names DOL's own month and date only when they're DOL's (our check stands in from Oct 31 2026).
+    dolAsOf: estimator?.frontier && estimator.frontier.from !== "check" ? estimator.frontier.asOf : null,
     sweepFinishedOn: sweep?.finishedOn ?? null,
     today: new Date().toISOString().slice(0, 10),
   });

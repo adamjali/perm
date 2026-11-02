@@ -24,8 +24,10 @@ import type { PermLine } from "@/lib/permLine";
 export interface DolNow {
   /** DOL's average calendar days from filing to an analyst-review decision. */
   days: number | null;
-  /** The month of decisions that average was measured on, "August 2026". */
+  /** The month of decisions that average was measured on, "August 2026" (DOL's layout before Oct 31 2026). */
   decidedIn: string | null;
+  /** The window it was measured over, "the last 30 days" (DOL's layout from Oct 31 2026, which has no month). */
+  window: string | null;
   /** The filing month analyst review is working, "December 2025": by our own check when there is one. */
   frontier: string | null;
   /** The day our check ran, "November 1, 2026", or null when `frontier` is DOL's own month. */
@@ -44,7 +46,7 @@ const AUDIT_REVIEW = /audit review/i;
 export function dolNow(t: ProcessingTimesSnapshot | null, line: PermLine | null = null): DolNow {
   const ours = line ? formatMonth(line.month) : null;
   const checkedOn = ours && line ? longDate(line.asOf) : null;
-  if (!t) return { days: null, decidedIn: null, frontier: ours, checkedOn, dolFrontier: null, auditFrontier: null, asOf: null };
+  if (!t) return { days: null, decidedIn: null, window: null, frontier: ours, checkedOn, dolFrontier: null, auditFrontier: null, asOf: null };
   const avg = analystReviewAverage(t.permAverageDays ?? []);
   const queue = analystReviewQueue(t.permQueues ?? []);
   const audit = (t.permQueues ?? []).find((q) => AUDIT_REVIEW.test(q.queue));
@@ -52,12 +54,20 @@ export function dolNow(t: ProcessingTimesSnapshot | null, line: PermLine | null 
   return {
     days: avg?.calendarDays ?? null,
     decidedIn: formatMonth(avg?.month),
+    window: avg?.period ? `the ${avg.period.toLowerCase()}` : null,
     frontier: ours ?? dolFrontier,
     checkedOn,
     dolFrontier,
     auditFrontier: formatMonth(audit?.priorityDate),
     asOf: formatAsOf(t.permAsOf),
   };
+}
+
+/** What DOL's average was measured on: ", measured on the cases it decided in August 2026" or "over the last 30 days". */
+function measured(n: DolNow): string {
+  if (n.decidedIn) return `, measured on the cases it decided in ${n.decidedIn}`;
+  if (n.window) return `, measured on the cases it decided in ${n.window}`;
+  return "";
 }
 
 /** "336 days as of October 5, 2026", or "about a year" when DOL's figure can't be read. */
@@ -77,7 +87,7 @@ export function queueSentence(n: DolNow): string {
   if (n.checkedOn && n.frontier) {
     const avg =
       n.days !== null
-        ? ` DOL's published average from filing to a decision is ${n.days} days${n.decidedIn ? `, measured on the cases it decided in ${n.decidedIn}` : ""}${n.asOf ? `, as of ${n.asOf}` : ""}.`
+        ? ` DOL's published average from filing to a decision is ${n.days} days${measured(n)}${n.asOf ? `, as of ${n.asOf}` : ""}.`
         : "";
     const differs = n.dolFrontier && n.dolFrontier !== n.frontier ? ` DOL's own table${n.asOf ? `, dated ${n.asOf},` : ""} names ${n.dolFrontier}.` : "";
     return `By our check of DOL's case status on ${n.checkedOn}, DOL's analyst review is working cases filed in ${n.frontier}.${avg}${differs}`;
@@ -86,9 +96,7 @@ export function queueSentence(n: DolNow): string {
   if (n.frontier) parts.push(`DOL's analyst review is working cases filed in ${n.frontier}`);
   if (n.days !== null) {
     parts.push(
-      n.decidedIn
-        ? `its published average from filing to a decision is ${n.days} days, measured on the cases it decided in ${n.decidedIn}`
-        : `its published average from filing to a decision is ${n.days} days`,
+      `its published average from filing to a decision is ${n.days} days${measured(n)}`,
     );
   }
   const body = parts.join(", and ");
