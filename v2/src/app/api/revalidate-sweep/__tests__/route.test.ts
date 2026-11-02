@@ -73,6 +73,10 @@ describe("the list covers every cached page that reads a sweep-written figure", 
     "getActivitySeries",
     "getChangeActivity",
     "getLiveCensus",
+    // Our own daily check of where DOL is (lib/permLine.ts) and DOL's latest decided day (the board): a page
+    // printing "by our check of <day>" must move when the check does.
+    "getPermLine",
+    "getPermBoard",
     "getSweepCoverage",
     "getReviewStages",
     "getDecisionPace",

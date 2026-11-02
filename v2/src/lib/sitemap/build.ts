@@ -36,6 +36,7 @@ import {
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 import { lineSlugs } from "@/lib/bulletinLines";
 import { categoriesIn } from "@/lib/db/bulletin";
+import { bulletinDay } from "@/lib/db/dateSources";
 import type { BulletinMonth } from "@/lib/perm";
 import { SITE_URL } from "@/lib/constants/site";
 import { bulletinMonthDate, employerOwnDate, pageDate, type DateSources } from "@/lib/pageDates";
@@ -263,6 +264,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     capExempt: capExemptDay,
     corpus: await corpusAsOf(),
     reviews: reviewsAsOf,
+    // The day this site first held the newest bulletin, the bulletin pages' own day (the layout reads the same).
+    bulletin: await bulletinDay().catch(() => null),
   };
   const at = (route: string) => pageDate(route, sources);
   const statics: Entry[] = [
@@ -334,8 +337,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/visa-bulletin`, lastModified: at("/visa-bulletin"), images: [`${base}/og/visa-bulletin.jpg`] },
     // One page per archived bulletin. An older month's table is that month's
     // bulletin and nothing else, so its lastmod is the bulletin's own month;
-    // the newest one carries the DOL stamp because its "since" column moves
-    // with the next parse. Never the clock.
+    // the newest one carries the day this site first held it, because its
+    // "since" column moves with the next parse. Never the clock.
     ...bulletinMonths.map((m, i) => ({
       url: `${base}/visa-bulletin/${m}`,
       lastModified: bulletinMonthDate(i === bulletinMonths.length - 1, sources),

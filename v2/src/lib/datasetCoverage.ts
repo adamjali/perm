@@ -241,6 +241,15 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "The email DOMAINS DOL's newest PERM, wage-request and LCA files print beside each law firm, used only to check a claim on the firm's page. Never an address; personal mail and domains shared by many firms left out.",
 };
 
+/**
+ * A news feed: its row's date is the newest item's day, while the reader runs every half hour, so its source line
+ * says when we checked it and the newest item beside it (a quiet feed isn't a stale one). The Federal Register,
+ * agency newsrooms, courts, BALCA, DOJ, bills and the rule pipeline; not the comment counts, dated by their check.
+ */
+export function isNewsFeed(dataset: string): boolean {
+  return /^(policy-notices|rule-pipeline)/.test(dataset);
+}
+
 /** The coverage sentence for a dataset, or null when nobody has written one. */
 export function coverageFor(dataset: string): string | null {
   return DATASET_COVERAGE[dataset] ?? null;

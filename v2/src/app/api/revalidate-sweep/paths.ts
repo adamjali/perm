@@ -33,6 +33,10 @@ export const SWEEP_PAGES = [
   // Its "how long" answer quotes what the cases DOL decided on its last working day had waited (/today's board).
   "/perm-processing-times",
   "/estimate-scorecard",
+  // Both lead with where DOL is by our daily check (lib/permLine.ts): the queue page's first sentence and wall,
+  // and the FAQ's "how long does PERM take" answer.
+  "/perm-queue",
+  "/faq",
   // The wage-request, LCA and H-2A/H-2B summaries, written by
   // pwd-status-direct.yml, which calls this endpoint too.
   "/pwd-cases",

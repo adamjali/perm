@@ -558,16 +558,15 @@ function Answer({
         </>
       ) : wall && !wall.isPastFront ? (
         <>
-          {publishedFront ? (
+          {/* Our own daily count leads; DOL's table, which can sit weeks old, follows with its own date. */}
+          The oldest month still open is {formatMonth(wall.frontMonth)}
+          {publishedFront && publishedFront !== wall.frontMonth ? (
             <>
-              DOL says it&apos;s working {formatMonth(publishedFront)}
-              {publishedFront !== wall.frontMonth ? (
-                <> (the oldest month still open is {formatMonth(wall.frontMonth)})</>
-              ) : null}
+              {" "}
+              (DOL&apos;s own table says {formatMonth(publishedFront)}
+              {publishedAsOf ? <>, as of {formatAsOf(publishedAsOf)}</> : null})
             </>
-          ) : (
-            <>The oldest month still open is {formatMonth(wall.frontMonth)}</>
-          )}
+          ) : null}
           , and <b className="font-semibold">{formatInt(casesAhead ?? wall.ahead)}</b> cases in DOL&apos;s normal
           queue were filed before this one.
         </>

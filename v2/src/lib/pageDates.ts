@@ -35,7 +35,9 @@ export type DateSource =
   /** The last decision day in DOL's published PERM files. */
   | "corpus"
   /** The day the newest shown review was left (Eastern). */
-  | "reviews";
+  | "reviews"
+  /** The day this site first held the newest visa bulletin (Eastern). */
+  | "bulletin";
 
 export type DateSources = { readonly [K in DateSource]?: string | null };
 
@@ -110,12 +112,12 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/tools/green-card-timeline": "dol",
   "/tools/perm-timeline-calculator": "dol",
   "/tools/pwd-calculator": "dol",
-  "/visa-bulletin": "dol",
-  "/visa-bulletin/family": "dol",
-  "/visa-bulletin/categories": "dol",
-  "/visa-bulletin/categories/[line]": "dol",
+  "/visa-bulletin": "bulletin",
+  "/visa-bulletin/family": "bulletin",
+  "/visa-bulletin/categories": "bulletin",
+  "/visa-bulletin/categories/[line]": "bulletin",
   "/perm-by-state": "dol",
-  "/perm-wages": "dol",
+  "/perm-wages": "corpus",
   "/lca-wages": "dol",
   "/policy-changes": "dol",
   "/debarments": "dol",
@@ -123,14 +125,14 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/estimate-scorecard": "dol",
   "/open-data": "dol",
   "/layoffs": "dol",
-  "/perm-employers": "dol",
-  "/perm-attorneys": "dol",
-  "/perm-employers/browse": "dol",
-  "/perm-attorneys/browse": "dol",
-  "/perm-wages/browse": "dol",
-  "/perm-employers/browse/[letter]": "dol",
-  "/perm-attorneys/browse/[letter]": "dol",
-  "/perm-wages/browse/[letter]": "dol",
+  "/perm-employers": "corpus",
+  "/perm-attorneys": "corpus",
+  "/perm-employers/browse": "corpus",
+  "/perm-attorneys/browse": "corpus",
+  "/perm-wages/browse": "corpus",
+  "/perm-employers/browse/[letter]": "corpus",
+  "/perm-attorneys/browse/[letter]": "corpus",
+  "/perm-wages/browse/[letter]": "corpus",
   "/perm-cases": "dol",
   "/perm-denial-risk": "dol",
 
@@ -184,13 +186,13 @@ export function pageDate(route: string, sources: DateSources): string {
 }
 
 /**
- * A bulletin month's date. The newest month is new: it takes DOL's date too,
- * as the sitemap always has, so the page never says it was updated before it
- * existed. An older month's bulletin never changes, so only its code dates it.
+ * A bulletin month's date. The newest month is new: it takes the day this site
+ * first held it, so the page never says it was updated before it existed. An
+ * older month's bulletin never changes, so only its code dates it.
  */
 export function bulletinMonthDate(isNewest: boolean, sources: DateSources): string {
   const route = "/visa-bulletin/[month]";
-  return isNewest ? newer(sources.dol, changed(route)) : changed(route);
+  return isNewest ? newer(sources.bulletin, changed(route)) : changed(route);
 }
 
 /**

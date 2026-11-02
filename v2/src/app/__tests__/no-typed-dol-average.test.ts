@@ -29,6 +29,9 @@ const TYPED = [
   // DOL's month in other words (Oct 28 2026, the featured guide): "DOL is reviewing applications filed in
   // November 2025", "DOL is working requests received in April 2026"
   /\bDOL(?:'s|’s)?\s+(?:analyst review\s+)?is\s+(?:working|reviewing|deciding|processing|adjudicating)\s+(?:on\s+)?(?:cases|applications|requests|filings|PERM cases|wage requests)\s+(?:received|filed|submitted)\s+(?:around|in)\s+\*{0,2}(?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d\d/i,
+  // DOL's analysts with the month after them (Nov 2 2026, the statuses guide): "DOL says its analysts are working
+  // November 2025 filings"
+  /\b(?:its|DOL(?:'s|’s)?)\s+analysts\s+(?:are|were)\s+(?:working|reviewing|deciding)\s+(?:on\s+)?\*{0,2}(?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d\d/i,
   // an average said another way: "The average time to a determination is 336 days"
   /\baverage\b[^.\n]{0,40}?\bis\s+\*{0,2}[2-4]\d\d\*{0,2}\s+days/i,
 ];
@@ -65,6 +68,8 @@ describe("DOL's figures are read live, not typed", () => {
     expect(typedDolFigures("DOL is working requests received in April 2026 for the standard queue")).toHaveLength(1);
     expect(typedDolFigures("The average time to a determination is 336 days, about eleven months")).toHaveLength(1);
     expect(typedDolFigures("DOL is deciding cases filed in <DolNow show=\"month\" />")).toHaveLength(0);
+    expect(typedDolFigures("DOL says its analysts are working November 2025 filings, and its own average")).toHaveLength(1);
+    expect(typedDolFigures("DOL says its analysts are working <DolNow show=\"month\" /> filings")).toHaveLength(0);
   });
 
   it("no page or article types DOL's average or queue month", () => {

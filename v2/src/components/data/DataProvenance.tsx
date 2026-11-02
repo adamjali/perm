@@ -5,9 +5,10 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 import { CiteThis } from "@/components/data/CiteThis";
 import { FinePrint } from "@/components/data/FinePrint";
 import { getFreshness, type DatasetFreshness } from "@/lib/db/publicData";
-import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
+import { coverageFor, datasetLabel, isNewsFeed } from "@/lib/datasetCoverage";
 import { cn } from "@/lib/utils";
 import { MONTH_ABBR } from "@convex/lib/months";
+import { easternDay } from "@convex/lib/time";
 
 /**
  * Where a page's figures came from, rendered beside them: one visible line
@@ -54,7 +55,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
           <Fragment key={r.dataset}>
             {i > 0 ? " · " : ""}
             <span className="font-semibold text-soft">{label(r.dataset)}</span>
-            {r.asOf ? ` through ${fmt(r.asOf)}` : ""}
+            {when(r)}
           </Fragment>
         ))}
         {fresh.length > 0 ? ". " : ""}
@@ -81,7 +82,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
                 {" "}
                 <p>
                   <span className="font-bold text-soft">{label(r.dataset)}:</span> {r.source}
-                  {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
+                  {r.asOf || isNewsFeed(r.dataset) ? <> ·{when(r, "data through")}</> : null} · {r.cadence.toLowerCase()}
                 </p>
               </Fragment>
             ))}{" "}
@@ -147,6 +148,17 @@ function agePhrase(r: DatasetFreshness): string {
 }
 
 const label = datasetLabel;
+
+/**
+ * The date a source line gives a dataset: what its data runs to, or for a news feed when we last checked it and its
+ * newest item (isNewsFeed), so a quiet feed doesn't read as one nobody has looked at.
+ */
+function when(r: DatasetFreshness, through = "through"): string {
+  const checked = isNewsFeed(r.dataset) && r.fetchedAt > 0 ? easternDay(r.fetchedAt) : null;
+  if (!checked) return r.asOf ? ` ${through} ${fmt(r.asOf)}` : "";
+  const newest = r.asOf && r.asOf.slice(0, 10) !== checked ? `, newest ${fmt(r.asOf.slice(0, 10))}` : "";
+  return ` checked ${fmt(checked)}${newest}`;
+}
 
 function fmt(iso: string): string {
   // "2026-06-30" -> "Jun 30, 2026"; "2026-09" -> "Sep 2026"; else verbatim.

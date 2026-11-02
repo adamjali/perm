@@ -7,6 +7,7 @@
 
 import { formatMonth } from "@/lib/dolFormat";
 import { formatInt } from "@/lib/format";
+import { permLineSentence, type PermLine } from "@/lib/permLine";
 
 /**
  * The first day the queue can be shown on: scripts/build_census_days.py's START,
@@ -147,12 +148,19 @@ export function statusShift(now: readonly BacklogStatusCount[], before: readonly
 
 /**
  * The queue page's first sentence: how many PERM cases are still undecided, then
- * the filing month DOL's analyst review is working, with the day DOL published
- * it. The answer to "where is the PERM queue", read from the census and DOL's own
- * table, never typed. A date DOL didn't give is left off, never guessed.
+ * the filing month DOL is deciding. Our own daily check leads when it can see the
+ * month (lib/permLine.ts), with DOL's table after it: DOL's table can sit weeks
+ * old. Without it, DOL's month with the day DOL published it. Read from the census
+ * and DOL's own table, never typed. A date DOL didn't give is left off, never guessed.
  */
-export function queueLead(pending: number, dolMonth: string | null, dolAsOf: string | null): string {
+export function queueLead(
+  pending: number,
+  dolMonth: string | null,
+  dolAsOf: string | null,
+  line: PermLine | null = null,
+): string {
   const count = `${formatInt(pending)} PERM ${pending === 1 ? "case is" : "cases are"} still waiting for DOL's decision.`;
+  if (line) return `${count} ${permLineSentence(line, { month: dolMonth, asOf: dolAsOf })}`;
   const month = dolMonth ? formatMonth(dolMonth) : null;
   if (!month) return count;
   const where = `its analyst review is working cases filed in ${month}.`;

@@ -58,6 +58,17 @@ describe("queueLead", () => {
     expect(queueLead(5, null, null)).toBe("5 PERM cases are still waiting for DOL's decision.");
   });
 
+  it("leads with our daily check when it sees the month, DOL's table after it", () => {
+    const line = { month: "2026-01", total: 9000, decided: 3800, asOf: "2026-11-02" };
+    expect(queueLead(97123, "2025-12", "October 21, 2026", line)).toBe(
+      "97,123 PERM cases are still waiting for DOL's decision. By our daily check of DOL's case status on November 2, 2026, DOL is deciding PERM cases filed in January 2026. DOL's own table, dated October 21, 2026, names December 2025.",
+    );
+    // When the two agree, DOL's table adds nothing.
+    expect(queueLead(97123, "2026-01", "October 21, 2026", line)).toBe(
+      "97,123 PERM cases are still waiting for DOL's decision. By our daily check of DOL's case status on November 2, 2026, DOL is deciding PERM cases filed in January 2026.",
+    );
+  });
+
   it("leaves the date off rather than inventing one", () => {
     expect(queueLead(1, "2025-12", null)).toBe(
       "1 PERM case is still waiting for DOL's decision. Its analyst review is working cases filed in December 2025.",

@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { latestPostDate } from "@/lib/content";
+import { easternDay } from "@convex/lib/time";
 import type { DateSources } from "@/lib/pageDates";
 
 import { one } from "./client";
@@ -30,6 +31,14 @@ async function dolAsOf(): Promise<string | null> {
   return r?.d ? String(r.d) : null;
 }
 
+/** The Eastern day this site first held the newest bulletin (bulletin_first_seen, written once per month by the ingest). */
+export async function bulletinDay(): Promise<string | null> {
+  const r = await one<{ t: number | string | null }>(
+    "SELECT first_seen_at AS t FROM bulletin_first_seen ORDER BY bulletin_month DESC LIMIT 1",
+  );
+  return r?.t ? easternDay(Number(r.t)) : null;
+}
+
 function postsDay(): string | null {
   try {
     return latestPostDate();
@@ -48,10 +57,11 @@ async function safely(read: () => Promise<string | null>): Promise<string | null
 }
 
 export const getDateSources = cache(async (): Promise<DateSources> => {
-  const [dol, sweep, corpus] = await Promise.all([
+  const [dol, sweep, corpus, bulletin] = await Promise.all([
     safely(dolAsOf),
     safely(async () => (await getSweepCoverage())?.finishedOn ?? null),
     safely(async () => (await getFreshness())["perm-cases"]?.asOf ?? null),
+    safely(bulletinDay),
   ]);
-  return { dol, sweep, corpus, posts: postsDay() };
+  return { dol, sweep, corpus, bulletin, posts: postsDay() };
 });

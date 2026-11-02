@@ -304,9 +304,9 @@ export function CaseStatusEmpty({
   if (publishedFront && publishedFront !== front) {
     const asOf = longDate(publishedAsOf);
     facts.push({
-      label: "DOL is working",
+      label: "DOL's own table",
       value: monthYear(publishedFront) ?? publishedFront,
-      note: asOf ? `as of ${asOf}` : "analyst review",
+      note: asOf ? `its analyst review, as of ${asOf}` : "its analyst review",
     });
   }
 

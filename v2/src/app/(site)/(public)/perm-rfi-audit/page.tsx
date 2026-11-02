@@ -46,11 +46,12 @@ import { StageGlossary } from "@/components/rfi/StageGlossary";
 import { StageLadder, StageLadderTable } from "@/components/rfi/StageLadder";
 import { isReviewStage, reviewStages, stageMeta } from "@/components/rfi/stageMeta";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { getPermLine } from "@/lib/db/permLine";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getObservedDays } from "@/lib/db/pulse";
 import { getRfiClock } from "@/lib/db/rfiClock";
 import { getStageStats } from "@/lib/db/stageStats";
-import type { ReviewStage } from "@/lib/db/rfi";
+import type { ReviewStage, StageCohort } from "@/lib/db/rfi";
 import {
   SMALL_STAGE_MAX,
   getReviewStages,
@@ -61,7 +62,7 @@ import {
 } from "@/lib/db/rfi";
 import { MoreText } from "@/components/data/MoreText";
 import { SITE_URL } from "@/lib/constants/site";
-import { monthYear } from "@convex/lib/months";
+import { monthDay, monthYear } from "@convex/lib/months";
 
 const TITLE = "PERM RFI, Audits and Appeals";
 // 148 characters unescaped. Measure the UNESCAPED text: house style is
@@ -88,7 +89,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function PermRfiAuditPage() {
-  const [stages, funnel, cohortsRaw, occupations, smallRecords, dol, stageStats, rfiClock, observedDays] =
+  const [stages, funnel, cohortsRaw, occupations, smallRecords, dol, stageStats, rfiClock, observedDays, permLine] =
     await Promise.all([
       getReviewStages(),
       getBlendedRfiFunnel(),
@@ -100,6 +101,8 @@ export default async function PermRfiAuditPage() {
       getRfiClock().catch(() => null),
       // Every decision our sweep has seen, for the RFI cases' comparison.
       getObservedDays(150).catch(() => []),
+      // Where DOL is by our own daily check; DOL's table can sit weeks old (lib/permLine.ts).
+      getPermLine().catch(() => null),
     ]);
 
   const pending = stages.reduce((n, s) => n + s.cases, 0);
@@ -149,6 +152,14 @@ export default async function PermRfiAuditPage() {
       ?.calendarDays ?? null;
   const auditQueue =
     dol?.permQueues.find((q) => /audit/i.test(q.queue))?.priorityDate ?? null;
+
+  // The filing month holding the most open RFIs, counted from the rows the conveyor draws.
+  const busiestRfiMonth =
+    cohortsRaw.reduce<StageCohort | null>(
+      (best, c) => ((c.stages["RFI ISSUED"] ?? 0) > (best?.stages["RFI ISSUED"] ?? 0) ? c : best),
+      null,
+    )?.month ?? null;
+  const workingMonth = permLine?.month ?? analystQueue?.slice(0, 7) ?? null;
 
   const rfiMedian = rfi?.ageBand?.median ?? null;
 
@@ -357,13 +368,24 @@ export default async function PermRfiAuditPage() {
             <>
               Read across a row and each stage occupies its own slice of the
               backlog, barely overlapping the others.{" "}
-              {analystQueue ? (
+              {busiestRfiMonth ? (
                 <>
-                  DOL says its analysts are working{" "}
-                  <b className="font-bold text-foreground">
-                    {monthName(analystQueue)}
-                  </b>{" "}
-                  filings, and that is the month holding the most open RFIs.
+                  The most open RFIs sit in{" "}
+                  <b className="font-bold text-foreground">{monthName(busiestRfiMonth)}</b> filings
+                  {workingMonth ? (
+                    <>
+                      , {workingMonth === busiestRfiMonth ? "the month" : "while"}{" "}
+                      {permLine ? `our daily check of ${monthDay(permLine.asOf) ?? permLine.asOf} finds` : `DOL's own table${dol?.permAsOf ? ` of ${dol.permAsOf}` : ""} names`}{" "}
+                      {workingMonth === busiestRfiMonth ? (
+                        "DOL deciding"
+                      ) : (
+                        <>
+                          DOL deciding <b className="font-bold text-foreground">{monthName(workingMonth)}</b>
+                        </>
+                      )}
+                    </>
+                  ) : null}
+                  .
                 </>
               ) : null}
             </>
@@ -462,7 +484,7 @@ export default async function PermRfiAuditPage() {
 
         {/* 8. THE REFUSALS ------------------------------------------------ */}
         <Section id="limits" title="What this page will not tell you">
-          <Limits funnelTracked={funnel?.totalTracked ?? null} auditQueue={auditQueue} />
+          <Limits funnelTracked={funnel?.totalTracked ?? null} auditQueue={auditQueue} auditAsOf={dol?.permAsOf ?? null} />
         </Section>
 
         {/*
@@ -638,9 +660,12 @@ function Concentration({
 function Limits({
   funnelTracked,
   auditQueue,
+  auditAsOf,
 }: {
   funnelTracked: number | null;
   auditQueue: string | null;
+  /** DOL's own date on its processing-times table. */
+  auditAsOf: string | null;
 }) {
   return (
     <ul className="grid max-w-3xl gap-4">
@@ -662,7 +687,11 @@ function Limits({
         The outcome tally records zero audits ever, and zero is wrong rather
         than surprising: DOL&rsquo;s processing-times page publishes a live
         Audit Review queue
-        {auditQueue ? <>, currently working {monthName(auditQueue)} filings</> : null}
+        {auditQueue ? (
+          <>
+            , working {monthName(auditQueue)} filings{auditAsOf ? <> as of {auditAsOf}</> : null}
+          </>
+        ) : null}
         . An audit rate is not published anywhere we can source, so this page
         defines the term and gives no number.
       </Limit>

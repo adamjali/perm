@@ -46,6 +46,21 @@ describe("DataProvenance", () => {
     expect(screen.queryByText(/has not refreshed/)).not.toBeInTheDocument();
   });
 
+  it("dates a news feed by when we checked it, with its newest item beside it", async () => {
+    // BALCA's newest decision was Aug 24 while its reader ran on Nov 2: "through Aug 24" read as a feed nobody
+    // had looked at since (date audit, Nov 2 2026).
+    const checked = Date.UTC(2026, 10, 2, 15, 0);
+    await renderProvenance({
+      "policy-notices-balca": row({ dataset: "policy-notices-balca", asOf: "2026-08-24", fetchedAt: checked }),
+      "policy-notices-oflc": row({ dataset: "policy-notices-oflc", asOf: "2026-11-02", fetchedAt: checked }),
+    });
+    const line = document.querySelector("[data-provenance] p")?.textContent ?? "";
+    expect(line).toContain("checked Nov 2, 2026, newest Aug 24, 2026");
+    // A feed whose newest item is the day it was checked says the day once.
+    expect(line).toMatch(/OFLC[^·]*checked Nov 2, 2026(?!, newest)/);
+    expect(line).not.toContain("through Aug 24");
+  });
+
   it("says how the figures are counted and how to report a mistake", async () => {
     await renderProvenance({ "perm-month-stats": row() });
     expect(screen.getByRole("link", { name: "How these figures are counted" })).toHaveAttribute("href", "/methodology");

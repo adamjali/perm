@@ -414,15 +414,25 @@ export default async function PermProcessingTimesPage() {
               />
             ) : null}
 
-            {pwdPerm?.oewsReceiptDate ? (
+            {/* Our daily check leads: DOL's wage table is dated weeks behind it (lib/pwdLine.ts). */}
+            {pwdLine ? (
+              <Figure
+                label="Prevailing wage (PERM)"
+                icon={<CurrencyDollarIcon weight="bold" className="text-primary-text" />}
+                value={longDate(pwdLine.day) ?? pwdLine.day}
+                note={`Requests filed that day being decided, by our check of ${longDate(pwdLine.asOf) ?? pwdLine.asOf}.${
+                  pwdPerm?.oewsReceiptDate
+                    ? ` DOL's own table: ${formatMonth(pwdPerm.oewsReceiptDate) ?? pwdPerm.oewsReceiptDate} for OEWS requests${snapshot?.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.`
+                    : ""
+                }`}
+              />
+            ) : pwdPerm?.oewsReceiptDate ? (
               <Figure
                 label="Prevailing wage (PERM)"
                 icon={<CurrencyDollarIcon weight="bold" className="text-primary-text" />}
                 trend={queueMoveTrend(history, (h) => ({ month: h.pwdQueues.find((q) => /^perm\b/i.test(q.program.trim()))?.oewsReceiptDate, asOf: h.pwdAsOf }))}
                 value={formatMonth(pwdPerm.oewsReceiptDate) ?? pwdPerm.oewsReceiptDate}
-                note={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.${
-                  pwdLine ? ` Our check of ${longDate(pwdLine.asOf)}: requests filed ${longDate(pwdLine.day)} being decided.` : ""
-                }`}
+                note={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.`}
               />
             ) : null}
           </FigureRow>
@@ -575,7 +585,9 @@ export default async function PermProcessingTimesPage() {
           <Chapter
             id="queues"
             title="Every queue DOL publishes"
-            dek={`DOL's figures as of ${permAsOf}: the filing month each PERM queue is working, and the wage requests still waiting.`}
+            dek={`DOL's own figures: the filing month each PERM queue is working, as of ${permAsOf}, and the wage requests still waiting${
+              snapshot?.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""
+            }.`}
           >
             <ScrollBox label="Where each DOL queue stands" className="mt-6">
               <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">

@@ -27,6 +27,7 @@ import { LineChart } from "@/components/numbers/LineChart";
 import { ANALYST_REVIEW } from "@/lib/searchStages";
 import { queueLead, statusShift } from "@/lib/backlogMonths";
 import { SinceDay } from "@/components/queue/SinceDay";
+import { monthDay } from "@convex/lib/months";
 import { easternDay } from "@convex/lib/time";
 import { getEstimatorData } from "@/lib/db/estimate";
 import { getPermBoard } from "@/lib/db/board";
@@ -201,7 +202,7 @@ export default async function PermQueuePage() {
         </h1>{" "}
         {/* The answer first: the sentence a search result or an AI answer quotes. */}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          {queueLead(census.pending, dolMonth, dolAsOf)}
+          {queueLead(census.pending, dolMonth, dolAsOf, line)}
         </p>{" "}
         {/* The page opens on its figures (owner, Oct 27 2026: "visual heavy,
             not text blobs"); how the count is read is folded under them. */}
@@ -380,8 +381,9 @@ export default async function PermQueuePage() {
             days={pastDays}
             today={{
               months: census.months,
-              frontierMonth: dolMonth,
-              frontierAsOf: dolAsOf,
+              // Today's wall marks the month our daily check sees, as the lead says; a past day keeps DOL's table then.
+              frontierMonth: line?.month ?? dolMonth,
+              frontierAsOf: line ? `${monthDay(line.asOf) ?? line.asOf}, our check` : dolAsOf,
               frontMonth: front?.month ?? null,
               anomalies,
               noteAnchors: { [OCTOBER_2025.month]: OCTOBER_2025.anchorId },

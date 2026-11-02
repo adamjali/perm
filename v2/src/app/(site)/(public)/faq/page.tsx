@@ -14,7 +14,9 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FaqList } from "@/components/tools/FaqList";
-import { averagePhrase, dolNow } from "@/lib/dolNow";
+import { howLongSentence } from "@/lib/dolNow";
+import { getPermBoard } from "@/lib/db/board";
+import { getPermLine } from "@/lib/db/permLine";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 
 const START_LINKS = [
@@ -33,8 +35,9 @@ export const dynamic = "force-static";
 // whenever DOL republishes (it is on revalidate-dol's list).
 export const revalidate = 86400;
 
-// Replaced at render with DOL's current average and its date (lib/dolNow.ts).
-const DOL_AVERAGE = "{dolAverage}";
+// Replaced at render with the wait of DOL's latest decisions, the month our daily check sees DOL deciding, and
+// DOL's own average with its date (howLongSentence in lib/dolNow.ts, the case page's sentence too).
+const HOW_LONG = "{howLong}";
 
 export const metadata: Metadata = withSocialCard({
   // Named for what the page answers (it is the main sitelink under a search
@@ -83,7 +86,7 @@ const faqData = [
       {
         question: "How long does the PERM process take?",
         answer:
-          "The complete PERM process typically runs 18 to 36 months end to end: the prevailing wage determination, the recruitment period (2-3 months), the 30-day quiet period, and DOL's processing of the ETA 9089 itself, which DOL's own published average puts at {dolAverage}. Cases selected for audit take longer. The processing times page carries the live figure, and the case status page reads any specific case number.",
+          "The complete PERM process typically runs 18 to 36 months end to end: the prevailing wage determination, the recruitment period (2-3 months), the 30-day quiet period, and DOL's own review of the ETA 9089. {howLong} Cases selected for audit take longer. The processing times page carries the live figure, and the case status page reads any specific case number.",
       },
       {
         question: "What are the main steps in the PERM process?",
@@ -166,10 +169,15 @@ const LEARN_MORE = [
 ] as const;
 
 export default async function FAQPage() {
-  const average = averagePhrase(dolNow(await getProcessingTimes().catch(() => null)));
+  const [times, permBoard, permLine] = await Promise.all([
+    getProcessingTimes().catch(() => null),
+    getPermBoard().catch(() => null),
+    getPermLine().catch(() => null),
+  ]);
+  const howLong = howLongSentence(permBoard, times, permLine);
   const faq = faqData.map((section) => ({
     ...section,
-    items: section.items.map((i) => ({ ...i, answer: i.answer.replace(DOL_AVERAGE, average) })),
+    items: section.items.map((i) => ({ ...i, answer: i.answer.replace(HOW_LONG, howLong) })),
   }));
   // Flatten all FAQ items for structured data
   const allFAQs = faq.flatMap((section) => section.items);

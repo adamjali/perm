@@ -36,9 +36,31 @@ describe("pageDate", () => {
     expect(pageDate("/perm-processing-times", {})).toBe(changed("/perm-processing-times"));
   });
 
-  it("dates an older bulletin by its code alone and the newest by DOL's day too", () => {
-    expect(bulletinMonthDate(false, { dol: "2099-01-01" })).toBe(changed("/visa-bulletin/[month]"));
-    expect(bulletinMonthDate(true, { dol: "2099-01-01" })).toBe("2099-01-01");
+  it("dates an older bulletin by its code alone and the newest by the day this site first held it", () => {
+    expect(bulletinMonthDate(false, { bulletin: "2099-01-01" })).toBe(changed("/visa-bulletin/[month]"));
+    expect(bulletinMonthDate(true, { bulletin: "2099-01-01" })).toBe("2099-01-01");
+    // DOL's processing-times stamp says nothing about a bulletin (Nov 2 2026: the November bulletin read
+    // "Updated October 21", DOL's day, where the site first held it on October 22).
+    expect(bulletinMonthDate(true, { dol: "2099-01-01" })).toBe(changed("/visa-bulletin/[month]"));
+  });
+
+  it("dates the bulletin pages by the bulletin and the published-file lists by DOL's files", () => {
+    for (const r of ["/visa-bulletin", "/visa-bulletin/family", "/visa-bulletin/categories", "/visa-bulletin/categories/[line]"]) {
+      expect(pageDate(r, { bulletin: "2099-02-02", dol: "2099-03-03" }), r).toBe("2099-02-02");
+    }
+    for (const r of [
+      "/perm-employers",
+      "/perm-attorneys",
+      "/perm-wages",
+      "/perm-employers/browse",
+      "/perm-attorneys/browse",
+      "/perm-wages/browse",
+      "/perm-employers/browse/[letter]",
+      "/perm-attorneys/browse/[letter]",
+      "/perm-wages/browse/[letter]",
+    ]) {
+      expect(pageDate(r, { corpus: "2099-04-04", dol: "2099-05-05" }), r).toBe("2099-04-04");
+    }
   });
 
   it("dates an unpublished employer by its own cases, else the sweep", () => {
