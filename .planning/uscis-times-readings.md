@@ -6,3 +6,4 @@ by the `uscis-times` session timer. One line a reading; 80% of cases completed w
 Operations. After a month of lines, set the timer's pace from how often USCIS changed them.
 
 Saturday Oct 31 2026, 12:05 PM EDT: E11 32.5, E12 15, E13 27.5, E21 3, E31 4, EW3 9, NIW 30, NUR 25.5 (months); changed: none since Sep 26 (labels matched to USCIS's: E31 "Skilled worker or professional", NUR "Schedule A Nurses")
+Monday Nov 2 2026, 11:19 AM EST: E11 32.5, E12 15, E13 27.5, E21 3, E31 4, EW3 9, NIW 30, NUR 25.5 (months); changed: none since Sep 26 (labels as Oct 31)
