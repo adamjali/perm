@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewForm, sentMotion } from "../ReviewForm";
+import { forgetLink, keepLink, keptLink } from "@/lib/reviews/keptLink";
 
 const originalFetch = global.fetch;
 
@@ -87,6 +88,38 @@ describe("ReviewForm", () => {
     await waitFor(() => expect(sent.length).toBe(1));
     expect(sent[0]!.name).toBe("");
     expect(document.getElementById("review-error-name")).toBeNull();
+  });
+
+  it("keeps the link from our email for a reload, sends it with the review, then forgets it (Nov 2 2026)", async () => {
+    // Arrange: the link arrived on an earlier load and left the address bar; this load has none.
+    vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://test.convex.cloud");
+    keepLink("sealed-link-from-our-email");
+    const sent: { path: string; body: Record<string, unknown> }[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = new URL(String(input), "https://x.test").pathname.replace(/^\/c(?=\/)/, "");
+      if (init?.method === "POST") sent.push({ path, body: JSON.parse(String(init.body)) as Record<string, unknown> });
+      if (path === "/review/prefill") return new Response(JSON.stringify({ email: "reader@example.com" }), { status: 200 });
+      return new Response(JSON.stringify({ ok: true, message: "Thanks.", reviewId: "rev1" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    // Act
+    render(<ReviewForm />);
+    await waitFor(() => expect(screen.getByRole("textbox", { name: /email/i })).toHaveValue("reader@example.com"));
+    fireEvent.click(screen.getByLabelText("5 stars"));
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+    // Assert
+    await waitFor(() => expect(sent.some((x) => x.path === "/review/submit")).toBe(true));
+    expect(sent.find((x) => x.path === "/review/submit")!.body.t).toBe("sealed-link-from-our-email");
+    expect(keptLink()).toBeNull();
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps a link that arrives in the address bar, and takes it out of the bar", async () => {
+    window.history.replaceState(null, "", "/reviews?rating=5&t=sealed-fresh-link#write");
+    render(<ReviewForm />);
+    await waitFor(() => expect(keptLink()).toBe("sealed-fresh-link"));
+    expect(window.location.search).not.toContain("t=");
+    forgetLink();
+    window.history.replaceState(null, "", "/");
   });
 });
 

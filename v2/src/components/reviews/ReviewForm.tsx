@@ -11,6 +11,7 @@ import { analytics } from "@/lib/analytics";
 import { SUPPORT_EMAIL_ADDRESS } from "@/lib/constants/externalLinks";
 import { convexSiteUrl } from "@/lib/convexSite";
 import { formText } from "@/lib/forms/formText";
+import { forgetLink, keepLink, keptLink } from "@/lib/reviews/keptLink";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { cn } from "@/lib/utils";
 import { NOTE_MAX, REVIEW_NAME_MAX, REVIEW_TEXT_MAX, type ReviewField } from "@convex/lib/siteReview";
@@ -119,7 +120,10 @@ export function ReviewForm() {
   useEffect(() => {
     shownAt.current = Date.now();
     const url = new URL(window.location.href);
-    const t = url.searchParams.get("t");
+    const fromUrl = url.searchParams.get("t");
+    // A reload, the back button or a new tab comes back without the link (it leaves the address bar below), so the
+    // browser keeps it for a day: the review still ties to the rating it follows (Nov 2 2026).
+    const t = fromUrl ?? keptLink();
     // Fill only what the reader hasn't typed already.
     const fill = (got: { name?: unknown; email?: unknown }) => {
       const n = typeof got.name === "string" ? got.name : "";
@@ -134,9 +138,12 @@ export function ReviewForm() {
     };
     if (t) {
       linkToken.current = t;
-      // The token leaves the address bar at once: it opens to an address, so it's never left to be copied.
-      url.searchParams.delete("t");
-      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      if (fromUrl) {
+        keepLink(fromUrl);
+        // The token leaves the address bar at once: it opens to an address, so it's never left to be copied.
+        url.searchParams.delete("t");
+        window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      }
       const route = convexSiteUrl("/review/prefill");
       if (!route) return;
       fetch(route, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t }) })
@@ -228,6 +235,7 @@ export function ReviewForm() {
         reviewId?: string;
       } | null;
       if (body?.ok) {
+        forgetLink();
         setSent({ name: theName, rating: stars, reviewId: typeof body.reviewId === "string" ? body.reviewId : null });
         setPhase("sent");
         analytics.capture("review_submitted", { rating: stars, prefilled, hasText: String(data.get("text") ?? "").trim().length > 0 });

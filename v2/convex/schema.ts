@@ -2404,6 +2404,12 @@ export default defineSchema({
      */
     privateNote: v.optional(v.string()),
     privateNoteAt: v.optional(v.number()),
+    /**
+     * On a waiting rating from an alert email: the same person's written review, which takes its place in the
+     * queue (Nov 2 2026). Approving that review deletes this row; declining or deleting it clears the field, so
+     * the rating waits again. Never shown publicly.
+     */
+    supersededBy: v.optional(v.id("siteReviews")),
   })
     .index("by_status_created", ["status", "createdAt"])
     .index("by_created", ["createdAt"])

@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 31, 2026
+          Effective Date: February 17, 2026 | Last Updated: November 2, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -170,7 +170,11 @@ export default function PrivacyPage() {
                 An email address, if you give one. It&apos;s never shown or
                 shared, and is used only to follow up about your review. If
                 you&apos;re signed in, or arrive from a link in our email, the
-                form fills in your name and address for you to keep or change
+                form fills in your name and address for you to keep or change.
+                A link from our email is kept in this browser for one day,
+                sealed so it can&apos;t be read there, so the form still knows
+                it&apos;s you after a reload; it&apos;s cleared once you send
+                the review
               </li>{" "}
               <li>
                 The submitting IP address, used only to limit spam and never
@@ -195,7 +199,8 @@ export default function PrivacyPage() {
                 rating. A note you add can be kept without your address. Once
                 we approve it, the rating can show on the reviews page as
                 &quot;Case alert reader&quot; with the month, never with your
-                name, address or case
+                name, address or case. If you also write a review, it takes the
+                rating&apos;s place, so you&apos;re counted once
               </li>
             </ul>{" "}
 
@@ -898,8 +903,9 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>LocalStorage:</strong> Stores preferences such as dark
-                mode settings, UI preferences, and temporary authentication state
-                during OAuth redirects
+                mode settings, UI preferences, temporary authentication state
+                during OAuth redirects, and, for one day, the sealed review link
+                from our email (see Reviews above)
               </li>{" "}
               <li>
                 <strong>Error Monitoring:</strong> Sentry’s script runs only on

@@ -249,3 +249,83 @@ describe("a rating from an alert email", () => {
     expect(await reviews(t)).toMatchObject([{ source: "alert", rating: 5, createdAt: 10, ratingId: named }]);
   });
 });
+
+/**
+ * One person counts once even when their written review and their rating arrive as two rows (owner, Nov 2 2026,
+ * after KM's rating and review both waited): the sealed link ties them whatever is typed, the rating leaves the
+ * queue the moment the words arrive, and with no address at all the owner is offered a merge.
+ */
+describe("a rating and a written review from the same person", () => {
+  const words = { rating: 5, text: "Found my case by the employer's name.", name: "Krupal", ip: "203.0.113.9", quick: false };
+
+  it("takes the waiting rating out of the queue as soon as the written review arrives", async () => {
+    // Arrange
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 5);
+    // Act
+    await t.mutation(internal.siteReviews.submit, { ...words, linkEmail: EMAIL });
+    // Assert: one entry waits, and it says what it replaces.
+    const admin = await adminAuth(t);
+    const list = await admin.query(api.siteReviews.listForAdmin, {});
+    expect(list.waiting.map((r) => r.source)).toEqual(["site"]);
+    expect(list.waiting[0]!.replaces).toMatchObject({ rating: 5 });
+    expect(await t.query(internal.siteReviews.waitingCount, {})).toHaveLength(1);
+  });
+
+  it("ties them by the sealed link even when another address is typed", async () => {
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 5);
+    await t.mutation(internal.siteReviews.submit, { ...words, email: "someone.else@example.com", linkEmail: EMAIL });
+    const rows = await reviews(t);
+    const written = rows.find((r) => r.source === "site")!;
+    expect(written.raterKey).toBe(await raterKeyFor(EMAIL));
+    expect(rows.find((r) => r.source === "alert")!.supersededBy).toBe(written._id);
+  });
+
+  it("puts the rating back in the queue when the written review is declined", async () => {
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 5);
+    await t.mutation(internal.siteReviews.submit, { ...words, linkEmail: EMAIL });
+    const admin = await adminAuth(t);
+    const written = (await reviews(t)).find((r) => r.source === "site")!;
+    await admin.mutation(api.siteReviews.decline, { id: written._id, reason: "spam" });
+    const list = await admin.query(api.siteReviews.listForAdmin, {});
+    expect(list.waiting.map((r) => r.source)).toEqual(["alert"]);
+  });
+
+  it("offers a merge when a review with no address follows a rating with the same stars, and merging counts one", async () => {
+    // Arrange: the rating, then a review sent with no address (a reload lost the link).
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 5);
+    await t.mutation(internal.siteReviews.submit, words);
+    const admin = await adminAuth(t);
+    const list = await admin.query(api.siteReviews.listForAdmin, {});
+    const written = list.waiting.find((r) => r.source === "site")!;
+    const rating = list.waiting.find((r) => r.source === "alert")!;
+    expect(written.maybeSameAs).toMatchObject({ id: rating._id, rating: 5 });
+    // Act
+    await admin.mutation(api.siteReviews.merge, { reviewId: written._id, ratingReviewId: rating._id });
+    await admin.mutation(api.siteReviews.approve, { id: written._id });
+    // Assert
+    expect((await reviews(t)).map((r) => r.source)).toEqual(["site"]);
+    expect(await tally(t)).toEqual([0, 0, 0, 0, 1]);
+  });
+
+  it("offers no merge for a different score or a rating hours away", async () => {
+    const t = createTestContext();
+    await watching(t);
+    await rate(t, 4);
+    await t.mutation(internal.siteReviews.submit, words);
+    const admin = await adminAuth(t);
+    expect((await admin.query(api.siteReviews.listForAdmin, {})).waiting.find((r) => r.source === "site")!.maybeSameAs).toBeUndefined();
+    await t.run(async (ctx) => {
+      const r = (await ctx.db.query("siteReviews").collect()).find((x) => x.source === "alert")!;
+      await ctx.db.patch(r._id, { rating: 5, createdAt: Date.now() - 5 * 3600_000 });
+    });
+    expect((await admin.query(api.siteReviews.listForAdmin, {})).waiting.find((r) => r.source === "site")!.maybeSameAs).toBeUndefined();
+  });
+});

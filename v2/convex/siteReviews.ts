@@ -132,11 +132,16 @@ export const submit = internalMutation({
     const email = args.email ?? args.linkEmail;
     const viaLink = args.linkEmail !== undefined && email === args.linkEmail;
     const name = args.name || (await unnamedLabel(ctx, args.linkEmail, email));
+    // The sealed link names the person we wrote to, whatever is typed in the box, so it's the one that ties this
+    // review to their rating (Nov 2 2026: a typed or cleared address had left the two unlinked).
+    const keyFrom = args.linkEmail ?? email;
+    const raterKey = keyFrom ? await raterKeyFor(keyFrom) : undefined;
     const reviewId = await ctx.db.insert("siteReviews", {
       rating: args.rating,
       text: args.text,
       name,
-      ...(email ? { email, raterKey: await raterKeyFor(email) } : {}),
+      ...(email ? { email } : {}),
+      ...(raterKey ? { raterKey } : {}),
       status: "pending",
       source: "site",
       createdAt: now,
@@ -144,6 +149,7 @@ export const submit = internalMutation({
       ...(viaLink ? { viaLink: true } : {}),
     });
     log.info("review stored, waiting for the owner", { rating: args.rating, hasText: args.text.length > 0, quick: args.quick, viaLink });
+    if (raterKey) await supersedeRatings(ctx, raterKey, reviewId);
     await noteWaiting(ctx);
     return { ok: true, message: THANKS, reviewId };
   },
@@ -222,6 +228,30 @@ async function adjustTally(ctx: MutationCtx, rating: number, delta: 1 | -1): Pro
 async function noteWaiting(ctx: MutationCtx): Promise<void> {
   const notice = await checkAndRecordRateLimit(ctx, "admin", "site_review_notice", NOTICE_LIMIT);
   if (notice.allowed) await ctx.scheduler.runAfter(0, internal.siteReviews.notifyOwner, {});
+}
+
+/**
+ * A written review takes the place of the same person's waiting rating in the queue: one person counts once, and
+ * the owner reads one entry. A rating already shown stays shown until the words are approved (`approve` deletes it
+ * then), so the person is never counted zero times while their review waits.
+ */
+async function supersedeRatings(ctx: MutationCtx, raterKey: string, reviewId: Id<"siteReviews">): Promise<void> {
+  const rows = await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", raterKey)).take(20);
+  for (const r of rows) {
+    if (r.source === "alert" && r.status === "pending" && r.supersededBy === undefined) {
+      await ctx.db.patch(r._id, { supersededBy: reviewId });
+      log.info("waiting rating replaced by the same person's written review", { rating: r.rating });
+    }
+  }
+}
+
+/** The written review was declined or deleted: the rating it replaced waits again. */
+async function releaseRatings(ctx: MutationCtx, review: Doc<"siteReviews">): Promise<void> {
+  if (!review.raterKey) return;
+  const rows = await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", review.raterKey)).take(20);
+  for (const r of rows) {
+    if (r.supersededBy === review._id) await ctx.db.patch(r._id, { supersededBy: undefined });
+  }
 }
 
 // ============================================================================
@@ -470,6 +500,13 @@ const adminReview = v.object({
   privateNote: v.optional(v.string()),
   /** Who tapped an alert review's stars, from its rating: for the owner only, never shown publicly. */
   rater: v.optional(v.object({ email: v.string(), caseNumber: v.string() })),
+  /** On a written review: the same person's rating it took the place of in the queue. */
+  replaces: v.optional(v.object({ rating: v.number(), createdAt: v.number() })),
+  /**
+   * On a written review that came with no address: a rating with the same stars within SAME_PERSON_WINDOW_MS,
+   * perhaps the same person on another browser. The owner decides with Merge; nothing is joined on a guess.
+   */
+  maybeSameAs: v.optional(v.object({ id: v.id("siteReviews"), rating: v.number(), createdAt: v.number(), minutes: v.number() })),
   createdAt: v.number(),
   reviewedAt: v.optional(v.number()),
 });
@@ -508,12 +545,16 @@ export const listForAdmin = query({
         scrubbed: r.scrubbedAt !== undefined,
         createdAt: r.createdAt,
         ...(r.reviewedAt !== undefined ? { reviewedAt: r.reviewedAt } : {}),
+        ...(r.source === "site" ? await samePerson(ctx, r) : {}),
       };
     };
-    const waiting = await ctx.db
-      .query("siteReviews")
-      .withIndex("by_status_created", (q) => q.eq("status", "pending"))
-      .take(ADMIN_READ);
+    // A rating replaced by the same person's written review is shown on that review, not as a second entry.
+    const waiting = (
+      await ctx.db
+        .query("siteReviews")
+        .withIndex("by_status_created", (q) => q.eq("status", "pending"))
+        .take(ADMIN_READ)
+    ).filter((r) => r.supersededBy === undefined);
     const decided = [
       ...(await ctx.db.query("siteReviews").withIndex("by_status_created", (q) => q.eq("status", "approved")).order("desc").take(ADMIN_READ)),
       ...(await ctx.db.query("siteReviews").withIndex("by_status_created", (q) => q.eq("status", "declined")).order("desc").take(ADMIN_READ)),
@@ -522,6 +563,55 @@ export const listForAdmin = query({
       waiting: await Promise.all(waiting.map(shape)),
       decided: await Promise.all(decided.slice(0, ADMIN_READ).map(shape)),
     };
+  },
+});
+
+/** How close in time a rating and a written review with no address must be for the admin page to ask. */
+export const SAME_PERSON_WINDOW_MS = 3 * 60 * 60 * 1000;
+
+/** What the admin page says about a written review's rating: the one it replaced, or one that may be the same person's. */
+async function samePerson(
+  ctx: QueryCtx,
+  r: Doc<"siteReviews">,
+): Promise<{ replaces?: { rating: number; createdAt: number }; maybeSameAs?: { id: Id<"siteReviews">; rating: number; createdAt: number; minutes: number } }> {
+  if (r.raterKey) {
+    const mine = await ctx.db.query("siteReviews").withIndex("by_rater_key", (q) => q.eq("raterKey", r.raterKey)).take(20);
+    const replaced = mine.find((x) => x.supersededBy === r._id);
+    return replaced ? { replaces: { rating: replaced.rating, createdAt: replaced.createdAt } } : {};
+  }
+  if (r.status !== "pending") return {};
+  const near = await ctx.db
+    .query("siteReviews")
+    .withIndex("by_created", (q) => q.gte("createdAt", r.createdAt - SAME_PERSON_WINDOW_MS).lte("createdAt", r.createdAt + SAME_PERSON_WINDOW_MS))
+    .take(200);
+  const match = near
+    .filter((x) => x.source === "alert" && x.rating === r.rating && x.status !== "declined" && x.supersededBy === undefined)
+    .sort((a, b) => Math.abs(a.createdAt - r.createdAt) - Math.abs(b.createdAt - r.createdAt))[0];
+  return match
+    ? { maybeSameAs: { id: match._id, rating: match.rating, createdAt: match.createdAt, minutes: Math.round(Math.abs(match.createdAt - r.createdAt) / 60_000) } }
+    : {};
+}
+
+/**
+ * The owner says a written review and a rating are one person's (offered when the review came with no address):
+ * the review takes the rating's place, as it would have had the sealed link come with it. SECURITY: requireAdmin.
+ */
+export const merge = mutation({
+  args: { reviewId: v.id("siteReviews"), ratingReviewId: v.id("siteReviews") },
+  returns: v.null(),
+  handler: async (ctx, { reviewId, ratingReviewId }) => {
+    await requireAdmin(ctx);
+    const review = await ctx.db.get(reviewId);
+    const rating = await ctx.db.get(ratingReviewId);
+    if (!review || review.source !== "site") throw new Error("That written review no longer exists.");
+    if (!rating || rating.source !== "alert") throw new Error("That rating no longer exists.");
+    if (review.status === "declined") throw new Error("That review was declined, so it can't take the rating's place.");
+    // The same key as the rating, so approving the review deletes the rating, as for any linked pair.
+    if (rating.raterKey && review.raterKey !== rating.raterKey) await ctx.db.patch(review._id, { raterKey: rating.raterKey });
+    if (review.status === "approved") await removeReview(ctx, rating._id);
+    else if (rating.status === "pending") await ctx.db.patch(rating._id, { supersededBy: review._id });
+    log.info("written review and rating joined by the owner", { review: review.status, rating: rating.status });
+    return null;
   },
 });
 
@@ -558,6 +648,7 @@ export const decline = mutation({
     if (!row) throw new Error("That review no longer exists.");
     await ctx.db.patch(id, { status: "declined", reviewedAt: Date.now(), declineReason: reason });
     if (isShown(row)) await adjustTally(ctx, row.rating, -1);
+    if (row.source === "site") await releaseRatings(ctx, row);
     log.info("review declined", { rating: row.rating, reason });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
     return null;
@@ -569,6 +660,7 @@ export async function removeReview(ctx: MutationCtx, id: Id<"siteReviews">): Pro
   const row = await ctx.db.get(id);
   if (!row) return false;
   await ctx.db.delete(id);
+  if (row.source === "site") await releaseRatings(ctx, row);
   if (isShown(row)) await adjustTally(ctx, row.rating, -1);
   log.info("review deleted", { rating: row.rating, wasShown: isShown(row), source: row.source });
   if (isShown(row)) await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
@@ -604,7 +696,8 @@ export const waitingCount = internalQuery({
       .query("siteReviews")
       .withIndex("by_status_created", (q) => q.eq("status", "pending"))
       .take(ADMIN_READ);
-    return rows.map((r) => ({ name: r.name, rating: r.rating, text: r.text }));
+    // A rating replaced by the same person's written review isn't a second thing to read.
+    return rows.filter((r) => r.supersededBy === undefined).map((r) => ({ name: r.name, rating: r.rating, text: r.text }));
   },
 });
 

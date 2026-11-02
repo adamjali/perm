@@ -62,6 +62,7 @@ function ReviewCard({ r }: { r: Row }) {
   const approve = useMutation(api.siteReviews.approve);
   const remove = useMutation(api.siteReviews.remove);
   const decline = useMutation(api.siteReviews.decline);
+  const merge = useMutation(api.siteReviews.merge);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const run = async (fn: () => Promise<unknown>) => {
@@ -127,6 +128,29 @@ function ReviewCard({ r }: { r: Row }) {
           </>
         ) : null}
       </dl>{" "}
+      {r.replaces ? (
+        <p className="mt-2 text-sm">
+          {`It replaces this person's ${r.replaces.rating}-star tap from an alert email (${when(r.replaces.createdAt)}). Approving it removes the tap, so they count once; declining it puts the tap back in the queue.`}
+        </p>
+      ) : null}{" "}
+      {r.maybeSameAs ? (
+        <div className="mt-3 border-2 border-dashed border-border p-3">
+          <p className="text-sm font-bold">Same person?</p>{" "}
+          <p className="mt-1 text-sm">
+            {`A ${r.maybeSameAs.rating}-star tap from an alert email came ${r.maybeSameAs.minutes} minutes ${
+              r.maybeSameAs.createdAt <= r.createdAt ? "before" : "after"
+            } this review, which came with no email address to tie them.`}
+          </p>{" "}
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => run(() => merge({ reviewId: id, ratingReviewId: r.maybeSameAs!.id as Id<"siteReviews"> }))}
+            className={`${BTN} mt-2 border-2 border-input`}
+          >
+            Merge: they&apos;re one person
+          </button>
+        </div>
+      ) : null}{" "}
       {r.insider ? null : (
         <div className="mt-3 flex flex-wrap gap-2">
           {r.status !== "approved" && !r.scrubbed ? (
