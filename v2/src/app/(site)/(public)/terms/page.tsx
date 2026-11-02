@@ -878,7 +878,7 @@ export default function TermsPage() {
         <div className="mt-12 text-center">
           <Link
             href="/"
-            className="underline-offset-4 hover:underline text-muted-foreground text-sm"
+            className="inline-flex min-h-11 items-center underline-offset-4 hover:underline text-muted-foreground text-sm"
           >
             &larr; Back to Home
           </Link>
