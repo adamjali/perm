@@ -10,11 +10,13 @@
  */
 
 import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import type { FunctionReturnType } from "convex/server";
 import { useState } from "react";
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { DECLINE_NOTE_MAX } from "@convex/lib/siteReview";
 import { choiceVariants } from "@/components/ui/choice";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -36,13 +38,18 @@ function when(ms: number | undefined): string {
   });
 }
 
-/** The reasons 16 CFR 465.7(b) allows for keeping a review off the site, in the owner's words. */
-const REASONS: { id: "spam" | "abusive" | "personal" | "unrelated" | "other"; label: string }[] = [
+/**
+ * The reasons 16 CFR 465.7(b) allows for keeping a review off the site, in the owner's words: each applies the same
+ * whatever the stars. "Other" asks for the owner's own words (up to DECLINE_NOTE_MAX characters).
+ */
+type Reason = "spam" | "abusive" | "personal" | "unrelated" | "duplicate" | "other";
+const REASONS: { id: Reason; label: string }[] = [
   { id: "spam", label: "Spam or fake" },
   { id: "abusive", label: "Abusive or obscene" },
   { id: "personal", label: "Someone's personal details" },
   { id: "unrelated", label: "Not about PERM Tracker" },
-  { id: "other", label: "Other lawful reason" },
+  { id: "duplicate", label: "Duplicate (same person)" },
+  { id: "other", label: "Other (say why)" },
 ];
 const REASON_LABEL = Object.fromEntries(REASONS.map((x) => [x.id, x.label])) as Record<string, string>;
 
@@ -58,6 +65,8 @@ const isPosted = (r: Row) => r.status === "approved" && !r.insider;
 
 function ReviewCard({ r }: { r: Row }) {
   const [choosing, setChoosing] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [note, setNote] = useState("");
   const [deleting, setDeleting] = useState(false);
   const approve = useMutation(api.siteReviews.approve);
   const remove = useMutation(api.siteReviews.remove);
@@ -71,7 +80,7 @@ function ReviewCard({ r }: { r: Row }) {
     try {
       await fn();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(e instanceof ConvexError ? String(e.data) : e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -124,7 +133,11 @@ function ReviewCard({ r }: { r: Row }) {
         {r.reviewedAt ? (
           <>
             <dt className="font-bold">Decided</dt>{" "}
-            <dd>{`${when(r.reviewedAt)}${r.declineReason ? `: ${REASON_LABEL[r.declineReason] ?? r.declineReason}` : ""}`}</dd>{" "}
+            <dd className="[overflow-wrap:anywhere]">
+              {`${when(r.reviewedAt)}${r.declineReason ? `: ${REASON_LABEL[r.declineReason] ?? r.declineReason}` : ""}${
+                r.declineNote ? ` ("${r.declineNote}")` : ""
+              }`}
+            </dd>{" "}
           </>
         ) : null}
       </dl>{" "}
@@ -158,9 +171,9 @@ function ReviewCard({ r }: { r: Row }) {
               Approve and show
             </button>
           ) : null}{" "}
-          {r.status !== "declined" && !choosing ? (
+          {!choosing ? (
             <button type="button" disabled={busy} onClick={() => setChoosing(true)} className={`${BTN} bg-background`}>
-              {r.status === "approved" ? "Take it down" : "Decline"}
+              {r.status === "approved" ? "Take it down" : r.status === "declined" ? "Change the reason" : "Decline"}
             </button>
           ) : null}{" "}
           {!deleting ? (
@@ -189,25 +202,69 @@ function ReviewCard({ r }: { r: Row }) {
       {choosing ? (
         <fieldset className="mt-3">
           <legend className="text-sm font-bold">Why? Never for its stars.</legend>{" "}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {REASONS.map((x) => (
-              <button
-                key={x.id}
-                type="button"
-                disabled={busy}
-                onClick={() => run(async () => {
-                  await decline({ id, reason: x.id });
+          {writing ? (
+            <form
+              className="mt-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!note.trim()) {
+                  setError("Say why in a few words.");
+                  return;
+                }
+                void run(async () => {
+                  await decline({ id, reason: "other", note: note.trim() });
                   setChoosing(false);
-                })}
-                className={`${BTN} bg-background`}
-              >
-                {x.label}
+                  setWriting(false);
+                  setNote("");
+                });
+              }}
+            >
+              <label htmlFor={`why-${id}`} className="text-sm font-bold">
+                In your words
+              </label>{" "}
+              <input
+                id={`why-${id}`}
+                type="text"
+                value={note}
+                maxLength={DECLINE_NOTE_MAX}
+                autoFocus
+                onChange={(e) => setNote(e.target.value)}
+                className="mt-1 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 text-sm"
+              />{" "}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button type="submit" disabled={busy} className={`${BTN} bg-background`}>
+                  Save
+                </button>{" "}
+                <button type="button" disabled={busy} onClick={() => setWriting(false)} className={`${BTN} bg-background`}>
+                  Back
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {REASONS.map((x) => (
+                <button
+                  key={x.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    x.id === "other"
+                      ? setWriting(true)
+                      : run(async () => {
+                          await decline({ id, reason: x.id });
+                          setChoosing(false);
+                        })
+                  }
+                  className={`${BTN} bg-background`}
+                >
+                  {x.label}
+                </button>
+              ))}{" "}
+              <button type="button" disabled={busy} onClick={() => setChoosing(false)} className={`${BTN} bg-background`}>
+                Cancel
               </button>
-            ))}{" "}
-            <button type="button" disabled={busy} onClick={() => setChoosing(false)} className={`${BTN} bg-background`}>
-              Cancel
-            </button>
-          </div>
+            </div>
+          )}
         </fieldset>
       ) : null}{" "}
       {error ? (

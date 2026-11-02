@@ -7,6 +7,8 @@
 
 export const REVIEW_TEXT_MAX = 2000;
 export const REVIEW_NAME_MAX = 80;
+/** The owner's own words on why a review was declined (Admin > Reviews, required with "other"). */
+export const DECLINE_NOTE_MAX = 200;
 /** The most a review request's body may hold, in characters: the longest review and name with room to spare. */
 export const REVIEW_BODY_MAX = 16_000;
 const EMAIL_MAX = 254;

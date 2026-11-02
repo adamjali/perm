@@ -2394,8 +2394,17 @@ export default defineSchema({
     viaLink: v.optional(v.boolean()),
     /** Why the owner declined it, from the reasons 16 CFR 465.7(b) allows. */
     declineReason: v.optional(
-      v.union(v.literal("spam"), v.literal("abusive"), v.literal("personal"), v.literal("unrelated"), v.literal("other")),
+      v.union(
+        v.literal("spam"),
+        v.literal("abusive"),
+        v.literal("personal"),
+        v.literal("unrelated"),
+        v.literal("duplicate"),
+        v.literal("other"),
+      ),
     ),
+    /** The owner's own words on why (required with "other"); deleted with the words at the 90-day scrub. */
+    declineNote: v.optional(v.string()),
     /** A declined review's words, name and email are deleted 90 days after the decision; the rating and reason stay. */
     scrubbedAt: v.optional(v.number()),
     /**

@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("convex/react", () => ({ useMutation: () => vi.fn(async () => null) }));
+const calls = vi.hoisted(() => [] as unknown[]);
+vi.mock("convex/react", () => ({ useMutation: () => vi.fn(async (args: unknown) => void calls.push(args)) }));
 
 import { ReviewsPanel, type ReviewsData } from "../ReviewsPanel";
 
@@ -62,5 +63,26 @@ describe("ReviewsPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Waiting (1)" }));
     expect(screen.getByText("Case alert reader, 5 of 5")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Decided" })).toBeNull();
+  });
+
+  it("offers duplicate, asks for words with other, and lets a declined review's reason change", async () => {
+    calls.length = 0;
+    render(<ReviewsPanel data={data} />);
+    const waiting = screen.getByRole("heading", { name: "Waiting for you: 1" }).closest("section")!;
+    fireEvent.click(within(waiting).getByRole("button", { name: "Decline" }));
+    expect(within(waiting).getByRole("button", { name: "Duplicate (same person)" })).toBeTruthy();
+    fireEvent.click(within(waiting).getByRole("button", { name: "Other (say why)" }));
+    const box = within(waiting).getByLabelText("In your words");
+    fireEvent.click(within(waiting).getByRole("button", { name: "Save" }));
+    expect(within(waiting).getByRole("alert").textContent).toBe("Say why in a few words.");
+    expect(calls).toHaveLength(0);
+    fireEvent.change(box, { target: { value: "Same person as a written review." } });
+    fireEvent.click(within(waiting).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => expect(calls).toEqual([{ id: "w1", reason: "other", note: "Same person as a written review." }]));
+
+    const declined = screen.getByText("Spam Bot, 1 of 5").closest("li")!;
+    fireEvent.click(within(declined).getByRole("button", { name: "Change the reason" }));
+    fireEvent.click(within(declined).getByRole("button", { name: "Duplicate (same person)" }));
+    await vi.waitFor(() => expect(calls[1]).toEqual({ id: "d1", reason: "duplicate" }));
   });
 });

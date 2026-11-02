@@ -20,7 +20,7 @@
  * no personal data; the owner hears of waiting reviews at most once a day.
  */
 
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -33,6 +33,7 @@ import { SITE_URL } from "./lib/links";
 import { createLogger } from "./lib/logging";
 import { sendOwnerMail } from "./lib/ownerMail";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { DECLINE_NOTE_MAX } from "./lib/siteReview";
 import { REVIEW_LINK_TTL_MS, sealEmail } from "./lib/sealedEmail";
 import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import { INSIDER_REVIEW_IDS, parseSenjaWidget, senjaTime } from "../src/lib/reviews/senjaParse";
@@ -72,8 +73,11 @@ const declineReason = v.union(
   v.literal("abusive"),
   v.literal("personal"),
   v.literal("unrelated"),
+  // The same person's review counted twice: a rule applied the same whatever the stars (16 CFR 465.7(b)).
+  v.literal("duplicate"),
   v.literal("other"),
 );
+
 
 // ============================================================================
 // The form
@@ -495,6 +499,7 @@ const adminReview = v.object({
   quick: v.boolean(),
   viaLink: v.boolean(),
   declineReason: v.optional(declineReason),
+  declineNote: v.optional(v.string()),
   scrubbed: v.boolean(),
   /** What the reviewer said could be better, after a low rating; private, never shown with the review. */
   privateNote: v.optional(v.string()),
@@ -539,6 +544,7 @@ export const listForAdmin = query({
         quick: r.quick === true,
         viaLink: r.viaLink === true,
         ...(r.declineReason ? { declineReason: r.declineReason } : {}),
+        ...(r.declineNote ? { declineNote: r.declineNote } : {}),
         ...(r.privateNote ? { privateNote: r.privateNote } : {}),
         // A rating whose reader later chose to leave their address off has none to show.
         ...(rating?.email && rating.caseNumber ? { rater: { email: rating.email, caseNumber: rating.caseNumber } } : {}),
@@ -624,7 +630,7 @@ export const approve = mutation({
     const row = await ctx.db.get(id);
     if (!row) throw new Error("That review no longer exists.");
     if (row.scrubbedAt !== undefined) throw new Error("That review's words were deleted after it was declined, so it can't be shown.");
-    await ctx.db.patch(id, { status: "approved", reviewedAt: Date.now(), declineReason: undefined });
+    await ctx.db.patch(id, { status: "approved", reviewedAt: Date.now(), declineReason: undefined, declineNote: undefined });
     if (!isShown(row) && isShown({ status: "approved", insider: row.insider })) await adjustTally(ctx, row.rating, 1);
     // One person counts once: a written review, once shown, takes the place of the same address's alert rating.
     const raterKey = row.raterKey;
@@ -638,19 +644,47 @@ export const approve = mutation({
   },
 });
 
-/** Keep a review off the site, for one of the reasons 16 CFR 465.7(b) allows; never its stars. SECURITY: requireAdmin. */
+/**
+ * Keep a review off the site, for one of the reasons 16 CFR 465.7(b) allows; never its stars. On a review already
+ * declined it changes the reason and keeps the decision's date, which the 90-day scrub counts from.
+ * SECURITY: requireAdmin.
+ */
 export const decline = mutation({
-  args: { id: v.id("siteReviews"), reason: declineReason },
+  args: { id: v.id("siteReviews"), reason: declineReason, note: v.optional(v.string()) },
   returns: v.null(),
-  handler: async (ctx, { id, reason }) => {
+  handler: async (ctx, { id, reason, note }) => {
     await requireAdmin(ctx);
     const row = await ctx.db.get(id);
     if (!row) throw new Error("That review no longer exists.");
-    await ctx.db.patch(id, { status: "declined", reviewedAt: Date.now(), declineReason: reason });
+    const words = note?.trim().slice(0, DECLINE_NOTE_MAX) || undefined;
+    if (reason === "other" && !words) throw new ConvexError("Say why in a few words.");
+    if (row.status === "declined") {
+      await ctx.db.patch(id, { declineReason: reason, declineNote: words });
+      log.info("decline reason changed", { reason });
+      return null;
+    }
+    await ctx.db.patch(id, { status: "declined", reviewedAt: Date.now(), declineReason: reason, declineNote: words });
     if (isShown(row)) await adjustTally(ctx, row.rating, -1);
     if (row.source === "site") await releaseRatings(ctx, row);
     log.info("review declined", { rating: row.rating, reason });
     await ctx.scheduler.runAfter(0, internal.siteReviews.refreshPages, {});
+    return null;
+  },
+});
+
+/**
+ * Change a declined review's reason from the command line (`npx convex run siteReviews:relabelDeclined --prod`), for a
+ * fix while the admin page that can do it waits for the night deploy. Changes nothing else.
+ */
+export const relabelDeclined = internalMutation({
+  args: { id: v.id("siteReviews"), reason: declineReason, note: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, { id, reason, note }) => {
+    const row = await ctx.db.get(id);
+    if (!row || row.status !== "declined") throw new Error("Only a declined review's reason can be changed here.");
+    const words = note?.trim().slice(0, DECLINE_NOTE_MAX) || undefined;
+    if (reason === "other" && !words) throw new Error("Say why in a few words.");
+    await ctx.db.patch(id, { declineReason: reason, declineNote: words });
     return null;
   },
 });
@@ -826,7 +860,7 @@ export const scrubDeclined = internalMutation({
       }
       reached = r.createdAt;
       if (r.scrubbedAt !== undefined || r.reviewedAt === undefined || r.reviewedAt > cutoff) continue;
-      await ctx.db.patch(r._id, { text: "", name: "", email: undefined, scrubbedAt: now });
+      await ctx.db.patch(r._id, { text: "", name: "", email: undefined, declineNote: undefined, scrubbedAt: now });
       scrubbed += 1;
       if (scrubbed >= SCRUB_BATCH) {
         more = true;

@@ -10,6 +10,7 @@ import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import { DECLINED_KEEP_MS, GLOBAL_PER_DAY, IP_LIMIT, NOTE_KEEP_MS, NOTE_WINDOW_MS, THANKS } from "../siteReviews";
 import { sealEmail } from "../lib/sealedEmail";
+import { DECLINE_NOTE_MAX } from "../lib/siteReview";
 import { buildDefaultProfile } from "../lib/userDefaults";
 import { INSIDER_REVIEW_IDS } from "../../src/lib/reviews/senjaParse";
 
@@ -200,6 +201,29 @@ describe("approving, declining and the public read", () => {
     expect((await t.run((ctx) => ctx.db.get(newer)))?.declineReason).toBe("unrelated");
   });
 
+  it("declines a duplicate, asks for words with other, and changes a decided reason without moving its date", async () => {
+    const t = createTestContext();
+    const id = await t.run((ctx) =>
+      ctx.db.insert("siteReviews", { rating: 5, text: "", name: "Case alert reader", status: "pending", source: "alert", createdAt: 1 }),
+    );
+    const admin = await adminAuth(t);
+    await expect(admin.mutation(api.siteReviews.decline, { id, reason: "other" })).rejects.toThrow(/Say why/);
+    await expect(admin.mutation(api.siteReviews.decline, { id, reason: "other", note: "   " })).rejects.toThrow(/Say why/);
+    await admin.mutation(api.siteReviews.decline, { id, reason: "other", note: "  Same person as the written review.  " });
+    const first = await t.run((ctx) => ctx.db.get(id));
+    expect(first).toMatchObject({ status: "declined", declineReason: "other", declineNote: "Same person as the written review." });
+
+    await admin.mutation(api.siteReviews.decline, { id, reason: "duplicate" });
+    const second = await t.run((ctx) => ctx.db.get(id));
+    expect(second).toMatchObject({ status: "declined", declineReason: "duplicate", reviewedAt: first?.reviewedAt });
+    expect(second?.declineNote).toBeUndefined();
+
+    await t.mutation(internal.siteReviews.relabelDeclined, { id, reason: "other", note: "x".repeat(500) });
+    expect((await t.run((ctx) => ctx.db.get(id)))?.declineNote).toHaveLength(DECLINE_NOTE_MAX);
+    const listed = await admin.query(api.siteReviews.listForAdmin, {});
+    expect(listed.decided[0]).toMatchObject({ declineReason: "other", declineNote: "x".repeat(DECLINE_NOTE_MAX) });
+  });
+
   it("lets only the admin approve, decline or list", async () => {
     const t = createTestContext();
     const id = await t.run((ctx) =>
@@ -266,7 +290,7 @@ describe("keeping nothing longer than needed", () => {
     const t = createTestContext();
     const now = Date.now();
     const old = await t.run((ctx) =>
-      ctx.db.insert("siteReviews", { rating: 1, text: "Spam text.", name: "Spammer", email: "s@example.com", status: "declined", declineReason: "spam", source: "site", createdAt: 1, reviewedAt: now - DECLINED_KEEP_MS - 1000 }),
+      ctx.db.insert("siteReviews", { rating: 1, text: "Spam text.", name: "Spammer", email: "s@example.com", status: "declined", declineReason: "spam", declineNote: "From Spammer again.", source: "site", createdAt: 1, reviewedAt: now - DECLINED_KEEP_MS - 1000 }),
     );
     const recent = await t.run((ctx) =>
       ctx.db.insert("siteReviews", { rating: 2, text: "Recent decline.", name: "Recent", status: "declined", declineReason: "other", source: "site", createdAt: 2, reviewedAt: now - 1000 }),
@@ -277,6 +301,7 @@ describe("keeping nothing longer than needed", () => {
     expect(await t.mutation(internal.siteReviews.scrubDeclined, {})).toEqual({ scrubbed: 1, notes: 0 });
     const [a, b, c] = await t.run(async (ctx) => [await ctx.db.get(old), await ctx.db.get(recent), await ctx.db.get(shown)]);
     expect(a).toMatchObject({ rating: 1, text: "", name: "", declineReason: "spam" });
+    expect(a?.declineNote).toBeUndefined();
     expect(a?.email).toBeUndefined();
     expect(b?.text).toBe("Recent decline.");
     expect(c?.text).toBe("Shown review.");
