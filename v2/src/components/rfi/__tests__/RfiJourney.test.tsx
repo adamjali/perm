@@ -25,7 +25,8 @@ describe("RfiJourney's comparison", () => {
     expect(screen.getByText("How many were certified: RFI cases against every PERM case")).toBeTruthy();
     // 45 of 60 RFI cases; 920 of 1,000 cases from Aug 26 on (the Aug 20 day is before the record).
     const block = screen.getByText("How many were certified: RFI cases against every PERM case").parentElement!;
-    const shares = [...block.querySelectorAll("dd")].map((d) => d.textContent);
+    // Each row is a term, its share, then the bar and its count (axe: a dl row holds only dt and dd).
+    const shares = [...block.querySelectorAll("dt")].map((t) => t.nextElementSibling?.textContent);
     expect(shares).toEqual(["75%", "92%"]);
     expect(screen.getByText(/of the 60 that ended since/)).toBeTruthy();
     expect(screen.getByText(/of the 1,000 that ended since/)).toBeTruthy();

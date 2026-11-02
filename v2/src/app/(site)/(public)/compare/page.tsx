@@ -149,7 +149,7 @@ export default function ComparePage() {
                     {t.slug === PERM_TRACKER.slug ? (
                       <>{t.name}{" "}<span className="block text-sm font-normal text-soft">this site</span></>
                     ) : (
-                      <a href={`#site-${t.slug}`} className="link">
+                      <a href={`#site-${t.slug}`} className="link -my-3 inline-flex min-h-11 items-center">
                         {t.name}
                       </a>
                     )}{" "}

@@ -175,15 +175,16 @@ export function RfiJourney({
           <p className="text-base font-semibold">How many were certified: RFI cases against every PERM case</p>{" "}
           <dl className="mt-2 max-w-2xl space-y-3">
             {compare.map((c) => (
-              <div key={c.label}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <dt className="text-base">{c.label}</dt>{" "}
-                  <dd className="font-heading text-2xl font-bold tabular-nums">{pct(c.share)}</dd>
-                </div>{" "}
-                <div className="mt-1 h-3 w-full bg-muted" aria-hidden="true">
-                  <div className="h-full border-r-2 border-data-good-ink bg-chart-green" style={{ width: `${c.share * 100}%` }} />
-                </div>{" "}
-                <p className="mt-1 text-sm text-muted-foreground">of the {int(c.n)} that ended{since ? ` since ${formatAsOf(since)}` : ""}</p>
+              // One row of the list: a dt and its dd's only (axe: no other element sits in a dl's row).
+              <div key={c.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
+                <dt className="text-base">{c.label}</dt>{" "}
+                <dd className="font-heading text-2xl font-bold tabular-nums">{pct(c.share)}</dd>{" "}
+                <dd className="col-span-2">
+                  <div className="mt-1 h-3 w-full bg-muted" aria-hidden="true">
+                    <div className="h-full border-r-2 border-data-good-ink bg-chart-green" style={{ width: `${c.share * 100}%` }} />
+                  </div>{" "}
+                  <span className="mt-1 block text-sm text-muted-foreground">of the {int(c.n)} that ended{since ? ` since ${formatAsOf(since)}` : ""}</span>
+                </dd>
               </div>
             ))}
           </dl>
