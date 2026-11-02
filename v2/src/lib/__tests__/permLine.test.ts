@@ -74,3 +74,13 @@ describe("permLineFrom and scripts/lib_perm_line.py give the same month", () => 
     });
   }
 });
+
+describe("the line rule's two constants", () => {
+  it("equal the site's FRONT_MIN_CASES and WORKING_BELOW", async () => {
+    const rule = await import("@convex/lib/permLine");
+    const { FRONT_MIN_CASES } = await import("@/lib/liveQueue");
+    const { WORKING_BELOW } = await import("@/lib/pwdLine");
+    expect(rule.LINE_MIN_CASES).toBe(FRONT_MIN_CASES);
+    expect(rule.LINE_WORKING_BELOW).toBe(WORKING_BELOW);
+  });
+});

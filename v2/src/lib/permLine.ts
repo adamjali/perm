@@ -10,45 +10,12 @@
  */
 
 import { formatMonth } from "@/lib/dolFormat";
-import { FRONT_MIN_CASES } from "@/lib/liveQueue";
-import { WORKING_BELOW } from "@/lib/pwdLine";
 import { formatShareOf } from "@/lib/format";
 import { longDate, monthDay } from "@convex/lib/months";
 
-export interface PermLine {
-  /** The filing month DOL is deciding now, "YYYY-MM". */
-  month: string;
-  /** That month's cases, and how many of them DOL has decided. */
-  total: number;
-  decided: number;
-  /** The day our check ran (ISO). */
-  asOf: string;
-}
-
-const MONTH = /^\d{4}-\d{2}$/;
-
-/** The line from the census matrix: null when the census doesn't reach back far enough to see it. */
-export function permLineFrom(
-  matrix: readonly { month: string; is_final: number; n: number }[],
-  asOf: string,
-): PermLine | null {
-  const months = new Map<string, { total: number; decided: number }>();
-  for (const r of matrix) {
-    if (!MONTH.test(r.month)) continue;
-    const m = months.get(r.month) ?? { total: 0, decided: 0 };
-    m.total += r.n;
-    if (r.is_final === 1) m.decided += r.n;
-    months.set(r.month, m);
-  }
-  const busy = [...months.entries()]
-    .filter(([, m]) => m.total >= FRONT_MIN_CASES)
-    .sort(([a], [b]) => (a < b ? -1 : 1));
-  const at = busy.findIndex(([, m]) => m.decided / m.total < WORKING_BELOW);
-  // The first month on record still mostly waiting: the record doesn't show where DOL is.
-  if (at <= 0) return null;
-  const [month, m] = busy[at]!;
-  return { month, total: m.total, decided: m.decided, asOf };
-}
+// The rule itself lives in convex/lib so Convex's PERM month alerts use the same one.
+export { permLineFrom, type PermLine } from "@convex/lib/permLine";
+import type { PermLine } from "@convex/lib/permLine";
 
 /**
  * The line under the month, our check first and DOL's table after it: "42% decided by our check of DOL's

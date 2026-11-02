@@ -62,7 +62,15 @@ export interface QueueReachedProps {
   queueName?: string;
   /** "filing month" for PERM, "submission month" for PWD. */
   monthNoun?: string;
+  /**
+   * Whose month it is: DOL's processing-times page ("dol", the default), or our daily check of DOL's case
+   * status ("check"), which PERM alerts use since DOL's page stopped printing a month on Oct 31 2026.
+   */
+  source?: "dol" | "check";
 }
+
+/** Where our daily check of DOL's case status draws the PERM line, month by month. */
+export const PERM_QUEUE_URL = `${SITE_URL}/perm-queue`;
 
 export function QueueReached({
   frontierMonth,
@@ -74,13 +82,19 @@ export function QueueReached({
   queueName = "PERM queue",
   monthNoun = "filing month",
   prefsUrl,
+  source = "dol",
 }: QueueReachedProps) {
   const hasMovedPast = monthsPast > 0;
   const isPwd = queueName.toLowerCase().includes("prevailing");
+  const fromCheck = source === "check";
 
   return (
     <EmailLayout
-      previewText={`The Department of Labor’s published figure, as of ${asOf}.`}
+      previewText={
+        fromCheck
+          ? `By our daily check of the Department of Labor’s case status, ${asOf}.`
+          : `The Department of Labor’s published figure, as of ${asOf}.`
+      }
       hideSettingsLink={!prefsUrl}
       settingsUrl={prefsUrl}
       settingsLabel="Email preferences"
@@ -106,15 +120,19 @@ export function QueueReached({
       */}
       <QueueStamp eyebrow="DOL has reached" month={frontierMonth}>
         <Text className="em-text-secondary" style={styles.provenance}>
-          {isPwd ? `${queueName}, as of ${asOf}` : `Analyst review, as of ${asOf}`}
+          {fromCheck
+            ? `Analyst review, by our daily check of DOL’s case status, ${asOf}`
+            : isPwd
+              ? `${queueName}, as of ${asOf}`
+              : `Analyst review, as of ${asOf}`}
         </Text>
         <Text style={styles.sourceLine}>
           <Link
-            href={DOL_PROCESSING_TIMES_URL}
+            href={fromCheck ? PERM_QUEUE_URL : DOL_PROCESSING_TIMES_URL}
             className="em-text-secondary"
             style={styles.sourceLink}
           >
-            flag.dol.gov/processingtimes
+            {fromCheck ? "permtracker.app/perm-queue" : "flag.dol.gov/processingtimes"}
           </Link>
         </Text>
       </QueueStamp>

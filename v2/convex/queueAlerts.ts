@@ -88,6 +88,9 @@ import { CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } f
 import { scaled } from "./lib/emailAllowance";
 import { isPlausibleEmail } from "./lib/emailShape";
 import { TEXT_LEGAL_LINE } from "./lib/textFooter";
+import { one } from "./lib/publicMirror";
+import { permLineFrom } from "./lib/permLine";
+import { easternDay } from "./lib/time";
 
 const log = createLogger("QueueAlerts");
 
@@ -764,6 +767,9 @@ export const notifyQueueReached = internalAction({
     frontier: v.string(),
     asOf: v.string(),
     queue: v.optional(queueValidator),
+    // Whose month `frontier` is: DOL's processing-times page (the default) or, for PERM since DOL's page
+    // stopped printing a month on Oct 31 2026, our daily check of DOL's case status (sweepPermFromCheck).
+    source: v.optional(v.union(v.literal("dol"), v.literal("check"))),
   },
   returns: v.object({ sent: v.number(), failed: v.number(), remaining: v.boolean() }),
   handler: async (
@@ -771,6 +777,7 @@ export const notifyQueueReached = internalAction({
     args,
   ): Promise<{ sent: number; failed: number; remaining: boolean }> => {
     const queue: DolQueue = args.queue ?? "perm";
+    const fromCheck = args.source === "check";
     const due = await ctx.runQuery(internal.queueAlerts.dueForAlert, {
       frontier: args.frontier,
       limit: notifyBatchLimit() + 1,
@@ -842,6 +849,7 @@ export const notifyQueueReached = internalAction({
               prefsUrl,
               queueName: label,
               monthNoun,
+              source: fromCheck ? "check" : "dol",
             });
           },
         );
@@ -867,8 +875,13 @@ export const notifyQueueReached = internalAction({
             `The Department of Labor's ${label} has reached ${frontierLabel}.`,
             `You asked to be told when it reached ${filingLabel}.`,
             "",
-            `This is DOL's own published figure, as of ${asOfLabel}, from`,
-            "https://flag.dol.gov/processingtimes",
+            ...(fromCheck
+              ? [
+                  `This is from our daily check of DOL's case status, ${asOfLabel}. DOL's own`,
+                  "processing-times page stopped printing a filing month on October 31, 2026.",
+                  `The line, month by month: ${SITE_URL}/perm-queue`,
+                ]
+              : [`This is DOL's own published figure, as of ${asOfLabel}, from`, "https://flag.dol.gov/processingtimes"]),
             "",
             // The same branch the HTML makes. "Adjudicating cases filed then"
             // is false once the frontier has run past their month.
@@ -937,5 +950,60 @@ export const notifyQueueReached = internalAction({
     }
 
     return { sent, failed, remaining };
+  },
+});
+
+/** Our check's month is used only when the census it comes from is this fresh. */
+const CHECK_MAX_AGE_DAYS = 3;
+
+/**
+ * The PERM month alerts, from our own daily check of DOL's case status.
+ *
+ * DOL's processing-times page stopped printing a filing month on Oct 31 2026, so the DOL path in
+ * dolProcessingTimes.refresh has no month to sweep against. This reads the census the sweep writes
+ * (perm_docs['live_census']) and alerts everyone whose month the line has reached, with the email naming our
+ * check as the source. It stands down while DOL's stored reading still carries a month (that path alerts), and
+ * when the census is missing, unreadable or older than CHECK_MAX_AGE_DAYS. dueForAlert only returns rows not
+ * yet told, so running it twice a day never sends one twice.
+ */
+export const sweepPermFromCheck = internalAction({
+  args: {},
+  returns: v.object({ swept: v.boolean(), reason: v.string() }),
+  handler: async (ctx): Promise<{ swept: boolean; reason: string }> => {
+    const latest = await ctx.runQuery(api.dolProcessingTimes.getLatest, {});
+    if (latest && latest.permQueues.length > 0) return { swept: false, reason: "DOL prints a month" };
+    const row = await one("SELECT json FROM perm_docs WHERE key = 'live_census'");
+    if (!row || typeof row.json !== "string") {
+      log.warn("no live census; PERM month alerts not swept from our check");
+      return { swept: false, reason: "no census" };
+    }
+    let doc: { asOf?: unknown; matrix?: unknown };
+    try {
+      doc = JSON.parse(row.json) as { asOf?: unknown; matrix?: unknown };
+    } catch {
+      log.warn("live census unreadable; PERM month alerts not swept from our check");
+      return { swept: false, reason: "census unreadable" };
+    }
+    const asOf = typeof doc.asOf === "string" ? doc.asOf.slice(0, 10) : null;
+    const matrix = Array.isArray(doc.matrix)
+      ? (doc.matrix as { month: string; is_final: number; n: number }[]).filter(
+          (r) => typeof r?.month === "string" && typeof r?.n === "number",
+        )
+      : [];
+    if (!asOf) return { swept: false, reason: "census undated" };
+    const ageDays = (Date.parse(`${easternDay()}T00:00:00Z`) - Date.parse(`${asOf}T00:00:00Z`)) / 86_400_000;
+    if (!(ageDays <= CHECK_MAX_AGE_DAYS)) {
+      log.warn("live census too old for PERM month alerts", { asOf, ageDays });
+      return { swept: false, reason: "census too old" };
+    }
+    const line = permLineFrom(matrix, asOf);
+    if (!line) return { swept: false, reason: "no line in the census" };
+    await ctx.runAction(internal.queueAlerts.notifyQueueReached, {
+      frontier: line.month,
+      asOf: line.asOf,
+      queue: "perm",
+      source: "check",
+    });
+    return { swept: true, reason: `line at ${line.month}` };
   },
 });

@@ -254,6 +254,17 @@ crons.cron(
   {}
 );
 
+// PERM month alerts from our own daily check of DOL's case status (queueAlerts.sweepPermFromCheck), since
+// DOL's page stopped printing a filing month on Oct 31 2026. After the 4:10 AM ET full sweep has rebuilt the
+// census, and again after the 3:40 PM ET pending pass. It stands down while DOL's reading carries a month, and
+// only rows not yet told are due, so a second run sends nothing twice.
+crons.cron(
+  "perm-month-alerts-from-check",
+  "20 13,22 * * *",
+  internal.queueAlerts.sweepPermFromCheck,
+  {}
+);
+
 // ============================================================================
 // PER-CASE STATUS ALERTS
 // ============================================================================
