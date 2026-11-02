@@ -52,7 +52,9 @@ FILES = {
     "15-1252.00,SD,Application Developer,N\n15-1252.00,SD,Software Engineer,Y\n15-1252.00,SD,Software Engineer,N\n",
     "task_statements.csv": "O*NET-SOC Code,Title,Task ID,Task,Task Type,Incumbents Responding,Date,Domain Source\n"
     "15-1252.00,SD,1,Low task.,Core,1,x,y\n15-1252.00,SD,2,Top task.,Core,1,x,y\n"
-    "15-1252.00,SD,3,Supplemental task.,Supplemental,1,x,y\n",
+    "15-1252.00,SD,3,Supplemental task.,Supplemental,1,x,y\n"
+    # O*NET's analysts wrote these and no worker survey rated them, so they carry no type (13-2051.00 is like this).
+    "11-1011.03,CSO,4,First untyped task.,,,x,Analyst\n11-1011.03,CSO,5,Second untyped task.,,,x,Analyst\n",
     "task_ratings.csv": "O*NET-SOC Code,Title,Task ID,Task,Scale ID,Scale Name,Category,Data Value,N,Standard Error,"
     "Lower CI Bound,Upper CI Bound,Recommend Suppress,Date,Domain Source\n"
     "15-1252.00,SD,1,Low task.,IM,Importance,,3.1,5,,,,N,x,y\n"
@@ -89,6 +91,8 @@ def main() -> int:
           d["education"], [{"level": "Bachelor's Degree", "pct": 65}, {"level": "Master's Degree", "pct": 30}])
     check("titles: shown in My Next Move first, no repeats", d["titles"], ["Software Engineer", "Application Developer"])
     check("tasks: core only, by importance", d["tasks"], ["Top task.", "Low task."])
+    check("a code with no core tasks takes its untyped ones, in O*NET's order",
+          json.loads(by["11-1011.03"][6])["tasks"], ["First untyped task.", "Second untyped task."])
     check("related: by O*NET's own order", [r["code"] for r in d["related"]], ["15-1251.00", "15-1253.00"])
     check("the zone reference carries DOL's wording", ref["jobZones"]["4"]["education"], "Bachelor's degree")
     check("no bright list loads without it", {r[0]: r for r in onet.parse(release(), None, min_occupations=6)[0]}["15-1252.00"][5], None)

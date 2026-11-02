@@ -15,7 +15,7 @@ the top tasks). "O*NET" is a trademark and is used only as an adjective.
 WHAT'S KEPT, PER O*NET-SOC CODE: title, description, Job Zone, the Bright
 Outlook categories from O*NET OnLine, and in `detail`: the education shares
 (required level, each at 5% or more), up to eight titles workers report, the
-top fifteen core tasks by rated importance, and up to six related occupations.
+top fifteen core tasks by rated importance (its untyped ones for a code with none), and up to six related occupations.
 One row per O*NET-SOC code (1,016 in release 31.0); `soc7` is the six-digit
 SOC code the site's occupation pages are keyed by. A SOC code can carry
 several O*NET codes (11-1011.00 and 11-1011.03); the page shows the `.00` one
@@ -150,10 +150,20 @@ def parse(zip_bytes: bytes, bright_rows: list[dict[str, str]] | None,
             except ValueError:
                 pass
     tasks: dict[str, list[tuple[float, str]]] = {}
+    # Tasks O*NET's analysts wrote that no worker survey has rated carry no type (13 codes in 31.0, among them
+    # 13-2051.00, Financial and Investment Analysts). A code with no core task takes those, in O*NET's own order,
+    # rather than offer no description at all; supplemental tasks are never taken.
+    untyped: dict[str, list[tuple[float, str]]] = {}
     for r in read_csv(archive, "task_statements.csv"):
-        if r.get("Task Type") != "Core":
-            continue
-        tasks.setdefault(r["O*NET-SOC Code"], []).append((importance.get(r["Task ID"], 0.0), r["Task"].strip()))
+        kind = (r.get("Task Type") or "").strip()
+        if kind == "Core":
+            tasks.setdefault(r["O*NET-SOC Code"], []).append((importance.get(r["Task ID"], 0.0), r["Task"].strip()))
+        elif not kind:
+            # A falling score keeps the file's order through the importance sort below.
+            got = untyped.setdefault(r["O*NET-SOC Code"], [])
+            got.append((-float(len(got)), r["Task"].strip()))
+    for code, rows in untyped.items():
+        tasks.setdefault(code, rows)
 
     related: dict[str, list[tuple[int, str, str]]] = {}
     for r in read_csv(archive, "related_occupations.csv"):
