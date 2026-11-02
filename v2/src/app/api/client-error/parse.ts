@@ -82,3 +82,12 @@ export function chunkFileOf(message: string): string | null {
   if (file.includes("..") || file.includes("\\") || !/^(?:chunks|css)\/[\w()[\]@.\/-]+$/.test(file)) return null;
   return file;
 }
+
+/**
+ * The build a ChunkLoadError's file belongs to, from its `?dpl=` (the deployment id Next puts on every build
+ * file), or null. A page from an older build than the live one asks for that build's files.
+ */
+export function dplOf(message: string): string | null {
+  const m = /[?&]dpl=([\w.-]{1,120})/.exec(message);
+  return m ? m[1]! : null;
+}

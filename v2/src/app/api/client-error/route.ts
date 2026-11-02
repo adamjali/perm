@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
-import { MAX_BODY, chunkFileOf, groupingKey, parseClientError } from "./parse";
+import { MAX_BODY, chunkFileOf, dplOf, groupingKey, parseClientError } from "./parse";
 
 /**
  * POST /api/client-error: an error screen's own report, sent with
@@ -17,7 +17,10 @@ import { MAX_BODY, chunkFileOf, groupingKey, parseClientError } from "./parse";
  * visitor's connection dropped it and the screen's reload cured it, so all of
  * them share one Sentry issue at warning level and alert nobody twice. A file
  * the server doesn't have is a real fault (a deploy pruned what a page still
- * uses) and stays an error of its own.
+ * uses) and stays an error of its own, unless the file belongs to an older build
+ * than the live one: a page kept open or cached for weeks asks for files the
+ * three-week prune has since removed, and the screen's reload loads the live
+ * build. Those share one warning issue too (Nov 2 2026: a run-96 page on run 445).
  */
 const PER_MINUTE = 120;
 
@@ -54,12 +57,22 @@ export async function POST(request: Request) {
   const tags = { component: report.boundary, outcome: report.outcome, ...(report.digest && { digest: report.digest }) };
   const extra = { path: report.path, stack: report.stack, ua, message: report.message };
   const file = chunkFileOf(report.message);
+  // Next bakes the live build's id into server code; a file stamped with another is an older page's.
+  const live = process.env.NEXT_DEPLOYMENT_ID || null;
+  const dpl = file ? dplOf(report.message) : null;
   if (file && onServer(file)) {
     Sentry.captureMessage("A build file didn't download on the visitor's connection (the server has it)", {
       level: "warning",
       tags: { ...tags, chunk: "on-server" },
       extra,
       fingerprint: ["client-error", "chunk-download"],
+    });
+  } else if (file && live && dpl && dpl !== live) {
+    Sentry.captureMessage("An older build's file was asked for after it was pruned (the page reloads into the live build)", {
+      level: "warning",
+      tags: { ...tags, chunk: "old-build" },
+      extra: { ...extra, dpl, live },
+      fingerprint: ["client-error", "chunk-old-build"],
     });
   } else {
     Sentry.captureMessage(`${report.boundary}: ${report.name}: ${report.message}`.slice(0, 300), {

@@ -2057,3 +2057,29 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   rating with the same stars within 3 hours shows "Same person?" with a Merge button (`siteReviews.merge`).
 - **Reviews with words show before ratings alone** on the homepage and the reviews page's rows (`wordsFirst` in
   `src/lib/reviews/rows.ts`), even when older.
+
+## Nov 2 2026 (evening): DOL stopped printing a filing month
+
+- **On Oct 31 2026 DOL's FLAG processing-times page dropped the PERM queue month.** Its PERM table is now average
+  days to a decision over the last 30, 90 and 180 days (300, 315, 360 as of 10/31/2026), labelled "Analyst Review"
+  once in the middle row; the audit row and the separate averages table are gone, and a note says audit and
+  supervised-recruitment averages aren't shown. The parser threw from Oct 31 (the hourly ingest, Convex's refresh,
+  their error emails). `parseProcessingTimes` reads both layouts: `permQueues: []` and each average with its `period`
+  (fixture `convex/lib/__fixtures__/flag-processingtimes-2026-11-02.html`).
+- **Where DOL is now comes from our own daily check** (`permLineFrom`, now in `convex/lib/permLine.ts`; the site
+  re-exports it; `scripts/lib_perm_line.py` is its Python twin, both held to `scripts/fixtures/perm_line.json`). The
+  estimator's frontier falls back to it with `from: "check"`, and anything that says "DOL publishes" reads only
+  `from !== "check"`. The PERM queue badge, llms.txt, the API (`period`), open data (a `period` column, last), the
+  straggler rates and the backtest (`line_on` over `perm_census_days`) follow.
+- **PERM month alerts fire from our check** (`queueAlerts.sweepPermFromCheck`, 13:20 and 22:20 UTC): the email names
+  our check and links /perm-queue. It stands down while DOL's stored reading carries a month, and on a census missing
+  or over 3 days old. First run (Nov 2, 4:30 PM EST): line at January 2026, nobody due (the 37 waiting filed later).
+- **A list that names an employer links its page in every program** (the wage-request, LCA and seasonal browsers,
+  the all-programs search, the day's changes, the filed-on-day lists), each slug through `keepLinkableSlugs` so a
+  name with no page stays text. PERM's status tables carry no slug: join `perm_live_recent` and `perm_cases` on
+  `case_number` (both primary keys).
+- **A build file missing on the server from an OLDER build is one quiet warning** (`/api/client-error`, `dplOf`
+  against `process.env.NEXT_DEPLOYMENT_ID`, which Next bakes into server code): a page kept open for weeks asks for
+  files the three-week prune removed, and the reload cures it. A file the live build lacks stays an error.
+- **The 1:35 AM database refresh refuses connections for a few seconds** (Sentry 5A, `ECONNREFUSED 127.0.0.1:8080`,
+  13 events in 12 days, no visitor affected): known, not yet retried with a wait.

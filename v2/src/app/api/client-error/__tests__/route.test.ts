@@ -13,7 +13,7 @@ vi.mock("@sentry/nextjs", () => ({ captureMessage: vi.fn() }));
 
 import * as Sentry from "@sentry/nextjs";
 import { POST } from "../route";
-import { chunkFileOf, groupingKey, parseClientError } from "../parse";
+import { chunkFileOf, dplOf, groupingKey, parseClientError } from "../parse";
 
 const good = { boundary: "GlobalError", outcome: "redirect-login", name: "Error", message: "Not authenticated", path: "/dashboard?case=G-100-1" };
 const post = (body: string) => POST(new Request("https://permtracker.app/api/client-error", { method: "POST", body }));
@@ -42,6 +42,11 @@ describe("groupingKey and chunkFileOf", () => {
     expect(groupingKey(a.replace("missing", "timeout"))).toBe(groupingKey(b));
     expect(groupingKey("Not authenticated")).toBe("Not authenticated");
     expect(groupingKey("Not authenticated")).not.toBe(groupingKey("Server Error"));
+  });
+
+  it("reads the build a file belongs to from its dpl", () => {
+    expect(dplOf("Loading chunk 1 failed. (missing: https://permtracker.app/_next/static/chunks/a.js?dpl=579bd05c-96)")).toBe("579bd05c-96");
+    expect(dplOf("Loading chunk 1 failed. (missing: https://permtracker.app/_next/static/chunks/a.js)")).toBeNull();
   });
 
   it("names the build file a chunk failure points at, and nothing else", () => {
@@ -91,6 +96,41 @@ describe("POST /api/client-error", () => {
     const [msg, opts] = vi.mocked(Sentry.captureMessage).mock.calls[0]!;
     expect(msg).toContain("9999-deadbeefdeadbeef.js");
     expect(opts).toMatchObject({ level: "error", tags: expect.objectContaining({ chunk: "not-on-server" }) });
+  });
+
+  it("files a pruned file from an older build than the live one under one warning", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NEXT_DEPLOYMENT_ID", "live-445");
+    try {
+      // chunkReport's files carry ?dpl=abc-1, an older build.
+      await post(JSON.stringify(chunkReport("9999-deadbeefdeadbeef.js")));
+      await post(JSON.stringify(chunkReport("8888-deadbeefdeadbeef.js")));
+      const calls = vi.mocked(Sentry.captureMessage).mock.calls;
+      expect(calls).toHaveLength(2);
+      for (const [, opts] of calls) {
+        expect(opts).toMatchObject({
+          level: "warning",
+          tags: expect.objectContaining({ chunk: "old-build" }),
+          fingerprint: ["client-error", "chunk-old-build"],
+        });
+      }
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("keeps a missing file of the live build itself as an error", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NEXT_DEPLOYMENT_ID", "abc-1");
+    try {
+      await post(JSON.stringify(chunkReport("9999-deadbeefdeadbeef.js")));
+      expect(vi.mocked(Sentry.captureMessage).mock.calls[0]![1]).toMatchObject({
+        level: "error",
+        tags: expect.objectContaining({ chunk: "not-on-server" }),
+      });
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("logs one line and sends Sentry the screen and message, never the query", async () => {
