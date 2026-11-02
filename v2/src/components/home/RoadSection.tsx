@@ -18,7 +18,7 @@ import { RoadStage, type RoadStop } from "./RoadStage";
  *   - Form ETA-9089 and its Final Determination, "Permanent Employment
  *     Certification Approval", from DOL's forms page (both expire 02/28/2029)
  *   - Forms I-140 and I-485 from uscis.gov
- *   - the October 2026 visa bulletin's employment chart, from the State
+ *   - the November 2026 visa bulletin's employment chart, from the State
  *     Department's own page (adoption.state.gov)
  *   - USCIS's specimen permanent resident card, from uscis.gov
  * Federal documents, so no licence question (17 U.S.C. 105). Each is shown
@@ -96,14 +96,14 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): RoadStop[] {
       who: "State Dept.",
       dot: "bg-stage-recruitment",
       img: {
-        src: "/images/road/visa-bulletin-oct-2026.webp",
-        alt: "The employment-based final action dates chart from the October 2026 visa bulletin",
+        src: "/images/road/visa-bulletin-nov-2026.webp",
+        alt: "The employment-based final action dates chart from the November 2026 visa bulletin",
         w: 560,
-        h: 486,
+        h: 559,
       },
       fact: "Every bulletin since October 2014",
       href: "/tools/priority-date-calculator",
-      doc: "The October 2026 visa bulletin, from the State Department",
+      doc: "The November 2026 visa bulletin, from the State Department",
       cta: "Is my date current?",
     },
     {

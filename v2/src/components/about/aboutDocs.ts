@@ -33,10 +33,10 @@ export const ABOUT_DOCS: AboutDoc[] = [
     page: "Case status search",
   },
   {
-    src: "/images/road/visa-bulletin-oct-2026.webp",
+    src: "/images/road/visa-bulletin-nov-2026.webp",
     width: 560,
-    height: 486,
-    alt: "The final action dates chart for employment-based cases in the State Department's October 2026 visa bulletin.",
+    height: 559,
+    alt: "The final action dates chart for employment-based cases in the State Department's November 2026 visa bulletin.",
     agency: "State Dept.",
     page: "Visa bulletin",
   },
