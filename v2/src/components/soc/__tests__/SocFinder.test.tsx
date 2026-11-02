@@ -50,6 +50,13 @@ describe("SocFinder", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("says it's looking on a first search, instead of a blank area", async () => {
+    params.q = "nurse";
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+    render(<SocFinder examples={[]} />);
+    expect(await screen.findByText("Looking up job codes…")).toBeInTheDocument();
+  });
+
   it("says what each code covers in O*NET's words, under its name", async () => {
     params.q = "data scientist";
     const answer = found("data scientist", "Data Scientist", "data-scientist");

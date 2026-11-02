@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CaretDownIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, CircleNotchIcon } from "@phosphor-icons/react";
 
 import { OnetCredit } from "@/components/reference/OnetCredit";
 import {
@@ -42,8 +42,30 @@ export function SocDescriptionSuggestion({
   onDescriptionChange: (value: string) => void;
   disabled?: boolean;
 }) {
-  const { data } = useSocProfile(socCode);
-  if (!data || (!data.description && !data.tasks.length)) return null;
+  const result = useSocProfile(socCode);
+  const { data } = result;
+  if (!socCode) return null;
+  // While the code's description loads, one line says so; a failed read says so with Try again (owner, Nov 2
+  // 2026: nothing loads in silence).
+  if (result.failed) {
+    return (
+      <p role="status" className="flex flex-wrap items-center gap-3 text-sm text-soft">
+        <span>The suggested description for this job code couldn&apos;t be read just now.</span>{" "}
+        <Button type="button" variant="outline" size="sm" onClick={result.retry}>
+          Try again
+        </Button>
+      </p>
+    );
+  }
+  if (!data) {
+    return (
+      <p role="status" className="flex min-h-11 items-center gap-2 text-sm text-soft">
+        <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+        Loading the suggested description for this job code…
+      </p>
+    );
+  }
+  if (!data.description && !data.tasks.length) return null;
   // A new code is a new suggestion: the key resets what was ticked and whether it's open.
   return (
     <Suggestion

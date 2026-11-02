@@ -35,7 +35,7 @@ export function NotFoundSuggestions() {
   );
 
   const family = found?.family ?? null;
-  const { suggestions } = useNameSuggestions(family?.kind ?? "all", family?.query ?? "", Boolean(family?.kind));
+  const { suggestions, loading } = useNameSuggestions(family?.kind ?? "all", family?.query ?? "", Boolean(family?.kind));
 
   if (!found) return null;
   const pages = found.pages.map((p) => ({ label: p.label, href: p.href }));
@@ -52,7 +52,7 @@ export function NotFoundSuggestions() {
             <MagnifyingGlassIcon aria-hidden="true" className="size-5" weight="bold" />
             {family.searchable ? `Search ${family.noun} for “${family.query}”` : `Every page of ${family.noun}`}
           </Link>{" "}
-          <DidYouMean className="mt-5" suggestions={nameSuggestionChips(suggestions)} />
+          <DidYouMean className="mt-5" loading={loading} suggestions={nameSuggestionChips(suggestions)} />
         </>
       ) : (
         <DidYouMean suggestions={pages} />

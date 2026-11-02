@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowsClockwiseIcon, CheckIcon, CopyIcon, TrashIcon } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon, CheckIcon, CircleNotchIcon, CopyIcon, TrashIcon } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { CharLimit } from "@/components/ui/char-limit";
@@ -81,7 +81,10 @@ export function JobDescriptionEditor({
     if (tracking && positionTitle) onPositionTitleChange(inheritedPositionTitle);
   }, [inheritedPositionTitle, tracking, positionTitle, onPositionTitleChange]);
 
-  const busy = disabled || isLoading;
+  // Only the template picker and Save need the saved templates; the words, Copy, Clear and the suggestion work
+  // while they load, and a line says they're loading (owner, Nov 2 2026: nothing greyed out in silence).
+  const busy = disabled;
+  const templatesBusy = disabled || isLoading;
   const loaded = templates.find((t) => t._id === templateId);
   const modified = Boolean(loaded && original && (shown !== original.positionTitle || description !== original.description));
   const name = shown.trim();
@@ -162,7 +165,7 @@ export function JobDescriptionEditor({
           onSelect={(t) => void handleLoad(t)}
           onDelete={hardDeleteTemplate}
           onUpdate={updateTemplate}
-          disabled={busy}
+          disabled={templatesBusy}
         />{" "}
         <Button type="button" variant="outline" onClick={() => void handleCopy()} disabled={!description || busy}>
           {isCopied ? <CheckIcon className="size-4 text-primary-text" aria-hidden="true" /> : <CopyIcon className="size-4" aria-hidden="true" />}
@@ -175,6 +178,12 @@ export function JobDescriptionEditor({
           </Button>
         ) : null}{" "}
         {loaded ? <TemplateStatusBadge isModified={modified} /> : null}
+        {isLoading ? (
+          <span role="status" className="inline-flex items-center gap-2 text-sm text-soft">
+            <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+            Loading your saved templates…
+          </span>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -235,7 +244,7 @@ export function JobDescriptionEditor({
         <TemplateSaveButton
           isExisting={Boolean(matching)}
           isSaving={isSaving}
-          disabled={!canSave || busy || isSaving}
+          disabled={!canSave || templatesBusy || isSaving}
           onClick={() => void save({ name, description }, matching)}
         />{" "}
         {name ? <TemplateTypeBadge isExisting={Boolean(matching)} /> : null}

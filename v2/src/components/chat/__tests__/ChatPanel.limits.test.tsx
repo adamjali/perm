@@ -117,4 +117,12 @@ describe('ChatPanel as a dialog', () => {
     );
     for (const radio of screen.getAllByRole('radio')) expect(radio).toBeDisabled();
   });
+
+  it('says the saved conversation is loading, not "Start a conversation"', () => {
+    const { rerender } = render(<ChatPanel {...base} status="ready" messages={[]} historyLoading />);
+    expect(screen.getByText('Loading your conversation…')).toBeInTheDocument();
+    expect(screen.queryByText('Start a conversation')).not.toBeInTheDocument();
+    rerender(<ChatPanel {...base} status="ready" messages={[]} />);
+    expect(screen.getByText('Start a conversation')).toBeInTheDocument();
+  });
 });

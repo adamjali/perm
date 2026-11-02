@@ -48,6 +48,19 @@ afterEach(() => {
 });
 
 describe("CaseMilestones (the timeline form)", () => {
+  it("says a returning visitor's saved timeline is loading, not \"Add your dates\"", async () => {
+    window.localStorage.setItem(`pt-timeline-key:${CASE}`, "a".repeat(64));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) =>
+        url.includes("/timeline/mine") ? new Promise<Response>(() => {}) : Promise.resolve(new Response("null", { status: 200 })),
+      ),
+    );
+    render(<CaseMilestones caseNumber={CASE} />);
+    expect(await screen.findByText("Loading your timeline…")).toBeInTheDocument();
+    expect(screen.queryByText("Add your dates")).toBeNull();
+  });
+
   it("renders nothing for a number that is not a PERM case", () => {
     const { container } = render(<CaseMilestones caseNumber="P-100-26125-868956" />);
     expect(container.innerHTML).toBe("");

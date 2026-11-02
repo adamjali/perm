@@ -82,6 +82,7 @@ function Editor({ start = "", startTitle = "Software Engineer", socCode, clearab
 beforeEach(() => {
   vi.clearAllMocks();
   templates.templates = [];
+  templates.isLoading = false;
   templates.saveAsNewTemplate.mockResolvedValue("template_new");
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(PROFILE))));
 });
@@ -204,7 +205,33 @@ describe("JobDescriptionEditor", () => {
   });
 });
 
+describe("while the saved templates load", () => {
+  it("lets the words be written, says the templates are loading, and holds only the picker and Save", async () => {
+    templates.isLoading = true;
+    render(<Editor />);
+    expect(screen.getByText("Loading your saved templates…")).toBeInTheDocument();
+    expect(screen.getByLabelText("Job description")).not.toBeDisabled();
+    expect(screen.getByLabelText("Position title for the job description")).not.toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Job description"), "Builds things.");
+    expect(screen.getByTestId("text").textContent).toBe("Builds things.");
+  });
+});
+
 describe("the suggestion from the SOC code", () => {
+  it("says it's loading the code's description, never blank space", async () => {
+    // A code no other test asks for, so no earlier answer is reused; an answer that hasn't come back yet.
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+    render(<Editor socCode="29-1141" />);
+    expect(await screen.findByText(/Loading the suggested description for this job code/)).toBeInTheDocument();
+  });
+
+  it("says when the code's description couldn't be read, with Try again", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 503 })));
+    render(<Editor socCode="11-1021" />);
+    expect(await screen.findByText(/couldn't be read just now/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  });
+
   it("fills an empty description with O*NET's text and every ticked task, and Undo empties it again", async () => {
     render(<Editor socCode="15-1252" />);
     expect(await screen.findByRole("heading", { name: "Suggested from SOC 15-1252, Software Developers" })).toBeInTheDocument();

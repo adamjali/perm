@@ -636,6 +636,8 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     status,
     error: localError ?? error,
     streamingContent,
+    // The saved conversation's messages are still on their way (an empty panel isn't an empty conversation).
+    historyLoading: Boolean(conversationId) && !isSigningOut && persistedMessages === undefined,
 
     // Actions
     setInput,

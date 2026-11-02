@@ -87,6 +87,8 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
   const valid = PERM_CASE.test(caseNumber);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [mine, setMine] = useState<Mine | null>(null);
+  // A returning visitor's saved dates are on their way: the heading says so instead of "Add your dates".
+  const [mineLoading, setMineLoading] = useState(false);
   const [key, setKey] = useState<string | null>(null);
   const [form, setForm] = useState<TimelineInput>(EMPTY);
   const [open, setOpen] = useState(false);
@@ -114,6 +116,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
     const url = convexSiteUrl("/timeline/mine");
     if (!k || !url) return;
     setKey(k);
+    setMineLoading(true);
     fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseNumber, key: k }) })
       .then((r) => (r.ok ? r.json() : null))
       .then((b: { mine: Mine | null } | null) => {
@@ -123,7 +126,8 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
           setOpen(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setMineLoading(false));
     // Runs once per case: the summary URL and key are derived from it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseNumber, valid]);
@@ -233,7 +237,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
       >
         <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
           <CaretRightIcon className="size-4 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
-          {mine ? "Your timeline for this case" : "Add your dates"}
+          {mine ? "Your timeline for this case" : mineLoading ? "Loading your timeline…" : "Add your dates"}
         </summary>
 
         {mine?.permCertifiedOn ? (

@@ -50,26 +50,38 @@ const LIFETIMES: { label: string; days: number | null }[] = [
   { label: "1 year", days: 365 },
 ];
 
-function Meter({ label, used, limit }: { label: string; used: number; limit: number }) {
-  const share = limit > 0 ? Math.min(1, used / limit) : 0;
+/**
+ * One usage meter. `used` is null until the count is read: it says "Loading" or "Not read", never a zero that
+ * isn't the count (owner, Nov 2 2026).
+ */
+function Meter({ label, used, limit, failed = false }: { label: string; used: number | null; limit: number; failed?: boolean }) {
+  const share = used !== null && limit > 0 ? Math.min(1, used / limit) : 0;
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
         <span className="font-semibold">{label}</span>{" "}
         <span className="font-mono tabular-nums">
-          {used.toLocaleString("en-US")} of {limit.toLocaleString("en-US")}
+          {used !== null
+            ? `${used.toLocaleString("en-US")} of ${limit.toLocaleString("en-US")}`
+            : failed
+              ? `Not read, of ${limit.toLocaleString("en-US")}`
+              : `Loading, of ${limit.toLocaleString("en-US")}`}
         </span>
       </div>
-      <div
-        className="h-3 border-input bg-muted border"
-        role="meter"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={limit}
-        aria-valuenow={used}
-      >
-        <div className={share >= 1 ? "h-full bg-destructive" : "h-full bg-primary"} style={{ width: `${share * 100}%` }} />
-      </div>
+      {used !== null ? (
+        <div
+          className="h-3 border-input bg-muted border"
+          role="meter"
+          aria-label={label}
+          aria-valuemin={0}
+          aria-valuemax={limit}
+          aria-valuenow={used}
+        >
+          <div className={share >= 1 ? "h-full bg-destructive" : "h-full bg-primary"} style={{ width: `${share * 100}%` }} />
+        </div>
+      ) : (
+        <div aria-hidden="true" className={failed ? "h-3 border border-input bg-muted" : "skeleton-pulse h-3 border border-input"} />
+      )}
     </div>
   );
 }
@@ -215,12 +227,12 @@ export default function ApiKeysSection() {
           </p>
         )}
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-          <Meter label="Calls today" used={usage?.today ?? 0} limit={plan.perDay} />
-          <Meter label="Calls this month" used={usage?.month ?? 0} limit={plan.perMonth} />
+          <Meter label="Calls today" used={usage ? usage.today : null} limit={plan.perDay} failed={usageFailed} />
+          <Meter label="Calls this month" used={usage ? usage.month : null} limit={plan.perMonth} failed={usageFailed} />
         </div>
         {usageFailed && (
           <p className="-mt-3 mb-6 text-sm text-muted-foreground">
-            Usage couldn&apos;t be read just now, so these show zero. Your keys still work.
+            Usage couldn&apos;t be read just now. Your keys still work.
           </p>
         )}
 
@@ -272,8 +284,11 @@ export default function ApiKeysSection() {
                         ? `Rotated: keeps working until ${checkedLabel(k.graceUntil)}. `
                         : ""}
                       {state === "stopped" ? "Rotated: stopped working. " : ""}
-                      {(u?.month ?? 0).toLocaleString("en-US")} calls this month
-                      {last ? `, last used ${last}` : ""}.
+                      {usage
+                        ? `${(u?.month ?? 0).toLocaleString("en-US")} calls this month${last ? `, last used ${last}` : ""}.`
+                        : usageFailed
+                          ? "This month's calls couldn't be read."
+                          : "Reading this month's calls…"}
                     </p>
                   </div>{" "}
                   <div className="flex flex-wrap gap-2">

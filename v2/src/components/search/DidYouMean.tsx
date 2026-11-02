@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 
 import { KIND_NOUN, type NameSuggestion, type SuggestKind } from "@/lib/search/suggestTypes";
 import { cn } from "@/lib/utils";
@@ -79,11 +80,22 @@ export function DidYouMean({
   suggestions,
   className,
   label = "Did you mean",
+  loading = false,
 }: {
   suggestions: Suggestion[];
   className?: string;
   label?: string;
+  /** The close names are still being looked up: one line says so, so they don't pop in unannounced. */
+  loading?: boolean;
 }) {
+  if (suggestions.length === 0 && loading) {
+    return (
+      <p className={cn("flex items-center gap-2 text-sm text-muted-foreground", className)} role="status">
+        <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+        Looking for close names…
+      </p>
+    );
+  }
   if (suggestions.length === 0) return null;
   const chip =
     "inline-flex min-h-[44px] flex-wrap items-baseline gap-x-2 gap-y-0.5 border-2 border-border bg-card px-3 py-2 text-left font-bold transition-colors hover:bg-tint";

@@ -340,7 +340,7 @@ export function FilterableStatTable<T>({
   // a filter that empties the table isn't a misspelling.
   const askSuggestions =
     pageRows.length === 0 && !remoteBusy && !remoteFailure && !remoteExtra && q.length >= 3 && activeFacets.length === 0;
-  const { suggestions: nameSuggestions } = useNameSuggestions(
+  const { suggestions: nameSuggestions, loading: nameSuggesting } = useNameSuggestions(
     suggestKind ?? "all",
     q,
     askSuggestions && suggestKind !== undefined,
@@ -615,6 +615,7 @@ export function FilterableStatTable<T>({
                 {" "}
                 <DidYouMean
                   className="mx-auto mt-4 max-w-2xl text-foreground [&_ul]:justify-center"
+                  loading={nameSuggesting}
                   suggestions={didYouMean}
                 />{" "}
                 </td>

@@ -34,12 +34,15 @@ function Picker({
   const [busy, setBusy] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(initial);
   const [searchedFor, setSearchedFor] = useState("");
+  // A failed search says so; it had looked exactly like no match.
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (chosen && text === chosen.name) return;
     const q = text.trim();
     if (q.length < 2) {
       setHits([]);
+      setFailed(false);
       return;
     }
     const t = setTimeout(async () => {
@@ -48,9 +51,11 @@ function Picker({
         const { rows } = await searchEntities("employer", q, { onlyLive: false });
         setHits(rows.slice(0, 8));
         setSearchedFor(q);
+        setFailed(false);
       } catch {
         setHits([]);
         setSearchedFor("");
+        setFailed(true);
       } finally {
         setBusy(false);
       }
@@ -60,7 +65,7 @@ function Picker({
 
   // Nothing published under that spelling: the closest published sponsors,
   // the only ones the comparison can draw.
-  const { suggestions } = useNameSuggestions(
+  const { suggestions, loading: suggesting } = useNameSuggestions(
     "employer",
     text,
     !chosen && !busy && hits.length === 0 && searchedFor !== "" && searchedFor === text.trim() && text.trim().length >= 3,
@@ -90,6 +95,16 @@ function Picker({
         className="mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       />{" "}
       {busy ? <p className="mt-2 text-sm text-muted-foreground">Searching…</p> : null}{" "}
+      {!busy && failed ? (
+        <p role="status" className="mt-2 text-sm text-muted-foreground">
+          The employers couldn&apos;t be searched just now. Keep typing, or try again in a moment.
+        </p>
+      ) : null}{" "}
+      {!busy && !failed && !chosen && hits.length === 0 && searchedFor !== "" && searchedFor === text.trim() ? (
+        <p role="status" className="mt-2 text-sm text-muted-foreground">
+          No employer matches that spelling.
+        </p>
+      ) : null}{" "}
       {!chosen && hits.length > 0 ? (
         <ul className="mt-2 border-border bg-card border">
           {hits.map((h) => (
@@ -110,6 +125,7 @@ function Picker({
       ) : null}{" "}
       <DidYouMean
         className="mt-3 text-sm"
+        loading={suggesting}
         suggestions={suggestions
           .filter((s) => s.published)
           .map((s) => ({

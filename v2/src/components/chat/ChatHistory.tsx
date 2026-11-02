@@ -23,7 +23,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Button } from '@/components/ui/button';
-import { ChatTextIcon, PlusIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
+import { ChatTextIcon, CircleNotchIcon, PlusIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Id } from '@convex/_generated/dataModel';
@@ -143,7 +143,13 @@ export function ChatHistory({
 
           {/* Conversation List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {!conversations || conversations.length === 0 ? (
+            {conversations === undefined ? (
+              // Loading is not empty: the list says so instead of "No conversations yet" (owner, Nov 2 2026).
+              <div role="status" className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+                Loading your conversations…
+              </div>
+            ) : !conversations || conversations.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <ChatTextIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">No conversations yet</p>

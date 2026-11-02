@@ -479,7 +479,7 @@ export function CaseBrowser({
   const shown: CaseRow[] = searching ? (nameHits ?? EMPTY_ROWS) : sorted;
   // A name search that found nothing: the closest employer or law firm names
   // on file, each running the search again under that name.
-  const { suggestions: nameSuggestions } = useNameSuggestions(
+  const { suggestions: nameSuggestions, loading: nameSuggesting } = useNameSuggestions(
     nameField === "attorney" ? "attorney" : "employer",
     nameQuery,
     searching && nameHits !== undefined && nameHits.length === 0 && nameQuery.length >= 3,
@@ -1051,6 +1051,7 @@ export function CaseBrowser({
             <DidYouMean
               className="mt-4"
               label={nameField === "attorney" ? "Law firms with a name close to it" : "Employers with a name close to it"}
+              loading={nameSuggesting}
               suggestions={nameSuggestions.map((e) => ({
                 label: e.name,
                 onPick: () => {

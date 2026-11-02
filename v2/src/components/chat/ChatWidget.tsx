@@ -40,6 +40,8 @@ interface ChatWidgetProps {
   onApproveConfirmation?: (toolCallId: string) => Promise<void>;
   /** Deny a pending confirmation */
   onDenyConfirmation?: (toolCallId: string) => void;
+  /** The saved conversation is still loading (passed through to ChatPanel). */
+  historyLoading?: boolean;
   /** Summary metadata for the compaction divider (passed through to ChatPanel) */
   summaryMetadata?: {
     messageCountAtSummary: number;
@@ -68,6 +70,7 @@ export function ChatWidget({
   onApproveConfirmation,
   onDenyConfirmation,
   summaryMetadata,
+  historyLoading = false,
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   // Focus goes back to the bubble when the panel closes (the bubble is
@@ -148,6 +151,7 @@ export function ChatWidget({
             onApproveConfirmation={onApproveConfirmation}
             onDenyConfirmation={onDenyConfirmation}
             summaryMetadata={summaryMetadata}
+            historyLoading={historyLoading}
           />
         )}
       </AnimatePresence>

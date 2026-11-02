@@ -2,7 +2,7 @@
 
 import { Fragment, useRef, useEffect, useId, useLayoutEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'motion/react';
-import { ArrowDownIcon, ChatTextIcon, ClockCounterClockwiseIcon as History, InfoIcon, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
+import { ArrowDownIcon, ChatTextIcon, CircleNotchIcon, ClockCounterClockwiseIcon as History, InfoIcon, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -71,6 +71,8 @@ interface ChatPanelProps {
     summary: string;
     facts?: string | null;
   };
+  /** The saved conversation is still loading: say so instead of "Start a conversation" (owner, Nov 2 2026). */
+  historyLoading?: boolean;
 }
 
 /** Within this many px of the end counts as "at the bottom". */
@@ -197,6 +199,7 @@ export function ChatPanel({
   onApproveConfirmation,
   onDenyConfirmation,
   summaryMetadata,
+  historyLoading = false,
 }: ChatPanelProps) {
   const { scrollRef, contentRef, onScroll, showJump, stick, jump, toBottom } = useStickToBottom();
   const reduceMotion = useReducedMotion();
@@ -357,7 +360,12 @@ export function ChatPanel({
         >
           {/* Always mounted, so the size watcher follows a first conversation too. */}
           <div ref={contentRef} className="min-h-full flex flex-col">
-          {messages.length === 0 ? (
+          {messages.length === 0 && historyLoading ? (
+            <div role="status" className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+              Loading your conversation…
+            </div>
+          ) : messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground">
               <ChatTextIcon className="h-12 w-12 mb-4 opacity-30" />
               <p className="text-sm">Start a conversation</p>{" "}

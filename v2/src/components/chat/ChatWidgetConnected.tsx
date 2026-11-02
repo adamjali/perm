@@ -84,6 +84,7 @@ export function ChatWidgetConnected() {
     status,
     error,
     streamingContent,
+    historyLoading,
     setInput,
     handleSend,
     startNewConversation,
@@ -219,6 +220,8 @@ export function ChatWidgetConnected() {
         getConfirmation={getConfirmation}
         onApproveConfirmation={approveConfirmation}
         onDenyConfirmation={denyConfirmation}
+        // The newest conversation is still being found, or its messages are still loading.
+        historyLoading={recentConversation === undefined || historyLoading}
         summaryMetadata={
           conversation?.summary && conversation.summary.messageCountAtSummary > 0
             ? {

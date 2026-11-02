@@ -704,7 +704,7 @@ export function UnifiedCaseSearch({
   // file, each running the search again under that name.
   const emptyNameSearch =
     searching && Boolean(data) && !data?.needsLead && data?.rows.length === 0 && query.search.trim().length >= 3;
-  const { suggestions: employerSuggestions } = useNameSuggestions("employer", query.search, emptyNameSearch);
+  const { suggestions: employerSuggestions, loading: employerSuggesting } = useNameSuggestions("employer", query.search, emptyNameSearch);
 
   // How many filters each fold holds, said on its closed summary so a set
   // filter is never hidden from the reader who set it.
@@ -1605,6 +1605,7 @@ export function UnifiedCaseSearch({
           <DidYouMean
             className="mt-4"
             label="Employers with a name close to it"
+            loading={employerSuggesting}
             suggestions={employerSuggestions.map((e) => ({
               label: e.name,
               note: `${formatInt(e.cases)} ${e.cases === 1 ? "filing" : "filings"}`,

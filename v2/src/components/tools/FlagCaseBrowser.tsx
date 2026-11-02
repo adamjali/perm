@@ -488,7 +488,7 @@ export function FlagCaseBrowser({
   const found = search ? search.cases.length + (halves?.fileOnly.length ?? 0) : 0;
   // No filing under that name: the closest employer names on file, each
   // running the search again under that name.
-  const { suggestions: employerSuggestions } = useNameSuggestions(
+  const { suggestions: employerSuggestions, loading: employerSuggesting } = useNameSuggestions(
     "employer",
     query.employer,
     searching && Boolean(search) && found === 0 && query.employer.trim().length >= 3,
@@ -686,6 +686,7 @@ export function FlagCaseBrowser({
           <DidYouMean
             className="mt-4"
             label="Employers with a name close to it"
+            loading={employerSuggesting}
             suggestions={employerSuggestions.map((e) => ({
               label: e.name,
               onPick: () => {

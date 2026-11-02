@@ -213,6 +213,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   // Get user profile to check Google Calendar connection status
   const userProfile = useQuery(api.users.currentUserProfile);
   const isGoogleConnected = userProfile?.googleCalendarConnected ?? false;
+  // Until the profile loads the connection is unknown: the button says it's checking rather than flashing "not
+  // connected" at a synced case (owner, Nov 2 2026).
+  const checkingCalendar = userProfile === undefined;
 
   // Mutations
   const removeMutation = useMutation(api.cases.remove);
@@ -528,16 +531,20 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               variant="ghost"
               size="icon"
               onClick={handleToggleCalendarSync}
-              disabled={isTogglingCalendarSync}
+              disabled={isTogglingCalendarSync || checkingCalendar}
               title={
-                caseData.calendarSyncEnabled && isGoogleConnected
+                checkingCalendar
+                  ? "Checking your Google Calendar connection"
+                  : caseData.calendarSyncEnabled && isGoogleConnected
                   ? "Synced to Google Calendar"
                   : caseData.calendarSyncEnabled
                     ? "Calendar not connected: open settings to connect it"
                     : "Not synced to Google Calendar"
               }
               aria-label={
-                caseData.calendarSyncEnabled && !isGoogleConnected
+                checkingCalendar
+                  ? "Checking your Google Calendar connection"
+                  : caseData.calendarSyncEnabled && !isGoogleConnected
                   ? "Calendar not connected: open settings"
                   : caseData.calendarSyncEnabled
                     ? "Stop syncing to Google Calendar"
@@ -545,7 +552,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               }
               aria-pressed={caseData.calendarSyncEnabled && isGoogleConnected}
             >
-              {caseData.calendarSyncEnabled && isGoogleConnected ? (
+              {checkingCalendar ? (
+                <CalendarBlankIcon className="size-5 text-muted-foreground" />
+              ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
                 <CalendarCheckIcon className="size-5 text-primary-text" />
               ) : caseData.calendarSyncEnabled ? (
                 <CalendarSlashIcon className="size-5 text-data-warn-ink" />
@@ -564,9 +573,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 border-2 shadow-hard-sm p-1 border-border" onCloseAutoFocus={(e) => e.preventDefault()}>
-                <DropdownMenuItem onSelect={handleToggleTimeline} disabled={isUpdating}>
+                <DropdownMenuItem onSelect={handleToggleTimeline} disabled={isUpdating || timelinePrefs === undefined}>
                   <ChartBarHorizontalIcon className="size-4" />
-                  {isOnTimeline ? "Remove from timeline" : "Show on timeline"}
+                  {timelinePrefs === undefined ? "Checking the timeline…" : isOnTimeline ? "Remove from timeline" : "Show on timeline"}
                 </DropdownMenuItem>
                 {isClosed ? (
                   <DropdownMenuItem onSelect={handleReopen} disabled={isUpdating}>

@@ -43,7 +43,19 @@ const ROW = "flex min-h-11 cursor-pointer items-baseline justify-between gap-3 p
 const GROUP =
   "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground";
 
-export function AppSearchPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function AppSearchPalette({
+  open,
+  onOpenChange,
+  onReady,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Called once the palette's code has loaded, so the header button can stop its spinner. */
+  onReady?: () => void;
+}) {
+  React.useEffect(() => {
+    onReady?.();
+  }, [onReady]);
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const q = query.trim();

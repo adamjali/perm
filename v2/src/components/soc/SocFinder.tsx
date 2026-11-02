@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
@@ -146,6 +147,13 @@ export function SocFinder({ examples }: { examples: { slug: string; title: strin
         {state.kind === "error" ? (
           <p role="alert" className="mt-6 border-2 border-destructive bg-card p-4 text-base">
             {state.message}
+          </p>
+        ) : null}{" "}
+        {state.kind === "loading" && !state.previous ? (
+          // A first search (or a shared ?q= link) says it's looking, never a blank area (owner, Nov 2 2026).
+          <p role="status" className="mt-6 flex items-center gap-2 text-base text-soft">
+            <CircleNotchIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 animate-spin motion-reduce:animate-none" />
+            Looking up job codes…
           </p>
         ) : null}{" "}
         {shown ? <Results found={shown} /> : null}

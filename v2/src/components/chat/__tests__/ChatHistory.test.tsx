@@ -12,7 +12,7 @@ const many = Array.from({ length: 73 }, (_, i) => ({
   title: `Conversation ${i + 1}`,
   updatedAt: Date.UTC(2026, 8, 29) - i * 60_000,
 }));
-let list: typeof many = many;
+let list: typeof many | undefined = many;
 
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(() => list),
@@ -90,5 +90,13 @@ describe('ChatHistory', () => {
     list = Array.from({ length: 200 }, (_, i) => ({ _id: `c${i}`, title: `Conversation ${i + 1}`, updatedAt: Date.UTC(2026, 8, 29) - i * 60_000 }));
     render(<ChatHistory {...props} />);
     expect(screen.getByText('Your 200 most recent conversations')).toBeInTheDocument();
+  });
+
+  it('says the list is loading, never "No conversations yet" while it loads', () => {
+    list = undefined;
+    render(<ChatHistory {...props} />);
+    expect(screen.getByText('Loading your conversations…')).toBeInTheDocument();
+    expect(screen.queryByText('No conversations yet')).not.toBeInTheDocument();
+    list = many;
   });
 });
