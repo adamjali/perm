@@ -186,6 +186,7 @@ import type * as lib_perm_validators_recruitment from "../lib/perm/validators/re
 import type * as lib_perm_validators_rfe from "../lib/perm/validators/rfe.js";
 import type * as lib_perm_validators_rfi from "../lib/perm/validators/rfi.js";
 import type * as lib_perm_validators_validateCase from "../lib/perm/validators/validateCase.js";
+import type * as lib_permLine from "../lib/permLine.js";
 import type * as lib_pipelineMatch from "../lib/pipelineMatch.js";
 import type * as lib_posthog from "../lib/posthog.js";
 import type * as lib_prefsLink from "../lib/prefsLink.js";
@@ -443,6 +444,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/validators/rfe": typeof lib_perm_validators_rfe;
   "lib/perm/validators/rfi": typeof lib_perm_validators_rfi;
   "lib/perm/validators/validateCase": typeof lib_perm_validators_validateCase;
+  "lib/permLine": typeof lib_permLine;
   "lib/pipelineMatch": typeof lib_pipelineMatch;
   "lib/posthog": typeof lib_posthog;
   "lib/prefsLink": typeof lib_prefsLink;

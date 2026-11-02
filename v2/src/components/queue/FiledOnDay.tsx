@@ -6,6 +6,7 @@ import { Fragment, useRef } from "react";
 import { Pagination } from "@/components/ui/pagination";
 import { useUrlPatch, useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { INITIAL_RE } from "@/lib/employerInitial";
+import { entityHref } from "@/lib/entityPayload";
 import { DAY_PAGE_SIZE, dayView, type DayCase } from "@/lib/filingDay";
 import { formatInt } from "@/lib/format";
 import { CASE_STATUS_FILL, caseStatusTint, prettyStatus } from "@/lib/statusTone";
@@ -107,7 +108,13 @@ export function FiledOnDay({ perm, pwd, dayLabel }: { perm: DayCase[]; pwd: DayC
                   {r.caseNumber}
                 </Link>{" "}
                 <span className="leading-snug">
-                  <span className="block font-semibold">{r.employer || "Employer not named"}</span>{" "}
+                  {r.employer && r.employerSlug ? (
+                    <Link href={entityHref("employer", r.employerSlug)} className="link block font-semibold">
+                      {r.employer}
+                    </Link>
+                  ) : (
+                    <span className="block font-semibold">{r.employer || "Employer not named"}</span>
+                  )}{" "}
                   <span className="block text-sm text-soft">{r.jobTitle}</span>
                 </span>{" "}
                 <span className={cn("justify-self-start px-2 py-1 text-sm font-semibold", fill(r.status))}>{prettyStatus(r.status)}</span>{" "}

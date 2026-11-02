@@ -35,6 +35,7 @@ import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { ISO_MONTH_RE } from "@convex/lib/months";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -209,7 +210,7 @@ function Rows({
               <td className="whitespace-nowrap px-3 py-3">
                 <CaseStatusChip status={r.status} />
               {" "}</td>
-              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
+              <td className="px-3 py-3 font-bold"><EmployerName name={r.employerName} slug={r.employerSlug} />{" "}</td>
               <td className="px-3 py-3 text-soft max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
               {withWage ? (
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:empty:hidden">
@@ -297,7 +298,7 @@ function DisclosedRows({
               <td className="whitespace-nowrap px-3 py-3">
                 <CaseStatusChip status={r.status} />
               {" "}</td>
-              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
+              <td className="px-3 py-3 font-bold"><EmployerName name={r.employerName} slug={r.employerSlug} />{" "}</td>
               <td className="px-3 py-3 text-soft">{r.jobTitle ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                 {formatWage(r.wage, r.wageUnit) ?? ""}{" "}
@@ -860,5 +861,19 @@ export function FlagCaseBrowser({
         ) : null}
       </section>
     </div>
+  );
+}
+
+/**
+ * The employer's name, linked to its page when it has one. The API clears a slug with no page
+ * (keepLinkableSlugs), so a link here never lands on a 404. 44px on a phone, the site's tap floor.
+ */
+function EmployerName({ name, slug }: { name: string | null; slug: string | null | undefined }) {
+  if (!name) return null;
+  if (!slug) return <>{name}</>;
+  return (
+    <Link href={entityHref("employer", slug)} className="link max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">
+      {name}
+    </Link>
   );
 }

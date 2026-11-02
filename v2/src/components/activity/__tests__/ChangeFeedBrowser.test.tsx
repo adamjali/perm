@@ -46,6 +46,7 @@ function change(over: Partial<CaseChange> = {}): CaseChange {
     toStatus: "CERTIFIED",
     isFinal: true,
     employerName: "Flextronics International USA, Inc.",
+    employerSlug: null,
     jobTitle: "Automation Engineer",
     filingDate: "2025-11-04",
     ...over,

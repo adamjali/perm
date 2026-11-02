@@ -10,6 +10,7 @@ import type { SortColumn, SortState } from "@/lib/tableSort";
 // runtime import of a "server-only" module.
 import type { CaseChange } from "@/lib/db/changes";
 import { PROGRAM_LABEL } from "@/lib/changeProgram";
+import { entityHref } from "@/lib/entityPayload";
 
 /**
  * Every column this table sorts on. Exported because the browser above needs
@@ -94,10 +95,16 @@ export function ChangeTable({
                 {PROGRAM_LABEL[c.program]}{" "}
               </td>
               <td className="px-3 py-3 font-bold">
-                {c.employerName ?? (
-                  <span className="font-normal text-muted-foreground">
-                    Not named in the live record yet
-                  </span>
+                {c.employerName && c.employerSlug ? (
+                  <Link href={entityHref("employer", c.employerSlug)} className="link">
+                    {c.employerName}
+                  </Link>
+                ) : (
+                  c.employerName ?? (
+                    <span className="font-normal text-muted-foreground">
+                      Not named in the live record yet
+                    </span>
+                  )
                 )}{" "}
               </td>
               <td className="px-3 py-3 text-soft">{c.jobTitle ?? ""}{" "}</td>

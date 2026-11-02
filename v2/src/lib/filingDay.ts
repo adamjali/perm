@@ -9,6 +9,8 @@ export interface DayCase {
   /** DOL's status word as it prints it. */
   status: string;
   employer: string;
+  /** The employer page's slug, or null where it has none (keepLinkableSlugs clears it). */
+  employerSlug: string | null;
   jobTitle: string;
   /** DOL has decided it. */
   final: boolean;

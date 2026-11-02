@@ -5,6 +5,7 @@ import { MAX_TITLE_FILTER } from "@/lib/db/cases";
 import { isUnsettledMiss } from "@/lib/dolMiss";
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 import { ISO_MONTH_RE } from "@convex/lib/months";
+import { keepLinkableSlugs } from "@/lib/db/entityLinks";
 
 /**
  * The GET handler for a FLAG program's cases (`/api/pwd-cases`,
@@ -70,7 +71,11 @@ export function makeFlagCasesHandler(program: FlagProgram) {
       };
       // Two halves of one answer: the live table (status, may be pending) and
       // DOL's quarterly file (decided, with the wage). The browser merges them.
-      const [cases, disclosed] = await Promise.all([program.search(args), program.searchDisclosed(args)]);
+      // Each employer slug points at its page, or is cleared where there is none, so the table links no 404.
+      const [cases, disclosed] = await Promise.all([
+        program.search(args).then((r) => keepLinkableSlugs(r)),
+        program.searchDisclosed(args).then((r) => keepLinkableSlugs(r)),
+      ]);
       return NextResponse.json(
         { cases, disclosed },
         { headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400" } },
@@ -95,8 +100,9 @@ export function makeFlagCasesHandler(program: FlagProgram) {
       visa,
       ...(Number.isFinite(rawItems) ? { numItems: Math.floor(rawItems) } : {}),
     });
-    return NextResponse.json(page, {
-      headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400" },
-    });
+    return NextResponse.json(
+      { ...page, rows: await keepLinkableSlugs(page.rows) },
+      { headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400" } },
+    );
   };
 }

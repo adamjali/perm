@@ -9,6 +9,7 @@ const mk = (i: number, over: Partial<DayCase> = {}): DayCase => ({
   caseNumber: `G-100-26015-${String(200000 + i).padStart(6, "0")}`,
   status: "ANALYST REVIEW",
   employer: `Employer ${i}`,
+  employerSlug: null,
   jobTitle: "Software Engineer",
   final: false,
   ...over,
@@ -109,5 +110,20 @@ describe("FiledOnDay", () => {
   it("says so when the day holds none of a kind", () => {
     render(<FiledOnDay perm={[]} pwd={[]} dayLabel="January 15, 2026" />);
     expect(screen.getByText("DOL's record holds none filed on January 15, 2026.")).toBeInTheDocument();
+  });
+});
+
+describe("FiledOnDay employer links", () => {
+  it("links an employer that has a page and leaves the rest as text", () => {
+    render(
+      <FiledOnDay
+        perm={[mk(1, { employer: "Acme Corp", employerSlug: "acme-corp" }), mk(2, { employer: "No Page LLC" })]}
+        pwd={[]}
+        dayLabel="x"
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Acme Corp" }).getAttribute("href")).toBe("/perm-employers/acme-corp");
+    expect(screen.queryByRole("link", { name: "No Page LLC" })).toBeNull();
+    expect(screen.getByText("No Page LLC")).toBeTruthy();
   });
 });

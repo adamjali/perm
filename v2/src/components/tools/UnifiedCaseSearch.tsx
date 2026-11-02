@@ -340,7 +340,7 @@ function PhoneRow({ r }: { r: UnifiedCase }) {
         {r.status ? <CaseStatusChip status={r.status} /> : null}
       </div>{" "}
       <p className="text-base">
-        {r.employerSlug && r.program === "perm" ? (
+        {r.employerSlug ? (
           <Link href={entityHref("employer", r.employerSlug)} className="link">
             {r.employerName ?? "Employer not given"}
           </Link>
@@ -1704,7 +1704,7 @@ export function UnifiedCaseSearch({
                       {r.status ? <CaseStatusChip status={r.status} /> : <span className="text-muted-foreground">Not given</span>}
                     {" "}</td>
                     <td className="px-3 py-3 text-sm">
-                      {r.employerSlug && r.program === "perm" ? (
+                      {r.employerSlug ? (
                         <Link
                           href={entityHref("employer", r.employerSlug)}
                           className="link"

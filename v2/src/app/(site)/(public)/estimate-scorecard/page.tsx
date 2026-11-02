@@ -250,7 +250,11 @@ export default async function EstimateScorecardPage() {
                   <tbody translate="no">
                     {sample.recent.map((r) => (
                       <tr key={`${r.caseNumber}-${r.recordedOn}`} className="border-b border-border/40">
-                        <td className="py-2 pr-3 font-mono text-sm">{`${r.caseNumber} `}</td>
+                        <td className="py-2 pr-3 font-mono text-sm">
+                          <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className="link">
+                            {r.caseNumber}
+                          </Link>{" "}
+                        </td>
                         <td className="py-2 pr-3 tabular-nums">{`${r.recordedOn} `}</td>
                         <td className="py-2 pr-3 tabular-nums">{`${r.predicted} `}</td>
                         <td className="py-2 pr-3 tabular-nums">{`${r.decidedOn} `}</td>

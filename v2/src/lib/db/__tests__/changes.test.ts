@@ -33,6 +33,9 @@ vi.mock("server-only", () => ({}));
 const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 vi.mock("../client", () => ({ rows, one: vi.fn() }));
 vi.mock("../publicData", () => ({ doc: vi.fn() }));
+// The page check for employer slugs has its own tests (entityLinks.test.ts); here it passes rows through.
+const keepLinkableSlugs = vi.fn(async <T,>(items: T[]) => items);
+vi.mock("../entityLinks", () => ({ keepLinkableSlugs }));
 
 const { getChangeCalendar, getChangeDay, getChangeActivity, DAY_ROW_CAP } =
   await import("../changes");
@@ -357,5 +360,21 @@ describe("what the feed refuses to do", () => {
     mockDb();
     expect(await getChangeDay("not-a-day")).toBeNull();
     expect(rows).not.toHaveBeenCalled();
+  });
+});
+
+describe("the employer's slug on each change", () => {
+  it("reads PERM's from the live remainder or DOL's file, and the other programs' from their own table", async () => {
+    mockDb({ rows: [{ case_number: "G-100-25308-370619", from_status: "ANALYST REVIEW", to_status: "CERTIFIED", to_final: 1, employer_name: "Acme Corp", employer_slug: "acme-corp" }] });
+    const day = await getChangeDay("2026-08-28");
+    const perm = issued().find((q) => q.includes("FROM perm_case_events e"))!;
+    expect(perm).toContain("COALESCE(lr.employer_slug, pc.employer_slug) AS employer_slug");
+    expect(perm).toContain("LEFT JOIN perm_live_recent lr ON lr.case_number = e.case_number");
+    expect(perm).toContain("LEFT JOIN perm_cases pc ON pc.case_number = e.case_number");
+    const pwd = issued().find((q) => q.includes("FROM pwd_case_events e"));
+    if (pwd) expect(pwd).toContain("s.employer_slug AS employer_slug");
+    expect(day?.changes.find((c) => c.caseNumber === "G-100-25308-370619")?.employerSlug).toBe("acme-corp");
+    // Every change goes through the page check before it reaches a table.
+    expect(keepLinkableSlugs).toHaveBeenCalled();
   });
 });

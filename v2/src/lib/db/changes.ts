@@ -72,6 +72,7 @@ import { MS_PER_DAY } from "@/lib/time";
 import { dolDayBounds, dolDayOf } from "@/lib/dolDay";
 
 import { rows } from "./client";
+import { keepLinkableSlugs } from "./entityLinks";
 // The program list and its labels are a PLAIN module: this one is
 // `server-only`, and the browser needs the same labels for its column and
 // its filter. One definition, reachable from both sides.
@@ -158,6 +159,8 @@ export interface CaseChange {
   /** True once the case has reached a status DOL does not move it out of. */
   isFinal: boolean;
   employerName: string | null;
+  /** The employer page's slug, or null where it has none (keepLinkableSlugs clears it). */
+  employerSlug: string | null;
   jobTitle: string | null;
   /** Filing date, `YYYY-MM-DD`, when the live corpus carries one. */
   filingDate: string | null;
@@ -366,11 +369,20 @@ async function dayRows(
   const drop = bulkStamps.length
     ? ` AND e.changed_at NOT IN (${bulkStamps.map(() => "?").join(", ")})`
     : "";
+  // The employer's slug, for a link to its page. PERM's status table carries none: a PERM case is in the live
+  // remainder or in DOL's published file, both keyed by case number, so the two joins are point reads.
+  const slug = program === "perm" ? "COALESCE(lr.employer_slug, pc.employer_slug)" : "s.employer_slug";
+  const slugJoins =
+    program === "perm"
+      ? `
+       LEFT JOIN perm_live_recent lr ON lr.case_number = e.case_number
+       LEFT JOIN perm_cases pc ON pc.case_number = e.case_number`
+      : "";
   return rows<Record<string, unknown>>(
     `SELECT e.case_number, e.from_status, e.to_status, e.to_final,
-            s.employer_name, s.job_title, s.filing_date
+            s.employer_name, s.job_title, s.filing_date, ${slug} AS employer_slug
        FROM ${t.events} e
-       LEFT JOIN ${t.status} s ON s.case_number = e.case_number
+       LEFT JOIN ${t.status} s ON s.case_number = e.case_number${slugJoins}
       WHERE e.changed_at >= ? AND e.changed_at < ?
         AND NOT (${expiryClause("e.")})${drop}
       ORDER BY s.employer_name IS NULL, s.employer_name, e.case_number
@@ -481,6 +493,7 @@ export async function getChangeDay(
         // rather than at each reader: an untrimmed name sorts before every
         // other employer and a search for its first word misses it.
         employerName: text(row.employer_name),
+        employerSlug: text(row.employer_slug),
         jobTitle: text(row.job_title),
         filingDate: text(row.filing_date),
       });
@@ -496,7 +509,8 @@ export async function getChangeDay(
 
   return {
     date,
-    changes: changes.slice(0, cap),
+    // Each slug pointed at its page, or cleared where there is none, so the feed links no 404.
+    changes: await keepLinkableSlugs(changes.slice(0, cap)),
     total,
     byProgram,
     transitions,
