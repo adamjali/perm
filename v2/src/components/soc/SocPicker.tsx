@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 
 import { formatShareOf } from "@/lib/format";
 import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
@@ -96,6 +97,10 @@ export function SocPicker({
   const [active, setActive] = useState(-1);
   const [picked, setPicked] = useState<SocOption | null>(null);
   const [failed, setFailed] = useState(false);
+  // While the finder answers, the list says so: a box that waits in silence reads as broken (owner, Nov 2 2026).
+  const [loading, setLoading] = useState(false);
+  // A search has answered (so an empty list means no match, not "not asked yet").
+  const [answered, setAnswered] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Leaving the box closes the list a moment later (so a click on an option lands first); coming back cancels it,
   // or a list a quick answer has just opened would be shut by the old timer.
@@ -111,11 +116,17 @@ export function SocPicker({
     const q = text.trim();
     if (q.length < MIN || q === asked.current) return;
     asked.current = q;
+    setLoading(true);
+    setAnswered(false);
+    setFailed(false);
+    setOpen(true);
     fetch(`/api/soc?q=${encodeURIComponent(q)}`)
       .then((r) => (r.ok ? (r.json() as Promise<Found>) : Promise.reject(new Error(String(r.status)))))
       .then((found) => {
         if (asked.current !== q) return;
         const next = optionsFrom(found);
+        setLoading(false);
+        setAnswered(true);
         setFailed(false);
         setOptions(next);
         setActive(next.length ? 0 : -1);
@@ -123,6 +134,7 @@ export function SocPicker({
       })
       .catch(() => {
         if (asked.current !== q) return;
+        setLoading(false);
         setFailed(true);
         setOptions([]);
         setOpen(true);
@@ -140,6 +152,9 @@ export function SocPicker({
       return;
     }
     if (text.trim().length < MIN) {
+      asked.current = "";
+      setLoading(false);
+      setAnswered(false);
       setOpen(false);
       return;
     }
@@ -184,7 +199,9 @@ export function SocPicker({
     }
   }
 
-  const showList = open && (options.length > 0 || failed);
+  // A finished search that matched nothing says so too, rather than showing no list at all.
+  const empty = answered && !loading && !failed && options.length === 0 && !picked;
+  const showList = open && (loading || options.length > 0 || failed || empty);
   return (
     <div className="relative">
       <input
@@ -213,11 +230,21 @@ export function SocPicker({
           id={listId}
           role="listbox"
           aria-label="SOC codes"
+          aria-busy={loading}
           className="absolute left-0 right-0 z-20 mt-1 max-h-80 overflow-y-auto border-2 border-border bg-card shadow-hard-sm"
         >
-          {failed ? (
+          {loading ? (
+            <li role="option" aria-selected={false} aria-disabled="true" className="flex min-h-11 items-center gap-2 px-3 py-2 text-sm text-soft">
+              <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+              Looking up job codes…
+            </li>
+          ) : failed ? (
             <li role="option" aria-selected={false} aria-disabled="true" className="px-3 py-2 text-sm text-soft">
               The job codes couldn&apos;t be read just now. Type the code itself, or try again.
+            </li>
+          ) : options.length === 0 ? (
+            <li role="option" aria-selected={false} aria-disabled="true" className="px-3 py-2 text-sm text-soft">
+              No job code matches that. Try a shorter title, or type the code itself.
             </li>
           ) : (
             options.map((o, i) => (

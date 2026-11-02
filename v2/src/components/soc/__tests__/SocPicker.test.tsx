@@ -85,6 +85,23 @@ describe("SocPicker", () => {
     expect(await screen.findByText(/couldn't be read just now/, {}, { timeout: 2000 })).toBeInTheDocument();
   });
 
+  it("says it's looking while the codes load, never a silent box", async () => {
+    // An answer that hasn't come back yet.
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+    render(<Harness />);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "nurse" } });
+    expect(await screen.findByText("Looking up job codes…", {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.getByRole("listbox")).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("says when nothing matches, instead of showing no list", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ code: null, titles: [], codes: [] }))));
+    render(<Harness />);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "zzqx" } });
+    expect(await screen.findByText(/No job code matches that/, {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.queryByText("Looking up job codes…")).toBeNull();
+  });
+
   it("asks nothing for one letter", async () => {
     const fetchSpy = vi.fn(async () => new Response(JSON.stringify(DS)));
     vi.stubGlobal("fetch", fetchSpy);
