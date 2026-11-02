@@ -5,6 +5,7 @@ import { useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { captureError } from "@/lib/sentry";
+import { isNetworkError } from "@/lib/auth/auth-errors";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { useInactivityTimeout } from "@/hooks/useInactivityTimeout";
 import { MS_PER_MINUTE } from "@/lib/time";
@@ -70,7 +71,11 @@ export default function InactivityTimeoutProvider({
       // The server session will expire on its own; the client token is
       // already cleared or will be cleared on page load.
       console.error("Inactivity sign-out error (redirecting anyway):", error);
-      captureError(error, { operation: "inactivitySignOut" });
+      // A dropped connection is the visitor's network after a long idle, not a defect: the redirect still signs
+      // them out (Sentry 56: "TypeError: network error", Chrome on a tab left idle).
+      if (!isNetworkError(error instanceof Error ? error.message : String(error))) {
+        captureError(error, { operation: "inactivitySignOut" });
+      }
     }
 
     // Hard redirect — always reached, whether signOut() succeeded or failed.

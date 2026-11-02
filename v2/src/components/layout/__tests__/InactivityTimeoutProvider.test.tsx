@@ -47,6 +47,9 @@ vi.mock("@/lib/contexts/AuthContext", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+const mockCaptureError = vi.fn();
+vi.mock("@/lib/sentry", () => ({ captureError: (...a: unknown[]) => mockCaptureError(...a) }));
+
 // Mock useInactivityTimeout hook to control warning state
 let mockIsWarningVisible = false;
 let mockOnTimeoutCallback: (() => void) | null = null;
@@ -209,6 +212,30 @@ describe("InactivityTimeoutProvider", () => {
         expect(window.location.href).toBe("/login");
       });
       expect(mockCancelSignOut).not.toHaveBeenCalled();
+    });
+
+    it("reports a failed sign-out, but not one the visitor's connection dropped (Sentry 56)", async () => {
+      // An idle tab's connection is often gone by the time the sign-out runs; the redirect signs it out anyway.
+      for (const [error, reported] of [
+        [new TypeError("network error"), false],
+        [new TypeError("Failed to fetch"), false],
+        [new Error("Sign out failed"), true],
+      ] as const) {
+        mockCaptureError.mockClear();
+        mockSignOut.mockRejectedValueOnce(error);
+        mockIsWarningVisible = true;
+        const { unmount } = renderWithTheme(
+          <InactivityTimeoutProvider>
+            <div>Content</div>
+          </InactivityTimeoutProvider>
+        );
+        await act(async () => {
+          fireEvent.click(screen.getByRole("button", { name: /log out now/i }));
+        });
+        await waitFor(() => expect(window.location.href).toBe("/login"));
+        expect(mockCaptureError.mock.calls.length > 0, error.message).toBe(reported);
+        unmount();
+      }
     });
 
     it("does not trigger signOut if already signing out", async () => {
