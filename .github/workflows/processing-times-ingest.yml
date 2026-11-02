@@ -27,6 +27,10 @@ on:
         description: "Only DOL's processing times, the visa bulletin, OFLC and DOL's newsroom (the weekday hourly pass)"
         required: false
         default: "false"
+      dol_news_back_to:
+        description: "A one-time catch-up: walk DOL's newsroom back to this day (YYYY-MM-DD), whatever is held"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -108,8 +112,9 @@ jobs:
         working-directory: v2
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          BACK_TO: ${{ inputs.dol_news_back_to }}
         run: |
-          python3 scripts/ingest_dol_news.py \
+          python3 scripts/ingest_dol_news.py ${BACK_TO:+--back-to "$BACK_TO"} \
             || python3 scripts/record_ingest_failure.py --script ingest_dol_news.py --note "DOL news releases failed"
 
       # BALCA's decisions from OALJ's caselists on www.dol.gov (found from its

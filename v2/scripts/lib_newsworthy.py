@@ -72,6 +72,7 @@ class Inputs:
     documents: list[dict] = field(default_factory=list)
     rule_documents: set[str] = field(default_factory=set)  # Register numbers the rule watch follows
     articles: dict[str, list[str]] = field(default_factory=dict)  # RIN -> the articles that follow it
+    debarments: list[dict] = field(default_factory=list)  # program, entity, start_date, end_date, first_seen_at
 
 
 def day_label(iso: str | None) -> str:
@@ -244,6 +245,24 @@ def _bulletin_items(inputs: Inputs, since_ms: int) -> list[dict]:
                         "what": (f"The {month_label(b['bulletin_month'])} visa bulletin is out; "
                                  f"this site first held it at {clock(seen)}."),
                         "source": "the State Department's visa bulletin"})
+    return out
+
+
+DEBAR_PROGRAM = {"PERM": "PERM", "H-1B": "H-1B", "H-2A": "H-2A", "H-2B": "H-2B"}
+
+
+def _debarment_items(inputs: Inputs, since_ms: int) -> list[dict]:
+    """A debarment that reached DOL's lists since the window opened (first seen by this site's ingest)."""
+    out = []
+    for d in inputs.debarments:
+        seen = int(d.get("first_seen_at") or 0)
+        if seen < since_ms:
+            continue
+        program = DEBAR_PROGRAM.get(d.get("program") or "", d.get("program") or "a visa program")
+        out.append({"kind": "debarment", "when": et_day(seen),
+                    "what": (f"DOL's {program} debarment list added {d['entity']}, barred from "
+                             f"{day_label(d.get('start_date'))} to {day_label(d.get('end_date'))}."),
+                    "source": "DOL's debarment lists"})
     return out
 
 
@@ -434,8 +453,9 @@ def newsworthy(inputs: Inputs, since_ms: int, now_ms: int) -> list[dict]:
     """Every move since `since_ms`, newest first, rules first within a day."""
     items = (_rule_items(inputs, since_ms, now_ms) + _dol_items(inputs, since_ms)
              + _bulletin_items(inputs, since_ms) + _employer_items(inputs, since_ms)
-             + _decision_items(inputs, since_ms) + _document_items(inputs, since_ms, now_ms))
-    order = {"rule": 0, "document": 1, "dol": 2, "bulletin": 3, "employer": 4, "decisions": 5}
+             + _decision_items(inputs, since_ms) + _document_items(inputs, since_ms, now_ms)
+             + _debarment_items(inputs, since_ms))
+    order = {"rule": 0, "document": 1, "debarment": 2, "dol": 3, "bulletin": 4, "employer": 5, "decisions": 6}
     items.sort(key=lambda i: (i["when"] or "", -order[i["kind"]]), reverse=True)
     return items
 
@@ -494,4 +514,12 @@ def read_inputs(db, since_ms: int) -> Inputs:
         "SELECT proposed_document FROM rule_pipeline WHERE proposed_document IS NOT NULL UNION "
         "SELECT final_document FROM rule_pipeline WHERE final_document IS NOT NULL", []) if r.get("n")}
     inputs.articles = articles_by_rin()
+    # A table without first_seen_at (before Nov 1 2026) reads as no new debarments.
+    try:
+        inputs.debarments = query_dicts(
+            db, "SELECT program, entity, start_date, end_date, first_seen_at FROM debarments WHERE first_seen_at >= ?",
+            [since_ms])
+    except Exception as exc:  # noqa: BLE001
+        if "no such" not in str(exc).lower():
+            raise
     return inputs

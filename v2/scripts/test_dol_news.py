@@ -187,6 +187,13 @@ def main() -> int:
         check("an unchanged second run writes nothing", code == 0 and len(rows(db)) == 1)
         check("the quiet run goes through record_quiet_run with written=0, no new row",
               len(quiet) == 2 and quiet[1]["written"] == 0 and len(runs(db)) == 1, str(quiet) + str(runs(db)))
+        # A walk back to a date ignores what's held and stops at the first page reaching past it.
+        f = fetcher([OCT, SEP, SEP])
+        d.run(db, fetch=f, sleep=no_sleep, back_to="2026-08-01")
+        check("a walk back reads past the releases already held", len(f.calls) == 2, str(f.calls))
+        f = fetcher([OCT, SEP, SEP])
+        d.run(db, fetch=f, sleep=no_sleep, back_to="2026-09-20")
+        check("and stops once a page reaches back past its day", len(f.calls) == 1, str(f.calls))
     finally:
         d.record_quiet_run = real_quiet
 

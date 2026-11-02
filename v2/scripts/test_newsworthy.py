@@ -208,6 +208,14 @@ def main() -> int:
           "Source: the Justice Department's releases and IER's settlements list." in words, str(words))
     check("an OCAHO case is dated by its newest order",
           any(w.startswith('OCAHO\'s newest order in "United States v. Cloudera') for w in words), str(words))
+    words = [nw.line(i) for i in nw.newsworthy(nw.Inputs(debarments=[
+        {"program": "PERM", "entity": "Acme Staffing LLC", "start_date": "2026-10-20", "end_date": "2029-10-19", "first_seen_at": seen},
+        {"program": "H-2A", "entity": "Old Farm", "start_date": "2024-01-01", "end_date": "2027-01-01", "first_seen_at": 0},
+    ]), morning, now)]
+    check("a debarment new to DOL's lists is news, with its dates",
+          "DOL's PERM debarment list added Acme Staffing LLC, barred from Oct 20, 2026 to Oct 19, 2029. "
+          "Source: DOL's debarment lists." in words, str(words))
+    check("one held before the record began isn't", not any("Old Farm" in w for w in words), str(words))
     shared = json.loads((HERE / "fixtures" / "bill_numbers.json").read_text())["cases"]
     check("bill numbers match the site's", all(nw.bill_number(k) == v for k, v in shared.items()),
           str({k: nw.bill_number(k) for k in shared}))

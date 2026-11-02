@@ -67,6 +67,7 @@ TYPE = "DOL news release"
 LABEL = "DOL newsroom"
 CADENCE = "Hourly on weekdays, and daily"
 MAX_PAGES = 4        # 80 releases, about three months of DOL's pace
+BACK_TO_PAGES = 40   # a walk back to a date (--back-to): about two years at DOL's pace
 PAGE_GAP_S = 5       # between pages: www.dol.gov refuses sustained traffic
 RETRY_WAITS = (20,)  # a 429 or 503 is asked once more, 20 s later
 
@@ -244,10 +245,14 @@ class Read:
     pages: int = 0
 
 
-def read_pages(fetch=fetch_url, sleep=time.sleep, newest_held: str | None = None) -> Read:
+def read_pages(fetch=fetch_url, sleep=time.sleep, newest_held: str | None = None,
+               back_to: str | None = None) -> Read:
+    """Newest first. An ordinary run stops at the newest release held; a walk with `back_to`
+    (YYYY-MM-DD) ignores what's held and stops once a page reaches back past that day."""
     out = Read()
     seen: set[str] = set()
-    for n in range(MAX_PAGES):
+    limit = BACK_TO_PAGES if back_to else MAX_PAGES
+    for n in range(limit):
         if n:
             sleep(PAGE_GAP_S)
         try:
@@ -273,9 +278,14 @@ def read_pages(fetch=fetch_url, sleep=time.sleep, newest_held: str | None = None
         seen.update(i["path"] for i in items)
         out.items.extend(fresh)
         oldest = min(i["day"] for i in items)
-        if not fresh or (newest_held and oldest <= newest_held):
+        if not fresh:
             return out
-    out.note = f"stopped at {MAX_PAGES} pages"
+        if back_to:
+            if oldest < back_to:
+                return out
+        elif newest_held and oldest <= newest_held:
+            return out
+    out.note = f"stopped at {limit} pages"
     return out
 
 
@@ -329,7 +339,7 @@ def finish(db, got: Read, started: float, dry_run: bool) -> int:
 
 
 def run(db=None, *, fetch=fetch_url, sleep=time.sleep, dry_run: bool = False,
-        from_file: str | None = None) -> int:
+        from_file: str | None = None, back_to: str | None = None) -> int:
     started = time.time()
     if not dry_run and db is None:
         db = Database()
@@ -340,7 +350,7 @@ def run(db=None, *, fetch=fetch_url, sleep=time.sleep, dry_run: bool = False,
         except LostStructure as e:
             got.status, got.note = "broken", str(e)
     else:
-        got = read_pages(fetch, sleep, held_newest(None if dry_run else db))
+        got = read_pages(fetch, sleep, held_newest(None if dry_run else db), back_to=back_to)
     return finish(None if dry_run else db, got, started, dry_run)
 
 
@@ -348,8 +358,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="fetch and print, write nothing")
     ap.add_argument("--from-file", help="a saved copy of the releases list (the live page or the Archive's)")
+    ap.add_argument("--back-to", help="walk back to this day (YYYY-MM-DD) whatever is held; a one-time catch-up")
     a = ap.parse_args()
-    return run(dry_run=a.dry_run, from_file=a.from_file)
+    if a.back_to and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", a.back_to):
+        ap.error("--back-to takes YYYY-MM-DD")
+    return run(dry_run=a.dry_run, from_file=a.from_file, back_to=a.back_to)
 
 
 if __name__ == "__main__":

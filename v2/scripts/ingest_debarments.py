@@ -43,7 +43,7 @@ import time
 import urllib.request
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
-from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, query_dicts, record_run, stamp_freshness, write_doc  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 
 OFLC_URL = "https://www.dol.gov/agencies/eta/foreign-labor/program-debarments"
@@ -274,18 +274,33 @@ DDL = [
 ]
 
 
+def ensure_first_seen(db: Database) -> None:
+    """The day a debarment first reached this site's table (Nov 1 2026), for the evening news check. Rows
+    held before the column existed get 0, which reads as "before the record": never news."""
+    cols = {r["name"] for r in query_dicts(db, "PRAGMA table_info(debarments)", [])}
+    if "first_seen_at" not in cols:
+        db.execute("ALTER TABLE debarments ADD COLUMN first_seen_at INTEGER")
+        db.execute("UPDATE debarments SET first_seen_at = 0 WHERE first_seen_at IS NULL")
+
+
 def write(db: Database, rows: list[dict]) -> int:
     for ddl in DDL:
         db.execute(ddl)
+    ensure_first_seen(db)
     now = int(time.time() * 1000)
     n = 0
     for r in rows:
+        # An upsert, so a row already held keeps the day it was first seen.
         db.execute(
-            "INSERT OR REPLACE INTO debarments (program, entity, entity_slug, entity_type, location, "
-            "start_date, end_date, violation, citation, source_url, fetched_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO debarments (program, entity, entity_slug, entity_type, location, "
+            "start_date, end_date, violation, citation, source_url, fetched_at, first_seen_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT (program, entity, start_date) DO UPDATE SET entity_slug = excluded.entity_slug, "
+            "entity_type = excluded.entity_type, location = excluded.location, end_date = excluded.end_date, "
+            "violation = excluded.violation, citation = excluded.citation, source_url = excluded.source_url, "
+            "fetched_at = excluded.fetched_at",
             [r["program"], r["entity"], slugify(r["entity"]), r["entity_type"], r["location"],
-             r["start_date"], r["end_date"], r["violation"], r["citation"], r["source_url"], now])
+             r["start_date"], r["end_date"], r["violation"], r["citation"], r["source_url"], now, now])
         n += 1
     return n
 

@@ -133,6 +133,28 @@ def main() -> int:
           deb.parse_long_date("January 16, 2029") == "2029-01-16" and deb.parse_short_date("3/4/2026") == "2026-03-04"
           and deb.parse_long_date("Employer") is None and deb.parse_whd_period("nonsense") == (None, None), "")
 
+    # --- the writer keeps each row's first-seen day (Nov 1 2026), on real SQLite ---
+    import time as _time
+    from lib_db import query_dicts
+    from lib_sqlite_shim import SqliteTurso
+    db = SqliteTurso()
+    # A table from before the column existed: its rows read as "before the record".
+    db.execute(deb.DDL[0])
+    db.execute("INSERT INTO debarments (program, entity, entity_slug, start_date, end_date, source_url, fetched_at) "
+               "VALUES ('PERM', 'Old Co', 'old-co', '2024-01-01', '2027-01-01', 'u', 1)")
+    row = {"program": "PERM", "entity": "New Co", "entity_type": None, "location": None, "start_date": "2026-10-20",
+           "end_date": "2029-10-19", "violation": None, "citation": None, "source_url": "u"}
+    deb.write(db, [row])
+    first = {r["entity"]: r["first_seen_at"] for r in query_dicts(db, "SELECT entity, first_seen_at FROM debarments", [])}
+    check("a row held before the column reads 0, a new one its write time",
+          int(first.get("Old Co") or -1) == 0 and int(first.get("New Co") or 0) > 0, str(first))
+    _time.sleep(0.01)
+    deb.write(db, [dict(row, end_date="2029-12-31")])
+    again = query_dicts(db, "SELECT end_date, first_seen_at, fetched_at FROM debarments WHERE entity = 'New Co'", [])
+    check("a rerun updates the row and keeps its first-seen day",
+          len(again) == 1 and again[0]["end_date"] == "2029-12-31" and again[0]["first_seen_at"] == first["New Co"]
+          and int(again[0]["fetched_at"]) > int(first["New Co"]), str(again))
+
     print(f"\n{'ALL PASS' if not failures else f'{len(failures)} FAILED'}")
     return 1 if failures else 0
 
