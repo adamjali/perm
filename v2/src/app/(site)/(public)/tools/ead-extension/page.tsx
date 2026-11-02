@@ -31,12 +31,15 @@ export const metadata: Metadata = withSocialCard({
 export const dynamic = "force-static";
 
 const FR_URL = "https://www.federalregister.gov/documents/2025/10/30/2025-19702/removal-of-the-automatic-extension-of-employment-authorization-documents";
+/** DHS's final rule, 2026-20955: it finalized the interim rule without changes, effective Oct 14 2026. */
+const FINAL_RULE_URL =
+  "https://www.federalregister.gov/documents/2026/10/14/2026-20955/removal-of-automatic-extensions-for-certain-employment-authorization-documents";
 const ECFR_URL = "https://www.ecfr.gov/current/title-8/chapter-I/subchapter-B/part-274a/subpart-B/section-274a.13";
 
 const FAQS = [
   {
     q: "What changed on October 30, 2025?",
-    a: "DHS's interim final rule at 90 FR 48799 added 8 CFR 274a.13(e): a renewal received on or after October 30, 2025 no longer extends an expiring EAD, except where a law or a TPS Federal Register notice provides one. Renewals received before that date keep the old rule in 274a.13(d), an extension of up to 540 days.",
+    a: "DHS's interim final rule at 90 FR 48799 added 8 CFR 274a.13(e): a renewal received on or after October 30, 2025 no longer extends an expiring EAD, except where a law or a TPS Federal Register notice provides one. Renewals received before that date keep the old rule in 274a.13(d), an extension of up to 540 days. DHS's final rule at 91 FR 65306, effective October 14, 2026, kept those rules without changes.",
   },
   {
     q: "Does this affect an EAD that was already extended?",
@@ -98,8 +101,11 @@ export default function EadExtensionPage() {
           <a href={ECFR_URL} rel="noopener" className="link">
             8 CFR 274a.13
           </a>{" "}
-          and limited the older paragraph (d) to renewals received before that date. DHS took comments until
-          December 1, 2025 and has published no final rule since (checked October 4, 2026).
+          and limited the older paragraph (d) to renewals received before that date. DHS&rsquo;s final rule,{" "}
+          <a href={FINAL_RULE_URL} rel="noopener" className="link">
+            91 FR 65306
+          </a>
+          , kept both without changes; it took effect October 14, 2026.
         </p>
       </section>
 

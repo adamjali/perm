@@ -16,7 +16,9 @@
  *   (Federal Register document 2025-19702, Oct 30 2025): a renewal filed on or
  *   after October 30, 2025 extends nothing, "except as otherwise provided by
  *   law ... or in an applicable Federal Register notice regarding procedures
- *   for renewing TPS-related employment documentation".
+ *   for renewing TPS-related employment documentation". DHS's final rule at
+ *   91 FR 65306 (document 2026-20955, effective Oct 14 2026) finalized it
+ *   "without changes".
  * - USCIS's category table, now on its archive (last updated Oct 29 2025):
  *   which categories qualified, and that A17, A18 and C26 also end with the
  *   I-94. TPS categories (A12, C19) follow their own Federal Register notices,
