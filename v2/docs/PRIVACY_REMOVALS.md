@@ -45,7 +45,12 @@ So a request isn't a legal obligation today. The owner has chosen to honor them 
    Eastern), when few people are reading. While Cloudflare's Under Attack Mode is on, its live check sees
    Cloudflare's 403 where it expects a 404; check from the server instead:
    `ssh permtracker 'curl -s -o /dev/null -w "%{http_code}" -H "Host: permtracker.app" http://127.0.0.1:8081/perm-employers/<slug>'`.
-   The name-suggestion index loads a few minutes after a deploy (`"warming"`); it's built from the same filtered rows.
+   The name-suggestion index loads a few minutes after a deploy (`"warming"`); it's built from the same filtered rows,
+   so check it once it's warm. **The redeploy builds main as it stands**, so a red test suite or a failing page check
+   holds the removal too: get main green first. If the tool reports the deploy failed (the setting is already saved),
+   fix main, run `gh workflow run oracle-deploy.yml -f when=now`, and once it succeeds run the tool's last two steps
+   from Python (`withhold.check_live` and `withhold.tell_indexnow`, with `withhold.affected_paths` through
+   `withhold.with_database`); they print counts, never the name.
 4. **In Search Console and Bing** (no API exists; done in Claude-in-Chrome on the owner's go). **Google Search
    Console** (the `sc-domain:permtracker.app` property): Removals > New request > Temporarily remove URL, choose
    **"Remove all URLs with this prefix"** on `https://permtracker.app/perm-employers/<slug>` (the prefix also covers
