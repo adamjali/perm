@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { handleOperationError } from "@/lib/errors";
 import {
   CaseSelectionModal,
   type CaseForSelection,
@@ -152,7 +153,35 @@ export function CalendarFilters({
   const [isFiltersExpanded, setIsFiltersExpanded] = React.useState(false);
 
   // Mutation for persisting preferences
-  const updatePreferences = useMutation(api.calendar.updateCalendarPreferences);
+  // The filter shows the change at once (it had waited for the server before a checkbox moved), and a failed
+  // save puts it back and says so.
+  const saveCalendarPreferences = useMutation(api.calendar.updateCalendarPreferences).withOptimisticUpdate(
+    (store, args) => {
+      const current = store.getQuery(api.calendar.getCalendarPreferences, {});
+      if (!current) return;
+      store.setQuery(api.calendar.getCalendarPreferences, {}, {
+        ...current,
+        ...(args.hiddenCases !== undefined ? { hiddenCases: args.hiddenCases } : {}),
+        ...(args.hiddenDeadlineTypes !== undefined ? { hiddenDeadlineTypes: args.hiddenDeadlineTypes } : {}),
+        ...(args.showCompleted !== undefined ? { showCompleted: args.showCompleted } : {}),
+        ...(args.showClosed !== undefined ? { showClosed: args.showClosed } : {}),
+      });
+    },
+  );
+  const updatePreferences = React.useCallback(
+    async (args: Parameters<typeof saveCalendarPreferences>[0]) => {
+      try {
+        await saveCalendarPreferences(args);
+      } catch (error) {
+        handleOperationError(error, {
+          userMessage: "Couldn’t save the calendar filter. Try again.",
+          context: { operation: "updateCalendarPreferences" },
+        });
+        throw error;
+      }
+    },
+    [saveCalendarPreferences],
+  );
 
   // Calculate selected cases (inverse of hidden)
   const selectedCaseIds = React.useMemo(() => {
@@ -202,7 +231,7 @@ export function CalendarFilters({
         newHiddenTypes = [...hiddenDeadlineTypes, type];
       }
 
-      await updatePreferences({ hiddenDeadlineTypes: newHiddenTypes });
+      await updatePreferences({ hiddenDeadlineTypes: newHiddenTypes }).catch(() => undefined);
     },
     [hiddenDeadlineTypes, updatePreferences]
   );
@@ -230,7 +259,7 @@ export function CalendarFilters({
         newHiddenTypes = Array.from(currentHiddenSet) as DeadlineType[];
       }
 
-      await updatePreferences({ hiddenDeadlineTypes: newHiddenTypes });
+      await updatePreferences({ hiddenDeadlineTypes: newHiddenTypes }).catch(() => undefined);
     },
     [hiddenDeadlineTypes, updatePreferences]
   );

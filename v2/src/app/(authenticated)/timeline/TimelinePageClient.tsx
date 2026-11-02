@@ -8,6 +8,7 @@ import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useKeptWhileLoading } from "@/hooks/useKeptWhileLoading";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
@@ -16,6 +17,7 @@ import { TimelineLegendCompact } from "@/components/timeline/TimelineLegend";
 import { CaseSelectionModal, type CaseForSelection } from "@/components/timeline/CaseSelectionModal";
 import { PageHeading } from "../components/PageHeading";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
+import { handleOperationError } from "@/lib/errors";
 
 /**
  * The timeline while it loads, in the page's own frame: the controls row and
@@ -68,16 +70,26 @@ export function TimelinePageClient() {
   // Waits for the saved range: asking with the default 6 first meant anyone
   // who had saved a different range loaded the timeline twice, the first
   // answer thrown away.
-  const cases = useQuery(
-    api.timeline.getCasesForTimeline,
-    preferences === undefined ? "skip" : { timeRange },
+  // A new range asks again; the timeline keeps its rows, dimmed, until the answer lands (it had gone back to
+  // the whole loading screen).
+  const { value: cases, refreshing } = useKeptWhileLoading(
+    useQuery(api.timeline.getCasesForTimeline, preferences === undefined ? "skip" : { timeRange }),
   );
 
   // Query ALL cases for the selection modal (unfiltered)
   const allCasesRaw = useQuery(api.cases.list, {});
 
   // Mutation to update preferences
-  const updatePreferences = useMutation(api.timeline.updatePreferences);
+  // The range and the selection show at once; a failed save puts them back and says so.
+  const updatePreferences = useMutation(api.timeline.updatePreferences).withOptimisticUpdate((store, args) => {
+    const current = store.getQuery(api.timeline.getPreferences, {});
+    if (!current) return;
+    store.setQuery(api.timeline.getPreferences, {}, {
+      ...current,
+      ...(args.timeRange !== undefined ? { timeRange: args.timeRange } : {}),
+      ...(args.selectedCaseIds !== undefined ? { selectedCaseIds: args.selectedCaseIds } : {}),
+    });
+  });
 
   // Transform raw cases to CaseForSelection format
   const allCasesForSelection: CaseForSelection[] = useMemo(() => {
@@ -110,7 +122,14 @@ export function TimelinePageClient() {
   // Handle time range change
   const handleTimeRangeChange = useCallback(
     async (newTimeRange: 3 | 6 | 12 | 24) => {
-      await updatePreferences({ timeRange: newTimeRange });
+      try {
+        await updatePreferences({ timeRange: newTimeRange });
+      } catch (error) {
+        handleOperationError(error, {
+          userMessage: "Couldn’t change the timeline's range. Try again.",
+          context: { operation: "saveTimelineRange" },
+        });
+      }
     },
     [updatePreferences]
   );
@@ -138,12 +157,20 @@ export function TimelinePageClient() {
         activeCaseIds.every((id) => newSelectedIds.includes(id));
 
       // Empty array or all active cases selected = save as null (show all active)
-      if (newSelectedIds.length === 0 || isAllActiveSelected) {
-        await updatePreferences({ selectedCaseIds: null });
-      } else {
-        await updatePreferences({
-          selectedCaseIds: newSelectedIds as Id<"cases">[],
+      try {
+        if (newSelectedIds.length === 0 || isAllActiveSelected) {
+          await updatePreferences({ selectedCaseIds: null });
+        } else {
+          await updatePreferences({
+            selectedCaseIds: newSelectedIds as Id<"cases">[],
+          });
+        }
+      } catch (error) {
+        handleOperationError(error, {
+          userMessage: "Couldn’t save the case selection. Try again.",
+          context: { operation: "saveTimelineSelection" },
         });
+        throw error;
       }
       setCaseSelectorOpen(false);
     },
@@ -260,6 +287,7 @@ export function TimelinePageClient() {
           isOpen={caseSelectorOpen}
           onClose={closeCaseSelector}
           allCases={allCasesForSelection}
+          loading={allCasesRaw === undefined}
           selectedIds={selectedIds}
           onSelectionChange={handleSaveSelection}
         />
@@ -304,7 +332,11 @@ export function TimelinePageClient() {
       {/* The key sits above the grid: below it, a phone reached it only after
           scrolling past every case. */}
       <TimelineLegendCompact className="mb-3" />
-      <div className="flex-1 min-h-[160px]" data-scroll-target="timeline">
+      <div
+        className={refreshing ? "flex-1 min-h-[160px] opacity-60 transition-opacity" : "flex-1 min-h-[160px]"}
+        data-scroll-target="timeline"
+        aria-busy={refreshing}
+      >
         <TimelineGrid
           cases={displayedCases}
           timeRange={effectiveTimeRange}
@@ -320,6 +352,7 @@ export function TimelinePageClient() {
         isOpen={caseSelectorOpen}
         onClose={closeCaseSelector}
         allCases={allCasesForSelection}
+        loading={allCasesRaw === undefined}
         selectedIds={selectedIds}
         onSelectionChange={handleSaveSelection}
       />

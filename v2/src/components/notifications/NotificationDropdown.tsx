@@ -327,7 +327,10 @@ export default function NotificationDropdown() {
     }
   };
 
+  const [markingAll, setMarkingAll] = useState(false);
   const handleMarkAllAsRead = async () => {
+    if (markingAll) return;
+    setMarkingAll(true);
     try {
       await markAllAsRead({});
     } catch (error) {
@@ -335,6 +338,8 @@ export default function NotificationDropdown() {
         userMessage: "Couldn’t mark all notifications as read. Try again.",
         context: { operation: "markAllNotificationsRead" },
       });
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -376,6 +381,8 @@ export default function NotificationDropdown() {
             variant="ghost"
             size="xs"
             onClick={handleMarkAllAsRead}
+            loading={markingAll}
+            loadingText="Marking..."
             className="text-sm text-primary hover:text-primary-text hover:bg-accent"
           >
             Mark all read

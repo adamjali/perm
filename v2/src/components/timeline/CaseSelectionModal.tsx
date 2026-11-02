@@ -25,11 +25,14 @@ export interface CaseSelectionModalProps {
   onClose: () => void;
   allCases: CaseForSelection[];
   selectedIds: Set<string>;
-  onSelectionChange: (ids: string[]) => void;
+  /** May return a promise: the dialog then shows "Saving…" and closes only once it resolves. */
+  onSelectionChange: (ids: string[]) => void | Promise<void>;
   /** Optional title override. Defaults to "Select Cases" */
   title?: string;
   /** Optional description override. Defaults to "Choose which cases to display." */
   description?: string;
+  /** The case list is still loading: say so, never "No cases available" or "0 of 0" (owner, Nov 2 2026). */
+  loading?: boolean;
 }
 
 type SortOption = "name" | "status" | "date";
@@ -79,6 +82,7 @@ export function CaseSelectionModal({
   onSelectionChange,
   title,
   description,
+  loading = false,
 }: CaseSelectionModalProps) {
   // Local state for modal (will be committed on save)
   const [localSelectedIds, setLocalSelectedIds] = React.useState<Set<string>>(
@@ -182,12 +186,24 @@ export function CaseSelectionModal({
     setLocalSelectedIds(new Set(activeIds));
   };
 
-  const handleSave = () => {
-    onSelectionChange(Array.from(localSelectedIds));
-    onClose();
+  // A save that returns a promise keeps the dialog open, saying so, until it lands (it had closed first,
+  // and a failed save left the old cases on the timeline with nothing said). The caller reports a failure.
+  const [saving, setSaving] = React.useState(false);
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onSelectionChange(Array.from(localSelectedIds));
+      onClose();
+    } catch {
+      // Kept open with the picks as they are, so the person can try again.
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
+    if (saving) return;
     // Reset to original selection
     setLocalSelectedIds(new Set(selectedIds));
     setSearchQuery("");
@@ -277,8 +293,8 @@ export function CaseSelectionModal({
             Active only
           </Button>
           <span className="ml-auto text-sm text-muted-foreground">
-            Showing {filteredCases.length} of {allCases.length} cases
-            {selectedFromFiltered > 0 && ` (${selectedFromFiltered} selected)`}
+            {loading ? "Loading your cases…" : `Showing ${filteredCases.length} of ${allCases.length} cases`}
+            {!loading && selectedFromFiltered > 0 && ` (${selectedFromFiltered} selected)`}
           </span>
         </div>
 
@@ -292,9 +308,11 @@ export function CaseSelectionModal({
         >
           {filteredCases.length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground py-8 duration-150">
-              {searchQuery || filterBy !== "all"
-                ? "No cases match your search or filter"
-                : "No cases available"}
+              {loading
+                ? "Loading your cases…"
+                : searchQuery || filterBy !== "all"
+                  ? "No cases match your search or filter"
+                  : "No cases available"}
             </div>
           ) : (
             filteredCases.map((caseData, index) => (
@@ -318,10 +336,10 @@ export function CaseSelectionModal({
 
         {/* Footer */}
         <DialogFooter className="pt-2">
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} data-testid="save-selection-btn">
+          <Button onClick={() => void handleSave()} loading={saving} loadingText="Saving..." data-testid="save-selection-btn">
             Save changes
           </Button>
         </DialogFooter>

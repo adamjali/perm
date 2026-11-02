@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui/label";
@@ -151,6 +151,10 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   const [soc, setSoc] = useState(initialSoc);
   const [result, setResult] = useState<Result>({ kind: "idle" });
   const [history, setHistory] = useState<History | null>(null);
+  // The year-by-year table reads separately from the four levels, so it says when it's still reading and when
+  // it couldn't be read (it had stayed blank either way). Only the newest lookup's answer is kept.
+  const [historyState, setHistoryState] = useState<"idle" | "loading" | "failed" | "done">("idle");
+  const historyAsk = useRef({ id: 0, code: "", area: "" });
   // An iPhone's form script can fill the box without React hearing it, which
   // left the button disabled with a code on screen (Oct 4 2026, /perm-cases).
   const formRef = useFormDomSync({ soc: setSoc });
@@ -161,15 +165,29 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
 
   const ready = SOC_CODE_RE.test(soc.trim()) && area !== "" && result.kind !== "loading";
 
+  function loadHistory(code: string, areaCode: string) {
+    const ask = { id: historyAsk.current.id + 1, code, area: areaCode };
+    historyAsk.current = ask;
+    setHistory(null);
+    setHistoryState("loading");
+    fetch(`/api/wage-levels/history?soc=${encodeURIComponent(code)}&area=${areaCode}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j: ({ ok?: boolean } & History) | null) => {
+        if (historyAsk.current !== ask) return;
+        if (!j?.ok) throw new Error("not ok");
+        setHistory(j);
+        setHistoryState("done");
+      })
+      .catch(() => {
+        if (historyAsk.current === ask) setHistoryState("failed");
+      });
+  }
+
   async function lookUp(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!ready) return;
     setResult({ kind: "loading" });
-    setHistory(null);
-    fetch(`/api/wage-levels/history?soc=${encodeURIComponent(soc.trim())}&area=${area}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: ({ ok?: boolean } & History) | null) => setHistory(j?.ok ? j : null))
-      .catch(() => setHistory(null));
+    loadHistory(soc.trim(), area);
     try {
       const res = await fetch(`/api/wage-levels?soc=${encodeURIComponent(soc.trim())}&area=${area}&year=${seriesYear}`);
       const j = (await res.json().catch(() => null)) as { ok?: boolean; levels?: WageLevel[] | null; message?: string; soc?: string; seriesYear?: number; source?: string } | null;
@@ -275,6 +293,23 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
         </div>
       ) : null}
 
+      {result.kind === "levels" && historyState === "loading" ? (
+        <p className="mt-8 text-base text-muted-foreground" role="status">
+          Reading every wage year DOL has published for this job and area…
+        </p>
+      ) : null}
+      {result.kind === "levels" && historyState === "failed" ? (
+        <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-base" role="status">
+          <span>The year-by-year table couldn&apos;t be read just now. The four levels above are DOL&apos;s current figures.</span>{" "}
+          <button
+            type="button"
+            onClick={() => loadHistory(historyAsk.current.code, historyAsk.current.area)}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Try again
+          </button>
+        </p>
+      ) : null}
       {history && (history.alc.length > 0 || history.market) ? (
         <div className="mt-8 space-y-6">
           {history.market?.median != null ? (

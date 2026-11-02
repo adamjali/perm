@@ -74,6 +74,8 @@ function formatTimeAgo(timestamp: number): string {
 export default function AutoClosureAlertBanner() {
   const { isSigningOut } = useAuthContext();
   const [isExpanded, setIsExpanded] = useState(false);
+  // The dismiss under way ("all" or one alert's id), so a click shows it's working and can't be sent twice.
+  const [busy, setBusy] = useState<string | null>(null);
 
   // Fetch auto-closure alerts
   const alerts = useQuery(
@@ -91,6 +93,8 @@ export default function AutoClosureAlertBanner() {
   }
 
   const handleDismissOne = async (notificationId: Id<"notifications">) => {
+    if (busy) return;
+    setBusy(notificationId);
     try {
       await dismissOne({ notificationId });
     } catch (error) {
@@ -98,10 +102,14 @@ export default function AutoClosureAlertBanner() {
         userMessage: "Couldn’t dismiss the alert. Try again.",
         context: { operation: "dismissAutoClosureAlert" },
       });
+    } finally {
+      setBusy(null);
     }
   };
 
   const handleDismissAll = async () => {
+    if (busy) return;
+    setBusy("all");
     try {
       await dismissAll({});
     } catch (error) {
@@ -109,6 +117,8 @@ export default function AutoClosureAlertBanner() {
         userMessage: "Couldn’t dismiss the alerts. Try again.",
         context: { operation: "dismissAllAutoClosureAlerts" },
       });
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -138,9 +148,11 @@ export default function AutoClosureAlertBanner() {
               variant="ghost"
               size="sm"
               onClick={handleDismissAll}
+              disabled={busy !== null}
+              aria-busy={busy === "all"}
               className="text-data-warn-ink hover:text-data-warn-ink text-sm"
             >
-              Dismiss all
+              {busy === "all" ? "Dismissing…" : "Dismiss all"}
             </Button>
           )}
 
@@ -200,7 +212,9 @@ export default function AutoClosureAlertBanner() {
               )}
               <button
                 onClick={() => handleDismissOne(alert.notificationId)}
-                className="p-1.5 text-data-warn-ink hover:text-data-warn-ink transition-colors"
+                disabled={busy !== null}
+                aria-busy={busy === alert.notificationId}
+                className="p-1.5 text-data-warn-ink hover:text-data-warn-ink transition-colors disabled:opacity-50"
                 title="Dismiss alert"
                 aria-label={`Dismiss alert for ${alert.employerName} - ${alert.positionTitle}`}
               >

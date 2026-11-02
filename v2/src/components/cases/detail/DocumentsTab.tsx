@@ -391,8 +391,11 @@ export function DocumentsTab({
     setIsDragOver(false);
   }, []);
 
+  // The dialog stays open, saying "Deleting…", until the delete has finished (it had closed on the click).
+  const [deleting, setDeleting] = useState(false);
   const handleConfirmDelete = useCallback(async () => {
     if (!onDelete || !confirmDeleteId) return;
+    setDeleting(true);
     try {
       await onDelete(confirmDeleteId);
       setConfirmDeleteId(null);
@@ -401,6 +404,8 @@ export function DocumentsTab({
     } catch {
       // Parent handler (handleDeleteDocument) already calls handleOperationError
       setConfirmDeleteId(null);
+    } finally {
+      setDeleting(false);
     }
   }, [onDelete, confirmDeleteId, selectedId, fullscreenId]);
 
@@ -727,16 +732,24 @@ export function DocumentsTab({
       </div>
 
       {/* Delete confirmation: a real dialog (focus kept inside, Escape closes). */}
-      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(open) => (open ? null : setConfirmDeleteId(null))}>
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(open) => (open || deleting ? null : setConfirmDeleteId(null))}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this document?</AlertDialogTitle>
             <AlertDialogDescription>It&apos;s deleted for good; it can&apos;t be brought back.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep it</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleConfirmDelete()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogCancel disabled={deleting}>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmDelete();
+              }}
+              disabled={deleting}
+              aria-busy={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

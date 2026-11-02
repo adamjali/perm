@@ -245,8 +245,12 @@ export default function CalendarSyncSection({
   const connectedEmail = profile.googleEmail;
 
   // Query case counts for progress UX
-  const syncEligibleCount = useQuery(api.cases.getSyncEligibleCaseCount) ?? 0;
-  const casesWithEvents = useQuery(api.cases.getCasesWithEventsCount) ?? { caseCount: 0, estimatedEventCount: 0 };
+  const syncEligibleRaw = useQuery(api.cases.getSyncEligibleCaseCount);
+  const casesWithEventsRaw = useQuery(api.cases.getCasesWithEventsCount);
+  // Until the counts load, each row says it's counting (and its button waits) instead of a zero.
+  const countsLoading = syncEligibleRaw === undefined || casesWithEventsRaw === undefined;
+  const syncEligibleCount = syncEligibleRaw ?? 0;
+  const casesWithEvents = casesWithEventsRaw ?? { caseCount: 0, estimatedEventCount: 0 };
 
   // Handle OAuth callback query params
   useEffect(() => {
@@ -563,9 +567,11 @@ export default function CalendarSyncSection({
                   ? `Syncing ${plural(syncEligibleCount, "case")} to calendar...`
                   : syncProgress
                     ? `Last sync: ${syncProgress.synced}/${syncProgress.total} cases synced`
-                    : syncEligibleCount > 0
-                      ? `${plural(syncEligibleCount, "case")} ready to sync`
-                      : "Sync all case deadlines to your Google Calendar"}
+                    : countsLoading
+                      ? "Counting your cases…"
+                      : syncEligibleCount > 0
+                        ? `${plural(syncEligibleCount, "case")} ready to sync`
+                        : "Sync all case deadlines to your Google Calendar"}
               </p>
             </div>
             <Button
@@ -600,9 +606,11 @@ export default function CalendarSyncSection({
                   ? `Removing ${plural(casesWithEvents.estimatedEventCount, "event")} from ${plural(casesWithEvents.caseCount, "case")}...`
                   : clearProgress
                     ? `Last cleared: ${plural(clearProgress.eventsDeleted, "event")} from ${plural(clearProgress.casesCleaned, "case")}`
-                    : casesWithEvents.estimatedEventCount > 0
-                      ? `${plural(casesWithEvents.estimatedEventCount, "event")} in ${plural(casesWithEvents.caseCount, "case")} synced`
-                      : "Remove all PERM Tracker events from your Google Calendar"}
+                    : countsLoading
+                      ? "Counting the synced events…"
+                      : casesWithEvents.estimatedEventCount > 0
+                        ? `${plural(casesWithEvents.estimatedEventCount, "event")} in ${plural(casesWithEvents.caseCount, "case")} synced`
+                        : "Remove all PERM Tracker events from your Google Calendar"}
               </p>
             </div>
             <Button

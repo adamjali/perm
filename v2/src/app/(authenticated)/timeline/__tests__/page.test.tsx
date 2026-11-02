@@ -47,8 +47,11 @@ vi.mock("@/components/cases/CaseCapNotice", () => ({ CaseCapNotice: () => null }
 
 import { useQuery, useMutation } from "convex/react";
 
-// Default mock mutation function
-const mockUpdatePreferences = vi.fn().mockResolvedValue(undefined);
+// Default mock mutation function. The page shows a range change at once, through Convex's
+// withOptimisticUpdate, which hands back the same callable.
+const mockUpdatePreferences = Object.assign(vi.fn().mockResolvedValue(undefined), {
+  withOptimisticUpdate: () => mockUpdatePreferences,
+});
 
 // TEST FIXTURES
 

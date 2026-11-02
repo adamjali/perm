@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CaretRightIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import { useOnboarding } from "./OnboardingProvider";
 import { CHECKLIST_ITEMS } from "@/lib/onboarding/constants";
 import { cn } from "@/lib/utils";
-import { handleOperationError } from "@/lib/errors";
 
 export function OnboardingChecklist() {
   const router = useRouter();
   const { completedChecklistItems, isChecklistDismissed, dismissChecklist } =
     useOnboarding();
+  // The dismiss under way: the button says so and can't be pressed twice. A failure is reported by the
+  // provider's dismissChecklist, which catches it.
+  const [dismissing, setDismissing] = useState(false);
 
   if (isChecklistDismissed) return null;
 
@@ -42,16 +45,17 @@ export function OnboardingChecklist() {
         <button
           type="button"
           onClick={async () => {
+            if (dismissing) return;
+            setDismissing(true);
             try {
               await dismissChecklist();
-            } catch (error) {
-              handleOperationError(error, {
-                userMessage: "Couldn’t dismiss the checklist. Try again.",
-                context: { operation: "dismissChecklist" },
-              });
+            } finally {
+              setDismissing(false);
             }
           }}
-          className="flex-shrink-0 p-2 -mr-1 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          disabled={dismissing}
+          aria-busy={dismissing}
+          className="flex-shrink-0 p-2 -mr-1 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
           aria-label="Dismiss checklist"
         >
           <XIcon className="w-4 h-4" />

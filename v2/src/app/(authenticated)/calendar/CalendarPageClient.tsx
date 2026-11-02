@@ -12,6 +12,7 @@ import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
 import { RECORDED_EVENT_TYPES, type DeadlineType } from "@/lib/calendar/types";
 import { toCalendarCaseData } from "@/lib/calendar/fromQuery";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useKeptWhileLoading } from "@/hooks/useKeptWhileLoading";
 import { Button } from "@/components/ui/button";
 import { CalendarView, type CaseDataMap, CalendarFilters } from "@/components/calendar";
 import type { CaseForSelection } from "@/components/timeline";
@@ -169,10 +170,14 @@ export function CalendarPageClient() {
   const [showClosed, setShowClosed] = useState(false);
 
   // Query calendar events (cases with deadline fields)
-  const calendarCases = useQuery(api.calendar.getCalendarEvents, {
-    showCompleted,
-    showClosed,
-  });
+  // Ticking "show completed" or "show closed" asks again; the calendar keeps its events, dimmed, until the
+  // new answer lands, where it had gone back to the whole loading screen.
+  const { value: calendarCases, refreshing } = useKeptWhileLoading(
+    useQuery(api.calendar.getCalendarEvents, {
+      showCompleted,
+      showClosed,
+    }),
+  );
 
   // Query user's calendar preferences (hidden cases/deadline types)
   const preferences = useQuery(api.calendar.getCalendarPreferences);
@@ -300,8 +305,9 @@ export function CalendarPageClient() {
     >
       <CaseCapNotice className="mb-4" />
 
-      {/* Google Calendar Connection Banner - shown when not connected */}
-      {!isGoogleConnected && (
+      {/* Google Calendar Connection Banner - shown when not connected, and only once the profile has loaded:
+          a connected account had briefly been asked to connect (owner, Nov 2 2026). */}
+      {userProfile !== undefined && !isGoogleConnected && (
         <div className="mb-4 flex items-center justify-between gap-4 bg-tint px-4 py-3">
           <div className="flex items-center gap-3">
             <InfoIcon className="size-5 shrink-0 text-foreground" aria-hidden="true" />
@@ -346,7 +352,7 @@ export function CalendarPageClient() {
       </div>
 
       {/* Calendar */}
-      <div className="flex-1">
+      <div className={refreshing ? "flex-1 opacity-60 transition-opacity" : "flex-1"} aria-busy={refreshing}>
         <CalendarView
           events={events}
           defaultView="month"

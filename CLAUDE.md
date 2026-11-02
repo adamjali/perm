@@ -2083,3 +2083,12 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   files the three-week prune removed, and the reload cures it. A file the live build lacks stays an error.
 - **The 1:35 AM database refresh refuses connections for a few seconds** (Sentry 5A, `ECONNREFUSED 127.0.0.1:8080`,
   13 events in 12 days, no visitor affected): known, not yet retried with a wait.
+- **A pending PERM case lists its likely wage request, and a wage request its likely PERM case** ("The wage request
+  behind it", "The PERM case it may support"; `src/lib/employerWageRequests.ts`, reads in `lib/db/`). DOL's live
+  record never names a pending case's wage request; its file does once the PERM is decided (the decided timeline).
+  The inferred list is the employer's P-100 requests for the same job title with a wage issued (`wageIssued`) and
+  decided on or before the PERM's filing day, from the file's decision date or the event log's first final status;
+  the reverse starts on the day the wage was issued. Its first version listed requests decided after the case was filed.
+- **A filter change keeps the page on screen** (`useKeptWhileLoading`): the calendar's "show completed/closed" and the
+  timeline's range had dropped back to the whole loading skeleton. Their preference saves show at once
+  (`withOptimisticUpdate`) and say so when they fail; the case picker stays open saying "Saving..." until its save lands.

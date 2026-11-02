@@ -26,15 +26,17 @@ export function NotificationsPageClient() {
     isSigningOut ? "skip" : undefined
   );
 
-  // Calculate tab counts from stats
-  const tabCounts: Partial<Record<NotificationTabType, number>> = {
-    all: stats?.total ?? 0,
-    unread: stats?.unread ?? 0,
-    deadlines: stats?.byType?.deadline_reminder ?? 0,
-    status: stats?.byType?.status_change ?? 0,
-    rfe_rfi:
-      (stats?.byType?.rfe_alert ?? 0) + (stats?.byType?.rfi_alert ?? 0),
-  };
+  // Calculate tab counts from stats. None until they load: a 0 on a tab is a count, so it isn't shown for
+  // one we haven't read yet (owner, Nov 2 2026).
+  const tabCounts: Partial<Record<NotificationTabType, number>> = stats
+    ? {
+        all: stats.total ?? 0,
+        unread: stats.unread ?? 0,
+        deadlines: stats.byType?.deadline_reminder ?? 0,
+        status: stats.byType?.status_change ?? 0,
+        rfe_rfi: (stats.byType?.rfe_alert ?? 0) + (stats.byType?.rfi_alert ?? 0),
+      }
+    : {};
 
   return (
     <div className="mx-auto w-full max-w-4xl">

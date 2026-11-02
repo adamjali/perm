@@ -451,6 +451,34 @@ describe("CaseSelectionModal - Save Changes", () => {
       expect.not.arrayContaining(["2"])
     );
   });
+
+  it("says it's saving and closes only once a slow save lands", async () => {
+    let finish: () => void = () => {};
+    const props = createDefaultProps({
+      onSelectionChange: vi.fn(() => new Promise<void>((resolve) => { finish = resolve; })),
+    });
+    const { user } = renderWithProviders(<CaseSelectionModal {...props} />);
+
+    await user.click(screen.getByTestId("save-selection-btn"));
+
+    expect(screen.getByTestId("save-selection-btn")).toHaveTextContent("Saving...");
+    expect(props.onClose).not.toHaveBeenCalled();
+    finish();
+    await waitFor(() => expect(props.onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it("stays open with the picks when the save fails", async () => {
+    const props = createDefaultProps({
+      onSelectionChange: vi.fn(() => Promise.reject(new Error("offline"))),
+    });
+    const { user } = renderWithProviders(<CaseSelectionModal {...props} />);
+
+    await user.click(screen.getByTestId("case-selection-item-1"));
+    await user.click(screen.getByTestId("save-selection-btn"));
+
+    await waitFor(() => expect(screen.getByTestId("save-selection-btn")).toHaveTextContent("Save changes"));
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
 });
 
 // CANCEL BUTTON TESTS

@@ -141,7 +141,7 @@ export function SearchPalette({
   const month = looksLikeMonth(query);
   // The closest employer, firm and occupation names, asked for only once the
   // exact lookup has come back with none.
-  const { suggestions } = useNameSuggestions(
+  const { suggestions, loading: suggesting } = useNameSuggestions(
     "all",
     query,
     !caseNumber && !month && !searchingEntities && !entityError && entityHits.length === 0 && query.trim().length >= 3,
@@ -431,7 +431,9 @@ export function SearchPalette({
                 an in-flight one look the same. */}
             {searchingEntities
               ? null
-              : `Nothing matches “${query.trim()}”. Try an employer, a law firm, a page name, or a case number.`}
+              : suggesting
+                ? `Nothing matches “${query.trim()}” exactly. Looking for close names…`
+                : `Nothing matches “${query.trim()}”. Try an employer, a law firm, a page name, or a case number.`}
           </Command.Empty>
 
           {suggestions.length > 0 ? (
