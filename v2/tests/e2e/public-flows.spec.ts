@@ -214,15 +214,33 @@ test("the queue wall goes back to a past day and returns to today", async ({ pag
 });
 
 test("a filing month says what moved since the last replayed day, and its first letters open its cases", async ({ page }) => {
-  await page.goto("/perm-queue/2026-01");
+  // The months move under a fixed date (2026-01 had both until DOL's line passed it on Nov 3 2026): the end-of-month
+  // estimate shows on a month the line hasn't reached, the first letters on a month DOL is deciding.
+  const monthBack = (n: number) => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - n);
+    return d.toISOString().slice(0, 7);
+  };
+  await page.goto(`/perm-queue/${monthBack(5)}`);
   await expect(page.getByText(/^Since the end of [A-Z][a-z]+day, [A-Z][a-z]{2} \d+/)).toBeVisible();
   // The end-of-month estimate carries its range, never a broken date.
   await expect(page.getByText(/^[A-Z][a-z]{2} \d+ to [A-Z][a-z]{2} \d+, at DOL's recent pace$/)).toBeVisible();
   await expect(page.getByText("Invalid Date")).toHaveCount(0);
-  const letterA = page.locator('a[href^="/perm-cases?filed=2026-01&letter=A"]');
+  let worked: string | null = null;
+  for (const n of [10, 9, 11, 8, 12, 13]) {
+    const m = monthBack(n);
+    await page.goto(`/perm-queue/${m}`);
+    if ((await page.locator(`a[href^="/perm-cases?filed=${m}&letter=A"]`).count()) > 0) {
+      worked = m;
+      break;
+    }
+  }
+  expect(worked, "no filing month from the last year shows its first letters").not.toBeNull();
+  const letterA = page.locator(`a[href^="/perm-cases?filed=${worked}&letter=A"]`);
   await expect(letterA).toBeVisible();
   await letterA.click();
-  await expect(page).toHaveURL(/\/perm-cases\?filed=2026-01&letter=A/);
+  await expect(page).toHaveURL((url) => url.pathname === "/perm-cases" && url.searchParams.get("filed") === worked && url.searchParams.get("letter") === "A");
   const chip = page.getByRole("button", { name: /Showing employers from A; show every employer/ });
   await expect(chip).toBeVisible();
   await chip.click();
