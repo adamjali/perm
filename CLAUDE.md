@@ -2162,7 +2162,9 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
   (lib_db) let NVC timeframes, visa news, wait times and issuances warn, keep the data's own date and record ok;
   the freshness budget is the alarm. `ingest_visa_issuances.py --local FILE` loads a file saved from a browser.
 - **The court reader searches "immigrant visa interview" and "public charge"**: CLINIC v. Rubio named no work visa,
-  so the eleven old phrases never found it.
+  so the eleven old phrases never found it. It still can't: its Aug 21 2026 opinion is in CourtListener's RECAP docket
+  (1:26-cv-00858), not its opinion collection, which the reader searches (checked Nov 3 with the server's key: 38 CLINIC
+  opinions, none this case). Reading a named docket's filings would be its own reader.
 - **`BarRows inline` gives every figure one width** (`figureCh`, in the monospace face's own ch): each row was its own
   grid, so a short figure lengthened its track and the bars didn't compare.
 - **The age-out calculator sits in the I-140 group**: Consulates made the green card line group ten, past the nine the
