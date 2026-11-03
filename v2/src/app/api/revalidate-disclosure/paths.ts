@@ -48,4 +48,5 @@ export const DISCLOSURE_PAGES = [
   "/tools/compare-my-offer",
   "/tools/i140-trends",
   "/perm-recruitment",
+  "/perm-layoff-disclosures",
 ] as const;

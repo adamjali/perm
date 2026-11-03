@@ -61,6 +61,7 @@ export type DataSection =
   | "h1b-employers"
   | "firm-rankings"
   | "cap-exempt"
+  | "layoff-answers"
   | "case-alerts"
   | "opt-employers"
   | "employers-under-review"
@@ -158,6 +159,7 @@ export const SECTIONS: DataNavSection[] = [
 
   s("recruitment", "Recruitment", "PERM recruitment", "/perm-recruitment"),
   t("deadlines", "Recruitment", "PERM deadlines", "/tools/perm-deadline-calculator", "The recruitment window, the quiet period and the filing window."),
+  s("layoff-answers", "Recruitment", "Layoffs reported on PERM", "/perm-layoff-disclosures"),
 
   s("cases", "PERM", "PERM cases", "/perm-cases"),
   s("processing-times", "PERM", "PERM processing times", "/perm-processing-times"),

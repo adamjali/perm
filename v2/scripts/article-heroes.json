@@ -1247,6 +1247,14 @@
   "credit": "Screenshot of permtracker.app, November 2, 2026",
   "alt": "H-1B wage violations by fiscal year, and the largest back wages, on permtracker.app"
  },
+ "changelog/layoffs-reported-on-perm": {
+  "capture": {
+   "url": "/perm-layoff-disclosures",
+   "clip": "fromm:Whose applications said yes"
+  },
+  "credit": "Screenshot of permtracker.app, November 3, 2026",
+  "alt": "The layoffs reported on PERM page: one hundred squares showing one employer's share of the applications that said yes"
+ },
  "changelog/where-dol-is-and-job-codes": {
   "tour": {
    "file": "job-code-light.webp",

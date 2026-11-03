@@ -819,5 +819,21 @@
   },
   "credit": "Case Status Search, FLAG, U.S. Department of Labor, captured October 21, 2026",
   "alt": "DOL's Case Status Search on flag.dol.gov answering for one PERM case filed December 1, 2025 by LinkedIn Corporation for a Digital Marketing Manager, with its status, RFI ISSUED, highlighted"
+ },
+ "guides/perm-layoff-rule-for-employers/form-g12": {
+  "pdf": {
+   "file": "eta9089.pdf",
+   "page": 3,
+   "top": 0.79,
+   "height": 0.093,
+   "mark": [
+    "12. Has the employer had a layoff in the occupation involved in this application or in a related",
+    "occupation within the 6 months immediately preceding the filing of this application in the area",
+    "of intended employment?"
+   ]
+  },
+  "credit": "Form ETA-9089, Section G, page 4. U.S. Department of Labor, expires 02/28/2029",
+  "source": "https://www.dol.gov/sites/dolgov/files/ETA/oflc/pdfs/ETA-9089-Application-for-Perm-Employment-Certification-Expires02-28-29.pdf",
+  "alt": "Question 12 of Section G on Form ETA-9089, highlighted: has the employer had a layoff in the occupation involved in this application, or a related one, within the 6 months before filing, in the area of intended employment? Yes or No"
  }
 }

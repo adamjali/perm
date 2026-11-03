@@ -118,6 +118,7 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/visa-bulletin/categories/[line]": "bulletin",
   "/perm-by-state": "dol",
   "/perm-wages": "corpus",
+  "/perm-layoff-disclosures": "corpus",
   "/lca-wages": "dol",
   "/policy-changes": "dol",
   "/debarments": "dol",

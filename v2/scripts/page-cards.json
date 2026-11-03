@@ -1565,6 +1565,21 @@
   ]
  },
  {
+  "slug": "perm-layoff-disclosures",
+  "path": "/perm-layoff-disclosures",
+  "title": "Layoffs reported on PERM applications",
+  "label": "Each employer's answer to the layoff question on its PERM applications, from DOL's files.",
+  "shot": "perm-layoff-disclosures.png",
+  "from": "The question, as DOL asks it",
+  "crop": [
+   0,
+   0,
+   1504,
+   1004
+  ],
+  "mask": "figures"
+ },
+ {
   "slug": "h1b-cap-exempt-employers",
   "path": "/h1b-cap-exempt-employers",
   "title": "H-1B cap‑exempt employers",

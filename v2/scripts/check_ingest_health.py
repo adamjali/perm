@@ -401,6 +401,8 @@ PRECOMPUTED_DOCS = {
     "firm_ranks_summary": (45, "the law firm ranking pages' years and totals"),
     # Rebuilt after each wage-request and LCA load, with the rankings.
     "cap_exempt": (45, "the H-1B cap-exempt employer page"),
+    # Rebuilt by the monthly PERM disclosure run (the 20th) and every history load.
+    "layoff_disclosures": (45, "the layoffs reported on PERM page"),
     # Rebuilt after each PERM, wage-request and LCA load (scripts/build_soc_titles.py): the job code finder
     # (/soc-codes), its title pages and the titles on each occupation page.
     "soc_codes": (125, "the job code finder and its title pages"),

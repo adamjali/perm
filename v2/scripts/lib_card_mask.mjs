@@ -2,8 +2,8 @@
  * What a social card masks when its spec says `"mask": "figures"`: every figure and date that moves with the data
  * (counts, percentages, dollar amounts, "October 27, 2026", "Jan 2026"), drawn as a grey bar of the same width, so
  * the card keeps the page's shape and never carries a stale number (owner's rule: a card holds no live figure).
- * Left alone: codes and names that carry digits (G-100-26125-868956, ETA-9089, I-140, FY2016, H-1B), and numbers of
- * one or two digits, which are mostly fixed wording ("60 days' notice").
+ * Left alone: codes and names that carry digits (G-100-26125-868956, ETA-9089, I-140, FY2016, H-1B), a regulation's
+ * section ("20 CFR 656.17(k)"), and numbers of one or two digits, which are mostly fixed wording ("60 days' notice").
  */
 const MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
 
@@ -25,8 +25,8 @@ export const FIGURE_SOURCE = [
   `(?<![\\w-])\\$?\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?%?(?![\\w-])`,
   // A percentage: "88%", "3.3%".
   `(?<![\\w-])\\d+(?:\\.\\d+)?%`,
-  // A bare number of three or more digits: "598", "2026".
-  `(?<![\\w-])\\$?\\d{3,}(?:\\.\\d+)?(?![\\w-])`,
+  // A bare number of three or more digits: "598", "2026". Not a regulation's section: "20 CFR 656.17", "§ 656.40".
+  `(?<![\\w-])(?<!(?:CFR|C\\.F\\.R\\.|§)\\s?)\\$?\\d{3,}(?:\\.\\d+)?(?![\\w-])`,
 ].join("|");
 
 /** Text that is only a figure ("8", "+49", "26%"): a count in its own cell, however short, is masked whole. */

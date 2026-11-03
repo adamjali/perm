@@ -37,4 +37,9 @@ describe("what a social card masks", () => {
   it("leaves codes, form names and fixed wording alone", () => {
     expect(figureRuns("G-100-26125-868956 on an ETA-9089, the I-140, FY2016, H-1B and EB-2; 60 days' notice")).toEqual([]);
   });
+
+  it("leaves a regulation's section alone (Nov 3 2026: \"20 CFR 656.17(k)\" was masked)", () => {
+    expect(figureRuns("20 CFR 656.17(k), 20 C.F.R. § 656.40(c), 8 CFR 214.2(h) and §§ 656.10")).toEqual([]);
+    expect(figureRuns("656 cases under 20 CFR 656.17")).toEqual(["656"]);
+  });
 });

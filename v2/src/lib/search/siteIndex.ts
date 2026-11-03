@@ -59,6 +59,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/perm-by-the-numbers": "numbers statistics stats totals counts data pending waiting on hold holds decisions per day new filings jobs crew member new employers sponsors rfi wage requests visa bulletin archive press",
   "/perm-recruitment": "recruitment sunday ad ads advertisement newspaper newspapers job order notice of filing additional steps professional journal timing",
   "/perm-case-alerts": "email alerts notification notify me track perm case status updates changes watch my case filing month visa bulletin employer follow free",
+  "/perm-layoff-disclosures": "layoff layoffs laid off reduction rif disclosed reported question g12 item 12 656.17(k) six months notify consider employers microsoft perm application",
   "/h1b-cap-exempt-employers": "h-1b h1b cap exempt cap-exempt employers universities colleges nonprofit research no lottery acwia year round hire",
   "/law-firm-rankings": "law firm rankings top immigration lawyers attorneys biggest busiest firms perm h-1b h1b lca by state fiscal year fragomen",
   "/h1b-employers": "h-1b h1b top employers sponsors biggest largest busiest companies ranking lca uscis data hub approvals by state",

@@ -106,6 +106,8 @@ import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
 import { EnforcementNotice } from "@/components/entities/EnforcementNotice";
 import { debarmentsForSlug } from "@/lib/db/debarments";
 import { warnForSlug } from "@/lib/db/warn";
+import { getEmployerLayoffAnswer } from "@/lib/db/layoffDisclosures";
+import { LayoffAnswerLine } from "@/components/layoffs/LayoffAnswerLine";
 import { whdForSlug } from "@/lib/db/whd";
 import { oshaForSlug } from "@/lib/db/osha";
 import { WageHourCases } from "@/components/entities/WageHourCases";
@@ -686,7 +688,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows, taaRows, pppRows] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows, taaRows, pppRows, layoffAnswer] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -756,6 +758,8 @@ export default async function EmployerPage({
       taaForSlug(canonicalSlug),
       // SBA's PPP loans matched by name and city (2020 and 2021). No catch.
       pppForSlug(canonicalSlug),
+      // Its own answers to Form 9089's layoff question on its newest decided year. No catch, as with layoffs.
+      getEmployerLayoffAnswer(canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -1128,7 +1132,8 @@ export default async function EmployerPage({
             steps={facets.recruit_step}
             lead={facets.recruit_lead}
             className="mt-4"
-          />
+          />{" "}
+          {layoffAnswer ? <LayoffAnswerLine answer={layoffAnswer} name={row.name} className="mt-4" /> : null}
         </Chapter>
       ) : null}
 

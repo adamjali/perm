@@ -2092,3 +2092,21 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
 - **A filter change keeps the page on screen** (`useKeptWhileLoading`): the calendar's "show completed/closed" and the
   timeline's range had dropped back to the whole loading skeleton. Their preference saves show at once
   (`withOptimisticUpdate`) and say so when they fail; the case picker stays open saying "Saving..." until its save lands.
+
+## Nov 3 2026: layoffs reported on PERM applications
+
+- **Every decided PERM case keeps the employer's answer to Form 9089's layoff question** (Section G, Item 12; old form
+  Section I.e, Item 26) as `layoff` in `perm_cases` and `perm_cases_history`: DOL's Y or N, a blank or N/A unknown,
+  never N (`yes_no` in `ingest_perm_disclosure.py`). DOL's column names, read off its record layouts on Nov 3:
+  `RI_LAYOFF_IN_PAST_SIX_MONTHS` to FY2019, `LAYOFF_IN_PAST_SIX_MONTHS` on the old form FY2020 to FY2024,
+  `OTHER_REQ_EMP_LAYOFF` on the new form. The old-form FY2024 file's answers had never been read, so the
+  denial-risk page's layoff row grows at the next PERM load.
+- **`scripts/build_layoff_disclosures.py`** writes `perm_docs['layoff_disclosures']` (each fiscal year's yeses and
+  outcomes, the newest year's employers and jobs, each year's top ten) after every PERM disclosure load and every
+  history load; the health check watches it at 45 days. A year shows only when most of its cases carry an answer.
+- **`/perm-layoff-disclosures`** (the data menu's Recruitment group): 100 squares for one employer's share of the
+  year's yeses, the busiest employers, year by year as counts and shares, the jobs, how yes and no cases ended, every
+  employer that said yes (searchable), and DOL's own form with the question highlighted. Employer pages carry one line
+  when their newest year has a yes (`LayoffAnswerLine`, in "The work").
+- **A yes isn't a bar or a finding**: the rule (20 CFR 656.17(k)) allows the filing if the laid-off workers were
+  notified and considered. The page says so beside every figure, and never pairs one employer's count with a reason.

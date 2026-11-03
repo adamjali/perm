@@ -363,6 +363,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "Where PERM employers recruit and how long before filing, from DOL's Form 9089 Section H over every decided case filed on the current form: the Sunday ads and the newspapers by state, the additional steps, the notice of filing, and the days from each step to filing.",
   },
   {
+    path: "/perm-layoff-disclosures",
+    label: "Layoffs reported on PERM applications",
+    blurb: "Each employer's answer to Form 9089's layoff question (Section G, Item 12: a layoff in the job's occupation, in the area, in the six months before filing), from DOL's PERM files: the share of applications saying yes each fiscal year since FY2016, the employers and occupations with the most, how those cases ended against the rest, and every employer that said yes.",
+  },
+  {
     path: "/opt-employers",
     label: "Top OPT and CPT employers",
     blurb: "ICE's own top-200 lists of employers of F-1 students on OPT, STEM OPT and CPT, for every year ICE published one, as ICE printed them.",
