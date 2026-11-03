@@ -1,11 +1,11 @@
-import Link from "next/link";
-
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PageSection } from "@/components/data/PageSection";
-import { prettyStatus } from "@/components/queue/stages";
-import { formatDay } from "@/lib/dolFormat";
+import { FilingRows } from "@/components/entities/FilingRows";
 import {
   PERM_AFTER_WAGE_MONTHS,
   WAGE_REQUEST_LOOKBACK_MONTHS,
+  WAGE_REQUESTS_SHOWN,
   type EmployerPermCases as FoundPerm,
   type EmployerWageRequests as Found,
 } from "@/lib/employerWageRequests";
@@ -13,8 +13,10 @@ import { formatWage } from "@/lib/wageFormat";
 
 /**
  * A pending PERM case's likely wage request: the employer's PERM wage requests for the same job title with a
- * wage issued by the day the case was filed. DOL's live record doesn't say which one the case used (its published file does, once the
- * case is decided), so the heading says "very likely one of these" and each links its own page.
+ * wage issued by the day the case was filed. DOL's live record doesn't say which one the case used (its
+ * published file does, once the case is decided), so the lede says "very likely one of these", each row links
+ * its own page, and the rule behind the list folds under "Why these". The rows are the site's filings table
+ * (FilingRows), dated by the day DOL issued the wage, which is what decides whether a request could be it.
  */
 export function EmployerWageRequests({
   found,
@@ -27,43 +29,56 @@ export function EmployerWageRequests({
 }) {
   if (!found || found.rows.length === 0) return null;
   const { rows, more } = found;
-  const who = employerName?.trim() || "The employer";
-  const job = jobTitle?.trim() ? `"${jobTitle.trim()}"` : "this job";
+  const who = employerName?.trim() || "the employer";
+  const job = jobTitle?.trim() ? `“${jobTitle.trim()}”` : "this job";
   return (
     <PageSection
       title="The wage request behind it"
       id="wage-request"
       lede={
         more
-          ? `DOL's record of a pending case doesn't name its wage request. Its published file does, once the case is decided. ${who} had more PERM wage requests for ${job} with a wage issued by the day this case was filed than fit here. These are the newest, from the ${WAGE_REQUEST_LOOKBACK_MONTHS} months before it. This case's may be one of them, or an older one.`
-          : `DOL's record of a pending case doesn't name its wage request. Its published file does, once the case is decided. These are ${who}'s PERM wage requests for ${job} that DOL had issued a wage on by the day this case was filed, from the ${WAGE_REQUEST_LOOKBACK_MONTHS} months before it. This case's is very likely one of them.`
+          ? "This case’s wage request is very likely one of these, or an older one. DOL names it only once the case is decided."
+          : "This case’s wage request is very likely one of these. DOL names it only once the case is decided."
       }
     >
-      <ul className="max-w-3xl divide-y-2 divide-border border-y-2 border-border">
-        {rows.map((r) => {
+      <FilingRows
+        withWage
+        dateLabel="Wage issued"
+        rows={rows.map((r) => {
           const wage = formatWage(r.wage, r.wageUnit);
-          return (
-            <li key={r.caseNumber} className="grid grid-cols-1 gap-x-4 gap-y-1 py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:items-center [&>*]:min-w-0">
-              <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className="link inline-flex min-h-11 items-center font-mono">
-                {r.caseNumber}
-              </Link>{" "}
-              <span className="text-soft">
-                {prettyStatus(r.status.toUpperCase())}
-                {r.filed ? `, filed ${formatDay(r.filed)}` : ""}
-                {r.decided ? `, decided ${formatDay(r.decided)}` : ""}
-                {wage ? `, ${wage}` : ""}
-              </span>
-            </li>
-          );
+          return {
+            caseNumber: r.caseNumber,
+            job: r.jobTitle,
+            // The day the wage was issued, or blank: a filing day under this heading would be a wrong date.
+            date: r.decided,
+            status: r.status,
+            wage: wage ? (
+              <>
+                {wage}
+                <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
+              </>
+            ) : null,
+          };
         })}
-      </ul>
+      />{" "}
+      <FinePrint summary="Why these" className="mt-3">
+        <p>
+          These are {who}’s PERM wage requests for {job} on which DOL issued a wage by the day this case was filed,
+          from the {WAGE_REQUEST_LOOKBACK_MONTHS} months before it.
+          {more ? ` There were more than ${WAGE_REQUESTS_SHOWN}, so these are the newest.` : ""}
+        </p>{" "}
+        <p>
+          A request still waiting, withdrawn, or decided after the filing is left out. A PERM case is filed on a wage
+          DOL has already issued. DOL’s published file names the case’s own request once the case is decided.
+        </p>
+      </FinePrint>
     </PageSection>
   );
 }
 
 /**
- * The reverse, on a wage request's page: the employer's PERM cases for the same job title filed after DOL issued its wage,
- * shown when no decided PERM case names it yet (DOL's file names it only once the PERM is decided).
+ * The reverse, on a wage request's page: the employer's PERM cases for the same job title filed after DOL issued
+ * its wage, shown when no decided PERM case names it yet (DOL's file names it only once the PERM is decided).
  */
 export function EmployerPermCasesForWage({
   found,
@@ -76,32 +91,23 @@ export function EmployerPermCasesForWage({
 }) {
   if (!found || found.rows.length === 0) return null;
   const { rows, more } = found;
-  const who = employerName?.trim() || "The employer";
-  const job = jobTitle?.trim() ? `"${jobTitle.trim()}"` : "this job";
+  const who = employerName?.trim() || "the employer";
+  const job = jobTitle?.trim() ? `“${jobTitle.trim()}”` : "this job";
   return (
     <PageSection
       title="The PERM case it may support"
       id="perm-cases"
-      lede={
-        more
-          ? `No decided PERM case names this wage request yet. DOL's file names it once the PERM is decided. ${who} filed more PERM cases for ${job} in the ${PERM_AFTER_WAGE_MONTHS} months after DOL issued this wage than fit here. These are the newest.`
-          : `No decided PERM case names this wage request yet. DOL's file names it once the PERM is decided. These are ${who}'s PERM cases for ${job} filed in the ${PERM_AFTER_WAGE_MONTHS} months after DOL issued this wage. The one it supports is very likely among them.`
-      }
+      lede="The PERM case this wage supports is very likely one of these. DOL names it only once that case is decided."
     >
-      <ul className="max-w-3xl divide-y-2 divide-border border-y-2 border-border">
-        {rows.map((r) => (
-          <li key={r.caseNumber} className="grid grid-cols-1 gap-x-4 gap-y-1 py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:items-center [&>*]:min-w-0">
-            <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className="link inline-flex min-h-11 items-center font-mono">
-              {r.caseNumber}
-            </Link>{" "}
-            <span className="text-soft">
-              {prettyStatus(r.status.toUpperCase())}
-              {r.filed ? `, filed ${formatDay(r.filed)}` : ""}
-              {r.decided ? `, decided ${formatDay(r.decided)}` : ""}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <FilingRows rows={rows.map((r) => ({ caseNumber: r.caseNumber, job: jobTitle, date: r.filed, status: r.status }))} />{" "}
+      <FinePrint summary="Why these" className="mt-3">
+        <p>
+          These are {who}’s PERM cases for {job} filed in the {PERM_AFTER_WAGE_MONTHS} months after DOL issued this
+          wage.
+          {more ? ` There were more than ${WAGE_REQUESTS_SHOWN}, so these are the newest.` : ""}
+        </p>{" "}
+        <p>A PERM case is filed on a wage DOL has already issued, so nothing filed before that day is listed.</p>
+      </FinePrint>
     </PageSection>
   );
 }

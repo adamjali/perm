@@ -28,7 +28,8 @@ export interface FilingRow {
 }
 
 const COLS = "sm:grid-cols-[11.5rem_minmax(0,1fr)_6.5rem_12.5rem]";
-const COLS_WAGE = "sm:grid-cols-[11.5rem_minmax(0,1fr)_8.5rem_6.5rem_12.5rem]";
+// The wage column fits "$161,637 per year" in the mono face (it ran into the date at 8.5rem).
+const COLS_WAGE = "sm:grid-cols-[11.5rem_minmax(0,1fr)_10rem_6.5rem_12.5rem]";
 
 export function FilingRows({
   rows,
@@ -73,9 +74,16 @@ export function FilingRows({
                 <span className="order-2 whitespace-nowrap text-right text-sm tabular-nums text-muted-foreground sm:order-4 sm:text-left">
                   {shortDate(r.date) ?? ""}
                 </span>{" "}
-                <span className="order-3 min-w-0 truncate text-base text-soft sm:order-2" title={r.job ?? undefined}>
-                  {r.job ?? ""}
-                  {withWage && r.wage ? <span className="font-mono text-sm font-bold text-foreground sm:hidden">{" · "}{r.wage}</span> : null}
+                {/* On a phone the wage comes first and never shortens; the job gives way (it had hidden the wage
+                    behind its ellipsis). On the narrowest phones the wage wraps to two lines rather than run under
+                    the status. */}
+                <span className="order-3 flex min-w-0 items-baseline gap-x-2 sm:order-2 sm:block">
+                  {withWage && r.wage ? (
+                    <span className="max-w-full shrink-0 font-mono text-sm font-bold text-foreground sm:hidden">{r.wage}</span>
+                  ) : null}{" "}
+                  <span className="min-w-0 truncate text-base text-soft sm:block" title={r.job ?? undefined}>
+                    {r.job ?? ""}
+                  </span>
                 </span>{" "}
                 {withWage ? (
                   <span className="hidden whitespace-nowrap text-right font-mono text-sm font-bold tabular-nums sm:order-3 sm:block">

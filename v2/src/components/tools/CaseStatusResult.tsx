@@ -1040,15 +1040,16 @@ function StatusExplainer({
           have only been recorded since August 2026, too short a record to price those odds.
         </p>
       ) : null}{" "}
-      <p className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      {/* Two standalone links under the meaning: each a 44px target (they measured 20px on a phone). */}
+      <p className="mt-4 flex flex-wrap gap-x-6 text-sm">
         {meaning.cite ? (
-          <a href={meaning.cite.href} rel="noopener noreferrer" className={cn("font-mono", "link")}>
+          <a href={meaning.cite.href} rel="noopener noreferrer" className={cn("inline-flex min-h-11 items-center font-mono", "link")}>
             {meaning.cite.label}
           </a>
         ) : (
-          <span className="text-muted-foreground">No published definition</span>
+          <span className="inline-flex min-h-11 items-center text-muted-foreground">No published definition</span>
         )}{" "}
-        <Link href={`/perm-case-statuses#${statusAnchor(meaning.status)}`} className="link">
+        <Link href={`/perm-case-statuses#${statusAnchor(meaning.status)}`} className="link inline-flex min-h-11 items-center">
           Every status, side by side
         </Link>
       </p>
