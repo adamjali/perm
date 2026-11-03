@@ -276,3 +276,20 @@ package, and no walk is aborted. Both fixes are under the 7-day release floor un
 the plugin doesn't ask for (`^13.0.6`). Accepted in `scripts/daily_monitor.py`'s `ACCEPTED_ADVISORIES` until Nov 4
 2026; then an override (`glob@>=14.0.2`, `minimatch@>=11.0.1`) once a production build with Sentry's source-map
 upload passes on it, or a Sentry release that asks for them.
+
+## November 3 2026: glob 14.0.2 and minimatch 11.0.1, taken as overrides
+
+Both fixes cleared the 7-day release floor on Nov 3 (glob 14.0.2 at 5:07 PM EST, minimatch 11.0.1 at 5:26 PM EST).
+`package.json` overrides are now `"minimatch": ">=11.0.1 <12"` and `"glob": ">=14.0.2 <15"`, capped at their majors;
+the lockfile holds those two versions and no other glob or minimatch. Both accepted entries left `ACCEPTED_ADVISORIES`.
+
+The two majors, read in each package's changelog.md: minimatch 11 removes `makeRe()`, `Minimatch#regexp`, the AST,
+`matchOne`, `debug` and `maxExtglobRecursion`; glob 14 renames `Pattern#isRegExp` to `isMatcher`, removes `debug`,
+starts ignore patterns beginning with `/` at the root, and has `walk()` return arrays. Every consumer's built code
+was read for those: eslint 10.13.0, @eslint/config-array 0.23.5, @typescript-eslint/typescript-estree 8.70.0,
+eslint-plugin-jsx-a11y, eslint-plugin-react, @sentry/bundler-plugin-core 5.3.0, @sentry/bundler-plugins 10.73.0,
+@serwist/build 9.5.13 and @joshwooding/vite-plugin-react-docgen-typescript 0.7.0 use none of them.
+
+**One caller would break: eslint-plugin-import 2.32.0's `no-internal-modules` rule calls `minimatch.makeRe`.** The
+rule isn't enabled here (`eslint.config.mjs` takes eslint-config-next's core-web-vitals and typescript sets only),
+so nothing runs it. Enabling that rule, or any config that turns it on, needs this revisited first.
