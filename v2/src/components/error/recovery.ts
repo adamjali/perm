@@ -23,8 +23,12 @@ import { analytics } from "@/lib/analytics";
  * (scripts/error-codes/codes.json, read Oct 31 2026): #412 is "Connection
  * closed.", #441 is "An error occurred in the Server Components render."
  */
+// `enqueueModel` / `enqueueValue`: React's page-data reader met a row for a part it had already finished
+// ("null is not an object (evaluating 't.reason.enqueueModel')", Chrome for iPhone on the case page, Sentry 5S,
+// Nov 2 2026). That's a damaged or doubled page-data stream, never our code (nothing here calls either), and a
+// fresh load reads a clean one.
 const RELOAD_CURABLE =
-  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed|reading 'call'|Failed to fetch|Network ?Error|Load failed|Connection closed|fetch failed|An error occurred in the Server Components render|Minified React error #(412|441)\b/i;
+  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed|reading 'call'|Failed to fetch|Network ?Error|Load failed|Connection closed|fetch failed|An error occurred in the Server Components render|Minified React error #(412|441)\b|\benqueue(Model|Value)\b/i;
 
 export function isReloadCurable(error: unknown): boolean {
   if (!error) return false;

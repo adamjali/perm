@@ -17,6 +17,9 @@ describe("isReloadCurable", () => {
     // The same two as production React words them.
     ["Error", "Minified React error #412; visit https://react.dev/errors/412 for the full message"],
     ["Error", "Minified React error #441; visit https://react.dev/errors/441 for the full message"],
+    // React's page-data reader on a damaged stream, as Safari and Chrome word it (Sentry 5S).
+    ["TypeError", "null is not an object (evaluating 't.reason.enqueueModel')"],
+    ["TypeError", "Cannot read properties of null (reading 'enqueueValue')"],
   ])("a fresh load cures %s: %s", (name, message) => {
     const e = Object.assign(new Error(message), { name });
     expect(isReloadCurable(e)).toBe(true);
