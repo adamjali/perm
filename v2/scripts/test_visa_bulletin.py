@@ -54,6 +54,35 @@ def refuses(label: str, page: str, month: str | None, expect: str) -> None:
             check(label, False, "did not refuse")
 
 
+TABLES_FIXTURE = HERE / "__fixtures__" / "visa-bulletin-2026-11.tables.txt"
+
+
+def tables_route() -> None:
+    """The browser route (Nov 2026 on): the four tables' cell text, copied from
+    State's page in a person's browser, rebuilt and read by the same parser.
+    The fixture is the November 2026 bulletin as copied on Nov 3 2026; its
+    parse equalled the stored November row chart for chart."""
+    text = TABLES_FIXTURE.read_text()
+    parsed = vb.validated(vb.page_from_tables(text), "2026-11")
+    fa, df = parsed["finalAction"], parsed["datesForFiling"]
+    check("tables: EB2 India final action 01NOV13", fa["EB2"]["india"] == "01NOV13", fa["EB2"]["india"])
+    check("tables: EB2 rest of world final action 01APR25", fa["EB2"]["worldwide"] == "01APR25", fa["EB2"]["worldwide"])
+    check("tables: EB2 India dates for filing 15JAN15", df["EB2"]["india"] == "15JAN15", df["EB2"]["india"])
+    check("tables: F2A is current for filing", parsed["familyDatesForFiling"]["F2A"]["worldwide"] == "C",
+          parsed["familyDatesForFiling"]["F2A"]["worldwide"])
+    check("tables: a browser read ranks as a primary source", vb.rank_of(vb.BROWSER_TABLES_SOURCE) == 3,
+          str(vb.rank_of(vb.BROWSER_TABLES_SOURCE)))
+    # The same text without its dates-for-filing table is refused, never stored half.
+    parts = text.strip().split("^")
+    eb = [i for i, t in enumerate(parts) if t.startswith("Employment")]
+    short = "^".join(t for i, t in enumerate(parts) if i != eb[-1])
+    try:
+        vb.validated(vb.page_from_tables(short), "2026-11")
+        check("tables: a copy missing a chart is refused", False, "accepted")
+    except SystemExit as exc:
+        check("tables: a copy missing a chart is refused", True, str(exc))
+
+
 def main() -> int:
     page = FIXTURE.read_text()
 
@@ -391,6 +420,7 @@ def main() -> int:
         vb.Database, vb.fetch, vb.time.sleep = saved
         os.environ.pop("GITHUB_OUTPUT", None)
 
+    tables_route()
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 

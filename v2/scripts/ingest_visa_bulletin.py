@@ -153,6 +153,13 @@ BULLETIN_MAX_AGE_DAYS = 20
 SAVED_PAGE_SOURCE = (
     "travel.state.gov (page saved from a browser; the site refuses automated clients)"
 )
+# Since Nov 2 2026 adoption.state.gov sends every bulletin path to travel.state.gov,
+# which refuses scripts, so a bulletin is read in a person's own browser. The
+# copy step there writes each bulletin table's cell text: tables split by ^,
+# rows by ~, cells by | (no "=" or "?", which the browser tool won't return).
+BROWSER_TABLES_SOURCE = (
+    "travel.state.gov (the bulletin's tables, read in a browser; the site refuses automated clients)"
+)
 
 # The State Department serves the same bulletin pages from adoption.state.gov,
 # its own host, which answers a plain request (index, month pages and PDFs)
@@ -348,6 +355,41 @@ def ensure_family_columns(db: Database) -> None:
 
 def family_json(parsed: dict, key: str) -> str | None:
     return json.dumps(parsed[key]) if parsed.get(key) else None
+
+
+def page_from_tables(text: str) -> str:
+    """A page the parser reads, rebuilt from the tables' cell text.
+
+    The parser looks only at <table>, <tr> and each cell's text, so the
+    rebuilt page carries exactly what State printed in its tables, in order.
+    """
+    import html as _html
+    out = ["<html><body>"]
+    for tbl in text.strip().split("^"):
+        out.append("<table>")
+        for row in tbl.split("~"):
+            cells = "".join(f"<td>{_html.escape(c.strip())}</td>" for c in row.split("|"))
+            out.append(f"<tr>{cells}</tr>")
+        out.append("</table>")
+    out.append("</body></html>")
+    return "\n".join(out)
+
+
+def ingest_tables(path: str, month: str | None) -> int:
+    """Store one bulletin from its tables' text, copied out of a browser.
+
+    Same checks as a saved page; the month must be given, because the tables
+    don't name it.
+    """
+    if not month:
+        raise SystemExit("FATAL: --from-tables needs --month YYYY-MM (the tables don't name it).")
+    text = pathlib.Path(path).read_text(errors="replace")
+    log(f"read {path} ({len(text)} characters of table text)")
+    parsed = validated(page_from_tables(text), month)   # every refusal before any connection
+    db = Database()
+    write_month(db, month, parsed, BROWSER_TABLES_SOURCE)
+    stamp_bulletin_freshness(db, BROWSER_TABLES_SOURCE)
+    return 0
 
 
 def ingest_saved_page(path: str, month: str | None) -> int:
@@ -587,6 +629,7 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
 # travel.state.gov)", and a plain substring test would rank it as the page.
 SOURCE_RANK = [
     (lambda u: "saved from a browser" in u, 3),   # primary, a person fetched it
+    (lambda u: "read in a browser" in u, 3),      # primary, its tables copied in a person's browser
     (lambda u: u.startswith("adoption.state.gov"), 3),  # primary, State's own host
     (lambda u: "mirror" in u.lower(), 1),
     (lambda u: "travel.state.gov" in u, 2),       # the real page, via the archive
@@ -704,6 +747,11 @@ def main() -> int:
         help="A bulletin page saved from a browser. Stores that one month "
              "straight to the database as a primary-source row.",
     )
+    ap.add_argument(
+        "--from-tables",
+        help="The bulletin's tables as text copied from a browser (tables ^, rows ~, "
+             "cells |). Needs --month. Stored like a saved page.",
+    )
     ap.add_argument("--month", help="YYYY-MM, when the page cannot be read for it")
     ap.add_argument(
         "--direct", action="store_true",
@@ -730,6 +778,8 @@ def main() -> int:
     # so it short-circuits before any archive lookup.
     if args.from_file:
         return ingest_saved_page(args.from_file, args.month)
+    if args.from_tables:
+        return ingest_tables(args.from_tables, args.month)
     if args.backfill_direct:
         return ingest_direct(args.backfill_direct, args.dry_run, skip_bad=True)
     if args.direct:

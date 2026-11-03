@@ -211,7 +211,7 @@ def main() -> int:
     r = runs(db)
     check("only old servers answering is a refusal: exit 0", rc == 0)
     check("it asked LISTING_TRIES times, pausing between", len(f.calls) == s.LISTING_TRIES and len(slept) == s.LISTING_TRIES - 1)
-    check("the run is ok and names what came back", r and r[-1]["status"] == "ok" and "old site" in r[-1]["note"], str(r))
+    check("the run is ok and names what came back", r and r[-1]["status"] == "ok" and "redirected to travel.state.gov" in r[-1]["note"], str(r))
     check("no freshness is stamped on a refusal",
           not fresh(db))
 

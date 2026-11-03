@@ -201,7 +201,12 @@ def ask(url: str, tries: int, fetch, sleep, accept) -> tuple[str | None, str]:
                 last = describe(e)
                 continue
             raise
-    why = f"{old} of {tries} answers came from servers still on the old site"
+    # Since about 2 PM Eastern Nov 2 2026 EVERY server answers this way: State sends
+    # each adoption.state.gov path to travel.state.gov, which refuses scripts. A run
+    # where all tries redirect says so, so the note doesn't blame a few old servers.
+    why = (f"all {tries} answers redirected to travel.state.gov, which refuses scripts "
+           "(State closed adoption.state.gov to them on Nov 2 2026)"
+           if old == tries else f"{old} of {tries} answers came from servers still on the old site")
     return None, why + (f", the rest {last}" if last else "")
 
 
