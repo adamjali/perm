@@ -48,11 +48,13 @@ class Recording(SqliteTurso):
     def __init__(self) -> None:
         super().__init__()
         self.sql: list[str] = []
+        self.full: list[str] = []
 
     def pipeline(self, reqs, **kw):
         for r in reqs:
             if r.get("type") == "execute":
                 self.sql.append(r["stmt"]["sql"].split(" ", 3)[0:3][0])
+                self.full.append(r["stmt"]["sql"])
         return super().pipeline(reqs, **kw)
 
 
@@ -230,8 +232,13 @@ def layoff_check(db, incoming: list[dict]) -> None:
     check("N and No read as N", [yes_no(v) for v in ("N", "No", "n")] == ["N", "N", "N"])
     check("a blank, N/A or anything else is unknown, never N",
           [yes_no(v) for v in ("", None, "N/A ", "X", 1)] == [None] * 5)
-    db.sql = []
-    load(db, [dict(c, layoff="Y") if c["caseNumber"] == incoming[0]["caseNumber"] else c for c in incoming])
+    db.sql, db.full = [], []
+    # The row as employer_check left it, plus the answer: only the layoff column differs.
+    held = {"pwdNumber": "P-100-24339-516453", "empPayroll": 1250, "empYear": 1998}
+    load(db, [dict(c, layoff="Y", **held) if c["caseNumber"] == incoming[0]["caseNumber"] else c for c in incoming])
+    updates = [q for q in db.full if q.startswith("UPDATE")]
+    check(f"the UPDATE sets the one column that changed (saw {[q[:60] for q in updates]})",
+          len(updates) == 1 and updates[0].startswith("UPDATE perm_cases SET layoff = CASE") and updates[0].count(" = CASE ") == 1)
     got = db.conn.execute("SELECT layoff FROM perm_cases WHERE case_number = ?", [incoming[0]["caseNumber"]]).fetchone()
     check(f"the answer lands in perm_cases (got {got})", tuple(got) == ("Y",))
     check(f"by one narrow UPDATE, no row rewritten (saw {db.sql})",

@@ -348,30 +348,38 @@ def main() -> int:
         pending = []
 
     skipped = 0
-    narrow: list[tuple] = []
+    # Narrow rows grouped by which EXTRA columns differ, so a statement sets only
+    # those: a column added later (the layoff answer, Nov 3 2026) is one column
+    # across every stored row, and writing all twenty-five measured 50 rows a second.
+    narrow: dict[tuple[int, ...], list[tuple]] = {}
     narrowed = 0
 
-    def flush_narrow():
-        nonlocal narrow, narrowed
-        if not narrow:
-            return
-        pending.append(case_update("perm_cases", "case_number", EXTRA,
-                                   [(r[0], *r[CORE:]) for r in narrow]))
-        narrowed += len(narrow)
-        narrow = []
-        if len(pending) >= STMTS_PER_REQUEST:
-            flush_request()
+    def flush_narrow(changed: tuple[int, ...] | None = None):
+        nonlocal narrowed
+        for key in [changed] if changed is not None else list(narrow):
+            group = narrow.pop(key, [])
+            if not group:
+                continue
+            cols = [EXTRA[i] for i in key]
+            pending.append(case_update("perm_cases", "case_number", cols,
+                                       [(r[0], *(r[CORE + i] for i in key)) for r in group]))
+            narrowed += len(group)
+            if len(pending) >= STMTS_PER_REQUEST:
+                flush_request()
 
     for row in rows_from(cases, employers, firms):
         if incremental:
             stored = have.get(str(row[0]))
             if stored and stored[0] == row_fingerprint(row):
-                if stored[1] == extras_of(row):
+                mine = extras_of(row)
+                if stored[1] == mine:
                     skipped += 1
                 else:
-                    narrow.append(row)
-                    if len(narrow) >= NARROW_ROWS:
-                        flush_narrow()
+                    changed = tuple(i for i, (a, b) in enumerate(zip(stored[1], mine)) if a != b)
+                    group = narrow.setdefault(changed, [])
+                    group.append(row)
+                    if len(group) >= narrow_rows(len(changed)):
+                        flush_narrow(changed)
                 continue
         batch.append(row)
         sent += 1
@@ -413,10 +421,17 @@ def main() -> int:
     return 0
 
 
-# Rows per narrow UPDATE. A row costs two parameters per EXTRA column plus one
-# in the IN list (47 with twenty-three columns), so 200 rows is 9,400
-# parameters, under SQLite's 32,766.
+# Rows per narrow UPDATE. A row costs two parameters per column it sets plus one
+# in the IN list (51 with all twenty-five), so 200 rows is 10,200 parameters,
+# under SQLite's 32,766. Fewer columns take more rows, up to NARROW_ROWS_MAX: each
+# CASE is a scan of its arms, so a statement's work grows with the square of its rows.
 NARROW_ROWS = 200
+NARROW_PARAMS = 10_200
+NARROW_ROWS_MAX = 1000
+
+
+def narrow_rows(columns: int) -> int:
+    return max(NARROW_ROWS, min(NARROW_ROWS_MAX, NARROW_PARAMS // (2 * columns + 1)))
 
 FINGERPRINT_KEY = "perm_cases_fingerprint"
 
