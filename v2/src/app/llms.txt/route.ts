@@ -365,7 +365,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/perm-layoff-disclosures",
     label: "Layoffs reported on PERM applications",
-    blurb: "Each employer's answer to Form 9089's layoff question (Section G, Item 12: a layoff in the job's occupation, in the area, in the six months before filing), from DOL's PERM files: the share of applications saying yes each fiscal year since FY2016, the employers and occupations with the most, how those cases ended against the rest, and every employer that said yes.",
+    blurb: "Each employer's answer to Form 9089's layoff question (Section G, Item 12: a layoff in the job's occupation, in the area, in the six months before filing), from DOL's PERM files: the share of applications saying yes each fiscal year since FY2015, the employers and occupations with the most, how those cases ended against the rest, and every employer that said yes.",
   },
   {
     path: "/opt-employers",
