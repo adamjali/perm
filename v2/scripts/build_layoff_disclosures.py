@@ -42,7 +42,7 @@ DOC_KEY = "layoff_disclosures"
 TABLES = ("perm_cases", "perm_cases_history")
 OUTCOMES = ("certified", "denied", "withdrawn")
 TOP_PER_YEAR = 10
-JOBS_SHOWN = 15
+JOBS_SHOWN = 10
 # A year is shown only when most of its decided cases carry an answer: a year whose
 # file doesn't print the question would read as an employer-wide zero.
 MIN_ANSWERED_SHARE = 0.5
@@ -148,24 +148,49 @@ def read_employers(db: Database, fy: int, page_of: dict[str, str], names: dict[s
     return out, len(agg)
 
 
+def occupation_pages(db: Database) -> dict[str, tuple[str, str]]:
+    """SOC group -> its occupation page, as (slug, name): the code's own (".00" or bare) before a
+    specialty under it ("Database Architects", not "Data Warehousing Specialists"), then the busiest."""
+    best: dict[str, tuple[tuple[int, int], str, str]] = {}
+    for code, slug, name, total in rows_of(db.execute(
+            "SELECT code, slug, name, total FROM perm_entities WHERE kind = 'occupation' AND code IS NOT NULL")):
+        c = str(code or "")
+        g = c[:7]
+        rank = (1 if c in (g, f"{g}.00") else 0, num(total))
+        if len(g) == 7 and (g not in best or rank > best[g][0]):
+            best[g] = (rank, str(slug), " ".join(str(name or "").split()))
+    return {g: (slug, name) for g, (_, slug, name) in best.items()}
+
+
 def read_jobs(db: Database, fy: int) -> list[dict]:
-    """The SOC groups with the most yeses in `fy`, each with its answered cases."""
+    """The SOC groups with the most yeses in `fy`, each with its answered cases and its page."""
     jobs: dict[str, dict] = {}
+    titles: dict[str, dict[str, int]] = defaultdict(dict)
     # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     for code, title, layoff, n in rows_of(db.execute(
-            f"SELECT substr(soc_code, 1, 7), MAX(soc_title), layoff, COUNT(*) FROM {table_for(fy)} "
+            f"SELECT substr(soc_code, 1, 7), soc_title, layoff, COUNT(*) FROM {table_for(fy)} "
             "WHERE fiscal_year = ? AND layoff IN ('Y', 'N') AND soc_code IS NOT NULL AND soc_code != '' "
-            "GROUP BY substr(soc_code, 1, 7), layoff", [str(fy)])):
+            "GROUP BY substr(soc_code, 1, 7), soc_title, layoff", [str(fy)])):
         c = str(code or "")
         if len(c) != 7:
             continue
-        j = jobs.setdefault(c, {"code": c, "title": " ".join(str(title or "").split()), "yes": 0, "answered": 0})
+        j = jobs.setdefault(c, {"code": c, "yes": 0, "answered": 0})
         j["answered"] += num(n)
         if layoff == "Y":
             j["yes"] += num(n)
+        t = " ".join(str(title or "").split())
+        if t and t.upper() not in ("N/A", "NA", "NONE"):
+            titles[c][t] = titles[c].get(t, 0) + num(n)
     out = [j for j in jobs.values() if j["yes"] > 0]
     out.sort(key=lambda j: (-j["yes"], j["code"]))
-    return out[:JOBS_SHOWN]
+    pages = occupation_pages(db)
+    shown = []
+    for j in out[:JOBS_SHOWN]:
+        slug, page_name = pages.get(j["code"], (None, ""))
+        # The occupation page's own name where there is one, else the title employers used most.
+        title = page_name or (max(titles[j["code"]], key=titles[j["code"]].get) if titles[j["code"]] else j["code"])
+        shown.append({**j, "title": title, "slug": slug})
+    return shown
 
 
 def read_top_by_year(db: Database, fys: list[int], page_of: dict[str, str], names: dict[str, str]) -> dict:

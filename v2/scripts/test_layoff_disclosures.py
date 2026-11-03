@@ -43,13 +43,17 @@ def seeded() -> SqliteTurso:
         c.execute(f"CREATE TABLE {t} (case_number TEXT PRIMARY KEY, status TEXT, decision_date TEXT, "
                   "fiscal_year TEXT, employer_name TEXT, employer_slug TEXT, soc_code TEXT, soc_title TEXT, layoff TEXT)")
     c.execute("CREATE TABLE employer_page_map (source_slug TEXT, page_slug TEXT)")
-    c.execute("CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT)")
+    c.execute("CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT, code TEXT, total INTEGER)")
     c.execute("CREATE TABLE perm_docs (key TEXT PRIMARY KEY, json TEXT, computed_at INTEGER)")
     c.execute("CREATE TABLE ingest_runs (script TEXT, status TEXT, started_at INTEGER, finished_at INTEGER, "
               "rows_written INTEGER, note TEXT)")
     c.executemany("INSERT INTO employer_page_map VALUES (?,?)", [("acme-corp", "acme-inc")])
-    c.executemany("INSERT INTO perm_entities VALUES (?,?,?)", [("employer", "acme-inc", "Acme Inc"),
-                                                              ("employer", "quiet-llc", "Quiet LLC")])
+    c.executemany("INSERT INTO perm_entities VALUES (?,?,?,?,?)", [
+        ("employer", "acme-inc", "Acme Inc", None, 9), ("employer", "quiet-llc", "Quiet LLC", None, 9),
+        ("occupation", "software-developers", "Software Developers", "15-1252.00", 900),
+        ("occupation", "software-developers-old", "Software Developers", "15-1252", 10),
+        ("occupation", "a-specialty", "A Specialty", "13-2011.01", 500),
+        ("occupation", "accountants-and-auditors", "Accountants and Auditors", "13-2011.00", 50)])
     rows = []
     n = 0
 
@@ -65,6 +69,8 @@ def seeded() -> SqliteTurso:
     add("perm_cases", "certified", "2026", "ACME INC", "acme-inc", "15-1252.00", "N", 2)
     add("perm_cases", "certified", "2026", "Small Shop", "", "13-2011.00", "Y", 1)
     add("perm_cases", "certified", "2026", "Quiet LLC", "quiet-llc", "13-2011.00", "N", 4)
+    # A title of N/A never names a job.
+    rows.append(("perm_cases", ("G-100-99999", "certified", "2025-12-01", "2026", "Quiet LLC", "quiet-llc", "13-2011.00", "N/A", "N")))
     add("perm_cases", "withdrawn", "2026", "Quiet LLC", "quiet-llc", "13-2011.00", None, 1)
     add("perm_cases", "certified", "2025", "ACME INC", "acme-inc", "15-1252.00", "Y", 2)
     add("perm_cases", "certified", "2025", "Quiet LLC", "quiet-llc", "13-2011.00", "N", 2)
@@ -82,11 +88,11 @@ def main() -> int:
     db = seeded()
     years = b.read_years(db)
     fy26 = years[2026]
-    check(f"FY2026: 12 decided, 11 answered, 5 yes (got {fy26['cases']}, {fy26['answered']}, {fy26['yes']})",
-          (fy26["cases"], fy26["answered"], fy26["yes"]) == (12, 11, 5))
+    check(f"FY2026: 13 decided, 12 answered, 5 yes (got {fy26['cases']}, {fy26['answered']}, {fy26['yes']})",
+          (fy26["cases"], fy26["answered"], fy26["yes"]) == (13, 12, 5))
     check(f"outcomes counted apart (got {fy26['yesOutcomes']}, {fy26['noOutcomes']})",
           fy26["yesOutcomes"] == {"certified": 4, "denied": 1, "withdrawn": 0}
-          and fy26["noOutcomes"] == {"certified": 6, "denied": 0, "withdrawn": 0})
+          and fy26["noOutcomes"] == {"certified": 7, "denied": 0, "withdrawn": 0})
     check(f"a blank answer is not a no (FY2015 answered {years[2015]['answered']})", years[2015]["answered"] == 0)
     fys = b.shown_years(years)
     check(f"a year with no answers isn't shown (got {fys})", fys == [2019, 2025, 2026])
@@ -101,8 +107,9 @@ def main() -> int:
     check("an employer that only answered no isn't listed", all(e["name"] != "Quiet LLC" for e in emps))
     check(f"answering employers, each once across its spellings (got {answering})", answering == 3)
     jobs = b.read_jobs(db, 2026)
-    check(f"jobs by the seven-character code (got {jobs})",
-          [(j["code"], j["yes"], j["answered"]) for j in jobs] == [("15-1252", 4, 6), ("13-2011", 1, 5)])
+    check(f"jobs by the seven-character code, each with its busiest page (got {jobs})",
+          [(j["code"], j["title"], j["yes"], j["answered"], j["slug"]) for j in jobs]
+          == [("15-1252", "Software Developers", 4, 6, "software-developers"), ("13-2011", "Accountants and Auditors", 1, 6, "accountants-and-auditors")])
 
     import builtins
     old_print = builtins.print
