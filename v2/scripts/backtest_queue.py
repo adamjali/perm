@@ -53,6 +53,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_db import ET, Database, query_rows, write_doc  # noqa: E402
+from lib_pace_walk import days_to_clear, working_rates  # noqa: E402
 from lib_perm_line import line_on  # noqa: E402
 import ingest_case_status_direct as c  # noqa: E402
 
@@ -81,6 +82,27 @@ def pace_before(db: Database, t0: date) -> float | None:
     # Over the days actually observed, like `measurePace`: a window the series
     # doesn't yet fill must not be divided by 28.
     return sum(vals) / len(vals)
+
+
+def rates_before(db: Database, t0: date) -> tuple[float, float] | None:
+    """DOL's working-day and off-day rates over the 28 days before T0 (lib_pace_walk.working_rates)."""
+    rows = query_rows(
+        db,
+        "SELECT date, total FROM daily_decisions WHERE source = 'sweep-observed' AND date >= ? AND date < ?",
+        [(t0 - timedelta(days=28)).isoformat(), t0.isoformat()],
+    )
+    days = [(date.fromisoformat(r[0]), float(r[1])) for r in rows if r[1] is not None]
+    return working_rates(days) if len(days) >= 14 else None
+
+
+def walked(t0: date, ahead: dict[str, float], rates: tuple[float, float]) -> dict[str, date]:
+    """Each case's date walked over DOL's calendar: holidays and the year-end slowdown counted (lib_pace_walk)."""
+    out = {}
+    for cn, a in ahead.items():
+        d = days_to_clear(t0, a, *rates)
+        if d is not None:
+            out[cn] = t0 + timedelta(days=max(1, d))
+    return out
 
 
 def frontier_at(db: Database, t0: date) -> tuple[str | None, int | None]:
@@ -230,12 +252,20 @@ def weekday_spread(db: Database, t0: date, pace: float) -> tuple[float, float] |
     return q(0.9) * pace / mean, q(0.1) * pace / mean
 
 
-def band(t0: date, ahead: float, pace: float, fast: float, slow: float) -> tuple[date, date]:
+def band(t0: date, ahead: float, pace: float, fast: float, slow: float,
+         rates: tuple[float, float] | None = None) -> tuple[date, date]:
     """The range the site prints, from decisionPace.ts: fast/slow ends, then
-    a floor of 55% of the horizon grown one third early, two thirds late."""
-    raw = round(ahead / pace)
-    early = round(ahead / fast)
-    late = round(ahead / slow)
+    a floor of 55% of the horizon grown one third early, two thirds late. With
+    `rates` each end is walked over DOL's calendar, as the site does since Nov 4 2026."""
+    def walk(rate: float) -> int:
+        if not rates:
+            return round(ahead / rate)
+        k = rate / pace
+        d = days_to_clear(t0, ahead, rates[0] * k, rates[1] * k)
+        return d if d is not None else round(ahead / rate)
+    raw = walk(pace)
+    early = walk(fast)
+    late = walk(slow)
     floor = max(MIN_BAND_DAYS, round(raw * MIN_BAND_FRACTION))
     if late - early < floor:
         grow = floor - (late - early)
@@ -521,7 +551,8 @@ def range_model(samples: list[list[dict]]) -> list[dict]:
     return model
 
 
-def served_range(t0: date, p: date, ahead: float, pace: float, spread, model: list[dict] | None):
+def served_range(t0: date, p: date, ahead: float, pace: float, spread, model: list[dict] | None,
+                 rates: tuple[float, float] | None = None):
     """The range the site would print: the measured one for this distance, else the fixed rule."""
     h = (p - t0).days
     row = model[bucket_of(h)] if model else None
@@ -530,7 +561,7 @@ def served_range(t0: date, p: date, ahead: float, pace: float, spread, model: li
         return t0 + timedelta(days=e), t0 + timedelta(days=l)
     if not spread:
         return None
-    return band(t0, ahead, pace, *spread)
+    return band(t0, ahead, pace, *spread, rates=rates)
 
 
 def served_coverage(ranges: dict[str, tuple[date, date]], pred: dict[str, date], decided: dict[str, date],
@@ -585,20 +616,27 @@ def origin_run(db: Database, rec: Record, t0: date, end: date, prior_model: list
         return None
     cases, decided, how = rec.at(t0)
     ahead: dict[str, float] = {}
-    current = predict(cases, t0, pace, True, ahead, exact_day=True)
+    flat = predict(cases, t0, pace, True, ahead, exact_day=True)
+    # The site walks DOL's calendar since Nov 4 2026 (decisionPace.ts, lib_pace_walk): holidays and the year-end
+    # slowdown. A window it can't measure the walk's rates from keeps the flat pace, as the site does.
+    rates = rates_before(db, t0)
+    current = {**flat, **walked(t0, ahead, rates)} if rates else flat
     chosen = near_set(current, end, (end - t0).days)
     spread = weekday_spread(db, t0, pace)
-    fixed = {cn: band(t0, a, pace, *spread) for cn, a in ahead.items() if a > 0} if spread else {}
+    fixed = {cn: band(t0, a, pace, *spread, rates=rates) for cn, a in ahead.items() if a > 0} if spread else {}
     measured = {}
     for cn, a in ahead.items():
         if a > 0:
-            r = served_range(t0, current[cn], a, pace, spread, prior_model)
+            r = served_range(t0, current[cn], a, pace, spread, prior_model, rates)
             if r:
                 measured[cn] = r
     rc = rival_c(cases, t0, chosen)
     return {
         "t0": t0.isoformat(), "pace": round(pace, 1),
         "ours": score(current, decided, end, chosen),
+        # The flat calendar pace the site used before Nov 4 2026, on the same cases, for the comparison.
+        "flat": score(flat, decided, end, chosen),
+        "walked": rates is not None,
         "rivalC": score(rc, decided, end, chosen),
         "fixedRange": served_coverage(fixed, current, decided, how, end),
         "measuredRange": served_coverage(measured, current, decided, how, end) if prior_model else None,

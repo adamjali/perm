@@ -8,6 +8,7 @@ import {
   isGradedOutcome,
   PWD_DAY_MODEL,
   PWD_MODEL,
+  storedModel,
   type Cell,
   type Program,
   summarise,
@@ -376,7 +377,7 @@ export async function predictOurs(today: string): Promise<{
       caseNumber: c.caseNumber,
       filingDate: c.filingDate,
       status: c.status,
-      model: est.modelId,
+      model: storedModel(est.modelId),
       predicted: est.estimatedDate,
       bandEarly: est.earliestDate,
       bandLate: est.latestDate,
@@ -517,7 +518,7 @@ export async function predictWatched(today: string): Promise<NewPrediction[]> {
       if (!est || est.kind !== "date") continue;
       out.push({
         source: "watched", program: "perm", caseNumber: c.caseNumber, filingDate: c.filingDate, status: c.status,
-        model: est.modelId, predicted: est.estimatedDate, bandEarly: est.earliestDate, bandLate: est.latestDate, casesAhead,
+        model: storedModel(est.modelId), predicted: est.estimatedDate, bandEarly: est.earliestDate, bandLate: est.latestDate, casesAhead,
       });
     }
   }

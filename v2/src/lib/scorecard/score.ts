@@ -71,6 +71,15 @@ export const PWD_BEFORE_FIX = "pwd-queue-request-month";
 export const PWD_DAY_MODEL = "pwd-workday";
 
 /**
+ * The PERM main method's stored name. The case page's model id stays "decision-pace"; from Nov 4 2026 it walks
+ * DOL's calendar (holidays and the year-end slowdown, decisionPace.ts), so the dates it records are a different
+ * method's and carry their own name. The flat calendar pace before it keeps "decision-pace" (RETIRED_METHODS).
+ */
+export const PACE_MODEL = "decision-pace-calendar";
+/** The name a prediction is stored under: the case page's model id, the main method under PACE_MODEL. */
+export const storedModel = (modelId: string): string => (modelId === "decision-pace" ? PACE_MODEL : modelId);
+
+/**
  * Methods whose dates are DOL's days: each is graded on the day DOL decided
  * (decidedOnFromSeen), where every other method is graded on the day our
  * sweep first saw the decision, the clock it was built on.

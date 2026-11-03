@@ -102,7 +102,8 @@ export const getDecisionPace = cache(
       // three separate diffs in this repo. Coerce, never trust.
       const n = Number(r.total);
       if (!Number.isFinite(n)) continue;
-      days.push({ dayOfWeek: new Date(t).getUTCDay(), n });
+      // The date lets the pace walk DOL's calendar: its holidays and the year-end slowdown (decisionPace.ts).
+      days.push({ dayOfWeek: new Date(t).getUTCDay(), n, date: r.date });
     }
     // Chronological, because that is what a caller reading this expects a
     // series to be. NOT load-bearing today: `measurePace` splits by weekday,

@@ -306,7 +306,8 @@ export function readOurs(
  * passed, accounted for most of the grades and the worst misses.
  */
 export const METHOD_NAME: Record<string, string> = {
-  "decision-pace": "Our main method (cases ahead of yours, at DOL's measured pace)",
+  "decision-pace-calendar": "Our main method (cases ahead of yours, at DOL's measured pace, walked over its calendar)",
+  "decision-pace": "Our main method before Nov 4 2026 (cases ahead of yours, at DOL's flat calendar pace)",
   "dol-average": "DOL's published average, which the case page used for cases DOL's queue had just passed",
   "rfi-clock": "The RFI clock, for a case at a request for information, dated from its own RFI day",
   stragglers: "The behind-the-queue rate, for cases the queue passed earlier",
@@ -322,6 +323,7 @@ export const RETIRED_METHODS: Record<string, string> = {
   "dol-average": "October 7, 2026",
   "pwd-queue-request-month": "October 3, 2026",
   "pwd-day": "October 15, 2026",
+  "decision-pace": "November 4, 2026",
 };
 
 /** Whether the case page still dates cases with this method. */

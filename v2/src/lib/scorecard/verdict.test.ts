@@ -164,7 +164,7 @@ describe("letterFor and settlesFrom", () => {
 describe("readMethods", () => {
   it("names each method, busiest first, with its misses and lean", () => {
     const out = readMethods({
-      "decision-pace": cell({ graded: 11, typicalMissDays: 4, biasDays: -4, within14Share: 1 }),
+      "decision-pace-calendar": cell({ graded: 11, typicalMissDays: 4, biasDays: -4, within14Share: 1 }),
       "dol-average": cell({ graded: 19, typicalMissDays: 6, biasDays: -6, within14Share: 12 / 19 }),
       stragglers: cell({ graded: 2, typicalMissDays: 7 }),
     });
@@ -172,13 +172,18 @@ describe("readMethods", () => {
     expect(out[0]).toBe(
       "DOL's published average, which the case page used for cases DOL's queue had just passed: 19 graded, typically 6 days off, 7 more than two weeks off, and its dates run late. Retired October 7, 2026: the case page no longer dates cases this way.",
     );
-    expect(out[1]).toBe("Our main method (cases ahead of yours, at DOL's measured pace): 11 graded, typically 4 days off, and its dates run late.");
+    expect(out[1]).toBe("Our main method (cases ahead of yours, at DOL's measured pace, walked over its calendar): 11 graded, typically 4 days off, and its dates run late.");
+  });
+
+  it("reads the flat-pace main method as retired from Nov 4 2026", () => {
+    const out = readMethods({ "decision-pace": cell({ graded: 30, typicalMissDays: 3 }) });
+    expect(out[0]).toContain("Retired November 4, 2026");
   });
 
   it("leaves the retired methods out when asked, for the public page", () => {
     const out = readMethods(
       {
-        "decision-pace": cell({ graded: 11, typicalMissDays: 4 }),
+        "decision-pace-calendar": cell({ graded: 11, typicalMissDays: 4 }),
         "dol-average": cell({ graded: 19, typicalMissDays: 6 }),
       },
       3,

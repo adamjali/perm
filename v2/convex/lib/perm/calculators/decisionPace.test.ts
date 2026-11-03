@@ -1,5 +1,10 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { isBusinessDay } from "../dates/holidays";
 import {
+  daysToClear,
+  seasonFactor,
   MAX_BAND_DAYS,
   MAX_HORIZON_DAYS,
   boundRange,
@@ -351,5 +356,75 @@ describe("no range is wider than MAX_BAND_DAYS", () => {
     const r = ask({ casesAhead: Math.round(normal.pace * 10), measuredRange: [{ fromDays: 0, toDays: 14, earlyDays: -40, lateDays: 90 }] });
     if (r.kind !== "estimate") throw new Error("expected an estimate");
     expect(r.late - r.early).toBeLessThanOrEqual(MAX_BAND_DAYS);
+  });
+});
+
+/* ---- The holiday-aware walk (Nov 3 2026) -------------------------------------------------- */
+
+const dayOf = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
+const isoOf = (day: number) => new Date(day * 86_400_000).toISOString().slice(0, 10);
+
+/** A dated 28-day window ending the day before `today`, at `wd` a DOL working day and `we` a weekend or holiday. */
+const dated = (todayIso: string, wd: number, we: number): DecisionDay[] =>
+  Array.from({ length: 28 }, (_, i) => {
+    const iso = isoOf(dayOf(todayIso) - 28 + i);
+    return { dayOfWeek: new Date(`${iso}T00:00:00Z`).getUTCDay(), n: isBusinessDay(iso) ? wd : we, date: iso };
+  });
+
+describe("daysToClear and seasonFactor: the twin of scripts/lib_pace_walk.py", () => {
+  const fx = JSON.parse(readFileSync(join(process.cwd(), "scripts", "fixtures", "pace_walk.json"), "utf8")) as {
+    walks: { today: string; cases: number; workday: number; offday: number; days: number | null }[];
+    factors: { date: string; factor: number }[];
+  };
+
+  it.each(fx.walks)("$cases cases from $today take $days days", (c) => {
+    expect(daysToClear(dayOf(c.today), c.cases, c.workday, c.offday)).toBe(c.days);
+  });
+
+  it.each(fx.factors)("$date counts $factor of a working day", (f) => {
+    expect(seasonFactor(f.date)).toBe(f.factor);
+  });
+});
+
+describe("estimateByPace: walked over DOL's calendar when the window is dated", () => {
+  const today = "2026-11-03";
+  const pace = measurePace(dated(today, 760, 5)) as MeasuredPace;
+
+  it("measures a working-day rate and an off-day rate from a dated window", () => {
+    expect(pace.workday).toBeCloseTo(760, 0);
+    expect(pace.offday).toBeCloseTo(5, 0);
+  });
+
+  it("counts the holidays and the year-end slowdown a horizon crosses", () => {
+    const r = estimateByPace({ today: dayOf(today), casesAhead: 36_061, pace, status: "ANALYST REVIEW", monthsBehindFrontier: 4, sweepAgeDays: 0 });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.rawDays).toBe(daysToClear(dayOf(today), 36_061, pace.workday!, pace.offday!));
+    expect(r.holidayDays).toBeGreaterThan(5);
+    // Longer than the flat calendar pace, which assumes no holiday ahead.
+    expect(r.rawDays).toBeGreaterThan(Math.round(36_061 / pace.pace));
+  });
+
+  it("adds nothing in a stretch with no holiday", () => {
+    const march = "2027-03-01";
+    const p = measurePace(dated(march, 760, 5)) as MeasuredPace;
+    const r = estimateByPace({ today: dayOf(march), casesAhead: 7_600, pace: p, status: "ANALYST REVIEW", monthsBehindFrontier: 4, sweepAgeDays: 0 });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.holidayDays).toBe(0);
+  });
+
+  it("keeps the band around the walked date", () => {
+    const r = estimateByPace({ today: dayOf(today), casesAhead: 36_061, pace, status: "ANALYST REVIEW", monthsBehindFrontier: 4, sweepAgeDays: 0 });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.early).toBeLessThanOrEqual(r.day);
+    expect(r.late).toBeGreaterThanOrEqual(r.day);
+    expect(r.late - r.early).toBeLessThanOrEqual(MAX_BAND_DAYS);
+  });
+
+  it("falls back to the flat pace when the window carries no dates", () => {
+    expect(normal.workday).toBeNull();
+    const r = ask({ casesAhead: 30_000 });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.rawDays).toBe(Math.round(30_000 / normal.pace));
+    expect(r.holidayDays).toBe(0);
   });
 });
