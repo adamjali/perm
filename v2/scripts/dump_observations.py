@@ -13,9 +13,11 @@ that outlived the nightly backups would lose all of it.
 What: one gzipped JSONL per table, read in primary-key-ordered pages so no
 single request is large. Rebuildable tables are deliberately absent.
 
-The workflow uploads the directory as a GitHub Actions artifact. The rows are
-public DOL data (case numbers, employers, job titles, statuses) plus this
-project's own timestamps; there is no user data in any of these tables.
+The workflow seals the directory with the backup key's public half and
+uploads it as a GitHub Actions artifact (sealed since Nov 3 2026: a public
+repository's artifacts can be downloaded by any signed-in GitHub user). The
+rows are public DOL data (case numbers, employers, job titles, statuses) plus
+this project's own timestamps; there is no user data in any of these tables.
 
     python3 scripts/dump_observations.py --out backups/
 """

@@ -146,8 +146,8 @@ npx convex import --prod --replace convex.zip
 
 Layers, newest first: Oracle's own disk backups (3 days, whole machine), the
 nightly database dump (7 here), the sealed server and Convex copies (7 here),
-the same three in R2, and the weekly public dump of the tables DOL
-cannot give back (GitHub artifact, 90 days, `backup-observations.yml`).
+the same three in R2, and the weekly sealed dump of the tables DOL
+cannot give back (GitHub artifact, 90 days, `backup-observations.yml`; opened with the same key).
 
 ## Switch day (only on the owner's go)
 

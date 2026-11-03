@@ -5,13 +5,18 @@ name: Backup observations
 # the small federal series whose sources keep no archive. See
 # scripts/dump_observations.py for the reasoning and the table list.
 #
-# The artifact is public, like the repository: the rows are DOL's public data
-# plus this project's own timestamps, and none of these tables hold user data.
-# 90 days is the longest retention GitHub offers; the 13 weekly artifacts
-# that implies are about 1.5 GB.
+# Sealed before upload (Nov 3 2026): any signed-in GitHub user can download a
+# public repository's artifacts, and the event log is this site's own work, so
+# the dump is a tar sealed with the PUBLIC half of the backup key, the same way
+# convex-backup.yml seals Convex. Only the private half on the owner's Mac
+# opens it. 90 days is the longest retention GitHub offers.
 #
-# Restore: download the artifact, then load each .jsonl.gz with INSERT OR
-# IGNORE by primary key (a dump is a snapshot, never a replacement).
+# Restore: download the artifact, then
+#   openssl cms -decrypt -binary -inform DER -in observations.tar.cms \
+#     -inkey backup-key.pem | tar -xf -
+# and load each .jsonl.gz with INSERT OR IGNORE by primary key (a dump is a
+# snapshot, never a replacement). The event logs are never pruned, so the
+# newest artifact holds every transition the older ones do.
 
 on:
   schedule:
@@ -46,11 +51,24 @@ jobs:
         # if it were a backup.
         run: python3 scripts/dump_observations.py --out "${RUNNER_TEMP}/observations"
 
+      - name: Seal
+        working-directory: v2
+        run: |
+          o="$RUNNER_TEMP/observations"
+          s="$RUNNER_TEMP/sealed"
+          mkdir -p "$s"
+          tar -C "$o" -cf - . \
+            | openssl cms -encrypt -binary -aes-256-gcm -outform DER \
+                -out "$s/observations.tar.cms" scripts/oracle/conf/backup-recipient.pem
+          rm -rf "$o"
+          test -s "$s/observations.tar.cms" || { echo "::error::nothing sealed"; exit 1; }
+          echo "sealed: $(du -h "$s/observations.tar.cms" | cut -f1)"
+
       - name: Upload
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: observations-${{ github.run_id }}
-          path: ${{ runner.temp }}/observations
+          path: ${{ runner.temp }}/sealed
           retention-days: 90
           if-no-files-found: error
 
