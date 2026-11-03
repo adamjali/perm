@@ -102,7 +102,11 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     "attorney": ["ATTY_AG_LAW_FIRM_NAME", "LAWFIRM_NAME_BUSINESS", "AGENT_ATTORNEY_FIRM_NAME"],
     "attorney_state": ["ATTY_AG_STATE", "AGENT_ATTORNEY_STATE"],
     # Risk factors DOL records on the form itself (Form 9089, Sections A & G).
-    "layoff": ["OTHER_REQ_EMP_LAYOFF", "EMP_LAYOFF_IN_PAST_SIX_MONTHS"],
+    # A layoff in the job's occupation in the six months before filing: Form 9089
+    # Section G Item 12 on the new form, Section I.e Item 26 on the old one (DOL's
+    # record layouts: RI_ to FY2019, plain from FY2020, OTHER_REQ_ from FY2025).
+    "layoff": ["OTHER_REQ_EMP_LAYOFF", "LAYOFF_IN_PAST_SIX_MONTHS", "RI_LAYOFF_IN_PAST_SIX_MONTHS",
+               "EMP_LAYOFF_IN_PAST_SIX_MONTHS"],
     "ownership": ["EMP_WORKER_INTEREST", "FW_OWNERSHIP_INTEREST"],
     "fulltime": ["OTHER_REQ_IS_FULLTIME_EMP", "JOB_OPP_FULL_TIME"],
     # The employer's industry and the city the job is in, read off
@@ -277,6 +281,15 @@ def yes(raw: str | None) -> bool:
     return (raw or "").strip().upper()[:1] == "Y"
 
 
+def yes_no(raw) -> str | None:
+    """DOL's own Y or N for a yes-or-no field, kept as it answered. A blank, N/A or
+    anything else is unknown: never counted as N."""
+    if not isinstance(raw, str):
+        return None
+    v = raw.strip().upper()
+    return "Y" if v in ("Y", "YES") else "N" if v in ("N", "NO") else None
+
+
 def no(raw: str | None) -> bool:
     """Explicit N only. A BLANK is unknown, and unknown is not 'part time'."""
     return (raw or "").strip().upper()[:1] == "N"
@@ -375,7 +388,7 @@ def norm_status(raw: str) -> str | None:
 PERM_TRACKED = (
     "case_status", "received_date", "decision_date", "employer_name",
     "job_title", "soc_code", "soc_title", "wage", "worksite_state", "attorney_name",
-    "naics", "worksite_city", "paper1", "job_order_start",
+    "naics", "worksite_city", "paper1", "job_order_start", "layoff",
 )
 
 
@@ -452,6 +465,7 @@ class CaseWriter:
             "worksite_state": row.get("state"), "attorney_name": row.get("attorneyName"),
             "naics": row.get("naics"), "worksite_city": row.get("worksiteCity"),
             "paper1": row.get("paper1"), "job_order_start": row.get("jobOrderStart"),
+            "layoff": row.get("layoff"),
         })
         self.by_status[status] += 1
         # A row with no resolvable state still counts nationally; it just has
@@ -897,6 +911,7 @@ def parse_file(
                         "pwdNumber": pwd_number(rec.get("pwd_number")),
                         "empPayroll": whole_in(rec.get("emp_payroll"), 1, PAYROLL_MAX),
                         "empYear": whole_in(rec.get("emp_year"), YEAR_MIN, int(decided[:4]) if decided else None),
+                        "layoff": yes_no(rec.get("layoff")),
                         **worker_fields(rec),
                         **recruitment_fields(rec, to_iso),
                     }

@@ -85,12 +85,13 @@ def workbook(rows: list[list], sheet_file: str = "sheet1.xml") -> str:
 
 FY2010 = workbook([
     ["CASE_NO", "DECISION_DATE", "CASE_STATUS", "EMPLOYER_NAME", "JOB_INFO_WORK_STATE",
-     "WAGE_OFFER_FROM_9089", "WAGE_OFFER_UNIT_OF_PAY_9089", "2007_NAICS_US_CODE", "JOB_INFO_WORK_CITY"],
-    ["A-09111-00001", 40210, "Certified", "ACME, INC.", "WA", 90000, "yr", 541511, "Seattle"],
-    ["A-09111-00002", 40211, "Certified-Expired", "Acme Inc", "WA", 90000, "yr", 541511, "Seattle"],
-    ["A-09111-00003", 40212, "Denied", "ACME INC", "WA", 90000, "yr", 541511, "Seattle"],
-    ["A-09111-00004", 40213, "Withdrawn", "NOBODY LLC", "TX", 50000, "yr", 111, "Austin"],
-    ["A-09111-00005", "", "Certified", "ACME INC", "WA", 1, "yr", 1, "x"],
+     "WAGE_OFFER_FROM_9089", "WAGE_OFFER_UNIT_OF_PAY_9089", "2007_NAICS_US_CODE", "JOB_INFO_WORK_CITY",
+     "RI_LAYOFF_IN_PAST_SIX_MONTHS"],
+    ["A-09111-00001", 40210, "Certified", "ACME, INC.", "WA", 90000, "yr", 541511, "Seattle", "Y"],
+    ["A-09111-00002", 40211, "Certified-Expired", "Acme Inc", "WA", 90000, "yr", 541511, "Seattle", "N"],
+    ["A-09111-00003", 40212, "Denied", "ACME INC", "WA", 90000, "yr", 541511, "Seattle", ""],
+    ["A-09111-00004", 40213, "Withdrawn", "NOBODY LLC", "TX", 50000, "yr", 111, "Austin", "N"],
+    ["A-09111-00005", "", "Certified", "ACME INC", "WA", 1, "yr", 1, "x", "Y"],
 ], sheet_file="sheet3.xml")
 
 FY2021_HEAD = ["CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE", "EMPLOYER_NAME",
@@ -98,15 +99,15 @@ FY2021_HEAD = ["CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE", "
                "WAGE_OFFER_FROM", "WAGE_OFFER_UNIT_OF_PAY", "AGENT_ATTORNEY_FIRM_NAME", "NAICS_CODE",
                "COUNTRY_OF_CITIZENSHIP", "FOREIGN_WORKER_BIRTH_COUNTRY", "CLASS_OF_ADMISSION",
                "FOREIGN_WORKER_EDUCATION", "FOREIGN_WORKER_INFO_MAJOR", "FOREIGN_WORKER_INST_OF_ED",
-               "MINIMUM_EDUCATION"]
+               "MINIMUM_EDUCATION", "LAYOFF_IN_PAST_SIX_MONTHS"]
 FY2021 = workbook([
     FY2021_HEAD,
     ["A-20001-11111", "Certified", "2020-01-02", "2021-03-01", "Acme Inc.", "Washington", "Seattle",
      "15-1252.00", "Software Developers", "Engineer", 50, "Hour", "Law Firm LLP", "541511",
-     "india", "INDIA", "H-1B", "Master's", "Computer Science", "Some University", "Bachelor's"],
+     "india", "INDIA", "H-1B", "Master's", "Computer Science", "Some University", "Bachelor's", "Y"],
     ["A-20001-11112", "Denied", "2020-01-02", "2021-03-02", "ACME INC", "WA", "Redmond",
      "15-1252.00", "Software Developers", "Engineer", 120000, "Year", "N/A", "541511",
-     "N/A", "", "", "", "", "", ""],
+     "N/A", "", "", "", "", "", "", "N/A"],
 ])
 
 # FY2009 writes its headers with spaces and spells citizenship without the second I.
@@ -176,7 +177,7 @@ def main() -> int:
 
     rows = {r[0]: r for r in db.conn.execute(
         "SELECT case_number, fiscal_year, employer_slug, state, wage, attorney_slug, days, naics, worksite_city, "
-        "citizenship, birth_country, visa_class, education, major, institution, job_education "
+        "citizenship, birth_country, visa_class, education, major, institution, job_education, layoff "
         "FROM perm_cases_history")}
     old = {k: v for k, v in rows.items() if k.startswith("A-09")}
     check(f"FY2010 rows are stored too, the undated one skipped (got {sorted(old)})",
@@ -191,8 +192,12 @@ def main() -> int:
           and a[4] == 104000.0 and a[5] == "law-firm-llp" and a[6] == 424
           and a[7] == "541511" and a[8] == "Seattle")
     check(f"the worker's fields stored, citizenship upper-cased (got {a[9:] if a else None})",
-          a is not None and a[9:] == ("INDIA", "INDIA", "H-1B", "Master's", "Computer Science",
-                                      "Some University", "Bachelor's"))
+          a is not None and a[9:16] == ("INDIA", "INDIA", "H-1B", "Master's", "Computer Science",
+                                        "Some University", "Bachelor's"))
+    check(f"the layoff answer as DOL gave it, both spellings of the column (got "
+          f"{[(k, v[16]) for k, v in sorted(rows.items())]})",
+          [rows[k][16] for k in ("A-09111-00001", "A-09111-00002", "A-09111-00003", "A-20001-11111",
+                                 "A-20001-11112")] == ["Y", "N", None, "Y", None])
     b = rows.get("A-20001-11112")
     check("an 'N/A' firm is no firm", b is not None and b[5] == "")
     check("an 'N/A' citizenship is no citizenship", b is not None and b[9] is None)
@@ -227,7 +232,7 @@ def main() -> int:
     check(f"a second identical load writes no data rows (touched {touched})", rc == 0 and touched == [])
 
     # A row stored before the worker's fields existed is filled by a narrow UPDATE.
-    db.conn.execute("UPDATE perm_cases_history SET citizenship = NULL, visa_class = NULL "
+    db.conn.execute("UPDATE perm_cases_history SET citizenship = NULL, visa_class = NULL, layoff = NULL "
                     "WHERE case_number = 'A-20001-11111'")
     db.conn.commit()
     sqls: list[str] = []
@@ -239,9 +244,9 @@ def main() -> int:
     db.pipeline = spying
     run(db, ["--local", FY2021])
     db.pipeline = orig_pipeline
-    got = db.conn.execute("SELECT citizenship, visa_class FROM perm_cases_history "
+    got = db.conn.execute("SELECT citizenship, visa_class, layoff FROM perm_cases_history "
                           "WHERE case_number = 'A-20001-11111'").fetchone()
-    check(f"the missing fields filled (got {got})", got == ("INDIA", "H-1B"))
+    check(f"the missing fields filled (got {got})", got == ("INDIA", "H-1B", "Y"))
     check("by a narrow UPDATE, not a whole-row replace",
           any(q.startswith("UPDATE perm_cases_history") for q in sqls)
           and not any(q.startswith("INSERT OR REPLACE INTO perm_cases_history") for q in sqls))

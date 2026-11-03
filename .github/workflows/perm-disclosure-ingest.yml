@@ -167,6 +167,8 @@ jobs:
           python3 scripts/build_quarter_report.py
           # Job titles and the SOC codes employers filed them under (/soc-codes).
           python3 scripts/build_soc_titles.py
+          # What employers told DOL about layoffs on their applications (/perm-layoff-disclosures).
+          python3 scripts/build_layoff_disclosures.py
 
       # The pages built from this corpus sit on a week-long window, which is
       # only right if a load expires them. `success()` so a failed load never

@@ -92,3 +92,9 @@ jobs:
               --note "run ${GITHUB_RUN_ID} failed; see the log" || true
             exit 1
           }
+          # Employers' layoff answers by year (/perm-layoff-disclosures), which read the history table too.
+          python3 scripts/build_layoff_disclosures.py || {
+            python3 scripts/record_ingest_failure.py --script build_layoff_disclosures.py \
+              --note "run ${GITHUB_RUN_ID} failed; see the log" || true
+            exit 1
+          }

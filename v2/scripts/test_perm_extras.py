@@ -221,6 +221,23 @@ def employer_check(db, incoming: list[dict]) -> None:
           types.get("emp_payroll") == "INTEGER" and types.get("emp_year") == "INTEGER")
 
 
+def layoff_check(db, incoming: list[dict]) -> None:
+    """The layoff answer (Form 9089, Section G, Item 12; old form's RI_LAYOFF_IN_PAST_SIX_MONTHS): kept
+    as DOL's Y or N, blank when the file leaves it blank, and loaded by a narrow UPDATE (Nov 3 2026)."""
+    from ingest_perm_disclosure import yes_no
+
+    check("Y, Yes and y read as Y", [yes_no(v) for v in ("Y", "Yes", " y ")] == ["Y", "Y", "Y"])
+    check("N and No read as N", [yes_no(v) for v in ("N", "No", "n")] == ["N", "N", "N"])
+    check("a blank, N/A or anything else is unknown, never N",
+          [yes_no(v) for v in ("", None, "N/A ", "X", 1)] == [None] * 5)
+    db.sql = []
+    load(db, [dict(c, layoff="Y") if c["caseNumber"] == incoming[0]["caseNumber"] else c for c in incoming])
+    got = db.conn.execute("SELECT layoff FROM perm_cases WHERE case_number = ?", [incoming[0]["caseNumber"]]).fetchone()
+    check(f"the answer lands in perm_cases (got {got})", tuple(got) == ("Y",))
+    check(f"by one narrow UPDATE, no row rewritten (saw {db.sql})",
+          db.sql.count("UPDATE") == 1 and db.sql.count("INSERT") == 0)
+
+
 def main() -> int:
     db = Recording()
     same, changed = case(1), case(2)
@@ -263,6 +280,7 @@ def main() -> int:
     facets_check()
     recruitment_check(db, incoming)
     employer_check(db, incoming)
+    layoff_check(db, incoming)
 
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0

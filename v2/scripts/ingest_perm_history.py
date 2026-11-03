@@ -102,6 +102,8 @@ COLUMNS = [
     "naics", "worksite_city",
     "citizenship", "birth_country", "visa_class", "education", "major",
     "institution", "job_education",
+    # DOL's Y or N to "a layoff in this occupation in the six months before filing" (Nov 3 2026).
+    "layoff",
 ]
 # The first CORE columns decide whether a stored row is the same case record;
 # the rest (the worker's fields) can be filled into a row that is otherwise
@@ -146,7 +148,8 @@ SCHEMA = [
          education     TEXT,
          major         TEXT,
          institution   TEXT,
-         job_education TEXT
+         job_education TEXT,
+         layoff        TEXT
        )""",
     # An employer page lists its own cases, newest first: one equality and
     # the ordering column last, so the index supplies the order.
@@ -356,6 +359,7 @@ def parse_workbook(path: str, seen: set[str]) -> dict:
                                                                rec.get("wage_unit") or ""),
             "naics": normalize_naics(rec.get("naics")),
             "worksiteCity": clean(rec.get("worksite_city"), 60) or None,
+            "layoff": ipd.yes_no(rec.get("layoff")),
             **worker,
         })
     return {"counts": counts, "countries": countries, "rows": rows,
@@ -447,7 +451,7 @@ def row_tuple(r: dict, emp: dict[str, str], att: dict[str, str]) -> tuple:
             r["state"], r["jobTitle"], r["socCode"], r["socTitle"], a or None,
             att.get(entity_key(a), "") if a else "", r["wage"], r["naics"], r["worksiteCity"],
             r.get("citizenship"), r.get("birthCountry"), r.get("visaClass"), r.get("education"),
-            r.get("major"), r.get("institution"), r.get("jobEducation"))
+            r.get("major"), r.get("institution"), r.get("jobEducation"), r.get("layoff"))
 
 
 def fingerprint(t: tuple) -> str:

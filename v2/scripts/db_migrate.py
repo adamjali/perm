@@ -44,6 +44,9 @@ COLUMNS = [
     # Form 9089 Section E, Item 1 and Section A, Items 14 and 15 (new form only, Oct 28 2026): the job's
     # wage request, the employer's headcount and the year it began.
     "pwd_number", "emp_payroll", "emp_year",
+    # Form 9089 Section G Item 12 (old form Section I.e Item 26, Nov 3 2026): DOL's Y or N to
+    # "a layoff in this occupation in the six months before filing".
+    "layoff",
 ]
 # The first CORE columns are the ones every load has carried since the table
 # was made. The two after them (the employer's NAICS code and the worksite city)
@@ -54,7 +57,7 @@ CORE = 15
 EXTRA = COLUMNS[CORE:]
 # An EXTRA column added to a live table is TEXT unless named here.
 EXTRA_TYPES = {"emp_payroll": "INTEGER", "emp_year": "INTEGER"}
-# 38 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
+# 39 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
 # 19,000 - comfortably under, and large enough that the round trip dominates.
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
@@ -100,7 +103,8 @@ SCHEMA = [
          notice        TEXT,
          pwd_number    TEXT,
          emp_payroll   INTEGER,
-         emp_year      INTEGER
+         emp_year      INTEGER,
+         layoff        TEXT
        )""",
 ]
 
@@ -211,6 +215,7 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
                 r.get("sundayEdition"), r.get("adType"), r.get("paper1"), r.get("ad1"),
                 r.get("paper2"), r.get("ad2"), r.get("recrSteps"), r.get("notice"),
                 r.get("pwdNumber"), r.get("empPayroll"), r.get("empYear"),
+                r.get("layoff"),
             )
 
 
