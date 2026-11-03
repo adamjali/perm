@@ -1,7 +1,7 @@
 "use client";
 
 import { LinkSimpleIcon } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { RequestFailed } from "@/components/tools/RequestFailed";
@@ -21,11 +21,12 @@ import { AnswerBand } from "./AnswerBand";
 import { BulletinChoice, BulletinNote, type LineState } from "./BulletinWays";
 import { CaseInputs, CATEGORY_LABEL, COUNTRY_LABEL } from "./CaseInputs";
 import { ChangeFigures, type QueueChoice, type StepEditor } from "./ChangeFigures";
+import { ConsulateChoice } from "./ConsulateChoice";
 import { DateRail } from "./DateRail";
 import { LENGTH_UNIT, type LengthKey } from "./format";
 import { DEFAULT_FEES, PlanCosts, type FeeChoices } from "./PlanCosts";
 import { PlanTimeline } from "./PlanTimeline";
-import { reachedMilestone, readPlanUrl } from "./planUrl";
+import { planPatch, reachedMilestone, readPlanUrl } from "./planUrl";
 
 /** How long the planner waits after the last keystroke before asking the queues. */
 const ASK_AFTER_MS = 400;
@@ -40,7 +41,18 @@ const COPIED_MS = 2500;
  * case page links to one already filled in. A filed PERM or wage request is dated from the
  * cases ahead of it, by the same models its own pages use (/api/plan).
  */
-export function GreenCardPlanner({ reading, check, today }: { reading: PlanReading; check: BulletinCheck | null; today: string }) {
+export function GreenCardPlanner({
+  reading,
+  check,
+  today,
+  consularNote = null,
+}: {
+  reading: PlanReading;
+  check: BulletinCheck | null;
+  today: string;
+  /** The dated interview-pause line (ConsularPauseNote, drawn on the server), shown on the consulate route. */
+  consularNote?: ReactNode;
+}) {
   const params = useUrlSearchParams();
   const state = readPlanUrl(params, today);
   const set = useUrlPatch();
@@ -136,7 +148,9 @@ export function GreenCardPlanner({ reading, check, today }: { reading: PlanReadi
       ? cell?.latest.kind === "unavailable"
         ? `Unavailable in the ${monthYear(reading.figures.bulletinMonth) ?? "newest"} bulletin`
         : "Waits on the bulletin"
-      : `No measured wait for the ${firstOpen.name.toLowerCase()}`;
+      : firstOpen.key === "consular" && figures.consularPause
+        ? `Consulate interviews paused since ${figures.consularPause.sinceLabel}`
+        : `No measured wait for the ${firstOpen.name.toLowerCase()}`;
   const changes = changedCount(o);
   const lineState: LineState = answer?.line ? "ready" : question.line ? (asked.failed ? "failed" : waiting ? "loading" : "ready") : "not-yet";
   const openFigures = () => {
@@ -187,6 +201,10 @@ export function GreenCardPlanner({ reading, check, today }: { reading: PlanReadi
               after="The plan below uses DOL's plain wait until it loads."
               className="mt-6 bg-tint p-4 border-2 border-border"
             />
+          ) : null}{" "}
+          {state.route === "cp" && consularNote ? <div className="mt-6">{consularNote}</div> : null}{" "}
+          {state.route === "cp" && reading.consulates ? (
+            <ConsulateChoice consulates={reading.consulates} post={state.post} onPick={(post) => set(planPatch({ post }))} />
           ) : null}{" "}
           <AnswerBand plan={plan} today={today} noDateWhy={noDateWhy} />{" "}
           <DateRail plan={plan} today={today} noDateWhy={noDateWhy} />{" "}

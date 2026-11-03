@@ -236,6 +236,21 @@ def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS,
     raise SystemExit("unreachable")
 
 
+# State closed adoption.state.gov to scripts on Nov 2 2026: every path answers 302 to travel.state.gov,
+# which answers scripts with Cloudflare's 403 (robots.txt included). A person's browser still reads the
+# pages, so each State reader takes a saved page, and a refusal is a warning on the dataset's freshness row.
+STATE_CLOSED = ("State's site refuses scripts (since Nov 2 2026 adoption.state.gov sends every page to "
+                "travel.state.gov, which answers 403)")
+
+
+def state_refused(exc: BaseException) -> bool:
+    """True when a State Department page turned a script away: a 403, or a 404 once redirected to travel."""
+    if not isinstance(exc, urllib.error.HTTPError):
+        return False
+    url = str(getattr(exc, "url", "") or getattr(exc, "filename", "") or "")
+    return exc.code == 403 or (exc.code == 404 and "travel.state.gov" in url)
+
+
 def discover_links(html: str, pattern: str, host: str) -> dict[str, str]:
     """Map filename to absolute URL for every href matching `pattern`.
 

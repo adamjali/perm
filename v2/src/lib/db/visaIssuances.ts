@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { one, rows } from "./client";
+import type { SeventyFiveMonth } from "@/lib/consular/seventyFive";
 import { shiftMonth } from "@convex/lib/months";
 
 /**
@@ -140,4 +141,33 @@ export async function lineIssuance(bulletinCategory: string, country: string): P
     total: mine.reduce((a, r) => a + Number(r.n), 0),
     newest: mine.filter((r) => r.month === to).reduce((a, r) => a + Number(r.n), 0),
   };
+}
+
+
+/**
+ * Immigrant visas issued abroad each month from `from`, split between nationals of the countries
+ * the January 2026 pause named (State's issuance keys, `keys`) and everyone else. By country of
+ * chargeability, as State counts them. A failed read throws, so the page keeps its last render.
+ */
+export async function issuedByPauseGroup(keys: ReadonlySet<string>, from: string): Promise<SeventyFiveMonth[]> {
+  const got = await rows<{ month: string; group_key: string; eb: unknown; n: unknown }>(
+    `SELECT month, group_key, sum(CASE WHEN category IN (${EMPLOYMENT_CATEGORIES.map(() => "?").join(",")}) THEN n ELSE 0 END) AS eb, sum(n) AS n
+     FROM visa_issuances WHERE dim = 'fsc' AND month >= ? GROUP BY month, group_key`,
+    [...EMPLOYMENT_CATEGORIES, from],
+  );
+  const byMonth = new Map<string, SeventyFiveMonth>();
+  for (const r of got) {
+    const m = byMonth.get(r.month) ?? { month: r.month, eb75: 0, all75: 0, ebOther: 0, allOther: 0 };
+    const eb = Number(r.eb);
+    const n = Number(r.n);
+    if (keys.has(r.group_key)) {
+      m.eb75 += eb;
+      m.all75 += n;
+    } else {
+      m.ebOther += eb;
+      m.allOther += n;
+    }
+    byMonth.set(r.month, m);
+  }
+  return [...byMonth.values()].sort((a, b) => a.month.localeCompare(b.month));
 }

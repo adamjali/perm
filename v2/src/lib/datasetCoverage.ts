@@ -233,6 +233,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "BEA's regional price parities: what the same basket costs in a state or metro area against the national level of 100.",
   "visa-issuances":
     "Immigrant visas State's consulates issued abroad each month, by visa class and by country or consulate. A green card granted inside the United States (adjustment of status at USCIS) is not in it, and for employment categories that is most of them.",
+  "iv-scheduling":
+    "For each US consulate, the month of documentarily complete cases the National Visa Center is scheduling interviews for, in employment, family preference and immediate relative cases, as State's IV Scheduling Status Tool printed it at each monthly update. It's NVC's paperwork queue: it doesn't show an interview wait, or whether a post is holding interviews. Copied in a browser, since State's site refuses scripts.",
   // --- USCIS H-1B Employer Data Hub -------------------------------------------
   "uscis-h1b-hub":
     "H-1B workers USCIS approved and denied per petitioner, by the fiscal year of its FIRST decision, from FY2009. Appeals, revocations and pending petitions are excluded, and the address is the petitioner's mailing address, not where the work is.",
@@ -377,6 +379,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "census-geo": "Census places and metros",
   "bea-rpp": "BEA price parities",
   "visa-issuances": "State visa issuances",
+  "iv-scheduling": "State's IV scheduling table",
   "firm-email-domains": "Law firms' email domains",
   // Retired names still stamped on older rows.
   "perm-month-stats": "Pending case counts",

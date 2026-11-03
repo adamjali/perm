@@ -10,6 +10,7 @@
  */
 
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Fragment } from "react";
 import { CalendarCheckIcon, HourglassMediumIcon, ProhibitIcon, TimerIcon } from "@phosphor-icons/react/ssr";
 
@@ -111,6 +112,14 @@ export default async function VisaWaitTimesPage() {
         <p className="mt-4 text-lg leading-relaxed">
           How long until the next visa interview at every U.S. embassy and consulate, from the State Department&apos;s
           own table, as it updated it on {readingDate}.
+        </p>{" "}
+        <p className="mt-3 text-base leading-relaxed text-soft">
+          These waits are for visitor, student and work visas. State&apos;s table has no immigrant visa column; for a
+          green card through a consulate,{" "}
+          <Link href="/consular-posts" className="link">
+            see where each consulate stands
+          </Link>
+          .
         </p>
       </header>{" "}
       <p className="mt-8 text-sm font-semibold text-soft">Work visas (H, L, O, P and Q): the next interview</p>{" "}

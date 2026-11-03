@@ -38,6 +38,7 @@ const READING: PlanReading = {
   },
   standing: { perm: "Now: DOL is deciding PERM cases filed around Jan 9, 2026" },
   sources: { perm: "The filing days DOL decided on its last working day" },
+  consulates: null,
 };
 const ANSWER: PlanAnswer = {
   pwd: null,
@@ -215,6 +216,24 @@ describe("GreenCardPlanner, the costs", () => {
     expect(within(costs).getByText("DS-260")).toBeInTheDocument();
     expect(within(costs).queryByText("I-485")).toBeNull();
     expect(screen.queryByLabelText("Work permit and travel document")).toBeNull();
+  });
+
+  it("while interviews are paused, dates every step but the visa, says why, and offers the reader's consulate", () => {
+    nav.params = new URLSearchParams("where=perm-filed&pd=2024-01-10&route=cp&post=manila");
+    const paused: PlanReading = {
+      ...READING,
+      figures: { ...READING.figures, consularPause: { sinceLabel: "about August 25, 2026" } },
+      consulates: { asOf: "2026-10-07", posts: [{ slug: "manila", name: "Manila", employment: { printed: "Mar-2023", month: "2023-03" } }] },
+    };
+    render(<GreenCardPlanner reading={paused} check={null} today={TODAY} consularNote={<p>Paused line</p>} />);
+    expect(screen.getByText("Paused line")).toBeInTheDocument();
+    expect(screen.getAllByText(/Consulate interviews paused since about August 25, 2026/).length).toBeGreaterThan(0);
+    // The reader's consulate, read from the address, with State's month and its page.
+    expect(screen.getByLabelText("Your consulate")).toHaveValue("manila");
+    expect(screen.getByText("Mar-2023")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manila's page" })).toHaveAttribute("href", "/consular-posts/manila");
+    fireEvent.change(screen.getByLabelText("Your consulate"), { target: { value: "" } });
+    expect(nav.replace).toHaveBeenLastCalledWith(expect.not.stringContaining("post="), expect.anything());
   });
 
   it("puts the employer's size beside the total, where its fee changes it", () => {

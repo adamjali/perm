@@ -2123,6 +2123,10 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   the same parser and checks, ranked as a primary source, then the bulletin pages refresh through nginx). November's
   copy parsed equal to the stored row chart for chart (fixture `scripts/__fixtures__/visa-bulletin-2026-11.tables.txt`).
   A session timer (`bulletin-read` in `~/.claude/timers/registry.py`) checks daily from the 5th for the next month's bulletin.
+  **Six ingests read that host** (`grep -l adoption.state.gov scripts/*.py`): the bulletin (now the browser route), State's
+  visa news, NVC timeframes, monthly visa issuances (newest Feb 2026), the annual limits and Table V, and Global Visa Wait
+  Times (newest reading Oct 21 2026). Each warns and keeps its last data; each freshness row is the alarm. The other five need
+  their own route (browser copy or the Internet Archive) before they go stale.
 - **The weekly observations backup is sealed** (`backup-observations.yml`): any signed-in GitHub user can download a
   public repository's artifacts, so the dump is a tar sealed with the backup key's public half, opened only by the
   owner's key (`openssl cms -decrypt ... -inkey backup-key.pem | tar -xf -`). The nine unsealed copies were deleted;
@@ -2132,3 +2136,34 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   with its own line in the FAQ); GreenCardClock's operator is named; H1BGrader keeps Oct 28 (Cloudflare refused every
   scripted read). Every quote was matched word for word against the saved pages. No sign any rival copied our text;
   the shared phrases with PermTrack appeared on its site first.
+
+## Nov 3 2026 (afternoon): the immigrant visa interview pause, and every consulate
+
+Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
+
+- **State postponed immigrant visa interviews at most posts from about Aug 25 2026** (public charge training, an
+  in-person part) and published no notice, list or end date. The site dates it from State's sworn filings in *CLINIC v.
+  Rubio* (S.D.N.Y. 1:26-cv-00858, ECF 90-1, 96-1, 114-1) through ONE hand-kept record,
+  `v2/scripts/data/consular_facts.json` (read by `src/lib/consular/facts.ts`, the planner and the health check's
+  `check_consular_facts`, which warns past `recheckBy`). Re-read the sources and move `checked` and `recheckBy`; set
+  `status` to anything but "paused" and every pause line disappears. The 75-country list (Jan 21 to Aug 21 2026) lives there too.
+- **`ConsularPauseNote`** draws it: `line` (one dated line, a `<div role="note">`, never a `<p>`: article prose rules
+  reach into not-prose parts) wherever a green card date shows (bulletin hub, month, line and family pages, the green
+  card line, priority dates, NVC waiting list, `JourneyNow`, the planner's consulate route); `full` on the consulate pages.
+- **The planner gives no consulate date while paused** (`PlanFigures.consularPause`, cleared by the reader's own
+  consular length), and lets the reader pick a post (`?post=<slug>`, `ConsulateChoice`), shown as context, never a wait.
+- **State's IV Scheduling Status Tool** (the month of documentarily complete cases NVC is scheduling, per post and
+  category) loads into `iv_scheduling` (`scripts/ingest_iv_scheduling.py`; `permtracker-uscis iv-tool <file|archive>`).
+  It's a paperwork queue: on the Oct 7 update 105 of 142 posts read caught up for employment while most held no
+  interviews. travel.state.gov refuses scripts, so the session timer `iv-tool-read` copies it in Adam's Chrome monthly;
+  the Archive holds copies to mid-July 2026. `/consular-posts` and a page per post (`getConsularIndex`, `getPostDetail`),
+  refreshed by `/api/revalidate-consular`.
+- **State's other readers stop calling a closure a failure**: `state_refused` (lib_gov_data) and `restamp_note`
+  (lib_db) let NVC timeframes, visa news, wait times and issuances warn, keep the data's own date and record ok;
+  the freshness budget is the alarm. `ingest_visa_issuances.py --local FILE` loads a file saved from a browser.
+- **The court reader searches "immigrant visa interview" and "public charge"**: CLINIC v. Rubio named no work visa,
+  so the eleven old phrases never found it.
+- **`BarRows inline` gives every figure one width** (`figureCh`, in the monospace face's own ch): each row was its own
+  grid, so a short figure lengthened its track and the bars didn't compare.
+- **The age-out calculator sits in the I-140 group**: Consulates made the green card line group ten, past the nine the
+  rail allows, and the CSPA rule subtracts the time the I-140 was pending.

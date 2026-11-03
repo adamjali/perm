@@ -111,8 +111,13 @@ MAX_AGE_DAYS = 30
 # measurement, "CW-1" (criminal opinions name cooperating witnesses that way)
 # and "I-485" alone (family and asylum adjustment suits), since an
 # employment-based I-485 suit names the I-140 or says "employment-based".
+#
+# "immigrant visa interview" and "public charge" (Nov 3 2026): the 75-country pause, the worldwide
+# interview pause and the public charge rule were argued in suits that never name a work visa
+# (CLINIC v. Rubio, S.D.N.Y. 1:26-cv-00858, vacated the pause on Aug 21 2026 and wasn't in the feed).
+# A plain "immigrant visa" was left out: it's in nearly every family-based delay suit.
 TERMS = ("labor certification", "H-1B", "H-2A", "H-2B", "I-140", "ETA 9089", "ETA-9089",
-         "employment-based", "EB-2", "EB-3", "visa bulletin")
+         "employment-based", "EB-2", "EB-3", "visa bulletin", "immigrant visa interview", "public charge")
 QUERY = "(" + " OR ".join(f'"{t}"' for t in TERMS) + ")"
 
 # What a highlighted passage must say, word for word, for the match to count:
@@ -120,7 +125,8 @@ QUERY = "(" + " OR ".join(f'"{t}"' for t in TERMS) + ")"
 # (a contract's line items) and "D.I. 140" (a Delaware docket entry) match the
 # query and fail here.
 STRICT = re.compile(
-    r"^(labor certification|H-1B|H-2A|H-2B|I-140|ETA[- ]9089|employment-based|EB-[23]|visa bulletin)$", re.I)
+    r"^(labor certification|H-1B|H-2A|H-2B|I-140|ETA[- ]9089|employment-based|EB-[23]|visa bulletin"
+    r"|immigrant visa interviews?|public charge)$", re.I)
 
 FEDERAL_JURISDICTIONS = {"F", "FD"}  # appellate and district (CourtListener's codes); FS is a board
 FEDERAL_COURT = re.compile(

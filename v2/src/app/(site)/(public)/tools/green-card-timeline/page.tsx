@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
@@ -60,7 +61,7 @@ const FAQS = [
   },
   {
     q: "What if I'll get the green card at a consulate abroad?",
-    a: "Choose \"At a US consulate abroad\". The I-485 step becomes the National Visa Center and the consulate: NVC takes the case once the I-140 is approved, the documents go in once your date is current, and NVC's review time comes from the State Department's own weekly figure. The consulate's interview wait has no public figure, so the planner assumes one to six months, and you set your consulate's. The fees change too: State's visa fee and USCIS's immigrant fee for each person, and no work permit or travel document.",
+    a: "Choose \"At a US consulate abroad\". The I-485 step becomes the National Visa Center and the consulate: NVC takes the case once the I-140 is approved, the documents go in once your date is current, and NVC's review time comes from the State Department's own weekly figure. The consulate's interview wait has no public figure, so the planner assumes one to six months, and you set your consulate's. While State has interviews paused (since late August 2026), the planner gives no visa date until you set that length yourself; the consulate pages show where each post stands. The fees change too: State's visa fee and USCIS's immigrant fee for each person, and no work permit or travel document.",
   },
   {
     q: "Does premium processing shorten the whole timeline?",
@@ -93,7 +94,7 @@ export default async function GreenCardTimelinePage() {
       </header>
       <section data-embed="green-card-timeline" className="mt-10">
         <SearchParamsBoundary>
-          <GreenCardPlanner reading={reading} check={check} today={easternDay()} />
+          <GreenCardPlanner reading={reading} check={check} today={easternDay()} consularNote={<ConsularPauseNote />} />
         </SearchParamsBoundary>
       </section>
       <section className="mt-12">

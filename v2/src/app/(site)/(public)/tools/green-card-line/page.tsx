@@ -1,3 +1,4 @@
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import type { Metadata } from "next";
 
 import { GreenCardLine } from "@/components/tools/GreenCardLine";
@@ -106,6 +107,7 @@ export default async function GreenCardLinePage() {
           State Department publish, and how many years that is at the pace the line got green cards last year.
         </p>
       </header>
+      <ConsularPauseNote className="mt-6" />{" "}
 
       <section className="mt-10">
         <GreenCardLine snapshot={snapshot} pace={pace} check={check} />

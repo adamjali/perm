@@ -458,6 +458,22 @@
   "from": "Employment-based, by category"
  },
  {
+  "slug": "consular-posts",
+  "path": "/consular-posts",
+  "title": "US consulates",
+  "label": "How far back each consulate is scheduling employment cases, from State's own table.",
+  "shot": "consular-posts.png",
+  "crop": [
+   0,
+   0,
+   1504,
+   1008
+  ],
+  "fromEl": "main figure",
+  "css": "main figure li p.text-sm{display:none!important}main figure li > span.font-mono{color:transparent!important;background:#E2E2E2!important;text-shadow:none!important}",
+  "mask": "figures"
+ },
+ {
   "slug": "visa-issuances",
   "path": "/visa-issuances",
   "title": "Immigrant visas issued",

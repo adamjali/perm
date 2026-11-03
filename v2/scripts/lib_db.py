@@ -574,6 +574,25 @@ def stamp_freshness(
     )
 
 
+def restamp_note(db: "Database", dataset: str, note: str) -> bool:
+    """Say why a dataset read nothing new, keeping its row's date, source, cadence and budget.
+
+    For a source that refused the run (State's site since Nov 2 2026): the data's own date keeps
+    ageing, so the health check warns as the source goes quiet and fails past its grace, and the
+    note says why where someone reads it. Never raises; False when there's no row to note on.
+    """
+    try:
+        got = query_rows(db, "SELECT as_of, source, cadence, max_age_days FROM data_freshness WHERE dataset = ?", [dataset])
+        if not got:
+            return False
+        as_of, source, cadence, max_age = got[0]
+        stamp_freshness(db, dataset, as_of=as_of, source=source, cadence=cadence, note=note[:500],
+                        max_age_days=int(max_age))
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def record_run(
     db: "Database",
     script: str,

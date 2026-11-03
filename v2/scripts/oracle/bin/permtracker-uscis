@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -74,6 +74,23 @@ case "$job" in
         http://127.0.0.1:8081/api/revalidate-bulletin || true
     else
       rc=1; fail ingest_visa_bulletin.py "the $m bulletin copied from a browser was refused"
+    fi ;;
+  # State's IV Scheduling Status Tool copied out of a person's browser (Nov 3 2026), for the bulletin's reason:
+  # travel.state.gov refuses scripts. The table's text (or the saved page) goes in a file, read monthly:
+  #   sudo -u permtracker permtracker-uscis iv-tool /tmp/iv-tool.txt
+  # "iv-tool archive" loads the Internet Archive's older copies (they stop in mid-July 2026). Same parser and
+  # checks either way; the consulate pages refresh through nginx (both web copies).
+  iv-tool)
+    f="${2:-}"
+    if [ -z "$f" ]; then echo "usage: permtracker-uscis iv-tool <file|archive>"; exit 2; fi
+    if [ "$f" = archive ]; then args=(--archive); else args=(--from-file "$f"); fi
+    if timeout 30m python3 scripts/ingest_iv_scheduling.py "${args[@]}"; then
+      REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+      [ -n "$REVALIDATE_SECRET" ] && curl -s -m 60 -o /dev/null -w "refresh %{http_code}\n" -X POST \
+        -H "Host: permtracker.app" -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+        http://127.0.0.1:8081/api/revalidate-consular || true
+    else
+      rc=1; fail ingest_iv_scheduling.py "the IV scheduling table ($f) was refused"
     fi ;;
   posted-times)
     if timeout 20m nice -n 10 python3 scripts/ingest_uscis_posted_times.py; then

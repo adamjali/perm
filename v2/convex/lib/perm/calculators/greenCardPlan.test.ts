@@ -319,6 +319,29 @@ describe('buildPlan', () => {
       expect(plan.greenCard!.mid).toBe(plus(plan.milestones.i485Filed!.mid, 69 + 90));
     });
 
+    it('gives no visa date while interviews are paused, and says why', () => {
+      const paused = { ...FIGURES, consularPause: { sinceLabel: 'about August 25, 2026' } };
+      const plan = buildPlan({ ...cp, category: 'EB3', known: { permFiled: '2026-01-10' } }, paused);
+      // Every step before the consulate is still dated.
+      expect(plan.milestones.i485Filed).not.toBeNull();
+      expect(plan.greenCard).toBeNull();
+      expect(step(plan, 'consular').end).toBeNull();
+      expect(step(plan, 'consular').basis).toMatch(/Interviews paused at most consulates since about August 25, 2026/);
+    });
+
+    it('a pause never touches the I-485 inside the US', () => {
+      const paused = { ...FIGURES, consularPause: { sinceLabel: 'about August 25, 2026' } };
+      const inside = buildPlan({ ...base, known: { permFiled: '2024-01-10' } }, paused);
+      expect(inside.greenCard).toEqual(buildPlan({ ...base, known: { permFiled: '2024-01-10' } }, FIGURES).greenCard);
+      expect(inside.greenCard).not.toBeNull();
+    });
+
+    it('a date the reader knows stands, pause or not', () => {
+      const paused = { ...FIGURES, consularPause: { sinceLabel: 'about August 25, 2026' } };
+      const plan = buildPlan({ ...cp, known: { permFiled: '2024-01-10', greenCard: '2027-03-01' } }, paused);
+      expect(plan.greenCard!.mid).toBe('2027-03-01');
+    });
+
     it('waits for the cutoff when the date is not current, never before the approval', () => {
       const plan = buildPlan({ ...cp, known: { permFiled: '2025-12-15' } }, FIGURES);
       expect(plan.current).toBe(false);

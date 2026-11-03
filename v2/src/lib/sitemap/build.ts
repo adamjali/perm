@@ -42,6 +42,7 @@ import { SITE_URL } from "@/lib/constants/site";
 import { bulletinMonthDate, employerOwnDate, pageDate, type DateSources } from "@/lib/pageDates";
 import { h1bAsOf as summaryAsOf } from "@/lib/h1bRanks";
 import { FORM_PAGES } from "@/lib/uscisForms";
+import { getConsularIndex } from "@/lib/db/consularPosts";
 import { getSocTitlePages } from "@/lib/db/socTitles";
 
 /**
@@ -163,6 +164,14 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     bulletinMonths = [];
     bulletinLines = [];
+  }
+  // A page per consulate, from the read the consulate index makes; a read that fails lists none
+  // and keeps the rest of the file.
+  let consularPosts: { slug: string }[] = [];
+  try {
+    consularPosts = (await getConsularIndex()).posts;
+  } catch {
+    consularPosts = [];
   }
   // One URL per filing month holding at least one case, read from the SAME
   // census `/perm-queue` builds its month strip from and the month route
@@ -292,6 +301,9 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/h1b-lottery-odds`, lastModified: at("/h1b-lottery-odds"), images: [`${base}/og/h1b-lottery-odds.jpg`] },
     { url: `${base}/nvc-waiting-list`, lastModified: at("/nvc-waiting-list"), images: [`${base}/og/nvc-waiting-list.jpg`] },
     { url: `${base}/visa-issuances`, lastModified: at("/visa-issuances"), images: [`${base}/og/visa-issuances.jpg`] },
+    { url: `${base}/consular-posts`, lastModified: at("/consular-posts"), images: [`${base}/og/consular-posts.jpg`] },
+    // A page per consulate State's tables name, from the same read the index makes.
+    ...consularPosts.map((p) => ({ url: `${base}/consular-posts/${p.slug}`, lastModified: at("/consular-posts/[post]") })),
     { url: `${base}/visa-wait-times`, lastModified: at("/visa-wait-times"), images: [`${base}/og/visa-wait-times.jpg`] },
     { url: `${base}/perm-cities`, lastModified: at("/perm-cities"), images: [`${base}/og/perm-cities.jpg`] },
     { url: `${base}/perm-industries`, lastModified: at("/perm-industries"), images: [`${base}/og/perm-industries.jpg`] },

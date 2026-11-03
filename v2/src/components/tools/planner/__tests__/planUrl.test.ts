@@ -7,7 +7,7 @@ const read = (s: string) => readPlanUrl(new URLSearchParams(s), TODAY);
 
 describe("readPlanUrl", () => {
   it("plans from today with nothing in the address", () => {
-    expect(read("")).toEqual({ where: "start", known: {}, startOn: TODAY, category: "EB2", country: "worldwide", premium: false, route: "aos" });
+    expect(read("")).toEqual({ where: "start", known: {}, startOn: TODAY, category: "EB2", country: "worldwide", premium: false, route: "aos", post: null });
   });
 
   it("reads the route, adjustment of status unless the address says consular processing", () => {
@@ -16,6 +16,14 @@ describe("readPlanUrl", () => {
     expect(planPatch({ route: "cp" }).route).toBe("cp");
     // The default leaves the address clean.
     expect(planPatch({ route: "aos" }).route).toBeNull();
+  });
+
+  it("reads the consulate as a page slug, and drops anything else", () => {
+    expect(read("route=cp&post=ciudad-juarez").post).toBe("ciudad-juarez");
+    expect(read("route=cp&post=../etc").post).toBeNull();
+    expect(read("route=cp&post=Manila").post).toBeNull();
+    expect(planPatch({ post: "manila" }).post).toBe("manila");
+    expect(planPatch({ post: null }).post).toBeNull();
   });
 
   it("reads every date up to where the case is, and ignores the ones past it", () => {
@@ -34,7 +42,7 @@ describe("readPlanUrl", () => {
 
   it("drops a malformed date, an unknown step, line or country", () => {
     const s = read("where=moon&pd=2026-1-1&cat=EB9&country=mars&premium=yes");
-    expect(s).toEqual({ where: "start", known: {}, startOn: TODAY, category: "EB2", country: "worldwide", premium: false, route: "aos" });
+    expect(s).toEqual({ where: "start", known: {}, startOn: TODAY, category: "EB2", country: "worldwide", premium: false, route: "aos", post: null });
   });
 });
 

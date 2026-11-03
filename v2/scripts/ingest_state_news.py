@@ -180,6 +180,10 @@ def _old_site(exc: BaseException) -> bool:
     return False
 
 
+# The words a run uses when every try was sent to travel.state.gov: State's closure, not a few old servers.
+ALL_REDIRECTED = "answers redirected to travel.state.gov"
+
+
 def ask(url: str, tries: int, fetch, sleep, accept) -> tuple[str | None, str]:
     """Ask `url` up to `tries` times until a server on the new site answers.
     (text, "") on success; (None, why) when no try reached one, `why` naming
@@ -204,7 +208,7 @@ def ask(url: str, tries: int, fetch, sleep, accept) -> tuple[str | None, str]:
     # Since about 2 PM Eastern Nov 2 2026 EVERY server answers this way: State sends
     # each adoption.state.gov path to travel.state.gov, which refuses scripts. A run
     # where all tries redirect says so, so the note doesn't blame a few old servers.
-    why = (f"all {tries} answers redirected to travel.state.gov, which refuses scripts "
+    why = (f"all {tries} {ALL_REDIRECTED}, which refuses scripts "
            "(State closed adoption.state.gov to them on Nov 2 2026)"
            if old == tries else f"{old} of {tries} answers came from servers still on the old site")
     return None, why + (f", the rest {last}" if last else "")

@@ -76,6 +76,9 @@ export function figuresFor(
       ap: own.ap ?? base.spans.ap,
       consular: own.consular ?? base.spans.consular,
     },
+    // The reader's own consulate length is their assumption about when interviews run, so the pause
+    // stops withholding the visa date once they set one.
+    consularPause: own.consular ? null : (base.consularPause ?? null),
     pwdByQueue: o.byQueue.pwd ? (answer?.pwd ?? null) : null,
     permByQueue: o.byQueue.perm ? (answer?.perm ?? null) : null,
     paceDaysPerMonth: o.paceDaysPerMonth,

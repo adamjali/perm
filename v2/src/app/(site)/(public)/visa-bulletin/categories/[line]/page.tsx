@@ -11,6 +11,7 @@
  * Unknown slugs 404 from `generateMetadata`, before anything streams.
  */
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
 import { getUscisCharts } from "@/lib/uscisChartsFetch";
 import type { Metadata } from "next";
@@ -221,6 +222,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         </p>
       </section>{" "}
       <UscisChartNote charts={uscisCharts} month={fa.latestMonth} only="employment" className="mt-8" />
+      <ConsularPauseNote className="mt-6" />{" "}
 
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-bold">Check your priority date</h2>{" "}

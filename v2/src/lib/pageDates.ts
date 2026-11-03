@@ -37,7 +37,9 @@ export type DateSource =
   /** The day the newest shown review was left (Eastern). */
   | "reviews"
   /** The day this site first held the newest visa bulletin (Eastern). */
-  | "bulletin";
+  | "bulletin"
+  /** State's newest IV Scheduling Status Tool update held (its own "Last Updated" day). */
+  | "consular";
 
 export type DateSources = { readonly [K in DateSource]?: string | null };
 
@@ -84,6 +86,8 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   // Oct 28 2026: the form pages are new.
   "/uscis-processing-times/[form]": "2026-10-28",
   "/visa-bulletin/[month]": "2026-10-17",
+  // Nov 3 2026: the consulate pages are new.
+  "/consular-posts/[post]": "2026-11-03",
   "/visa-bulletin/categories/[line]": "2026-10-16",
 };
 
@@ -158,6 +162,9 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/perm-countries/[slug]": "corpus",
 
   "/reviews": "reviews",
+
+  "/consular-posts": "consular",
+  "/consular-posts/[post]": "consular",
 };
 
 /**

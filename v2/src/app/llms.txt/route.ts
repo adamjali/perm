@@ -464,6 +464,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Every immigrant visa State's consulates issued each month since March 2017, by employment and family category, by country of chargeability and by consulate, from State's own tables, each month checked against State's grand total. Consular issuances only: a green card granted inside the US isn't in it.",
   },
   {
+    path: "/consular-posts",
+    label: "Where each US consulate stands for immigrant visas",
+    blurb:
+      "State's IV Scheduling Status Tool at every monthly update this site holds: for each consulate, the month of completed cases NVC is scheduling for employment, family preference and immediate relative visas, beside the immigrant visas that post issued each month, with the worldwide interview pause since about August 25 2026 dated from State's sworn court filings. A paperwork queue: it doesn't show an interview wait.",
+  },
+  {
     path: "/visa-wait-times",
     label: "Visa interview wait times by consulate",
     blurb:

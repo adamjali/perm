@@ -81,6 +81,7 @@ export type DataSection =
   | "i485-offices"
   | "nvc-waiting-list"
   | "visa-issuances"
+  | "consular-posts"
   | "visa-wait-times"
   | "risk"
   | "rfi-audit"
@@ -176,16 +177,18 @@ export const SECTIONS: DataNavSection[] = [
   s("awaiting-visa", "I-140", "I-140s awaiting a visa", "/i140-awaiting-visa"),
   s("uscis-rfe", "I-140", "USCIS RFE rates", "/uscis-rfe-rates"),
   t("retention", "I-140", "Priority date retention", "/tools/priority-date-retention", "When the date is kept, and when an I-485 can move."),
+  // The age-out rule subtracts the time the I-140 was pending, so it sits with the I-140 tools.
+  t("cspa-age", "I-140", "Child age-out (CSPA)", "/tools/cspa-age-calculator", "Whether a child still counts as under 21."),
 
   s("visa-bulletin", "Green card line", "Visa bulletin", "/visa-bulletin"),
   t("priority-dates", "Green card line", "Priority date calculator", "/tools/priority-date-calculator", "Your date against every bulletin."),
   t("green-card-line", "Green card line", "Your place in line", "/tools/green-card-line", "Everyone ahead of your priority date."),
   t("eb2-vs-eb3", "Green card line", "EB-2 or EB-3", "/tools/eb2-vs-eb3", "Which line has fewer people ahead of your date."),
-  t("cspa-age", "Green card line", "Child age-out (CSPA)", "/tools/cspa-age-calculator", "Whether a child still counts as under 21."),
   s("i485-offices", "Green card line", "I-485 by office", "/i485-by-field-office"),
   t("i485-position", "Green card line", "I-485 queue position", "/tools/i485-queue-position", "Adjustment applications pending ahead of you."),
   s("nvc-waiting-list", "Green card line", "NVC waiting list", "/nvc-waiting-list"),
   s("visa-issuances", "Green card line", "Visas issued", "/visa-issuances"),
+  s("consular-posts", "Green card line", "Consulates", "/consular-posts"),
 
   s("employers", "Employers and firms", "Employers", "/perm-employers"),
   s("attorneys", "Employers and firms", "Law firms", "/perm-attorneys"),

@@ -1,0 +1,145 @@
+Last Updated: October 07, 2026
+Post|Employment Visa|Preference Visa|Relative Visa
+Abu Dhabi|Oct-2023|Aug-2025|Mar-2025
+Abidjan|Oct-2026|Jul-2026|Mar-2026
+Accra|Nov-2023|Nov-2023|Mar-2024
+Auckland|Oct-2026|Oct-2026|Oct-2026
+Addis Ababa|Oct-2026|Jul-2025|Jul-2025
+Ashgabat|Oct-2026|Oct-2026|Oct-2026
+Algiers|Oct-2026|Oct-2026|Jul-2026
+Amman|Sep-2026|Aug-2023|Oct-2025
+Amsterdam|Oct-2026|Oct-2026|Oct-2026
+Ankara|Jun-2026|Sep-2023|Mar-2025
+Antananarivo|Oct-2026|Oct-2026|Oct-2026
+Asmara|Oct-2026|Oct-2026|Oct-2026
+Asuncion|Oct-2026|Oct-2026|Oct-2026
+Almaty|Oct-2026|Oct-2026|Jul-2026
+Athens|Oct-2026|Oct-2026|Oct-2026
+Bucharest|Oct-2026|Oct-2026|Oct-2026
+Budapest|Oct-2026|Oct-2026|Oct-2026
+Bern|Oct-2026|Oct-2026|Oct-2026
+Baghdad|Oct-2026|Oct-2026|Nov-2025
+Bridgetown|Oct-2026|Jul-2026|Jun-2026
+Bogota|Feb-2026|Sep-2025|Feb-2026
+Bishkek|Oct-2026|Oct-2026|Oct-2026
+Belgrade|Oct-2026|Oct-2026|Aug-2026
+Belmopan|Oct-2026|Oct-2026|Aug-2026
+Mumbai (Bombay)|Apr-2026|Feb-2025|Mar-2026
+Bangkok|Jun-2026|Oct-2026|Jun-2026
+Buenos Aires|Oct-2026|Oct-2026|Jul-2026
+Brussels|Oct-2026|Oct-2026|Oct-2026
+Beirut|Oct-2026|Oct-2024|Feb-2026
+Brazzaville|Oct-2026|Oct-2026|Oct-2026
+Bratislava|Oct-2026|Oct-2026|Oct-2026
+Bujumbura|Oct-2026|Oct-2026|Oct-2026
+Ciudad Juarez|Jul-2023|Aug-2023|Dec-2024
+null|Oct-2026|Oct-2026|Oct-2026
+Chisinau|Oct-2026|Oct-2026|Oct-2026
+Colombo|Jul-2026|Oct-2026|Aug-2026
+Cotonou|Oct-2026|Oct-2026|Oct-2026
+Cairo|Oct-2026|Feb-2026|Feb-2026
+Casablanca|Oct-2026|Dec-2025|Dec-2025
+Dublin|Oct-2026|Oct-2026|Oct-2026
+Dushanbe|Oct-2026|Jun-2025|Jun-2025
+Dhaka|Sep-2022|Dec-2021|Aug-2025
+Djibouti|Oct-2026|Oct-2026|Jun-2025
+Dakar|Oct-2026|Jun-2026|Jun-2026
+Doha|Oct-2023|Oct-2026|Oct-2024
+Dar Es Salaam|Oct-2026|Oct-2026|Oct-2025
+Frankfurt|May-2026|Jul-2026|Jun-2026
+Freetown|Oct-2026|Oct-2026|Oct-2026
+Georgetown|Oct-2026|Jan-2025|Mar-2026
+Guatemala City|Oct-2026|Jun-2026|Sep-2025
+Guangzhou|Aug-2023|Mar-2025|Apr-2026
+Guayaquil|Oct-2026|Jun-2026|Apr-2026
+Hanoi|Oct-2026|Oct-2026|Oct-2026
+Havana|Oct-2026|Oct-2022|Dec-2025
+Ho Chi Minh City|Mar-2026|Jan-2025|May-2026
+Helsinki|Oct-2026|Oct-2026|Oct-2026
+Hamilton|Oct-2026|Oct-2026|Oct-2026
+Hong Kong|Jul-2026|Jul-2026|Jul-2026
+Harare|Oct-2026|Oct-2026|Oct-2026
+Islamabad|May-2026|Oct-2024|Sep-2025
+Jakarta|Oct-2026|Oct-2026|Jul-2026
+Johannesburg|Aug-2023|Mar-2025|Jul-2025
+Jerusalem|Oct-2026|Jun-2025|Aug-2026
+Kabul|N/A|N/A|N/A
+Kathmandu|Jan-2026|Jan-2026|Dec-2025
+Kyiv|Oct-2026|Oct-2026|Oct-2026
+Kigali|Oct-2026|Oct-2026|Jan-2026
+Khartoum|Oct-2026|Oct-2026|Oct-2026
+Kinshasa|Oct-2026|Oct-2025|May-2025
+Kuala Lumpur|Oct-2026|Oct-2026|Aug-2026
+Kampala|Oct-2026|Oct-2026|Oct-2026
+Kingston|Apr-2026|Mar-2024|Apr-2026
+Kuwait|Oct-2026|Oct-2026|Mar-2026
+Lagos|Feb-2025|Jul-2025|May-2025
+Libreville|Oct-2026|Oct-2026|Oct-2026
+Lilongwe|Oct-2026|Oct-2026|Oct-2026
+Ljubljana|Oct-2026|Oct-2026|Oct-2026
+Lima|Oct-2026|Apr-2025|Mar-2026
+London|Feb-2026|Mar-2026|Jun-2026
+Lome|Oct-2026|Oct-2026|Oct-2026
+La Paz|Oct-2026|Sep-2026|Jul-2026
+Luanda|Oct-2026|Oct-2026|Oct-2026
+Lusaka|Oct-2026|Oct-2026|Oct-2026
+Madrid|Mar-2026|Mar-2026|Jul-2026
+Manama|Oct-2026|Oct-2026|Oct-2026
+Managua|Oct-2026|Jul-2026|Jul-2026
+Manila|Mar-2023|Jun-2021|Feb-2026
+Moscow|Oct-2026|Oct-2026|Oct-2026
+Monrovia|Oct-2026|Sep-2025|Oct-2024
+Muscat|Oct-2026|Oct-2026|Jun-2025
+Montreal|May-2026|Sep-2025|Apr-2026
+Montevideo|Oct-2026|Oct-2026|Oct-2026
+Nicosia|Oct-2026|Oct-2026|Oct-2026
+Naha|Oct-2026|Oct-2026|Oct-2026
+Niamey|Oct-2026|Oct-2026|Oct-2026
+Naples|Mar-2026|Oct-2026|Apr-2026
+Nairobi|Feb-2024|Nov-2024|Jul-2025
+Nassau|Oct-2026|Jan-2023|Dec-2022
+New Delhi|Oct-2026|Oct-2026|Oct-2026
+Ouagadougou|Oct-2026|Oct-2026|Oct-2026
+Phnom Penh|Oct-2026|Sep-2023|Nov-2025
+Praia|Oct-2026|Feb-2026|Jul-2026
+Panama City|Oct-2026|Jul-2026|Jun-2026
+Prague|Oct-2026|Oct-2026|Oct-2026
+Pristina|Oct-2026|Oct-2026|Oct-2026
+Paris|Jun-2026|Oct-2026|Aug-2026
+Port Moresby|Oct-2026|Oct-2026|Oct-2026
+Port Au Prince|Oct-2026|Aug-2020|Jun-2021
+Port Of Spain|Oct-2026|Jul-2026|Jul-2026
+Rio De Janeiro|Sep-2025|Sep-2025|Jun-2026
+Riga|Oct-2026|Oct-2026|Oct-2026
+Riyadh|Oct-2023|Oct-2024|Jun-2025
+Reykjavik|Oct-2026|Oct-2026|Oct-2026
+Rangoon|Oct-2026|Jun-2026|Jul-2026
+Sarajevo|Oct-2026|Oct-2026|Oct-2026
+Santo Domingo|May-2025|Feb-2024|Mar-2025
+Seoul|Nov-2023|Feb-2026|Jul-2026
+Singapore|Oct-2026|Oct-2026|Oct-2026
+Skopje|Oct-2026|Oct-2026|Oct-2026
+San Jose|Oct-2026|Oct-2026|Jul-2026
+San Salvador|Oct-2026|Jul-2025|Jul-2025
+Santiago|Oct-2026|Oct-2026|Jul-2026
+Sofia|Oct-2026|Oct-2026|Oct-2026
+Stockholm|Oct-2026|Oct-2026|Apr-2026
+Suva|Oct-2026|Oct-2026|Mar-2026
+Sydney|Jan-2026|Oct-2026|Apr-2026
+Taipei|Jun-2025|Aug-2025|Mar-2026
+Tallinn|Oct-2026|Oct-2026|Oct-2026
+Tbilisi|Oct-2026|Sep-2026|Jul-2026
+Tegucigalpa|Oct-2026|Apr-2026|Apr-2025
+Tashkent|Oct-2026|Jan-2026|Nov-2025
+Tirana|Oct-2026|Jan-2026|Jun-2026
+Tokyo|Jun-2026|Oct-2026|Jul-2026
+Tunis|Oct-2026|Oct-2026|Oct-2026
+Ulaanbataar|Oct-2026|Oct-2026|Oct-2026
+Vancouver|Oct-2026|Oct-2026|Oct-2026
+Vilnius|Oct-2026|Oct-2026|Oct-2026
+Vienna|Oct-2026|Oct-2026|Oct-2026
+Vientiane|Oct-2026|Oct-2026|Oct-2026
+Warsaw|Jun-2026|Oct-2026|Sep-2026
+Yaounde|Oct-2026|Jun-2026|May-2026
+Yerevan|Mar-2025|Aug-2025|Mar-2025
+Zagreb|Oct-2026|Oct-2026|Oct-2026

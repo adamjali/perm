@@ -42,6 +42,7 @@ export const PAGE_CARD_ALT = {
   "soc-codes": "Find a job's SOC code. A job title in, the occupation codes employers filed it under in DOL's PERM, wage request and H-1B files, with how often.",
   "visa-wait-times": "Visa interview wait times. The next work-visa interview at U.S. consulates by country, from the State Department's own table.",
   "visa-issuances": "Immigrant visas issued abroad. State's monthly count of the visas its consulates issued, by employment and family category, since March 2017.",
+  "consular-posts": "US consulates and immigrant visas. How far back each post is scheduling employment cases, from State's own monthly table, beside the interview pause.",
   "green-card-timelines": "Green card timelines as the people waiting report them: PERM dates checked against DOL, the I-140 and I-485 self-reported.",
   "uscis-processing-times": "USCIS processing times, the median. Every form's median months to a decision from USCIS's quarterly workbook, beside the figure on its processing-times page.",
   "uscis-rfe-rates": "USCIS RFE rates for work visa petitions. The share of H-1B petitions USCIS decided each month that had a request for evidence, since October 2014, from USCIS's quarterly files.",

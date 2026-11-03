@@ -1265,5 +1265,26 @@
   },
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
   "alt": "The case form's SOC code box offering the codes employers filed Operations Research Analyst under, with each code's share"
+ },
+ "guides/immigrant-visa-interview-pause": {
+  "photo": {
+   "file": "us-embassy-london-nine-elms.jpg",
+   "focus": [
+    0.55,
+    0.5
+   ]
+  },
+  "credit": "Photo: Curran2 / Wikimedia Commons, CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/w/index.php?curid=57591541",
+  "alt": "The US Embassy in London at Nine Elms, seen across the Thames from Pimlico"
+ },
+ "changelog/consulates-and-the-interview-pause": {
+  "capture": {
+   "url": "/consular-posts",
+   "clip": "sel:main figure",
+   "css": "main figure li:nth-child(n+9){display:none!important}"
+  },
+  "credit": "Screenshot of permtracker.app, November 3, 2026",
+  "alt": "The consulates page: how far back each post is scheduling employment cases, Dhaka, Manila, Ciudad Ju\u00e1rez and Guangzhou first"
  }
 }

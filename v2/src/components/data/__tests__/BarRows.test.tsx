@@ -14,6 +14,19 @@ const ROWS: BarRow[] = [
   { key: "c", label: "Newark, NJ", value: null, text: "" },
 ];
 
+describe("BarRows inline", () => {
+  it("gives every row's figure one width, so a short figure doesn't lengthen its track", () => {
+    const rows: BarRow[] = [
+      { key: "a", label: "Dhaka", value: 49, text: "4.1 years back" },
+      { key: "b", label: "Doha", value: 36, text: "3 years back" },
+      { key: "c", label: "Kabul", value: null, text: "", nullText: "Not shown" },
+    ];
+    const { container } = render(<BarRows rows={rows} inline />);
+    const widths = [...container.querySelectorAll("li > span.font-mono")].map((el) => (el as HTMLElement).style.width);
+    expect(widths).toEqual(["14ch", "14ch", "14ch"]);
+  });
+});
+
 describe("BarRows tooltips", () => {
   it("derives the tip from the label, the figure and the sub-line", () => {
     expect(barRowTip(ROWS[0]!)).toBe("I-140 immigrant petition\n6.2 mo\n4,210 pending, 3,900 decided in the quarter");

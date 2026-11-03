@@ -36,6 +36,15 @@ describe("figuresFor", () => {
     expect(f.spans.pwd).toBe(SPAN);
   });
 
+  it("keeps the interview pause until the reader sets their own consulate length", () => {
+    const paused: PlanBase = { ...BASE, consularPause: { sinceLabel: "about August 25, 2026" } };
+    expect(figuresFor(paused, NO_OVERRIDES, "EB2", null, null).consularPause).toEqual({ sinceLabel: "about August 25, 2026" });
+    const own = { low: 30, mid: 60, high: 120 };
+    const f = figuresFor(paused, { ...NO_OVERRIDES, lengths: { consular: own } }, "EB2", null, null);
+    expect(f.consularPause).toBeNull();
+    expect(f.spans.consular).toBe(own);
+  });
+
   it("drops a queue dating the reader turned off, and takes their green cards a year", () => {
     const f = figuresFor(BASE, { ...NO_OVERRIDES, byQueue: { pwd: true, perm: false }, perYear: 9000, method: "supply" }, "EB2", ANSWER, null);
     expect(f.permByQueue).toBeNull();

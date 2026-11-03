@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { Fragment } from "react";
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { STEP_HREF } from "@/components/tools/planner/PlanTimeline";
 import { aboutMonths } from "@/lib/board";
 import { getPlanReading } from "@/lib/db/planFigures";
@@ -80,6 +81,7 @@ export async function JourneyNow() {
           <>The steps&apos; lengths couldn&apos;t be read today; each step&apos;s own page carries its figure.</>
         )}
       </div>{" "}
+      <ConsularPauseNote className="mt-5" />{" "}
       {/* A list by role, not <ol>: an article's unlayered list padding reaches inside not-prose. */}
       <div role="list" className="mt-5 divide-y-2 divide-border border-y-2 border-border">
         {steps.map((s, i) => (

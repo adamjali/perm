@@ -57,11 +57,12 @@ async function safely(read: () => Promise<string | null>): Promise<string | null
 }
 
 export const getDateSources = cache(async (): Promise<DateSources> => {
-  const [dol, sweep, corpus, bulletin] = await Promise.all([
+  const [dol, sweep, corpus, bulletin, consular] = await Promise.all([
     safely(dolAsOf),
     safely(async () => (await getSweepCoverage())?.finishedOn ?? null),
     safely(async () => (await getFreshness())["perm-cases"]?.asOf ?? null),
     safely(bulletinDay),
+    safely(async () => (await getFreshness())["iv-scheduling"]?.asOf ?? null),
   ]);
-  return { dol, sweep, corpus, bulletin, posts: postsDay() };
+  return { dol, sweep, corpus, bulletin, consular, posts: postsDay() };
 });

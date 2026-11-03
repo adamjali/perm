@@ -14,12 +14,15 @@ import {
   type SideStage,
   type Span,
 } from "@/lib/perm";
+import { CONSULAR_PAUSE, pauseActive } from "@/lib/consular/facts";
+import type { IvCell } from "@/lib/consular/scheduling";
 import { getI140ProcessingTime, PROCESSING_TIMES_AS_OF } from "@/lib/processing-times/i140ProcessingTimes";
 import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 import { shortDate } from "@convex/lib/months";
 import { MS_PER_DAY } from "@convex/lib/time";
 
 import { getPermBoard, getPwdBoard } from "./board";
+import { getConsularIndex } from "./consularPosts";
 import { doc } from "./publicData";
 import { getBulletinBoard } from "./bulletin";
 import { getRecruitmentSummary } from "./recruitment";
@@ -86,6 +89,8 @@ export interface PlanReading {
   standing: Partial<Record<PlanStage | SideStage, string>>;
   /** What each step's three lengths rest on, one short line each. */
   sources: Partial<Record<PlanStage | SideStage, string>>;
+  /** Through a consulate: every post in State's scheduling table, its employment month, and State's update day. */
+  consulates: { asOf: string; posts: { slug: string; name: string; employment: IvCell | null }[] } | null;
 }
 
 /**
@@ -124,7 +129,7 @@ const quarterOf = (points: readonly UscisFormHistoryPoint[], title: string): str
  * step undated rather than failing the page.
  */
 export const getPlanReading = cache(async (): Promise<PlanReading> => {
-  const [perm, pwd, board, recruitment, i140, i485, i765, i131, nvcDoc] = await Promise.all([
+  const [perm, pwd, board, recruitment, i140, i485, i765, i131, nvcDoc, consular] = await Promise.all([
     getPermBoard().catch(() => null),
     getPwdBoard().catch(() => null),
     getBulletinBoard().catch(() => null),
@@ -134,6 +139,7 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
     getUscisFormHistory(USCIS_ROWS.ead.form),
     getUscisFormHistory(USCIS_ROWS.ap.form),
     doc<{ readings?: NvcReading[] }>("nvc_timeframes").catch(() => null),
+    getConsularIndex().catch(() => null),
   ]);
   const nvc = nvcSpans(nvcDoc?.readings);
 
@@ -160,6 +166,7 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
       consular: nvc?.consular ?? null,
     },
     nvcCreation: nvc?.creation ?? null,
+    consularPause: pauseActive() ? { sinceLabel: CONSULAR_PAUSE.sinceLabel } : null,
     pace: paceByLine(board?.finalAction ?? [], (c) => (c.category in PLAN_I140_CLASS ? `${c.category}|${c.country}` : null)),
     bulletinMonth: board?.lastMonth ?? null,
   };
@@ -180,6 +187,10 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
   if (nvc) {
     standing.consular = `Now: the National Visa Center is reviewing documents sent on ${shortDate(nvc.newest.reviewedThrough)} (State, as of ${shortDate(nvc.newest.asOf)})`;
   }
+  if (pauseActive()) {
+    const paused = `Interviews paused at most consulates since ${CONSULAR_PAUSE.sinceLabel}, with no end date (State's sworn filings, checked ${shortDate(CONSULAR_PAUSE.checked)})`;
+    standing.consular = standing.consular ? `${standing.consular}. ${paused}` : `Now: ${paused}`;
+  }
 
   const sources: PlanReading["sources"] = {
     pwd: "The filing days DOL decided on its last working day: the latest-filed tenth, the middle, the earliest-filed tenth",
@@ -193,7 +204,14 @@ export const getPlanReading = cache(async (): Promise<PlanReading> => {
     ead: "USCIS's work-permit median for a pending I-485, the last four quarters",
     ap: "USCIS's advance-parole median inside the US, the last four quarters",
     consular:
-      "NVC's document review, this week's between the quickest and slowest of the last 12 weeks (State's NVC Timeframes page), then the consulate's interview: an assumption, not measured, because State publishes no wait for it. Set it to your consulate's",
+      "NVC's document review, this week's between the quickest and slowest of the last 12 weeks (State's NVC Timeframes page), then the consulate's interview: an assumption, not measured. State publishes no interview wait in days; its monthly table of each consulate's scheduling month (on the consulate pages) is NVC's paperwork queue. Set it to your consulate's, and setting it dates the visa while interviews are paused",
   };
-  return { figures, standing, sources };
+  const consulates =
+    consular?.asOf
+      ? {
+          asOf: consular.asOf,
+          posts: consular.posts.filter((p) => p.now).map((p) => ({ slug: p.slug, name: p.name, employment: p.now?.employment ?? null })),
+        }
+      : null;
+  return { figures, standing, sources, consulates };
 });

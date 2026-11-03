@@ -58,6 +58,11 @@ const BAR_TONE: Record<NonNullable<BarRow["tone"]>, string> = {
   green: "bg-chart-green",
 };
 
+/** The figure a row prints beside its bar. */
+function figureText(r: BarRow): string {
+  return r.value === null ? (r.nullText ?? "withheld") : r.text;
+}
+
 export function BarRows({
   rows,
   max,
@@ -79,6 +84,10 @@ export function BarRows({
   className?: string;
 }) {
   const top = max ?? Math.max(0, ...rows.map((r) => r.value ?? 0));
+  // Inline rows are separate grids, so each figure column is as wide as its own text and a short figure
+  // lengthens its track. One width for every figure (the longest, in the monospace face's own ch) keeps every
+  // track the same length, so the bars compare.
+  const figureCh = Math.max(0, ...rows.map((r) => figureText(r).length));
   return (
     <ChartTips label={label} className={className}>
     <ol className="space-y-3">
@@ -100,8 +109,11 @@ export function BarRows({
                   <div className={cn("h-full", BAR_TONE[r.tone ?? "primary"])} style={{ width: `${width}%` }} />
                 ) : null}
               </div>{" "}
-              <span className="min-w-[6rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums">
-                {r.value === null ? (r.nullText ?? "withheld") : r.text}
+              <span
+                className="min-w-[6rem] whitespace-nowrap text-right font-mono text-base font-bold tabular-nums"
+                style={{ width: `${figureCh}ch` }}
+              >
+                {figureText(r)}
               </span>
             </li>
           ) : (
@@ -111,7 +123,7 @@ export function BarRows({
             <div className="flex items-baseline justify-between gap-x-4">
               <p className="min-w-0 text-base font-semibold leading-snug">{r.label}</p>{" "}
               <span className="shrink-0 whitespace-nowrap text-right font-mono text-sm font-bold tabular-nums sm:text-base">
-                {r.value === null ? (r.nullText ?? "withheld") : r.text}
+                {figureText(r)}
               </span>
             </div>{" "}
             {r.sub ? <p className="text-sm text-muted-foreground">{r.sub}</p> : null}

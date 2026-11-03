@@ -597,6 +597,7 @@ def main() -> int:
     check_freshness_verdict()
     check_capped_partial_is_not_broken()
     check_hand_read_figures()
+    check_consular_record()
     check_main_combines_every_check()
     check_wage_views_rules()
     check_lca_numbers_rules()
@@ -632,6 +633,37 @@ def check_hand_read_figures() -> None:
     check("the real file's date is readable and current",
           health.check_hand_read_figures(today=d(2026, 9, 27)) == 0)
     check("warn comes before fail", health.HAND_READ_WARN_DAYS < health.HAND_READ_FAIL_DAYS)
+
+
+# --- The hand-kept consular pause record --------------------
+def check_consular_record() -> None:
+    import contextlib
+    import io
+    import tempfile
+
+    def say(today, text=None):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            if text is None:
+                rc = health.check_consular_facts(today=today)
+            else:
+                with tempfile.TemporaryDirectory() as tmp:
+                    f = pathlib.Path(tmp) / "facts.json"
+                    f.write_text(text)
+                    rc = health.check_consular_facts(today=today, path=f)
+        return rc, buf.getvalue()
+
+    real = json.loads(health.CONSULAR_FACTS.read_text())["pause"]
+    due = datetime.date.fromisoformat(real["recheckBy"])
+    rc, out = say(due)
+    check("consular record: on its re-read day it reads ok", rc == 0 and "::warning" not in out, out)
+    rc, out = say(due + datetime.timedelta(days=1))
+    check("consular record: a day past its re-read day it warns, never fails",
+          rc == 0 and "::warning::" in out and "re-read" in out, out)
+    rc, out = say(due, '{"pause": {"status": "paused"}}')
+    check("consular record: a record missing its dates warns", rc == 0 and "unreadable" in out, out)
+    rc, out = say(due, "not json")
+    check("consular record: a broken file warns", rc == 0 and "unreadable" in out, out)
 
 
 # --- A `partial` that names the sweep's cap is a designed stop
@@ -677,10 +709,11 @@ def check_main_combines_every_check() -> None:
 
     saved = {name: getattr(health, name) for name in CHECKS + ("Database", "check_cap_streak",
                                                               "check_unclassified_statuses", "check_warn_states",
-                                                              "check_hand_read_figures")}
+                                                              "check_hand_read_figures", "check_consular_facts")}
     try:
         health.Database = FreshDB
-        for name in ("check_cap_streak", "check_unclassified_statuses", "check_warn_states", "check_hand_read_figures"):
+        for name in ("check_cap_streak", "check_unclassified_statuses", "check_warn_states", "check_hand_read_figures",
+                     "check_consular_facts"):
             setattr(health, name, lambda *a: 0)
         for name in CHECKS:
             setattr(health, name, lambda db: 0)

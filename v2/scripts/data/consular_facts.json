@@ -1,0 +1,91 @@
+{
+  "_about": "What the record says about immigrant visa interviews at US consulates, kept by hand. Every fact carries its primary source and the day it was read. The site (src/lib/consular/facts.ts), the planner and the health check (scripts/check_ingest_health.py, check_consular_facts) all read this file. Re-read the sources and move `checked` and `recheckBy` on or before the recheck day, or the health check warns.",
+  "pause": {
+    "status": "paused",
+    "since": "2026-08-25",
+    "sinceLabel": "about August 25, 2026",
+    "checked": "2026-11-03",
+    "recheckBy": "2026-11-17",
+    "summary": "The State Department postponed immigrant visa interviews worldwide in late August 2026 so consular officers could finish new public charge training, including an in-person part. It has published no list of the posts that have restarted and no end date.",
+    "reinterviewsExempt": "Cases refused under the 75-country pause and sent back for review are exempt from the in-person training, so some posts hold those second interviews while their first interviews stay paused.",
+    "sources": [
+      {
+        "label": "State's sworn declaration, Aug 28 2026",
+        "quote": "the Bureau of Consular Affairs is rescheduling immigrant visa appointments.",
+        "url": "https://storage.courtlistener.com/recap/gov.uscourts.nysd.657161/gov.uscourts.nysd.657161.90.1.pdf",
+        "date": "2026-08-28",
+        "kind": "sworn"
+      },
+      {
+        "label": "State's sworn declaration, Sep 8 2026",
+        "quote": "four new training requirements that the Bureau of Consular Affairs formally deployed on September 1, 2026.",
+        "url": "https://storage.courtlistener.com/recap/gov.uscourts.nysd.657161/gov.uscourts.nysd.657161.96.1.pdf",
+        "date": "2026-09-08",
+        "kind": "sworn"
+      },
+      {
+        "label": "State's sworn declaration, Oct 5 2026",
+        "quote": "the Department instructed all posts to complete a set of required trainings related to public charge visa ineligibility and inadmissibility, including an in-person training component, before processing and adjudicating immigrant visa applications",
+        "url": "https://storage.courtlistener.com/recap/gov.uscourts.nysd.657161/gov.uscourts.nysd.657161.114.1.pdf",
+        "date": "2026-10-05",
+        "kind": "sworn"
+      }
+    ],
+    "reported": [
+      {
+        "label": "Reuters, Sep 8 2026",
+        "says": "Processing resumed in Hungary and Poland.",
+        "url": "https://www.usnews.com/news/world/articles/2026-09-08/exclusive-us-resumes-immigrant-visa-processing-for-hungary-poland-as-pause-remains-elsewhere",
+        "date": "2026-09-08"
+      }
+    ]
+  },
+  "seventyFive": {
+    "label": "The 75-country pause",
+    "summary": "From January 21, 2026, consular officers refused immigrant visas to nationals of 75 countries under INA 221(g). Interviews went on; nothing was issued. A federal court struck the policy down on August 21, 2026.",
+    "effective": "2026-01-21",
+    "vacated": "2026-08-21",
+    "sources": [
+      {
+        "label": "State's announcement, Jan 14 2026 (Internet Archive copy of Jul 14 2026)",
+        "url": "https://web.archive.org/web/20260714120748/https://travel.state.gov/content/travel/en/News/visas-news/immigrant-visa-processing-updates-for-nationalities-at-high-risk-of-public-benefits-usage.html",
+        "date": "2026-01-14",
+        "kind": "state"
+      },
+      {
+        "label": "CLINIC v. Rubio, opinion vacating the policy (S.D.N.Y. 1:26-cv-00858), Aug 21 2026",
+        "url": "https://storage.courtlistener.com/recap/gov.uscourts.nysd.657161/gov.uscourts.nysd.657161.83.0_1.pdf",
+        "date": "2026-08-21",
+        "kind": "court"
+      }
+    ],
+    "countries": [
+      ["Afghanistan", "afghanistan"], ["Albania", "albania"], ["Algeria", "algeria"], ["Antigua and Barbuda", "antigua and barbuda"],
+      ["Armenia", "armenia"], ["Azerbaijan", "azerbaijan"], ["Bahamas", "bahamas, the"], ["Bangladesh", "bangladesh"],
+      ["Barbados", "barbados"], ["Belarus", "belarus"], ["Belize", "belize"], ["Bhutan", "bhutan"],
+      ["Bosnia and Herzegovina", "bosnia - herzegovina"], ["Brazil", "brazil"], ["Burma", "burma"], ["Cambodia", "cambodia"],
+      ["Cameroon", "cameroon"], ["Cape Verde", "cabo verde"], ["Colombia", "colombia"], ["Cote d'Ivoire", "cote d'ivoire"],
+      ["Cuba", "cuba"], ["Democratic Republic of the Congo", "congo, democratic republic of the"], ["Dominica", "dominica"], ["Egypt", "egypt"],
+      ["Eritrea", "eritrea"], ["Ethiopia", "ethiopia"], ["Fiji", "fiji"], ["The Gambia", "gambia, the"],
+      ["Georgia", "georgia"], ["Ghana", "ghana"], ["Grenada", "grenada"], ["Guatemala", "guatemala"],
+      ["Guinea", "guinea"], ["Haiti", "haiti"], ["Iran", "iran"], ["Iraq", "iraq"],
+      ["Jamaica", "jamaica"], ["Jordan", "jordan"], ["Kazakhstan", "kazakhstan"], ["Kosovo", "kosovo"],
+      ["Kuwait", "kuwait"], ["Kyrgyz Republic", "kyrgyzstan"], ["Laos", "laos"], ["Lebanon", "lebanon"],
+      ["Liberia", "liberia"], ["Libya", "libya"], ["Moldova", "moldova"], ["Mongolia", "mongolia"],
+      ["Montenegro", "montenegro"], ["Morocco", "morocco"], ["Nepal", "nepal"], ["Nicaragua", "nicaragua"],
+      ["Nigeria", "nigeria"], ["North Macedonia", "north macedonia"], ["Pakistan", "pakistan"], ["Republic of the Congo", "congo, republic of the"],
+      ["Russia", "russia"], ["Rwanda", "rwanda"], ["Saint Kitts and Nevis", "saint kitts and nevis"], ["Saint Lucia", "saint lucia"],
+      ["Saint Vincent and the Grenadines", "saint vincent and the grenadines"], ["Senegal", "senegal"], ["Sierra Leone", "sierra leone"], ["Somalia", "somalia"],
+      ["South Sudan", "south sudan"], ["Sudan", "sudan"], ["Syria", "syria"], ["Tanzania", "tanzania"],
+      ["Thailand", "thailand"], ["Togo", "togo"], ["Tunisia", "tunisia"], ["Uganda", "uganda"],
+      ["Uruguay", "uruguay"], ["Uzbekistan", "uzbekistan"], ["Yemen", "yemen"]
+    ]
+  },
+  "postAliases": {
+    "_about": "Where State's scheduling table spells a post differently from its issuance tables: the table's name, folded, to the issuance key.",
+    "kuwait": "kuwait city",
+    "port au prince": "port - au - prince",
+    "taipei": "ait taipei",
+    "ulaanbataar": "ulaanbaatar"
+  }
+}

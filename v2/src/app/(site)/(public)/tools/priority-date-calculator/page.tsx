@@ -1,3 +1,4 @@
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import type { Metadata } from "next";
 
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
@@ -140,6 +141,7 @@ export default async function PriorityDateCalculatorPage() {
           cutoffs, and which way those cutoffs have been moving.
         </p>
       </header>
+      <ConsularPauseNote className="mt-6" />{" "}
 
       <section data-embed="priority-date" className="mt-10">
         <PriorityDateEstimator

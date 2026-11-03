@@ -15,6 +15,7 @@
  * never streams a 200 with a not-found body.
  */
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
 import { getUscisCharts } from "@/lib/uscisChartsFetch";
 import type { Metadata } from "next";
@@ -364,6 +365,7 @@ export default async function BulletinMonthPage({
       </p>{" "}
       {/* USCIS names a chart only for the newest bulletins; the note shows on the month it names. */}
       <UscisChartNote charts={uscisCharts} month={month} only="employment" className="mt-6" />{" "}
+      <ConsularPauseNote className="mt-6" />{" "}
 
       {prev ? (
         <section aria-labelledby="moved" className="mt-8 border-2 shadow-hard-sm p-5 sm:p-6 bg-card border-border">

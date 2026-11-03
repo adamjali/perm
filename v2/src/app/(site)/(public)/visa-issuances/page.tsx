@@ -5,6 +5,7 @@
  * in the table at the end.
  */
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { Fragment } from "react";
 
 import type { Metadata } from "next";
@@ -16,6 +17,10 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FigurePlate } from "@/components/tools/FigurePlate";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
+import { ColumnChart, type Column } from "@/components/numbers/ColumnChart";
+import { SEVENTY_FIVE, SEVENTY_FIVE_KEYS } from "@/lib/consular/facts";
+import { changeWords, yearOnYear } from "@/lib/consular/seventyFive";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { formatInt } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -26,6 +31,7 @@ import {
   EMPLOYMENT_CATEGORIES,
   employmentBy,
   issuanceSummary,
+  issuedByPauseGroup,
   monthName,
   type IssuanceGroup,
 } from "@/lib/db/visaIssuances";
@@ -51,6 +57,8 @@ export const metadata: Metadata = withSocialCard(
 );
 
 const SPARK_MONTHS = 36;
+/** The 75-country chart starts a year before the pause, so a month of it has its year-earlier month. */
+const PAUSE_CHART_FROM = "2024-10";
 
 /** One category's months as small bars in green (visas issued), the newest in the stronger green. */
 function Spark({ label, points, max }: { label: string; points: { month: string; n: number }[]; max: number }) {
@@ -106,7 +114,22 @@ export default async function VisaIssuancesPage() {
     );
   }
   const yearFrom = shiftMonth(newest, -11);
-  const [byCountry, byPost] = await Promise.all([employmentBy("fsc", yearFrom, newest), employmentBy("post", yearFrom, newest)]);
+  const [byCountry, byPost, pauseMonths] = await Promise.all([
+    employmentBy("fsc", yearFrom, newest),
+    employmentBy("post", yearFrom, newest),
+    issuedByPauseGroup(SEVENTY_FIVE_KEYS, PAUSE_CHART_FROM),
+  ]);
+  const yoy = yearOnYear(pauseMonths);
+  const pauseColumns: Column[] = pauseMonths.map((m) => {
+    const inPause = m.month >= SEVENTY_FIVE.effective.slice(0, 7) && m.month <= SEVENTY_FIVE.vacated.slice(0, 7);
+    return {
+      key: m.month,
+      value: m.eb75,
+      label: monthName(m.month),
+      parts: [{ value: m.eb75, fill: inPause ? "bg-chart-yellow" : "bg-chart-blue" }],
+      tip: `${monthName(m.month)}\n${formatInt(m.eb75)} employment visas to nationals of the 75 countries${inPause ? "\nInside the pause" : ""}`,
+    };
+  });
   const sparkMonths = summary.months.slice(-SPARK_MONTHS);
   const latest = summary.byMonth[newest] ?? {};
   const monthTotal = Object.values(latest).reduce((a, n) => a + n, 0);
@@ -180,6 +203,69 @@ export default async function VisaIssuancesPage() {
           </table>
         </ChartTips>
       </FigurePlate>
+
+      {pauseColumns.length ? (
+        <section className="mt-12" aria-labelledby="iv-75">
+          <h2 id="iv-75" className="font-heading text-2xl font-bold">
+            The 75-country pause, in State&apos;s own counts
+          </h2>{" "}
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
+            {SEVENTY_FIVE.summary} Employment visas were refused under it too.{" "}
+            {SEVENTY_FIVE.sources.map((src, i) => (
+              <Fragment key={src.url}>
+                {i ? ", " : "Sources: "}
+                <a href={src.url} className="link" target="_blank" rel="noopener noreferrer">
+                  {src.label}
+                </a>
+              </Fragment>
+            ))}
+            .
+          </p>
+          {yoy ? (
+            <FigureRow className="mt-6">
+              <Figure
+                label="Nationals of the 75 countries"
+                value={formatInt(yoy.eb75.to)}
+                note={`employment visas in ${monthName(yoy.newest)}, ${changeWords(yoy.eb75)} from ${formatInt(yoy.eb75.from)} in ${monthName(yoy.yearBefore)}`}
+              />{" "}
+              <Figure
+                label="Everyone else"
+                value={formatInt(yoy.ebOther.to)}
+                note={`employment visas in ${monthName(yoy.newest)}, ${changeWords(yoy.ebOther)} from ${formatInt(yoy.ebOther.from)} in ${monthName(yoy.yearBefore)}`}
+              />{" "}
+              <Figure
+                label="Every immigrant visa, the 75 countries"
+                value={formatInt(yoy.all75.to)}
+                note={`in ${monthName(yoy.newest)}, ${changeWords(yoy.all75)} from ${formatInt(yoy.all75.from)} a year before`}
+              />
+            </FigureRow>
+          ) : null}
+          <FigurePlate
+            title="Employment visas to nationals of the 75 countries, month by month"
+            subject={`${monthName(pauseColumns[0]!.key)} to ${monthName(pauseColumns.at(-1)!.key)}`}
+            caption="Each column is one month, by country of chargeability as State counts it. Yellow months fall inside the pause, January 21 to August 21, 2026; January holds three weeks before it began. State's newest table is the last column, so the months since aren't shown yet."
+            source="U.S. Department of State, monthly immigrant visa issuances"
+            className="mt-6"
+          >
+            <ColumnChart
+              columns={pauseColumns}
+              label="Employment visas to nationals of the 75 paused countries, by month"
+              first={monthName(pauseColumns[0]!.key)}
+              last={monthName(pauseColumns.at(-1)!.key)}
+              unit="employment visas"
+            />
+            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm" aria-label="Colour key">
+              <li className="flex items-center gap-2">
+                <span aria-hidden="true" className="inline-block size-3 bg-chart-blue" /> Before the pause
+              </li>{" "}
+              <li className="flex items-center gap-2">
+                <span aria-hidden="true" className="inline-block size-3 bg-chart-yellow" /> Inside the pause
+              </li>
+            </ul>
+          </FigurePlate>
+          <ConsularPauseNote className="mt-6" />
+        </section>
+      ) : null}
 
       <section className="mt-12" aria-labelledby="iv-countries">
         <h2 id="iv-countries" className="font-heading text-2xl font-bold">

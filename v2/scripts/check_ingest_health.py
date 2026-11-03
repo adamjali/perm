@@ -976,6 +976,30 @@ def check_hand_read_figures(today: datetime.date | None = None) -> int:
     return 0
 
 
+CONSULAR_FACTS = pathlib.Path(__file__).resolve().parent / "data" / "consular_facts.json"
+
+
+def check_consular_facts(today: datetime.date | None = None, path: pathlib.Path = CONSULAR_FACTS) -> int:
+    """The consular interview pause is a hand-kept record (no agency publishes it as
+    data), so it can only go stale by nobody re-reading it. A warning, never a
+    failure: every page that prints it shows the day it was checked."""
+    try:
+        pause = json.loads(path.read_text(encoding="utf8"))["pause"]
+        recheck = datetime.date.fromisoformat(pause["recheckBy"])
+        checked = pause["checked"]
+        status = pause["status"]
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"::warning::The consular pause record ({path.name}) is unreadable: {exc}")
+        return 0
+    today = today or datetime.date.today()
+    if today > recheck:
+        print(f"::warning::The consular pause record ({status}, checked {checked}) was due a "
+              f"re-read by {recheck}: read the sources it cites, then move checked and recheckBy")
+        return 0
+    print(f"consular pause record: {status}, checked {checked}, re-read by {recheck}")
+    return 0
+
+
 def main() -> int:
     db = Database()
     res = db.execute(
@@ -1047,6 +1071,7 @@ def main() -> int:
     check_policy_sources(db)          # a warning only; see its docstring
     check_data_gov_key(db)            # a warning only; see its docstring
     check_posted_vs_typed(db)         # a warning only; see its docstring
+    check_consular_facts()            # a warning only; see its docstring
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)

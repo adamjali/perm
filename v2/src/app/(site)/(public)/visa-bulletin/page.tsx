@@ -17,6 +17,7 @@
  * points are, and every non-date transition is named rather than numbered.
  */
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
@@ -267,6 +268,7 @@ export default async function VisaBulletinPage() {
         </span>
       </p>{" "}
       <UscisChartNote charts={uscisCharts} className="mt-6" />
+      <ConsularPauseNote className="mt-6" />{" "}
 
       {latestMoves.some((s) => s.rows.some((r) => r.move)) ? (
         <>

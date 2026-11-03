@@ -103,6 +103,14 @@ vi.mock("@/lib/db/socTitles", () => ({
     ],
   })),
 }));
+vi.mock("@/lib/db/consularPosts", () => ({
+  getConsularIndex: vi.fn(async () => ({
+    asOf: "2026-10-07",
+    issuedFrom: "2025-03",
+    issuedTo: "2026-02",
+    posts: [{ key: "manila", slug: "manila", name: "Manila", now: null, issued: 30000, employment: 7523 }],
+  })),
+}));
 vi.mock("@/lib/db/groups", () => ({
   GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
   listGroups: vi.fn(async (kind: string) => [

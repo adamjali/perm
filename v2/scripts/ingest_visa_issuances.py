@@ -28,6 +28,11 @@ Usage:
     python3 scripts/ingest_visa_issuances.py                 # discover; load new or changed months
     python3 scripts/ingest_visa_issuances.py --since 2024-01 # only months from then on
     python3 scripts/ingest_visa_issuances.py --dry-run [--local FILE --month YYYY-MM --dim fsc|post]
+    python3 scripts/ingest_visa_issuances.py --local FILE --month YYYY-MM --dim fsc|post   # a file saved from a browser
+
+Since Nov 2 2026 State's site refuses scripts (lib_gov_data.STATE_CLOSED): the discovery run warns,
+writes nothing and notes why on the freshness row, and a new month loads from a file a person saves
+in a browser (--local, same parser and checks).
 """
 from __future__ import annotations
 
@@ -38,12 +43,13 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_gov_data import POLITE_PAUSE_S, fetch, log  # noqa: E402
+from lib_gov_data import POLITE_PAUSE_S, STATE_CLOSED, fetch, log, state_refused  # noqa: E402
 from lib_reference import sha256, sheet_rows, sync_rows  # noqa: E402
-from lib_db import Database, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, read_doc, record_run, restamp_note, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_visa_issuances.py"
 # What the site prints as the source line: a readable name, never a bare URL (a URL has no
@@ -244,14 +250,44 @@ def main() -> int:
     started = time.time()
 
     if args.local:
-        rows = parse(open(args.local, "rb").read(), args.local)
+        data = open(args.local, "rb").read()
+        try:
+            rows = parse(data, args.local)
+        except Refusal as exc:
+            log(f"REFUSED {args.local}: {exc}")
+            return 1
         cats: dict[str, int] = {}
         for (_, symbol), n in rows.items():
             cats[category_of(symbol)] = cats.get(category_of(symbol), 0) + n
         log(f"  {len(rows)} rows, {sum(rows.values()):,} visas; {dict(sorted(cats.items()))}")
+        if args.dry_run:
+            return 0
+        month = args.month or month_of(os.path.basename(args.local))
+        dim = args.dim or dim_of(os.path.basename(args.local))
+        if not month or not dim:
+            ap.error("name the file's --month and --dim (State's file name carries both)")
+        db = Database()
+        db.script(DDL)
+        got = store(db, month, dim, rows)
+        record = read_doc(db, RECORD) or {}
+        record.setdefault("files", {})[f"{month}|{dim}"] = sha256(data)
+        write_doc(db, RECORD, record)
+        log(f"  {month} {dim}: {got}")
+        finish(db, got["written"], 1, [], started)
         return 0
 
-    files = listing(fetch(PAGE).decode("utf-8", "replace"))
+    try:
+        files = listing(fetch(PAGE).decode("utf-8", "replace"))
+    except urllib.error.HTTPError as exc:
+        if not state_refused(exc):
+            raise
+        note = f"{STATE_CLOSED}; save a month's file from a browser and load it with --local"
+        log(f"::warning::{note}")
+        if not args.dry_run:
+            db = Database()
+            restamp_note(db, "visa-issuances", note)
+            record_run(db, SCRIPT, status="ok", rows_written=0, note=note, started_at=started)
+        return 0
     if args.since:
         files = {k: v for k, v in files.items() if k[0] >= args.since}
     log(f"{len(files)} month files linked, {min(files)[0] if files else '-'} to {max(files)[0] if files else '-'}")
@@ -277,9 +313,7 @@ def main() -> int:
         if db is None:
             log(f"  {month} {dim}: {len(rows)} rows, {sum(rows.values()):,} visas")
             continue
-        got = sync_rows(db, TABLE, ("month", "dim", "key", "visa_class"), COLS,
-                        [(month, dim, k, s, n, category_of(s), group_key(k)) for (k, s), n in sorted(rows.items())],
-                        scope_sql="month = ? AND dim = ?", scope_args=[month, dim])
+        got = store(db, month, dim, rows)
         written += got["written"]
         seen[f"{month}|{dim}"] = digest
         write_doc(db, RECORD, {"files": seen})
@@ -287,6 +321,18 @@ def main() -> int:
         time.sleep(POLITE_PAUSE_S)
     if db is None:
         return 1 if refused else 0
+    return finish(db, written, loaded, refused, started)
+
+
+def store(db: Database, month: str, dim: str, rows: dict) -> dict:
+    """Make one month's table hold exactly this file's rows."""
+    return sync_rows(db, TABLE, ("month", "dim", "key", "visa_class"), COLS,
+                     [(month, dim, k, s, n, category_of(s), group_key(k)) for (k, s), n in sorted(rows.items())],
+                     scope_sql="month = ? AND dim = ?", scope_args=[month, dim])
+
+
+def finish(db: Database, written: int, loaded: int, refused: list[str], started: float) -> int:
+    """The summary the pages read, the freshness row and the run row, after any load."""
     doc = summary(db)
     write_doc(db, "visa_issuances_summary", doc)
     if doc["newest"]:

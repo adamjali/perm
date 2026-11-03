@@ -47,10 +47,15 @@ export interface PlanUrlState {
   premium: boolean;
   /** Adjustment of status inside the US, or consular processing abroad. */
   route: GreenCardRoute;
+  /** Through a consulate: the post's page slug the reader picked (NVC schedules in the country of residence). */
+  post: string | null;
 }
 
 /** The route's address key; adjustment of status, the default, leaves it out. */
 export const ROUTE_PARAM = "route";
+/** The consulate's address key, a post page's slug. */
+export const POST_PARAM = "post";
+const POST_SLUG = /^[a-z0-9-]{2,60}$/;
 
 const isoOrNull = (v: string | null) => (v && ISO_DATE_REGEX.test(v) ? v : null);
 const whereOf = (key: string | null) => WHERE.find((w) => w.key === key) ?? WHERE[0];
@@ -98,6 +103,7 @@ export function readPlanUrl(params: URLSearchParams, today: string): PlanUrlStat
     country,
     premium: params.get("premium") === "1",
     route: GREEN_CARD_ROUTES.find((r) => r === params.get(ROUTE_PARAM)) ?? "aos",
+    post: POST_SLUG.test(params.get(POST_PARAM) ?? "") ? params.get(POST_PARAM) : null,
   };
 }
 
@@ -109,6 +115,7 @@ export function planPatch(patch: Partial<Record<Milestone, string | null>> & {
   country?: PlanCountry;
   premium?: boolean;
   route?: GreenCardRoute;
+  post?: string | null;
 }): Record<string, string | null> {
   const out: Record<string, string | null> = { [LEGACY_DATE]: null };
   for (const m of MILESTONE_ORDER) if (m in patch) out[MILESTONE_PARAM[m]] = patch[m] ?? null;
@@ -118,6 +125,7 @@ export function planPatch(patch: Partial<Record<Milestone, string | null>> & {
   if (patch.country !== undefined) out.country = patch.country === "worldwide" ? null : patch.country;
   if (patch.premium !== undefined) out.premium = patch.premium ? "1" : null;
   if (patch.route !== undefined) out[ROUTE_PARAM] = patch.route === "aos" ? null : patch.route;
+  if (patch.post !== undefined) out[POST_PARAM] = patch.post;
   return out;
 }
 

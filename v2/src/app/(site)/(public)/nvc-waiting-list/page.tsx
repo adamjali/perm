@@ -5,6 +5,7 @@
  * reconciles every report against itself and against the report before it.
  */
 
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
@@ -119,6 +120,7 @@ export default async function NvcWaitingListPage() {
           National Visa Center, by category.
         </p>
       </header>
+      <ConsularPauseNote className="mt-6" />{" "}
 
       <div className="mt-8 border-l-4 border-primary bg-card p-5 shadow-hard">
         <p className="text-base leading-relaxed">

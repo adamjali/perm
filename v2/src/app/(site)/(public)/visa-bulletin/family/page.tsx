@@ -1,3 +1,4 @@
+import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import type { Metadata } from "next";
 import { UscisChartNote } from "@/components/bulletin/UscisChartNote";
 import { getUscisCharts } from "@/lib/uscisChartsFetch";
@@ -157,6 +158,7 @@ export default async function FamilyBulletinPage() {
             : "The family charts are being read from the bulletin archive; check back shortly."}
         </p>{" "}
         <UscisChartNote charts={uscisCharts} only="family" className="mt-6" />
+        <ConsularPauseNote className="mt-6" />{" "}
       </header>
 
       {board ? (

@@ -141,6 +141,12 @@ def main() -> int:
           keep_of(name="Acme LLC v. Rubio", snippet="<mark>employment-based</mark> immigrant visas")[0])
     check("\"employment-based\" with no immigration word doesn't",
           not keep_of(name="Acme LLC v. Rubio", snippet="her <mark>employment-based</mark> retaliation claim")[0])
+    check("\"public charge\" counts: the 75-country pause suit (CLINIC v. Rubio) named no work visa",
+          keep_of(name="Catholic Legal Immigration Network, Inc. v. Rubio", snippet="refused on <mark>public charge</mark> grounds")[0])
+    check("\"immigrant visa interviews\" counts",
+          keep_of(name="Acme LLC v. Rubio", snippet="paused all <mark>immigrant visa interviews</mark> worldwide")[0])
+    check("a bare \"immigrant visa\" mark doesn't",
+          not keep_of(name="Acme LLC v. Rubio", snippet="her <mark>immigrant visa</mark> petition")[0])
     check("a state court doesn't", not keep_of(name="Acme LLC v. Rubio", court="Superior Court of Delaware", juris="SA")[0])
     check("a federal court with no jurisdiction code is judged by its name",
           keep_of(name="Acme LLC v. Rubio", court="Court of Appeals for the Fourth Circuit", juris=None)[0])

@@ -184,9 +184,10 @@ export const RECRUITMENT_MIN_DAYS = JOB_ORDER_MIN_DAYS + FILING_WINDOW_WAIT_DAYS
 export const I140_PREP_DAYS_ASSUMED = 30;
 /**
  * Days from the documents going in at the National Visa Center to the immigrant visa, past NVC's
- * own review: the consulate's interview wait. State publishes no wait for immigrant visa
- * interviews (NVC's review time it does publish, weekly, and the plan reads it), so this is an
- * assumption the page names as one and the reader sets to their consulate's.
+ * own review: the consulate's interview wait. State publishes no interview wait in days. Its IV
+ * Scheduling Status Tool gives each consulate's scheduling month, which is NVC's paperwork queue
+ * and no wait (the consulate pages show it); NVC's review time it publishes weekly, and the plan
+ * reads it. So this is an assumption the page names as one and the reader sets to their consulate's.
  */
 export const CONSULAR_INTERVIEW_DAYS_ASSUMED: Span = { low: 30, mid: 90, high: 180 };
 
@@ -234,6 +235,12 @@ export interface PlanFigures {
   };
   /** Through a consulate: days from the I-140's approval until NVC has created the case (NVC's own weekly figure). */
   nvcCreation?: Span | null;
+  /**
+   * Through a consulate, while the record says immigrant visa interviews are paused worldwide
+   * (scripts/data/consular_facts.json): the visa isn't dated, since nothing says when interviews
+   * resume. A length the reader sets for the consulate step clears it (their own assumption).
+   */
+  consularPause?: { sinceLabel: string } | null;
   /**
    * For a PERM filed on or before today: its decision from the cases still ahead of it
    * and DOL's measured pace, the case page's own model. It replaces the plain wait.
@@ -639,14 +646,17 @@ export function buildPlan(input: PlanInput, figures: PlanFigures): Plan {
           ? `Your pace, ${figures.paceDaysPerMonth} days a month`
           : "The cutoff's measured pace";
 
-  const lastSpan = route === 'cp' ? figures.spans.consular : figures.spans.i485;
+  const paused = route === 'cp' ? (figures.consularPause ?? null) : null;
+  const lastSpan = route === 'cp' ? (paused ? null : figures.spans.consular) : figures.spans.i485;
   if (known.greenCard) at.greenCard = fixed(known.greenCard);
   else if (at.i485Filed && lastSpan) at.greenCard = shift(at.i485Filed, orderedSpan(lastSpan));
   basis[last] = knownSet.has('greenCard')
     ? 'Your date'
-    : route === 'cp'
-      ? "NVC's document review this week, then the consulate's interview wait, an assumption"
-      : "USCIS's employment-based medians, the last four quarters";
+    : paused
+      ? `Interviews paused at most consulates since ${paused.sinceLabel}: no date until they resume`
+      : route === 'cp'
+        ? "NVC's document review this week, then the consulate's interview wait, an assumption"
+        : "USCIS's employment-based medians, the last four quarters";
   holdUnderKnown(at, known);
 
   // Every step, end to end: the ones before the first date the reader gave are done.

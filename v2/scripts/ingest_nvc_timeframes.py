@@ -25,9 +25,10 @@ import datetime as dt
 import re
 import sys
 import time
+import urllib.error
 
-from lib_db import Database, read_doc, record_run, stamp_freshness, write_doc
-from lib_gov_data import fetch
+from lib_db import Database, read_doc, record_run, restamp_note, stamp_freshness, write_doc
+from lib_gov_data import STATE_CLOSED, fetch, state_refused
 
 URL = "https://adoption.state.gov/content/travel/en/us-visas/immigrate/nvc-timeframes.html"
 SOURCE = "The State Department's NVC Timeframes page"
@@ -90,7 +91,19 @@ def main() -> int:
     ap.add_argument("--no-stamp", action="store_true")
     args = ap.parse_args()
     started = time.time()
-    html = open(args.from_file, encoding="utf8").read() if args.from_file else fetch(URL).decode("utf8", "replace")
+    try:
+        html = open(args.from_file, encoding="utf8").read() if args.from_file else fetch(URL).decode("utf8", "replace")
+    except urllib.error.HTTPError as exc:
+        if not state_refused(exc):
+            raise
+        # Nothing to read: the freshness row keeps NVC's own date and says why (lib_db.restamp_note).
+        note = f"{STATE_CLOSED}; save the NVC Timeframes page from a browser and run --from-file"
+        log(f"::warning::{note}")
+        if not args.dry_run:
+            db = Database()
+            restamp_note(db, DATASET, note)
+            record_run(db, SCRIPT, status="ok", rows_written=0, note=note, started_at=started)
+        return 0
     reading = parse(html)
     log(f"NVC as of {reading['asOf']}: creating cases received {reading['createdThrough']} "
         f"({reading['creationLagDays']} days), reviewing documents sent {reading['reviewedThrough']} "

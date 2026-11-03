@@ -85,9 +85,9 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_state_news import OldSite, ask  # noqa: E402
-from lib_db import Database, et_today, query_rows, record_run, stamp_freshness  # noqa: E402
-from lib_gov_data import POLITE_PAUSE_S, parse_robots, rules_allow  # noqa: E402
+from ingest_state_news import ALL_REDIRECTED, OldSite, ask  # noqa: E402
+from lib_db import Database, et_today, query_rows, record_run, restamp_note, stamp_freshness  # noqa: E402
+from lib_gov_data import POLITE_PAUSE_S, STATE_CLOSED, parse_robots, rules_allow, state_refused  # noqa: E402
 from lib_reference import sync_rows  # noqa: E402
 
 SCRIPT = "ingest_visa_wait_times.py"
@@ -386,6 +386,16 @@ def main() -> int:
             pages = [(PAGE, read_page())]
         readings = [parse(text) for _src, text in pages]
     except (Refusal, urllib.error.URLError, TimeoutError, OSError) as exc:
+        if (isinstance(exc, urllib.error.HTTPError) and state_refused(exc)) or ALL_REDIRECTED in str(exc):
+            # State's site turns scripts away (Nov 2 2026): a warning, and the freshness row keeps
+            # State's own reading date while saying why (lib_db.restamp_note).
+            note = f"{STATE_CLOSED}; save the Global Visa Wait Times page from a browser and run --from-file"
+            log(f"::warning::{note}")
+            if not args.dry_run:
+                db = Database()
+                restamp_note(db, DATASET, note)
+                record_run(db, SCRIPT, status="ok", rows_written=0, note=note, started_at=started)
+            return 0
         # A refusal and an unreachable State both write no rows and leave the
         # freshness row to age; the run row says which it was.
         log(f"{'REFUSED' if isinstance(exc, Refusal) else 'UNREACHABLE'} {exc}")
