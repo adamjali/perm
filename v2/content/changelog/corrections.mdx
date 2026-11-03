@@ -1,7 +1,7 @@
 ---
 title: "Corrections"
 description: "Every time this site published something wrong about its data, its process or the rules: what it said, what was true, and what changed."
-date: "2026-10-29"
+date: "2026-11-02"
 author: "PERM Tracker team"
 image: "/images/content/heroes/changelog/corrections.webp"
 imageAlt: "How the numbers are computed: six readings of one PERM average side by side"
@@ -18,6 +18,30 @@ was true, and says what changed so it can't recur.
 The bar for an entry is a reader who could have formed a false belief from the
 page; an internal bug alone doesn't qualify. A wrong number on a live page
 qualifies. A typo doesn't, and a design somebody disliked doesn't unless it misled.
+
+## The page after a low alert rating · Nov 2, 2026
+
+**It said:** "The steps after PERM, and how long each takes" and "Where your green card line stands", to anyone who rated a certified case 1 or 2, and PERM's denial guide for a denied one, whatever the case was.
+
+**What was true:** An H-1B LCA, a wage request or an H-2A, H-2B or CW-1 case has its own next step. A certified LCA leads to the H-1B petition, not to the green card line.
+
+**What changed:** The page offers the next steps for the case's own program, the same ones its alert email gives. A test holds each program to its own.
+
+## The green card planner · Nov 1, 2026
+
+**It said:** A plan that began before the wage request had no wage request step, so every date after it came out months early.
+
+**What was true:** The wage request takes months at DOL. The planner reads its length from DOL's last working day, and a Saturday with a handful of wage decisions gave it no length, so the step was dropped.
+
+**What changed:** The planner reads DOL's last full working day, and a saved reading with no length is read again live. The pre-release page checks run the planner on every build. [See the planner](/tools/green-card-timeline).
+
+## The employer, law firm and job lists · Oct 30, 2026
+
+**It said:** "Load all 5,571", and then "All 2,882" once the list had loaded.
+
+**What was true:** The full list holds only those with 5 or more filings. The larger count was every one with a page.
+
+**What changed:** Each count names the list it counts. A test fails if a button promises more rows than its list holds.
 
 ## The privacy policy · Oct 29, 2026
 

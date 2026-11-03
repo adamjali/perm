@@ -38,7 +38,7 @@ export default function ChangelogListing({ posts }: { posts: PostSummary[] }) {
 
   return (
     <div className="space-y-8">
-      <div className="grid max-w-3xl grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,1fr)_10rem_11rem] sm:items-end [&>*]:min-w-0">
+      <div className="grid max-w-3xl grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,1fr)_11rem_11rem] sm:items-end [&>*]:min-w-0">
         <div className="col-span-2 sm:col-span-1">
           <ContentSearch value={search} onChange={setSearch} placeholder="Search the changelog..." />
         </div>{" "}

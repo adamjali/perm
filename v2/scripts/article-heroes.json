@@ -1238,5 +1238,24 @@
   "credit": "Photo: Office of War Information, 1943, Library of Congress",
   "source": "https://commons.wikimedia.org/wiki/File:Advertisement_of_the_United_States_Employment_Service,_8d16963v.jpg",
   "alt": "A 1943 sign over a storefront that reads This Way to a Job, U.S. Employment Service"
+ },
+ "changelog/federal-records-and-three-calculators": {
+  "capture": {
+   "url": "/wage-violations",
+   "clip": "fromm:H-1B"
+  },
+  "credit": "Screenshot of permtracker.app, November 2, 2026",
+  "alt": "H-1B wage violations by fiscal year, and the largest back wages, on permtracker.app"
+ },
+ "changelog/where-dol-is-and-job-codes": {
+  "tour": {
+   "file": "job-code-light.webp",
+   "focus": [
+    0.5,
+    0.0
+   ]
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The case form's SOC code box offering the codes employers filed Operations Research Analyst under, with each code's share"
  }
 }
