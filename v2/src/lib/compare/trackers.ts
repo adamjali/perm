@@ -161,7 +161,9 @@ export function compareFaq(trackers: readonly Tracker[]): { q: string; a: string
   const list = (row: RowKey, marks: readonly Mark[]) => nameList(namesWhere(trackers, row, marks)) || "none of them";
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const freeNoAds = trackers.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark === "yes").map((t) => t.name).sort((a, b) => a.localeCompare(b));
-  const freeAds = trackers.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark !== "yes").map((t) => t.name).sort((a, b) => a.localeCompare(b));
+  const freeAds = trackers.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark === "no").map((t) => t.name).sort((a, b) => a.localeCompare(b));
+  // "partial": no ad code in its pages when read, but ads named in its policy or planned.
+  const freeAdsLater = trackers.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark === "partial").map((t) => t.name).sort((a, b) => a.localeCompare(b));
   const paid = trackers.filter((t) => t.cells.free.mark !== "yes").map((t) => `${t.name} (${t.price.charAt(0).toLowerCase()}${t.price.slice(1)})`);
   return [
     {
@@ -173,6 +175,7 @@ export function compareFaq(trackers: readonly Tracker[]): { q: string; a: string
       a: [
         freeNoAds.length ? `Free with no ads: ${nameList(freeNoAds)}.` : "",
         freeAds.length ? `Free with ads: ${nameList(freeAds)}.` : "",
+        freeAdsLater.length ? `Free, with no ads in their pages yet but ads named in their policy or planned: ${nameList(freeAdsLater)}.` : "",
         paid.length ? `With paid parts: ${nameList(paid)}.` : "",
       ].filter(Boolean).join(" "),
     },

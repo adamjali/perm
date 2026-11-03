@@ -2110,3 +2110,25 @@ removed; the page went from 13,066 to about 10,700 px at 1440 wide. What changed
   when their newest year has a yes (`LayoffAnswerLine`, in "The work").
 - **A yes isn't a bar or a finding**: the rule (20 CFR 656.17(k)) allows the filing if the laid-off workers were
   notified and considered. The page says so beside every figure, and never pairs one employer's count with a reason.
+
+## Nov 3 2026 (morning): State closed its script door, sealed backups, /compare re-read
+
+- **adoption.state.gov sends every page to travel.state.gov since about 2 PM Eastern Nov 2 2026**, and travel.state.gov
+  refuses scripts (Cloudflare 403, robots.txt included), so the nightly direct bulletin read stores nothing new (it warns
+  and exits 0; the freshness budget is the alarm) and State's visa-news reader says so in its run note. State also moved
+  its bulletin pages under the fiscal-year folder (November 2026 is `/visa-bulletin/2027/...`). A person's Chrome still
+  reads them after Cloudflare's check clears by itself. **The browser route:** copy the bulletin's four tables' cell
+  text in the page (tables `^`, rows `~`, cells `|`), then on the server
+  `sudo -u permtracker permtracker-uscis bulletin-tables <file> <YYYY-MM>` (`ingest_visa_bulletin.py --from-tables`,
+  the same parser and checks, ranked as a primary source, then the bulletin pages refresh through nginx). November's
+  copy parsed equal to the stored row chart for chart (fixture `scripts/__fixtures__/visa-bulletin-2026-11.tables.txt`).
+  A session timer (`bulletin-read` in `~/.claude/timers/registry.py`) checks daily from the 5th for the next month's bulletin.
+- **The weekly observations backup is sealed** (`backup-observations.yml`): any signed-in GitHub user can download a
+  public repository's artifacts, so the dump is a tar sealed with the backup key's public half, opened only by the
+  owner's key (`openssl cms -decrypt ... -inkey backup-key.pem | tar -xf -`). The nine unsealed copies were deleted;
+  the event logs are never pruned, so the newest copy holds every transition.
+- **/compare re-read Nov 3** (`~/.claude/explanations/20261103_compare_recheck/`): PermTrack's wage requests are public
+  now (`wage` yes); PERM Timeline and PermQueue carry no ad code though their policies name AdSense (`noAds` partial,
+  with its own line in the FAQ); GreenCardClock's operator is named; H1BGrader keeps Oct 28 (Cloudflare refused every
+  scripted read). Every quote was matched word for word against the saved pages. No sign any rival copied our text;
+  the shared phrases with PermTrack appeared on its site first.

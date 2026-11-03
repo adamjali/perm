@@ -112,6 +112,13 @@ describe("the PERM tracker comparison", () => {
     const withAds = all.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark !== "yes");
     expect(free.split("Free with ads")[0]).toContain(nameList(namesWhere(clean, "free", ["yes"])));
     for (const t of withAds) expect(free.split("Free with ads")[0], t.slug).not.toContain(`${t.name},`);
+    // A free site with no ad code yet (a "partial" mark) is named in its own sentence, never under "Free with ads".
+    const later = all.filter((t) => t.cells.free.mark === "yes" && t.cells.noAds.mark === "partial");
+    const adsLine = free.split(". ").find((x) => x.startsWith("Free with ads")) ?? "";
+    for (const t of later) {
+      expect(free, t.slug).toContain("ads named in their policy or planned");
+      expect(adsLine, t.slug).not.toContain(t.name);
+    }
   });
 
   it("lists names in a sentence the plain way", () => {
