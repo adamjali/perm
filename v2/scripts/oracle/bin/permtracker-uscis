@@ -13,6 +13,14 @@ fail(){ python3 scripts/record_ingest_failure.py --script "$1" --note "oracle ti
 # this one failed run kept the health check red for its whole window.
 ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; record_run(Database(), sys.argv[1], status="ok", note=sys.argv[2])' "$1" "oracle timer ($job): $2" || echo "could not record the ok row"; }
 rc=0
+# A reader that asks the site to rebuild its pages (lib_policy_feed.expire_policy_page and its siblings) reads
+# these two; without them it takes the run for a local one and asks nothing, silently. nginx sends the call to
+# both web copies. The secret is the site's own, read from its env file and never printed.
+site_refresh_env(){
+  export REVALIDATE_BASE=http://127.0.0.1:8081
+  REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+  export REVALIDATE_SECRET
+}
 case "$job" in
   i485)
     python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; }
@@ -44,17 +52,13 @@ case "$job" in
   # www.dol.gov doesn't. DOL updates it quarterly; read weekly, and a week with nothing new writes nothing.
   # The employer pages whose cases moved are rebuilt through nginx, which sends the call to both web copies.
   whd)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 30m nice -n 10 python3 scripts/ingest_whd.py || { rc=1; fail ingest_whd.py "exited non-zero or ran past 30m"; } ;;
   # OSHA's inspections of PERM sponsors (Oct 31 2026): two files from data.dol.gov, 1.5 and 2.3 GB, stored
   # uncompressed. They go to /var/tmp on disk (ingest_osha.py), since /tmp here is memory. OSHA updates daily; read
   # weekly, and a week with nothing new writes nothing. Pages whose inspections moved rebuild through nginx.
   osha)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 60m nice -n 10 python3 scripts/ingest_osha.py || { rc=1; fail ingest_osha.py "exited non-zero or ran past 60m"; } ;;
   # USCIS's processing-times page as posted, every day since March 2022 (Oct 31 2026): the daily copies an
   # open-source project publishes on GitHub (ingest_uscis_posted_times.py says why and how). Read daily; a day the
@@ -117,17 +121,20 @@ case "$job" in
         s=ingest_visa_issuances.py; set -- --local "$f" --month "$m" --dim "$d" ;;
       *) echo "$usage"; exit 2 ;;
     esac
+    site_refresh_env
     if ! timeout 10m python3 "scripts/$s" "$@"; then
       rc=1; fail "$s" "the $kind copy from a browser ($f) was refused"
     fi ;;
   # The U.S. embassies' Visas feeds copied out of a person's browser (Nov 4 2026): every usembassy.gov site
   # answers scripts with CloudFront's 403, so the session timer embassy-read reads the 20 feeds in
   # scripts/data/embassy_feeds.json in Chrome and hands them over as one JSON copy. The reader keeps the
-  # consular notices, writes them to the policy feed and asks nginx to rebuild /policy-changes.
+  # consular notices, writes them to the policy feed and asks nginx to rebuild /policy-changes and the
+  # consulate pages.
   #   sudo -u permtracker permtracker-uscis embassy-notices /tmp/embassies.json
   embassy-notices)
     f="${2:-}"
     if [ -z "$f" ]; then echo "usage: permtracker-uscis embassy-notices <file>"; exit 2; fi
+    site_refresh_env
     if ! timeout 10m python3 scripts/ingest_embassy_notices.py --bundle "$f"; then
       rc=1; fail ingest_embassy_notices.py "the embassies' copy from a browser ($f) was refused"
     fi ;;
@@ -156,23 +163,17 @@ case "$job" in
   # SAM.gov's exclusions of PERM sponsors (Oct 31 2026): one public file a day, no key. Read weekly; pages whose
   # exclusions moved rebuild through nginx.
   sam)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 15m nice -n 10 python3 scripts/ingest_sam_exclusions.py || { rc=1; fail ingest_sam_exclusions.py "exited non-zero or ran past 15m"; } ;;
   # DOL's Trade Adjustment Assistance petitions of PERM sponsors (Oct 31 2026): one 48 MB file from data.dol.gov. The
   # program stopped on July 1 2022, so the file is closed; read monthly to catch a correction or the file moving.
   taa)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 15m nice -n 10 python3 scripts/ingest_taa.py || { rc=1; fail ingest_taa.py "exited non-zero or ran past 15m"; } ;;
   # SBA's PPP loans to PERM sponsors (Oct 31 2026): thirteen CSVs from data.sba.gov, 5.2 GB, read one at a time into
   # /var/tmp and deleted. The program closed in May 2021 and SBA's release is a snapshot; read monthly.
   ppp)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 90m nice -n 10 python3 scripts/ingest_ppp.py || { rc=1; fail ingest_ppp.py "exited non-zero or ran past 90m"; } ;;
   i140)
     t=$(mktemp -d)
@@ -244,9 +245,7 @@ case "$job" in
   # sends the call to both web copies). DOL's newsroom and OFLC are read from
   # GitHub's runners (www.dol.gov refuses this server).
   policy-watch)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     # One source down is that source's failure row (the health check and the
     # morning report name it), not this unit's failure: reginfo.gov's 502s and
     # a cut-off robots.txt failed the unit every 30 minutes on Oct 30 and 31
