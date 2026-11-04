@@ -6,6 +6,7 @@ import { generateSecureOTP } from "./lib/crypto";
 import { isEmailBlocked } from "./lib/emailBlocklist";
 import { chargeAuthMail, recordAuthSend, type ChargeCtx } from "./lib/authMailGate";
 import { recordError } from "./lib/errorRecording";
+import { AUTH_CODE_MAX_AGE_S } from "./lib/authCodeTtl";
 import { PasswordResetCode } from "../src/emails/PasswordResetCode";
 
 // See ResendOTP.ts: @convex-dev/auth passes the Convex action ctx as a 2nd arg
@@ -18,6 +19,8 @@ type SendCtx = ChargeCtx & {
 
 export const ResendPasswordReset = Email({
   id: "resend-password-reset",
+  // The 10 minutes the email states; the library's default is an hour (convex/lib/authCodeTtl.ts).
+  maxAge: AUTH_CODE_MAX_AGE_S,
   async generateVerificationToken() {
     // 12-char alphanumeric: 30^12 = 5.3 * 10^17 combinations (vs 10^8 for 8-digit)
     return generateSecureOTP();
