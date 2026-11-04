@@ -45,6 +45,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/perm-cities": "city cities town metro worksite location",
   "/perm-industries": "industry industries naics sector",
   "/bright-outlook-jobs": "bright outlook fast growing fastest growing jobs occupations in demand onet o*net bls projections growth sponsorship h-1b perm",
+  "/tools/priority-date-retention": "change jobs job change switch employer new employer h-1b transfer keep priority date i-140 withdrawn 180 days ac21 portability supplement j",
   "/soc-codes": "soc code occupation code job title lookup onet o*net 15-1252 occupational classification",
   "/perm-countries": "country countries citizenship nationality birth",
   "/perm-by-state": "state states worksite location",
