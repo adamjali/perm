@@ -128,7 +128,7 @@ export const PERM_TRACKER: Tracker = {
     source: { mark: "yes", note: "DOL's case-status service and its quarterly disclosure files", evidence: { url: `${OURS}/methodology` } },
     uscis: { mark: "no", note: "Receipt numbers decoded and saved in your browser, with USCIS's own page; reading the status waits on USCIS granting access", evidence: { url: `${OURS}/uscis-case-status` } },
     wage: { mark: "yes", evidence: { url: `${OURS}/pwd-cases` } },
-    lca: { mark: "yes", note: "Every LCA in DOL's files since October 2019", evidence: { url: `${OURS}/lca-cases` } },
+    lca: { mark: "yes", note: "Every LCA in DOL's files since October 2015", evidence: { url: `${OURS}/lca-cases` } },
     seasonal: { mark: "yes", evidence: { url: `${OURS}/seasonal-cases` } },
     alerts: { mark: "yes", note: "Free; a status change is emailed at once", evidence: { url: `${OURS}/perm-case-status` } },
     push: { mark: "yes", note: "A browser notification when a DOL case changes, or when a new bulletin is out for your line; no account", evidence: { url: `${OURS}/perm-case-status` } },

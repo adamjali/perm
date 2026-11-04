@@ -94,6 +94,9 @@ const ISOLATED_UNIT_FILES = [
   // Added 2026-10-17: makes one real guide read as a draft by mocking
   // @/lib/content, which every content test imports.
   "src/lib/content/__tests__/drafts.test.ts",
+  // Added 2026-11-04: the victim, isolated. In the shared pool a file that left @/lib/content or its reads
+  // altered made this guide answer 404 (local pnpm check); it passes alone and beside drafts.test.ts.
+  "src/lib/content/__tests__/sharedImage.test.ts",
   // Both mock ../client and the wage-view module; shared-pool leaks would
   // hand one file's mock to the other.
   "src/lib/db/__tests__/lcaDefaultView.test.ts",

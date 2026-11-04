@@ -213,7 +213,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/h1b-employers",
     label: "Top H-1B employers by year and state",
     blurb:
-      "The 100 busiest H-1B employers each fiscal year, nationally and in each state, ranked two ways: certified LCAs from DOL's disclosure files (FY2020 on, by worksite) and approvals from USCIS's H-1B Employer Data Hub (FY2009 on, by the petitioner's address), with positions, median yearly wage and each employer's full record.",
+      "The 100 busiest H-1B employers each fiscal year, nationally and in each state, ranked two ways: certified LCAs from DOL's disclosure files (by worksite; the page names the first year held) and approvals from USCIS's H-1B Employer Data Hub (FY2009 on, by the petitioner's address), with positions, median yearly wage and each employer's full record.",
   },
   {
     path: "/perm-case-alerts",

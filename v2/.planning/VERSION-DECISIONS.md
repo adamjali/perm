@@ -293,3 +293,19 @@ eslint-plugin-jsx-a11y, eslint-plugin-react, @sentry/bundler-plugin-core 5.3.0, 
 **One caller would break: eslint-plugin-import 2.32.0's `no-internal-modules` rule calls `minimatch.makeRe`.** The
 rule isn't enabled here (`eslint.config.mjs` takes eslint-config-next's core-web-vitals and typescript sets only),
 so nothing runs it. Enabling that rule, or any config that turns it on, needs this revisited first.
+
+## November 4 2026: Dependabot's production group in, and `convex-test` held at 0.0.62
+
+Taken (CI's full suite green on each PR before it was cherry-picked onto main, 4:0x PM EST): #75's 17
+production updates (`convex` 1.48.0, `ai` 7.0.155 and its providers, `@modelcontextprotocol/server` 2.4.0,
+`motion` 14.7.1, `posthog-js` 1.440.0, `resend` 6.35.0, `svix` 2.9.1 and the rest), #70 CodeQL 4.39.1,
+#71 `actions/setup-python` 7.1.0, #72 `claude-code-action` 1.0.264. `svix` and `resend` are bundled into
+Convex, so this batch needs `npx convex deploy -y` once main's suite is green. The Nov 6 step to `convex`
+1.49 still stands.
+
+Held: #73's `convex-test` 0.0.66. From 0.0.63 it runs every handler with its own copy of the globals it
+patches (`fetch`, `Date`, timers and others; `PATCHABLE_GLOBALS` in its dist), and five tests in
+`convex/__tests__/webhooks.test.ts` fail with it (deliveries read "pending" where the stubbed failures
+should make them "failed" and "held", and the redirect test's stub is never called). The rest of #73
+(Storybook 10.6.5, `vite` 8.3.5) waits with it. To take it: make the webhook tests' fetch stub reach the
+delivery action under 0.0.66 (read its isolation notes first), then take the whole group.

@@ -12,7 +12,7 @@ import { MONTH_NAMES } from "@convex/lib/months";
  * different for each, which is why a state view shows only the ranked
  * source's own figures:
  *
- * - DOL's certified H-1B LCAs (FY2020 on), by WORKSITE state;
+ * - DOL's certified H-1B LCAs (FY2020 on from lca_cases, older years from lca_cases_history), by WORKSITE state;
  * - USCIS's H-1B approvals (FY2009 on), by the PETITIONER's state.
  */
 
@@ -49,6 +49,15 @@ export function h1bAsOf(summary: Pick<H1bSummary, "years"> | null | undefined): 
   const newest = summary?.years[0];
   if (!newest) return null;
   return [newest.lcaThrough, newest.uscisThrough].filter((d): d is string => !!d).sort().pop() ?? null;
+}
+
+/**
+ * The oldest fiscal year DOL's LCA files reach on these rankings, from the summary itself, or null
+ * when no year holds one. Pages state it instead of typing a year: the history loads move it back.
+ */
+export function firstLcaYear(summary: Pick<H1bSummary, "years"> | null | undefined): number | null {
+  const held = (summary?.years ?? []).filter((y) => y.lcaThrough).map((y) => y.fy);
+  return held.length ? Math.min(...held) : null;
 }
 
 export interface H1bSummary {

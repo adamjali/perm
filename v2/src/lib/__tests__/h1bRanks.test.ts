@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   concentration,
   defaultYear,
+  firstLcaYear,
   fyLabel,
   fyShort,
   hasBasis,
@@ -127,5 +128,19 @@ describe("state addresses", () => {
     expect(stateFromSlug("new-york")).toBe("NY");
     expect(stateFromSlug("TEXAS")).toBe("TX");
     expect(stateFromSlug("atlantis")).toBeNull();
+  });
+});
+
+describe("the first year DOL's files cover", () => {
+  const y = (fy: number, lcaThrough: string | null) => ({ fy, lcaThrough, uscisThrough: `${fy}-09-30`, places: {} });
+
+  it("is the oldest year with any LCA, whatever order the years come in", () => {
+    // The page had typed "start with FY2020" while the history loads were adding FY2016 to FY2019.
+    expect(firstLcaYear({ years: [y(2026, "2026-06-30"), y(2016, "2016-09-30"), y(2015, null), y(2019, "2019-09-30")] })).toBe(2016);
+  });
+
+  it("is null when no year holds an LCA, so the page says nothing rather than a wrong year", () => {
+    expect(firstLcaYear({ years: [y(2012, null)] })).toBeNull();
+    expect(firstLcaYear(null)).toBeNull();
   });
 });

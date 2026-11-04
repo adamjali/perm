@@ -9,6 +9,7 @@ import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { formatInt } from "@/lib/format";
 import {
+  firstLcaYear,
   concentration,
   fyLabel,
   fyShort,
@@ -266,6 +267,7 @@ export function H1bEmployerRanks({
 
   const lcaYear = hasBasis(year, "lca", state);
   const uscisYear = hasBasis(year, "uscis", state);
+  const firstLca = firstLcaYear(summary);
   const shown = rows.slice(0, LIST_SHOWN);
   const folded = rows.slice(LIST_SHOWN);
 
@@ -327,7 +329,7 @@ export function H1bEmployerRanks({
             : state === NATION
               ? "Workers USCIS approved on its first decision."
               : `Workers USCIS approved for employers whose petitions give an address in ${placeName(state)}.`}
-          {!lcaYear && uscisYear && by === "uscis" ? " DOL's LCA files here start with FY2020." : ""}
+          {!lcaYear && uscisYear && by === "uscis" && firstLca ? ` DOL's LCA files here start with FY${firstLca}.` : ""}
         </p>
       </div>
 

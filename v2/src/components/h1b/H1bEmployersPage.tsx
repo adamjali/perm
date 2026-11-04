@@ -13,6 +13,7 @@ import { firstThatFits } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
 import {
   defaultYear,
+  firstLcaYear,
   h1bAsOf,
   hasBasis,
   NATION,
@@ -34,7 +35,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 /**
  * /h1b-employers and /h1b-employers/<state>: the busiest H-1B employers by
- * fiscal year, from DOL's certified LCAs (FY2020 on) and USCIS's approvals
+ * fiscal year, from DOL's certified LCAs (from the oldest year the summary holds) and USCIS's approvals
  * (FY2009 on). Reads `h1b_employer_ranks` and perm_docs['h1b_ranks_summary']
  * (scripts/build_h1b_ranks.py, after each LCA and Data Hub load).
  */
@@ -119,11 +120,12 @@ export async function H1bEmployersPage({ state }: { state: string }) {
     : null;
   const listed = view ? rankedRows(view.rows, view.by).slice(0, 25) : [];
 
+  const firstLca = firstLcaYear(summary);
   const schemas: object[] = [
     getDatasetSchema(SITE_URL, {
       name: state === NATION ? "Top H-1B employers by fiscal year and state" : `Top H-1B employers in ${name}`,
       description:
-        "Employers ranked by certified H-1B Labor Condition Applications (DOL, FY2020 on) and by H-1B approvals (USCIS's Employer Data Hub, FY2009 on), with positions, median yearly wage and approvals.",
+        `Employers ranked by certified H-1B Labor Condition Applications (DOL${firstLca ? `, FY${firstLca} on` : ""}) and by H-1B approvals (USCIS's Employer Data Hub, FY2009 on), with positions, median yearly wage and approvals.`,
       url: `${SITE_URL}${path}`,
       isBasedOn: "https://www.dol.gov/agencies/eta/foreign-labor/performance",
       temporalCoverage: summary ? `${summary.years[summary.years.length - 1]!.fy - 1}-10-01/..` : undefined,
