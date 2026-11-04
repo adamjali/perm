@@ -103,23 +103,50 @@ def main() -> int:
         check("gives up after the last attempt", calls["n"] == 3, f"calls={calls['n']}")
     csd.lookup = real
 
-    # --- the flush counter -------------------------------------------------
+    # --- the flush: conditional, counted, cleared -------------------------
     # flush() is called mid-run, so it must CLEAR what it wrote or the next
-    # flush re-sends everything and the totals double.
-    class FakeDB:
-        def __init__(self): self.batches = 0
-        def pipeline(self, reqs, **kw): self.batches += 1; return {}
-    db = FakeDB()
+    # flush re-sends everything and the totals double. It writes from the status
+    # the run READ: the 5-minute watched-case check can record the same move in
+    # between, and the sweep must not record it again (Nov 4 2026).
+    from lib_sqlite_shim import SqliteTurso
+    db = SqliteTurso()
+    db.script(["CREATE TABLE perm_case_status (case_number TEXT PRIMARY KEY, current_status TEXT, is_final INTEGER, "
+               "employer_name TEXT, job_title TEXT, source TEXT, fetched_at INTEGER)",
+               "CREATE TABLE perm_case_events (case_number TEXT, changed_at INTEGER, from_status TEXT, "
+               "to_status TEXT, to_final INTEGER, source TEXT, PRIMARY KEY (case_number, changed_at))"])
+    for i in range(5):
+        db.execute("INSERT INTO perm_case_status VALUES (?,?,?,?,?,?,?)", [f"G-{i}", "A", 0, "E", "J", "s", 0])
+    # The watched check got to G-1 first: it's already B, with its own event.
+    db.execute("UPDATE perm_case_status SET current_status = 'B' WHERE case_number = 'G-1'")
+    db.execute("INSERT INTO perm_case_events VALUES ('G-1', 5, 'A', 'B', 0, 'watched')")
     csd.written["u"] = csd.written["e"] = 0
-    ups = [[f"S{i}", 0, "E", "J", "src", 1, f"G-{i}"] for i in range(5)]
-    evs = [[f"G-{i}", 1, "A", "B", 0, "src"] for i in range(3)]
+    ups = [["B", 0, "E", "J", "src", 9, f"G-{i}", "A"] for i in range(5)]
+    evs = [[f"G-{i}", 9, "A", "B", 0, "src"] for i in range(3)]
     csd.flush(db, ups, evs)
     check("flush clears its input", ups == [] and evs == [], f"{len(ups)},{len(evs)}")
-    check("flush counts what it wrote", csd.written["u"] == 5 and csd.written["e"] == 3,
-          str(csd.written))
+    check("flush counts what applied: the watched check's case isn't written again",
+          csd.written["u"] == 4 and csd.written["e"] == 2, str(csd.written))
+    g1 = db.conn.execute("SELECT COUNT(*) FROM perm_case_events WHERE case_number = 'G-1'").fetchone()[0]
+    check("a move another writer already recorded gets no second event", g1 == 1, str(g1))
+    moved = db.conn.execute("SELECT COUNT(*) FROM perm_case_status WHERE current_status = 'B'").fetchone()[0]
+    check("every case ends at DOL's status", moved == 5, str(moved))
     csd.flush(db, ups, evs)
     check("a second flush of empty lists adds nothing",
-          csd.written["u"] == 5 and csd.written["e"] == 3, str(csd.written))
+          csd.written["u"] == 4 and csd.written["e"] == 2, str(csd.written))
+
+    # An update and its event never land in different requests, whatever comes before them.
+    from lib_db import run_groups
+    class Recorder:
+        def __init__(self): self.sizes = []
+        def pipeline(self, reqs, **kw):
+            self.sizes.append(len(reqs) - 1)
+            return {"results": [{"type": "ok", "response": {"result": {"affected_row_count": 1}}}] * len(reqs)}
+    rec = Recorder()
+    groups = [[{"x": 1}]] + [[{"u": i}, {"e": i}] for i in range(150)]
+    out = run_groups(rec, groups, per_request=200)
+    # A single and 99 pairs fill 199; the 100th pair would be split at 200, so it starts the next request.
+    check("groups are never split across requests", rec.sizes == [199, 102], str(rec.sizes))
+    check("each group's counts come back in its own shape", [len(g) for g in out] == [1] + [2] * 150)
 
     # --- discovery: the pure pieces --------------------------------------
     import datetime as _dt

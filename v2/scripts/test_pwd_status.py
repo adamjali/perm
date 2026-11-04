@@ -47,17 +47,17 @@ def sweep_heals_stale_flags() -> None:
     # the file holds. An appeal is never in it (its status is not the rule's).
     in_file = [("H-400-25321-412193",)]
     writes: list[dict] = []
-    saved = (m.query_rows, m.lookup_with_retry, m.run_stmts, m.record_sweep, m.time.sleep)
+    saved = (m.query_rows, m.lookup_with_retry, m.run_groups, m.record_sweep, m.time.sleep)
     try:
         m.query_rows = lambda db, sql, args=None: in_file if "JOIN seasonal_cases" in sql else stored
         m.lookup_with_retry = lambda nums: [
             {"caseNumber": c, "caseStatus": st} for c, st, *_ in stored if c in nums]
-        m.run_stmts = lambda db, stmts, per_request=200: writes.extend(stmts) or [1] * len(stmts)
+        m.run_groups = lambda db, groups, per_request=200: [writes.extend(g) or [1] * len(g) for g in groups]
         m.record_sweep = lambda *a, **k: None
         m.time.sleep = lambda s: None
         m.sweep(None, "seasonal", pending_only=True, limit=None)
     finally:
-        m.query_rows, m.lookup_with_retry, m.run_stmts, m.record_sweep, m.time.sleep = saved
+        m.query_rows, m.lookup_with_retry, m.run_groups, m.record_sweep, m.time.sleep = saved
     sqls = [w["stmt"]["sql"] for w in writes]
     fixed = sorted(w["stmt"]["args"][1]["value"] for w in writes
                    if w["stmt"]["sql"].startswith("UPDATE seasonal_case_status SET is_final"))

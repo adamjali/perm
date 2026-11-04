@@ -211,6 +211,37 @@ def run_stmts(db: "Database", stmts: Iterable[dict], per_request: int = 200) -> 
     return counts
 
 
+def run_groups(db: "Database", groups: Sequence[Sequence[dict]], per_request: int = 200) -> list[list[int]]:
+    """Send statement groups in order, never splitting a group across two requests.
+
+    A group is statements that must share a connection: an UPDATE and the INSERT that
+    tests its `changes()`. Returns each statement's affected-row count, grouped as given.
+    """
+    out: list[list[int]] = []
+    chunk: list[dict] = []
+    sizes: list[int] = []
+
+    def send() -> None:
+        counts = run_stmts(db, chunk, per_request=len(chunk))
+        at = 0
+        for n in sizes:
+            out.append(counts[at:at + n])
+            at += n
+        chunk.clear()
+        sizes.clear()
+
+    for group in groups:
+        if len(group) > per_request:
+            raise ValueError(f"a group of {len(group)} can't fit a request of {per_request}")
+        if chunk and len(chunk) + len(group) > per_request:
+            send()
+        chunk.extend(group)
+        sizes.append(len(group))
+    if chunk:
+        send()
+    return out
+
+
 def insert_stmts(table: str, columns: Sequence[str], rows: Sequence[Sequence],
                  per_stmt: int = 400) -> Iterator[dict]:
     """INSERT OR REPLACE statements for `rows`, `per_stmt` rows to a statement.

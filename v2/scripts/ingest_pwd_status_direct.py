@@ -44,7 +44,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_db import (  # noqa: E402
     ET, Database, add_missing_columns, query_rows, read_doc, record_run, record_sweep,
-    run_independently, run_stmts, stamp_freshness, stmt, write_doc,
+    run_groups, run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from ingest_case_status_direct import (  # noqa: E402
     BATCH, PACE_S, decode_filing_date, log, lookup_with_retry,
@@ -610,11 +610,12 @@ def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
     started = time.time()
     stamp = int(time.time() * 1000)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    pending_writes: list[dict] = []
+    # Groups that must share a request: a status update and the event that tests its changes().
+    pending_writes: list[list[dict]] = []
 
     def flush() -> None:
         if pending_writes:
-            run_stmts(db, pending_writes)
+            run_groups(db, pending_writes)
             pending_writes.clear()
 
     for i in range(0, len(todo), BATCH):
@@ -654,24 +655,26 @@ def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
             if new_status and new_status != old_status:
                 moved += 1
                 fin = is_final(new_status, program, cn in published)
-                pending_writes.append(stmt(
+                # Only from the status this run read, and the event only when that update
+                # applied: the 5-minute watched-case check may have recorded the move since
+                # (ingest_case_status_direct.flush says why).
+                pending_writes.append([stmt(
                     f"UPDATE {table} SET current_status=?, is_final=?, employer_name=?, "
                     f"job_title=?, visa_type=COALESCE(?, visa_type), last_checked_at=?, "
-                    f"source=?, fetched_at=? WHERE case_number=?",
+                    f"source=?, fetched_at=? WHERE case_number=? AND current_status IS ?",
                     [new_status, fin, v.get("employerName") or old[1],
-                     v.get("jobTitle") or old[2], visa, now_iso, SOURCE, stamp, cn]))
-                pending_writes.append(stmt(
+                     v.get("jobTitle") or old[2], visa, now_iso, SOURCE, stamp, cn, old[0]]), stmt(
                     f"INSERT OR IGNORE INTO {events} (case_number, changed_at, from_status, "
-                    f"to_status, to_final, source) VALUES (?,?,?,?,?,?)",
-                    [cn, stamp, old_status, new_status, fin, SOURCE]))
+                    f"to_status, to_final, source) SELECT ?,?,?,?,?,? WHERE changes() > 0",
+                    [cn, stamp, old_status, new_status, fin, SOURCE])])
             elif new_status and _flag(old[3]) != is_final(new_status, program, cn in published):
                 # Same status, wrong flag: the status set learned a word after
                 # the row was stored, or DOL's file has since recorded the
                 # decision. Fix the flag; no event, because nothing moved.
                 healed += 1
-                pending_writes.append(stmt(
+                pending_writes.append([stmt(
                     f"UPDATE {table} SET is_final=? WHERE case_number=?",
-                    [is_final(new_status, program, cn in published), cn]))
+                    [is_final(new_status, program, cn in published), cn])])
             # An unchanged row is not written. This branch used to stamp
             # last_checked_at on every row it looked at: ~300,000 UPDATEs a
             # Sunday to record 54 transitions, each one maintaining every
@@ -679,7 +682,7 @@ def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
             # sweep_runs, and that is what "last checked" on the site reads.
         missing += len(chunk) - len(seen)
         # Written as it goes, so a shutdown mid-run keeps the work.
-        if len(pending_writes) >= 400:
+        if len(pending_writes) >= 200:
             flush()
         if (i // BATCH) % 40 == 0 and i:
             log(f"  {i:,}/{len(todo):,}  moved={moved:,}  missing={missing:,}")

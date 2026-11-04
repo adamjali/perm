@@ -41,7 +41,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_db import (  # noqa: E402
     ET, Database, et_date, et_today, last_complete_sweep, query_rows, read_doc, record_run, record_sweep,
-    run_independently, run_stmts, stamp_freshness, stmt, write_doc,
+    run_groups, run_independently, stamp_freshness, stmt, write_doc,
 )
 from lib_housekeeping import prune as prune_old_rows  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
@@ -487,15 +487,30 @@ def flush(db, updates: list, events: list) -> None:
 
     Called mid-run, not only at the end, so a sweep that stops partway (DOL
     has published maintenance windows) keeps the work it already did.
+
+    Each update names the status the run read (its last element), and its case's
+    event is written only when that update changed a row (`changes()` on the same
+    connection, so the pair always shares a request). The run reads every row at
+    its start and writes over an hour or more; the 5-minute watched-case check
+    can record the same move in between, and an unconditional write recorded it
+    twice. None had happened in the 60 days to Nov 4 2026 (211 repeated moves, all
+    cases that went back and forth); this keeps it that way.
     """
-    run_stmts(db, [stmt(
-        "UPDATE perm_case_status SET current_status=?, is_final=?, employer_name=?, "
-        "job_title=?, source=?, fetched_at=? WHERE case_number=?", u) for u in updates])
-    run_stmts(db, [stmt(
-        "INSERT OR IGNORE INTO perm_case_events (case_number, changed_at, from_status, "
-        "to_status, to_final, source) VALUES (?,?,?,?,?,?)", e) for e in events])
-    written["u"] += len(updates)
-    written["e"] += len(events)
+    by_case = {e[0]: e for e in events}
+    groups: list[list[dict]] = []
+    for u in updates:
+        group = [stmt("UPDATE perm_case_status SET current_status=?, is_final=?, employer_name=?, "
+                      "job_title=?, source=?, fetched_at=? WHERE case_number=? AND current_status IS ?", u)]
+        e = by_case.pop(u[6], None)
+        if e is not None:
+            group.append(stmt("INSERT OR IGNORE INTO perm_case_events (case_number, changed_at, from_status, "
+                              "to_status, to_final, source) SELECT ?,?,?,?,?,? WHERE changes() > 0", e))
+        groups.append(group)
+    if by_case:  # an event with no update can't happen; refuse rather than write it unconditionally
+        raise RuntimeError(f"{len(by_case)} event(s) with no status update, e.g. {next(iter(by_case))}")
+    for counts in run_groups(db, groups):
+        written["u"] += 1 if counts[0] else 0
+        written["e"] += 1 if len(counts) > 1 and counts[1] else 0
     updates.clear()
     events.clear()
 
@@ -2060,7 +2075,7 @@ def main() -> int:
                 moved += 1
                 is_final = 1 if new_status.upper() in FINAL_STATUSES else 0
                 updates.append([new_status, is_final, v.get("employerName") or old[1],
-                                v.get("jobTitle") or old[2], SOURCE, stamp, cn])
+                                v.get("jobTitle") or old[2], SOURCE, stamp, cn, old[0]])
                 # A reconciliation is not a transition: correcting stale rows
                 # against DOL must not write events stamped today, or the alert
                 # sweep and the activity history would see a one-day surge that
