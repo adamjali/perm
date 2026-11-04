@@ -61,7 +61,9 @@ The site runs on an Oracle server behind Cloudflare (since Sep 28 2026; runbook
   goes live only in the 1 to 5 AM Eastern window (the server's 2 AM run ships main
   when the site changed; `gh workflow run oracle-deploy.yml -f when=now` for an
   urgent fix). Every deploy empties the page cache, so they're batched.
-- **Convex:** `npx convex deploy -y` from `v2/`, by hand, once GitHub's suite is green.
+- **Convex:** `pnpm convex:deploy` from `v2/`, by hand, once GitHub's suite is green: it refuses an
+  unclean, unpushed or untested commit and records the commit it deployed (`DEPLOYED_COMMIT`; rollback in
+  `v2/scripts/oracle/README.md`).
 
 ### Project Names (avoid confusion)
 
@@ -71,7 +73,7 @@ The site runs on an Oracle server behind Cloudflare (since Sep 28 2026; runbook
 | Local folder | `perm-tracker/v2/` | All code lives in `v2/` |
 | Oracle server | `ssh permtracker` | the site, the database (sqld), nginx, the timers |
 | Cloudflare | `permtracker.app` zone | DNS, the tunnel `permtracker-oracle`, R2 backups, the mail Worker |
-| Convex prod | See `.env.local` | `npx convex deploy -y` from `v2/` |
+| Convex prod | See `.env.local` | `pnpm convex:deploy` from `v2/` |
 | Convex dev | See `.env.local` | `npx convex dev` from `v2/` |
 
 **Always run commands from `v2/` directory.** Claude is always launched from `v2/`.

@@ -14,6 +14,7 @@
     "typecheck": "pnpm typecheck:app && pnpm typecheck:convex && pnpm typecheck:extension && pnpm typecheck:sdk",
     "typecheck:app": "tsgo --noEmit",
     "typecheck:convex": "tsc -p convex --noEmit",
+    "convex:deploy": "bash scripts/convex_deploy.sh",
     "typecheck:extension": "tsc -p extension --noEmit && tsc -p extension/tsconfig.test.json --noEmit",
     "build:extension": "node scripts/build_extension.mjs",
     "build:sdk": "node scripts/build_sdk.mjs",

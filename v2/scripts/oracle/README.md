@@ -109,6 +109,24 @@ ssh <admin> sudo permtracker-deploy rollback     # back to the other slot, insta
 journalctl -u permtracker-web@blue -f            # a copy's log
 ```
 
+### Convex: deploying, and rolling back
+
+`pnpm convex:deploy` (from `v2/`, `scripts/convex_deploy.sh`) refuses unless the branch is `main`, nothing tracked
+is changed and nothing untracked sits under `convex/`, HEAD is what `origin/main` holds, and GitHub's Tests run
+passed for HEAD itself; then it runs `npx convex deploy -y` and sets `DEPLOYED_COMMIT` and `DEPLOYED_AT` on the
+production deployment (`npx convex env get DEPLOYED_COMMIT --prod`). `--check` runs the checks alone. Until Nov 4
+2026 nothing recorded which commit Convex ran.
+
+**Rolling Convex back**: Convex keeps no older version to switch to, so deploy an older commit's functions from a
+worktree of it. A schema change that removed a field or table must be undone first, or the older code won't deploy.
+
+```bash
+git worktree add /tmp/convex-rollback <good sha> && cd /tmp/convex-rollback/v2
+pnpm install --offline && npx convex deploy -y
+npx convex env set DEPLOYED_COMMIT <good sha> --prod
+cd - && git worktree remove /tmp/convex-rollback
+```
+
 ## Secrets (names and places only)
 
 | secret | where |
