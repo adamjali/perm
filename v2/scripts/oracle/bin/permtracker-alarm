@@ -40,10 +40,16 @@ midnight Eastern and the journal says "not sent".
   sampler     the health sampler has written nothing for 30 minutes
   page-cache  the page-cache cap has not finished for 2.5 hours
   backup      the nightly backup's last success is over 30 hours old
+  journal     nothing has reached the journal on disk for an hour. When the
+              disk filled on Oct 10 2026, journald fell back to keeping its
+              log in memory and stayed there after space came back; the
+              Nov 4 reboot then erased 25 days of every service's log
 
 WHAT IT FIXES before it emails:
   disk        starts the page-cache cap now (it switches to tight budgets
               under 20 GB free) instead of waiting up to 30 minutes
+  journal     `journalctl --flush`: journald moves what it holds in memory to
+              disk and writes there again
   disk-crit   deletes the route cache of every release the live slot does not
               run from (the standby's too: a rollback renders it again), which
               takes seconds where the cap's page-by-page walk takes minutes;
@@ -105,6 +111,10 @@ PRUNE_STALE_S = int(2.5 * 3600)
 # pages in a folder the cap doesn't read (the cap records both figures).
 UNCOUNTED_GB = 15
 BACKUP_STALE_S = 30 * 3600
+# The server logs every minute (timers, nginx's units, the web copies), so an hour
+# with nothing written to disk means journald isn't writing there.
+JOURNAL_STALE_S = 3600
+JOURNAL = pathlib.Path(os.environ.get("PT_JOURNAL_DIR", "/var/log/journal"))
 REMIND_S = 6 * 3600
 EMAILS_PER_DAY = 12
 # A job that fails on every run is "failed" between runs and "activating" while
@@ -215,7 +225,8 @@ def evaluate(snap: dict, rate: float | None, already_on=()) -> dict[str, str]:
     for key, age, limit, what in (
             ("sampler", snap.get("sampler_age_s"), SAMPLER_STALE_S, "the health sampler"),
             ("page-cache", snap.get("prune_age_s"), PRUNE_STALE_S, "the page-cache cap"),
-            ("backup", snap.get("backup_age_s"), BACKUP_STALE_S, "the nightly backup")):
+            ("backup", snap.get("backup_age_s"), BACKUP_STALE_S, "the nightly backup"),
+            ("journal", snap.get("journal_age_s"), JOURNAL_STALE_S, "a write to the journal on disk")):
         if age is None or age > limit:
             when = "never" if age is None else f"{age / 3600:.1f} hours ago"
             on[key] = f"{what} last finished {when}"
@@ -366,7 +377,14 @@ def snapshot(now: float) -> dict:
         "uncounted": uncounted,
         "cache_headroom_gb": headroom,
         "backup_age_s": age_of(APP / "backups" / "LAST_OK", now),
+        "journal_age_s": journal_age(now),
     }
+
+
+def journal_age(now: float) -> float | None:
+    """Seconds since journald last wrote its system journal on disk; None when there is none."""
+    ages = [a for a in (age_of(f, now) for f in JOURNAL.glob("*/system.journal")) if a is not None]
+    return min(ages) if ages else None
 
 
 # --------------------------------------------------------------------------
@@ -408,6 +426,10 @@ def start_prune() -> None:
 
 def heal(on: dict[str, str]) -> list[str]:
     actions = []
+    if "journal" in on:
+        r = subprocess.run(["journalctl", "--flush"], capture_output=True, text=True)
+        actions.append("asked journald to move its log to disk and write there again"
+                       + ("" if r.returncode == 0 else f" (it answered {r.returncode})"))
     if "disk-crit" in on:
         dropped = drop_route_caches()
         if dropped:
@@ -428,6 +450,7 @@ TITLES = {
     "memory": "memory is low",
     "sampler": "the health sampler stopped", "page-cache": "the page-cache cap stopped",
     "backup": "the nightly backup is late",
+    "journal": "the server's log isn't reaching the disk",
     "page-cache-blind": "the page-cache cap can't see some pages",
 }
 # What each alarm clearing means, said as the good news. The Oct 10 2026 clear
@@ -438,6 +461,7 @@ CLEARED = {
     "memory": "memory has recovered",
     "sampler": "the health sampler is running again", "page-cache": "the page-cache cap is running again",
     "backup": "the nightly backup has run",
+    "journal": "the server's log is reaching the disk again",
     "page-cache-blind": "the page-cache cap can see every page again",
 }
 

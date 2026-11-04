@@ -44,7 +44,8 @@ def check(name: str, ok: bool, detail: str = "") -> None:
 
 def healthy(**over) -> dict:
     snap = {"disk_free_gb": 96.0, "mem_available_mb": 4000, "swap_used_mb": 200,
-            "failed_units": [], "sampler_age_s": 300, "prune_age_s": 900, "backup_age_s": 3600 * 5}
+            "failed_units": [], "sampler_age_s": 300, "prune_age_s": 900, "backup_age_s": 3600 * 5,
+            "journal_age_s": 60}
     snap.update(over)
     return snap
 
@@ -129,6 +130,36 @@ check("the filter keeps ours and drops the OS's",
 check("a sampler silent for an hour is an alarm", "sampler" in alarm.evaluate(healthy(sampler_age_s=3600), None))
 check("a page-cache cap that never finished is an alarm",
       "page-cache" in alarm.evaluate(healthy(prune_age_s=None), None))
+
+# The journal: Oct 10 to Nov 4 2026 journald kept its log in memory and a reboot erased it.
+check("a journal unwritten for over an hour is an alarm",
+      "journal" in alarm.evaluate(healthy(journal_age_s=3700), None))
+check("a journal written in the last hour is not", "journal" not in alarm.evaluate(healthy(journal_age_s=600), None))
+check("no system journal on disk at all is an alarm", "journal" in alarm.evaluate(healthy(journal_age_s=None), None))
+import tempfile as _tf, os as _os, time as _t
+with _tf.TemporaryDirectory() as d:
+    (pathlib.Path(d) / "abc").mkdir()
+    f = pathlib.Path(d) / "abc" / "system.journal"
+    f.write_text("x")
+    _os.utime(f, (_t.time() - 7200, _t.time() - 7200))
+    saved_j = alarm.JOURNAL
+    alarm.JOURNAL = pathlib.Path(d)
+    try:
+        age = alarm.journal_age(_t.time())
+        check("journal_age reads the system journal's own write time", age is not None and 7100 < age < 7300, str(age))
+        alarm.JOURNAL = pathlib.Path(d) / "missing"
+        check("journal_age is None with no journal", alarm.journal_age(_t.time()) is None)
+    finally:
+        alarm.JOURNAL = saved_j
+calls_j = []
+saved_run = alarm.subprocess.run
+alarm.subprocess.run = lambda cmd, **kw: (calls_j.append(cmd), type("R", (), {"returncode": 0})())[1]
+try:
+    acts = alarm.heal({"journal": "a write to the journal on disk last finished 2.0 hours ago"})
+finally:
+    alarm.subprocess.run = saved_run
+check("the journal alarm flushes journald to disk before it emails",
+      calls_j == [["journalctl", "--flush"]] and acts and "disk" in acts[0], str((calls_j, acts)))
 
 # Start, quiet, reminder, clear.
 on = {"disk": "20 GB free"}
