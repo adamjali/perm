@@ -163,6 +163,11 @@ openssl cms -decrypt -binary -inform DER -in convex-<stamp>.zip.cms -inkey $K -o
 npx convex import --prod --replace convex.zip
 ```
 
+**Opened once, Nov 4 2026, 5:28 PM EST** (the first time a sealed copy was opened): that morning's Convex export
+decrypted with the Mac's key into a 211-file zip holding 72 tables (283 accounts, 368 cases, 596 case alerts), then
+deleted. The server's sealed tar and an import into a deployment have not been tried yet; a monthly drill can only
+run on the Mac, which alone holds the key.
+
 Layers, newest first: Oracle's own disk backups (3 days, whole machine), the
 nightly database dump (7 here), the sealed server and Convex copies (7 here),
 the same three in R2, and the weekly sealed dump of the tables DOL
