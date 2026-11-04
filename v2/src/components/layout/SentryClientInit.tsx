@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { isStaleDeploymentError } from "@/components/error/auth-error";
 import { sentryEventFromInjectedPageScript } from "@/lib/exceptionNoise";
+import { CLIENT_IGNORE_ERRORS } from "@/lib/sentryIgnore";
 
 let sentryInitialized = false;
 
@@ -47,51 +48,8 @@ export function SentryClientInit() {
         // sample rate has no pipeline to configure. This SDK is errors-only.
         // Performance/web-vitals live in PostHog (instrumentation-client.ts).
         debug: false,
-        ignoreErrors: [
-          "ResizeObserver loop limit exceeded",
-          "ResizeObserver loop completed with undelivered notifications",
-          "Failed to fetch",
-          "NetworkError",
-          // Chrome's words for a response cut off mid-read (Sentry 56, on /login): the
-          // visitor's connection, not the site; nginx logged every request that minute
-          // as 200 (Oct 28 2026). PostHog still counts it, and the error screen reloads.
-          /(^|: )network error$/i,
-          "Network request failed",
-          "AbortError",
-          /^chrome-extension:\/\//,
-          /^moz-extension:\/\//,
-          "not authenticated",
-          "User profile not found",
-          // iOS network flake during Convex auth token refresh (mobile suspend/resume)
-          "Load failed",
-          // Deployment cache mismatch — client has stale Server Action hashes
-          "Server Action",
-          "UnrecognizedActionError",
-          // Browser extension parsing JSON-LD structured data (not app code)
-          /@context.*toLowerCase/,
-          // Browser extension mutating DOM → React reconciler insertBefore/removeChild fails
-          /insertBefore.*not a child/,
-          /removeChild.*not a child/,
-          // Network/deploy: stale chunk hashes, timeouts
-          "ChunkLoadError",
-          /Loading chunk.*failed/,
-          // SW registration abort during page navigation (Serwist fire-and-forget)
-          "Rejected",
-          /Failed to register a ServiceWorker/,
-          /Operation has been aborted/,
-          // PostHog session recorder internal bugs (not our code)
-          /bufferBelongsToIframe/,
-          /Called on script loaded before session recording is available/,
-          // React hydration mismatch from browser extensions injecting DOM
-          /Minified React error #418/,
-          /Minified React error #423/,
-          /Minified React error #425/,
-          // A wallet extension's injected provider (Sentry 3N)
-          /MetaMask/,
-          // Safari refusing to fetch the service worker script (Sentry 49);
-          // the SW is progressive enhancement and registration is retried
-          /sw\.js load failed/,
-        ],
+        // Anchored patterns only: a bare string matches anywhere in a message (src/lib/sentryIgnore.ts).
+        ignoreErrors: CLIENT_IGNORE_ERRORS,
         // Code that isn't ours, identified by where it runs: a script some
         // extension or tool injects as executors/<n>.js (Sentry 43).
         denyUrls: [/executors\/\d+\.js/, /extensions\//, /^safari-(web-)?extension:/],
