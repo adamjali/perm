@@ -244,9 +244,13 @@ STATE_CLOSED = ("State's site refuses scripts (since Nov 2 2026 adoption.state.g
 
 
 def state_refused(exc: BaseException) -> bool:
-    """True when a State Department page turned a script away: a 403, or a 404 once redirected to travel."""
+    """True when a State Department page turned a script away: a 403, a 404 once redirected to travel, or,
+    for a reader that follows no redirect, the redirect to travel.state.gov itself (adoption.state.gov's
+    robots.txt answered one on Nov 3 2026, and the wait-times reader recorded it as a failure)."""
     if not isinstance(exc, urllib.error.HTTPError):
         return False
+    if exc.code in (301, 302, 303, 307, 308):
+        return "travel.state.gov" in str(exc.headers.get("Location", "") if exc.headers else "")
     url = str(getattr(exc, "url", "") or getattr(exc, "filename", "") or "")
     return exc.code == 403 or (exc.code == 404 and "travel.state.gov" in url)
 
