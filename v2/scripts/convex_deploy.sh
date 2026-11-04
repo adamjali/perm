@@ -42,3 +42,7 @@ npx convex deploy -y
 npx convex env set DEPLOYED_COMMIT "$head" --prod >/dev/null
 npx convex env set DEPLOYED_AT "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --prod >/dev/null
 echo "convex:deploy: production runs ${head:0:8} ($(TZ=America/New_York date '+%-I:%M %p %Z'))"
+# The deploy regenerates convex/_generated: a module added since the last codegen shows up there.
+if [ -n "$(git status --porcelain -- convex/_generated)" ]; then
+  echo "convex:deploy: convex/_generated changed; commit it (git add convex/_generated)"
+fi
