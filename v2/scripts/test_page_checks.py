@@ -33,6 +33,12 @@ def main() -> int:
     rc = pc.run({**phone, "cmd": [sys.executable, "-c", script_c]})
     if any("covered=0" in ln for ln in rc["tail"]) or not any("/hid" in ln for ln in rc["tail"]):
         failures.append(f"a clean line that counts covered text is left out of the report (got {rc['tail']})")
+    # Nov 3 2026: a sweep that runs out of time says how far it got and its slowest loads.
+    slow = [f"390 /page-{i}  overflow=0px  small=0  taps=0  covered=0  ({i}.5 s)" for i in range(8)]
+    script_s = "import sys, time\n" + "".join(f"print({ln!r}, flush=True)\n" for ln in slow) + "time.sleep(30)\n"
+    rs = pc.run({**phone, "cmd": [sys.executable, "-c", script_s], "limit": 3})
+    if rs["exit"] != -1 or not any("reached 8 page loads" in ln for ln in rs["tail"]) or not any("/page-7" in ln for ln in rs["tail"]):
+        failures.append(f"a sweep that ran out of time names how far it got and its slowest page (got {rs['tail']})")
     clean = pc.run({**phone, "cmd": [sys.executable, "-c", "import sys\nprint('320 / overflow=0px  small=0  taps=0')\nsys.exit(1)\n"]})
     if not clean["tail"]:
         failures.append("a failure with no finding lines still reports what it printed")
