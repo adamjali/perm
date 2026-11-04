@@ -27,7 +27,7 @@ import { internal } from "./_generated/api";
 import type { Id, Doc } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
-import { getVerifiedUserIds } from "./lib/auth";
+import { getVerifiedUserIds, isEmailVerified } from "./lib/auth";
 
 const log = loggers.scheduler;
 import {
@@ -131,74 +131,66 @@ function daysUntilDeadline(
  *
  * Deduplication: Excludes deadlines that already have a notification for the
  * same (caseId, deadlineType, daysUntilDeadline) combination.
+ *
+ * Every read goes through an index (Nov 4 2026): live cases through
+ * `by_deleted_at`; each case's account once, its user by id, its auth accounts
+ * through `userIdAndProvider` and its profile through `by_user_id`; and each
+ * case's reminders already sent through `notifications.by_case_id`. It had read
+ * every profile, user, auth account, reminder and case through `.filter()`, the
+ * whole of each table, every morning. The reminders are the same, in the same
+ * (case creation) order.
  */
 export const getCasesNeedingReminders = internalQuery({
   args: {},
   handler: async (ctx): Promise<DeadlineReminder[]> => {
     const reminders: DeadlineReminder[] = [];
 
-    // Get all user profiles with their settings
-    const userProfiles = await ctx.db
-      .query("userProfiles")
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .collect();
-
-    // Build a map of userId -> profile for quick lookup
-    const profilesByUserId = new Map<Id<"users">, Doc<"userProfiles">>();
-    for (const profile of userProfiles) {
-      profilesByUserId.set(profile.userId, profile);
-    }
-
-    // Get all active users and verified user IDs (from authAccounts)
-    const [users, verifiedUserIds] = await Promise.all([
-      ctx.db
-        .query("users")
-        .filter((q) => q.eq(q.field("deletedAt"), undefined))
-        .collect(),
-      getVerifiedUserIds(ctx),
-    ]);
-
-    const userEmailById = new Map<Id<"users">, string>();
-    for (const user of users) {
-      if (user.email && verifiedUserIds.has(user._id)) {
-        userEmailById.set(user._id, user.email);
+    // An account's address (only when it's live and verified) and its newest
+    // live profile, read once per account.
+    const accounts = new Map<Id<"users">, { email: string | undefined; profile: Doc<"userProfiles"> | undefined }>();
+    const accountOf = async (userId: Id<"users">) => {
+      const held = accounts.get(userId);
+      if (held) return held;
+      const user = await ctx.db.get(userId);
+      const email =
+        user && user.deletedAt === undefined && user.email && (await isEmailVerified(ctx, userId))
+          ? user.email
+          : undefined;
+      let profile: Doc<"userProfiles"> | undefined;
+      for await (const p of ctx.db
+        .query("userProfiles")
+        .withIndex("by_user_id", (q) => q.eq("userId", userId))
+        .order("desc")) {
+        if (p.deletedAt === undefined) {
+          profile = p;
+          break;
+        }
       }
-    }
+      const account = { email, profile };
+      accounts.set(userId, account);
+      return account;
+    };
 
-    // Get all existing notifications for deduplication
-    const existingNotifications = await ctx.db
-      .query("notifications")
-      .filter((q) => q.eq(q.field("type"), "deadline_reminder"))
-      .collect();
-
-    // Build a set of existing notification keys for O(1) lookup
-    const existingKeys = new Set<string>();
-    for (const notif of existingNotifications) {
-      if (notif.caseId && notif.deadlineType && notif.daysUntilDeadline !== undefined) {
-        existingKeys.add(`${notif.caseId}:${notif.deadlineType}:${notif.daysUntilDeadline}`);
-      }
-    }
-
-    // Get all active cases (not deleted, not closed). The onboarding sample
-    // case is demo data: it never makes a reminder, a notification or an email.
-    const cases = await ctx.db
+    // Every live case, oldest first. The onboarding sample case is demo data:
+    // it never makes a reminder, a notification or an email.
+    for await (const caseDoc of ctx.db
       .query("cases")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("deletedAt"), undefined),
-          q.neq(q.field("caseStatus"), "closed"),
-          q.neq(q.field("isSample"), true)
-        )
-      )
-      .collect();
+      .withIndex("by_deleted_at", (q) => q.eq("deletedAt", undefined))) {
+      if (caseDoc.caseStatus === "closed" || caseDoc.isSample === true) continue;
 
-    // Process each case for deadlines
-    for (const caseDoc of cases) {
-      const profile = profilesByUserId.get(caseDoc.userId);
-      const userEmail = userEmailById.get(caseDoc.userId);
-
+      const { email: userEmail, profile } = await accountOf(caseDoc.userId);
       // Skip if no email address
       if (!userEmail) continue;
+
+      // The reminders this case has already had, keyed for O(1) lookup.
+      const existingKeys = new Set<string>();
+      for await (const notif of ctx.db
+        .query("notifications")
+        .withIndex("by_case_id", (q) => q.eq("caseId", caseDoc._id))) {
+        if (notif.type === "deadline_reminder" && notif.deadlineType && notif.daysUntilDeadline !== undefined) {
+          existingKeys.add(`${caseDoc._id}:${notif.deadlineType}:${notif.daysUntilDeadline}`);
+        }
+      }
 
       const userPrefs = profile ? buildUserNotificationPrefs(profile) : getDefaultPrefs();
       const reminderDays = profile?.reminderDaysBefore ?? DEFAULT_REMINDER_DAYS;

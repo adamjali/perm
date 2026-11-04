@@ -1448,3 +1448,140 @@ describe("Scheduled Jobs", () => {
     });
   });
 });
+
+/**
+ * getCasesNeedingReminders reads through indexes (Nov 4 2026). It had read every user profile, every user, every
+ * auth account, every deadline_reminder notification (with no index on the type) and every case through
+ * `.filter()`, the whole of each table, every morning. Now: live cases through `by_deleted_at`, each account's
+ * user, auth accounts and profile once through their own indexes, and each case's reminders through
+ * `notifications.by_case_id`. The reminders that come out are the same.
+ */
+describe("getCasesNeedingReminders reads through indexes", () => {
+  const SOURCE = Object.values(
+    import.meta.glob("../scheduledJobs.ts", { query: "?raw", import: "default", eager: true }),
+  )[0] as string;
+
+  it("reads no whole table", () => {
+    const start = SOURCE.indexOf("export const getCasesNeedingReminders");
+    const body = SOURCE.slice(start, SOURCE.indexOf("\n});\n", start));
+    expect(body.length).toBeGreaterThan(500);
+    expect(body).not.toContain(".filter(");
+    expect(body).not.toContain("getVerifiedUserIds(");
+    expect(body).toContain('withIndex("by_deleted_at", (q) => q.eq("deletedAt", undefined))');
+    expect(body).toContain('withIndex("by_case_id", (q) => q.eq("caseId", caseDoc._id))');
+  });
+
+  async function insertCase(
+    t: ReturnType<typeof createTestContext>,
+    userId: Id<"users">,
+    employerName: string,
+    overrides: Record<string, unknown> = {},
+  ): Promise<Id<"cases">> {
+    const now = Date.now();
+    return await t.run(async (ctx) =>
+      ctx.db.insert("cases", {
+        userId,
+        employerName,
+        positionTitle: "Software Engineer",
+        beneficiaryIdentifier: `Ben ${employerName}`,
+        caseStatus: "pwd",
+        progressStatus: "working",
+        pwdExpirationDate: daysFromNow(7),
+        rfiEntries: [],
+        rfeEntries: [],
+        notes: [],
+        isProfessionalOccupation: false,
+        isFavorite: false,
+        priorityLevel: "normal",
+        tags: [],
+        calendarSyncEnabled: false,
+        documents: [],
+        recruitmentApplicantsCount: 0,
+        additionalRecruitmentMethods: [],
+        createdAt: now,
+        updatedAt: now,
+        ...overrides,
+      }),
+    );
+  }
+
+  it("gives the same reminders across verified, unverified, deleted and profileless accounts", async () => {
+    const t = createTestContext();
+    // A verified account with a profile that asks for 7 days' notice.
+    const { userId: a } = await createTestUserWithProfile(t, "Alpha Firm", { reminderDaysBefore: [7] });
+    // A verified account with no profile: the defaults apply.
+    const b = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("users", { name: "Bravo", email: "bravo@example.com" });
+      await ctx.db.insert("authAccounts", { userId: id, provider: "google", providerAccountId: "bravo-google" });
+      return id;
+    });
+    // An account whose address isn't verified, and a deleted account: neither is reminded.
+    const c = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("users", { name: "Charlie", email: "charlie@example.com" });
+      await ctx.db.insert("authAccounts", { userId: id, provider: "password", providerAccountId: "charlie@example.com" });
+      return id;
+    });
+    const d = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("users", { name: "Delta", email: "delta@example.com", deletedAt: Date.now() });
+      await ctx.db.insert("authAccounts", { userId: id, provider: "google", providerAccountId: "delta-google" });
+      return id;
+    });
+
+    const a1 = await insertCase(t, a, "A live");
+    await insertCase(t, a, "A closed", { caseStatus: "closed" });
+    await insertCase(t, a, "A sample", { isSample: true });
+    await insertCase(t, a, "A deleted", { deletedAt: Date.now() });
+    const a5 = await insertCase(t, a, "A already told");
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("notifications", {
+        userId: a,
+        caseId: a5,
+        type: "deadline_reminder",
+        title: "PWD expires in 7 days",
+        message: "Told already",
+        priority: "high",
+        deadlineDate: daysFromNow(7),
+        deadlineType: "pwd_expiration",
+        daysUntilDeadline: 7,
+        isRead: false,
+        emailSent: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // A status notice on the same case is not a reminder and holds nothing back.
+      await ctx.db.insert("notifications", {
+        userId: a,
+        caseId: a1,
+        type: "status_change",
+        title: "Status changed",
+        message: "x",
+        priority: "normal",
+        deadlineType: "pwd_expiration",
+        daysUntilDeadline: 7,
+        isRead: false,
+        emailSent: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const b1 = await insertCase(t, b, "B live", { pwdExpirationDate: daysFromNow(3) });
+    await insertCase(t, c, "C unverified");
+    await insertCase(t, d, "D deleted account");
+
+    const all = await t.query(internal.scheduledJobs.getCasesNeedingReminders, {});
+    const pwd = all
+      .filter((r: { deadlineType: string }) => r.deadlineType === "pwd_expiration")
+      .map((r: { caseId: Id<"cases">; daysUntilDeadline: number; userEmail: string }) => [
+        r.caseId,
+        r.daysUntilDeadline,
+        r.userEmail,
+      ]);
+    expect(pwd).toEqual([
+      [a1, 7, "alpha.firm@example.com"],
+      [b1, 3, "bravo@example.com"],
+    ]);
+    // Every reminder belongs to the two reachable accounts, in case order.
+    expect(new Set(all.map((r: { userId: Id<"users"> }) => r.userId))).toEqual(new Set([a, b]));
+  });
+});
