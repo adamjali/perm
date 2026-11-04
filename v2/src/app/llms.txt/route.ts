@@ -388,6 +388,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "DOL's four OEWS prevailing wage levels for any occupation in any metro or non-metro area, read live from the OFLC wage search with the series year each figure belongs to.",
   },
   {
+    path: "/bright-outlook-jobs",
+    label: "Fast-growing jobs that get sponsored",
+    blurb: "O*NET's Bright Outlook occupations (projected to grow 5% or more from 2025 to 2035, to have 75,000 or more openings, or new and emerging), each with BLS's projected growth, openings and median pay, the PERM cases DOL decided under its code and its certified H-1B LCAs.",
+  },
+  {
     path: "/soc-codes",
     label: "SOC code lookup",
     blurb: "A job title in, the SOC occupation codes employers filed it under in DOL's PERM, prevailing wage and LCA files out, with each code's share of the filings; a code in, its title, and for a 2010 code the 2018 codes it became. Each common title has its own page.",

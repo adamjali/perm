@@ -43,6 +43,10 @@ const FAQS = [
     a: "INA 204(j) and 8 CFR 245.25: once the I-485 has been pending 180 days, it may be approved on a new offer in the same or a similar occupation, filed on Form I-485 Supplement J. Whether the new job is same or similar is USCIS's determination.",
   },
   {
+    q: "I'm on an H-1B and changing jobs. What moves with me?",
+    a: "Before the I-140 is approved, a move usually means a new PERM with the new employer. Once it's approved, the priority date stays yours for a later employment-based petition unless USCIS revokes the approval for fraud, a willful misrepresentation, an invalidated labor certification or a material error (8 CFR 204.5(e)). An I-485 pending 180 days or more can move to a same or similar job (INA 204(j); 8 CFR 245.25). In H-1B status you can start with the new employer once it files a nonfrivolous H-1B petition for you, or on its requested start date, whichever is later (8 CFR 214.2(h)(2)(i)(H)). Enter your dates above to see where each one stands.",
+  },
+  {
     q: "Is this legal advice?",
     a: "No. The dates are arithmetic on what you enter and the regulation each rule comes from. A revocation's reason, a job's similarity and the effect of prior filings are for the attorney handling the case.",
   },
