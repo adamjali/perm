@@ -180,10 +180,17 @@ PROGRAMS: dict[str, dict] = {
         "table": "lca_cases",
         "freshness": "lca-disclosure",
         "source": "DOL quarterly LCA disclosure files (www.dol.gov)",
-        # `LCA_Appendix_A_*` and `LCA_Worksites_*` are companion tables, and
-        # the FY2019-and-earlier `H-1B_Disclosure_Data_*` files use older
-        # column names that are not mapped here.
-        "file_pattern": r"LCA_Disclosure_Data_FY\d{2,4}(_Q\d)?\.xlsx$",
+        # `LCA_Appendix_A_*`, `LCA_Worksites_*` and `LCA_FY2020_AppendixA` /
+        # `_Worksites` are companion tables. Before FY2020 DOL published one
+        # file a year under six names (read off its page, Nov 4 2026):
+        # H-1B_Case_Data_FY2008/FY2009 (the old e-file system), Icert_ LCA_ FY2009
+        # (with DOL's own spaces), H-1B_FY2010, H-1B_iCert_LCA_FY2011_Q4,
+        # LCA_FY2012_Q4, LCA_FY2013, H-1B_FY14_Q4, and H-1B_Disclosure_Data_FY15_Q4
+        # to FY2019. Their columns differ by era; the alternates below map them.
+        "file_pattern": (r"(?:LCA_Disclosure_Data_FY\d{2,4}(?:_Q\d)?"
+                         r"|H-1B_Disclosure_Data_FY\d{2,4}(?:_Q\d|_EOY)?"
+                         r"|H-1B_Case_Data_FY\d{4}|Icert_ ?LCA_ ?FY\d{4}|H-1B_iCert_LCA_FY\d{4}(?:_Q\d)?"
+                         r"|H-1B_FY\d{2,4}(?:_Q\d)?|LCA_FY\d{4}(?:_Q\d)?)\.xlsx$"),
         "columns": {
             "case": ["CASE_NUMBER"],
             "status": ["CASE_STATUS"],
@@ -1306,11 +1313,17 @@ def main() -> int:
             # download a file from it.
             if args.fy is None:
                 newest_name = pick_latest(list(byname))
-            if args.name not in byname:
+            # DOL's FY2009 iCert file is "Icert_ LCA_ FY2009.xlsx", spaces and
+            # all, and the workflow only passes names without spaces: match a
+            # name with its spaces taken out, and send them as %20.
+            unspaced = {n.replace(" ", ""): n for n in byname}
+            if args.name.replace(" ", "") not in unspaced:
                 raise SystemExit(
                     f"FATAL: DOL's page does not list {args.name}. It lists: "
                     + ", ".join(sorted(byname)))
-            name, url = args.name, byname[args.name]
+            name = unspaced[args.name.replace(" ", "")]
+            url = byname[name].replace(" ", "%20")
+            name = name.replace(" ", "")
             path = os.path.join(tmp, name)
             log(f"Downloading {name}")
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)

@@ -374,6 +374,14 @@ PAGE_HTML = """
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Worksites_FY2025_Q4.xlsx">LCA_Worksites_FY2025_Q4.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2020_Q1.xlsx">LCA_FY2020_Q1.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_Disclosure_Data_FY2019.xlsx">H-1B FY2019.xlsx</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_Disclosure_Data_FY2018_EOY.xlsx">H-1B FY2018</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_FY14_Q4.xlsx">H-1B FY2014</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_FY2013.xlsx">LCA FY2013</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_iCert_LCA_FY2011_Q4.xlsx">FY2011</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/Icert_ LCA_ FY2009.xlsx">iCert FY2009</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_Case_Data_FY2008.xlsx">FY2008</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_FY2020_AppendixA.xlsx">FY2020 Appendix A</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_FY2020_Worksites.xlsx">FY2020 worksites</a>
 <a href="https://www.dol.gov/media/PW_Disclosure_Data_FY2026_Q3.xlsx">PW_Disclosure_Data_FY2026_Q3.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/FY26Q3/PW_Worksites_FY2026_Q3.xlsx">PW_Worksites_FY2026_Q3.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/PW_Disclosure_Data_FY2025_Q4.xlsx">PW_Disclosure_Data_FY2025.xlsx</a>
@@ -492,10 +500,15 @@ def check_fixture(tmp: str, writer_name: str, write) -> None:
 
 def check_discovery() -> None:
     lca = discover_links(PAGE_HTML, PROGRAMS["lca"]["file_pattern"], HOST)
-    check("LCA: exactly the disclosure files match, not Appendix A or worksites",
-          sorted(lca), ["LCA_Disclosure_Data_FY2020_Q1.xlsx",
-                        "LCA_Disclosure_Data_FY2025_Q4.xlsx",
-                        "LCA_Disclosure_Data_FY2026_Q3.xlsx"])
+    check("LCA: exactly the disclosure files match, every era, not Appendix A or worksites",
+          sorted(lca), sorted(["LCA_Disclosure_Data_FY2020_Q1.xlsx",
+                               "LCA_Disclosure_Data_FY2025_Q4.xlsx",
+                               "LCA_Disclosure_Data_FY2026_Q3.xlsx",
+                               "H-1B_Disclosure_Data_FY2019.xlsx",
+                               "H-1B_Disclosure_Data_FY2018_EOY.xlsx",
+                               "H-1B_FY14_Q4.xlsx", "LCA_FY2013.xlsx",
+                               "H-1B_iCert_LCA_FY2011_Q4.xlsx",
+                               "Icert_ LCA_ FY2009.xlsx", "H-1B_Case_Data_FY2008.xlsx"]))
     newest = pick_latest(lca)
     check("LCA: the newest file is FY2026 Q3", newest, "LCA_Disclosure_Data_FY2026_Q3.xlsx")
 
