@@ -255,7 +255,7 @@ export function SalaryExplorer({
           <div>
             <Label htmlFor={ids.soc} className="text-sm font-bold">
               Occupation
-            </Label>
+            </Label>{" "}
             {/* Hundreds of occupations: a box you can type a title or a code into. It shows the chosen
                 title whole, so the line SelectedInFull drew under the select isn't needed here. */}
             <FilterCombobox

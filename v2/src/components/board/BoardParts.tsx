@@ -465,7 +465,9 @@ const toneOf = (kind: string): Tone =>
       ? "back"
       : "same";
 const TONE_CELL: Record<Tone, string> = { forward: "bg-soft-good", back: "bg-soft-bad", same: "bg-tint" };
-const TONE_TEXT: Record<Tone, string> = { forward: "text-data-good-ink", back: "text-data-bad-ink", same: "text-soft" };
+// The fill carries the direction (and the key names it); the move's words are in the body's own ink, since the
+// green ink on the pale green fill was 4.3:1, under AA (axe on the Nov 4 2026 build).
+const TONE_TEXT: Record<Tone, string> = { forward: "text-foreground", back: "text-foreground", same: "text-soft" };
 
 export function BulletinGrid({ rows, monthLabel }: { rows: BulletinMoveRow[]; monthLabel: string }) {
   const countries = rows[0]?.cells.map((c) => c.country) ?? [];

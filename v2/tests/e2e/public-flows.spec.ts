@@ -139,11 +139,13 @@ test("the green card timeline plans a certified case, takes the reader's own fig
   await expect(chart.getByText(/^Done, about /).first()).toBeVisible();
 
   // A changed input goes into the address, so a reload or a shared link opens the same plan.
+  // Category is a row of one-tap choices (ChoiceRow) since Nov 4 2026, not a select.
   const yourCase = page.getByRole("group", { name: "Your case" });
-  await yourCase.getByLabel("Category").selectOption("EB3");
+  const eb3 = () => yourCase.getByRole("group", { name: "Category" }).getByRole("button", { name: /^EB-3/ });
+  await eb3().click();
   await expect(page).toHaveURL(/cat=EB3/);
   await page.reload();
-  await expect(yourCase.getByLabel("Category")).toHaveValue("EB3");
+  await expect(eb3()).toHaveAttribute("aria-pressed", "true");
 
   // A step's own length moves the plan, and today's figures come back in one press.
   await page.getByText("Change the figures").click();
