@@ -153,6 +153,7 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/law-firm-rankings": "firms",
   "/law-firm-rankings/[state]": "firms",
   "/h1b-cap-exempt-employers": "capExempt",
+  "/bright-outlook-jobs": "corpus",
 
   "/perm-employers/[slug]": "corpus",
   "/perm-attorneys/[slug]": "corpus",

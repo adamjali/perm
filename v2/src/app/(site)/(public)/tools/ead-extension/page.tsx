@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
+import { BarRows } from "@/components/data/BarRows";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { EadExtensionCalculator } from "@/components/tools/EadExtensionCalculator";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
+import { getUscisPosted } from "@/lib/db/uscisPosted";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { h4EadTimes } from "@/lib/uscisPosted";
+import { longDate } from "@convex/lib/months";
 import { withSocialCard } from "@/lib/socialCard";
 
 /**
@@ -28,12 +32,14 @@ export const metadata: Metadata = withSocialCard({
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
 }, "ead-extension");
 
-export const dynamic = "force-static";
+// Daily: the H-4 section prints USCIS's newest posted times (perm_docs['uscis_posted_times'], read twice a day).
+export const revalidate = 86400;
 
 const FR_URL = "https://www.federalregister.gov/documents/2025/10/30/2025-19702/removal-of-the-automatic-extension-of-employment-authorization-documents";
 /** DHS's final rule, 2026-20955: it finalized the interim rule without changes, effective Oct 14 2026. */
 const FINAL_RULE_URL =
   "https://www.federalregister.gov/documents/2026/10/14/2026-20955/removal-of-automatic-extensions-for-certain-employment-authorization-documents";
+const H4_RULE_URL = "https://www.ecfr.gov/current/title-8/chapter-I/subchapter-B/part-214/section-214.2#p-214.2(h)(9)(iv)";
 const ECFR_URL = "https://www.ecfr.gov/current/title-8/chapter-I/subchapter-B/part-274a/subpart-B/section-274a.13";
 
 const FAQS = [
@@ -55,7 +61,8 @@ const FAQS = [
   },
 ];
 
-export default function EadExtensionPage() {
+export default async function EadExtensionPage() {
+  const h4 = h4EadTimes(await getUscisPosted(), new Date().toISOString().slice(0, 10));
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -88,6 +95,47 @@ export default function EadExtensionPage() {
           aspectRatio={1520 / 530}
           maxWidth={960}
         />
+      </section>
+
+      <section className="mt-10 max-w-3xl" id="h4-ead">
+        <h2 className="font-heading text-2xl font-bold">H-4 EAD: who can apply, and how long it takes</h2>{" "}
+        <p className="mt-3 text-base leading-relaxed text-soft">
+          An H-4 spouse of an H-1B worker can get a work permit only if the H-1B worker has an approved I-140, or is
+          in H-1B status past six years under sections 106(a) and (b) of AC21 (
+          <a href={H4_RULE_URL} rel="noopener" className="link">
+            8 CFR 214.2(h)(9)(iv)
+          </a>
+          ).
+        </p>{" "}
+        {h4 ? (
+          <>
+            <p className="mt-3 text-base leading-relaxed text-soft">
+              How long USCIS took to decide 80% of these applications over the past six months, as its processing-times
+              page posted on {longDate(h4.published)}. Filing with the H-4 extension is the faster route.
+            </p>{" "}
+            <div className="mt-4">
+              <BarRows
+                label="USCIS's posted time for an H-4 work permit, by how it's filed"
+                inline
+                rows={h4.rows.map((r, i) => ({
+                  key: r.key,
+                  label: r.name,
+                  value: r.months,
+                  text: r.text,
+                  tone: i === 0 ? "primary" : "blue",
+                }))}
+              />
+            </div>
+          </>
+        ) : (
+          <p className="mt-3 text-base leading-relaxed text-soft">
+            USCIS&rsquo;s current times for it are on{" "}
+            <a href="https://egov.uscis.gov/processing-times/" rel="noopener" className="link">
+              its processing-times page
+            </a>{" "}
+            (Form I-765, category (c)(26)).
+          </p>
+        )}
       </section>
 
       <section className="mt-10 max-w-3xl">

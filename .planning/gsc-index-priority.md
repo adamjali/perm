@@ -1838,3 +1838,27 @@ Next round, after the Tue Nov 3 2:00 AM EST run (check `ssh permtracker 'sudo pe
 2. `/soc-codes` and `/soc-codes/software-engineer`.
 3. The pages tonight's run changes: `/perm-queue`, `/perm-processing-times`, `/faq`, `/perm-case-status`, `/`.
 Then `node scripts/gsc_queue.mjs --since 3422fc35` for anything else.
+
+## Round of Wed Nov 4 2026, 1:32 PM EST
+
+What's live is 958137bf (release 481, the 2:00 AM EST run). The commits since it wait for the 2:00 AM EST run on Thu
+Nov 5, so the pages they touch were left alone: `/bright-outlook-jobs` (new), `/`, `/compare`, `/faq`,
+`/for-attorneys`, `/perm-queue`, `/tools`, five calculators, eight guides and the employer and bulletin-line
+families (`node scripts/gsc_queue.mjs --since 958137bf` lists all 24).
+
+Requested (6, no quota refusal):
+- `/blog/perm-processing-times-2026`: crawled Oct 29, 6:09 PM, before its opening sentence went live.
+- `/blog/what-is-perm-labor-certification`: crawled Oct 29, 8:55 PM.
+- `/guides/complete-perm-filing-guide`: crawled Oct 28, 6:37 PM.
+- `/soc-codes`: crawled Oct 29, 10:01 PM.
+- `/perm-processing-times`: crawled Nov 3, 12:38 PM, before the Nov 4 deploy changed its copy.
+- `/perm-case-status`: crawled Nov 2, 5:46 PM, before the Nov 3 deploy.
+
+Skipped, crawled after their last change went live: `/guides/check-perm-case-status` (Nov 2, 3:55 PM),
+`/soc-codes/software-engineer` (Nov 2, 9:32 PM).
+
+Next round, after the Thu Nov 5 2:00 AM EST run (check `ssh permtracker 'sudo permtracker-deploy status'`):
+1. `/bright-outlook-jobs` (new), then `/`, `/compare`, `/perm-queue`, `/faq`, `/for-attorneys`.
+2. `/tools/ead-extension` and `/tools/priority-date-retention` (new H-4 and job-change answers).
+3. `/perm-employers/google-llc` (the H-1B year-by-year chart reaching back past FY2020, once the older LCA files load).
+Then `node scripts/gsc_queue.mjs --since 958137bf` for anything else.
