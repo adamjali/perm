@@ -13,10 +13,12 @@ export const CLIENT_IGNORE_ERRORS: RegExp[] = [
   // since Chrome 136), Firefox, Safari, React Native's polyfill, and Chrome's response cut off mid-read
   // (Sentry 56, on /login: nginx logged every request that minute as 200, Oct 28 2026). PostHog still
   // counts them, and the error screen reloads.
-  /^Failed to fetch( \(.+\))?$/,
+  /^Failed to fetch$/,
+  /^Failed to fetch \([^)]*\)$/,
   /^NetworkError when attempting to fetch resource\.?$/,
   /^NetworkError: /,
-  /^Load failed( \(.+\))?$/,
+  /^Load failed$/,
+  /^Load failed \([^)]*\)$/,
   /^Network request failed$/,
   /(^|: )network error$/i,
   /^AbortError: /,

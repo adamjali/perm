@@ -46,7 +46,7 @@ export function RouteError({
       // Session expired — redirect gracefully, don’t report to Sentry. Our own
       // server still hears of it: a timeout guessed wrong looks exactly like this.
       logClientError("RouteError", error, "redirect-login");
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
+      // A full load: the app has crashed, so nothing held in memory should survive.
       window.location.href = loginHrefFor(currentPage(), { expired: "1" });
       return;
     }

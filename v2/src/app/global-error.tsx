@@ -87,7 +87,7 @@ export default function GlobalError({
 
     if (isExpiredSession) {
       logClientError("GlobalError", error, "redirect-login");
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
+      // A full load: the app has crashed, so nothing held in memory should survive.
       window.location.href = loginHrefFor(currentPage(), { expired: "1" });
       return;
     }

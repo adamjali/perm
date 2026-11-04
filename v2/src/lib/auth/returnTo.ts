@@ -29,7 +29,7 @@ const NEVER = ["/login", "/signup", "/reset-password", "/start", "/api"];
 export function safeReturnPath(raw: string | null | undefined): string | null {
   if (!raw || raw.length > MAX) return null;
   if (!raw.startsWith("/") || raw.startsWith("//")) return null;
-  // eslint-disable-next-line no-control-regex -- control characters are exactly what's refused
+  // Control characters are exactly what's refused.
   if (/[\\\s\u0000-\u001f\u007f]/.test(raw)) return null;
   let url: URL;
   try {
