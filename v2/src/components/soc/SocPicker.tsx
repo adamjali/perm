@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { CircleNotchIcon } from "@phosphor-icons/react";
 
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { formatShareOf } from "@/lib/format";
 import { SOC_CODE_RE, socGroup } from "@/lib/socCode";
 import type { CodeAnswer, TitleAnswer } from "@/lib/socFinder";
@@ -13,6 +14,11 @@ import { cn } from "@/lib/utils";
  * 15-2051 from the codes employers filed it under (from /api/soc, the job code finder's reads), or
  * type the code itself. Every tool that asks for a job's code uses it, so they all find codes the
  * same way. An ARIA 1.2 combobox: arrows move, Enter picks, Escape closes.
+ *
+ * The list is drawn in a layer of its own (a Radix popover anchored on the box, in a portal), so it
+ * flips above the box when there's no room below: inside the fixed-height wage-levels and lottery
+ * embeds, and under a phone's keyboard, a list drawn in place ran off the bottom and was clipped.
+ * Focus never leaves the box; the popover only places the list.
  *
  * Given `suggestFrom` (the case form passes the position title), an empty box offers the codes employers
  * filed that title under as soon as it's focused, before anything is typed.
@@ -106,6 +112,7 @@ export function SocPicker({
   // or a list a quick answer has just opened would be shut by the old timer.
   const closing = useRef<ReturnType<typeof setTimeout> | null>(null);
   const asked = useRef("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
@@ -204,71 +211,93 @@ export function SocPicker({
   const showList = open && (loading || options.length > 0 || failed || empty);
   return (
     <div className="relative">
-      <input
-        id={id}
-        name={name}
-        value={value}
-        onChange={(e) => type(e.target.value)}
-        onKeyDown={onKeyDown}
-        onBlur={() => {
-          closing.current = setTimeout(() => setOpen(false), 150);
+      <Popover
+        open={showList}
+        onOpenChange={(next) => {
+          if (!next) setOpen(false);
         }}
-        onFocus={focus}
-        placeholder={placeholder}
-        autoComplete="off"
-        role="combobox"
-        aria-autocomplete="list"
-        aria-expanded={showList}
-        aria-controls={listId}
-        aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
-        aria-describedby={describedBy}
-        aria-invalid={invalid}
-        className={className}
-      />{" "}
-      {showList ? (
-        <ul
-          id={listId}
-          role="listbox"
-          aria-label="SOC codes"
-          aria-busy={loading}
-          className="absolute left-0 right-0 z-20 mt-1 max-h-80 overflow-y-auto border-2 border-border bg-card shadow-hard-sm"
+      >
+        <PopoverAnchor asChild>
+          <input
+            ref={inputRef}
+            id={id}
+            name={name}
+            value={value}
+            onChange={(e) => type(e.target.value)}
+            onKeyDown={onKeyDown}
+            onBlur={() => {
+              closing.current = setTimeout(() => setOpen(false), 150);
+            }}
+            onFocus={focus}
+            placeholder={placeholder}
+            autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={showList}
+            aria-controls={listId}
+            aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
+            aria-describedby={describedBy}
+            aria-invalid={invalid}
+            className={className}
+          />
+        </PopoverAnchor>{" "}
+        <PopoverContent
+          align="start"
+          sideOffset={4}
+          collisionPadding={8}
+          // The box keeps the cursor: the list only shows beside it.
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          // A press or focus on the box itself isn't "outside": it mustn't shut the list it opens.
+          onInteractOutside={(e) => {
+            if (e.target instanceof Node && inputRef.current?.contains(e.target)) e.preventDefault();
+          }}
+          className="w-[var(--radix-popover-trigger-width)] min-w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] border-2 border-border p-0 shadow-hard-sm"
         >
-          {loading ? (
-            <li role="option" aria-selected={false} aria-disabled="true" className="flex min-h-11 items-center gap-2 px-3 py-2 text-sm text-soft">
-              <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
-              Looking up job codes…
-            </li>
-          ) : failed ? (
-            <li role="option" aria-selected={false} aria-disabled="true" className="px-3 py-2 text-sm text-soft">
-              The job codes couldn&apos;t be read just now. Type the code itself, or try again.
-            </li>
-          ) : options.length === 0 ? (
-            <li role="option" aria-selected={false} aria-disabled="true" className="px-3 py-2 text-sm text-soft">
-              No job code matches that. Try a shorter title, or type the code itself.
-            </li>
-          ) : (
-            options.map((o, i) => (
-              <li
-                key={o.soc}
-                id={`${listId}-${i}`}
-                role="option"
-                aria-selected={i === active}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  pick(o);
-                }}
-                onMouseEnter={() => setActive(i)}
-                className={cn("flex min-h-11 cursor-pointer flex-col justify-center px-3 py-1.5", i === active && "bg-sage")}
-              >
-                <span className="text-base font-semibold">
-                  <span className="whitespace-nowrap font-mono">{o.soc}</span> {o.title}
-                </span>{" "}
-                <span className="text-sm text-soft">{o.why}</span>
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label="SOC codes"
+            aria-busy={loading}
+            className="max-h-[min(20rem,var(--radix-popover-content-available-height,20rem))] overflow-y-auto overscroll-contain bg-card"
+          >
+            {loading ? (
+              <li role="option" aria-selected={false} aria-disabled="true" className="flex min-h-11 items-center gap-2 px-3 py-2 text-sm text-soft">
+                <CircleNotchIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 animate-spin motion-reduce:animate-none" />
+                Looking up job codes…
               </li>
-            ))
-          )}
-        </ul>
-      ) : null}{" "}
+            ) : failed ? (
+              <li role="option" aria-selected={false} aria-disabled="true" className="px-3 py-2 text-sm text-soft">
+                The job codes couldn&apos;t be read just now. Type the code itself, or try again.
+              </li>
+            ) : options.length === 0 ? (
+              <li role="option" aria-selected={false} aria-disabled="true" className="px-3 py-2 text-sm text-soft">
+                No job code matches that. Try a shorter title, or type the code itself.
+              </li>
+            ) : (
+              options.map((o, i) => (
+                <li
+                  key={o.soc}
+                  id={`${listId}-${i}`}
+                  role="option"
+                  aria-selected={i === active}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pick(o);
+                  }}
+                  onMouseEnter={() => setActive(i)}
+                  className={cn("flex min-h-11 cursor-pointer flex-col justify-center px-3 py-1.5", i === active && "bg-sage")}
+                >
+                  <span className="text-base font-semibold">
+                    <span className="whitespace-nowrap font-mono">{o.soc}</span> {o.title}
+                  </span>{" "}
+                  <span className="text-sm text-soft">{o.why}</span>
+                </li>
+              ))
+            )}
+          </ul>
+        </PopoverContent>
+      </Popover>{" "}
       {picked && showPicked ? (
         <p className="mt-1 text-sm text-soft" aria-live="polite">
           <span className="whitespace-nowrap font-mono">{picked.soc}</span> {picked.title}

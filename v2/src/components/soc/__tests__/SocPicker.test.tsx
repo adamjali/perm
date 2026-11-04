@@ -166,4 +166,19 @@ describe("SocPicker", () => {
     await act(() => new Promise((r) => setTimeout(r, 300)));
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("draws its list in a layer of its own, so a short frame can't clip it, and keeps the cursor in the box", async () => {
+    // Arrange
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(DS))));
+    const { container } = render(<Harness />);
+    const box = screen.getByRole("combobox", { name: "Job title or SOC code" });
+    box.focus();
+    // Act
+    fireEvent.change(box, { target: { value: "data scientist" } });
+    const list = await screen.findByRole("listbox", {}, { timeout: 2000 });
+    // Assert
+    expect(container.contains(list)).toBe(false);
+    expect(box).toHaveFocus();
+    expect(box).toHaveAttribute("aria-controls", list.id);
+  });
 });
