@@ -819,11 +819,30 @@ OLD_LCA_HEADERS = {
                                           "SOC_CODE", "SOC_NAME", "TOTAL WORKERS", "VISA_CLASS",
                                           "WAGE_RATE_OF_PAY", "WAGE_UNIT_OF_PAY", "WILLFUL VIOLATOR",
                                           "WORKSITE_CITY", "WORKSITE_STATE"],
+    # FY2019's real header (dumped on GitHub Nov 4 2026): its worksite and wage columns are numbered, one set
+    # per worksite up to ten, and the first set is the one read.
     "H-1B_Disclosure_Data_FY2019.xlsx": ["AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME", "CASE_NUMBER", "CASE_STATUS",
                                          "CASE_SUBMITTED", "DECISION_DATE", "EMPLOYER_NAME", "H-1B_DEPENDENT",
                                          "JOB_TITLE", "NAICS_CODE", "SOC_CODE", "SOC_TITLE", "VISA_CLASS",
-                                         "WAGE_RATE_OF_PAY_FROM", "WAGE_UNIT_OF_PAY", "WORKSITE_CITY",
-                                         "WORKSITE_STATE", "TOTAL_WORKER_POSITIONS"],
+                                         "TOTAL_WORKER_POSITIONS", "PREVAILING_WAGE_1", "PREVAILING_WAGE_2",
+                                         "PW_UNIT_OF_PAY_1", "PW_WAGE_LEVEL_1", "PW_OES_YEAR_1", "PW_OTHER_SOURCE_1",
+                                         "PW_NON-OES_YEAR_1", "PW_SURVEY_NAME_1", "PW_SURVEY_PUBLISHER_1",
+                                         "PW_TRACKING_NUMBER_1", "WAGE_RATE_OF_PAY_FROM_1", "WAGE_RATE_OF_PAY_FROM_2",
+                                         "WAGE_RATE_OF_PAY_TO_1", "WAGE_UNIT_OF_PAY_1", "WORKSITE_CITY_1",
+                                         "WORKSITE_CITY_2", "WORKSITE_STATE_1", "WORKSITE_STATE_2"],
+}
+
+# What each file must read where, beyond the required fields (the numbered FY2019 set is easy to miss).
+OLD_LCA_EXPECT = {
+    "H-1B_Disclosure_Data_FY2019.xlsx": {
+        "wage": "WAGE_RATE_OF_PAY_FROM_1", "wage_unit": "WAGE_UNIT_OF_PAY_1", "state": "WORKSITE_STATE_1",
+        "city": "WORKSITE_CITY_1", "wage_level": "PW_WAGE_LEVEL_1", "pw_wage": "PREVAILING_WAGE_1",
+        "pw_unit": "PW_UNIT_OF_PAY_1", "pw_other_year": "PW_NON-OES_YEAR_1", "pw_case": "PW_TRACKING_NUMBER_1",
+    },
+    "H-1B_Disclosure_Data_FY15_Q4.xlsx": {"wage": "WAGE_RATE_OF_PAY", "soc_title": "SOC_NAME", "workers": "TOTAL WORKERS"},
+    "H-1B_FY2010.xlsx": {"wage": "LCA_CASE_WAGE_RATE_FROM", "state": "WORK_LOCATION_STATE1", "pw_wage": "PW_1"},
+    "H-1B_Case_Data_FY2008.xlsx": {"wage": "WAGE_RATE_1", "wage_unit": "RATE_PER_1", "state": "STATE_1",
+                                   "visa": "PROGRAM", "workers": "NBR_IMMIGRANTS"},
 }
 
 
@@ -839,7 +858,10 @@ def check_old_lca_layouts() -> None:
         check(f"{name}: every required field resolves",
               [f for f in fd.REQUIRED_FIELDS if f not in got], [])
         check(f"{name}: the offered wage, never the prevailing wage, is the wage",
-              got.get("wage") in (None, "WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY", "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"), True)
+              got.get("wage") in (None, "WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY_FROM_1", "WAGE_RATE_OF_PAY",
+                                  "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"), True)
+        for field, column in OLD_LCA_EXPECT.get(name, {}).items():
+            check(f"{name}: {field} reads {column}", got.get(field), column)
         # The site names law firms, never people: FY2015 to FY2018 print the individual attorney only.
         check(f"{name}: an attorney's own name is never read as the firm",
               got.get("attorney") in (None, "AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME"), True)
@@ -851,6 +873,11 @@ def check_old_lca_layouts() -> None:
     check("an old status, unit and missing visa read in the newer files' words", row,
           {"case_status": "CERTIFIED - WITHDRAWN", "visa_class": "H-1B", "case_number": "I-200-10012-123456",
            "wage_unit": "YEAR"})
+    placeholder = {"case_status": "CERTIFIED", "visa_class": "Select Visa Classification",
+                   "case_number": "I-203-16012-1", "wage_unit": "YEAR"}
+    fd.lca_era_fixups(placeholder)
+    check("the form's own 'Select Visa Classification' takes the case number's visa", placeholder["visa_class"],
+          "E-3 Australian")
     kept = {"case_status": "CERTIFIED", "visa_class": "E-3 Australian", "case_number": "I-203-21012-1", "wage_unit": "HOUR"}
     fd.lca_era_fixups(kept)
     check("a row already in the newer words is left as it is", kept,

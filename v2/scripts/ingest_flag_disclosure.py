@@ -198,7 +198,8 @@ PROGRAMS: dict[str, dict] = {
             # work location in CITY_1 and STATE_1, NBR_IMMIGRANTS), FY2009 to FY2014's iCert ones (LCA_CASE_*,
             # STATUS, PW_1 per PW_UNIT_1; FY2010 has no wage unit or visa class and names the work location
             # WORK_LOCATION_*1), and FY2015 to FY2019's (CASE_SUBMITTED, SOC_NAME, WAGE_RATE_OF_PAY in FY2015,
-            # TOTAL WORKERS with a space). Each field's alternates are those names, in era order; the first
+            # TOTAL WORKERS with a space; FY2019 numbers its worksite and wage columns, the first worksite
+            # being WORKSITE_CITY_1, WAGE_RATE_OF_PAY_FROM_1, PREVAILING_WAGE_1 and so on). Each field's alternates are those names, in era order; the first
             # one a header holds wins.
             #
             # Left unread on purpose: AGENT_ATTORNEY_NAME (FY2015 to FY2018 name the individual attorney;
@@ -217,14 +218,14 @@ PROGRAMS: dict[str, dict] = {
             # The OFFERED wage. The file also carries PREVAILING_WAGE (the
             # floor the employer attested to), which is a different number and
             # the plausible-wrong column. The test pins this choice.
-            "wage": ["WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY", "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"],
-            "wage_unit": ["WAGE_UNIT_OF_PAY", "LCA_CASE_WAGE_RATE_UNIT", "RATE_PER_1"],
-            "state": ["WORKSITE_STATE", "LCA_CASE_WORKLOC1_STATE", "WORK_LOCATION_STATE1", "STATE_1"],
+            "wage": ["WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY_FROM_1", "WAGE_RATE_OF_PAY", "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"],
+            "wage_unit": ["WAGE_UNIT_OF_PAY", "WAGE_UNIT_OF_PAY_1", "LCA_CASE_WAGE_RATE_UNIT", "RATE_PER_1"],
+            "state": ["WORKSITE_STATE", "WORKSITE_STATE_1", "LCA_CASE_WORKLOC1_STATE", "WORK_LOCATION_STATE1", "STATE_1"],
             "visa": ["VISA_CLASS", "PROGRAM_DESIGNATION", "PROGRAM"],
             # From LCA_Record_Layout_FY2026_Q3.pdf: NAICS_CODE is Form ETA-9035
             # Section C, Item 13; WORKSITE_CITY is the first worksite location
             # (the Worksites companion file lists the rest).
-            "city": ["WORKSITE_CITY", "LCA_CASE_WORKLOC1_CITY", "WORK_LOCATION_CITY1", "CITY_1"],
+            "city": ["WORKSITE_CITY", "WORKSITE_CITY_1", "LCA_CASE_WORKLOC1_CITY", "WORK_LOCATION_CITY1", "CITY_1"],
             "naics": ["NAICS_CODE", "NAIC_CODE", "LCA_CASE_NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
             # under the same name; the ETA-9035 layout calls it "Name of Law
@@ -246,7 +247,7 @@ PROGRAMS: dict[str, dict] = {
             "new_concurrent_employment": ["NEW_CONCURRENT_EMPLOYMENT", "NEW_CONCURRENT_EMP"],
             "change_employer": ["CHANGE_EMPLOYER"],
             "amended_petition": ["AMENDED_PETITION"],
-            "wage_level": ["PW_WAGE_LEVEL"],
+            "wage_level": ["PW_WAGE_LEVEL", "PW_WAGE_LEVEL_1"],
             "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT", "H1B_DEPENDENT"],
             "willful_violator": ["WILLFUL_VIOLATOR", "WILLFUL VIOLATOR"],
             # Section F, the prevailing wage the employer attested to and where
@@ -257,13 +258,13 @@ PROGRAMS: dict[str, dict] = {
             # PW_TRACKING_NUMBER, the wage request's own case number when DOL
             # determined the wage.
             "pw_wage": ["PREVAILING_WAGE", "PW_1", "PREVAILING_WAGE_1"],
-            "pw_unit": ["PW_UNIT_OF_PAY", "PW_UNIT_1"],
-            "pw_oes_year": ["PW_OES_YEAR"],
-            "pw_other_source": ["PW_OTHER_SOURCE"],
-            "pw_other_year": ["PW_OTHER_YEAR"],
-            "pw_survey_publisher": ["PW_SURVEY_PUBLISHER"],
-            "pw_survey_name": ["PW_SURVEY_NAME"],
-            "pw_case": ["PW_TRACKING_NUMBER"],
+            "pw_unit": ["PW_UNIT_OF_PAY", "PW_UNIT_OF_PAY_1", "PW_UNIT_1"],
+            "pw_oes_year": ["PW_OES_YEAR", "PW_OES_YEAR_1"],
+            "pw_other_source": ["PW_OTHER_SOURCE", "PW_OTHER_SOURCE_1"],
+            "pw_other_year": ["PW_OTHER_YEAR", "PW_NON-OES_YEAR_1"],
+            "pw_survey_publisher": ["PW_SURVEY_PUBLISHER", "PW_SURVEY_PUBLISHER_1"],
+            "pw_survey_name": ["PW_SURVEY_NAME", "PW_SURVEY_NAME_1"],
+            "pw_case": ["PW_TRACKING_NUMBER", "PW_TRACKING_NUMBER_1"],
         },
         "event_dates": [],
     },
@@ -916,7 +917,8 @@ def lca_era_fixups(row: dict) -> None:
     status = row.get("case_status")
     if status:
         row["case_status"] = re.sub(r"\s*-\s*", " - ", status.strip())
-    if not row.get("visa_class"):
+    if not row.get("visa_class") or str(row["visa_class"]).upper().startswith("SELECT "):
+        # FY2016 has one row whose visa is the form's own "Select Visa Classification".
         row["visa_class"] = LCA_VISA_BY_PREFIX.get(row["case_number"][:5])
     unit = row.get("wage_unit")
     if unit:
