@@ -192,31 +192,45 @@ PROGRAMS: dict[str, dict] = {
                          r"|H-1B_Case_Data_FY\d{4}|Icert_ ?LCA_ ?FY\d{4}|H-1B_iCert_LCA_FY\d{4}(?:_Q\d)?"
                          r"|H-1B_FY\d{2,4}(?:_Q\d)?|LCA_FY\d{4}(?:_Q\d)?)\.xlsx$"),
         "columns": {
-            "case": ["CASE_NUMBER"],
-            "status": ["CASE_STATUS"],
-            "received": ["RECEIVED_DATE"],
-            "decision": ["DECISION_DATE"],
-            "employer": ["EMPLOYER_NAME"],
-            "job_title": ["JOB_TITLE"],
-            "soc_code": ["SOC_CODE"],
-            "soc_title": ["SOC_TITLE"],
+            # Before FY2020 (read off each file's own header on a GitHub runner, Nov 4 2026) DOL's files came
+            # in three layouts: FY2008 and FY2009's e-file workbooks (CASE_NO, APPROVAL_STATUS,
+            # SUBMITTED_DATE, DOL_DECISION_DATE, NAME or EMPLOYER_NAME, WAGE_RATE_1 per RATE_PER_1, the first
+            # work location in CITY_1 and STATE_1, NBR_IMMIGRANTS), FY2009 to FY2014's iCert ones (LCA_CASE_*,
+            # STATUS, PW_1 per PW_UNIT_1; FY2010 has no wage unit or visa class and names the work location
+            # WORK_LOCATION_*1), and FY2015 to FY2019's (CASE_SUBMITTED, SOC_NAME, WAGE_RATE_OF_PAY in FY2015,
+            # TOTAL WORKERS with a space). Each field's alternates are those names, in era order; the first
+            # one a header holds wins.
+            #
+            # Left unread on purpose: AGENT_ATTORNEY_NAME (FY2015 to FY2018 name the individual attorney;
+            # the site names firms only, so only FY2019's AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME maps), the
+            # e-file JOB_CODE and OCCUPATIONAL_CODE (three-digit DOT codes, not SOC codes), and the old
+            # prevailing-wage source columns, whose words don't match Section F's (the wage-source page
+            # draws a year only once 90% of its LCAs are read, so those years stay out of it).
+            "case": ["CASE_NUMBER", "LCA_CASE_NUMBER", "CASE_NO"],
+            "status": ["CASE_STATUS", "STATUS", "APPROVAL_STATUS"],
+            "received": ["RECEIVED_DATE", "CASE_SUBMITTED", "LCA_CASE_SUBMIT", "SUBMITTED_DATE"],
+            "decision": ["DECISION_DATE", "DOL_DECISION_DATE"],
+            "employer": ["EMPLOYER_NAME", "LCA_CASE_EMPLOYER_NAME", "NAME"],
+            "job_title": ["JOB_TITLE", "LCA_CASE_JOB_TITLE"],
+            "soc_code": ["SOC_CODE", "LCA_CASE_SOC_CODE"],
+            "soc_title": ["SOC_TITLE", "SOC_NAME", "LCA_CASE_SOC_NAME"],
             # The OFFERED wage. The file also carries PREVAILING_WAGE (the
             # floor the employer attested to), which is a different number and
             # the plausible-wrong column. The test pins this choice.
-            "wage": ["WAGE_RATE_OF_PAY_FROM"],
-            "wage_unit": ["WAGE_UNIT_OF_PAY"],
-            "state": ["WORKSITE_STATE"],
-            "visa": ["VISA_CLASS"],
+            "wage": ["WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY", "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"],
+            "wage_unit": ["WAGE_UNIT_OF_PAY", "LCA_CASE_WAGE_RATE_UNIT", "RATE_PER_1"],
+            "state": ["WORKSITE_STATE", "LCA_CASE_WORKLOC1_STATE", "WORK_LOCATION_STATE1", "STATE_1"],
+            "visa": ["VISA_CLASS", "PROGRAM_DESIGNATION", "PROGRAM"],
             # From LCA_Record_Layout_FY2026_Q3.pdf: NAICS_CODE is Form ETA-9035
             # Section C, Item 13; WORKSITE_CITY is the first worksite location
             # (the Worksites companion file lists the rest).
-            "city": ["WORKSITE_CITY"],
-            "naics": ["NAICS_CODE"],
+            "city": ["WORKSITE_CITY", "LCA_CASE_WORKLOC1_CITY", "WORK_LOCATION_CITY1", "CITY_1"],
+            "naics": ["NAICS_CODE", "NAIC_CODE", "LCA_CASE_NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
             # under the same name; the ETA-9035 layout calls it "Name of Law
             # Firm representing the Employer submitting the Labor Condition
             # Application", the ETA-9141 one the same for a wage request.
-            "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
+            "attorney": ["LAWFIRM_NAME_BUSINESS_NAME", "AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME"],
             # From LCA_Record_Layout_FY2026_Q3.pdf. The worker counts are Form
             # ETA-9035 Section B, Items 7 and 7a-7f: how many of the positions
             # are new employment, continuing, a change of employer (a
@@ -225,16 +239,16 @@ PROGRAMS: dict[str, dict] = {
             # OES ("I" to "IV" or "N/A"). The two flags are Section H.a, Items
             # 1 and 2: the employer's own attestation. Note the hyphen: the
             # header is `H-1B_DEPENDENT`.
-            "workers": ["TOTAL_WORKER_POSITIONS"],
+            "workers": ["TOTAL_WORKER_POSITIONS", "TOTAL_WORKERS", "TOTAL WORKERS", "NBR_IMMIGRANTS"],
             "new_employment": ["NEW_EMPLOYMENT"],
             "continued_employment": ["CONTINUED_EMPLOYMENT"],
             "change_previous_employment": ["CHANGE_PREVIOUS_EMPLOYMENT"],
-            "new_concurrent_employment": ["NEW_CONCURRENT_EMPLOYMENT"],
+            "new_concurrent_employment": ["NEW_CONCURRENT_EMPLOYMENT", "NEW_CONCURRENT_EMP"],
             "change_employer": ["CHANGE_EMPLOYER"],
             "amended_petition": ["AMENDED_PETITION"],
             "wage_level": ["PW_WAGE_LEVEL"],
-            "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT"],
-            "willful_violator": ["WILLFUL_VIOLATOR"],
+            "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT", "H1B_DEPENDENT"],
+            "willful_violator": ["WILLFUL_VIOLATOR", "WILLFUL VIOLATOR"],
             # Section F, the prevailing wage the employer attested to and where
             # it came from (read off FY2026 Q3's own header, Oct 4 2026):
             # PREVAILING_WAGE and its unit; PW_OES_YEAR when it came from OES;
@@ -242,8 +256,8 @@ PROGRAMS: dict[str, dict] = {
             # PW_SURVEY_PUBLISHER and PW_SURVEY_NAME for a private survey; and
             # PW_TRACKING_NUMBER, the wage request's own case number when DOL
             # determined the wage.
-            "pw_wage": ["PREVAILING_WAGE"],
-            "pw_unit": ["PW_UNIT_OF_PAY"],
+            "pw_wage": ["PREVAILING_WAGE", "PW_1", "PREVAILING_WAGE_1"],
+            "pw_unit": ["PW_UNIT_OF_PAY", "PW_UNIT_1"],
             "pw_oes_year": ["PW_OES_YEAR"],
             "pw_other_source": ["PW_OTHER_SOURCE"],
             "pw_other_year": ["PW_OTHER_YEAR"],
@@ -887,6 +901,28 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
     }
 
 
+# The visa an LCA's case number names, where its year's file has no visa column (FY2010): DOL's prefixes,
+# I-200 H-1B, I-201 H-1B1 Chile, I-202 H-1B1 Singapore, I-203 E-3 (src/lib/flagCaseNumber.ts), in the words
+# the newer files' VISA_CLASS uses.
+LCA_VISA_BY_PREFIX = {"I-200": "H-1B", "I-201": "H-1B1 Chile", "I-202": "H-1B1 Singapore", "I-203": "E-3 Australian"}
+
+
+def lca_era_fixups(row: dict) -> None:
+    """Older LCA files in the newer files' words, so every year counts the same way.
+
+    "CERTIFIED-WITHDRAWN" (FY2009 to FY2019) is the newer "CERTIFIED - WITHDRAWN"; a row with no visa column
+    takes the visa its case-number prefix names; a unit spelled "Year" or "Per Year" is "YEAR".
+    """
+    status = row.get("case_status")
+    if status:
+        row["case_status"] = re.sub(r"\s*-\s*", " - ", status.strip())
+    if not row.get("visa_class"):
+        row["visa_class"] = LCA_VISA_BY_PREFIX.get(row["case_number"][:5])
+    unit = row.get("wage_unit")
+    if unit:
+        row["wage_unit"] = re.sub(r"^PER\s+", "", unit.strip(), flags=re.I)
+
+
 class ParseStats:
     """Counts kept in the same pass that yields the rows, so they cannot disagree."""
 
@@ -900,6 +936,8 @@ class ParseStats:
         self.wage_parsed = 0
         self.state_known = 0
         self.by_status: Counter = Counter()
+        self.by_visa: Counter = Counter()
+        self.by_unit: Counter = Counter()
         self.first_received = ""
         self.last_received = ""
         self.first_decided = ""
@@ -909,6 +947,8 @@ class ParseStats:
     def see(self, row: dict) -> None:
         self.kept += 1
         self.by_status[row["case_status"] or "(none)"] += 1
+        self.by_visa[row["visa_class"] or "(none)"] += 1
+        self.by_unit[row["wage_unit"] or "(none)"] += 1
         if row["wage"] is not None:
             self.wage_parsed += 1
         if row["worksite_state"]:
@@ -933,6 +973,8 @@ class ParseStats:
         log(f"  no received     {self.no_received:,}")
         log(f"  no decision     {self.no_decision:,}")
         log(f"  by status       {dict(self.by_status.most_common(8))}")
+        log(f"  by visa         {dict(self.by_visa.most_common(6))}")
+        log(f"  by wage unit    {dict(self.by_unit.most_common(6))}")
         log(f"  received        {self.first_received or '-'} .. {self.last_received or '-'}")
         log(f"  decided         {self.first_decided or '-'} .. {self.last_decided or '-'}")
         log(f"  wage parsed     {self.wage_parsed:,} of {self.kept:,}")
@@ -975,6 +1017,8 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
             if i in cells:
                 slots[slot] = cells[i]
         row = normalise_row(rec, slots, filename, fy, cfg.get("visa_default"), cfg.get("first_decision_column"))
+        if row is not None and cfg["table"] == "lca_cases":
+            lca_era_fixups(row)
         if row is None:
             stats.blank_case += 1
             continue
