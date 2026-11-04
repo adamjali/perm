@@ -28,7 +28,7 @@ vi.mock("../client", () => ({ rows, one }));
 
 const { nameVariants } = await import("../entityDetail");
 const { fieldDistribution, searchByLetters } = await import("../entities");
-const { countPageworthy, getEntitySeed } = await import("../publicData");
+const { countPageworthy, getAllEntities, getEntitySeed } = await import("../publicData");
 
 beforeEach(() => {
   rows.mockReset();
@@ -107,5 +107,30 @@ describe("countPageworthy", () => {
     const seed = await getEntitySeed("occupation", 10);
     expect(seed.total).toBe(1410);
     expect(one.mock.calls.every(([sql]) => !/count\(\*\)/i.test(sql))).toBe(true);
+  });
+});
+
+describe("getAllEntities", () => {
+  const row = (rank: number) => ({
+    slug: `e${rank}`, name: `E ${rank}`, rank, total: 10, certified: 5, denied: 1,
+    median_days: 300, median_annual_wage: 100000, state: "CA", code: null,
+  });
+
+  it("reads the bulk list in rank windows, in order, and stops at the first empty window", async () => {
+    // One 9,654-row answer waited past the 20-second deadline inside a busy web copy (Sentry 59, 181
+    // events since Oct 20) while the database answered it in well under a second.
+    rows
+      .mockResolvedValueOnce([row(1), row(2)])
+      .mockResolvedValueOnce([row(2501)])
+      .mockResolvedValueOnce([]);
+    const got = await getAllEntities("employer");
+    expect(got.map((r) => r.slug)).toEqual(["e1", "e2", "e2501"]);
+    expect(rows).toHaveBeenCalledTimes(3);
+    for (const [i, [sql, args]] of rows.mock.calls.entries()) {
+      expect(sql).toMatch(/rank > \? AND rank <= \?/);
+      expect(sql).toContain("ORDER BY rank");
+      expect(sql).not.toMatch(/OFFSET/i);
+      expect(args).toEqual(["employer", 5, i * 2500, (i + 1) * 2500]);
+    }
   });
 });

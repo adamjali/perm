@@ -83,10 +83,17 @@ export async function getEntitySeed(
 }
 
 /**
- * Every row of one kind that belongs in the BULK dump, in one query.
+ * Every row of one kind that belongs in the BULK dump, read in rank windows.
  *
- * No paging: a single read here is not capped the way a Convex read is, so it
- * needs no rank cursor, runaway guard or duplicate-rank check.
+ * One query used to carry it, and that answer (9,654 employers) waited past the
+ * read layer's 20-second deadline inside a busy web copy 181 times from Oct 20
+ * to Nov 4 2026 (Sentry 59), while the database answered it in well under a
+ * second: the Oct 11 starvation again. So it reads `BULK_WINDOW` ranks at a
+ * time off `idx_pe_kind_rank`, with the event loop let go between windows.
+ * Ranks are dense 1..N in volume order, so the rows above the floor are a
+ * prefix of the ranks (measured Nov 4: employer 9,654 rows, max rank 9,654):
+ * the first window holding none ends the read. `MAX_BULK_WINDOWS` bounds a
+ * corrupt rank column.
  *
  * IT READS `MIN_TOTAL_FOR_BULK`, NOT THE PAGE FLOOR, which is 1. Its only
  * caller is `/api/perm-entities/<kind>`, which the search palette downloads
@@ -99,12 +106,23 @@ export async function getEntitySeed(
  * file.
  */
 export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
-  const all = await rows<EntityDbRow>(
-    `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? AND total >= ? ORDER BY rank`,
-    [kind, MIN_TOTAL_FOR_BULK],
-  );
+  const all: EntityDbRow[] = [];
+  for (let w = 0; w < MAX_BULK_WINDOWS; w++) {
+    const lo = w * BULK_WINDOW;
+    const part = await rows<EntityDbRow>(
+      `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? AND total >= ? ` +
+        "AND rank > ? AND rank <= ? ORDER BY rank",
+      [kind, MIN_TOTAL_FOR_BULK, lo, lo + BULK_WINDOW],
+    );
+    if (part.length === 0) break;
+    all.push(...part);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
   return all.map(toEntityRow);
 }
+
+const BULK_WINDOW = 2_500;
+const MAX_BULK_WINDOWS = 100;
 
 /**
  * The slugs for ONE sitemap chunk, read as a rank window.
