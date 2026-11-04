@@ -106,3 +106,26 @@ export function scrubClickEvent(props: Record<string, unknown> | undefined): voi
     for (const key of ["$el_text", "$elements_chain", "$elements", "$selected_content"]) delete props[key];
   }
 }
+
+const FIELD_TAGS = new Set(["input", "select", "option", "textarea"]);
+const BUTTON_INPUT = /attr__type="(?:submit|button|reset|image)"/;
+
+/**
+ * A click that only put the cursor in a field or opened a dropdown. The field's `change` event
+ * records what was chosen, so the click adds nothing, and these were a fifth of every click PostHog
+ * received (Nov 1 to 4 2026: 8,499 on text boxes and 5,624 on dropdowns of 70,442), with the
+ * month's events projected past the free million. A submit or button input is a real press and
+ * stays. Read before scrubClickEvent, which takes a signed-in page's attributes out.
+ */
+export function isFieldFocusClick(event: { event?: string; properties?: Record<string, unknown> } | null | undefined): boolean {
+  const props = event?.properties;
+  if (event?.event !== "$autocapture" || !props || props.$event_type !== "click") return false;
+  const chain = typeof props.$elements_chain === "string" ? props.$elements_chain : "";
+  const first = chain.split(";")[0] ?? "";
+  const fromChain = first.split(/[.:]/)[0]?.toLowerCase() ?? "";
+  const elements = Array.isArray(props.$elements) ? (props.$elements as Array<Record<string, unknown>>) : [];
+  const tag = fromChain || String(elements[0]?.tag_name ?? "").toLowerCase();
+  if (!FIELD_TAGS.has(tag)) return false;
+  const type = String(elements[0]?.attr__type ?? "");
+  return !(BUTTON_INPUT.test(first) || /^(submit|button|reset|image)$/i.test(type));
+}

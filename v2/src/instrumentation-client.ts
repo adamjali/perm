@@ -30,7 +30,7 @@ import {
   fromInjectedPageScript,
   fromServiceWorkerRegister,
 } from "@/lib/exceptionNoise";
-import { scrubClickEvent } from "@/lib/analyticsRedact";
+import { isFieldFocusClick, scrubClickEvent } from "@/lib/analyticsRedact";
 import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 import { guardStorage } from "@/lib/storageGuard";
 import { isLocalDevHost } from "@/lib/localHost";
@@ -159,6 +159,9 @@ function startPostHog(key: string, country: string | null): void {
         // Redacted here rather than on the page because $current_url is read
         // from window.location by the SDK: there is no page-local hook. The
         // event still carries the path, so the page is still measurable.
+        // A click that only focused a field or opened a dropdown: its change event says what was chosen.
+        if (isFieldFocusClick(event)) return null;
+
         redactCaseParam(event.properties);
         redactCaseParam(event.$set);
         // A click's own text and attributes: none from the signed-in app (it can show

@@ -2,7 +2,7 @@ import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { APP_SEGMENTS, isAppPath, redactIdentifiers, scrubClickEvent } from "../analyticsRedact";
+import { APP_SEGMENTS, isAppPath, isFieldFocusClick, redactIdentifiers, scrubClickEvent } from "../analyticsRedact";
 
 const CHAIN_APP =
   'button.btn:text="Open case for Jane Client"attr__aria-label="Jane Client, Acme Inc"nth-child="2"nth-of-type="1";' +
@@ -72,3 +72,29 @@ describe("click events never carry a client's details or a filing's identifiers"
     expect([...APP_SEGMENTS].sort()).toEqual(routes.sort());
   });
 });
+
+describe("clicks that only focus a field are not sent", () => {
+  const click = (chain: string, extra: Record<string, unknown> = {}) => ({
+    event: "$autocapture",
+    properties: { $event_type: "click", $elements_chain: chain, ...extra },
+  });
+  it("drops a click into a text box or onto a dropdown", () => {
+    expect(isFieldFocusClick(click('input.border:attr__name="q"attr__type="text"nth-child="1";form;div'))).toBe(true);
+    expect(isFieldFocusClick(click("select:nth-child=\"2\";label;div"))).toBe(true);
+    expect(isFieldFocusClick(click("textarea;form"))).toBe(true);
+  });
+  it("keeps the change that says what was chosen, buttons, links and submit inputs", () => {
+    expect(isFieldFocusClick({ event: "$autocapture", properties: { $event_type: "change", $elements_chain: "select;form" } })).toBe(false);
+    expect(isFieldFocusClick(click("button.primary;form"))).toBe(false);
+    expect(isFieldFocusClick(click('a:attr__href="/perm-queue"'))).toBe(false);
+    expect(isFieldFocusClick(click('input:attr__type="submit";form'))).toBe(false);
+    expect(isFieldFocusClick(click("", { $elements: [{ tag_name: "input", attr__type: "submit" }] }))).toBe(false);
+    expect(isFieldFocusClick(click("span;button"))).toBe(false);
+  });
+  it("reads the element list when the chain is gone, and leaves other events alone", () => {
+    expect(isFieldFocusClick(click("", { $elements: [{ tag_name: "INPUT", attr__type: "email" }] }))).toBe(true);
+    expect(isFieldFocusClick({ event: "$pageview", properties: { $event_type: "click" } })).toBe(false);
+    expect(isFieldFocusClick(null)).toBe(false);
+  });
+});
+
