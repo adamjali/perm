@@ -30,6 +30,8 @@ export const lca = makeFlagProgram({
   budgetPrefix: "lca_discovery_budget_",
   // DOL's quarterly LCA file: the decided record with the OFFERED wage.
   disclosureTable: "lca_cases",
+  // DOL's FY2008 to FY2019 files (scripts/ingest_flag_disclosure.py HISTORY_TABLES).
+  disclosureHistoryTable: "lca_cases_history",
   disclosureDocKey: "flag_disclosure_summary_lca",
   // A broad name ("Am": 168,861 LCAs) is read newest-first (BROAD_NAME_ROWS).
   disclosureByDateIndex: "lca_cases_recv",

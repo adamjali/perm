@@ -70,9 +70,10 @@ DB_SETTINGS = {
 # One request never mixes the two: a join between `lca_cases` and a table in the
 # main file can't run, so it fails loudly here instead of half-running. What the
 # main file needs to know about published LCAs is in `lca_case_numbers` there.
-# The LCA database holds two tables: FY2020 on, and DOL's FY2008 to FY2019 files (`lca_cases_history`).
-LCA_TABLES = ("lca_cases", "lca_cases_history")
-LCA_TABLE_RE = re.compile(r"\blca_cases(?:_history)?\b")
+# The LCA database holds FY2020 on (`lca_cases`), DOL's FY2008 to FY2019 files (`lca_cases_history`) and
+# each employer's counts by fiscal year from both (`lca_cases_years`, scripts/build_lca_years.py).
+LCA_TABLES = ("lca_cases", "lca_cases_history", "lca_cases_years")
+LCA_TABLE_RE = re.compile(r"\blca_cases(?:_history|_years)?\b")
 _TXN_CONTROL = re.compile(r"^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b", re.I)
 
 

@@ -17,9 +17,10 @@
 
 export type DatabaseHome = "lca" | "main";
 
-// The LCA database holds two tables: FY2020 on, and DOL's FY2008 to FY2019 files (`lca_cases_history`).
-const LCA_TABLES = new Set(["lca_cases", "lca_cases_history"]);
-const LCA_TABLE_RE = /\blca_cases(?:_history)?\b/;
+// The LCA database holds FY2020 on (`lca_cases`), DOL's FY2008 to FY2019 files (`lca_cases_history`) and
+// each employer's counts by fiscal year from both (`lca_cases_years`, scripts/build_lca_years.py).
+const LCA_TABLES = new Set(["lca_cases", "lca_cases_history", "lca_cases_years"]);
+const LCA_TABLE_RE = /\blca_cases(?:_history|_years)?\b/;
 const TXN_CONTROL = /^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
 // A table a statement reads or writes: the name after FROM, JOIN, INTO or
 // UPDATE, unless a parenthesis follows (a table-valued function like json_each).

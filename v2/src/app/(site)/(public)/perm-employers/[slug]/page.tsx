@@ -53,6 +53,7 @@ import {
   entityStaticParams,
 } from "@/lib/entityPage";
 import { employerHistoryCases, employerYears, workerFacets } from "@/lib/db/employerHistory";
+import { lcaYears } from "@/lib/db/lcaYears";
 import { getDisclosureSummary, getFreshness, liveOnlyLastChanged } from "@/lib/db/publicData";
 import { getDateSources } from "@/lib/db/dateSources";
 import { employerOwnDate, pageDate } from "@/lib/pageDates";
@@ -68,6 +69,7 @@ import { similarSponsors } from "@/lib/db/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
+import { LcaYears } from "@/components/entities/LcaYears";
 import { WorkerMix } from "@/components/entities/WorkerMix";
 import { IndustryMix, OccupationMix, PartyMix, PlaceMix, RecruitmentMix } from "@/components/entities/FilingMakeup";
 import { FilingsSearch } from "@/components/entities/FilingsSearch";
@@ -688,7 +690,7 @@ export default async function EmployerPage({
   // the LCA panel and the lists below all read the same rows.
   // No catch, for the reason at the live-only branch's call.
   const match = await employerMatch(canonicalSlug);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows, taaRows, pppRows, layoffAnswer] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor, pwdLinks, size, acwia, whd, osha, samRows, taaRows, pppRows, layoffAnswer, lcaYearRows] =
     await Promise.all([
       getDisclosureSummary(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -760,6 +762,8 @@ export default async function EmployerPage({
       pppForSlug(canonicalSlug),
       // Its own answers to Form 9089's layoff question on its newest decided year. No catch, as with layoffs.
       getEmployerLayoffAnswer(canonicalSlug),
+      // Its H-1B LCAs by fiscal year, FY2008 on (lca_cases_years, one indexed read). No catch, as with layoffs.
+      lcaYears(canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -863,7 +867,8 @@ export default async function EmployerPage({
   const hasWork = Boolean(
     facets.occupation || facets.state || facets.attorney || facets.city || facets.industry || facets.newspaper || facets.recruit_lead,
   );
-  const hasHistory = years.length > 0 || historyCases.length > 0 || Object.values(workers).some((r) => (r?.length ?? 0) > 0);
+  const hasHistory =
+    years.length > 0 || historyCases.length > 0 || lcaYearRows.length > 1 || Object.values(workers).some((r) => (r?.length ?? 0) > 0);
   // Other agencies' records (WHD, OSHA, SAM.gov, TAA, PPP): a chapter of their own, only when there's one to show.
   const hasRecords = Boolean(whd) || Boolean(osha) || samRows.length > 0 || taaRows.length > 0 || pppRows.length > 0;
   const chapters: ChapterItem[] = [
@@ -1158,6 +1163,7 @@ export default async function EmployerPage({
             cases={historyCases}
             lastYearPartial={throughMonth ? `DOL's newest file runs through ${throughMonth}` : undefined}
           />{" "}
+          <LcaYears years={lcaYearRows} className="mt-8" />{" "}
           <WorkerMix facets={workers} subject="employer" />
         </Chapter>
       ) : null}

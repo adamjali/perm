@@ -270,14 +270,26 @@ jobs:
               --note "after the LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             exit 1
           }
+          # Each employer's H-1B LCAs by fiscal year, FY2008 on (the employer pages' year chart).
+          timeout 30m python3 scripts/build_lca_years.py || {
+            python3 scripts/record_ingest_failure.py --script build_lca_years.py \
+              --note "after the LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
 
-      # An older H-1B file (FY2008 to FY2019, in lca_cases_history) changes only the yearly rankings.
+      # An older H-1B file (FY2008 to FY2019, in lca_cases_history) changes only the yearly rankings and counts.
       - name: Rebuild the H-1B rankings after an older file
         if: success() && matrix.program == 'lca' && steps.load.outputs.history == 'true' && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
         working-directory: v2
         run: |
           timeout 40m python3 scripts/build_h1b_ranks.py || {
             python3 scripts/record_ingest_failure.py --script build_h1b_ranks.py \
+              --note "after an older LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
+          # Each employer's H-1B LCAs by fiscal year, FY2008 on (the employer pages' year chart).
+          timeout 30m python3 scripts/build_lca_years.py || {
+            python3 scripts/record_ingest_failure.py --script build_lca_years.py \
               --note "after an older LCA load: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             exit 1
           }
