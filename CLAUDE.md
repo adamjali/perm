@@ -2229,3 +2229,12 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
   download is driven. The loader still checks State's own grand total.
 - **The site's list of policy sources is held to the Python feed's** (`policy-sources-agree.test.ts`): court dockets,
   DOJ and embassies had been written by the feed and read back with no source.
+- **A WordPress feed's description is only "The post X appeared first on Y"**: the post itself is in
+  `content:encoded`, after the embassy theme's `ga-title` block. The excerpt comes from there; the keep rule reads the
+  title alone, because nearly every visa page's body names appointments and petitions.
+- **A server job whose script refreshes pages needs the site's secret exported** (`site_refresh_env` in
+  `permtracker-uscis`, held by `scripts/oracle/test_runner_refresh.py`): without it the script takes the run for a
+  local one and asks nothing, so the first embassy and news loads left the pages on their old render.
+- **A chart's small headings are labels** (`PlateLabel`, or a `<p>`): the consulate page's per-category `h3`s sat
+  under no `h2`, and the pre-ship heading check held a deploy for it on 122 pages once a shared module put the whole
+  family on the check.
