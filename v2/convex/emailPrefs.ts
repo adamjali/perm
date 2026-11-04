@@ -75,6 +75,7 @@ import {
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
 import { dropQueued, dropRetries } from "./lib/alertOutboxStore";
+import { turnOffAlerts, turnOffNewsAndDigest } from "./lib/listMailOff";
 
 /**
  * Render the React template, or fall back to text only.
@@ -486,61 +487,6 @@ async function stateForEmail(ctx: QueryCtx, email: string) {
 }
 
 /**
- * Tombstone every alert row for an address (all four kinds, staged changes
- * dropped so a replayed confirm link cannot resurrect one), and drop every
- * alert still waiting in the outbox. News, the digest and account mail are
- * not alerts and are left alone.
- */
-async function turnOffAlerts(ctx: MutationCtx, email: string, now: number): Promise<void> {
-  for (const row of await ctx.db
-    .query("dolQueueAlerts")
-    .withIndex("by_email", (q) => q.eq("email", email))
-    .collect()) {
-    if (row.unsubscribedAt === undefined || row.pendingFilingMonth !== undefined) {
-      await ctx.db.patch(row._id, {
-        unsubscribedAt: row.unsubscribedAt ?? now,
-        pendingFilingMonth: undefined,
-      });
-    }
-  }
-  for (const row of await ctx.db
-    .query("caseStatusAlerts")
-    .withIndex("by_email", (q) => q.eq("email", email))
-    .collect()) {
-    if (row.unsubscribedAt === undefined || row.pendingCaseNumber !== undefined) {
-      await ctx.db.patch(row._id, {
-        unsubscribedAt: row.unsubscribedAt ?? now,
-        pendingCaseNumber: undefined,
-      });
-    }
-  }
-  for (const row of await ctx.db
-    .query("bulletinAlerts")
-    .withIndex("by_email", (q) => q.eq("email", email))
-    .collect()) {
-    if (row.unsubscribedAt === undefined || row.pendingSeries !== undefined) {
-      await ctx.db.patch(row._id, {
-        unsubscribedAt: row.unsubscribedAt ?? now,
-        pendingSeries: undefined,
-      });
-    }
-  }
-  for (const row of await ctx.db
-    .query("employerAlerts")
-    .withIndex("by_email", (q) => q.eq("email", email))
-    .collect()) {
-    if (row.unsubscribedAt === undefined || row.pendingSlug !== undefined) {
-      await ctx.db.patch(row._id, {
-        unsubscribedAt: row.unsubscribedAt ?? now,
-        pendingSlug: undefined,
-        pendingName: undefined,
-      });
-    }
-  }
-  await dropQueued(ctx, email, "all");
-}
-
-/**
  * Everything we hold for the address behind a prefs token.
  *
  * A mutation rather than a query ONLY because it shares `stateForEmail` with
@@ -713,20 +659,7 @@ export const unsubscribeAllByToken = internalMutation({
     const now = Date.now();
 
     await turnOffAlerts(ctx, email, now);
-    const news = await ctx.db
-      .query("newsSubscribers")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .first();
-    if (news && news.unsubscribedAt === undefined) {
-      await ctx.db.patch(news._id, { unsubscribedAt: now });
-    }
-    const newsletterRow = await ctx.db
-      .query("newsletterSubscribers")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .first();
-    if (newsletterRow && newsletterRow.unsubscribedAt === undefined) {
-      await ctx.db.patch(newsletterRow._id, { unsubscribedAt: now });
-    }
+    await turnOffNewsAndDigest(ctx, email, now);
     await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, { email });
     // Resend contact removal is an action (external API); scheduled, and
     // idempotent on the other end for an address with no contact.

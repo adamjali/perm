@@ -8,6 +8,7 @@
  */
 
 import { dropRetries } from "./alertOutboxStore";
+import { stopListMail, type ListMailStopped } from "./listMailOff";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { recordError } from "./errorRecording";
@@ -30,6 +31,8 @@ interface PurgeResult {
   authVerificationCodes: number;
   profileDeleted: boolean;
   userDeleted: boolean;
+  /** The address's list mail turned off (convex/lib/listMailOff.ts). */
+  listMail: ListMailStopped;
 }
 
 /**
@@ -244,6 +247,27 @@ export async function purgeAllUserData(
     await ctx.db.delete(session._id);
   }
 
+  // The address's list mail stops too. Every alert table is keyed by address,
+  // not account, so the rows above never covered it: onboarding's "Waiting on
+  // my own case" writes a case alert that a verified account confirms at once,
+  // and the same address can follow a queue month, a bulletin line, an
+  // employer, the news and the digest. Each is turned off the way its own
+  // opt-out does it (tombstoned, its waiting outbox and retry mail dropped),
+  // with any confirmation still waiting for room and any founder's note still
+  // due. Nov 4 2026: until then they kept mailing a deleted account's address.
+  let listMail: ListMailStopped = { subscriptions: 0, confirmations: 0, congratsNotes: 0 };
+  if (email) {
+    const now = Date.now();
+    for (const address of new Set([email.toLowerCase().trim(), email])) {
+      const stopped = await stopListMail(ctx, address, now);
+      listMail = {
+        subscriptions: listMail.subscriptions + stopped.subscriptions,
+        confirmations: listMail.confirmations + stopped.confirmations,
+        congratsNotes: listMail.congratsNotes + stopped.congratsNotes,
+      };
+    }
+  }
+
   // Mail waiting in the retry queue for this address goes too (a deadline
   // reminder carries case details), except the deletion confirmation itself.
   if (email) {
@@ -270,5 +294,6 @@ export async function purgeAllUserData(
     authVerificationCodes: authVerificationCodesCount,
     profileDeleted: profiles.length > 0,
     userDeleted: true,
+    listMail,
   };
 }
