@@ -13,6 +13,7 @@
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { ArrowCounterClockwiseIcon as RefreshCcw, HouseIcon as Home } from "@phosphor-icons/react";
+import { currentPage, loginHrefFor } from "@/lib/auth/returnTo";
 import { isAuthError, isStaleDeploymentError, isLikelySessionTimeout } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { claimAutoReload, isReloadCurable, logClientError, reportCaughtError } from "./recovery";
@@ -46,7 +47,7 @@ export function RouteError({
       // server still hears of it: a timeout guessed wrong looks exactly like this.
       logClientError("RouteError", error, "redirect-login");
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
-      window.location.href = "/login?expired=1";
+      window.location.href = loginHrefFor(currentPage(), { expired: "1" });
       return;
     }
 

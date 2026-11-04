@@ -2,12 +2,13 @@
 
 /**
  * The admin page's sections as tabs, so a growing page reads as four short
- * ones. The chosen tab lives in the URL hash (#alerts), so a reload or a
- * shared link lands on the same section. Arrow keys move between tabs, per
- * the WAI-ARIA tabs pattern.
+ * ones. The chosen tab is the URL hash (#alerts) and nothing else, so a reload,
+ * a shared link, an emailed link that came through sign-in, Back and Forward,
+ * and a second link followed while the page is open all land on the section
+ * they name. Arrow keys move between tabs, per the WAI-ARIA tabs pattern.
  */
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useSyncExternalStore, type ReactNode } from "react";
 import { choiceVariants } from "@/components/ui/choice";
 
 export interface AdminTab {
@@ -18,21 +19,34 @@ export interface AdminTab {
   content: ReactNode;
 }
 
+const TAB_EVENT = "pt:admin-tab";
+
+function subscribeHash(onChange: () => void): () => void {
+  window.addEventListener("hashchange", onChange);
+  window.addEventListener("popstate", onChange);
+  window.addEventListener(TAB_EVENT, onChange);
+  return () => {
+    window.removeEventListener("hashchange", onChange);
+    window.removeEventListener("popstate", onChange);
+    window.removeEventListener(TAB_EVENT, onChange);
+  };
+}
+
+const readHash = () => window.location.hash.slice(1);
+
 export function AdminTabs({ tabs }: { tabs: AdminTab[] }) {
-  // The hash is the starting tab, read in the initializer: reading it in an
-  // effect painted Overview first and then jumped. Safe for hydration because
-  // these tabs only ever mount in the browser, after the admin data loads
-  // (the server renders the page's skeleton). The hash is a starting point,
-  // not a live binding.
-  const [active, setActive] = useState(() => {
-    const fromHash = typeof window === "undefined" ? "" : window.location.hash.slice(1);
-    return tabs.some((t) => t.id === fromHash) ? fromHash : (tabs[0]?.id ?? "");
-  });
+  // Read from the address on every render and every hash change: read once, a
+  // link followed while the page was open, or an address that settled a moment
+  // after the tabs mounted (a sign-in's navigation), left the old tab showing.
+  // These tabs only mount in the browser, after the admin data loads.
+  const fromHash = useSyncExternalStore(subscribeHash, readHash, () => "");
+  const active = tabs.some((t) => t.id === fromHash) ? fromHash : (tabs[0]?.id ?? "");
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   function choose(id: string, focus = false) {
-    setActive(id);
-    window.history.replaceState(null, "", `#${id}`);
+    // replaceState fires no hashchange, so the store is told by hand.
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${id}`);
+    window.dispatchEvent(new Event(TAB_EVENT));
     if (focus) refs.current[id]?.focus();
   }
 

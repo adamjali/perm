@@ -5,7 +5,7 @@ import {
 } from "@convex-dev/auth/nextjs/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { refuseAuthPost } from "@/lib/auth/authGate";
-import { afterAuthPath } from "@/lib/carriedCase";
+import { afterSignIn, loginHrefFor } from "@/lib/auth/returnTo";
 
 // Protected routes (auth required) — unknown routes fall through to Next.js (404 naturally)
 const isProtectedRoute = createRouteMatcher([
@@ -76,13 +76,17 @@ const auth = convexAuthNextjsMiddleware(
     // Redirect authenticated users away from login/signup pages. One who chose
     // "Save as a case" under the deadline calculator goes straight to the
     // new-case form with those dates (src/lib/carriedCase.ts).
+    // A `?next=` page wins (an email link that met sign-in on another tab), then the calculator's dates.
     if (isAuth && isAuthenticated) {
-      return nextjsMiddlewareRedirect(request, afterAuthPath("login", request.nextUrl.search));
+      return nextjsMiddlewareRedirect(request, afterSignIn("login", request.nextUrl.search, ""));
     }
 
     // Redirect unauthenticated users to login (for protected routes only)
+    // The page asked for comes back after sign-in (src/lib/auth/returnTo.ts); its #section rides along in
+    // the browser, which keeps a fragment across a redirect. API routes get plain sign-in.
     if (needsAuth && !isAuthenticated) {
-      return nextjsMiddlewareRedirect(request, "/login");
+      const { pathname, search } = request.nextUrl;
+      return nextjsMiddlewareRedirect(request, pathname.startsWith("/api/") ? "/login" : loginHrefFor(`${pathname}${search}`));
     }
   },
   {

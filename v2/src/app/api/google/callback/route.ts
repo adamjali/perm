@@ -11,6 +11,7 @@
  * - Tokens are encrypted before storage
  */
 import { NextRequest, NextResponse } from "next/server";
+import { loginHrefFor } from "@/lib/auth/returnTo";
 import { captureError } from "@/lib/sentry";
 import {
   convexAuthNextjsToken,
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
   if (!isAuthenticated) {
     console.error("[Google OAuth] User not authenticated");
     return NextResponse.redirect(
-      new URL("/login?redirect=/settings?tab=calendar-sync", request.url)
+      new URL(loginHrefFor("/settings?tab=calendar-sync"), request.url)
     );
   }
 

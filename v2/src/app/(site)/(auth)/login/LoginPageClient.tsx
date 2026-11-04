@@ -35,7 +35,8 @@ import {
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
-import { afterAuthPath } from "@/lib/carriedCase";
+import { afterSignIn, authPageHref } from "@/lib/auth/returnTo";
+import { useAuthPageHref } from "@/hooks/useAuthPageHref";
 
 type LoginStep = "login" | "verification";
 
@@ -56,6 +57,8 @@ export function LoginPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showExpiredBanner, setShowExpiredBanner] = useState(false);
+  const resetHref = useAuthPageHref("/reset-password");
+  const signupHref = useAuthPageHref("/signup");
 
   const emailValidation = validateEmailValue(email, emailTouched);
   const emailInvalid = emailValidation.state === "invalid";
@@ -77,7 +80,8 @@ export function LoginPageClient() {
   useEffect(() => {
     if (searchParams.get("expired") === "1") {
       setShowExpiredBanner(true);
-      window.history.replaceState({}, "", "/login");
+      // Drop the banner flag and keep the page to come back to (and its #section).
+      window.history.replaceState({}, "", authPageHref("/login", window.location.search, window.location.hash));
     }
   }, [searchParams]);
 
@@ -135,7 +139,7 @@ export function LoginPageClient() {
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
         trackLoginSucceeded("email_password");
-        router.push(afterAuthPath("login"));
+        router.push(afterSignIn("login"));
       } else {
         // Email not verified — provider re-sent a verification code
         setStep("verification");
@@ -193,7 +197,7 @@ export function LoginPageClient() {
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
       trackLoginSucceeded("email_password");
-      router.push(afterAuthPath("login"));
+      router.push(afterSignIn("login"));
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -225,7 +229,7 @@ export function LoginPageClient() {
     setIsGoogleLoading(true);
     authBreadcrumb("login_google_initiated");
     try {
-      await signIn("google", { redirectTo: afterAuthPath("login") });
+      await signIn("google", { redirectTo: afterSignIn("login") });
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -367,7 +371,7 @@ export function LoginPageClient() {
 
           <div className="flex items-center justify-end">
             <NavLink
-              href="/reset-password"
+              href={resetHref}
               className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
               spinnerSize={12}
             >
@@ -454,7 +458,7 @@ export function LoginPageClient() {
           <p className="text-base leading-relaxed text-muted-foreground">
             Don&apos;t have an account?{" "}
             <NavLink
-              href="/signup"
+              href={signupHref}
               className="text-foreground font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
               spinnerSize={12}
             >

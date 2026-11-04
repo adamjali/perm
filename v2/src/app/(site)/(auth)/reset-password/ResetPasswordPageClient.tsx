@@ -5,6 +5,8 @@ import { useAction } from "convex/react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authPageHref } from "@/lib/auth/returnTo";
+import { useAuthPageHref } from "@/hooks/useAuthPageHref";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +51,7 @@ export function ResetPasswordPageClient() {
   const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
 
   const [step, setStep] = useState<ResetStep>("email");
+  const loginHref = useAuthPageHref("/login");
   const [isLoading, setIsLoading] = useState(false);
 
   // Email step
@@ -196,7 +199,8 @@ export function ResetPasswordPageClient() {
       await signIn("password", formData);
       trackPasswordResetCompleted();
       toast.success("Password reset. Please sign in.");
-      router.push("/login");
+      // Back through sign-in, which sends a signed-in visitor on to the page they first asked for.
+      router.push(authPageHref("/login", window.location.search, window.location.hash));
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -389,7 +393,7 @@ export function ResetPasswordPageClient() {
           <p className="text-base leading-relaxed text-muted-foreground">
             Remember your password?{" "}
             <Link
-              href="/login"
+              href={loginHref}
               className="text-foreground font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
             >
               Sign in

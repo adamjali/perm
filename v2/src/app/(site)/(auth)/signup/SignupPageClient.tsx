@@ -45,7 +45,8 @@ import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { StorageBlockedNotice } from "@/components/auth/StorageBlockedNotice";
-import { afterAuthPath } from "@/lib/carriedCase";
+import { afterSignIn } from "@/lib/auth/returnTo";
+import { useAuthPageHref } from "@/hooks/useAuthPageHref";
 
 type SignupStep = "credentials" | "verification";
 
@@ -56,6 +57,7 @@ export function SignupPageClient() {
   const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
 
   const [step, setStep] = useState<SignupStep>("credentials");
+  const loginHref = useAuthPageHref("/login");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -213,7 +215,7 @@ export function SignupPageClient() {
         localStorage.setItem("perm_last_login_at", String(Date.now()));
         recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
         trackSignupSucceeded("email_password");
-        router.push(afterAuthPath("signup"));
+        router.push(afterSignIn("signup"));
       } else {
         // OTP sent — move to verification step
         setStep("verification");
@@ -288,7 +290,7 @@ export function SignupPageClient() {
       localStorage.setItem("perm_last_login_at", String(Date.now()));
       recordMyLogin().catch((err) => console.warn("[recordMyLogin] failed:", err));
       trackSignupSucceeded("email_password");
-      router.push(afterAuthPath("signup"));
+      router.push(afterSignIn("signup"));
     } catch (error) {
       if (handleStaleDeployment(error)) return;
 
@@ -320,7 +322,7 @@ export function SignupPageClient() {
     setIsGoogleLoading(true);
     authBreadcrumb("signup_google_initiated");
     try {
-      await signIn("google", { redirectTo: afterAuthPath("signup") });
+      await signIn("google", { redirectTo: afterSignIn("signup") });
     } catch (error) {
       if (handleStaleDeployment(error)) return;
       const message = error instanceof Error ? error.message : String(error);
@@ -569,7 +571,7 @@ export function SignupPageClient() {
           <p className="text-base leading-relaxed text-muted-foreground">
             Already have an account?{" "}
             <NavLink
-              href="/login"
+              href={loginHref}
               className="text-foreground font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
               spinnerSize={12}
             >

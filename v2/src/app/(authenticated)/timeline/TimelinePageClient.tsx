@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { currentPage, loginHrefFor } from "@/lib/auth/returnTo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useKeptWhileLoading } from "@/hooks/useKeptWhileLoading";
 import Link from "next/link";
@@ -249,7 +250,7 @@ export function TimelinePageClient() {
 
   // Redirect to login if not authenticated
   if (preferences === null) {
-    router.push("/login");
+    router.push(loginHrefFor(currentPage()));
     return null;
   }
 

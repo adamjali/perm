@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { currentPage, loginHrefFor } from "@/lib/auth/returnTo";
 import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -49,7 +50,7 @@ export function DashboardPageClient() {
   // Redirect to login if not authenticated (in useEffect to avoid setState during render)
   useEffect(() => {
     if (currentUser === null) {
-      router.push("/login");
+      router.push(loginHrefFor(currentPage()));
     }
   }, [currentUser, router]);
 

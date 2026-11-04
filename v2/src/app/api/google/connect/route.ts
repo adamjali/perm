@@ -11,6 +11,7 @@
  * - This route: Used for calendar API access (connecting calendar)
  */
 import { NextRequest, NextResponse } from "next/server";
+import { loginHrefFor } from "@/lib/auth/returnTo";
 import { captureError } from "@/lib/sentry";
 import {
   convexAuthNextjsToken,
@@ -34,10 +35,7 @@ export async function GET(request: NextRequest) {
     if (!isAuthenticated) {
       // Not authenticated - redirect to login with return URL
       console.log("[Google OAuth] Not authenticated, redirecting to login");
-      const returnUrl = encodeURIComponent("/settings?tab=calendar-sync");
-      return NextResponse.redirect(
-        new URL(`/login?redirect=${returnUrl}`, request.url)
-      );
+      return NextResponse.redirect(new URL(loginHrefFor("/settings?tab=calendar-sync"), request.url));
     }
 
     // Get current user from Convex

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ArrowSquareOutIcon, CalendarIcon as CalendarIcon, InfoIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { api } from "@convex/_generated/api";
+import { currentPage, loginHrefFor } from "@/lib/auth/returnTo";
 import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
 import { RECORDED_EVENT_TYPES, type DeadlineType } from "@/lib/calendar/types";
 import { toCalendarCaseData } from "@/lib/calendar/fromQuery";
@@ -248,7 +249,7 @@ export function CalendarPageClient() {
   // useQuery returns null when auth fails, undefined while loading
   useEffect(() => {
     if (calendarCases === null || preferences === null) {
-      router.push("/login");
+      router.push(loginHrefFor(currentPage()));
     }
   }, [calendarCases, preferences, router]);
 

@@ -4,6 +4,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { currentPage, loginHrefFor } from "@/lib/auth/returnTo";
 import { captureError } from "@/lib/sentry";
 import { isNetworkError } from "@/lib/auth/auth-errors";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -81,7 +82,7 @@ export default function InactivityTimeoutProvider({
     // Hard redirect — always reached, whether signOut() succeeded or failed.
     // window.location always works even when the tab was backgrounded.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load clears every signed-in query and cache
-    window.location.href = "/login";
+    window.location.href = loginHrefFor(currentPage());
   }, [isSigningOut, beginSignOut, signOut]);
 
   const { isWarningVisible, remainingSeconds, extendSession } = useInactivityTimeout({

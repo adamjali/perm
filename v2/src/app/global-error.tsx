@@ -17,6 +17,7 @@
  */
 
 import { useEffect } from "react";
+import { currentPage, loginHrefFor } from "@/lib/auth/returnTo";
 import { isAuthError, isStaleDeploymentError } from "@/components/error/auth-error";
 import { claimAutoReload, isReloadCurable, logClientError, reportCaughtError } from "@/components/error/recovery";
 import { failedLine } from "@/components/error/failedLine";
@@ -87,7 +88,7 @@ export default function GlobalError({
     if (isExpiredSession) {
       logClientError("GlobalError", error, "redirect-login");
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
-      window.location.href = "/login?expired=1";
+      window.location.href = loginHrefFor(currentPage(), { expired: "1" });
       return;
     }
 
