@@ -160,12 +160,17 @@ describe("TimelinePage - Loading State", () => {
 // AUTHENTICATION REDIRECT TESTS
 
 describe("TimelinePage - Authentication", () => {
-  it("redirects to login when preferences is null", () => {
-    setupMocks({ preferences: null, cases: [] });
+  it("redirects to login when preferences is null, naming this page to come back to", () => {
+    window.history.replaceState(null, "", "/timeline?range=12");
+    try {
+      setupMocks({ preferences: null, cases: [] });
 
-    renderWithProviders(<TimelinePage />);
+      renderWithProviders(<TimelinePage />);
 
-    expect(mockRouterPush).toHaveBeenCalledWith("/login");
+      expect(mockRouterPush).toHaveBeenCalledWith("/login?next=%2Ftimeline%3Frange%3D12");
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
   });
 
   it("does not redirect when preferences exist", () => {
@@ -173,7 +178,7 @@ describe("TimelinePage - Authentication", () => {
 
     renderWithProviders(<TimelinePage />);
 
-    expect(mockRouterPush).not.toHaveBeenCalledWith("/login");
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
 

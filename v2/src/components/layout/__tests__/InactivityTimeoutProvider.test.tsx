@@ -168,6 +168,23 @@ describe("InactivityTimeoutProvider", () => {
       expect(window.location.href).toBe("/login");
     });
 
+    it("names the page it signed out from, so signing in again comes back to it", async () => {
+      Object.defineProperty(window, "location", {
+        value: { href: "", pathname: "/cases/abc123", search: "?tab=dates", hash: "#notes" },
+        writable: true,
+        configurable: true,
+      });
+      renderWithTheme(
+        <InactivityTimeoutProvider>
+          <div>Content</div>
+        </InactivityTimeoutProvider>
+      );
+      await act(async () => {
+        mockOnTimeoutCallback?.();
+      });
+      await waitFor(() => expect(window.location.href).toBe("/login?next=%2Fcases%2Fabc123%3Ftab%3Ddates%23notes"));
+    });
+
     it("calls signOut when Log Out Now is clicked", async () => {
       mockIsWarningVisible = true;
       renderWithTheme(
