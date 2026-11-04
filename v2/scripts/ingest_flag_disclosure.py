@@ -755,8 +755,15 @@ def clean_text(raw: str | None, limit: int) -> str | None:
 
 
 def parse_wage(raw: str | None) -> float | None:
-    """`$145,600.00` -> 145600.0; anything unreadable -> None, never 0."""
+    """`$145,600.00` -> 145600.0; anything unreadable -> None, never 0.
+
+    FY2015's file writes the offered wage as its range in one cell, "85000.00 - 95000.00" or "20000 -" with no
+    top (dumped on GitHub Nov 4 2026); the bottom of the range is the wage, as WAGE_RATE_OF_PAY_FROM is.
+    """
     text = (raw or "").replace("$", "").replace(",", "").strip()
+    ranged = re.fullmatch(r"(\d+(?:\.\d+)?)\s*-\s*(?:\d+(?:\.\d+)?)?", text)
+    if ranged:
+        text = ranged.group(1)
     if not text:
         return None
     try:

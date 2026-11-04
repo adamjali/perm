@@ -890,6 +890,10 @@ def check_old_lca_layouts() -> None:
            "H-1B_Disclosure_Data_FY2019.xlsx", "LCA_Disclosure_Data_FY2020_Q1.xlsx", "LCA_Disclosure_Data.xlsx")]
           + [fd.table_for("pw", "PW_Disclosure_Data_FY2019.xlsx", "pwd_cases")],
           ["lca_cases_history", "lca_cases_history", "lca_cases_history", "lca_cases", "lca_cases", "pwd_cases"])
+    check("FY2015's one-cell wage range reads its bottom, and nothing else is guessed",
+          [fd.parse_wage(v) for v in ("85000.00 - 95000.00", "20000 -", "20000 - 0", "$61,256.00 - $0.00",
+                                      "abc - 1", "-5", "1 - 2 - 3")],
+          [85000.0, 20000.0, 20000.0, 61256.0, None, None, None])
     placeholder = {"case_status": "CERTIFIED", "visa_class": "Select Visa Classification",
                    "case_number": "I-203-16012-1", "wage_unit": "YEAR"}
     fd.lca_era_fixups(placeholder)
