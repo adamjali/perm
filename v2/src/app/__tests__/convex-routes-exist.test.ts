@@ -158,7 +158,11 @@ describe("Convex HTTP routes that something points at", () => {
     // Oct 31 2026: some work networks block the .convex.site host, and six people's sign-ups failed there.
     process.env.NEXT_PUBLIC_CONVEX_URL ??= "https://example.convex.cloud";
     expect(convexSiteUrl("/case-alert/subscribe")).toBe("/c/case-alert/subscribe");
-    expect(read("scripts/oracle/nginx/permtracker.conf")).toMatch(/location \^~ \/c\/ \{[^}]*rewrite \^\/c\(\/\.\*\)\$ \$1 break;/);
+    // The path is taken from the request as sent (still encoded), so an encoded line break can't reach
+    // the backend as a header (Nov 4 2026): a map over $request_uri, not a rewrite of the decoded $uri.
+    const nginx = read("scripts/oracle/nginx/permtracker.conf");
+    expect(nginx).toMatch(/map \$request_uri \$pt_c_path \{[^}]*\$1;[^}]*default \/__pt_refused;/);
+    expect(nginx).toMatch(/location \^~ \/c\/ \{[^}]*proxy_pass https:\/\/\$pt_convex_site\$pt_c_path\$is_args\$args;/);
     expect(read("next.config.ts")).toContain('{ source: "/c/:path*", destination: `${convexSite}/:path*` }');
     expect(read("src/app/robots.ts")).toContain("'/c/',");
   });
