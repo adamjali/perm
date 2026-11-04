@@ -131,7 +131,12 @@ describe("the thanks, by the stars given", () => {
       // The form posts through the site's own relay (/c/<route>); the route is what's after it.
       const path = new URL(String(input), "https://x.test").pathname.replace(/^\/c(?=\/)/, "");
       if (init?.method === "POST") sent.push({ path, body: JSON.parse(String(init.body)) as Record<string, unknown> });
-      if (path === "/review/submit") return new Response(JSON.stringify({ ok: true, message: "Thanks.", reviewId: "rev123" }), { status: 200 });
+      if (path === "/review/submit") {
+        const stars = Number((sent[sent.length - 1]?.body ?? {}).rating);
+        // The route gives a note token only to a review of 3 stars or fewer.
+        const token = stars <= 3 ? { noteToken: "note-token-for-rev123-abcdefghij" } : {};
+        return new Response(JSON.stringify({ ok: true, message: "Thanks.", reviewId: "rev123", ...token }), { status: 200 });
+      }
       if (path === "/review/note") return new Response(JSON.stringify({ ok: true, message: "Thank you." }), { status: 200 });
       return new Response("{}", { status: 200 });
     }) as unknown as typeof fetch;
@@ -161,7 +166,24 @@ describe("the thanks, by the stars given", () => {
     fireEvent.change(box, { target: { value: "Tell me about RFIs sooner." } });
     fireEvent.click(screen.getByRole("button", { name: "Send it to us" }));
     await waitFor(() => expect(screen.getByText(/We read every note/)).toBeTruthy());
-    expect(sent.find((s) => s.path === "/review/note")?.body).toEqual({ reviewId: "rev123", note: "Tell me about RFIs sooner." });
+    // The note carries the token the review's reply gave this browser: the review's id alone authorises nothing.
+    expect(sent.find((s) => s.path === "/review/note")?.body).toEqual({
+      reviewId: "rev123",
+      noteToken: "note-token-for-rev123-abcdefghij",
+      note: "Tell me about RFIs sooner.",
+    });
+  });
+
+  it("offers no note box when the reply carried no token, and points to support instead", async () => {
+    const sent: string[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      sent.push(String(input));
+      return new Response(JSON.stringify({ ok: true, message: "Thanks.", reviewId: "rev123" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    await postWith(2);
+    await waitFor(() => expect(screen.getByRole("heading", { name: "We're sorry it fell short, Pat." })).toBeTruthy());
+    expect(screen.queryByRole("textbox", { name: "What should we do better?" })).toBeNull();
+    expect(screen.getByText(/Write to/)).toBeTruthy();
   });
 
   it("sends a name Chrome on iPhone filled into the box without React hearing it", async () => {

@@ -2453,6 +2453,12 @@ export default defineSchema({
     privateNote: v.optional(v.string()),
     privateNoteAt: v.optional(v.number()),
     /**
+     * The keys (SHA-256, hex) of the tokens given to the browser that posted this review, which /review/note must
+     * bring back for the private note (convex/lib/reviewNoteKey.ts). Only on a review of 3 stars or fewer, at most
+     * NOTE_KEYS_KEPT (a double send gets its own). Absent on reviews stored before Nov 4 2026: they take no note.
+     */
+    noteKeys: v.optional(v.array(v.string())),
+    /**
      * On a waiting rating from an alert email: the same person's written review, which takes its place in the
      * queue (Nov 2 2026). Approving that review deletes this row; declining or deleting it clears the field, so
      * the rating waits again. Never shown publicly.

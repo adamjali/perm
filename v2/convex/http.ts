@@ -19,6 +19,7 @@ import {
 import { RATING_PATH, parseScore } from "./alertRatings";
 import { checkNote, checkReview, isHoneypot, isQuick, REVIEW_BODY_MAX } from "./lib/siteReview";
 import { openEmail } from "./lib/sealedEmail";
+import { newNoteToken, noteKeyOf } from "./lib/reviewNoteKey";
 import { reviewLinkFor, THANKS as SITE_REVIEW_THANKS } from "./siteReviews";
 import { normaliseFlagCaseNumber, programOf } from "../src/lib/flagCaseNumber";
 import { confirmOffers, isPermWageRequest, PWD_MATCH_SENTENCE } from "./lib/alertNextSteps";
@@ -867,13 +868,19 @@ http.route({
     const secret = process.env.UNSUBSCRIBE_SECRET;
     const linkEmail = secret && typeof fields.t === "string" ? await openEmail(fields.t, secret, Date.now()) : null;
     const ip = callerIp(req);
+    // The private note's token, for this browser alone; only its key is stored (convex/lib/reviewNoteKey.ts).
+    const noteToken = newNoteToken();
     const result = await ctx.runMutation(internal.siteReviews.submit, {
       ...checked.review,
       ip,
       quick: isQuick(fields),
       ...(linkEmail ? { linkEmail } : {}),
+      noteKey: await noteKeyOf(noteToken),
     });
-    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+    const reply: Record<string, unknown> = { ...result };
+    delete reply.noteAllowed;
+    if ("noteAllowed" in result && result.noteAllowed === true) reply.noteToken = noteToken;
+    return json(reply, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
 });
 
@@ -902,9 +909,14 @@ http.route({
       reviewLog.warn("review note refused before reading", { status: parsed.status });
       return json({ ok: false, message: parsed.message }, parsed.status);
     }
-    const { reviewId, note } = parsed.body;
+    const { reviewId, note, noteToken } = parsed.body;
     if (typeof reviewId !== "string" || reviewId.length === 0 || reviewId.length > 64) {
       reviewLog.warn("review note refused: no review named", {});
+      return json({ ok: false, message: "That note couldn't be sent. Write to support@permtracker.app instead." }, 400);
+    }
+    // The token the review's own reply carried: the review's id alone authorises nothing (Nov 4 2026).
+    if (typeof noteToken !== "string" || noteToken.length < 16 || noteToken.length > 128) {
+      reviewLog.warn("review note refused: no note token", {});
       return json({ ok: false, message: "That note couldn't be sent. Write to support@permtracker.app instead." }, 400);
     }
     const checked = checkNote(note);
@@ -912,7 +924,11 @@ http.route({
       reviewLog.info("review note refused", { reason: checked.message });
       return json({ ok: false, message: checked.message }, 400);
     }
-    const result = await ctx.runMutation(internal.siteReviews.addNote, { reviewId, note: checked.note });
+    const result = await ctx.runMutation(internal.siteReviews.addNote, {
+      reviewId,
+      note: checked.note,
+      noteKey: await noteKeyOf(noteToken),
+    });
     return json(result, result.ok ? 200 : 409);
   }),
 });

@@ -34,6 +34,7 @@ import { createLogger } from "./lib/logging";
 import { sendOwnerMail } from "./lib/ownerMail";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { DECLINE_NOTE_MAX } from "./lib/siteReview";
+import { NOTE_KEYS_KEPT } from "./lib/reviewNoteKey";
 import { REVIEW_LINK_TTL_MS, sealEmail } from "./lib/sealedEmail";
 import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import { INSIDER_REVIEW_IDS, parseSenjaWidget, senjaTime } from "../src/lib/reviews/senjaParse";
@@ -93,6 +94,8 @@ export const submit = internalMutation({
     quick: v.boolean(),
     /** The address a valid sealed link opened to; the HTTP route checked it. */
     linkEmail: v.optional(v.string()),
+    /** The key of the note token the route made for this browser (convex/lib/reviewNoteKey.ts); never the token. */
+    noteKey: v.optional(v.string()),
   },
   returns: v.object({
     ok: v.boolean(),
@@ -100,9 +103,12 @@ export const submit = internalMutation({
     message: v.string(),
     /** The stored review, for the thanks screen's private note; only the browser that sent it is told. */
     reviewId: v.optional(v.string()),
+    /** The note key was stored: the route hands this browser its token (only for NOTE_UP_TO stars or fewer). */
+    noteAllowed: v.optional(v.boolean()),
   }),
   handler: async (ctx, args) => {
     const now = Date.now();
+    const takesNote = args.noteKey !== undefined && args.rating <= NOTE_UP_TO;
     let today = 0;
     for await (const row of ctx.db.query("siteReviews").withIndex("by_created", (q) => q.gte("createdAt", now - MS_PER_DAY))) {
       // The day's budget is the form's: ratings queued from alert emails and Senja copies don't use it up.
@@ -120,6 +126,11 @@ export const submit = internalMutation({
         row.text === args.text
       ) {
         log.info("duplicate review ignored", { rating: args.rating });
+        // The browser may only have this reply (the first was dropped), so its token works too.
+        if (takesNote && row.privateNote === undefined) {
+          await ctx.db.patch(row._id, { noteKeys: [...(row.noteKeys ?? []), args.noteKey!].slice(-NOTE_KEYS_KEPT) });
+          return { ok: true, message: THANKS, reviewId: row._id, noteAllowed: true };
+        }
         return { ok: true, message: THANKS, reviewId: row._id };
       }
       today += 1;
@@ -151,29 +162,35 @@ export const submit = internalMutation({
       createdAt: now,
       ...(args.quick ? { quick: true } : {}),
       ...(viaLink ? { viaLink: true } : {}),
+      ...(takesNote ? { noteKeys: [args.noteKey!] } : {}),
     });
     log.info("review stored, waiting for the owner", { rating: args.rating, hasText: args.text.length > 0, quick: args.quick, viaLink });
     if (raterKey) await supersedeRatings(ctx, raterKey, reviewId);
     await noteWaiting(ctx);
-    return { ok: true, message: THANKS, reviewId };
+    return { ok: true, message: THANKS, reviewId, ...(takesNote ? { noteAllowed: true } : {}) };
   },
 });
 
 /**
  * A private note after a low rating: what could be better. One per review, within NOTE_WINDOW_MS of posting, only
- * for NOTE_UP_TO stars or fewer, so knowing a review's id gains a stranger nothing worth having. The route has
- * already checked and tidied the words (checkNote).
+ * for NOTE_UP_TO stars or fewer, and only with the note token the review's own reply carried (its key, `noteKey`,
+ * one of the review's `noteKeys`): the review's id alone is not enough (Nov 4 2026). The route has already checked
+ * and tidied the words (checkNote) and turned the token into its key (convex/lib/reviewNoteKey.ts).
  */
 export const addNote = internalMutation({
-  args: { reviewId: v.string(), note: v.string() },
+  args: { reviewId: v.string(), note: v.string(), noteKey: v.string() },
   returns: v.object({ ok: v.boolean(), message: v.string() }),
-  handler: async (ctx, { reviewId, note }) => {
+  handler: async (ctx, { reviewId, note, noteKey }) => {
     const id = ctx.db.normalizeId("siteReviews", reviewId);
     const row = id ? await ctx.db.get(id) : null;
     const now = Date.now();
     if (!row || row.source !== "site") {
       log.warn("review note refused: no such review");
       return { ok: false, message: "That review couldn't be found. Write to support@permtracker.app instead." };
+    }
+    if (!(row.noteKeys ?? []).includes(noteKey)) {
+      log.warn("review note refused: not the token this review's reply carried", { hasKeys: row.noteKeys !== undefined });
+      return { ok: false, message: "A note can't be added to this review any more. Write to support@permtracker.app instead." };
     }
     if (row.rating > NOTE_UP_TO || row.privateNote !== undefined || now - row.createdAt > NOTE_WINDOW_MS) {
       log.warn("review note refused", { rating: row.rating, hasNote: row.privateNote !== undefined, ageMs: now - row.createdAt });

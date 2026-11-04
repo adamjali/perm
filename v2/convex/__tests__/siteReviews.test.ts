@@ -311,12 +311,20 @@ describe("keeping nothing longer than needed", () => {
 });
 
 describe("a private note after a low rating", () => {
-  const note = (t: T, reviewId: unknown, text: unknown) => post(t, { reviewId, note: text }, "203.0.113.7", "/review/note");
-  const idOf = async (t: T, body: Record<string, unknown>) => ((await (await post(t, body)).json()) as { reviewId: string }).reviewId;
+  // The note is authorised by a token only the browser that posted the review was given, never by the review's id
+  // alone (Nov 4 2026: an id is no secret once it's in a reply, a log or a support thread).
+  type Sent = { reviewId: string; noteToken?: string };
+  const sentOf = async (t: T, body: Record<string, unknown>) => (await (await post(t, body)).json()) as Sent;
+  const note = (t: T, sent: Partial<Sent> | undefined, text: unknown) =>
+    post(t, { reviewId: sent?.reviewId, noteToken: sent?.noteToken, note: text }, "203.0.113.7", "/review/note");
+  const idOf = sentOf;
 
   it("adds one note to a review of 3 stars or fewer, private: the admin sees it, the public read never does", async () => {
     const t = createTestContext();
     const id = await idOf(t, { ...REVIEW, rating: 2, text: "It missed my RFI." });
+    expect(id.noteToken).toMatch(/^[A-Za-z0-9_-]{32,}$/);
+    // Only a key of the token is stored, never the token.
+    expect(JSON.stringify((await rows(t))[0])).not.toContain(id.noteToken!);
     const res = await note(t, id, "  Tell me when an RFI\u202E comes in.  ");
     expect(res.status).toBe(200);
     expect((await rows(t))[0]).toMatchObject({ privateNote: "Tell me when an RFI comes in." });
@@ -333,16 +341,47 @@ describe("a private note after a low rating", () => {
   it("refuses a note on a 4 or 5, after the window, to a review that isn't there, and an empty one", async () => {
     const t = createTestContext();
     const happy = await idOf(t, { ...REVIEW, rating: 5, text: "All good." });
-    expect((await note(t, happy, "Nothing to add.")).status).toBe(409);
-    const late = await t.run((ctx) =>
-      ctx.db.insert("siteReviews", { rating: 1, text: "", name: "Late", status: "pending", source: "site", createdAt: Date.now() - NOTE_WINDOW_MS - 1000 }),
-    );
+    // A 4 or 5 is given no token at all, so a note can't even be asked for.
+    expect(happy.noteToken).toBeUndefined();
+    expect((await note(t, happy, "Nothing to add.")).status).toBe(400);
+    const late = await idOf(t, { ...REVIEW, rating: 1, text: "Late." });
+    // Nor does another review's token open it.
+    expect((await note(t, { reviewId: happy.reviewId, noteToken: late.noteToken }, "Nothing to add.")).status).toBe(409);
+    await t.run(async (ctx) => {
+      const row = (await ctx.db.query("siteReviews").collect()).find((r) => r._id === late.reviewId)!;
+      await ctx.db.patch(row._id, { createdAt: Date.now() - NOTE_WINDOW_MS - 1000 });
+    });
     expect((await note(t, late, "Too late now.")).status).toBe(409);
-    expect((await note(t, "not-a-real-id", "Hello there.")).status).toBe(409);
+    expect((await note(t, { reviewId: "not-a-real-id", noteToken: late.noteToken }, "Hello there.")).status).toBe(409);
     expect((await note(t, undefined, "Hello there.")).status).toBe(400);
     const low = await idOf(t, { ...REVIEW, rating: 1, text: "Fell short." });
     expect((await note(t, low, "   ")).status).toBe(400);
     expect((await rows(t)).every((r) => r.privateNote === undefined)).toBe(true);
+  });
+
+  it("refuses a note by the review's id alone, with a wrong token, or with another review's token", async () => {
+    const t = createTestContext();
+    const mine = await idOf(t, { ...REVIEW, rating: 2, text: "Mine." });
+    const theirs = await idOf(t, { ...REVIEW, rating: 1, name: "Sam", text: "Theirs." });
+    expect((await note(t, { reviewId: mine.reviewId }, "No token.")).status).toBe(400);
+    expect((await note(t, { reviewId: mine.reviewId, noteToken: "x".repeat(43) }, "A guess.")).status).toBe(409);
+    expect((await note(t, { reviewId: mine.reviewId, noteToken: theirs.noteToken }, "Someone else's.")).status).toBe(409);
+    expect((await rows(t)).every((r) => r.privateNote === undefined)).toBe(true);
+    // A review stored before tokens existed takes no note: notes are only allowed for two hours anyway.
+    const older = await t.run((ctx) =>
+      ctx.db.insert("siteReviews", { rating: 1, text: "", name: "Old", status: "pending", source: "site", createdAt: Date.now() }),
+    );
+    expect((await note(t, { reviewId: older, noteToken: mine.noteToken }, "Hello.")).status).toBe(409);
+  });
+
+  it("gives a double send its own working token", async () => {
+    const t = createTestContext();
+    const first = await idOf(t, { ...REVIEW, rating: 2, text: "Sent twice." });
+    const second = await idOf(t, { ...REVIEW, rating: 2, text: "Sent twice." });
+    expect(second.reviewId).toBe(first.reviewId);
+    expect(second.noteToken).not.toBe(first.noteToken);
+    expect((await note(t, second, "From the second reply.")).status).toBe(200);
+    expect((await rows(t))[0]?.privateNote).toBe("From the second reply.");
   });
 
   it("deletes a note 90 days after it was written, keeping the review", async () => {

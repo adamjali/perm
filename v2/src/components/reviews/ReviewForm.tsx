@@ -102,7 +102,10 @@ export function ReviewForm() {
   // Chrome on iPhone can fill a box without the event React listens for: keep React's copy in step with the box.
   const formRef = useFormDomSync({ name: setName, email: setEmail });
   const [prefilled, setPrefilled] = useState(false);
-  const [sent, setSent] = useState<{ name: string; rating: number; reviewId: string | null } | null>(null);
+  // The review just posted, and the token that lets this browser add its private note (convex/lib/reviewNoteKey.ts).
+  const [sent, setSent] = useState<{ name: string; rating: number; reviewId: string | null; noteToken: string | null } | null>(
+    null,
+  );
   /** Bumped to replay the stars' wiggle when someone sends without picking one. */
   const [nudge, setNudge] = useState(0);
   const [fromLink] = useQueryParam("rating");
@@ -233,10 +236,16 @@ export function ReviewForm() {
         message?: string;
         field?: ReviewField;
         reviewId?: string;
+        noteToken?: string;
       } | null;
       if (body?.ok) {
         forgetLink();
-        setSent({ name: theName, rating: stars, reviewId: typeof body.reviewId === "string" ? body.reviewId : null });
+        setSent({
+          name: theName,
+          rating: stars,
+          reviewId: typeof body.reviewId === "string" ? body.reviewId : null,
+          noteToken: typeof body.noteToken === "string" ? body.noteToken : null,
+        });
         setPhase("sent");
         analytics.capture("review_submitted", { rating: stars, prefilled, hasText: String(data.get("text") ?? "").trim().length > 0 });
         return;
@@ -275,9 +284,13 @@ export function ReviewForm() {
           {words.title}
         </h2>{" "}
         <p className="mt-3 text-lg leading-relaxed text-soft">{words.body}</p>{" "}
-        {words.ask && sent.reviewId ? <NoteBox reviewId={sent.reviewId} ask={words.ask} rating={sent.rating} /> : null}{" "}
+        {words.ask && sent.reviewId && sent.noteToken ? (
+          <NoteBox reviewId={sent.reviewId} noteToken={sent.noteToken} ask={words.ask} rating={sent.rating} />
+        ) : null}{" "}
         <p className="mt-6 text-base text-muted-foreground">
-          {words.ask && !sent.reviewId ? `${words.ask} Write to ` : "To say more, or to change or remove your review later, write to "}
+          {words.ask && !(sent.reviewId && sent.noteToken)
+            ? `${words.ask} Write to `
+            : "To say more, or to change or remove your review later, write to "}
           <a href={`mailto:${SUPPORT_EMAIL_ADDRESS}`} className="link">
             {SUPPORT_EMAIL_ADDRESS}
           </a>
@@ -447,7 +460,17 @@ export function ReviewForm() {
  * siteReviews.addNote hold the rules: one note, within two hours). Only the owner reads it; it isn't posted with
  * the review. Problems are said calmly in its hint and read out, like the form's.
  */
-function NoteBox({ reviewId, ask, rating }: { reviewId: string; ask: string; rating: number }) {
+function NoteBox({
+  reviewId,
+  noteToken,
+  ask,
+  rating,
+}: {
+  reviewId: string;
+  noteToken: string;
+  ask: string;
+  rating: number;
+}) {
   const [note, setNote] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [problem, setProblem] = useState<string | null>(null);
@@ -477,7 +500,7 @@ function NoteBox({ reviewId, ask, rating }: { reviewId: string; ask: string; rat
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviewId, note }),
+        body: JSON.stringify({ reviewId, noteToken, note }),
       });
       const body = (await res.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
       if (body?.ok) {
