@@ -19,7 +19,7 @@ export function EstimateChecksList({ rows, className = "" }: { rows: CheckRow[];
         <li key={r.key} className="grid grid-cols-1 gap-x-6 gap-y-1 p-4 sm:p-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] [&>*]:min-w-0">
           <div className="font-heading text-base font-bold leading-snug">{`${r.estimate} `}</div>{" "}
           <div className="font-heading text-lg font-bold tabular-nums md:text-right">{`${r.result} `}</div>{" "}
-          <div className="text-sm leading-relaxed text-soft md:col-span-2">{r.basis}</div>
+          <div className="text-sm leading-relaxed text-soft md:col-span-2">{`${r.basis} `}</div>
         </li>
       ))}
     </ul>
