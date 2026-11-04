@@ -184,7 +184,7 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3 [&>*]:min-w-0">
             {IV_CATEGORIES.map((c) => (
               <div key={c}>
-                <h3 className="font-heading text-lg font-bold">{IV_CATEGORY_LABEL[c]}</h3>{" "}
+                <p className="font-heading text-lg font-bold">{IV_CATEGORY_LABEL[c]}</p>{" "}
                 <ColumnChart
                   columns={behindColumns(post, c)}
                   label={`${post.name}, ${IV_CATEGORY_LABEL[c]}: months back NVC was scheduling at each update`}
