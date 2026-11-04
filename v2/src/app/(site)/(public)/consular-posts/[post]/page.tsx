@@ -21,7 +21,7 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { behindLabel, IV_CATEGORIES, IV_CATEGORY_LABEL, IV_TOOL_URL, monthsBehind, type IvCategory } from "@/lib/consular/scheduling";
-import { embassyVisasUrl } from "@/lib/consular/embassies";
+import { embassyVisasUrl, shortExcerpt } from "@/lib/consular/embassies";
 import { getConsularIndex, getEmbassyNotices, getPostDetail, type EmbassyNotices, type PostDetail } from "@/lib/db/consularPosts";
 import { EMPLOYMENT_CATEGORIES, monthName } from "@/lib/db/visaIssuances";
 import { formatInt } from "@/lib/format";
@@ -293,7 +293,7 @@ function EmbassyNoticeList({ data }: { data: EmbassyNotices }) {
                 <a href={n.url} target="_blank" rel="noopener noreferrer" className="link inline-flex min-h-11 items-center font-heading text-lg font-bold">
                   {n.title}
                 </a>{" "}
-                {n.excerpt ? <p className="mt-1 text-base leading-relaxed">{n.excerpt}</p> : null}
+                {n.excerpt ? <p className="mt-1 max-w-3xl text-base leading-relaxed">{shortExcerpt(n.excerpt)}</p> : null}
               </li>
             ))}
           </ol>

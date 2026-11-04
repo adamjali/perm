@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EMBASSIES, embassyForPost, embassyVisasUrl, noticeRange } from "@/lib/consular/embassies";
+import { EMBASSIES, embassyForPost, embassyVisasUrl, noticeRange, shortExcerpt } from "@/lib/consular/embassies";
 
 vi.mock("server-only", () => ({}));
 const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
@@ -34,6 +34,32 @@ describe("the embassies this site reads", () => {
     // "ph" must not take "phx" or the code before it.
     expect(inside("embassy-phx-notice")).toBe(false);
     expect(inside("embassy-pk-notice")).toBe(false);
+  });
+});
+
+describe("shortExcerpt", () => {
+  const manila =
+    "The U.S. Embassy canceled all U.S. citizen services and visa appointments scheduled tomorrow, August 18, 2026, due to the ongoing impact of heavy rainfall on Embassy facilities and surrounding areas. For U.S. citizens and visa applicants who have scheduled appointments tomorrow at the Embassy, please check your registered email address.";
+
+  it("keeps whole sentences that fit", () => {
+    expect(shortExcerpt(manila)).toBe(
+      "The U.S. Embassy canceled all U.S. citizen services and visa appointments scheduled tomorrow, August 18, 2026, due to the ongoing impact of heavy rainfall on Embassy facilities and surrounding areas.",
+    );
+  });
+
+  it("doesn't end a sentence at an abbreviation's period (U.S. Embassy)", () => {
+    expect(shortExcerpt(manila).endsWith("U.S.")).toBe(false);
+    const mid = `Appointments for applicants are rescheduled while the building is repaired after the storm by the U.S. Embassy staff ${"and contractors ".repeat(12)}today.`;
+    expect(shortExcerpt(mid).endsWith("U.S.")).toBe(false);
+    expect(shortExcerpt(mid).endsWith("...")).toBe(true);
+  });
+
+  it("cuts at a word with an ellipsis when no sentence ends in time, and leaves a short text alone", () => {
+    const long = "word ".repeat(80).trim();
+    const got = shortExcerpt(long);
+    expect(got.endsWith("word...")).toBe(true);
+    expect(got.length).toBeLessThanOrEqual(263);
+    expect(shortExcerpt("Limited visa processing is available.")).toBe("Limited visa processing is available.");
   });
 });
 
