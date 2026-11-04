@@ -328,7 +328,15 @@ export default async function OccupationPage({
               Where it falls among certified offers, and the four wage levels DOL sets for it by area.
             </p>{" "}
             <div className="mt-4 flex flex-col gap-2">
-              <Link href="/tools/compare-my-offer" className={buttonVariants({ size: "lg" })}>
+              {/* The tool opens on this job: it reads ?soc= the way the wage-levels link below does. */}
+              <Link
+                href={
+                  row.code
+                    ? `/tools/compare-my-offer?soc=${encodeURIComponent(socGroup(row.code) ?? "")}`
+                    : "/tools/compare-my-offer"
+                }
+                className={buttonVariants({ size: "lg" })}
+              >
                 Compare my offer
               </Link>{" "}
               {row.code ? (

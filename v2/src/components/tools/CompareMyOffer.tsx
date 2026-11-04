@@ -4,7 +4,10 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { WageOption } from "@/lib/db/publicData";
-import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { ChoiceRow } from "@/components/ui/choice-row";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
+import { socGroup } from "@/lib/socCode";
 import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOffer as Placed } from "@/lib/wageStats";
 import { formatDollars } from "@/lib/format";
 import { HOURS_PER_YEAR } from "@/lib/wageFormat";
@@ -93,9 +96,25 @@ const PROGRAM: Record<Program, { api: string; name: string; noun: string; explor
   perm: { api: "/api/perm-wages", name: "PERM offers", noun: "certified PERM cases", explorer: "/tools/salary-explorer" },
 };
 
+const UNITS = [
+  { value: "year", label: "per year" },
+  { value: "hour", label: "per hour" },
+] as const;
+
+/**
+ * The occupation a link names (`?soc=15-1252`, from an occupation's page), if this tool lists it.
+ * Matched in the seven-character form, so a dotted code from DOL's files finds it too.
+ */
+function socFromLink(params: URLSearchParams, occupations: readonly WageOption[]): string {
+  const raw = params.get("soc") ?? "";
+  const code = socGroup(raw) ?? raw;
+  return occupations.some((o) => o.value === code) ? code : "";
+}
+
 export function CompareMyOffer({ occupations, states }: Props) {
   const ids = { soc: useId(), state: useId(), offer: useId(), unit: useId() };
-  const [soc, setSoc] = useState("");
+  const params = useUrlSearchParams();
+  const [soc, setSoc] = useState(() => socFromLink(params, occupations));
   const [state, setState] = useState("");
   const [offer, setOffer] = useState("");
   const [unit, setUnit] = useState<"year" | "hour">("year");
@@ -110,11 +129,23 @@ export function CompareMyOffer({ occupations, states }: Props) {
   }, [offer, unit]);
 
   const occupationLabel = occupations.find((o) => o.value === soc)?.label ?? "this occupation";
+  // A code typed ("15-1252") finds its title too.
+  const occupationOptions = useMemo(
+    () => occupations.map((o) => ({ value: o.value, label: o.label, keywords: o.value })),
+    [occupations],
+  );
 
   async function run(e: { preventDefault: () => void }) {
     e.preventDefault();
-    if (!soc || annual === null) {
-      setError("Pick an occupation and enter the offer.");
+    // The button never greys out; a press with something missing says what and puts the cursor there.
+    if (!soc) {
+      setError("Pick the occupation first.");
+      document.getElementById(ids.soc)?.focus();
+      return;
+    }
+    if (annual === null) {
+      setError("Enter the offer as a number, like 145000.");
+      document.getElementById(ids.offer)?.focus();
       return;
     }
     setBusy(true);
@@ -146,13 +177,19 @@ export function CompareMyOffer({ occupations, states }: Props) {
       <form onSubmit={run} className="grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor={ids.soc} className={label}>Occupation </label>{" "}
-          <select id={ids.soc} value={soc} onChange={(e) => setSoc(e.target.value)} className={`${field} mt-1.5`} required>
-            <option value="">Choose the occupation</option>
-            {occupations.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>{" "}
-          <SelectedInFull label={occupations.find((o) => o.value === soc)?.label} />
+          {/* Hundreds of occupations: a box you can type a title or a code into, the pick shown whole. */}
+          <FilterCombobox
+            id={ids.soc}
+            noun="occupations"
+            placeholder="Choose the occupation"
+            options={occupationOptions}
+            value={soc}
+            onChange={(v) => {
+              setSoc(v);
+              setError(null);
+            }}
+            className={`${field} mt-1.5`}
+          />
         </div>{" "}
         <div>
           <label htmlFor={ids.state} className={label}>Worksite state </label>{" "}
@@ -165,7 +202,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
         </div>{" "}
         <div>
           <label htmlFor={ids.offer} className={label}>Your offer </label>{" "}
-          <div className="mt-1.5 flex gap-2">
+          <div className="mt-1.5 flex flex-wrap gap-2">
             <input
               id={ids.offer}
               inputMode="decimal"
@@ -173,13 +210,9 @@ export function CompareMyOffer({ occupations, states }: Props) {
               placeholder="145000"
               value={offer}
               onChange={(e) => setOffer(e.target.value)}
-              className={field}
-              required
+              className={`${field} min-w-0 flex-1 basis-40`}
             />{" "}
-            <select id={ids.unit} aria-label="Unit" value={unit} onChange={(e) => setUnit(e.target.value as "year" | "hour")} className={`${field} w-auto`}>
-              <option value="year">per year</option>
-              <option value="hour">per hour</option>
-            </select>
+            <ChoiceRow label="Paid" hideLabel options={UNITS} value={unit} onChange={setUnit} />
           </div>
         </div>{" "}
         <div className="sm:col-span-2 flex flex-wrap items-center gap-4">

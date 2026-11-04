@@ -9,6 +9,7 @@ import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
 import {
   MIN_FOR_MEDIAN,
   reportability,
@@ -152,6 +153,11 @@ export function SalaryExplorer({
   const pathname = usePathname();
   const params = useUrlSearchParams();
   const ids = { soc: useId(), state: useId(), fy: useId(), status: useId(), city: useId(), sector: useId() };
+  // A code typed ("15-1252") finds its title too.
+  const occupationOptions = useMemo(
+    () => occupations.map((o) => ({ value: o.value, label: `${o.label} (${formatInt(o.n)})`, keywords: o.value })),
+    [occupations],
+  );
 
   const soc = params.get("soc") ?? "";
   const state = params.get("state") ?? "";
@@ -250,20 +256,17 @@ export function SalaryExplorer({
             <Label htmlFor={ids.soc} className="text-sm font-bold">
               Occupation
             </Label>
-            <select
+            {/* Hundreds of occupations: a box you can type a title or a code into. It shows the chosen
+                title whole, so the line SelectedInFull drew under the select isn't needed here. */}
+            <FilterCombobox
               id={ids.soc}
+              noun="occupations"
+              emptyLabel="All occupations"
+              options={occupationOptions}
               value={soc}
-              onChange={(e) => setParam("soc", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <option value="">All occupations</option>
-              {occupations.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label} ({formatInt(o.n)})
-                </option>
-              ))}
-            </select>{" "}
-            <SelectedInFull label={occupations.find((o) => o.value === soc)?.label} />
+              onChange={(v) => setParam("soc", v)}
+              className="mt-2 bg-background"
+            />
           </div>
 
           <div>

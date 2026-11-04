@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CompareMyOffer } from "@/components/tools/CompareMyOffer";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
@@ -86,7 +87,11 @@ export default async function CompareMyOfferPage() {
       </header>
 
       <section data-embed="compare-offer" className="mt-10">
-        <CompareMyOffer occupations={options.occupations} states={options.states} />
+        {/* The tool reads ?soc= (an occupation page's "Compare my offer" link names the job). The
+            boundary keeps the page prerendered: its fallback is the tool itself with no query. */}
+        <SearchParamsBoundary>
+          <CompareMyOffer occupations={options.occupations} states={options.states} />
+        </SearchParamsBoundary>
       </section>
 
       <section className="mt-12">

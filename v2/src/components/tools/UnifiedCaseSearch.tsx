@@ -14,6 +14,7 @@ import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 import {
   FILTER_LABEL,
@@ -244,6 +245,7 @@ function Choice({
   describedBy,
   placeholder,
   display = (v) => v,
+  typed = false,
 }: {
   id: string;
   label: string;
@@ -254,6 +256,8 @@ function Choice({
   describedBy: string | undefined;
   placeholder: string;
   display?: (v: string) => string;
+  /** A long list (the countries): drawn as a box you can type into. */
+  typed?: boolean;
 }) {
   if (options.length === 0) {
     return (
@@ -269,6 +273,26 @@ function Choice({
         aria-label={label}
         aria-describedby={describedBy}
         className={CONTROL + " min-w-0"}
+      />
+    );
+  }
+  if (typed) {
+    // Two hundred countries: a box you can type into, every country in it, the pick shown whole.
+    return (
+      <FilterCombobox
+        id={id}
+        noun="countries"
+        emptyLabel="Any"
+        options={options.map((o) => ({
+          value: o.value,
+          label: `${display(o.value)}${o.n === null ? "" : ` (${formatInt(o.n)})`}`,
+        }))}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        aria-label={label}
+        aria-describedby={describedBy}
+        className={CONTROL}
       />
     );
   }
@@ -1316,6 +1340,7 @@ export function UnifiedCaseSearch({
                       disabled={!can[k].on}
                       describedBy={can[k].on ? undefined : `${uid}-${k}-why`}
                       placeholder={WORKER_PLACEHOLDER[k]}
+                      typed={k === "citizenship" || k === "birthCountry"}
                       {...(WORKER_DISPLAY[k] ? { display: WORKER_DISPLAY[k] } : {})}
                     />
                   </Field>{" "}

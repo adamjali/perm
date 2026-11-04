@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
+import { useId, useMemo } from "react";
+
+import { FilterCombobox } from "@/components/ui/filter-combobox";
+import { POST_COUNTRY, postCountry } from "@/lib/consular/postCountries";
 
 import type { PlanReading } from "@/lib/db/planFigures";
 import { behindLabel } from "@/lib/consular/scheduling";
@@ -25,17 +28,32 @@ export function ConsulateChoice({
 }) {
   const id = useId();
   const picked = consulates.posts.find((p) => p.slug === post) ?? null;
+  // Each post with its country beside it, and the country's other names searchable too.
+  const options = useMemo(
+    () =>
+      consulates.posts.map((p) => {
+        const country = postCountry(p.slug);
+        return {
+          value: p.slug,
+          label: country && country !== p.name ? `${p.name}, ${country}` : p.name,
+          keywords: POST_COUNTRY[p.slug],
+        };
+      }),
+    [consulates.posts],
+  );
   return (
     <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] sm:items-end [&>*]:min-w-0">
       <Field id={id} label="Your consulate" hint="Usually in the country where you live">
-        <select id={id} value={picked?.slug ?? ""} onChange={(e) => onPick(e.target.value || null)} className={FIELD}>
-          <option value="">Choose a consulate</option>
-          {consulates.posts.map((p) => (
-            <option key={p.slug} value={p.slug}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        {/* About 140 posts: a box you can type a city or a country into ("India" finds Mumbai and New Delhi). */}
+        <FilterCombobox
+          id={id}
+          noun="consulates"
+          emptyLabel="Choose a consulate"
+          options={options}
+          value={picked?.slug ?? ""}
+          onChange={(v) => onPick(v || null)}
+          className={FIELD}
+        />
       </Field>{" "}
       <p role="status" className="text-base leading-relaxed">
         {picked ? (

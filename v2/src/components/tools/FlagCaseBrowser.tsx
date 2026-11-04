@@ -32,6 +32,7 @@ import { seasonalForm } from "@/lib/seasonalForms";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { choiceVariants } from "@/components/ui/choice";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
 import { buttonVariants } from "@/components/ui/button";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { ISO_MONTH_RE } from "@convex/lib/months";
@@ -324,8 +325,12 @@ function money(v: string): number | undefined {
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
 
-/** More values than this and a select stops being a way to choose. */
-const MAX_OPTIONS = 250;
+/**
+ * The fields whose values run to hundreds (occupations, law firms) get a box you can type into;
+ * the short ones (status, state, visa class) stay plain selects. Both list every value: a
+ * select of these had cut the list at 250 without saying so.
+ */
+const TYPED_FIELDS: ReadonlySet<string> = new Set(["soc", "firm"]);
 const FILTER_LABEL = "mb-1 block text-sm font-bold";
 
 /**
@@ -355,22 +360,40 @@ function FlagSearchFilters({
         {fields.map(({ f, opts }) => (
           <Fragment key={f.key}>
             {" "}
-            <label className="block" htmlFor={`${id}-${f.key}`}>
-              <span className={FILTER_LABEL}>{f.label}</span>{" "}
-              <select
-                id={`${id}-${f.key}`}
-                value={value[f.key] ?? ""}
-                onChange={(e) => onChange({ ...value, [f.key]: e.target.value || undefined })}
-                className={CONTROL}
-              >
-                <option value="">Any ({formatInt(opts.length)})</option>
-                {opts.slice(0, MAX_OPTIONS).map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {`${o.value} (${formatInt(o.n)})`}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {TYPED_FIELDS.has(f.key) ? (
+              // Occupations and firms run to hundreds: a box you can type into, every one of them in it.
+              <div>
+                <label className={FILTER_LABEL} htmlFor={`${id}-${f.key}`}>
+                  {f.label}
+                </label>{" "}
+                <FilterCombobox
+                  id={`${id}-${f.key}`}
+                  noun={f.key === "firm" ? "law firms" : "occupations"}
+                  emptyLabel={`Any (${formatInt(opts.length)})`}
+                  options={opts.map((o) => ({ value: o.value, label: `${o.value} (${formatInt(o.n)})` }))}
+                  value={value[f.key] ?? ""}
+                  onChange={(v) => onChange({ ...value, [f.key]: v || undefined })}
+                  className={CONTROL}
+                />
+              </div>
+            ) : (
+              <label className="block" htmlFor={`${id}-${f.key}`}>
+                <span className={FILTER_LABEL}>{f.label}</span>{" "}
+                <select
+                  id={`${id}-${f.key}`}
+                  value={value[f.key] ?? ""}
+                  onChange={(e) => onChange({ ...value, [f.key]: e.target.value || undefined })}
+                  className={CONTROL}
+                >
+                  <option value="">Any ({formatInt(opts.length)})</option>
+                  {opts.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {`${o.value} (${formatInt(o.n)})`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </Fragment>
         ))}{" "}
         {hasWage ? (

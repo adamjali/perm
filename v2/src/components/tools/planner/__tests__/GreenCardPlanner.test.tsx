@@ -229,10 +229,14 @@ describe("GreenCardPlanner, the costs", () => {
     expect(screen.getByText("Paused line")).toBeInTheDocument();
     expect(screen.getAllByText(/Consulate interviews paused since about August 25, 2026/).length).toBeGreaterThan(0);
     // The reader's consulate, read from the address, with State's month and its page.
-    expect(screen.getByLabelText("Your consulate")).toHaveValue("manila");
+    expect(screen.getByRole("combobox", { name: "Your consulate" })).toHaveTextContent("Manila, Philippines");
     expect(screen.getByText("Mar-2023")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Manila's page" })).toHaveAttribute("href", "/consular-posts/manila");
-    fireEvent.change(screen.getByLabelText("Your consulate"), { target: { value: "" } });
+    // A country finds its posts; the empty row clears the pick.
+    fireEvent.click(screen.getByRole("combobox", { name: "Your consulate" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find consulates" }), { target: { value: "philippines" } });
+    expect(screen.getByRole("option", { name: /^Manila, Philippines/ })).toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole("option", { name: /^Choose a consulate/ }));
     expect(nav.replace).toHaveBeenLastCalledWith(expect.not.stringContaining("post="), expect.anything());
   });
 

@@ -85,7 +85,10 @@ describe("the worker, job and industry filters", () => {
     renderIt();
     fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
     fireEvent.change(screen.getByRole("combobox", { name: "Industry" }), { target: { value: "31-33" } });
-    fireEvent.change(screen.getByRole("combobox", { name: "Citizenship" }), { target: { value: "KOREA, SOUTH" } });
+    // Citizenship is a box you type into: open it, find the country, pick it.
+    fireEvent.click(screen.getByRole("combobox", { name: "Citizenship" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find countries" }), { target: { value: "korea" } });
+    fireEvent.mouseDown(screen.getByRole("option", { name: "Korea, South (90)" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Visa at filing" }), { target: { value: "H-1B" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Worker's education" }), { target: { value: "Master's" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Worksite city" }), { target: { value: "Seattle" } });
@@ -105,8 +108,13 @@ describe("the worker, job and industry filters", () => {
 
   it("shows countries in title case with their counts, and keeps DOL's spelling as the value", () => {
     renderIt();
-    const opt = screen.getByRole("option", { name: "Korea, South (90)" }) as HTMLOptionElement;
-    expect(opt.value).toBe("KOREA, SOUTH");
+    fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
+    fireEvent.click(screen.getByRole("combobox", { name: "Citizenship" }));
+    expect(screen.getByRole("option", { name: "India (1,200)" })).toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole("option", { name: "Korea, South (90)" }));
+    expect(screen.getByRole("combobox", { name: "Citizenship" })).toHaveTextContent("Korea, South (90)");
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    expect(lastAsked().get("cit")).toBe("KOREA, SOUTH");
   });
 
   it("names a value the route would refuse instead of sending it", () => {

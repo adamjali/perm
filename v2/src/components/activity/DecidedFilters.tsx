@@ -11,14 +11,26 @@ import {
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { DecidedCase } from "@/lib/db/decidedDays";
 import { buttonVariants } from "@/components/ui/button";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
 
 const CONTROL =
   "mt-1 w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
   "block text-sm font-bold text-muted-foreground";
 
-/** More options than this and a select stops being a way to choose. */
-const MAX_OPTIONS = 250;
+/**
+ * The fields whose values are open-ended names (occupations, firms, cities,
+ * countries, industry codes) get a box you can type into, every value in it;
+ * the short fixed lists (state, visa, education) stay plain selects. A select
+ * of the long ones had cut the list at 250 without saying so.
+ */
+const TYPED_NOUN: Partial<Record<string, string>> = {
+  soc: "occupations",
+  firm: "law firms",
+  city: "cities",
+  citizenship: "countries",
+  naics: "industry codes",
+};
 
 function money(v: string): number | undefined {
   if (v.trim() === "") return undefined;
@@ -63,23 +75,38 @@ export function DecidedFilters({
               <label htmlFor={`${id}-${f.key}`} className={LABEL}>
                 {f.label}
               </label>{" "}
-              <select
-                id={`${id}-${f.key}`}
-                value={value[f.key] ?? ""}
-                onChange={(e) =>
-                  onChange({ ...value, [f.key]: e.target.value || undefined })
-                }
-                className={CONTROL}
-              >
-                <option value="">
-                  Any ({opts.length.toLocaleString("en-US")})
-                </option>
-                {opts.slice(0, MAX_OPTIONS).map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {`${o.value} (${o.n.toLocaleString("en-US")})`}
+              {TYPED_NOUN[f.key] ? (
+                <FilterCombobox
+                  id={`${id}-${f.key}`}
+                  noun={TYPED_NOUN[f.key]!}
+                  emptyLabel={`Any (${opts.length.toLocaleString("en-US")})`}
+                  options={opts.map((o) => ({
+                    value: o.value,
+                    label: `${o.value} (${o.n.toLocaleString("en-US")})`,
+                  }))}
+                  value={value[f.key] ?? ""}
+                  onChange={(v) => onChange({ ...value, [f.key]: v || undefined })}
+                  className={CONTROL}
+                />
+              ) : (
+                <select
+                  id={`${id}-${f.key}`}
+                  value={value[f.key] ?? ""}
+                  onChange={(e) =>
+                    onChange({ ...value, [f.key]: e.target.value || undefined })
+                  }
+                  className={CONTROL}
+                >
+                  <option value="">
+                    Any ({opts.length.toLocaleString("en-US")})
                   </option>
-                ))}
-              </select>
+                  {opts.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {`${o.value} (${o.n.toLocaleString("en-US")})`}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </Fragment>
         ))}{" "}

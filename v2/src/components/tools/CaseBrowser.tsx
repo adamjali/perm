@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
@@ -8,7 +8,8 @@ import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 // client is server-only, so the reads go through /api/perm-cases. See
 // src/hooks/usePublicQuery.ts.
 import { usePublicQuery } from "@/hooks/usePublicQuery";
-import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { FilterCombobox } from "@/components/ui/filter-combobox";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { Pager } from "@/components/ui/pager";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // TYPE ONLY, and that is what makes it legal here. `@/lib/db/cases` imports
@@ -164,6 +165,10 @@ const CONTROL =
   "min-h-[44px] w-full min-w-0 border-2 border-input bg-card px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-hard-sm";
 const BUTTON = buttonVariants({ variant: "outline" });
 const LABEL = "text-sm font-bold text-muted-foreground";
+const ORDER_CHOICES = [
+  { value: "newest", label: "Newest decision first" },
+  { value: "oldest", label: "Oldest decision first" },
+] as const;
 
 function fmtWage(n: number | null): string {
   return n === null ? "—" : `$${formatInt(n)}`;
@@ -220,6 +225,12 @@ export function CaseBrowser({
   const [fiscalYear, setFiscalYear] = useState(() => params.get("fy") ?? "");
   const [order, setOrder] = useState<"newest" | "oldest">("newest");
   const [pageSize, setPageSize] = useState(50);
+  const socBoxId = useId();
+  // A code typed ("15-1252") finds its title too.
+  const occupationOptions = useMemo(
+    () => occupations.map((o) => ({ value: o.code, label: `${o.name} (${formatInt(o.total)})`, keywords: o.code })),
+    [occupations],
+  );
 
   // --- paging: an explicit cursor stack, because a cursor is opaque to this
   // component and a "page 3" button needs the cursor page 3 started at.
@@ -682,22 +693,21 @@ export function CaseBrowser({
           ) : null}
 
           {dimension === "occupation" ? (
-            <label className="block">
-              <span className={LABEL}>Occupation</span>{" "}
-              <select
+            // Hundreds of occupations: a box you can type a title or a code into, showing the pick whole.
+            <div>
+              <label htmlFor={socBoxId} className={`block ${LABEL}`}>
+                Occupation
+              </label>{" "}
+              <FilterCombobox
+                id={socBoxId}
+                noun="occupations"
+                placeholder="Pick an occupation"
+                options={occupationOptions}
                 value={socValue}
-                onChange={(e) => setSocValue(e.target.value)}
+                onChange={setSocValue}
                 className={CONTROL}
-              >
-                <option value="">Pick an occupation</option>
-                {occupations.map((o) => (
-                  <option key={o.code} value={o.code}>
-                    {o.name} ({formatInt(o.total)})
-                  </option>
-                ))}
-              </select>{" "}
-              <SelectedInFull label={occupations.find((o) => o.code === socValue)?.name} />
-            </label>
+              />
+            </div>
           ) : null}
 
           {dimension === "employer" && employerSlug ? (
@@ -752,17 +762,13 @@ export function CaseBrowser({
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
-          <label className="block">
-            <span className={LABEL}>Order</span>{" "}
-            <select
-              value={order}
-              onChange={(e) => setOrder(e.target.value as "newest" | "oldest")}
-              className={CONTROL}
-            >
-              <option value="newest">Newest decision first</option>{" "}
-              <option value="oldest">Oldest decision first</option>
-            </select>
-          </label>{" "}
+          <ChoiceRow
+            label="Order"
+            labelClassName={`block ${LABEL}`}
+            options={ORDER_CHOICES}
+            value={order}
+            onChange={setOrder}
+          />{" "}
           <label className="block">
             <span className={LABEL}>Rows per page</span>{" "}
             <select
