@@ -71,8 +71,8 @@ describe("appCaseEstimate wiring", () => {
     });
     expect(res.casesAhead).toBeNull();
     expect(res.lineAhead).toBeNull();
-    // Still returns an estimate object (a no-date reading), never throws.
-    expect(res.estimate === null || typeof res.estimate.kind === "string").toBe(true);
+    // No filing date, nothing to count from: no estimate at all, rather than a made-up date.
+    expect(res.estimate).toBeNull();
   });
 
   it("is pure and deterministic for the same inputs", () => {
@@ -95,6 +95,7 @@ describe("appCaseEstimate wiring", () => {
       isFinal: false,
       today: TODAY,
     });
-    expect(empty.estimate === null || typeof empty.estimate.kind === "string").toBe(true);
+    // No census and no DOL reading: no estimate, never one built from nothing.
+    expect(empty.estimate).toBeNull();
   });
 });

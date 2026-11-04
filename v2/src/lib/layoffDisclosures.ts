@@ -73,11 +73,6 @@ export function parseLayoffDoc(raw: unknown): LayoffDoc | null {
   return { ...d, topByYear: d.topByYear ?? {} } as LayoffDoc;
 }
 
-/** The newest decision day the page's figures cover. */
-export function layoffAsOf(doc: LayoffDoc | null): string | null {
-  return doc?.newestThrough ?? null;
-}
-
 export function newestYear(doc: LayoffDoc): LayoffYear {
   return doc.years.find((y) => y.fy === doc.newestFy)!;
 }

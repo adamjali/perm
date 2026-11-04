@@ -125,8 +125,6 @@ export type BudgetName = keyof typeof BUDGETS;
 export function windowFor(name: BudgetName): { limit: number; windowMs: number } {
   return { limit: scaled(BUDGETS[name].limit), windowMs: MS_PER_DAY };
 }
-
-export const CASE_CONFIRMATION_KEY = BUDGETS.caseConfirm.key;
 export const CASE_ALERT_KEY = BUDGETS.caseAlert.key;
 
 /**

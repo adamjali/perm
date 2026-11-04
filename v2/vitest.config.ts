@@ -99,6 +99,20 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/content/__tests__/sharedImage.test.ts",
   // Added 2026-11-04: replaces Convex Auth's middleware and convex/nextjs, like proxyCarried.test.ts.
   "src/lib/auth/__tests__/proxyReturnTo.test.ts",
+  // Added 2026-11-04 from the tests audit: each mocks a module other files in the shared pool use
+  // for real (convex/nextjs and Convex Auth, @/lib/sentry, entityLinks, the database client and
+  // three read modules, the AI providers). The config's own rule: a file that mocks a shared module
+  // runs isolated, or a later file gets its mock (714e620f went red this way the same day).
+  "src/lib/auth/__tests__/proxyStart.test.ts",
+  "src/lib/__tests__/flagCasesApi.test.ts",
+  "src/lib/db/__tests__/boardDoc.test.ts",
+  "src/lib/ai/__tests__/summarize.test.ts",
+  "src/lib/db/__tests__/osha.test.ts",
+  "src/lib/db/__tests__/whd.test.ts",
+  "src/lib/scorecard/rivals.test.ts",
+  // Mocks fs, gray-matter and reading-time; the likely reason sharedImage.test.ts read an empty
+  // post list in the shared pool (isolating the victim alone left the mocker free to hit another).
+  "src/lib/content/__tests__/index.test.ts",
   // Both mock ../client and the wage-view module; shared-pool leaks would
   // hand one file's mock to the other.
   "src/lib/db/__tests__/lcaDefaultView.test.ts",
@@ -221,16 +235,9 @@ export default defineConfig({
         "convex/_generated/**",
         "**/*.stories.{ts,tsx}",
       ],
-      thresholds: process.env.CI
-        ? {
-            global: {
-              branches: 70,
-              functions: 75,
-              lines: 75,
-              statements: 75,
-            },
-          }
-        : undefined,
+      // No thresholds: Vitest reads a key under `thresholds` as a file glob, so the old
+      // `global: {...}` matched no file and never applied, and no workflow runs coverage
+      // (Nov 4 2026). Add top-level numbers only with a workflow that runs --coverage.
     },
 
     // Three-tier project structure optimized for SPEED

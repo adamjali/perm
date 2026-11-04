@@ -66,16 +66,6 @@ export async function employmentBy(dim: "fsc" | "post", from: string, to: string
   return got.map((r) => ({ group: r.group_key, label: r.label, category: r.category, n: Number(r.n) }));
 }
 
-/** One country's employment issuances by category and month, from `from` on. */
-export async function countryByMonth(group: string, from: string): Promise<{ month: string; category: string; n: number }[]> {
-  const got = await rows<{ month: string; category: string; n: unknown }>(
-    `SELECT month, category, sum(n) AS n FROM visa_issuances
-     WHERE dim = 'fsc' AND group_key = ? AND month >= ? GROUP BY month, category ORDER BY month`,
-    [group, from],
-  ).catch(() => []);
-  return got.map((r) => ({ month: r.month, category: r.category, n: Number(r.n) }));
-}
-
 /** "February 2026". */
 export function monthName(month: string): string {
   const [y, m] = month.split("-").map(Number) as [number, number];

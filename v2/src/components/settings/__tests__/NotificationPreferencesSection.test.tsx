@@ -26,31 +26,35 @@ const mockSendTestEmail = vi.fn();
 const mockSavePushSubscription = vi.fn();
 const mockRemovePushSubscription = vi.fn();
 const mockSendTestPush = vi.fn();
+const mockMarketingAction = vi.fn();
 
 // Track which hooks have been called to return the right mocks
 let useMutationCallCount = 0;
-let useActionCallCount = 0;
 
-vi.mock("convex/react", () => ({
-  useMutation: () => {
-    // Order of calls in component:
-    // 1. updateUserProfile
-    // 2. savePushSubscription
-    // 3. removePushSubscription
-    useMutationCallCount++;
-    if (useMutationCallCount % 3 === 2) return mockSavePushSubscription;
-    if (useMutationCallCount % 3 === 0) return mockRemovePushSubscription;
-    return mockUpdateProfile;
-  },
-  useAction: () => {
-    // Order of calls in component:
-    // 1. sendTestEmail
-    // 2. sendTestPush
-    useActionCallCount++;
-    if (useActionCallCount % 2 === 0) return mockSendTestPush;
-    return mockSendTestEmail;
-  },
-}));
+vi.mock("convex/react", async () => {
+  const { getFunctionName } = await vi.importActual<typeof import("convex/server")>("convex/server");
+  return {
+    useMutation: () => {
+      // Order of calls in component:
+      // 1. updateUserProfile
+      // 2. savePushSubscription
+      // 3. removePushSubscription
+      useMutationCallCount++;
+      if (useMutationCallCount % 3 === 2) return mockSavePushSubscription;
+      if (useMutationCallCount % 3 === 0) return mockRemovePushSubscription;
+      return mockUpdateProfile;
+    },
+    // By the action's name: the component calls four actions a render (two for the
+    // marketing switch first), and a mock handed out by call count gave the marketing
+    // status read the test-email mock, which then used up a test's one rejection.
+    useAction: (ref: Parameters<typeof getFunctionName>[0]) => {
+      const name = getFunctionName(ref);
+      if (name === "notificationActions:sendTestEmail") return mockSendTestEmail;
+      if (name === "pushNotifications:sendTestPush") return mockSendTestPush;
+      return mockMarketingAction;
+    },
+  };
+});
 
 // Mock push subscription helpers
 const mockIsPushSupported = vi.fn(() => true);
@@ -123,7 +127,7 @@ describe("NotificationPreferencesSection", () => {
     vi.clearAllMocks();
     // Reset call counters for proper mock routing
     useMutationCallCount = 0;
-    useActionCallCount = 0;
+    mockMarketingAction.mockResolvedValue(undefined);
     mockUpdateProfile.mockResolvedValue(undefined);
     mockSendTestEmail.mockResolvedValue(undefined);
     mockSendTestPush.mockResolvedValue({ success: true });
@@ -653,16 +657,7 @@ describe("NotificationPreferencesSection", () => {
       });
     });
 
-    // SKIPPED — pre-existing test-mock interaction issue (confirmed broken on
-    // commit e987840, i.e. before the April 2026 auth UX work). The useAction
-    // factory mock above returns mockSendTestEmail fresh on each call, which
-    // somehow swallows both mockRejectedValueOnce and mockImplementationOnce
-    // when the rejection lands inside React's transition batching. The error
-    // code path DOES fire correctly in prod (verified by matching string
-    // comparison with NotificationPreferencesSection.tsx). Fixing requires
-    // refactoring the useAction mock factory or switching to msw, which is
-    // out-of-scope for an auth-hardening PR. TODO: resolve separately.
-    it.skip("shows error toast when test email fails", async () => {
+    it("shows error toast when test email fails", async () => {
       mockSendTestEmail.mockImplementationOnce(() =>
         Promise.reject(new Error("Send failed")),
       );

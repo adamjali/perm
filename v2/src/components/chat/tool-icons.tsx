@@ -128,52 +128,6 @@ export const TOOL_COLORS: Record<string, string> = {
 } as const;
 
 /**
- * Tool name to background color class (for status indicators)
- */
-export const TOOL_BG_COLORS: Record<string, string> = {
-  // Read-only tools
-  queryCases: 'bg-data-info/10 ',
-  searchKnowledge: 'bg-tint',
-  searchWeb: 'bg-tint',
-
-  // Case CRUD tools
-  createCase: 'bg-tint',
-  updateCase: 'bg-data-warn/15 ',
-  archiveCase: 'bg-muted ',
-  reopenCase: 'bg-data-info/10 ',
-  deleteCase: 'bg-destructive/10 ',
-
-  // Other action tools
-  syncCalendar: 'bg-tint',
-
-  // Navigation tools
-  navigate: 'bg-muted ',
-  viewCase: 'bg-data-info/10 ',
-  scrollTo: 'bg-muted ',
-  refreshPage: 'bg-muted ',
-
-  // Calendar sync tools
-  syncToCalendar: 'bg-tint',
-  unsyncFromCalendar: 'bg-data-warn/15 ',
-
-  // Notification tools
-  markNotificationRead: 'bg-tint',
-  markAllNotificationsRead: 'bg-tint',
-  deleteNotification: 'bg-destructive/10 ',
-  clearAllNotifications: 'bg-destructive/10 ',
-
-  // Settings tools
-  updateSettings: 'bg-tint',
-  getSettings: 'bg-tint',
-
-  // Bulk operation tools
-  bulkUpdateStatus: 'bg-data-warn/15 ',
-  bulkArchiveCases: 'bg-muted ',
-  bulkDeleteCases: 'bg-destructive/10 ',
-  bulkCalendarSync: 'bg-tint',
-} as const;
-
-/**
  * Human-readable tool display names
  */
 export const TOOL_DISPLAY_NAMES: Record<string, string> = {
@@ -287,24 +241,10 @@ export const TOOL_LOADING_MESSAGES: Record<string, string> = {
 } as const;
 
 /**
- * Get icon for a tool, with fallback
- */
-export function getToolIcon(tool: string): PhosphorIcon {
-  return TOOL_ICONS[tool] ?? Search;
-}
-
-/**
  * Get color class for a tool, with fallback
  */
 export function getToolColor(tool: string): string {
   return TOOL_COLORS[tool] ?? 'text-muted-foreground ';
-}
-
-/**
- * Get background color class for a tool, with fallback
- */
-export function getToolBgColor(tool: string): string {
-  return TOOL_BG_COLORS[tool] ?? 'bg-muted ';
 }
 
 /**

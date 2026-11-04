@@ -240,39 +240,6 @@ export interface DashboardSummary {
   total: number;
 }
 
-/**
- * Factory function to create a DashboardSummary with computed total.
- *
- * Enforces the invariant that `total` equals the sum of all stage counts
- * (excluding duplicates as they overlap with other stages).
- *
- * @param counts - Individual stage counts
- * @returns DashboardSummary with computed total
- */
-export function createDashboardSummary(counts: {
-  pwd: StatusCount;
-  recruitment: StatusCount;
-  eta9089: StatusCount;
-  i140: StatusCount;
-  complete: StatusCount;
-  closed: StatusCount;
-  duplicates: StatusCount;
-}): DashboardSummary {
-  // Total excludes duplicates since they're already counted in their respective stages
-  const total =
-    counts.pwd.count +
-    counts.recruitment.count +
-    counts.eta9089.count +
-    counts.i140.count +
-    counts.complete.count +
-    counts.closed.count;
-
-  return {
-    ...counts,
-    total,
-  };
-}
-
 // ============================================================================
 // ACTIVITY TYPES
 // ============================================================================

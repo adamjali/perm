@@ -48,9 +48,6 @@ import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
 import { SITE_URL } from "../../convex/lib/links";
 import type { NextLink, NextSteps } from "../../convex/lib/alertNextSteps";
 
-/** The public case page. The email's primary destination. */
-export const CASE_PAGE_URL = `${SITE_URL}/perm-case-status`;
-
 export interface CaseStatusChangedProps {
   /** DOL case number, normalised, e.g. "P-100-26125-868956". */
   caseNumber: string;

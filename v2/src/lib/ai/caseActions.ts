@@ -1127,10 +1127,6 @@ export const ACTION_TOOLS = [
 
 export type ActionTool = (typeof ACTION_TOOLS)[number];
 
-export function isActionTool(name: string): name is ActionTool {
-  return (ACTION_TOOLS as readonly string[]).includes(name);
-}
-
 export async function prepareAction(toolName: ActionTool, params: unknown, token: string): Promise<Prepared> {
   switch (toolName) {
     case 'createCase':

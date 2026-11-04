@@ -28,11 +28,6 @@ export function loadPolicyItems(): Promise<PolicyItem[]> {
   return pending;
 }
 
-/** For tests: forget the fetched list. */
-export function resetPolicyItems(): void {
-  pending = null;
-}
-
 export interface PolicyQuery {
   text: string;
   kind: string;

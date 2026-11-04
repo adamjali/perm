@@ -200,23 +200,3 @@ export function isToolAllowed(
   // In CONFIRM or AUTO mode, all tools are allowed (with appropriate confirmation)
   return true;
 }
-
-/**
- * Get a human-readable description of why confirmation is needed
- *
- * @param toolName - The name of the tool
- * @returns Description string for UI display
- */
-export function getConfirmationReason(toolName: string): string {
-  const permission = getToolPermission(toolName);
-
-  switch (permission) {
-    case 'destructive':
-      return 'This action cannot be undone.';
-    case 'confirm':
-      return 'This action will modify your data.';
-    case 'autonomous':
-    default:
-      return '';
-  }
-}

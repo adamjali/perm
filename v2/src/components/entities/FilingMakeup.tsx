@@ -321,63 +321,6 @@ export function PartyMix({
 }
 
 /**
- * Cities as bars, because the question is "how concentrated", and a bar says
- * that before a number does. The worksite city is DOL's own field
- * (`PRIMARY_WORKSITE_CITY`), grouped across the spellings filers typed.
- */
-export function CityMix({
-  rows: given,
-  total,
-  className,
-}: {
-  rows: FacetRow[];
-  total: number;
-  className?: string;
-}) {
-  const rows = realCities(given);
-  if (rows.length === 0) return null;
-  const top = rows[0]?.n ?? 0;
-  const shown = rows.reduce((a, r) => a + r.n, 0);
-  return (
-    <Shell
-      title="Where the work is"
-      note={
-        <>
-          The worksite city on the application, which is where the job is.{" "}
-          {rows.length === 1 ? "This city covers" : `These ${rows.length} cities cover`}{" "}
-          {formatInt(shown)} of {formatInt(total)} filings.
-        </>
-      }
-      className={className}
-    >
-      <ChartTips label="Filings by worksite city">
-      <ul className="space-y-2.5">
-        {rows.map((r) => (
-          <Fragment key={r.key ?? r.label}>
-            {" "}
-            <li
-              data-tip={`${r.label}\n${formatInt(r.n)} of ${formatInt(total)} filings${approvedNote(r).replace(" · ", "\n")}`}
-            >
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
-                <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(r.n)}</span>
-              </span>{" "}
-              <span className="mt-1 block h-2 w-full bg-sage" aria-hidden="true">
-                <span
-                  className="block h-full bg-primary"
-                  style={{ width: `${top > 0 ? Math.max(2, (r.n / top) * 100) : 0}%` }}
-                />
-              </span>
-            </li>
-          </Fragment>
-        ))}
-      </ul>
-      </ChartTips>
-    </Shell>
-  );
-}
-
-/**
  * The states and the cities in one box: where the jobs are, at both grains.
  * An employer page shows both, and two half-empty boxes side by side read as
  * two answers to one question. The states are chips (few, short), the cities
