@@ -4,6 +4,7 @@
  * Generates structured data (JSON-LD) for content pages.
  */
 
+import { heroCrops } from "@/lib/content/heroCrops";
 import { TRADE_NAME } from "@/lib/constants/about";
 import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
 import { SCHEMA_IDS } from "@/lib/structuredData";
@@ -32,6 +33,15 @@ function imageUrl(meta: PostMeta): string {
 }
 
 /**
+ * The Article's images: an article header's 16x9, 4x3 and 1x1 shapes (Google's Article guide asks for all
+ * three, and Discover for a large 16x9 one), else the single image as before.
+ */
+function articleImages(meta: PostMeta): string | string[] {
+  const crops = heroCrops(meta.image);
+  return crops ? [crops.wide, crops.standard, crops.square].map((p) => `${BASE_URL}${p}`) : imageUrl(meta);
+}
+
+/**
  * Convert a YYYY-MM-DD date string to ISO 8601 with explicit UTC offset for
  * schema.org `datePublished` / `dateModified` fields.
  *
@@ -57,7 +67,7 @@ export function generateArticleSchema(
     "@type": "Article" as const,
     headline: meta.title,
     description: meta.description,
-    image: imageUrl(meta),
+    image: articleImages(meta),
     datePublished: toISO8601(meta.date),
     dateModified: toISO8601(meta.updated || meta.date),
     // THE ARTICLE'S OWN BYLINE, resolved to the right schema type.

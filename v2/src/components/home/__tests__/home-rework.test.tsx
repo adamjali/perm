@@ -47,7 +47,7 @@ describe("the answer and the figures at the top of the homepage", () => {
   it("drops a figure whose value is missing, and never invents one", () => {
     expect(heroFigures(undefined, null)).toEqual([]);
     const rows = heroFigures({ frontierMonth: null, lastDay: null, pending: 91933, checkedAt: null, pwdPending: null }, null);
-    expect(rows).toEqual([{ label: "PERM cases waiting", value: "91,933" }]);
+    expect(rows).toEqual([{ label: "In the PERM backlog", value: "91,933" }]);
   });
 
   it("the wait is the live reading, dated, never the quarterly file's month (Oct 28 2026)", () => {
@@ -67,7 +67,7 @@ describe("the answer and the figures at the top of the homepage", () => {
     );
     expect(rows.map((r) => `${r.label}=${r.value}`)).toEqual([
       "Cases decided Sep 30 waited=9½ months",
-      "PERM cases waiting=91,933",
+      "In the PERM backlog=91,933",
       "Decided on Sep 30=901",
       "Wage requests waiting=47,941",
     ]);

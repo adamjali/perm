@@ -61,7 +61,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-queue",
     label: "PERM queue backlog",
     blurb:
-      "Every filing month's pending census: how many cases are undecided, in which DOL queue, and how far each month has progressed.",
+      "The PERM backlog by filing month: how many cases are undecided, at which stage, and how far each month has progressed, from PERM Tracker's daily check of every pending case.",
   },
   {
     path: "/debarments",
@@ -101,9 +101,9 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
   {
     path: "/perm-denial-risk",
-    label: "PERM denial rates",
+    label: "PERM approval and denial rates",
     blurb:
-      "Measured denial rates by ETA-9089 answer, offered wage band, occupation, state and fiscal year. Group rates only: there is deliberately no per-case risk score.",
+      "How often DOL approves PERM, from its own disclosure files with the count and dates, beside the newest 30 days of decisions PERM Tracker's daily check saw; then denial rates by ETA-9089 answer, offered wage band, occupation, state and fiscal year. Group rates only: there is deliberately no per-case risk score.",
   },
   {
     path: "/perm-wages",

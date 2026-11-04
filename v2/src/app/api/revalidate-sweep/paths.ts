@@ -37,6 +37,10 @@ export const SWEEP_PAGES = [
   // and the FAQ's "how long does PERM take" answer.
   "/perm-queue",
   "/faq",
+  // Opens with the approval rate: DOL's files, then our check's newest 30 days of decisions.
+  "/perm-denial-risk",
+  // Our own column's freshness is the sweep's record.
+  "/compare",
   // The wage-request, LCA and H-2A/H-2B summaries, written by
   // pwd-status-direct.yml, which calls this endpoint too.
   "/pwd-cases",

@@ -13,6 +13,8 @@
  * groups at the top and calls them the riskiest thing in the data.
  */
 
+import { approvalRate, type CasesMeta } from "@/lib/approvalRate";
+import { getObservedDays } from "@/lib/db/pulse";
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
@@ -26,7 +28,7 @@ import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/Rat
 import { DenialReach } from "@/components/tools/DenialReach";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
 import { FreshnessDots, AnswerPanel } from "@/components/tools/Insight";
-import { getDisclosureStats } from "@/lib/db/publicData";
+import { getCasesMeta, getDisclosureStats } from "@/lib/db/publicData";
 import {
   getWageDenialBands,
   isMonotonic,
@@ -41,12 +43,13 @@ import { SITE_URL } from "@/lib/constants/site";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import { CaveatBox } from "@/components/ui/note";
 
-const TITLE = "PERM Denial Rates";
+// "Approval rate" is what people and answer engines ask for (owner, Nov 4 2026); the page answers it first.
+const TITLE = "PERM Approval and Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
 // and the entity-escaped source string is six characters per apostrophe, so
 // measure the UNESCAPED text.
 const DESCRIPTION =
-  "PERM denial rates measured from DOL's own files: by offered wage, by fiscal year, by occupation, by state, and by the factors the ETA-9089 records.";
+  "How often DOL approves PERM, from its own files, and the denial rate by offered wage, fiscal year, job, state and the answers on the ETA-9089.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -101,10 +104,14 @@ function denialRate(denied: number, decided: number): number | null {
 }
 
 export default async function PermDenialRiskPage() {
-  const [stats, wageBands] = await Promise.all([
+  const [stats, wageBands, casesMeta, observed] = await Promise.all([
     getDisclosureStats(),
     getWageDenialBands(),
+    // The approval-rate sentence: DOL's files' totals, then our check's newest 30 days. Either failing drops it.
+    getCasesMeta<CasesMeta>().catch(() => null),
+    getObservedDays().catch(() => []),
   ]);
+  const approval = approvalRate(casesMeta, observed);
   const risk = stats?.risk ?? null;
   const baseline = risk?.baseline ?? null;
   const sourceWindow = stats?.sourceFiles?.length
@@ -293,10 +300,17 @@ export default async function PermDenialRiskPage() {
 
       <header className="max-w-2xl">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
-          What gets denied
+          How often PERM is approved, and what gets denied
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-          The rates DOL&apos;s own files record: by what the form asks, by job,
+        {/* The answer first: the sentence a search result or an AI answer quotes. */}
+        {approval ? (
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            {approval.files}
+            {approval.recent ? ` ${approval.recent}` : ""}
+          </p>
+        ) : null}{" "}
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+          Below, the rates DOL&apos;s own files record: by what the form asks, by job,
           and by worksite.
         </p>
       </header>

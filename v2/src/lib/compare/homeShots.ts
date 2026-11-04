@@ -9,8 +9,10 @@
  * at the same page row (the top 656 rows, then rows 656 to 810). Nothing was
  * clicked or dismissed, so a site's own ad bar or cookie notice shows as it did.
  *
- * Re-take with `node node_modules/.cache/qa/rival-shots.mjs <dir>` when the
- * marks are re-read, and change the date in the caption with them.
+ * Re-take with `node node_modules/.cache/qa/rival-shots.mjs <dir>` and move each
+ * `captured` with it: the page's caption dates every picture by its own day,
+ * which needn't be the day its marks were re-read (Nov 3 2026 re-read the marks
+ * and kept the October pictures).
  */
 export interface HomeShot {
   src: string;
@@ -18,16 +20,20 @@ export interface HomeShot {
   height: number;
   /** What the picture shows, for anyone who can't see it. */
   alt: string;
+  /** "YYYY-MM-DD", the Eastern day the picture was taken. */
+  captured: string;
 }
 
 export const HOME_SHOTS: Record<string, HomeShot> = {
   permupdate: {
     src: "/images/compare/permupdate.webp",
+    captured: "2026-10-27",
     width: 960,
     height: 540,
     alt: "PERM Update's homepage: an ad across the top, a purple banner reading PERM Timeline Tracker, and a dashboard of yesterday's 791 processed and 742 certified cases.",
   },
   "perm-timeline": {
+    captured: "2026-10-27",
     src: "/images/compare/perm-timeline.webp",
     width: 960,
     height: 540,
@@ -35,48 +41,56 @@ export const HOME_SHOTS: Record<string, HomeShot> = {
   },
   permtrack: {
     src: "/images/compare/permtrack.webp",
+    captured: "2026-10-27",
     width: 960,
     height: 540,
     alt: "PermTrack's homepage: a side menu and a chart of PERM cases by filing month, under the line that DOL is deciding cases filed in January 2026.",
   },
   immilane: {
     src: "/images/compare/immilane.webp",
+    captured: "2026-10-27",
     width: 960,
     height: 540,
     alt: "ImmiLane's homepage: a dark page titled PERM Tracker, an employer search box, and a chart of DOL's processing timeline by filing month.",
   },
   permqueue: {
     src: "/images/compare/permqueue.webp",
+    captured: "2026-10-27",
     width: 960,
     height: 540,
     alt: "PermQueue's homepage: a dark page headed PERM Tracker, your real place in the PERM queue, beside a panel of 602 cases decided that day.",
   },
   h1bgrader: {
     src: "/images/compare/h1bgrader.webp",
+    captured: "2026-10-28",
     width: 960,
     height: 540,
     alt: "H1BGrader's homepage: a teal menu bar, a search for H-1B sponsors by company, job title or city, a strip announcing its new PERM tracker, and its top H-1B sponsors, job titles and cities for FY 2026 Q3.",
   },
   greencardclock: {
     src: "/images/compare/greencardclock.webp",
+    captured: "2026-10-28",
     width: 960,
     height: 540,
     alt: "GreenCardClock's homepage: a pale green page headed Your Green Card Clock Is Already Ticking, a banner that the November 2026 visa bulletin is live, buttons to check a priority date and explore salary data, and a cookie notice along the bottom.",
   },
   lawfully: {
     src: "/images/compare/lawfully.webp",
+    captured: "2026-10-28",
     width: 960,
     height: 540,
     alt: "Lawfully's homepage: a white page headed Lawfully, your immigration journey starts here, with two cards, one for its case tracker and one for its business plan.",
   },
   immigrationroad: {
     src: "/images/compare/immigrationroad.webp",
+    captured: "2026-10-28",
     width: 960,
     height: 540,
     alt: "Immigration Road's homepage: a green road-sign logo, buttons for the October and November 2026 visa bulletins, a chart of EB-2 cutoff dates, and its green card calculator.",
   },
   h1bperm: {
     src: "/images/compare/h1bperm.webp",
+    captured: "2026-10-27",
     width: 960,
     height: 540,
     alt: "H1BPerm's homepage: a dark page headed PWD, PERM and I-485 timelines, DOL's FLAG maintenance notice, and the filing days DOL is working on.",

@@ -94,7 +94,7 @@ export const PAGE_CARD_ALT = {
   "perm-denial-risk": "What gets denied. Denial rates by job, worksite and what the form asks, from DOL's own files.",
   "perm-employers": "Who sponsors the most. Every employer in DOL's files, ranked by filings, with its approval rate.",
   "perm-processing-times": "PERM processing times. Where DOL's queue stands, from DOL's own published figures, checked daily.",
-  "perm-queue": "Where the PERM queue stands. Undecided cases by filing month, from a per-case scan of DOL's index.",
+  "perm-queue": "Where the PERM backlog stands. Undecided cases by filing month, from a per-case scan of DOL's index.",
   "perm-rfi-audit": "RFIs, audits and appeals. How many cases sit at each review stage, and how long they have waited.",
   "perm-wages": "What PERM cases pay. Wage percentiles by occupation, employer and state, from DOL's disclosure files.",
   "privacy": "Privacy policy. What the site collects, what it never collects, and who processes it.",

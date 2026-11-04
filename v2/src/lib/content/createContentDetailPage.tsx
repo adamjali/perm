@@ -14,6 +14,7 @@ import { mdxComponents } from "@/lib/content/mdx-components";
 import { ArticleLayout } from "@/components/content";
 import StructuredData from "@/components/content/StructuredData";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
+import { HERO_SIZES, heroCrops } from "@/lib/content/heroCrops";
 import { openGraphBase } from "@/lib/openGraphBase";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -60,13 +61,19 @@ export function createContentDetailPage(type: ContentType) {
     // (with one, Next streams a 200 before any page code runs - measured).
     if (!post || !post.meta.published) notFound();
 
+    // The header's 16x9 copy is what the article shares (Google Discover: a large, relevant 16x9 picture, not
+    // a text card). With no header, `images` stays unset so the route's opengraph-image.tsx card still applies.
+    const crops = heroCrops(post.meta.image);
+    const shared = crops
+      ? [{ url: crops.wide, ...HERO_SIZES.wide, alt: post.meta.imageAlt ?? post.meta.title }]
+      : undefined;
     return {
       title: post.meta.seoTitle ?? post.meta.title,
       description: post.meta.seoDescription ?? post.meta.description,
       alternates: { canonical: `/${type}/${slug}` },
       openGraph: (() => {
-        // CRITICAL: omit `images` here so Next.js can merge the per-slug
-        // file-based opengraph-image.tsx at this route segment. Next 16.2.6
+        // CRITICAL: omit `images` unless the header's copy is set (below), so Next.js can merge the per-slug
+        // file-based opengraph-image.tsx at this route segment for an article with no header. Next 16.2.6
         // (node_modules/next/dist/lib/metadata/resolve-metadata.js:148) skips
         // the file-based image merge whenever `source.openGraph.hasOwnProperty('images')`
         // is true — and that’s exactly what would happen if we spread
@@ -82,12 +89,14 @@ export function createContentDetailPage(type: ContentType) {
           modifiedTime: post.meta.updated ?? post.meta.date,
           authors: [post.meta.author],
           tags: post.meta.tags,
+          ...(shared ? { images: shared } : {}),
         };
       })(),
       twitter: {
         card: "summary_large_image",
         title: post.meta.title,
         description: post.meta.description,
+        ...(shared ? { images: shared } : {}),
       },
     };
   }

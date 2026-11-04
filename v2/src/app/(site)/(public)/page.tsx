@@ -47,7 +47,8 @@ import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { DataShelf, LiveDataBand } from "@/components/home/LiveDataBand";
 import { pulseHeadline } from "@/lib/pulseStats";
 import { deriveFigures } from "@/components/home/dataPageFigures";
-import { getDisclosureStats } from "@/lib/db/publicData";
+import { getCasesMeta, getDisclosureStats } from "@/lib/db/publicData";
+import { approvalRate, type CasesMeta } from "@/lib/approvalRate";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { getRecordCounts } from "@/lib/db/recordCounts";
 import { getSiteReviews } from "@/lib/reviews/read";
@@ -151,7 +152,7 @@ export default async function HomePage() {
   // The pulse reads our own sweep's record, a third clock: it moves when the
   // sweep finishes, and /api/revalidate-sweep expires this page then. Either
   // read failing drops the band, never the page.
-  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog, permBoard, line, pwdSummary] = await Promise.all([
+  const [snapshot, disclosure, record, observed, coverage, siteReviews, backlog, permBoard, line, pwdSummary, casesMeta] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
@@ -168,6 +169,8 @@ export default async function HomePage() {
     getPermLine().catch(() => null),
     // The wage requests still waiting, by our own check (DOL's table is a month or more older).
     getPwdSummary().catch(() => null),
+    // DOL's files' outcome totals, for the approval-rate sentence; a failed read drops only the sentence.
+    getCasesMeta<CasesMeta>().catch(() => null),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
@@ -210,6 +213,7 @@ export default async function HomePage() {
       <HeroSection
         wait={liveWait(permBoard)}
         trends={heroTrends(permBoard, lastDay)}
+        approval={approvalRate(casesMeta, observed)}
         months={months}
         board={{
           frontierMonth: workingMonth,

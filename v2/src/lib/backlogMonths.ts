@@ -159,7 +159,8 @@ export function queueLead(
   dolAsOf: string | null,
   line: PermLine | null = null,
 ): string {
-  const count = `${formatInt(pending)} PERM ${pending === 1 ? "case is" : "cases are"} still waiting for DOL's decision.`;
+  // "Backlog" is the word people search and answer engines use for this count (owner, Nov 4 2026).
+  const count = `The PERM backlog: ${formatInt(pending)} ${pending === 1 ? "case is" : "cases are"} still waiting for DOL's decision.`;
   if (line) return `${count} ${permLineSentence(line, { month: dolMonth, asOf: dolAsOf })}`;
   const month = dolMonth ? formatMonth(dolMonth) : null;
   if (!month) return count;
