@@ -113,6 +113,8 @@ const ISOLATED_UNIT_FILES = [
   // Mocks fs, gray-matter and reading-time; the likely reason sharedImage.test.ts read an empty
   // post list in the shared pool (isolating the victim alone left the mocker free to hit another).
   "src/lib/content/__tests__/index.test.ts",
+  // Mocks ../client and ../employerSlugs (Nov 4 2026).
+  "src/lib/db/__tests__/sponsorRecords.test.ts",
   // Both mock ../client and the wage-view module; shared-pool leaks would
   // hand one file's mock to the other.
   "src/lib/db/__tests__/lcaDefaultView.test.ts",

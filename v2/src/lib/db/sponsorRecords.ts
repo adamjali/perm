@@ -1,13 +1,16 @@
 import "server-only";
 
 import { one } from "./client";
+import { employerMatch } from "./employerSlugs";
 
 /**
  * What DOL's own record shows for a company the Justice or Labor Department acted against: its decided PERM
  * filings in DOL's published files, its newest PERM filing anywhere in the record, the PERM cases still
  * waiting, and the H-1B LCAs it filed on or after a day (the day an action was announced). Each read is one
  * index search on the page's own slug (perm_entities, idx_pc_emp_*, perm_live_recent_emp,
- * perm_entity_pending, lca_case_status_emp), so a page of 15 companies costs about 75 point reads.
+ * perm_entity_pending), so a page of 15 companies costs about 75 point reads. The LCAs are read through the
+ * spellings the nightly map gives the employer's page (employerMatch), as the employer page reads them: DOL
+ * prints each form's own spelling, and one company files LCAs under several (Nov 4 2026).
  *
  * A failed read throws: the page keeps its last good render rather than print a failed read as "none".
  */
@@ -34,6 +37,7 @@ const num = (v: unknown): number => {
 const day = (v: unknown): string | null => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
 
 export async function getSponsorRecord(slug: string, since: string): Promise<SponsorRecord> {
+  const match = (await employerMatch(slug)) ?? { where: "employer_slug = ?", args: [slug] };
   const [entity, liveOnly, other, published, live, pending, lca] = await Promise.all([
     one<{ total: unknown; name: unknown }>("SELECT total, name FROM perm_entities WHERE kind = 'employer' AND slug = ?", [slug]),
     one<{ name: unknown }>("SELECT name FROM perm_live_only_index WHERE slug = ?", [slug]),
@@ -41,7 +45,10 @@ export async function getSponsorRecord(slug: string, since: string): Promise<Spo
     one<{ d: unknown }>("SELECT MAX(received_date) AS d FROM perm_cases WHERE employer_slug = ?", [slug]),
     one<{ d: unknown }>("SELECT MAX(filing_date) AS d FROM perm_live_recent WHERE employer_slug = ?", [slug]),
     one<{ pending: unknown }>("SELECT pending FROM perm_entity_pending WHERE kind = 'employer' AND slug = ?", [slug]),
-    one<{ n: unknown }>("SELECT COUNT(*) AS n FROM lca_case_status WHERE employer_slug = ? AND filing_date >= ?", [slug, since]),
+    one<{ n: unknown }>(
+      `SELECT COUNT(*) AS n FROM lca_case_status WHERE ${match.where} AND filing_date >= ?`,
+      [...match.args, since],
+    ),
   ]);
   const days = [day(published?.d), day(live?.d)].filter((d): d is string => d !== null).sort();
   const name = [entity?.name, liveOnly?.name, other?.name].find((n): n is string => typeof n === "string" && n.trim() !== "");
