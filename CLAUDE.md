@@ -2199,3 +2199,15 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
   USCIS approved for it (new employment plus change of employer), the same three fiscal years, ranked among sponsors
   with 20+. No one publishes a labor market test pass rate (a failed test is never filed); this is the nearest
   honest comparison, and the page says it isn't a pass rate.
+
+## Nov 3 2026 (night): DOL's month in the copy, and the browser timers checked
+
+- **No page says DOL still prints its PERM month** (`src/app/__tests__/dol-prints-no-perm-month.test.ts`): since Oct 31
+  2026 DOL's table is the average days to a decision over 30, 90 and 180 days, no month and no audit row. Fifteen places
+  still said DOL publishes the month its analysts or its audit queue reached; each now says what DOL prints and that the
+  month comes from our daily check. The gate leaves wage-request sentences (that table still prints months) and dated
+  history alone. The queue guide shows DOL's page before and after.
+- **Every browser timer checks in on every firing** (`permtracker-uscis browser-check <name> <note>`, script
+  `browser-timer:<name>`): the five Chrome timers in `~/.claude/timers/registry.py` die with their Claude Code session,
+  and one that loads only when its source moved left no trace on a quiet day. `check_browser_timers` in the health check
+  warns, never fails, when a timer misses its interval plus a day or couldn't read its page; the morning report shows it.

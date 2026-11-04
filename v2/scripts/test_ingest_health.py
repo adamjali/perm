@@ -598,6 +598,7 @@ def main() -> int:
     check_capped_partial_is_not_broken()
     check_hand_read_figures()
     check_consular_record()
+    check_browser_timer_heartbeats()
     check_main_combines_every_check()
     check_wage_views_rules()
     check_lca_numbers_rules()
@@ -664,6 +665,49 @@ def check_consular_record() -> None:
     check("consular record: a record missing its dates warns", rc == 0 and "unreadable" in out, out)
     rc, out = say(due, "not json")
     check("consular record: a broken file warns", rc == 0 and "unreadable" in out, out)
+
+
+# --- Browser timers check in on every firing (Nov 3 2026)
+def check_browser_timer_heartbeats() -> None:
+    import contextlib
+    import io
+    from lib_sqlite_shim import SplitSqlite
+
+    def say(rows):
+        db = SplitSqlite()
+        db.script(["CREATE TABLE ingest_runs (script TEXT, status TEXT, note TEXT, finished_at INTEGER)"])
+        for script, note, hours_ago in rows:
+            db.execute("INSERT INTO ingest_runs VALUES (?, 'ok', ?, ?)",
+                       [script, note, int(health.NOW_MS - hours_ago * 3_600_000)])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = health.check_browser_timers(db)
+        return rc, buf.getvalue()
+
+    fresh = [(f"browser-timer:{n}", "checked, nothing due", 3) for n in health.BROWSER_TIMERS]
+    rc, out = say(fresh)
+    check("browser timers: every timer checked in today reads ok", rc == 0 and "::warning" not in out, out)
+    rc, out = say(fresh[1:])
+    first = next(iter(health.BROWSER_TIMERS))
+    check("browser timers: one that never checked in warns, never fails",
+          rc == 0 and f"The browser timer {first}" in out and "never checked in" in out, out)
+    rc, out = say([("browser-timer:bulletin-read", "checked", 3 * 24)] + fresh[1:])
+    check("browser timers: three days without a heartbeat warns that it stopped",
+          rc == 0 and "bulletin-read" in out and "probably ended" in out, out)
+    rc, out = say([("browser-timer:uscis-times", "checked", 6 * 24)] + [r for r in fresh if "uscis-times" not in r[0]])
+    check("browser timers: a weekly timer six days on is still within its week", "::warning" not in out, out)
+    rc, out = say([("browser-timer:iv-tool-read", "could not read travel.state.gov: Chrome isn't connected", 2)]
+                  + [r for r in fresh if "iv-tool-read" not in r[0]])
+    check("browser timers: a run that couldn't read its page warns with the reason",
+          rc == 0 and "couldn't read" in out and "Chrome isn't connected" in out, out)
+    rc, out = say([("browser-timer:gsc-round", "checked", 50), ("browser-timer:gsc-round", "checked", 2)]
+                  + [r for r in fresh if "gsc-round" not in r[0]])
+    check("browser timers: the newest heartbeat decides", "::warning" not in out, out)
+    here = pathlib.Path(__file__).resolve().parent
+    runner = (here / "oracle" / "bin" / "permtracker-uscis").read_text()
+    for name in health.BROWSER_TIMERS:
+        check(f"browser timers: the runner accepts {name}'s heartbeat", name in runner.split("browser-check)")[-1][:600],
+              "missing from the runner's browser-check case")
 
 
 # --- A `partial` that names the sweep's cap is a designed stop

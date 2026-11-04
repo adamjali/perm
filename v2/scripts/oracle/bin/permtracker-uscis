@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times> <file>>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times> <file>|browser-check <name> [note]>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -109,6 +109,19 @@ case "$job" in
     if ! timeout 10m python3 "scripts/$s" --from-file "$f"; then
       rc=1; fail "$s" "the $kind page copied from a browser ($f) was refused"
     fi ;;
+  # A browser timer's heartbeat (Nov 3 2026): the jobs that run in a Claude Code session in the owner's Chrome
+  # (the bulletin, State's IV table, NVC and wait times, USCIS's times, the Search Console round) record one
+  # every time they fire, due or not, so check_browser_timers in the health check can say when one stopped.
+  # The note says what the firing did; one starting "could not read" is a run that couldn't read its page.
+  #   sudo -u permtracker permtracker-uscis browser-check state-pages-read "checked, nothing due"
+  browser-check)
+    name="${2:-}"; note="${3:-checked}"
+    case "$name" in
+      bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round) ;;
+      *) echo "usage: permtracker-uscis browser-check <bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round> [note]"; exit 2 ;;
+    esac
+    python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; sys.exit(0 if record_run(Database(), "browser-timer:" + sys.argv[1], status="ok", note=sys.argv[2][:300]) else 1)' "$name" "$note" \
+      || { rc=1; echo "the heartbeat for $name was not recorded"; } ;;
   posted-times)
     if timeout 20m nice -n 10 python3 scripts/ingest_uscis_posted_times.py; then
       REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
