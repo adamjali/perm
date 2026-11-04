@@ -177,8 +177,11 @@ def run(conf_text: str) -> None:
     # the visitor's beyond what a form needs, never stored, never the app.
     check("form relay exists", bool(forms))
     check("forms go to the backend, looked up per request",
-          "proxy_pass https://$pt_convex_site$uri$is_args$args;" in forms and "resolver " in forms)
-    check("forms drop the /c prefix before the backend", "rewrite ^/c(/.*)$ $1 break;" in forms)
+          "proxy_pass https://$pt_convex_site$pt_c_path$is_args$args;" in forms and "resolver " in forms)
+    # $uri is decoded: in a variable proxy_pass a %0d%0a in the path was a line break in the upstream request.
+    check("forms build the path from the encoded request, never the decoded $uri",
+          "$uri" not in forms
+          and 'map $request_uri $pt_c_path { "~^/c(/[A-Za-z0-9/_.~-]*)(\\?|$)" $1; default /__pt_refused; }' in head)
     check("forms pass the visitor's address where the backend reads it",
           "proxy_set_header X-PT-Client-IP $remote_addr;" in forms)
     check("forms send only the headers a form needs",
@@ -188,6 +191,7 @@ def run(conf_text: str) -> None:
           "pt_api" in zones_in(forms, "limit_req") and "pt_app" not in zones_in(forms, "limit_conn"))
     check("forms' bodies are capped", "client_max_body_size 64k;" in forms)
     check("email-link relay exists", bool(mail))
+    check("email-link relay caps bodies like the forms", "client_max_body_size 64k;" in mail)
     check("email links go to the backend, looked up per request",
           "proxy_pass https://$pt_convex_site;" in mail and "resolver " in mail
           and "giant-dragon-464.convex.site" in mail)
@@ -492,6 +496,10 @@ def probe() -> None:
         "search engines refused instead of paced": good.replace("zone=pt_search burst=120 delay=8", "zone=pt_search burst=120 nodelay", 1),
         "refusal page drops its status": good.replace("error_page 429 @pt_slow_down;", "error_page 429 = @pt_slow_down;"),
         "defense log records the busy page's path": good.replace('"$request_uri" "$http_user_agent"', '"$uri" "$http_user_agent"', 1),
+        "forms relay the decoded path": good.replace("proxy_pass https://$pt_convex_site$pt_c_path$is_args$args;", "proxy_pass https://$pt_convex_site$uri$is_args$args;", 1),
+        "forms pass an unmatched path through": good.replace("default /__pt_refused; }", "default $uri; }", 1),
+        "forms path allows a line break": good.replace('"~^/c(/[A-Za-z0-9/_.~-]*)(\\?|$)" $1;', '"~^/c(/.*)" $1;', 1),
+        "email-link bodies uncapped": good.replace("        # /c/; capped like /c/ so nothing large reaches the backend this way either.\n        client_max_body_size 64k;\n", "        # /c/; capped like /c/ so nothing large reaches the backend this way either.\n", 1),
         "relay sends the server's address": good.replace(
             "proxy_set_header X-Forwarded-For $remote_addr;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie",
             "proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie", 1),

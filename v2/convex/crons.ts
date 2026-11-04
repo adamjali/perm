@@ -435,6 +435,18 @@ crons.cron(
   {}
 );
 
+/**
+ * Saved cases in the signed-in app, the same floor. The 5-minute check starts this sweep only when it
+ * wrote a change itself, so a move one of the daily sweeps recorded first had waited for some other
+ * watched case to move (found Nov 4 2026). It reads only our database copy and is idempotent.
+ */
+crons.cron(
+  "app-case-watch",
+  "8 12,23 * * *",
+  internal.appCaseWatch.sweepAppCaseStatuses,
+  {}
+);
+
 // Employer-wide moves for webhook watches, after the census the employer
 // follows read is written (the same times as employer-alerts, two minutes on).
 crons.cron(

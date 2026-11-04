@@ -275,7 +275,8 @@ def main() -> int:
             convex_call("/watched-cases/sweep", "POST")
             swept = "; alerts asked for"
         except Exception as exc:  # noqa: BLE001
-            # The Convex crons still sweep twice a day, so a refused call delays the email, never loses it.
+            # The Convex crons still sweep twice a day (the app case watch too, since Nov 4), so a refused call
+            # delays the email, never loses it.
             swept = f"; alert call failed ({exc})"
             failed.append("the alert call")
         print(swept.lstrip("; "))
