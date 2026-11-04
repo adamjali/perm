@@ -11,8 +11,40 @@
  * The admin's own error log (systemErrors) and its email keep the address: those stay with the owner.
  */
 
-/** A plausible address: local part, @, one or more labels, a letter-only top-level domain of two or more. */
-const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
+const LOCAL_CHAR = /[A-Za-z0-9._%+-]/;
+const DOMAIN_CHAR = /[A-Za-z0-9.-]/;
+const LABEL = /^[A-Za-z0-9-]+$/;
+const TOP_LEVEL = /^[A-Za-z]{2,}$/;
+
+/**
+ * Where the addresses in `text` are, as [start, end) spans: a local part, @, two or more dot-separated labels, a
+ * letter-only top-level label of two or more. Found by walking out from each @ rather than by one regular
+ * expression: a pattern with nested repeats backtracks on a long dotted string, and an error's text can carry
+ * anyone's input. Each character is looked at a bounded number of times.
+ */
+function addressSpans(text: string): Array<[number, number]> {
+  const spans: Array<[number, number]> = [];
+  let at = text.indexOf("@");
+  while (at !== -1) {
+    let start = at;
+    while (start > 0 && LOCAL_CHAR.test(text[start - 1]!)) start -= 1;
+    let end = at + 1;
+    while (end < text.length && DOMAIN_CHAR.test(text[end]!)) end += 1;
+    // A sentence's full stop or a trailing hyphen isn't part of the domain.
+    while (end > at + 1 && (text[end - 1] === "." || text[end - 1] === "-")) end -= 1;
+    const labels = text.slice(at + 1, end).split(".");
+    if (
+      start < at &&
+      labels.length >= 2 &&
+      labels.every((l) => LABEL.test(l)) &&
+      TOP_LEVEL.test(labels[labels.length - 1]!)
+    ) {
+      spans.push([start, end]);
+    }
+    at = text.indexOf("@", Math.max(end, at + 1));
+  }
+  return spans;
+}
 
 /** The label an address is replaced by. */
 export async function emailLabel(address: string): Promise<string> {
@@ -25,11 +57,22 @@ export async function emailLabel(address: string): Promise<string> {
 
 /** `text` with every address in it replaced by its label. */
 export async function redactEmails(text: string): Promise<string> {
-  const found = new Set(text.match(EMAIL_RE) ?? []);
-  if (found.size === 0) return text;
+  const spans = addressSpans(text);
+  if (spans.length === 0) return text;
   const labels = new Map<string, string>();
-  for (const address of found) labels.set(address, await emailLabel(address));
-  return text.replace(EMAIL_RE, (address) => labels.get(address) ?? address);
+  let out = "";
+  let from = 0;
+  for (const [start, end] of spans) {
+    const address = text.slice(start, end);
+    let label = labels.get(address);
+    if (!label) {
+      label = await emailLabel(address);
+      labels.set(address, label);
+    }
+    out += text.slice(from, start) + label;
+    from = end;
+  }
+  return out + text.slice(from);
 }
 
 /** A value with every string inside it redacted: strings, arrays and plain objects, to a few levels. */

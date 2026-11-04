@@ -34,6 +34,19 @@ describe("redactEmails", () => {
     expect(await emailLabel("Person@Example.com")).toBe(`email#${hex.slice(0, 6)}`);
   });
 
+  it("keeps a sentence's full stop and finds an address inside JSON", async () => {
+    const label = await emailLabel("a.person@example.com");
+    expect(await redactEmails("Write to a.person@example.com.")).toBe(`Write to ${label}.`);
+    expect(await redactEmails('{"to":"a.person@example.com","n":1}')).toBe(`{"to":"${label}","n":1}`);
+  });
+
+  it("stays fast on a long string built to make a pattern backtrack", async () => {
+    const started = Date.now();
+    const out = await redactEmails(`x@${"a.".repeat(60_000)}a${"@".repeat(20_000)}${"b".repeat(40_000)}`);
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(out).not.toContain("email#");
+  });
+
   it("leaves text without an address alone", async () => {
     for (const text of [
       "[Request ID: 51c34f59011c0f6b] Server Error",
