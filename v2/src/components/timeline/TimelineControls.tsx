@@ -11,17 +11,11 @@
 
 "use client";
 
-import { CalendarIcon, CaretDownIcon, FunnelIcon as Filter, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon } from "@phosphor-icons/react/ssr";
+import { FunnelIcon as Filter, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon } from "@phosphor-icons/react/ssr";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/app/(authenticated)/components/PageHeading";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ChoiceRow } from "@/components/ui/choice-row";
 
 interface TimelineControlsProps {
   timeRange: 3 | 6 | 12 | 24;
@@ -58,10 +52,6 @@ export function TimelineControls({
   onZoomChange,
   meta,
 }: TimelineControlsProps) {
-  const currentRangeLabel =
-    TIME_RANGE_OPTIONS.find((opt) => opt.value === timeRange)?.label ??
-    "12 months";
-
   // What the cases button says it shows: "3/5" for a choice, "All" for all
   const badgeText =
     totalCaseCount !== undefined && hasActiveSelection
@@ -100,28 +90,16 @@ export function TimelineControls({
           </div>
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="justify-between sm:justify-center">
-              <CalendarIcon className="size-4" aria-hidden="true" />
-              {currentRangeLabel}
-              <CaretDownIcon className="size-4 text-muted-foreground" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuRadioGroup
-              value={String(timeRange)}
-              onValueChange={(value) => onTimeRangeChange(Number(value) as 3 | 6 | 12 | 24)}
-            >
-              {TIME_RANGE_OPTIONS.map((option) => (
-                <DropdownMenuRadioItem key={option.value} value={String(option.value)} className="min-h-11 cursor-pointer">
-                  {option.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
+        {/* Four ranges, one tap each, the one shown lime (a menu hid them behind a second tap). */}
+        <ChoiceRow
+          className="flex items-center gap-2 min-[360px]:col-span-2 sm:col-span-1"
+          label="Months"
+          labelClassName="text-sm font-semibold text-muted-foreground"
+          rowClassName="mt-0 flex-nowrap gap-1"
+          options={TIME_RANGE_OPTIONS.map((o) => ({ value: String(o.value), label: String(o.value), ariaLabel: o.label }))}
+          value={String(timeRange)}
+          onChange={(v) => onTimeRangeChange(Number(v) as 3 | 6 | 12 | 24)}
+        />{" "}
         <Button
           variant="outline"
           onClick={onOpenCaseSelector}

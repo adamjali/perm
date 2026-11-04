@@ -4,27 +4,20 @@
  * CaseFilterBar
  *
  * The case list's controls in two rows: which cases (Active, Completed,
- * Closed, All), then the search (debounced 300ms), one Filters menu (stage,
- * progress, duplicates only) and one Sort menu (the order and how many a
- * page shows).
+ * Closed, All), then the search (debounced 300ms), one Filters panel (stage,
+ * progress, duplicates only) and one Sort panel (the order and how many a
+ * page shows). Each panel stays open while you choose and closes on Done,
+ * a press outside or Escape.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useId, useRef } from "react";
 import { ArrowDownIcon, ArrowUpIcon, CaretDownIcon, FunnelSimpleIcon, MagnifyingGlassIcon as Search } from "@phosphor-icons/react";
 import { formatCaseStatus, formatProgressStatus } from "@convex/lib/notificationHelpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { choiceVariants } from "@/components/ui/choice";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ChoiceRow } from "@/components/ui/choice-row";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type {
   CaseListFilters,
   CaseListSort,
@@ -76,6 +69,37 @@ const SORT_FIELD_LABELS: Record<CaseListSortField, string> = {
 
 const PAGE_SIZE_OPTIONS = [6, 12, 24, 50] as const;
 
+const PANEL_LEGEND = "text-sm font-bold text-muted-foreground";
+
+/** One choice in a panel's list: a real radio button with its whole 44px row to press. */
+function RadioRow({
+  name,
+  value,
+  checked,
+  onPick,
+  label,
+}: {
+  name: string;
+  value: string;
+  checked: boolean;
+  onPick: () => void;
+  label: string;
+}) {
+  return (
+    <label className="flex min-h-11 cursor-pointer items-center gap-3 px-1 text-base hover:bg-accent">
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        onChange={onPick}
+        className="size-5 shrink-0 accent-primary"
+      />{" "}
+      <span className={checked ? "font-semibold" : undefined}>{label}</span>
+    </label>
+  );
+}
+
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -113,6 +137,10 @@ export function CaseFilterBar({
 
   // Search input local state (for debouncing)
   const [searchInput, setSearchInput] = useState(filters.searchQuery ?? "");
+
+  const uid = useId();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
 
   // Refs for stable access in debounce effect (avoids dependency array issues)
   const filtersRef = useRef(filters);
@@ -262,6 +290,8 @@ export function CaseFilterBar({
   // The Completed and Closed toggles set the stage themselves; only a stage
   // chosen in the menu counts as a filter there.
   const tabSetsStatus = activeTab === "completed" || activeTab === "closed";
+  const stageValue = filters.status && !tabSetsStatus ? filters.status : "all";
+  const progressValue = filters.progressStatus ?? "all";
   const activeFilters =
     (filters.status && !tabSetsStatus ? 1 : 0) +
     (filters.progressStatus && activeTab !== "completed" ? 1 : 0) +
@@ -298,79 +328,138 @@ export function CaseFilterBar({
           <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        {/* A panel that stays open while you choose: a menu closed on every pick, so setting a stage and a
+            progress took two trips. The count says how many are on as you go; Done closes it. */}
+        <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <PopoverTrigger asChild>
             <Button variant="outline" className="h-11" aria-label={activeFilters ? `Filters, ${activeFilters} on` : "Filters"}>
               <FunnelSimpleIcon aria-hidden="true" />
               Filters
               {activeFilters ? <span className="tabular-nums text-muted-foreground">{activeFilters}</span> : null}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-60">
-            <DropdownMenuLabel>Stage</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={filters.status && !tabSetsStatus ? filters.status : "all"}
-              onValueChange={(v) => handleCaseStatusChange(v as CaseStatus | "all")}
-            >
-              <DropdownMenuRadioItem value="all">Any stage</DropdownMenuRadioItem>
-              {STAGES.map((st) => (
-                <DropdownMenuRadioItem key={st} value={st}>
-                  {formatCaseStatus(st)}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>Progress</DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={filters.progressStatus ?? "all"}
-              onValueChange={(v) => handleProgressStatusChange(v as ProgressStatus | "all")}
-            >
-              <DropdownMenuRadioItem value="all">Any progress</DropdownMenuRadioItem>
-              {PROGRESS.map((p) => (
-                <DropdownMenuRadioItem key={p} value={p}>
-                  {formatProgressStatus(p)}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuCheckboxItem
-              checked={Boolean(filters.duplicatesOnly)}
-              onCheckedChange={(on) => onFiltersChange({ ...filters, duplicatesOnly: on === true })}
-            >
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            collisionPadding={8}
+            aria-label="Filters"
+            className="max-h-[var(--radix-popover-content-available-height)] w-[min(20rem,calc(100vw-1rem))] overflow-y-auto border-2 border-border p-4"
+          >
+            <fieldset>
+              <legend className={PANEL_LEGEND}>Stage</legend>{" "}
+              <div className="mt-1">
+                <RadioRow
+                  name={`${uid}-stage`}
+                  value="all"
+                  checked={stageValue === "all"}
+                  onPick={() => handleCaseStatusChange("all")}
+                  label="Any stage"
+                />
+                {STAGES.map((st) => (
+                  <Fragment key={st}>
+                    {" "}
+                    <RadioRow
+                      name={`${uid}-stage`}
+                      value={st}
+                      checked={stageValue === st}
+                      onPick={() => handleCaseStatusChange(st)}
+                      label={formatCaseStatus(st)}
+                    />
+                  </Fragment>
+                ))}
+              </div>
+            </fieldset>{" "}
+            <fieldset className="mt-4">
+              <legend className={PANEL_LEGEND}>Progress</legend>{" "}
+              <div className="mt-1">
+                <RadioRow
+                  name={`${uid}-progress`}
+                  value="all"
+                  checked={progressValue === "all"}
+                  onPick={() => handleProgressStatusChange("all")}
+                  label="Any progress"
+                />
+                {PROGRESS.map((pr) => (
+                  <Fragment key={pr}>
+                    {" "}
+                    <RadioRow
+                      name={`${uid}-progress`}
+                      value={pr}
+                      checked={progressValue === pr}
+                      onPick={() => handleProgressStatusChange(pr)}
+                      label={formatProgressStatus(pr)}
+                    />
+                  </Fragment>
+                ))}
+              </div>
+            </fieldset>{" "}
+            <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-3 border-t-2 border-border pt-3 text-base">
+              <input
+                type="checkbox"
+                checked={Boolean(filters.duplicatesOnly)}
+                onChange={(e) => onFiltersChange({ ...filters, duplicatesOnly: e.target.checked })}
+                className="size-5 shrink-0 accent-primary"
+              />{" "}
               Duplicates only
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </label>{" "}
+            <div className="mt-4 flex items-center justify-between gap-3 border-t-2 border-border pt-3">
+              <p role="status" className="text-sm text-soft">
+                {activeFilters ? `${activeFilters} on` : "None on"}
+              </p>{" "}
+              <Button type="button" onClick={() => setFiltersOpen(false)}>
+                Done
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <div className="flex items-center gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* The order and how many a page shows, in one panel that stays open, the page size one tap. */}
+          <Popover open={sortOpen} onOpenChange={setSortOpen}>
+            <PopoverTrigger asChild>
               <Button variant="outline" className="h-11" aria-label={`Sort by: ${SORT_FIELD_LABELS[sort.sortBy]}`}>
                 <span className="truncate">
                   Sort<span className="hidden sm:inline">: {SORT_FIELD_LABELS[sort.sortBy]}</span>
                 </span>
                 <CaretDownIcon className="size-4" aria-hidden="true" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuRadioGroup value={sort.sortBy} onValueChange={(v) => handleSortChange(v as CaseListSortField)}>
-                {(Object.keys(SORT_FIELD_LABELS) as CaseListSortField[]).map((field) => (
-                  <DropdownMenuRadioItem key={field} value={field}>
-                    {SORT_FIELD_LABELS[field]}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Per page</DropdownMenuLabel>
-              <DropdownMenuRadioGroup value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <DropdownMenuRadioItem key={size} value={String(size)} aria-label={`${size} per page`}>
-                    {size}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              collisionPadding={8}
+              aria-label="Sort"
+              className="max-h-[var(--radix-popover-content-available-height)] w-[min(18rem,calc(100vw-1rem))] overflow-y-auto border-2 border-border p-4"
+            >
+              <fieldset>
+                <legend className={PANEL_LEGEND}>Order by</legend>{" "}
+                <div className="mt-1">
+                  {(Object.keys(SORT_FIELD_LABELS) as CaseListSortField[]).map((field) => (
+                    <Fragment key={field}>
+                      <RadioRow
+                        name={`${uid}-sort`}
+                        value={field}
+                        checked={sort.sortBy === field}
+                        onPick={() => handleSortChange(field)}
+                        label={SORT_FIELD_LABELS[field]}
+                      />{" "}
+                    </Fragment>
+                  ))}
+                </div>
+              </fieldset>{" "}
+              <ChoiceRow
+                className="mt-4"
+                label="Per page"
+                labelClassName={PANEL_LEGEND}
+                options={PAGE_SIZE_OPTIONS.map((size) => ({ value: String(size), label: String(size), ariaLabel: `${size} per page` }))}
+                value={String(pageSize)}
+                onChange={(v) => onPageSizeChange(Number(v))}
+              />{" "}
+              <div className="mt-4 flex justify-end border-t-2 border-border pt-3">
+                <Button type="button" onClick={() => setSortOpen(false)}>
+                  Done
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button
             variant="outline"
             size="icon"

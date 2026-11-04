@@ -5,7 +5,7 @@
  * Layout (md and up, one row):
  * - Left: "Showing X-Y of Z cases"
  * - Center: "Page X of Y"
- * - Right: Previous | Next buttons + Per page dropdown
+ * - Right: Previous | Next buttons + the page size as one row of choices
  * Below md it's two rows: the count and page number, then Previous and Next
  * side by side over the page size. As one row it was about 560px wide and
  * pushed a phone's whole page sideways (Safari, iPhone, Oct 17 2026).
@@ -18,12 +18,7 @@
 
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ChoiceRow } from "@/components/ui/choice-row";
 
 // ============================================================================
 // TYPES
@@ -152,31 +147,16 @@ export function CasePagination({
           <CaretRightIcon className="size-4" />
         </Button>
 
-        {/* Page Size Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={`${pageSize} per page`}
-              className="col-span-2 w-full gap-1 tabular-nums md:w-auto"
-            >
-              {pageSize} per page
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <DropdownMenuItem
-                key={size}
-                onClick={() => onPageSizeChange(size)}
-                className="tabular-nums"
-                aria-label={`${size} per page`}
-              >
-                {size} per page
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Page size: four choices in one tap, the one in use lime and pressed (a menu hid both). */}
+        <ChoiceRow
+          className="col-span-2 flex items-center gap-2 md:ml-2"
+          label="Per page"
+          labelClassName="whitespace-nowrap text-sm font-mono text-muted-foreground"
+          rowClassName="mt-0 flex-nowrap gap-1"
+          options={PAGE_SIZE_OPTIONS.map((size) => ({ value: String(size), label: String(size), ariaLabel: `${size} per page` }))}
+          value={String(pageSize)}
+          onChange={(v) => onPageSizeChange(Number(v))}
+        />
       </div>
     </div>
   );

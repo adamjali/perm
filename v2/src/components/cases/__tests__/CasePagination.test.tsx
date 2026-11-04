@@ -63,14 +63,15 @@ describe("CasePagination - Navigation Buttons", () => {
   });
 });
 
-describe("CasePagination - Page Size Dropdown", () => {
-  it("shows current page size and all options", async () => {
-    const { user } = renderWithProviders(<CasePagination {...defaultProps} />);
-    expect(screen.getByText("12 per page")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /per page/i }));
+describe("CasePagination - page size", () => {
+  it("shows every size as one tap, the one in use pressed", () => {
+    renderWithProviders(<CasePagination {...defaultProps} />);
+    expect(screen.getByRole("group", { name: "Per page" })).toBeInTheDocument();
     for (const size of [6, 12, 24, 50]) {
-      expect(await screen.findByRole("menuitem", { name: new RegExp(`${size} per page`, "i") })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: `${size} per page` })).toHaveAttribute(
+        "aria-pressed",
+        size === defaultProps.pageSize ? "true" : "false",
+      );
     }
   });
 
@@ -78,8 +79,7 @@ describe("CasePagination - Page Size Dropdown", () => {
     const onPageSizeChange = vi.fn();
     const { user } = renderWithProviders(<CasePagination {...defaultProps} onPageSizeChange={onPageSizeChange} />);
 
-    await user.click(screen.getByRole("button", { name: /per page/i }));
-    await user.click(await screen.findByRole("menuitem", { name: /24 per page/i }));
+    await user.click(screen.getByRole("button", { name: "24 per page" }));
     expect(onPageSizeChange).toHaveBeenCalledWith(24);
   });
 });

@@ -214,8 +214,8 @@ describe("TimelinePage - Empty State", () => {
   it("still shows TimelineControls in empty state", () => {
     renderWithProviders(<TimelinePage />);
 
-    // Time range dropdown should be present (showing 6 Months)
-    expect(screen.getByText(/6 months/i)).toBeInTheDocument();
+    // The range row should be present, with 6 months the one in use
+    expect(screen.getByRole("button", { name: "6 months" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("offers one way forward when there are no cases", () => {
@@ -293,71 +293,27 @@ describe("TimelinePage - Time Range Dropdown", () => {
     });
   });
 
-  it("displays current time range", () => {
+  it("shows the range in use as the pressed choice", () => {
     renderWithProviders(<TimelinePage />);
 
-    // Should show "6 Months" text
-    expect(screen.getByText(/6 months/i)).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Months" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "6 months" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("opens dropdown menu when clicked", async () => {
-    const { user } = renderWithProviders(<TimelinePage />);
+  it("shows every range as one tap", () => {
+    renderWithProviders(<TimelinePage />);
 
-    const dropdownTrigger = screen.getByRole("button", { name: /6 months/i });
-    await user.click(dropdownTrigger);
-
-    // Should show all options
-    await waitFor(() => {
-      expect(screen.getByText(/3 months/i)).toBeInTheDocument();
-    });
-  });
-
-  it("shows all time range options in dropdown", { timeout: 15000 }, async () => {
-    const { user } = renderWithProviders(<TimelinePage />);
-
-    const dropdownTrigger = screen.getByRole("button", { name: /6 months/i });
-    await user.click(dropdownTrigger);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("menuitemradio", { name: /3 months/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("menuitemradio", { name: /6 months/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("menuitemradio", { name: /12 months/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("menuitemradio", { name: /24 months/i })
-      ).toBeInTheDocument();
-    });
+    for (const months of [3, 6, 12, 24]) {
+      expect(screen.getByRole("button", { name: `${months} months` })).toBeInTheDocument();
+    }
   });
 
   it("calls updatePreferences when time range is changed", async () => {
     const { user } = renderWithProviders(<TimelinePage />);
 
-    const dropdownTrigger = screen.getByRole("button", { name: /6 months/i });
-    await user.click(dropdownTrigger);
-
-    const option12 = await screen.findByRole("menuitemradio", {
-      name: /12 months/i,
-    });
-    await user.click(option12);
+    await user.click(screen.getByRole("button", { name: "12 months" }));
 
     expect(mockUpdatePreferences).toHaveBeenCalledWith({ timeRange: 12 });
-  });
-
-  it("current time range option is checked", async () => {
-    const { user } = renderWithProviders(<TimelinePage />);
-
-    const dropdownTrigger = screen.getByRole("button", { name: /6 months/i });
-    await user.click(dropdownTrigger);
-
-    await waitFor(() => {
-      const option6 = screen.getByRole("menuitemradio", { name: /6 months/i });
-      expect(option6).toHaveAttribute("aria-checked", "true");
-    });
   });
 });
 
@@ -480,7 +436,7 @@ describe("TimelinePage - Time Range State", () => {
     renderWithProviders(<TimelinePage />);
 
     // Default should be 6 months
-    expect(screen.getByText(/6 months/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "6 months" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("uses timeRange from preferences", () => {
@@ -489,7 +445,7 @@ describe("TimelinePage - Time Range State", () => {
     renderWithProviders(<TimelinePage />);
 
     // Should show 12 months
-    expect(screen.getByText(/12 months/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "12 months" })).toHaveAttribute("aria-pressed", "true");
   });
 });
 
