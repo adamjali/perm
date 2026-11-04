@@ -888,7 +888,7 @@
    0,
    0,
    2672,
-   1326
+   1730
   ],
   "viewport": 1440,
   "maxWidth": 1408,
@@ -1309,7 +1309,8 @@
    1028
   ],
   "from": "The wall, by filing month",
-  "mask": "figures"
+  "mask": "figures",
+  "css": "div.mt-5:has(> p.text-base.font-bold){display:none!important}[data-embed=\"perm-queue\"] div.bg-tint{display:none!important}"
  },
  {
   "slug": "perm-rfi-audit",
