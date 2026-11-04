@@ -16,13 +16,8 @@ export function SentryUserContext(): null {
 
   useEffect(() => {
     if (user) {
-      const name = user.name;
-      const email = user.email;
-      setUser({
-        id: user._id,
-        email: email ?? undefined,
-        username: name ?? undefined,
-      });
+      // The account's id only: its address and name stay out of Sentry (src/lib/sentryRedact.ts).
+      setUser({ id: user._id });
     } else {
       setUser(null);
     }

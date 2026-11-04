@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { isStaleDeploymentError } from "@/components/error/auth-error";
 import { sentryEventFromInjectedPageScript } from "@/lib/exceptionNoise";
 import { CLIENT_IGNORE_ERRORS } from "@/lib/sentryIgnore";
+import { redactBrowserEvent } from "@/lib/sentryRedact";
 
 let sentryInitialized = false;
 
@@ -68,7 +69,8 @@ export function SentryClientInit() {
           ) {
             return null;
           }
-          return event;
+          // No email address goes to Sentry, from the user or from any message (src/lib/sentryRedact.ts).
+          return redactBrowserEvent(event);
         },
         // NO SESSION REPLAY. PostHog records the authenticated app (masked)
         // via AppSessionReplay; two replay products recording the same

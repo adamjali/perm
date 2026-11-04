@@ -147,17 +147,10 @@ export function trackValidationError(
  *
  * @param user - User information
  */
-export function setUser(user: {
-  id: string;
-  email?: string;
-  username?: string;
-} | null): void {
+export function setUser(user: { id: string } | null): void {
   if (user) {
-    Sentry.setUser({
-      id: user.id,
-      email: user.email,
-      username: user.username,
-    });
+    // The id only: no address or name goes to Sentry (src/lib/sentryRedact.ts).
+    Sentry.setUser({ id: user.id });
   } else {
     Sentry.setUser(null);
   }
