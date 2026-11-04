@@ -439,15 +439,6 @@
   "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "How old cases are at each review stage, from analyst review to BALCA appeals, as bars of days since filing"
  },
- "guides/compute-every-perm-deadline/scorecard": {
-  "capture": {
-   "url": "/estimate-scorecard",
-   "clip": "h:Typical miss on real decisions",
-   "maxHeight": 1000
-  },
-  "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The estimate scorecard's typical miss on real DOL decisions: 4 days"
- },
  "blog/how-perm-wage-data-is-published/occupation": {
   "capture": {
    "url": "/perm-wages/software-developers"

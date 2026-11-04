@@ -23,6 +23,9 @@ const CLAIMS = [
   // "a separate queue that DOL publishes its own date for", "their own queue, which DOL publishes separately"
   /\bqueue\b[^.]{0,40}\b(?:which|that) DOL publishes\b/i,
   /\bmonth DOL (?:says|publishes)\b/i,
+  // "DOL works cases roughly in filing order and publishes which filing month it is deciding now": the verb away from
+  // its subject (Nov 4 2026, the estimates guide).
+  /\bDOL\b[^.]{0,80}\b(?:publishes|prints) (?:which|the) (?:filing )?month\b/i,
 ];
 
 // A wage request's month is still printed; a dated sentence is history.
@@ -73,6 +76,7 @@ describe("no page says DOL still prints its PERM month", () => {
     expect(staleMonthClaims("The estimate is anchored to DOL's published position.")).toHaveLength(1);
     expect(staleMonthClaims("DOL publishes an Audit Review queue position alongside its analyst review position.")).toHaveLength(1);
     expect(staleMonthClaims("It opens with the filing month DOL says its analyst review is working.")).toHaveLength(1);
+    expect(staleMonthClaims("DOL works cases roughly in filing order and publishes which filing month it is deciding now.")).toHaveLength(1);
   });
 
   it("passes the audit RATE, which DOL has never published", () => {

@@ -51,4 +51,8 @@ export const SWEEP_PAGES = [
   "/guides/perm-rfi-issued-what-to-do",
   "/guides/track-a-prevailing-wage-request",
   "/guides/waiting-on-your-green-card",
+  // how well the dates have held (EstimateChecksNow), from the nightly checks that follow the full sweep
+  "/guides/dol-average-vs-your-wait",
+  "/guides/compute-every-perm-deadline",
+  "/guides/how-accurate-are-perm-estimates",
 ] as const;

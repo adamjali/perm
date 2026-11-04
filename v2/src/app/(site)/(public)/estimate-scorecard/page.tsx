@@ -13,6 +13,8 @@ import { HORIZONS, PWD_BEFORE_FIX, type Cell } from "@/lib/scorecard/score";
 import { RETIRED_METHODS, readMethods, readOurs } from "@/lib/scorecard/verdict";
 import { printedRangeCheck } from "@/lib/rangeCoverage";
 import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
+import { EstimateChecksList } from "@/components/scorecard/EstimateChecksList";
+import { getEstimateChecks } from "@/lib/db/estimateChecks";
 import { getEstimatorBacktest, getScorecardSummary } from "@/lib/db/predictions";
 import { getSeasonalCheck } from "@/lib/db/seasonalTiming";
 import { getScorecard } from "@/lib/db/scorecard";
@@ -93,12 +95,13 @@ function SampleCells({ cell, since }: { cell: Cell; since: string | null }) {
 }
 
 export default async function EstimateScorecardPage() {
-  const [rows, sweep, sample, backtest, checks] = await Promise.all([
+  const [rows, sweep, sample, backtest, checks, everyCheck] = await Promise.all([
     getScorecard(),
     getSweepCoverage().catch(() => null),
     getScorecardSummary().catch(() => null),
     getEstimatorBacktest().catch(() => null),
     getSeasonalCheck().catch(() => null),
+    getEstimateChecks().catch(() => []),
   ]);
   const today = new Date().toISOString().slice(0, 10);
   const asOf = sweep?.finishedOn ?? null;
@@ -142,7 +145,7 @@ export default async function EstimateScorecardPage() {
       <header>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Estimate scorecard</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          How close our PERM decision dates land, graded against what DOL actually did.
+          How close our dates land, PERM decisions first, graded against what DOL and the State Department actually did.
         </p>
       </header>
 
@@ -206,6 +209,18 @@ export default async function EstimateScorecardPage() {
           <p className="mt-4 text-sm text-muted-foreground">
             Recomputed every night. This run: {formatAsOf(new Date(backtest.computedAt).toISOString().slice(0, 10))}.
           </p>
+        </section>
+      ) : null}
+
+      {everyCheck.length > 0 ? (
+        <section aria-labelledby="every-h" className="mt-8">
+          <h2 id="every-h" className="font-heading text-2xl font-bold sm:text-3xl">Every estimate, checked</h2>{" "}
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
+            Each kind of date the site gives, rebuilt from the record as it stood earlier and set against what DOL,
+            or the State Department, then did. Each check reruns on its own: the PERM and wage-request ones nightly,
+            the bulletin and H-2A, H-2B and CW-1 ones weekly.
+          </p>{" "}
+          <EstimateChecksList rows={everyCheck} className="mt-4" />
         </section>
       ) : null}
 

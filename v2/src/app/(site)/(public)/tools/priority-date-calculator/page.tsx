@@ -59,7 +59,7 @@ const FAQS = [
   },
   {
     q: "Where do these cutoffs come from?",
-    a: "From the State Department's own bulletin pages, read from the Department's site every hour on weekdays, with bulletins back to June 2005. A new bulletin shows here the day State publishes it. Every figure is labelled with the bulletin it came from, and each bulletin is one click away on the State Department's own site.",
+    a: "From the State Department's own bulletin pages, with most bulletins back to June 2005. State's site has turned away automated reads since November 2, 2026, so each new bulletin is copied from State's own page in a browser and shows here within a day of State posting it. Every figure is labelled with the bulletin it came from, and each bulletin is one click away on the State Department's own site.",
   },
   {
     q: "What does it mean when a category shows U?",

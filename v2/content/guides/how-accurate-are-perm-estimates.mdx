@@ -2,11 +2,11 @@
 title: "How accurate are PERM approval estimates?"
 description: "PERM estimators disagree by months on the same case. What an estimate can and can't know, and how close ours lands on real DOL decisions."
 date: "2026-09-07"
-updated: "2026-11-03"
+updated: "2026-11-04"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/how-accurate-are-perm-estimates.webp"
-imageAlt: "The estimate scorecard: how close PERM Tracker's dates came to DOL's actual decisions"
-imageCredit: "Screenshot of permtracker.app, October 15, 2026"
+imageAlt: "An instructor holds up a stopwatch while recruits run laps on an indoor track"
+imageCredit: "Photo: U.S. Navy, Chief Photographer's Mate Chris Desmond / Wikimedia Commons, public domain"
 tags: ["perm", "processing-times", "estimate", "timeline", "employer-initial", "methodology"]
 category: "queue"
 seoTitle: "How Accurate Are PERM Estimates? We Measured"
@@ -15,25 +15,25 @@ featured: true
 published: true
 ---
 
-On one day in August 2026, six public PERM tools were asked the same headline question, how long a PERM takes, and answered between 335 and 503 days. DOL's own published average that day was 372. The spread isn't a rounding difference; it's five months on a wait that people plan their lives around. This guide is what an estimate can know, what it can't, and what we measured when we checked our own. PERM Tracker's [processing times page](/perm-processing-times) shows DOL's own published figures beside our own daily check of where DOL is actually deciding.
+On one day in August 2026, six public PERM tools were asked the same headline question, how long a PERM takes, and answered between 335 and 503 days. DOL's own published average that day was 372. The spread is five months, far beyond rounding, on a wait that people plan their lives around. This guide is what an estimate can know, what it can't, and what we measured when we checked our own. PERM Tracker's [processing times page](/perm-processing-times) shows DOL's own published figures beside our own daily check of where DOL is actually deciding.
 
 ## What an estimate actually is
 
-Every PERM estimator does the same arithmetic underneath. DOL works cases roughly in filing order and publishes which filing month it is deciding now. Your case has a filing month. The estimate is the distance between the two, converted to days using how fast the queue has been moving. Everything else a tool adds, an employer's initial, a "confidence" label, a colour, sits on top of that one subtraction.
+Every PERM estimator does the same arithmetic underneath. DOL works cases roughly in filing order, so there's a filing month it's deciding now, and your case has a filing month. The estimate is the distance between the two, converted to days using how fast the queue has been moving. Everything else a tool adds, an employer's initial, a "confidence" label, a colour, sits on top of that one subtraction. DOL printed the month it was deciding until October 31, 2026; since then it has to be found from DOL's own case statuses, which this site does every day.
 
-Ours counts instead of subtracting months: the cases in DOL's normal queue filed before yours, divided by the rate DOL has actually been deciding them. Cases on hold, at a request for information or on appeal are out of line, so they aren't counted as ahead of you.
+Ours counts instead of subtracting months: the cases in DOL's normal queue filed before yours, divided by the rate DOL has actually been deciding them, walked over the days DOL works. A weekend, a federal holiday or the slow days around Thanksgiving and the new year move a date the way they move DOL. Cases on hold, at a request for information or on appeal are out of line, so they aren't counted as ahead of you.
 
-That is also why estimates fail the same way. When DOL's queue slows, every tool built on the previous pace is late together. When DOL reorders work, as it did after the October 2025 shutdown, every tool is wrong in the same direction at once.
+That's also why estimates fail the same way. When DOL's queue slows, every tool built on the previous pace is late together. When DOL reorders work, as it did after the October 2025 shutdown, every tool is wrong in the same direction at once.
 
 ## What we measured
 
-We rebuilt DOL's queue as it stood on 13 September 2026, dated every case near the front the way this site dates it, and checked each date against what DOL actually did over the next two weeks.
+Every night the site rebuilds DOL's line as it stood a few weeks earlier, works out the date it would have given each case then, and sets each one against the day DOL actually decided it. It does the same for every other kind of date it gives: a case DOL's line has already passed, a case at a request for information, a wage request, a priority date waiting on the visa bulletin, and H-2A, H-2B and CW-1 applications. Here is how each check came out, read live:
 
-<Callout type="stat" stat="3 days" title="Typical miss, 7,135 real decisions">
-Half of those dates landed within three days of DOL's decision. Counting every pending case as ahead (the rule until 26 September 2026, which also counted cases on hold or at an RFI) missed by nine. The same test reruns every night, and a fresh random sample is recorded every morning before DOL decides it: both are on the [estimate scorecard](/estimate-scorecard).
-</Callout>
+<EstimateChecksNow />
 
-That figure is for cases near the front of the queue, the ones DOL decided within two weeks. A date further out has more that can change before it arrives, and the daily sample will show by how much as it fills.
+The [estimate scorecard](/estimate-scorecard) shows each check in full, with a fresh random sample of pending cases recorded every morning before DOL decides them. When the first of these checks ran, on September 13, 2026, counting every pending case as ahead (the rule until September 26, 2026, which also counted cases on hold or at an RFI) missed by nine days where counting only the line missed by three. That's why only the line counts now.
+
+Those figures are for dates within about a month. A date further out has more that can change before it arrives, and the daily sample will show by how much as it fills.
 
 The second number is the one every rival talks about and few publish: how much the employer's initial moves a decision. Across DOL's decided cases, a company starting with A has tended to be reached before one starting with Z. Its size is the question, so we measured it over 339,518 decided cases.
 
@@ -64,15 +64,15 @@ Any estimator can know DOL's queue position and how fast the queue has moved. No
 <ComparisonTable
   headers={["Input", "Can any tool know it?", "What we do with it"]}
   rows={[
-    ["DOL's published queue position", "Yes, it is public and weekly", "The anchor of every estimate, with DOL's own as-of date printed"],
-    ["How fast the queue has moved", "Yes, from DOL's decided cases", "Measured per stage from the disclosure files, shown as a range"],
-    ["The employer's initial", "Yes, it is on the record", "Not used. At the front of the queue it made dates worse, not better"],
-    ["An audit, an RFI, or a hold", "No, until DOL issues it", "Nothing. When one appears on a case, the estimate is withdrawn for that case"],
+    ["Where DOL's line is", "Yes, from DOL's own case statuses (DOL stopped printing the month on October 31, 2026)", "Found every day by this site's own check, and the anchor of every PERM date"],
+    ["How fast DOL decides", "Yes, from DOL's decisions", "Measured from DOL's decisions each day, walked over the days DOL works, and shown with a range"],
+    ["The employer's initial", "Yes, it's on the record", "Not used. At the front of the queue it made dates worse"],
+    ["An audit, an RFI, or a hold", "No, until DOL issues it", "Nothing in advance. Once one appears, the case is dated by its stage: an RFI from its own RFI day, a hold toward the slow end of its filing month's decisions"],
     ["Which analyst gets the file", "No", "Nothing"],
   ]}
 />
 
-The two rows marked "No" are the ones that produce the big misses, and they are the same for every tool. An audit adds months and is invisible until it is issued. No estimator, including this one, can see it coming.
+The two rows marked "No" are the ones that produce the big misses, and they're the same for every tool. An audit adds months and is invisible until DOL issues it. No estimator, including this one, can see it coming.
 
 ## How to read ours
 
@@ -103,7 +103,7 @@ The estimate is anchored to where DOL's line is. Since October 31, 2026 DOL no l
 <ScreenshotFigure
   src="/images/content/shots/queue-frontier.webp"
   alt="The queue page showing which filing month DOL is deciding and how the frontier has moved"
-  caption="The frontier is the whole estimate. Watch it move, not the countdown."
+  caption="The frontier is the whole estimate. Watch it move; the countdown follows from it."
   aspectRatio={1600 / 795}
 />
 
@@ -112,22 +112,22 @@ The estimate is anchored to where DOL's line is. Since October 31, 2026 DOL no l
 
 ## When we refuse to give a date
 
-We print no date once DOL has passed your filing month, for a filing month too new to have a measured history, or for the stages an audit adds.
+We print no date for a case on appeal, for an RFI that's run past its window, or for a passed filing month when the rate DOL finishes those cases can't be read.
 
 <Callout type="important" title="If DOL has already passed your filing month">
-Every filing-anchored model's date has elapsed, and printing a new one would be invention. The page says the queue passed your month, by how much, and that a case still pending at that point is usually in an audit, a request for information, or a hold. The per-case lookup is the next step, because it shows the status DOL actually holds.
+The filing-month arithmetic has nothing left to say: its date has gone by. A case page then dates the case by the rate DOL has actually been finishing the cases its line left behind, which the check above holds to account. The processing time calculator, which knows only a month and not a case, gives no date; it says how that month's cases are splitting and the rate they're finishing at. A case still pending well behind the line is often in an audit, a request for information or a hold, and the case lookup shows the status DOL actually holds.
 </Callout>
 
-We also print no estimate for a filing month too new to have a measured history, and no estimate at all for the stages an audit adds. A blank is a true answer; a confident wrong date is not.
+An appeal is a separate proceeding, so its page shows how long such cases have waited and gives no date. An RFI is dated from its own RFI day, through the 30 days the employer has to answer and the days DOL usually takes after; once it has run past both, it usually has an extension or a second request, and neither can be dated. A blank is a true answer, and a confident wrong date isn't one.
 
-## What this cannot tell you
+## What this can't tell you
 
 This guide can't tell you your decision date, whether your case will be audited, anything about a case DOL hasn't received, or how another tool got its number.
 
-- Your decision date. Near the front of the queue our dates have typically landed within a few days; further out there's more room to miss, and the scorecard shows how much.
+- Your decision date. Near the front of the queue our dates have typically landed within a few days; further out there's more room to miss, and the [estimate scorecard](/estimate-scorecard) shows how much.
 - Whether your case will be audited. Nothing can, until DOL issues it.
-- Anything about a case DOL has not received. An estimate needs a filing month, which needs a filing.
-- How another tool got its number. Where a rival publishes a method we describe it; where it does not, we say so on the [methodology page](/methodology).
+- Anything about a case DOL hasn't received. An estimate needs a filing month, which needs a filing.
+- How another tool got its number. Where a rival publishes a method we describe it; where it doesn't, we say so on the [methodology page](/methodology).
 
 ## Related
 

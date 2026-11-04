@@ -22,6 +22,8 @@ const FIGURE_ROUTES: Record<string, Array<"sweep" | "dol" | "bulletin">> = {
   EbLinesNow: ["bulletin"],
   // every step's length now, from DOL's boards, which the sweep writes (src/components/content)
   JourneyNow: ["sweep"],
+  // how well the dates have held: the nightly check runs after the full sweep, whose route the next pass calls
+  EstimateChecksNow: ["sweep"],
 };
 
 async function lists() {
