@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState, useRef, useEffect, useEffectEvent, useMemo, useCallback } from "react";
 import { CalendarIcon, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { parsePastedDate } from "@/lib/forms/pastedDate";
 
 // ============================================================================
 // HELPERS
@@ -142,6 +143,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       minDate,
       maxDate,
       sundayOnly,
+      onPaste,
       ...props
     },
     ref
@@ -151,6 +153,9 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       value != null ? String(value) : ""
     );
     const inputRef = useRef<HTMLInputElement>(null);
+    // A paste this box couldn't read, said under it until the next change.
+    const [pasteMiss, setPasteMiss] = useState(false);
+    const missId = React.useId();
 
     // Sync internal state when external value changes (e.g., auto-calculation from parent)
     useEffect(() => {
@@ -203,6 +208,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
         setInternalValue(newValue);
+        setPasteMiss(false);
 
         // Propagate immediately for:
         // 1. Valid complete dates (from date picker or complete typing)
@@ -238,6 +244,32 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
       [internalValue, value, onChange, onBlur]
     );
 
+    /**
+     * A native date box drops a pasted date whole, so a date copied from a DOL
+     * letter or an email ("March 15, 2025", "3/15/2025") went nowhere. Read it,
+     * and pass it on the way a picked date goes; say so when it can't be read.
+     */
+    const handlePaste = useCallback(
+      (e: React.ClipboardEvent<HTMLInputElement>) => {
+        onPaste?.(e);
+        if (e.defaultPrevented) return;
+        const text = e.clipboardData?.getData("text") ?? "";
+        if (!text.trim()) return;
+        e.preventDefault();
+        const iso = parsePastedDate(text);
+        const input = inputRef.current;
+        if (!iso || !input) {
+          setPasteMiss(true);
+          return;
+        }
+        setPasteMiss(false);
+        input.value = iso;
+        setInternalValue(iso);
+        onChange?.({ target: input, currentTarget: input } as React.ChangeEvent<HTMLInputElement>);
+      },
+      [onChange, onPaste]
+    );
+
     // Open native date picker on calendar icon click. A browser can still refuse
     // (NotAllowedError when it doesn't count the click as a gesture, seen Oct 17
     // 2026 on the priority date calculator); the box then takes the cursor so
@@ -266,6 +298,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           value={internalValue}
           onChange={handleChange}
           onBlur={handleBlur}
+          onPaste={handlePaste}
           disabled={disabled}
           {...(effectiveMinDate ? { min: effectiveMinDate } : {})}
           {...(maxDate ? { max: maxDate } : {})}
@@ -296,9 +329,16 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             "[&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           )}
           {...props}
+          aria-describedby={
+            pasteMiss
+              ? [props["aria-describedby"], missId].filter(Boolean).join(" ")
+              : props["aria-describedby"]
+          }
         />
 
-        {/* Calendar icon - acts as click target for picker */}
+        {/* Calendar icon - acts as click target for picker. Held to the box's own
+            middle (half its 44px), not the wrapper's, so a message under the box
+            doesn't pull the icons down. */}
         <button
           type="button"
           onClick={handleCalendarClick}
@@ -306,7 +346,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           className={cn(
             // date-picker-btn: Firefox draws its own picker button, which no
             // CSS hides, so globals.css hides this one there (one icon each).
-            "date-picker-btn absolute top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors",
+            "date-picker-btn absolute top-[1.375rem] -translate-y-1/2 p-1 text-muted-foreground transition-colors",
             "hover:text-foreground",
             "disabled:text-muted-foreground disabled:pointer-events-none",
             hasValue && onClear ? "right-8" : "right-2"
@@ -323,12 +363,18 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             type="button"
             onClick={onClear}
             data-testid="clear-button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="absolute right-2 top-[1.375rem] -translate-y-1/2 p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Clear date"
           >
             <XIcon className="h-4 w-4" />
           </button>
         )}
+
+        {pasteMiss ? (
+          <p id={missId} role="alert" className="mt-1 text-sm text-destructive">
+            Couldn&rsquo;t read that date. Type it, or pick it from the calendar.
+          </p>
+        ) : null}
       </div>
     );
   }

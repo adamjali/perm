@@ -242,3 +242,63 @@ describe("DateInput before its script starts", () => {
     expect(await hydrateWithTyped("")).not.toHaveBeenCalled();
   });
 });
+
+describe("DateInput reading a pasted date", () => {
+  function paste(input: HTMLInputElement, text: string) {
+    fireEvent.paste(input, { clipboardData: { getData: () => text } });
+  }
+
+  it("reads a date written out in words into the box and passes it on", () => {
+    // Arrange
+    const onChange = vi.fn();
+    renderWithProviders(<DateInput name="d" onChange={onChange} />);
+    const input = getDateInput();
+    // Act
+    paste(input, "March 15, 2025");
+    // Assert
+    expect(input.value).toBe("2025-03-15");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]![0].target.value).toBe("2025-03-15");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("reads a US slash date the same way", () => {
+    // Arrange
+    const onChange = vi.fn();
+    renderWithProviders(<DateInput name="d" onChange={onChange} />);
+    // Act
+    paste(getDateInput(), "3/5/2025");
+    // Assert
+    expect(onChange.mock.calls[0]![0].target.value).toBe("2025-03-05");
+  });
+
+  it("says when it can't read the paste, names the message on the box, and clears it on the next change", () => {
+    // Arrange
+    const onChange = vi.fn();
+    renderWithProviders(<DateInput name="d" onChange={onChange} aria-describedby="hint" />);
+    const input = getDateInput();
+    // Act
+    paste(input, "next Tuesday");
+    // Assert
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Couldn’t read that date");
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input.getAttribute("aria-describedby")).toBe(`hint ${alert.id}`);
+    // Act
+    fireEvent.change(input, { target: { value: "2025-01-02" } });
+    // Assert
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(input.getAttribute("aria-describedby")).toBe("hint");
+  });
+
+  it("leaves an empty paste alone", () => {
+    // Arrange
+    const onChange = vi.fn();
+    renderWithProviders(<DateInput name="d" onChange={onChange} />);
+    // Act
+    paste(getDateInput(), "");
+    // Assert
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
