@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   blockedResponseMessage,
   isBlockedResponseError,
-  isExistingAccountError,
   isInvalidCodeError,
   isMaskedServerError,
   isRateLimitError,
+  SIGNUP_REFUSED_TEXT,
+  signupRefusal,
 } from "../auth-errors";
 
 // Real messages from Sentry, verbatim.
@@ -38,13 +39,20 @@ describe("auth error classification", () => {
     expect(isInvalidCodeError(MASKED)).toBe(false);
   });
 
-  it("reads a masked error at sign-up as an existing account, the one plain error the form can't rule out", () => {
+  it("reads a masked error or an existing account at sign-up as one refusal, without saying which", () => {
     // Convex Auth throws a plain "Account <email> already exists" (createAccountFromCredentials), which production
-    // hides behind the mask. The form checks every other input before it submits.
-    expect(isExistingAccountError(MASKED)).toBe(true);
-    expect(isExistingAccountError("Account someone@example.com already exists")).toBe(true);
-    expect(isExistingAccountError("duplicate account")).toBe(true);
-    expect(isExistingAccountError(CHALLENGE_PAGE)).toBe(false);
-    expect(isExistingAccountError("Network error")).toBe(false);
+    // hides behind the mask, and the mask hides every other server failure the same way. The two can't be told
+    // apart, and saying "already has an account" would tell a stranger which addresses hold one (Nov 4 2026).
+    expect(signupRefusal(MASKED)).toBe("masked");
+    expect(signupRefusal("Account someone@example.com already exists")).toBe("exists");
+    expect(signupRefusal("duplicate account")).toBe("exists");
+    expect(signupRefusal(CHALLENGE_PAGE)).toBeNull();
+    expect(signupRefusal("Network error")).toBeNull();
+    expect(signupRefusal("Too many attempts. Try again in 10 minutes.")).toBeNull();
+  });
+
+  it("words the refusal so it says nothing about whether the address has an account", () => {
+    expect(SIGNUP_REFUSED_TEXT).toBe("We couldn't create that account. If you already have one,");
+    expect(SIGNUP_REFUSED_TEXT).not.toMatch(/already has an account|exists/i);
   });
 });

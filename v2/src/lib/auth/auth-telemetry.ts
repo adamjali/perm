@@ -45,6 +45,15 @@ export function trackSignupSucceeded(method: "email_password" | "google"): void 
   analytics.capture("user_signed_up", { method });
 }
 
+/**
+ * Track a sign-up the server refused with a masked error or an existing account (PostHog only, one event a press).
+ * Not Sentry: the mask hides Convex Auth's "already exists", which is a person's own second try far more often than
+ * a fault, and an issue per attempt buries the real ones. The kind says which, never the address.
+ */
+export function trackSignupRefused(kind: "masked" | "exists"): void {
+  analytics.capture("signup_refused", { kind });
+}
+
 /** Track a successful login (PostHog). */
 export function trackLoginSucceeded(method: "email_password" | "google"): void {
   analytics.capture("login_succeeded", { method });

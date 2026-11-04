@@ -63,13 +63,21 @@ export function isMaskedServerError(message: string): boolean {
 }
 
 /**
- * True when a password sign-up met an account already on that address. Convex Auth throws a plain
- * "Account <email> already exists", which production hides behind the mask, and the sign-up form checks every other
- * input before it submits, so at that step the mask means this (Sentry 2Q: a second press after the code went out).
+ * Why a password sign-up was refused when it wasn't a network, rate-limit, security-check or field error:
+ * "exists" for Convex Auth's plain "Account <email> already exists", "masked" for Convex's production mask, null
+ * otherwise. Production hides the first behind the second, and hides every other server failure the same way, so the
+ * two can't be told apart (Sentry 2Q). Both get SIGNUP_REFUSED_TEXT, which doesn't say whether the address has an
+ * account: "This email already has an account" told anyone who typed an address that it did (Nov 4 2026). Check the
+ * rate-limit and network errors first; their own words are more useful.
  */
-export function isExistingAccountError(message: string): boolean {
-  return /already exists|duplicate/i.test(message) || isMaskedServerError(message);
+export function signupRefusal(message: string): "exists" | "masked" | null {
+  if (/already exists|duplicate/i.test(message)) return "exists";
+  if (isMaskedServerError(message)) return "masked";
+  return null;
 }
+
+/** The start of the refused sign-up's sentence; the page links "sign in" and "reset your password" after it. */
+export const SIGNUP_REFUSED_TEXT = "We couldn't create that account. If you already have one,";
 
 /** What to tell the person when the auth reply wasn't JSON. */
 export function blockedResponseMessage(message: string): string {

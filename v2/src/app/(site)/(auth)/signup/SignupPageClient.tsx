@@ -28,16 +28,18 @@ import {
   isInvalidCodeError,
   isExpiredError,
   isBlockedResponseError,
-  isExistingAccountError,
   isMaskedServerError,
   isSecurityCheckExpired,
   blockedResponseMessage,
+  signupRefusal,
+  SIGNUP_REFUSED_TEXT,
 } from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
   trackSignupFieldInvalid,
   trackSubmitBlocked,
   trackSignupSucceeded,
+  trackSignupRefused,
   captureTurnstileServiceError,
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
@@ -58,6 +60,9 @@ export function SignupPageClient() {
 
   const [step, setStep] = useState<SignupStep>("credentials");
   const loginHref = useAuthPageHref("/login");
+  const resetHref = useAuthPageHref("/reset-password");
+  // The server refused the sign-up in a way that may mean the address already has an account (signupRefusal).
+  const [refused, setRefused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -170,6 +175,7 @@ export function SignupPageClient() {
     }
 
     setIsLoading(true);
+    setRefused(false);
 
     try {
       // Pre-flight Turnstile verification — must pass before signIn.
@@ -253,18 +259,22 @@ export function SignupPageClient() {
         toast.error("Please enter a valid email address.");
         return;
       }
-      // Checked after the blocked, expired and validation answers above, which carry their own words.
-      if (isExistingAccountError(message)) {
-        authBreadcrumb("signup_existing_account");
-        toast.error("This email already has an account. Sign in, or enter the code we emailed you.");
-        return;
-      }
       if (isRateLimitError(message)) {
         toast.error(authRateLimitText(message));
         return;
       }
       if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
+        return;
+      }
+      // Checked after every answer above, which carry their own words. A masked server error and an existing
+      // account look alike in production, and naming the second would tell a stranger the address has one, so
+      // both get the same sentence, with the way in for someone who does have an account.
+      const refusal = signupRefusal(message);
+      if (refusal) {
+        authBreadcrumb("signup_refused", { kind: refusal });
+        trackSignupRefused(refusal);
+        setRefused(true);
         return;
       }
 
@@ -550,6 +560,20 @@ export function SignupPageClient() {
           >
             {submitLabel}
           </Button>
+
+          {refused && (
+            <p role="alert" className="text-base leading-relaxed text-foreground">
+              {SIGNUP_REFUSED_TEXT}{" "}
+              <NavLink href={loginHref} className="link font-bold" spinnerSize={12}>
+                sign in
+              </NavLink>{" "}
+              or{" "}
+              <NavLink href={resetHref} className="link font-bold" spinnerSize={12}>
+                reset your password
+              </NavLink>
+              .
+            </p>
+          )}
         </form>
 
         {/* One line of small print (owner, Oct 26 2026: "too much text"). The terms acceptance and the
