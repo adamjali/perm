@@ -49,6 +49,11 @@ const ISOLATED_UNIT_FILES = [
   // Added 2026-10-10: each mocks the database client (or Convex and Convex
   // Auth, for the sign-in gate) per test.
   "src/lib/db/__tests__/warnForSlug.test.ts",
+  // Added 2026-11-04: mocks the database client under consularPosts; in the shared pool a file that
+  // loaded consularPosts first left the real client in place (CI red on 714e620f).
+  "src/lib/db/__tests__/embassyNotices.test.ts",
+  // Added 2026-11-04: mocks the database client and the employer map under lcaYears.
+  "src/lib/db/__tests__/lcaYears.test.ts",
   "src/lib/db/__tests__/tableColumns.test.ts",
   "src/lib/db/__tests__/processingTimesHydrate.test.ts",
   "src/lib/db/__tests__/storedMs.test.ts",

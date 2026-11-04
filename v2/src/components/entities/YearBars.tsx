@@ -51,7 +51,19 @@ export function fillYears(years: YearCount[]): YearCount[] {
   return out;
 }
 
-export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode }) {
+export function YearBars({
+  years,
+  note,
+  label = "PERM decisions by fiscal year",
+  noun = "Decisions",
+}: {
+  years: YearCount[];
+  note?: ReactNode;
+  /** What the chart counts, for its hover tips and screen readers. */
+  label?: string;
+  /** The aria label's first word ("Decisions", "H-1B LCAs"). */
+  noun?: string;
+}) {
   const series = fillYears(years);
   if (series.length === 0) return null;
   const first = series[0]!.fy;
@@ -65,12 +77,12 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const minWidth = Math.max(240, series.length * 44);
   return (
     <div className="border-2 border-border bg-sage p-5">
-      <ChartTips label="PERM decisions by fiscal year" scroll="" startAtEnd>
+      <ChartTips label={label} scroll="" startAtEnd>
         <div
           className="flex h-44 items-end gap-1.5 border-b-2 border-border"
           style={{ minWidth: `${minWidth}px` }}
           role="img"
-          aria-label={`Decisions by fiscal year, FY${first} to FY${last}, ${formatInt(total)} in all. The table below has every figure.`}
+          aria-label={`${noun} by fiscal year, FY${first} to FY${last}, ${formatInt(total)} in all. The table below has every figure.`}
         >
           {series.map((y, i) => {
             const t = totals[i]!;

@@ -75,7 +75,7 @@ import { permLineNote } from "@/lib/permLine";
 // claim otherwise.
 const TITLE = "PERM Queue Backlog";
 const DESCRIPTION =
-  "How many PERM cases are still undecided in every filing month, which DOL queue they sit in, and where DOL says its analyst review has reached.";
+  "The PERM backlog: how many cases are still undecided in every filing month, which stage each sits in, and the month DOL is deciding by our daily check.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -199,7 +199,7 @@ export default async function PermQueuePage() {
 
       <header>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
-          Where the PERM queue stands
+          Where the PERM backlog stands
         </h1>{" "}
         {/* The answer first: the sentence a search result or an AI answer quotes. */}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
@@ -211,9 +211,11 @@ export default async function PermQueuePage() {
           <div className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-6 [&>*]:min-w-0">
             <NoteBanner>
               <p>
-                DOL publishes which month it&rsquo;s working and nothing about the
-                size of what&rsquo;s behind it. Its disclosure files carry no pending
-                rows, so the backlog cannot be derived from them.
+                DOL has never published how many cases wait in its line, and since
+                October 31, 2026 it doesn&rsquo;t print which month it&rsquo;s working
+                either. Its disclosure files carry no pending rows, so the backlog
+                can&rsquo;t be derived from them. PERM Tracker counts it from DOL&rsquo;s
+                own case statuses, case by case.
               </p>
             </NoteBanner>{" "}
             <SourceNote />

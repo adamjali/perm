@@ -33,6 +33,11 @@ const isProtectedRoute = createRouteMatcher([
 // Auth routes (should redirect to dashboard if already logged in)
 const isAuthRoute = createRouteMatcher(["/login", "/signup"]);
 
+// The installed app's opening page (manifest start_url): an attorney signed in goes to the dashboard, anyone
+// else to the homepage. It had opened /dashboard for everyone, so a person who added a bulletin or case page to
+// an iPhone's home screen (which iOS needs before it delivers a notification) met the sign-in page.
+const isStartRoute = createRouteMatcher(["/start"]);
+
 // @convex-dev/auth mounts its handlers at the single /api/auth path (confirmed
 // by reading the package source — shouldProxyAuthAction matches only exact path
 // with/without trailing slash). All flows (signUp, signIn, reset, OTP verify,
@@ -56,6 +61,10 @@ const auth = convexAuthNextjsMiddleware(
   async (request, { convexAuth }) => {
     const needsAuth = isProtectedRoute(request);
     const isAuth = isAuthRoute(request);
+
+    if (isStartRoute(request)) {
+      return nextjsMiddlewareRedirect(request, (await convexAuth.isAuthenticated()) ? "/dashboard" : "/");
+    }
 
     // Skip auth check for routes that don't need it
     if (!needsAuth && !isAuth) {
@@ -127,6 +136,7 @@ export const config = {
     "/admin/:path*",
     "/login",
     "/signup",
+    "/start",
     "/api/auth/:path*",
     "/api/chat/:path*",
     "/api/google/:path*",

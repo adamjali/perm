@@ -14,6 +14,9 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FaqList } from "@/components/tools/FaqList";
+import { approvalRate, type CasesMeta } from "@/lib/approvalRate";
+import { getCasesMeta } from "@/lib/db/publicData";
+import { getObservedDays } from "@/lib/db/pulse";
 import { howLongSentence } from "@/lib/dolNow";
 import { getPermBoard } from "@/lib/db/board";
 import { getPermLine } from "@/lib/db/permLine";
@@ -38,6 +41,9 @@ export const revalidate = 86400;
 // Replaced at render with the wait of DOL's latest decisions, the month our daily check sees DOL deciding, and
 // DOL's own average with its date (howLongSentence in lib/dolNow.ts, the case page's sentence too).
 const HOW_LONG = "{howLong}";
+// Replaced at render with DOL's own approval rate, its count and dates, and our check's newest 30 days
+// (lib/approvalRate.ts, the homepage's and the approval page's sentence too).
+const APPROVAL = "{approval}";
 
 export const metadata: Metadata = withSocialCard({
   // Named for what the page answers (it is the main sitelink under a search
@@ -144,6 +150,10 @@ const faqData = [
           "The wages page shows median offered wages by occupation from DOL's disclosure files. These are wages employers committed to in federal filings. Hourly and other units are annualized before medians are taken.",
       },
       {
+        question: "How often is PERM approved?",
+        answer: `${APPROVAL} The approval and denial rates page breaks it down by offered wage, job, state and the answers on the form.`,
+      },
+      {
         question: "What’s the PERM denial rate?",
         answer:
           "Denials are rare: across DOL's current disclosure window under 3% of decided PERM cases were denied, with withdrawn cases excluded from both sides of that ratio. The rate isn’t evenly spread. The denial rates page breaks it down by offered wage, by fiscal year, and by the three risk questions the ETA-9089 itself asks. A group rate isn’t a probability for any single case.",
@@ -169,15 +179,22 @@ const LEARN_MORE = [
 ] as const;
 
 export default async function FAQPage() {
-  const [times, permBoard, permLine] = await Promise.all([
+  const [times, permBoard, permLine, casesMeta, observed] = await Promise.all([
     getProcessingTimes().catch(() => null),
     getPermBoard().catch(() => null),
     getPermLine().catch(() => null),
+    getCasesMeta<CasesMeta>().catch(() => null),
+    getObservedDays().catch(() => []),
   ]);
   const howLong = howLongSentence(permBoard, times, permLine);
+  const rate = approvalRate(casesMeta, observed);
+  // With DOL's files unreadable the answer says where the figures are rather than printing none.
+  const approval = rate
+    ? `${rate.files}${rate.recent ? ` ${rate.recent}` : ""}`
+    : "Most PERM cases DOL decides are certified, by DOL's own disclosure files.";
   const faq = faqData.map((section) => ({
     ...section,
-    items: section.items.map((i) => ({ ...i, answer: i.answer.replace(HOW_LONG, howLong) })),
+    items: section.items.map((i) => ({ ...i, answer: i.answer.replace(HOW_LONG, howLong).replace(APPROVAL, approval) })),
   }));
   // Flatten all FAQ items for structured data
   const allFAQs = faq.flatMap((section) => section.items);

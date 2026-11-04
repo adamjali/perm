@@ -10,6 +10,8 @@ import {
   summarise,
   summariseCell,
   type PredictionRow,
+  PACE_MODEL,
+  storedModel,
 } from "./score";
 
 const row = (over: Partial<PredictionRow>): PredictionRow => ({
@@ -317,5 +319,14 @@ describe("headToHead", () => {
     const h = headToHead(rows, "2026-10-01")["rival-c"]!;
     expect(h.shared).toBe(1);
     expect(h.decided + h.oursCloser + h.rivalCloser).toBe(0);
+  });
+});
+
+describe("storedModel", () => {
+  it("stores the main method's calendar-walked dates under their own name, and every other method as it is", () => {
+    expect(storedModel("decision-pace")).toBe(PACE_MODEL);
+    expect(PACE_MODEL).not.toBe("decision-pace");
+    expect(storedModel("rfi-clock")).toBe("rfi-clock");
+    expect(storedModel("stragglers")).toBe("stragglers");
   });
 });

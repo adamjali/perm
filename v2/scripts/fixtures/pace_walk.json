@@ -1,0 +1,97 @@
+{
+ "about": "Holiday-aware days to clear a queue, held equal in Python (lib_pace_walk.py) and TypeScript (decisionPace.ts daysToClear, seasonFactor).",
+ "walks": [
+  {
+   "today": "2026-11-03",
+   "cases": 36061,
+   "workday": 760,
+   "offday": 5,
+   "days": 79
+  },
+  {
+   "today": "2026-11-03",
+   "cases": 78380,
+   "workday": 760,
+   "offday": 5,
+   "days": 157
+  },
+  {
+   "today": "2026-03-02",
+   "cases": 20000,
+   "workday": 760,
+   "offday": 5,
+   "days": 37
+  },
+  {
+   "today": "2026-12-18",
+   "cases": 7600,
+   "workday": 760,
+   "offday": 5,
+   "days": 24
+  },
+  {
+   "today": "2026-11-20",
+   "cases": 3000,
+   "workday": 600,
+   "offday": 0,
+   "days": 11
+  },
+  {
+   "today": "2027-06-01",
+   "cases": 1,
+   "workday": 500,
+   "offday": 3,
+   "days": 1
+  }
+ ],
+ "factors": [
+  {
+   "date": "2026-11-26",
+   "factor": 1.0
+  },
+  {
+   "date": "2026-11-27",
+   "factor": 0.43
+  },
+  {
+   "date": "2026-11-30",
+   "factor": 1.0
+  },
+  {
+   "date": "2026-12-20",
+   "factor": 1.0
+  },
+  {
+   "date": "2026-12-21",
+   "factor": 0.67
+  },
+  {
+   "date": "2026-12-31",
+   "factor": 0.67
+  },
+  {
+   "date": "2027-01-01",
+   "factor": 1.0
+  },
+  {
+   "date": "2027-01-04",
+   "factor": 0.67
+  },
+  {
+   "date": "2027-01-05",
+   "factor": 0.67
+  },
+  {
+   "date": "2027-01-06",
+   "factor": 1.0
+  },
+  {
+   "date": "2025-11-28",
+   "factor": 0.43
+  },
+  {
+   "date": "2024-11-29",
+   "factor": 0.43
+  }
+ ]
+}

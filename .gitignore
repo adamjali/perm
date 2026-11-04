@@ -123,3 +123,8 @@ incident-report-*/
 *-email.html
 *-email.md
 
+
+# Pages copied from a browser into a loader (State refuses scripts): the database keeps what they said.
+.planning/state-copies/
+.planning/bulletin-copies/
+.planning/iv-tool-copies/

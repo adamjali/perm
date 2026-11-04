@@ -29,8 +29,9 @@ def check(name: str, ok: bool, detail: str = "") -> None:
         FAILED.append(name)
 
 
-def http(code: int, url: str) -> urllib.error.HTTPError:
-    return urllib.error.HTTPError(url, code, "x", {}, io.BytesIO(b""))  # type: ignore[arg-type]
+def http(code: int, url: str, location: str | None = None) -> urllib.error.HTTPError:
+    headers = {"Location": location} if location else {}
+    return urllib.error.HTTPError(url, code, "x", headers, io.BytesIO(b""))  # type: ignore[arg-type]
 
 
 class FakeDb:
@@ -54,6 +55,10 @@ def main() -> int:
     check("a 404 after the redirect is State refusing", state_refused(http(404, travel)))
     check("a 404 elsewhere isn't", not state_refused(http(404, "https://adoption.state.gov/x.html")))
     check("a 500 isn't", not state_refused(http(500, travel)))
+    robots = "https://adoption.state.gov/robots.txt"
+    check("a redirect to travel.state.gov is State refusing (robots.txt, Nov 3 2026)", state_refused(http(302, robots, travel)))
+    check("a redirect within adoption.state.gov isn't", not state_refused(http(302, robots, "https://adoption.state.gov/x.html")))
+    check("a redirect with no Location isn't", not state_refused(http(302, robots)))
     check("a dropped connection isn't", not state_refused(urllib.error.URLError("reset")))
 
     db = FakeDb(("2026-10-26", "State NVC Timeframes", "weekly", 21))

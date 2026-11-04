@@ -29,6 +29,8 @@ import { longDate, monthDay } from "@convex/lib/months";
  */
 /** A month DOL's table couldn't give today: where it is instead. */
 const NOT_READ = "on the processing times page";
+// DOL's page has printed no audit row since Oct 31 2026; a sentence that names the month still reads whole.
+const AUDIT_NOT_PRINTED = "no month (DOL stopped printing one on October 31, 2026)";
 
 export async function DolNow({
   show = "queue",
@@ -41,7 +43,7 @@ export async function DolNow({
   const permLine = show === "queue" || show === "month" ? await getPermLine().catch(() => null) : null;
   if (show === "queue") return <span>{queueSentence(dolNow(t, permLine))}</span>;
   if (show === "month") return <span>{dolNow(t, permLine).frontier ?? NOT_READ}</span>;
-  if (show === "auditMonth") return <span>{dolNow(t).auditFrontier ?? NOT_READ}</span>;
+  if (show === "auditMonth") return <span>{dolNow(t).auditFrontier ?? AUDIT_NOT_PRINTED}</span>;
   const pwd = dolPwdNow(t);
   if (show === "pwdOtherMonth") return <span>{pwd.otherFrontier ?? NOT_READ}</span>;
   const line = await getPwdLine();

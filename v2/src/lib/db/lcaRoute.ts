@@ -17,7 +17,10 @@
 
 export type DatabaseHome = "lca" | "main";
 
-const LCA_TABLE_RE = /\blca_cases\b/;
+// The LCA database holds FY2020 on (`lca_cases`), DOL's FY2008 to FY2019 files (`lca_cases_history`) and
+// each employer's counts by fiscal year from both (`lca_cases_years`, scripts/build_lca_years.py).
+const LCA_TABLES = new Set(["lca_cases", "lca_cases_history", "lca_cases_years"]);
+const LCA_TABLE_RE = /\blca_cases(?:_history|_years)?\b/;
 const TXN_CONTROL = /^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
 // A table a statement reads or writes: the name after FROM, JOIN, INTO or
 // UPDATE, unless a parenthesis follows (a table-valued function like json_each).
@@ -43,7 +46,7 @@ export function lcaJoins(sql: string): string[] {
   for (const m of sql.matchAll(TABLE_REF)) {
     const t = m[1]!;
     const lower = t.toLowerCase();
-    if (t !== "lca_cases" && !own.has(lower) && !NOT_TABLES.has(lower)) found.add(t);
+    if (!LCA_TABLES.has(lower) && !own.has(lower) && !NOT_TABLES.has(lower)) found.add(t);
   }
   return [...found].sort();
 }

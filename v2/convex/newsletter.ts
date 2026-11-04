@@ -237,7 +237,23 @@ const NOTICE_KIND: Record<string, string> = {
   Bill: "Bill in Congress",
   "Court opinion": "Court opinion",
   "BALCA decision": "BALCA",
+  "Court filing": "Court filing",
+  "Embassy notice": "U.S. embassy",
 };
+
+/** An embassy notice is named by its embassy (from the row's agencies), this only when that can't be read. */
+const EMBASSY_KIND = "U.S. embassy";
+
+/** An embassy notice's title doesn't say which embassy ("August 18 Consular Operations Update"), so its kind does. */
+function embassyName(agencies: unknown): string | null {
+  if (typeof agencies !== "string") return null;
+  try {
+    const list: unknown = JSON.parse(agencies);
+    return Array.isArray(list) && typeof list[0] === "string" && list[0].trim() ? list[0].trim() : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * The week's documents and announcements, newest first: Register documents
@@ -253,7 +269,7 @@ export async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
   const list = await rows(
     `SELECT title, html_url AS url, ${day} AS publication_date, type, document_number FROM policy_notices ` +
       `WHERE ${day} >= ? AND (status IS NULL OR status = 'published') AND superseded_by IS NULL ` +
-      `AND type NOT IN ('Court opinion', 'BALCA decision') ` +
+      `AND type NOT IN ('Court opinion', 'BALCA decision', 'Court filing', 'Embassy notice') ` +
       `ORDER BY ${day} DESC, document_number DESC LIMIT 8`,
     [sinceIso],
   );
@@ -265,11 +281,18 @@ export async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
   const sinceMs = Date.parse(`${sinceIso}T04:00:00Z`);
   const decided = await rows(
     "SELECT title, html_url AS url, publication_date, type, document_number FROM policy_notices " +
-      "WHERE type IN ('Court opinion', 'BALCA decision') AND first_seen_at >= ? " +
+      "WHERE type IN ('Court opinion', 'BALCA decision', 'Court filing') AND first_seen_at >= ? " +
       "AND publication_date >= date(?, '-120 days') ORDER BY publication_date DESC, document_number DESC LIMIT 3",
     [sinceMs, sinceIso],
   );
-  return [...list, ...decided]
+  // Twenty embassies post operations updates, so they could fill an issue on their own: the newest three, dated
+  // in the week, beside the Register's documents rather than in their place.
+  const embassies = await rows(
+    "SELECT title, html_url AS url, publication_date, type, document_number, agencies FROM policy_notices " +
+      "WHERE type = 'Embassy notice' AND publication_date >= ? ORDER BY publication_date DESC, document_number DESC LIMIT 3",
+    [sinceIso],
+  );
+  return [...list, ...embassies, ...decided]
     .filter((n) => typeof n.title === "string" && typeof n.url === "string" && typeof n.publication_date === "string")
     .map((n) => {
       const number = n.type === "Bill" && typeof n.document_number === "string" ? billNumber(n.document_number) : null;
@@ -277,7 +300,9 @@ export async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
         title: number ? `${number}, ${String(n.title)}` : String(n.title),
         url: String(n.url),
         publicationDate: String(n.publication_date).slice(0, 10),
-        type: typeof n.type === "string" ? (NOTICE_KIND[n.type] ?? n.type) : "Notice",
+        type: n.type === "Embassy notice"
+          ? (embassyName(n.agencies) ?? EMBASSY_KIND)
+          : typeof n.type === "string" ? (NOTICE_KIND[n.type] ?? n.type) : "Notice",
       };
     });
 }

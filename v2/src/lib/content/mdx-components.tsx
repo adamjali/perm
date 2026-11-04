@@ -18,6 +18,7 @@ import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { EbLinesNow } from "@/components/content/EbLinesNow";
+import { EstimateChecksNow } from "@/components/content/EstimateChecksNow";
 import { EbApprovalsNow } from "@/components/content/EbApprovalsNow";
 import { EbSplitNow } from "@/components/content/EbSplitNow";
 import { JourneyNow } from "@/components/content/JourneyNow";
@@ -208,6 +209,8 @@ export const mdxComponents: MDXComponents = {
   RuleCompare,
   // EB-2 and EB-3 for one country, and how many PERM jobs meet the EB-2 bar, live (async server components).
   EbLinesNow,
+  // how well the site's dates have held, from the nightly check (see its comment)
+  EstimateChecksNow,
   EbApprovalsNow,
   EbSplitNow,
   JourneyNow,

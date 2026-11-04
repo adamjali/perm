@@ -327,8 +327,8 @@ export default async function StagePage({
                 className="link"
               >
                 the backlog board
-              </Link>{" "}
-              against DOL&apos;s own published position.
+              </Link>
+              , with the month DOL is working by our daily check.
             </p>
           ) : null}
 

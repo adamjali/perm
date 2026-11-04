@@ -26,6 +26,8 @@ import { checkedPhrase, compareFaq, GROUPS, PERM_TRACKER, ROWS, type Tracker } f
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { longDate as formatLongDate } from "@convex/lib/months";
+import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { easternDay } from "@/lib/time";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -44,7 +46,9 @@ export const metadata: Metadata = withSocialCard(
   "compare",
 );
 
-export const dynamic = "force-static";
+// A day, not static: our own freshness bar is measured from the sweep's record
+// at render, where every other site's is the day its stamp was read.
+export const revalidate = 86400;
 
 /** Every day a rival's marks were read, in words ("October 27 and 28, 2026"). */
 const checked = checkedPhrase(RIVALS.map((t) => t.checkedOn));
@@ -71,7 +75,8 @@ function freshnessRows(trackers: readonly Tracker[]): BarRow[] {
         label: t.name,
         sub: t.newestData.note ?? (t.newestData.day ? `Newest data shown: ${formatLongDate(t.newestData.day)}` : undefined),
         value: age,
-        text: age === 0 ? "Same day" : age === 1 ? "1 day" : `${age} days`,
+        // Ours has no day only when the sweep's record couldn't be read: say so, never "Same day".
+        text: !t.newestData.day ? "Not read" : age === 0 ? "Same day" : age === 1 ? "1 day" : `${age} days`,
         tone: t.slug === PERM_TRACKER.slug ? ("primary" as const) : ("blue" as const),
       };
     })
@@ -83,20 +88,34 @@ function freshnessRows(trackers: readonly Tracker[]): BarRow[] {
  * "October 27, 2026 for PERM Update, ...; October 28, 2026 for H1BGrader, ...".
  * One day reads simply as that day.
  */
+/** The days the homepage pictures were taken, each with its sites: a picture's own day, not its marks'. */
 function shotDays(rivals: readonly Tracker[]): string {
-  const days = [...new Set(rivals.map((t) => t.checkedOn))].sort();
+  const shown = rivals.filter((t) => HOME_SHOTS[t.slug]);
+  const dayOf = (t: Tracker) => HOME_SHOTS[t.slug]!.captured;
+  const days = [...new Set(shown.map(dayOf))].sort();
   if (days.length === 1) return formatLongDate(days[0]!) ?? days[0]!;
   return days
     .map((d) => {
-      const names = rivals.filter((t) => t.checkedOn === d).map((t) => t.name);
+      const names = shown.filter((t) => dayOf(t) === d).map((t) => t.name);
       const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
       return `${formatLongDate(d) ?? d} for ${list}`;
     })
     .join("; ");
 }
 
-export default function ComparePage() {
-  const trackers: Tracker[] = [PERM_TRACKER, ...RIVALS];
+/** Our column as of this render: the day our sweep last finished against today, when its record can be read. */
+async function ourselfNow(): Promise<Tracker> {
+  const sweep = await getSweepCoverage();
+  if (!sweep) return PERM_TRACKER;
+  return {
+    ...PERM_TRACKER,
+    checkedOn: easternDay(new Date()),
+    newestData: { ...PERM_TRACKER.newestData, day: easternDay(sweep.checkedAt) },
+  };
+}
+
+export default async function ComparePage() {
+  const trackers: Tracker[] = [await ourselfNow(), ...RIVALS];
   const fresh = freshnessRows(trackers);
   const faq = compareFaq(trackers);
   const faqSchema = {
@@ -272,7 +291,7 @@ export default function ComparePage() {
           );
         })}
         <p className="mt-4 text-sm text-soft">
-          Each site&apos;s homepage as it opened the day its marks were read: {shotDays(RIVALS)}.
+          Each site&apos;s homepage as it opened on the day the picture was taken: {shotDays(RIVALS)}.
         </p>
       </section>{" "}
       <section aria-labelledby="faq" className="mt-14">

@@ -61,7 +61,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-queue",
     label: "PERM queue backlog",
     blurb:
-      "Every filing month's pending census: how many cases are undecided, in which DOL queue, and how far each month has progressed.",
+      "The PERM backlog by filing month: how many cases are undecided, at which stage, and how far each month has progressed, from PERM Tracker's daily check of every pending case.",
   },
   {
     path: "/debarments",
@@ -97,13 +97,13 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-processing-times",
     label: "PERM processing times",
     blurb:
-      "Which filing month DOL is currently deciding, the average days to a determination, and how the queue frontier has moved. Read live from DOL's FLAG system.",
+      "Which filing month DOL is currently deciding, from PERM Tracker's daily check of DOL's case-status service, DOL's own average days to a decision, and how the queue frontier has moved.",
   },
   {
     path: "/perm-denial-risk",
-    label: "PERM denial rates",
+    label: "PERM approval and denial rates",
     blurb:
-      "Measured denial rates by ETA-9089 answer, offered wage band, occupation, state and fiscal year. Group rates only: there is deliberately no per-case risk score.",
+      "How often DOL approves PERM, from its own disclosure files with the count and dates, beside the newest 30 days of decisions PERM Tracker's daily check saw; then denial rates by ETA-9089 answer, offered wage band, occupation, state and fiscal year. Group rates only: there is deliberately no per-case risk score.",
   },
   {
     path: "/perm-wages",
@@ -386,6 +386,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/tools/wage-levels",
     label: "Prevailing wage levels",
     blurb: "DOL's four OEWS prevailing wage levels for any occupation in any metro or non-metro area, read live from the OFLC wage search with the series year each figure belongs to.",
+  },
+  {
+    path: "/bright-outlook-jobs",
+    label: "Fast-growing jobs that get sponsored",
+    blurb: "O*NET's Bright Outlook occupations (projected to grow 5% or more from 2025 to 2035, to have 75,000 or more openings, or new and emerging), each with BLS's projected growth, openings and median pay, the PERM cases DOL decided under its code and its certified H-1B LCAs.",
   },
   {
     path: "/soc-codes",

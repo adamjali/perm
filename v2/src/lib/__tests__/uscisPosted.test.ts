@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getI140ProcessingTime, PROCESSING_TIMES_AS_OF } from "@/lib/processing-times/i140ProcessingTimes";
-import { i140Code, i140Figures, i140Series, isCurrent, parseUscisPosted } from "@/lib/uscisPosted";
+import { h4EadTimes, i140Code, i140Figures, i140Series, isCurrent, parseUscisPosted } from "@/lib/uscisPosted";
 
 /** USCIS's posted figures take the place of the typed ones only while they're current, code by code. */
 
@@ -82,5 +82,31 @@ describe("i140Series", () => {
   it("reads a subtype's code from USCIS's key", () => {
     expect(i140Code("136A-NIW")).toBe("NIW");
     expect(i140Code("136A-E31")).toBe("E31");
+  });
+});
+
+describe("h4EadTimes: the H-4 work permit's two posted routes", () => {
+  const withH4 = (published: string, rows: object[]) =>
+    parseUscisPosted(doc(published, 3, { newest: [...(JSON.parse(doc(published, 3)).newest as object[]), ...rows] }));
+  const both = [
+    { form: "I-765", subtype: "147-539C26", office: "SCD", posted: 6.5, postedText: "6.5 Months", requestDate: null },
+    { form: "I-765", subtype: "147-C26", office: "SCD", posted: 17.5, postedText: "17.5 Months", requestDate: null },
+  ];
+
+  it("names both routes, filed with the H-4 extension first, in months as USCIS posted them", () => {
+    expect(h4EadTimes(withH4("2026-10-19", both), "2026-11-04")).toEqual({
+      published: "2026-10-19",
+      rows: [
+        { key: "with-i539", name: "Filed with the H-4 extension (I-539)", months: 6.5, text: "6.5 months" },
+        { key: "alone", name: "Filed on its own", months: 17.5, text: "17.5 months" },
+      ],
+    });
+  });
+
+  it("says nothing when a route is missing, a figure is a note, or the posting has gone stale", () => {
+    expect(h4EadTimes(withH4("2026-10-19", both.slice(0, 1)), "2026-11-04")).toBeNull();
+    expect(h4EadTimes(withH4("2026-10-19", [both[0]!, { ...both[1]!, posted: null }]), "2026-11-04")).toBeNull();
+    expect(h4EadTimes(withH4("2026-06-01", both), "2026-11-04")).toBeNull();
+    expect(h4EadTimes(null, "2026-11-04")).toBeNull();
   });
 });

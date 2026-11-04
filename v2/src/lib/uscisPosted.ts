@@ -133,3 +133,27 @@ export function i140Series(doc: UscisPosted | null): (PostedSeries & { code: str
     return s && s.points.length >= 2 ? [{ ...s, code: t.code, name: t.label }] : [];
   });
 }
+
+/** USCIS's two posted routes for an H-4 spouse's work permit (Form I-765, category (c)(26)), in its own words. */
+const H4_ROUTES = [
+  { subtype: "147-539C26", key: "with-i539", name: "Filed with the H-4 extension (I-539)" },
+  { subtype: "147-C26", key: "alone", name: "Filed on its own" },
+] as const;
+
+export interface H4EadTimes {
+  published: string;
+  rows: { key: string; name: string; months: number; text: string }[];
+}
+
+/**
+ * The H-4 work permit's two posted times, while USCIS's newest posting is current, else null. USCIS labels them
+ * "filed with I-539 H4" and "Standalone; not filed with I-539 H4" (uscis_posted_labels, Nov 4 2026).
+ */
+export function h4EadTimes(doc: UscisPosted | null, today: string): H4EadTimes | null {
+  if (!doc || !isCurrent(doc, today)) return null;
+  const rows = H4_ROUTES.flatMap((r) => {
+    const row = doc.newest.find((n) => n.form === "I-765" && n.subtype === r.subtype && n.posted !== null);
+    return row ? [{ key: r.key, name: r.name, months: row.posted!, text: `${row.posted} months` }] : [];
+  });
+  return rows.length === H4_ROUTES.length ? { published: doc.published, rows } : null;
+}

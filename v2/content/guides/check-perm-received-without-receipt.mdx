@@ -2,7 +2,7 @@
 title: "Was my PERM received? How to check without a receipt"
 description: "No receipt, no case number, nobody answering. How to tell whether DOL has your PERM from its own index and the employer search, and what each result means."
 date: "2026-09-07"
-updated: "2026-10-11"
+updated: "2026-11-03"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/check-perm-received-without-receipt.webp"
 imageAlt: "Every decided PERM case on permtracker.app, with decisions per working day drawn as a line"
@@ -38,7 +38,7 @@ A filing shows up first in DOL's case-status index, then in our nightly walk of 
 
 The first two answer "was it received". The third never can: DOL's disclosure files hold only cases that have been decided, so a pending filing is absent from them by definition, however long ago it went in.
 
-<div className="my-8 overflow-x-auto overscroll-x-none">
+<div className="scroll-box my-8 overflow-x-auto overscroll-x-none" role="region" aria-label="Chart: where a PERM filing appears after it is filed" tabIndex={0}>
 <svg viewBox="0 0 760 210" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="filing-timeline-title">
 <title id="filing-timeline-title">Where a PERM filing appears, from the day it is filed: in DOL's index within days, in this site's nightly walk 0 to 2 days after that, and in the quarterly file only once decided, up to three months later.</title>
 <line x1="40" y1="120" x2="720" y2="120" stroke="currentColor" strokeWidth="3" />

@@ -60,7 +60,7 @@ export default async function ToolsPage() {
       <header className="mt-8 shadow-hard sm:mt-10">
         <div className="dark relative border-2 border-black bg-[#141414] px-5 py-7 text-foreground sm:px-8 sm:py-9">
           <span aria-hidden="true" className="absolute left-0 top-0 h-1.5 w-24 bg-primary" />
-          {/* NOT "Where the PERM queue stands" - that is /perm-queue's H1, and
+          {/* NOT "Where the PERM backlog stands" - that is /perm-queue's H1, and
               this page shipped a byte-identical copy of it. Two pages competing
               on one headline is a duplicate-content signal, and the borrowed one
               described the wrong page anyway: this is the hub over every live

@@ -106,10 +106,14 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Bills and joint resolutions in the current Congress whose titles name a work-visa or employment-based green card subject, with each bill's latest action. Resolutions and bills on other subjects are left out.",
   "policy-notices-courts":
     "Federal court opinions that turn on PERM labor certification, H-1B, H-2A, H-2B, I-140 or employment-based green cards, from CourtListener's archive, with a person named in a caption shown by initials. State courts, criminal cases and petitions for review of removal orders are left out.",
+  "policy-notices-dockets":
+    "The filings in a few court cases this site follows by name (scripts/data/court_dockets.json), from CourtListener's RECAP archive: opinions, judgments, rulings on a stay or an injunction, notices of appeal, and the government's status reports and sworn declarations. Each is named by its kind; an entry's own words, which name people, are never shown.",
   "policy-notices-balca":
     "BALCA's decisions as OALJ lists them: every en banc PERM decision, and prevailing wage, H-2A and H-2B appeals decided since October 2024, with a sole proprietor shown by initials. OALJ keeps no list of ordinary PERM panel decisions, and its lists run weeks to months behind.",
   "policy-notices-doj":
     "The Justice Department's actions against work-visa sponsors since January 2025: Civil Rights Division releases that name H-1B, H-2A, PERM or a job held for a visa worker, the Immigrant and Employee Rights Section's settlements that have no release, and OCAHO cases the government brought against a company IER names. Document-demand settlements and every case about a person are left out.",
+  "policy-notices-embassies":
+    "The visa notices of the 20 U.S. embassies whose posts issued the most employment-based immigrant visas from March 2025 to February 2026, from each embassy's own Visas feed, read in a browser once a day: consular operations updates, interviews paused or resumed, appointments cancelled, and immigrant visa processing. Checklists, scam warnings, health alerts and visitor or student notices are left out, and a feed holds only an embassy's newest ten posts.",
   "policy-notices-state":
     "The State Department's visa news on work and immigrant visas, from its own newsroom. Visitor-only, diversity-lottery, passport and adoption items are left out.",
   "policy-notices-uscis-pm":
@@ -304,9 +308,11 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "policy-notices-uscis-pm": "USCIS Policy Manual updates",
   "policy-notices-state": "State Department visa news",
   "policy-notices-doj": "Justice Department actions",
+  "policy-notices-embassies": "U.S. embassies' visa notices",
   "policy-comments": "Comment counts from regulations.gov",
   "policy-notices-congress": "Bills in Congress",
   "policy-notices-courts": "Federal court opinions",
+  "policy-notices-dockets": "Filings in followed court cases",
   "policy-notices-balca": "BALCA decisions",
   "rule-pipeline": "Rules in review and on public inspection",
   "rule-pipeline-agenda": "The Unified Agenda",

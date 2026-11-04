@@ -249,6 +249,36 @@ def main() -> int:
     except KeyError:
         check("a code error crashes", True)
 
+    # --- a bundle copied in a browser (Nov 4 2026: State's host refuses scripts) ----
+    import tempfile
+    pages = {f"/en/newsroom/visas/2026/{slug}.html": html for slug, html in PAGES.items()}
+    pages[IV_PATH] = PAGES["public-charge-bonds-for-immigrant-visa-applicants"]
+    with tempfile.TemporaryDirectory() as tmp:
+        bpath = os.path.join(tmp, "bundle.json")
+        open(bpath, "w").write(json.dumps({"listing": LISTING, "pages": pages}))
+        bdb = SqliteTurso()
+        def no_network(url):
+            raise AssertionError(f"a bundle run asked the network for {url}")
+        rc = s.run(bdb, fetch=no_network, sleep=no_sleep, robots=allow, bundle=bpath)
+        brows = [r["document_number"] for r in query_dicts(bdb, "SELECT document_number FROM policy_notices", typed=True)]
+        check("a bundle run exits 0 and asks nothing of the network", rc == 0, str(rc))
+        want = sorted(["state-2026-announcement-of-expanded-screening-and-vetting-for-visa-applicants",
+                       "state-2026-immigrant-visa-processing-updates-for-nationalities-at-high-risk-of-public-benefits-usage",
+                       "state-2026-public-charge-bonds-for-immigrant-visa-applicants"])
+        check("a bundle run decides every item in one run (no page limit, nothing waits)", sorted(brows) == want, f"{brows}")
+        check("a bundle run stamps freshness from State's own newest day",
+              any(r["as_of"] == "2026-10-20" for r in fresh(bdb)))
+        partial = dict(pages)
+        partial.pop(IV_PATH)
+        open(bpath, "w").write(json.dumps({"listing": LISTING, "pages": partial}))
+        pdb = SqliteTurso()
+        rc = s.run(pdb, fetch=no_network, sleep=no_sleep, robots=allow, bundle=bpath)
+        prows = [r["document_number"] for r in query_dicts(pdb, "SELECT document_number FROM policy_notices", typed=True)]
+        check("an item whose page the copy lacks waits; the rest are kept", rc == 0 and sorted(prows) == [w for w in want if "high-risk" not in w], f"{prows}")
+        open(bpath, "w").write(json.dumps({"pages": pages}))
+        rc = s.run(SqliteTurso(), fetch=no_network, sleep=no_sleep, robots=allow, bundle=bpath)
+        check("a bundle with no listing fails, writing nothing", rc == 1, str(rc))
+
     f = fetcher(answers)
     rc = s.run(None, fetch=f, sleep=no_sleep, robots=allow, dry_run=True)
     check("a dry run reads and writes nowhere", rc == 0 and f.calls.count(s.LISTING_URL) == 3)

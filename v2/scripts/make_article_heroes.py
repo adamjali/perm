@@ -35,6 +35,9 @@ import sys
 
 from PIL import Image
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import make_hero_crops  # noqa: E402
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "public" / "images" / "content" / "heroes"
 W, H = 1600, 1200
@@ -283,7 +286,13 @@ def main() -> int:
         dest = OUT / kind / f"{slug}.webp"
         dest.parent.mkdir(parents=True, exist_ok=True)
         im.save(dest, "WEBP", quality=82, method=6)
-        print(f"ok {key} {dest.stat().st_size // 1024} KB")
+        # Its 16x9 and 1x1 copies (Google Discover, the Article's structured data), from this run's own
+        # whole-or-photo call: with --only, whole-heroes.json isn't rewritten and can't be trusted yet.
+        shown_whole = make_hero_crops.whole_set() | {f"/images/content/heroes/{k}.webp" for k in whole}
+        if key not in whole:
+            shown_whole.discard(f"/images/content/heroes/{key}.webp")
+        make_hero_crops.crops_for(dest, shown_whole, force=True)
+        print(f"ok {key} {dest.stat().st_size // 1024} KB (with its 16x9 and 1x1 copies)")
     # Every header shown whole, for the guide cards: they show these with object-contain on the
     # same ground, where a photograph still fills its card.
     if not a.only:

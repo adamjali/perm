@@ -51,7 +51,7 @@ export const EMBEDS: readonly EmbedDef[] = [
   { slug: "salary-explorer", title: "PERM salaries", blurb: "Offered wages on certified PERM cases, by occupation, state and year.", href: "/tools/salary-explorer", height: 900, group: "calculator" },
   { slug: "compare-offer", title: "Compare my offer", blurb: "A salary offer against H-1B LCA wages for the same job and state.", href: "/tools/compare-my-offer", height: 760, group: "calculator" },
   { slug: "i140-trends", title: "I-140 trends", blurb: "USCIS I-140 receipts, approvals and pending by quarter.", href: "/tools/i140-trends", height: 760, group: "chart" },
-  { slug: "perm-queue", title: "The PERM queue by filing month", blurb: "Every filing month's undecided cases, and the month DOL says it is working.", href: "/perm-queue", height: 900, group: "chart" },
+  { slug: "perm-queue", title: "The PERM queue by filing month", blurb: "Every filing month's undecided cases, and the month DOL is working by our daily check.", href: "/perm-queue", height: 900, group: "chart" },
   { slug: "visa-bulletin", title: "Visa bulletin cutoffs", blurb: "Final action and filing dates by category and country, with the month's movement.", href: "/visa-bulletin", height: 820, group: "chart" },
 ];
 

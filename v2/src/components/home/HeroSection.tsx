@@ -1,3 +1,4 @@
+import type { ApprovalRate } from "@/lib/approvalRate";
 import { Fragment } from "react";
 import { TrendChip, type FigureTrend } from "@/components/data/FigureRow";
 import { ABOUT_ONE_LINER } from "@/lib/constants/about";
@@ -62,6 +63,8 @@ export interface HeroSectionProps {
   months?: readonly HomeMonth[];
   /** Which way each figure moved; a missing one draws no chip. */
   trends?: HeroTrends;
+  /** How often DOL approves PERM, in its plain, dated sentences (lib/approvalRate.ts); null draws none. */
+  approval?: ApprovalRate | null;
 }
 
 /** The live wait: days, and the DOL working day it was read on. */
@@ -101,7 +104,7 @@ const waitValue = (days: number) => aboutMonths(days).replace(/^about /, "");
 export function heroFigures(board: HeroBoard | undefined, wait: HeroWait | null, trends: HeroTrends = {}): HeroFigure[] {
   const rows: HeroFigure[] = [];
   if (wait && wait.days > 0) rows.push({ label: `Cases decided ${boardDay(wait.on)} waited`, value: waitValue(wait.days), trend: trends.wait });
-  if (board?.pending != null) rows.push({ label: "PERM cases waiting", value: formatInt(board.pending), trend: trends.pending });
+  if (board?.pending != null) rows.push({ label: "In the PERM backlog", value: formatInt(board.pending), trend: trends.pending });
   if (board?.lastDay) rows.push({ label: `Decided on ${boardDay(board.lastDay.date)}`, value: formatInt(board.lastDay.total), trend: trends.decided });
   if (board?.pwdPending) rows.push({ label: "Wage requests waiting", value: formatInt(board.pwdPending) });
   return rows;
@@ -135,7 +138,7 @@ export function monthColumns(months: readonly HomeMonth[]): Column[] {
   });
 }
 
-export function HeroSection({ wait = null, board, months = [], trends = {} }: HeroSectionProps) {
+export function HeroSection({ wait = null, board, months = [], trends = {}, approval = null }: HeroSectionProps) {
   const figures = heroFigures(board, wait, trends);
   const front = board?.frontierMonth ? formatMonth(board.frontierMonth.slice(0, 7)) : null;
   const columns = monthColumns(months);
@@ -187,6 +190,17 @@ export function HeroSection({ wait = null, board, months = [], trends = {} }: He
               </Fragment>
             ))}
           </dl>
+        ) : null}{" "}
+        {/* The sentence an answer engine quotes: DOL's own approval rate with its count and dates, then our
+            check's newest 30 days (owner, Nov 4 2026). */}
+        {approval ? (
+          <p className="mt-5 max-w-3xl text-base leading-relaxed text-soft">
+            {approval.files}
+            {approval.recent ? ` ${approval.recent}` : ""}{" "}
+            <Link href="/perm-denial-risk" className="link">
+              Approval rates by job, state and wage
+            </Link>
+          </p>
         ) : null}{" "}
         {columns.length ? (
           <figure className="mt-6 sm:mt-7">

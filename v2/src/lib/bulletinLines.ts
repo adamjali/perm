@@ -12,54 +12,20 @@ import type { CountryKey, Cutoff } from "@/lib/perm";
 import { MS_PER_DAY } from "@/lib/time";
 import { fiscalYearOf } from "@convex/lib/months";
 
-/** Bulletin category code -> slug. A code with no entry gets no page. */
-const CATEGORY_SLUG: Record<string, string> = {
-  EB1: "eb1",
-  EB2: "eb2",
-  EB3: "eb3",
-  EW3: "eb3-other-workers",
-  EB4: "eb4",
-  EB5: "eb5-unreserved",
-  EB5R: "eb5-rural",
-  EB5HU: "eb5-high-unemployment",
-  EB5I: "eb5-infrastructure",
-};
-
-const COUNTRY_SLUG: Record<CountryKey, string> = {
-  india: "india",
-  china: "china",
-  mexico: "mexico",
-  philippines: "philippines",
-  worldwide: "rest-of-world",
-};
-
-/** In the order the pages list them: the two long queues first. */
-export const LINE_PAGE_COUNTRIES: readonly CountryKey[] = ["india", "china", "philippines", "mexico", "worldwide"];
-
-/** Short names for titles and headings. */
-export const LINE_CATEGORY_SHORT: Record<string, string> = {
-  EB1: "EB-1",
-  EB2: "EB-2",
-  EB3: "EB-3",
-  EW3: "EB-3 Other Workers",
-  EB4: "EB-4",
-  EB5: "EB-5 Unreserved",
-  EB5R: "EB-5 Rural",
-  EB5HU: "EB-5 High Unemployment",
-  EB5I: "EB-5 Infrastructure",
-};
-
-export const LINE_COUNTRY_SHORT: Record<CountryKey, string> = {
-  india: "India",
-  china: "China",
-  mexico: "Mexico",
-  philippines: "Philippines",
-  worldwide: "Rest of World",
-};
-
-export function lineSlug(category: string, country: CountryKey): string {
-  return `${CATEGORY_SLUG[category] ?? category.toLowerCase()}-${COUNTRY_SLUG[country]}`;
-}
+// The names, slugs and order live in convex/lib so Convex's bulletin push names a line as its page does.
+import {
+  CATEGORY_SLUG,
+  COUNTRY_SLUG,
+  LINE_PAGE_COUNTRIES,
+  lineSlug,
+} from "@convex/lib/bulletinLineNames";
+export {
+  LINE_CATEGORY_SHORT,
+  LINE_COUNTRY_SHORT,
+  LINE_PAGE_COUNTRIES,
+  lineName,
+  lineSlug,
+} from "@convex/lib/bulletinLineNames";
 
 /** Every line page for the categories the archive holds, in page order. */
 export function lineSlugs(categories: readonly string[]): string[] {

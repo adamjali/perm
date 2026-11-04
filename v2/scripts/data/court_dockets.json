@@ -1,0 +1,32 @@
+{
+ "_about": "Court cases this site follows by name: their docket entries go into the policy feed (scripts/ingest_court_dockets.py). Add a case by its CourtListener docket id (the number in its docket's address), with a short name that names no private person, the court as the feed shows it, and one sentence on why it matters. Set stopped: true to stop reading one; its stored filings stay.",
+ "dockets": [
+  {
+   "id": 72218277,
+   "short": "CLINIC v. Rubio",
+   "number": "1:26-cv-00858",
+   "court": "U.S. District Court for the Southern District of New York",
+   "path": "/docket/72218277/catholic-legal-immigration-network-inc-v-rubio/",
+   "about": "The case over the State Department's 75-country immigrant visa pause, which the court struck down on August 21, 2026, and where State has reported under oath on its worldwide immigrant visa interview pause.",
+   "topicsText": "immigrant visa green card consular processing public charge"
+  },
+  {
+   "id": 74793181,
+   "short": "CLINIC v. Rubio, on appeal",
+   "number": "26-2573",
+   "court": "U.S. Court of Appeals for the Second Circuit",
+   "path": "/docket/74793181/catholic-legal-immigration-network-inc-v-rubio/",
+   "about": "The government's appeal of the ruling that struck down the 75-country immigrant visa pause. On October 19, 2026 the appeals court paused the part of the ruling that sent old refusals back for review.",
+   "topicsText": "immigrant visa green card consular processing"
+  },
+  {
+   "id": 74811260,
+   "short": "Make the Road New York v. DHS",
+   "number": "1:26-cv-08129",
+   "court": "U.S. District Court for the Southern District of New York",
+   "path": "/docket/74811260/make-the-road-new-york-v-united-states-department-of-homeland-security/",
+   "about": "The challenge to DHS's 2026 public charge rule, which applies to green card applications filed inside the US from September 18, 2026.",
+   "topicsText": "green card adjustment of status public charge"
+  }
+ ]
+}

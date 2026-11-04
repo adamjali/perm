@@ -65,6 +65,16 @@ describe("generateArticleSchema", () => {
     expect(schema.image).toBe(`${BASE_URL}/images/featured.png`);
   });
 
+  it("lists an article header's 16x9, 4x3 and 1x1 shapes (Google's Article guide, Discover)", () => {
+    const meta = createTestMeta({ image: "/images/content/heroes/guides/some-guide.webp" });
+    const schema = generateArticleSchema(meta, slug, type);
+    expect(schema.image).toEqual([
+      `${BASE_URL}/images/content/heroes/guides/some-guide-16x9.webp`,
+      `${BASE_URL}/images/content/heroes/guides/some-guide.webp`,
+      `${BASE_URL}/images/content/heroes/guides/some-guide-1x1.webp`,
+    ]);
+  });
+
   it("falls back to opengraph-image when no meta.image", () => {
     const meta = createTestMeta({ image: undefined });
     const schema = generateArticleSchema(meta, slug, type);

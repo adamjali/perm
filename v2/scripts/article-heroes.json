@@ -166,11 +166,16 @@
   "alt": "One filing month on permtracker.app: the share decided, by outcome, and where DOL has reached"
  },
  "guides/how-accurate-are-perm-estimates": {
-  "capture": {
-   "url": "/estimate-scorecard"
+  "photo": {
+   "file": "navy-stopwatch-pft.jpg",
+   "focus": [
+    0.3,
+    0.5
+   ]
   },
-  "credit": "Screenshot of permtracker.app, October 15, 2026",
-  "alt": "The estimate scorecard: how close PERM Tracker's dates came to DOL's actual decisions"
+  "credit": "Photo: U.S. Navy, Chief Photographer's Mate Chris Desmond / Wikimedia Commons, public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:US_Navy_030506-N-5862D-128_An_instructor_in_the_Freedom_Hall_athletic_complex_uses_a_stopwatch_while_recruits_run_a_1.5-mile_track_during_a_Physical_Fitness_Test_(PFT).jpg",
+  "alt": "An instructor holds up a stopwatch while recruits run laps on an indoor track"
  },
  "guides/reading-the-perm-data": {
   "capture": {

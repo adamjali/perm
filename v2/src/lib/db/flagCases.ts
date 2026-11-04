@@ -48,6 +48,12 @@ export interface FlagProgramConfig {
    * program has no such file.
    */
   disclosureTable?: string;
+  /**
+   * The program's older files, in a table of their own (`lca_cases_history`: DOL's FY2008 to FY2019 H-1B
+   * files). A case number missing from `disclosureTable` is looked for here, and an employer search with room
+   * left under its limit takes the rest from here, newest first. Absent when the program has none.
+   */
+  disclosureHistoryTable?: string;
   /** perm_docs key of the ingest's summary (rows, date span, files). */
   disclosureDocKey?: string;
   /** `visa_class` value that means "this program's PERM half" in the file. */
@@ -602,6 +608,18 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
 
   const disclosureTable = config.disclosureTable;
 
+  const historyTable = config.disclosureHistoryTable;
+
+  /** A read of the history table, or nothing while it isn't loaded yet; any other failure throws. */
+  const fromHistory = async <T,>(read: () => Promise<T>, none: T): Promise<T> => {
+    try {
+      return await read();
+    } catch (e) {
+      if (/no such table/i.test(String(e))) return none;
+      throw e;
+    }
+  };
+
   const lookupDisclosed = async (input: string): Promise<FlagDisclosedRow | null> => {
     if (!disclosureTable) return null;
     const cn = normalise(input);
@@ -610,7 +628,13 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} WHERE case_number = ?`,
       [cn],
     );
-    return r ? toDisclosed(r) : null;
+    if (r) return toDisclosed(r);
+    if (!historyTable) return null;
+    const old = await fromHistory(
+      () => one<DisclosedDbRow>(`SELECT ${DISCLOSED_COLS} FROM ${historyTable} WHERE case_number = ?`, [cn]),
+      null,
+    );
+    return old ? toDisclosed(old) : null;
   };
 
   const searchDisclosed = async (args: SearchFlagArgs): Promise<FlagDisclosedRow[]> => {
@@ -657,7 +681,23 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
         "ORDER BY received_date DESC, case_number DESC LIMIT ?",
       [...params, take],
     );
-    return found.map(toDisclosed);
+    // THE OLDER FILES FILL WHAT'S LEFT. Every row there was filed before every row in the current table's
+    // files (FY2019 and earlier against FY2020 on), so appending them keeps the list newest first, and a name
+    // that fills its limit from the current files never reads them. One employer's own range on `_emp`, so
+    // the sort is bounded by that employer's older filings.
+    if (!historyTable || found.length >= take) return found.map(toDisclosed);
+    const seen = new Set(found.map((r) => String(r.case_number)));
+    const older = await fromHistory(
+      () =>
+        rows<DisclosedDbRow>(
+          `SELECT ${DISCLOSED_COLS} FROM ${historyTable} INDEXED BY ${historyTable}_emp ` +
+            `WHERE ${conds.join(" AND ")} ` +
+            "ORDER BY received_date DESC, case_number DESC LIMIT ?",
+          [...params, take - found.length],
+        ),
+      [] as DisclosedDbRow[],
+    );
+    return [...found, ...older.filter((r) => !seen.has(String(r.case_number)))].map(toDisclosed);
   };
 
   const getDisclosureSummary = cache(async (): Promise<FlagDisclosureSummary | null> => {

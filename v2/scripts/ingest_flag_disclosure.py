@@ -180,36 +180,58 @@ PROGRAMS: dict[str, dict] = {
         "table": "lca_cases",
         "freshness": "lca-disclosure",
         "source": "DOL quarterly LCA disclosure files (www.dol.gov)",
-        # `LCA_Appendix_A_*` and `LCA_Worksites_*` are companion tables, and
-        # the FY2019-and-earlier `H-1B_Disclosure_Data_*` files use older
-        # column names that are not mapped here.
-        "file_pattern": r"LCA_Disclosure_Data_FY\d{2,4}(_Q\d)?\.xlsx$",
+        # `LCA_Appendix_A_*`, `LCA_Worksites_*` and `LCA_FY2020_AppendixA` /
+        # `_Worksites` are companion tables. Before FY2020 DOL published one
+        # file a year under six names (read off its page, Nov 4 2026):
+        # H-1B_Case_Data_FY2008/FY2009 (the old e-file system), Icert_ LCA_ FY2009
+        # (with DOL's own spaces), H-1B_FY2010, H-1B_iCert_LCA_FY2011_Q4,
+        # LCA_FY2012_Q4, LCA_FY2013, H-1B_FY14_Q4, and H-1B_Disclosure_Data_FY15_Q4
+        # to FY2019. Their columns differ by era; the alternates below map them.
+        "file_pattern": (r"(?:LCA_Disclosure_Data_FY\d{2,4}(?:_Q\d)?"
+                         r"|H-1B_Disclosure_Data_FY\d{2,4}(?:_Q\d|_EOY)?"
+                         r"|H-1B_Case_Data_FY\d{4}|Icert_ ?LCA_ ?FY\d{4}|H-1B_iCert_LCA_FY\d{4}(?:_Q\d)?"
+                         r"|H-1B_FY\d{2,4}(?:_Q\d)?|LCA_FY\d{4}(?:_Q\d)?)\.xlsx$"),
         "columns": {
-            "case": ["CASE_NUMBER"],
-            "status": ["CASE_STATUS"],
-            "received": ["RECEIVED_DATE"],
-            "decision": ["DECISION_DATE"],
-            "employer": ["EMPLOYER_NAME"],
-            "job_title": ["JOB_TITLE"],
-            "soc_code": ["SOC_CODE"],
-            "soc_title": ["SOC_TITLE"],
+            # Before FY2020 (read off each file's own header on a GitHub runner, Nov 4 2026) DOL's files came
+            # in three layouts: FY2008 and FY2009's e-file workbooks (CASE_NO, APPROVAL_STATUS,
+            # SUBMITTED_DATE, DOL_DECISION_DATE, NAME or EMPLOYER_NAME, WAGE_RATE_1 per RATE_PER_1, the first
+            # work location in CITY_1 and STATE_1, NBR_IMMIGRANTS), FY2009 to FY2014's iCert ones (LCA_CASE_*,
+            # STATUS, PW_1 per PW_UNIT_1; FY2010 has no wage unit or visa class and names the work location
+            # WORK_LOCATION_*1), and FY2015 to FY2019's (CASE_SUBMITTED, SOC_NAME, WAGE_RATE_OF_PAY in FY2015,
+            # TOTAL WORKERS with a space; FY2019 numbers its worksite and wage columns, the first worksite
+            # being WORKSITE_CITY_1, WAGE_RATE_OF_PAY_FROM_1, PREVAILING_WAGE_1 and so on). Each field's alternates are those names, in era order; the first
+            # one a header holds wins.
+            #
+            # Left unread on purpose: AGENT_ATTORNEY_NAME (FY2015 to FY2018 name the individual attorney;
+            # the site names firms only, so only FY2019's AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME maps), the
+            # e-file JOB_CODE and OCCUPATIONAL_CODE (three-digit DOT codes, not SOC codes), and the old
+            # prevailing-wage source columns, whose words don't match Section F's (the wage-source page
+            # draws a year only once 90% of its LCAs are read, so those years stay out of it).
+            "case": ["CASE_NUMBER", "LCA_CASE_NUMBER", "CASE_NO"],
+            "status": ["CASE_STATUS", "STATUS", "APPROVAL_STATUS"],
+            "received": ["RECEIVED_DATE", "CASE_SUBMITTED", "LCA_CASE_SUBMIT", "SUBMITTED_DATE"],
+            "decision": ["DECISION_DATE", "DOL_DECISION_DATE"],
+            "employer": ["EMPLOYER_NAME", "LCA_CASE_EMPLOYER_NAME", "NAME"],
+            "job_title": ["JOB_TITLE", "LCA_CASE_JOB_TITLE"],
+            "soc_code": ["SOC_CODE", "LCA_CASE_SOC_CODE"],
+            "soc_title": ["SOC_TITLE", "SOC_NAME", "LCA_CASE_SOC_NAME"],
             # The OFFERED wage. The file also carries PREVAILING_WAGE (the
             # floor the employer attested to), which is a different number and
             # the plausible-wrong column. The test pins this choice.
-            "wage": ["WAGE_RATE_OF_PAY_FROM"],
-            "wage_unit": ["WAGE_UNIT_OF_PAY"],
-            "state": ["WORKSITE_STATE"],
-            "visa": ["VISA_CLASS"],
+            "wage": ["WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY_FROM_1", "WAGE_RATE_OF_PAY", "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"],
+            "wage_unit": ["WAGE_UNIT_OF_PAY", "WAGE_UNIT_OF_PAY_1", "LCA_CASE_WAGE_RATE_UNIT", "RATE_PER_1"],
+            "state": ["WORKSITE_STATE", "WORKSITE_STATE_1", "LCA_CASE_WORKLOC1_STATE", "WORK_LOCATION_STATE1", "STATE_1"],
+            "visa": ["VISA_CLASS", "PROGRAM_DESIGNATION", "PROGRAM"],
             # From LCA_Record_Layout_FY2026_Q3.pdf: NAICS_CODE is Form ETA-9035
             # Section C, Item 13; WORKSITE_CITY is the first worksite location
             # (the Worksites companion file lists the rest).
-            "city": ["WORKSITE_CITY"],
-            "naics": ["NAICS_CODE"],
+            "city": ["WORKSITE_CITY", "WORKSITE_CITY_1", "LCA_CASE_WORKLOC1_CITY", "WORK_LOCATION_CITY1", "CITY_1"],
+            "naics": ["NAICS_CODE", "NAIC_CODE", "LCA_CASE_NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
             # under the same name; the ETA-9035 layout calls it "Name of Law
             # Firm representing the Employer submitting the Labor Condition
             # Application", the ETA-9141 one the same for a wage request.
-            "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
+            "attorney": ["LAWFIRM_NAME_BUSINESS_NAME", "AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME"],
             # From LCA_Record_Layout_FY2026_Q3.pdf. The worker counts are Form
             # ETA-9035 Section B, Items 7 and 7a-7f: how many of the positions
             # are new employment, continuing, a change of employer (a
@@ -218,16 +240,16 @@ PROGRAMS: dict[str, dict] = {
             # OES ("I" to "IV" or "N/A"). The two flags are Section H.a, Items
             # 1 and 2: the employer's own attestation. Note the hyphen: the
             # header is `H-1B_DEPENDENT`.
-            "workers": ["TOTAL_WORKER_POSITIONS"],
+            "workers": ["TOTAL_WORKER_POSITIONS", "TOTAL_WORKERS", "TOTAL WORKERS", "NBR_IMMIGRANTS"],
             "new_employment": ["NEW_EMPLOYMENT"],
             "continued_employment": ["CONTINUED_EMPLOYMENT"],
             "change_previous_employment": ["CHANGE_PREVIOUS_EMPLOYMENT"],
-            "new_concurrent_employment": ["NEW_CONCURRENT_EMPLOYMENT"],
+            "new_concurrent_employment": ["NEW_CONCURRENT_EMPLOYMENT", "NEW_CONCURRENT_EMP"],
             "change_employer": ["CHANGE_EMPLOYER"],
             "amended_petition": ["AMENDED_PETITION"],
-            "wage_level": ["PW_WAGE_LEVEL"],
-            "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT"],
-            "willful_violator": ["WILLFUL_VIOLATOR"],
+            "wage_level": ["PW_WAGE_LEVEL", "PW_WAGE_LEVEL_1"],
+            "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT", "H1B_DEPENDENT"],
+            "willful_violator": ["WILLFUL_VIOLATOR", "WILLFUL VIOLATOR"],
             # Section F, the prevailing wage the employer attested to and where
             # it came from (read off FY2026 Q3's own header, Oct 4 2026):
             # PREVAILING_WAGE and its unit; PW_OES_YEAR when it came from OES;
@@ -235,14 +257,14 @@ PROGRAMS: dict[str, dict] = {
             # PW_SURVEY_PUBLISHER and PW_SURVEY_NAME for a private survey; and
             # PW_TRACKING_NUMBER, the wage request's own case number when DOL
             # determined the wage.
-            "pw_wage": ["PREVAILING_WAGE"],
-            "pw_unit": ["PW_UNIT_OF_PAY"],
-            "pw_oes_year": ["PW_OES_YEAR"],
-            "pw_other_source": ["PW_OTHER_SOURCE"],
-            "pw_other_year": ["PW_OTHER_YEAR"],
-            "pw_survey_publisher": ["PW_SURVEY_PUBLISHER"],
-            "pw_survey_name": ["PW_SURVEY_NAME"],
-            "pw_case": ["PW_TRACKING_NUMBER"],
+            "pw_wage": ["PREVAILING_WAGE", "PW_1", "PREVAILING_WAGE_1"],
+            "pw_unit": ["PW_UNIT_OF_PAY", "PW_UNIT_OF_PAY_1", "PW_UNIT_1"],
+            "pw_oes_year": ["PW_OES_YEAR", "PW_OES_YEAR_1"],
+            "pw_other_source": ["PW_OTHER_SOURCE", "PW_OTHER_SOURCE_1"],
+            "pw_other_year": ["PW_OTHER_YEAR", "PW_NON-OES_YEAR_1"],
+            "pw_survey_publisher": ["PW_SURVEY_PUBLISHER", "PW_SURVEY_PUBLISHER_1"],
+            "pw_survey_name": ["PW_SURVEY_NAME", "PW_SURVEY_NAME_1"],
+            "pw_case": ["PW_TRACKING_NUMBER", "PW_TRACKING_NUMBER_1"],
         },
         "event_dates": [],
     },
@@ -536,7 +558,29 @@ def index_ddl(table: str) -> list[str]:
         # in the file for them (15 to 20 s under load, Sentry 59, Nov 1 2026), this index answers in 0.03 s.
         # Created on production by hand on Nov 2 2026.
         f"CREATE INDEX IF NOT EXISTS {table}_emp_title ON {table} (employer_slug, received_date, job_title)",
-    ] if table == "lca_cases" else [])
+    ] if table == "lca_cases" else []) + ([
+        # The yearly rankings and an employer's years read a whole fiscal year at a time (build_h1b_ranks.py,
+        # build_lca_years.py); the current table is read the same way and is a third the size.
+        f"CREATE INDEX IF NOT EXISTS {table}_fy ON {table} (fiscal_year, case_status, visa_class)",
+    ] if table.endswith("_history") else [])
+
+
+# DOL's H-1B files before FY2020 (FY2008 to FY2019, three older layouts) go to a table of their own in the LCA
+# database, `lca_cases_history`, as PERM's FY2016 to FY2023 do (`perm_cases_history`). `lca_cases` keeps
+# FY2020 on, so everything built from it stays as it was: the salary explorer's figures, the SOC finder's
+# titles (the older years filed 2010 SOC codes), the employer map and the searches' index plans. Readers that
+# want every year (a case by its number, the case search, an employer's years) read both.
+HISTORY_TABLES = {"lca": ("lca_cases_history", 2020)}
+
+
+def table_for(program: str, name: str, default: str) -> str:
+    """The table a file is written to: the program's own, or its history table for a file older than the
+    history boundary (by the fiscal year in DOL's file name). Pure."""
+    history = HISTORY_TABLES.get(program)
+    # A name with no fiscal year in it (0) is never taken for an old one.
+    if history and 0 < file_fiscal_year(name) < history[1]:
+        return history[0]
+    return default
 
 
 # ---------------------------------------------------------------------------
@@ -711,8 +755,15 @@ def clean_text(raw: str | None, limit: int) -> str | None:
 
 
 def parse_wage(raw: str | None) -> float | None:
-    """`$145,600.00` -> 145600.0; anything unreadable -> None, never 0."""
+    """`$145,600.00` -> 145600.0; anything unreadable -> None, never 0.
+
+    FY2015's file writes the offered wage as its range in one cell, "85000.00 - 95000.00" or "20000 -" with no
+    top (dumped on GitHub Nov 4 2026); the bottom of the range is the wage, as WAGE_RATE_OF_PAY_FROM is.
+    """
     text = (raw or "").replace("$", "").replace(",", "").strip()
+    ranged = re.fullmatch(r"(\d+(?:\.\d+)?)\s*-\s*(?:\d+(?:\.\d+)?)?", text)
+    if ranged:
+        text = ranged.group(1)
     if not text:
         return None
     try:
@@ -880,6 +931,46 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
     }
 
 
+# The visa an LCA's case number names, where its year's file has no visa column (FY2010): DOL's prefixes,
+# I-200 H-1B, I-201 H-1B1 Chile, I-202 H-1B1 Singapore, I-203 E-3 (src/lib/flagCaseNumber.ts), in the words
+# the newer files' VISA_CLASS uses.
+LCA_VISA_BY_PREFIX = {"I-200": "H-1B", "I-201": "H-1B1 Chile", "I-202": "H-1B1 Singapore", "I-203": "E-3 Australian"}
+
+
+# The FY2008 and FY2009 e-file workbooks write the visa as one letter, DOL's own record layouts say what each
+# means (H-1B_Record_Layout_FY08.doc and "H-1B Efile Record Layout FY09.rtf", read Nov 4 2026): "R = H-1B;
+# A = E-3 Australian; C = H-1B1 Chile; S = H-1B1 Singapore". Their pay units are abbreviated; the layouts
+# give no list, and each one's median wage in the FY2008 file says what it is (YR 60,000, HR 25.20, MTH
+# 4,899, WK 1,012.81, BI 2,176.80).
+EFILE_PROGRAMS = {"R": "H-1B", "A": "E-3 Australian", "C": "H-1B1 Chile", "S": "H-1B1 Singapore"}
+EFILE_UNITS = {"YR": "YEAR", "HR": "HOUR", "MTH": "MONTH", "WK": "WEEK", "BI": "BI-WEEKLY"}
+
+
+def lca_era_fixups(row: dict) -> None:
+    """Older LCA files in the newer files' words, so every year counts the same way.
+
+    "CERTIFIED-WITHDRAWN" (FY2009 to FY2019) is the newer "CERTIFIED - WITHDRAWN"; a row with no visa column
+    takes the visa its case-number prefix names, and an e-file letter its visa's name (EFILE_PROGRAMS); a unit
+    spelled "Year", "Per Year" or "YR" is "YEAR", and the form's "Select Pay Range" is no unit.
+    """
+    status = row.get("case_status")
+    if status:
+        row["case_status"] = re.sub(r"\s*-\s*", " - ", status.strip())
+    if not row.get("visa_class") or str(row["visa_class"]).upper().startswith("SELECT "):
+        # FY2016 has one row whose visa is the form's own "Select Visa Classification".
+        row["visa_class"] = LCA_VISA_BY_PREFIX.get(row["case_number"][:5])
+    visa = (row.get("visa_class") or "").strip().upper()
+    if visa in EFILE_PROGRAMS:
+        row["visa_class"] = EFILE_PROGRAMS[visa]
+    for field in ("wage_unit", "pw_unit"):
+        unit = row.get(field)
+        if not unit:
+            continue
+        unit = re.sub(r"^PER\s+", "", unit.strip(), flags=re.I)
+        # FY2009 to FY2013 hold the form's own "Select Pay Range" where no unit was picked: no unit.
+        row[field] = None if unit.upper().startswith("SELECT ") else EFILE_UNITS.get(unit.upper(), unit)
+
+
 class ParseStats:
     """Counts kept in the same pass that yields the rows, so they cannot disagree."""
 
@@ -893,6 +984,8 @@ class ParseStats:
         self.wage_parsed = 0
         self.state_known = 0
         self.by_status: Counter = Counter()
+        self.by_visa: Counter = Counter()
+        self.by_unit: Counter = Counter()
         self.first_received = ""
         self.last_received = ""
         self.first_decided = ""
@@ -902,6 +995,8 @@ class ParseStats:
     def see(self, row: dict) -> None:
         self.kept += 1
         self.by_status[row["case_status"] or "(none)"] += 1
+        self.by_visa[row["visa_class"] or "(none)"] += 1
+        self.by_unit[row["wage_unit"] or "(none)"] += 1
         if row["wage"] is not None:
             self.wage_parsed += 1
         if row["worksite_state"]:
@@ -926,6 +1021,8 @@ class ParseStats:
         log(f"  no received     {self.no_received:,}")
         log(f"  no decision     {self.no_decision:,}")
         log(f"  by status       {dict(self.by_status.most_common(8))}")
+        log(f"  by visa         {dict(self.by_visa.most_common(6))}")
+        log(f"  by wage unit    {dict(self.by_unit.most_common(6))}")
         log(f"  received        {self.first_received or '-'} .. {self.last_received or '-'}")
         log(f"  decided         {self.first_decided or '-'} .. {self.last_decided or '-'}")
         log(f"  wage parsed     {self.wage_parsed:,} of {self.kept:,}")
@@ -947,6 +1044,7 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
     colmap: dict[int, str] = {}
     events: dict[int, int] = {}
     seen: set[str] = set()
+    raw_left = 0
     for cells in iter_rows(archive, sheet, shared):
         if not colmap:
             colmap, events = resolve_columns(cells, cfg, filename)
@@ -959,6 +1057,14 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
                 log(f"    all {len(header)} header names:")
                 for name in header:
                     log(f"      {name}")
+                raw_left = 3
+            continue
+        if dump_header:
+            # Each read field's cell as the file holds it, for three cases: a value the parser can't read
+            # (FY2015's wage) shows here as DOL wrote it.
+            log(f"    raw: {json.dumps({colmap[i]: v for i, v in sorted(cells.items()) if i in colmap}, ensure_ascii=False)}")
+            raw_left -= 1
+            if raw_left <= 0:
                 return
             continue
         stats.sheet_rows += 1
@@ -968,6 +1074,8 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
             if i in cells:
                 slots[slot] = cells[i]
         row = normalise_row(rec, slots, filename, fy, cfg.get("visa_default"), cfg.get("first_decision_column"))
+        if row is not None and cfg["table"] == "lca_cases":
+            lca_era_fixups(row)
         if row is None:
             stats.blank_case += 1
             continue
@@ -1030,7 +1138,7 @@ def write_summary_doc(db: Database, program: str, table: str) -> dict:
         "latestDecision": latest,
         "files": files,
     }
-    write_doc(db, summary_key(program), doc)
+    write_doc(db, summary_key(program) + ("_history" if table.endswith("_history") else ""), doc)
     log(f"  summary   {doc['rows']:,} rows, received from {doc['earliestReceived']}, "
         f"decided through {doc['latestDecision']}, {len(files)} file(s)")
     return doc
@@ -1306,11 +1414,17 @@ def main() -> int:
             # download a file from it.
             if args.fy is None:
                 newest_name = pick_latest(list(byname))
-            if args.name not in byname:
+            # DOL's FY2009 iCert file is "Icert_ LCA_ FY2009.xlsx", spaces and
+            # all, and the workflow only passes names without spaces: match a
+            # name with its spaces taken out, and send them as %20.
+            unspaced = {n.replace(" ", ""): n for n in byname}
+            if args.name.replace(" ", "") not in unspaced:
                 raise SystemExit(
                     f"FATAL: DOL's page does not list {args.name}. It lists: "
                     + ", ".join(sorted(byname)))
-            name, url = args.name, byname[args.name]
+            name = unspaced[args.name.replace(" ", "")]
+            url = byname[name].replace(" ", "%20")
+            name = name.replace(" ", "")
             path = os.path.join(tmp, name)
             log(f"Downloading {name}")
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)
@@ -1324,6 +1438,15 @@ def main() -> int:
             log(f"Downloading {name}")
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)
             log(f"  {size / 1e6:.1f} MB  sha256 {sha[:16]}")
+
+        table = table_for(args.program, name, cfg["table"])
+        if table != cfg["table"]:
+            log(f"  {name} is before FY{HISTORY_TABLES[args.program][1]}: it goes to {table}")
+            # The workflow rebuilds only what reads the history table after such a load.
+            out = os.environ.get("GITHUB_OUTPUT")
+            if out:
+                with open(out, "a", encoding="utf-8") as fh:
+                    fh.write("history=true\n")
 
         # Is this the newest file DOL publishes? Only that file may stamp
         # freshness or move the "latest quarter" pointer; anything else is

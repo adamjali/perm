@@ -62,6 +62,21 @@ describe("sideways-scrolling tables a keyboard can reach", () => {
     expect(found).toEqual([]);
   });
 
+  // An article draws a wide chart in a plain div (Nov 3 2026: two guides' SVGs had no tab stop, found by the
+  // pre-ship axe check at 390 wide). Every scrolling box in an article needs the ScrollBox's name and tab stop.
+  it("every scrolling box in an article has a name and a tab stop", () => {
+    const articles = ["content/guides", "content/blog", "content/changelog"].flatMap((d) =>
+      readdirSync(d).filter((n) => n.endsWith(".mdx")).map((n) => join(d, n)),
+    );
+    expect(articles.length).toBeGreaterThan(80);
+    const plain = articles.flatMap((f) =>
+      [...readFileSync(f, "utf8").matchAll(/<div\b[^>]*\boverflow-x-auto\b[^>]*>/g)]
+        .filter((m) => !/tabIndex=/.test(m[0]) || !/aria-label=/.test(m[0]))
+        .map((m) => `${f}: ${m[0].slice(0, 80)}`),
+    );
+    expect(plain).toEqual([]);
+  });
+
   it("each exception still exists, so the list can't outlive its reason", () => {
     for (const path of Object.keys(HOLDS_A_CONTROL_ELSEWHERE)) {
       expect(readFileSync(path, "utf8")).toMatch(new RegExp(BOX.source));

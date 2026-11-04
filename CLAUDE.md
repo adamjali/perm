@@ -2169,3 +2169,72 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
   grid, so a short figure lengthened its track and the bars didn't compare.
 - **The age-out calculator sits in the I-140 group**: Consulates made the green card line group ten, past the nine the
   rail allows, and the CSPA rule subtracts the time the I-140 was pending.
+
+## Nov 3 2026 (evening): holidays in the estimate, followed court cases, State pages by browser
+
+- **PERM dates walk DOL's calendar** (`daysToClear`, `seasonFactor` in `convex/lib/perm/calculators/decisionPace.ts`;
+  twin `scripts/lib_pace_walk.py`, both held to `scripts/fixtures/pace_walk.json`): a working day at the measured
+  working-day rate, a weekend or federal holiday at the off-day rate, and the Friday after Thanksgiving (0.43),
+  Dec 21 to 31 (0.67) and Jan 2 to 5 (0.67), each the median of ten seasons in DOL's own files. Out of sample it
+  beat the flat pace (540 starts: 6.0 against 6.5 days typical, at two months 10 against 13) and tied or beat it on
+  the nightly backtest's six start days, which now date cases the same way and keep the flat pace beside it
+  (`flat`). The pace reader passes each day's date; a pace without the two rates walks flat. The scorecard stores
+  these dates as `decision-pace-calendar` (`storedModel`, `PACE_MODEL`); `decision-pace` retired Nov 4 2026.
+- **Court cases followed by name** (`scripts/ingest_court_dockets.py`, list `scripts/data/court_dockets.json`, type
+  "Court filing", source `courtlistener-dockets`, dataset `policy-notices-dockets`, in `policy-watch` every 6 hours):
+  CourtListener's opinion search never held CLINIC v. Rubio's Aug 21 2026 ruling; its RECAP docket does, read
+  with `COURTLISTENER_TOKEN` (server `uscis.env`; the docket endpoints refuse without one). It keeps opinions,
+  judgments, stay and injunction rulings, notices of appeal and the government's status reports and sworn
+  declarations, titled from the case's short name and the entry's kind: an entry's own words name plaintiffs and
+  are never stored. Add a case by its docket id there.
+- **State pages read in Adam's Chrome**: `permtracker-uscis state-page <nvc|wait-times> <file>` loads NVC's
+  timeframes or Global Visa Wait Times copied from the page; the session timer `state-pages-read` gates on each
+  dataset's `as_of` and copies only what's due (`iv-tool-read` does State's IV scheduling table). The NVC route was
+  run end to end Nov 3 (as of Nov 2: document review at Aug 24, 70 days).
+- **Embassy notices aren't scriptable**: every usembassy.gov site answered scripts 403 (CloudFront's "Technical
+  Difficulties" page) from this Mac and the server on Nov 3 2026, and the Archive's copies of their feeds are a
+  month old. Not built.
+- **"PERM cases for every 100 new H-1B workers"** (`perm_per_h1b` in `scripts/build_sponsor_index.py`, shown on
+  employer pages and /perm-employers/compare): PERM cases DOL decided for the employer against the new H-1B workers
+  USCIS approved for it (new employment plus change of employer), the same three fiscal years, ranked among sponsors
+  with 20+. No one publishes a labor market test pass rate (a failed test is never filed); this is the nearest
+  honest comparison, and the page says it isn't a pass rate.
+
+## Nov 3 2026 (night): DOL's month in the copy, and the browser timers checked
+
+- **No page says DOL still prints its PERM month** (`src/app/__tests__/dol-prints-no-perm-month.test.ts`): since Oct 31
+  2026 DOL's table is the average days to a decision over 30, 90 and 180 days, no month and no audit row. Fifteen places
+  still said DOL publishes the month its analysts or its audit queue reached; each now says what DOL prints and that the
+  month comes from our daily check. The gate leaves wage-request sentences (that table still prints months) and dated
+  history alone. The queue guide shows DOL's page before and after.
+- **Every browser timer checks in on every firing** (`permtracker-uscis browser-check <name> <note>`, script
+  `browser-timer:<name>`): the five Chrome timers in `~/.claude/timers/registry.py` die with their Claude Code session,
+  and one that loads only when its source moved left no trace on a quiet day. `check_browser_timers` in the health check
+  warns, never fails, when a timer misses its interval plus a day or couldn't read its page; the morning report shows it.
+
+## Nov 4 2026 (early morning): embassy notices, State's visa news and the monthly issuances, by browser
+
+- **Twenty U.S. embassies' own visa notices** (`scripts/ingest_embassy_notices.py`, list `scripts/data/embassy_feeds.json`,
+  type "Embassy notice", source `embassies`, dataset `policy-notices-embassies`): the embassies whose posts issued the most
+  employment-based immigrant visas from March 2025 to February 2026, each read from WordPress's feed of its Visas
+  category in the owner's Chrome (usembassy.gov answers scripts 403). Kept: operations updates, interviews paused,
+  cancelled or resumed, immigrant visa processing; dropped: checklists, scam and health alerts, FAQs, visitor and student
+  notices, anything a year old. A feed with a DOCTYPE or ENTITY declaration is refused before parsing; robots.txt is read
+  from the same copy. They show on `/policy-changes` ("From the agencies"), on each consulate page ("From the U.S.
+  Embassy in ...", `getEmbassyNotices` by the key range `embassy-<code>-`), in the digest (three a week at most, named by
+  embassy) and in the evening check. A load refreshes the policy page and the consulate pages.
+- **State's visa news and the monthly issuances come the same way** (`state-page news <bundle>`, `state-page issuances
+  <file> <YYYY-MM> <fsc|post>`): the news bundle is State's newsroom list plus each Visas item's page, read in the page;
+  an issuance workbook is read inside the page and crosses as base64 through the clipboard, checked by its SHA-256, so no
+  download is driven. The loader still checks State's own grand total.
+- **The site's list of policy sources is held to the Python feed's** (`policy-sources-agree.test.ts`): court dockets,
+  DOJ and embassies had been written by the feed and read back with no source.
+- **A WordPress feed's description is only "The post X appeared first on Y"**: the post itself is in
+  `content:encoded`, after the embassy theme's `ga-title` block. The excerpt comes from there; the keep rule reads the
+  title alone, because nearly every visa page's body names appointments and petitions.
+- **A server job whose script refreshes pages needs the site's secret exported** (`site_refresh_env` in
+  `permtracker-uscis`, held by `scripts/oracle/test_runner_refresh.py`): without it the script takes the run for a
+  local one and asks nothing, so the first embassy and news loads left the pages on their old render.
+- **A chart's small headings are labels** (`PlateLabel`, or a `<p>`): the consulate page's per-category `h3`s sat
+  under no `h2`, and the pre-ship heading check held a deploy for it on 122 pages once a shared module put the whole
+  family on the check.

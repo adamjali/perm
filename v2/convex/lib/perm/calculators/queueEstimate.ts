@@ -353,7 +353,7 @@ export interface EstimateModel {
 
 /** Each model's figures, by model. */
 export type ModelFacts =
-  | { id: 'decision-pace'; casesAhead: number; pace: number; rawDays: number }
+  | { id: 'decision-pace'; casesAhead: number; pace: number; rawDays: number; holidayDays?: number }
   | { id: 'queue-advance'; queueMonth: string; monthsBehind: number; rate: number; asOf: string }
   | { id: 'dol-average'; avgDays: number; asOf: string }
   | { id: 'cohort-percentile'; decided: number; month: string; medianDays: number }
@@ -674,7 +674,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       models.push({
         id: 'decision-pace',
         label: 'Cases ahead of you, at DOL\'s measured pace',
-        basis: `${input.casesAhead.toLocaleString()} cases in DOL's normal queue were filed before yours (cases on hold, at an RFI or on appeal are out of line and not counted), and DOL has been deciding about ${Math.round(paced.pace).toLocaleString()} a day including weekends. That is ${paced.rawDays.toLocaleString()} days of work.`,
+        basis: `${input.casesAhead.toLocaleString()} cases in DOL's normal queue were filed before yours (cases on hold, at an RFI or on appeal are out of line and not counted), and DOL has been deciding about ${Math.round(paced.pace).toLocaleString()} a day including weekends. That is ${paced.rawDays.toLocaleString()} days${paced.holidayDays > 0 ? `, ${paced.holidayDays.toLocaleString()} of them for the holidays on the way: DOL is closed on federal holidays and decides about a third less from December 21 to January 5` : ' of work'}.`,
         estimatedDate: toISO(paced.day),
         totalDays: Math.round(
           (paced.day * MS_PER_DAY - filed.getTime()) / MS_PER_DAY,
@@ -684,7 +684,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
         source: 'Our own count of DOL\'s live queue, and the decision rate we have observed over the last 28 days',
         rangeNote,
         rangeFrom: paced.rangeFrom,
-        facts: { id: 'decision-pace', casesAhead: input.casesAhead, pace: Math.round(paced.pace), rawDays: paced.rawDays },
+        facts: { id: 'decision-pace', casesAhead: input.casesAhead, pace: Math.round(paced.pace), rawDays: paced.rawDays, holidayDays: paced.holidayDays },
         rangeFacts,
       });
     } else if (

@@ -278,12 +278,14 @@ export default async function PolicyChangesPage() {
           "policy-notices-uscis",
           "policy-notices-uscis-pm",
           "policy-notices-state",
+          "policy-notices-embassies",
           "policy-notices-dol",
           "policy-notices-doj",
           "policy-notices-oflc",
           "policy-notices-congress",
           "policy-comments",
           "policy-notices-courts",
+          "policy-notices-dockets",
           "policy-notices-balca",
         ]}
       />

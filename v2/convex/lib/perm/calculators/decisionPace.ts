@@ -25,8 +25,65 @@
  * quarter the event log covers.
  */
 
+import { isBusinessDay } from '../dates/holidays';
+
 /** Below this many usable weekdays the pace is not measurable. */
 export const MIN_WEEKDAYS = 6;
+
+/*
+ * DOL'S YEAR-END SLOWDOWN, MEASURED. A DOL working day's decisions against a normal one's: the median of the ten
+ * seasons 2015 to 2024 in DOL's own disclosure files (`daily_decisions`, dol-disclosure), against the working days
+ * of the five weeks before Thanksgiving. A federal holiday is a day DOL is closed and walks as a weekend day.
+ *
+ * Tested out of sample before it was used (Nov 3 2026): each season against the other nine's medians, from every
+ * week mid-October to mid-December, 540 starts of 10 to 90 days' work. Typically 6.0 days off against 6.5 for the
+ * flat calendar pace, 8.2 against 9.2 on average, a lean of 1 day early against 3, and at two months of work 10
+ * days against 13. On the nightly backtest's six start days (Sep 14 to Oct 19 2026, no season in reach) it tied
+ * the flat pace's typical miss and put more dates within a week on five of six.
+ *
+ * scripts/lib_pace_walk.py is the twin; scripts/fixtures/pace_walk.json holds both to the same answers.
+ */
+export const DAY_AFTER_THANKSGIVING = 0.43;
+export const LATE_DECEMBER = 0.67;
+export const EARLY_JANUARY = 0.67;
+
+const MS_PER_DAY = 86_400_000;
+const isoOfDay = (day: number): string => new Date(day * MS_PER_DAY).toISOString().slice(0, 10);
+
+function thanksgivingDay(year: number): number {
+  // The fourth Thursday of November.
+  const first = new Date(Date.UTC(year, 10, 1)).getUTCDay();
+  return 1 + ((4 - first + 7) % 7) + 21;
+}
+
+/** A DOL working day's share of a normal one's decisions, on an ISO date. */
+export function seasonFactor(iso: string): number {
+  const y = Number(iso.slice(0, 4));
+  const m = Number(iso.slice(5, 7));
+  const d = Number(iso.slice(8, 10));
+  if (m === 12 && d >= 21) return LATE_DECEMBER;
+  if (m === 1 && d >= 2 && d <= 5) return EARLY_JANUARY;
+  if (m === 11 && d === thanksgivingDay(y) + 1) return DAY_AFTER_THANKSGIVING;
+  return 1;
+}
+
+/**
+ * Days after `today` (a day number) until DOL has decided `cases`, walking its calendar: a working day at
+ * `workday` times its season share, a weekend or federal holiday at `offday`. `plain` walks every weekday as a
+ * normal working day, which is what the holidays are measured against. Null with no rate or past the horizon.
+ */
+export function daysToClear(today: number, cases: number, workday: number, offday: number, plain = false): number | null {
+  if (!(workday > 0)) return null;
+  let left = cases;
+  for (let i = 1; i <= MAX_HORIZON_DAYS; i++) {
+    const iso = isoOfDay(today + i);
+    const dow = new Date((today + i) * MS_PER_DAY).getUTCDay();
+    const working = plain ? dow !== 0 && dow !== 6 : isBusinessDay(iso);
+    left -= working ? workday * (plain ? 1 : seasonFactor(iso)) : Math.max(0, offday);
+    if (left <= 0) return i;
+  }
+  return null;
+}
 
 /** A day under this share of the weekday median is a holiday or a shutdown. */
 export const COLLAPSE_FRACTION = 0.15;
@@ -100,6 +157,8 @@ export function boundRange(day: number, early: number, late: number, floor: numb
 export interface DecisionDay {
   dayOfWeek: number;
   n: number;
+  /** The ISO date. With it the pace walks DOL's calendar; without it, the flat calendar rate. */
+  date?: string;
 }
 
 export interface MeasuredPace {
@@ -113,6 +172,10 @@ export interface MeasuredPace {
   weekendMean: number;
   weekdaysUsed: number;
   daysUsed: number;
+  /** Decisions on a normal DOL working day (a season day counted at its own share), or null on an undated window. */
+  workday?: number | null;
+  /** Decisions on a weekend or federal holiday, or null on an undated window. */
+  offday?: number | null;
 }
 
 /**
@@ -190,6 +253,19 @@ export function measurePace(days: readonly DecisionDay[]): MeasuredPace | null {
     activeWd[Math.floor(p * (activeWd.length - 1))] ?? 0;
   const scale = pace / wdMean;
 
+  // The calendar walk's two rates, when every kept day carries its date: a working day by DOL's own calendar
+  // (holidays out, a season day scaled back to a normal one), and the days DOL is closed.
+  let workday: number | null = null;
+  let offday: number | null = null;
+  if (kept.every((d) => typeof d.date === 'string')) {
+    const work = kept.filter((d) => isBusinessDay(d.date!)).map((d) => d.n / seasonFactor(d.date!));
+    const off = kept.filter((d) => !isBusinessDay(d.date!)).map((d) => d.n);
+    if (work.length >= MIN_WEEKDAYS && off.length >= 2) {
+      workday = work.reduce((a, b) => a + b, 0) / work.length;
+      offday = off.reduce((a, b) => a + b, 0) / off.length;
+    }
+  }
+
   return {
     pace,
     fast: q(0.9) * scale,
@@ -198,6 +274,8 @@ export function measurePace(days: readonly DecisionDay[]): MeasuredPace | null {
     weekendMean: weAll,
     weekdaysUsed: activeWd.length,
     daysUsed: kept.length,
+    workday,
+    offday,
   };
 }
 
@@ -263,6 +341,8 @@ export type PaceEstimate =
       pace: number;
       /** Where the range came from: a measured distance, or the pace rule. */
       rangeFrom: "measured" | "pace";
+      /** Of `rawDays`, the days the federal holidays and the year-end slowdown add. Zero on an undated window. */
+      holidayDays: number;
     };
 
 /**
@@ -344,7 +424,22 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
     };
   }
 
-  const rawDays = Math.round(casesAhead / pace.pace);
+  // WALKED OVER DOL'S CALENDAR when the window was dated (see DAY_AFTER_THANKSGIVING); the flat calendar rate
+  // otherwise. A walk past the horizon is beyond it, as the flat rate's would be.
+  // `!= null`: a pace built without the two rates (an older stored reading, a test's literal) walks flat.
+  const walkable = pace.workday != null && pace.offday != null;
+  const flatDays = Math.round(casesAhead / pace.pace);
+  const walkedDays = walkable ? daysToClear(today, casesAhead, pace.workday!, pace.offday!) : flatDays;
+  const rawDays = walkedDays ?? Math.max(flatDays, MAX_HORIZON_DAYS + 1);
+  const plainDays = walkable ? daysToClear(today, casesAhead, pace.workday!, pace.offday!, true) : flatDays;
+  const holidayDays = walkedDays !== null && plainDays !== null ? Math.max(0, walkedDays - plainDays) : 0;
+  /** The day an edge's rate (a calendar rate, like `pace.fast`) clears the queue, on the same calendar. */
+  const edge = (rate: number): number => {
+    if (!walkable) return today + Math.round(casesAhead / rate);
+    const k = rate / pace.pace;
+    const d = daysToClear(today, casesAhead, pace.workday! * k, pace.offday! * k);
+    return today + (d ?? Math.round(casesAhead / rate));
+  };
   if (rawDays > MAX_HORIZON_DAYS) {
     return {
       kind: "refused",
@@ -363,10 +458,10 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
   const row = input.measuredRange?.find((r) => r.fromDays <= rawDays && rawDays <= r.toDays);
   if (row) {
     const [early, late] = boundRange(day, day + Math.min(0, row.earlyDays), day + Math.max(0, row.lateDays), today + 1);
-    return { kind: "estimate", day, early, late, casesAhead, rawDays, pace: pace.pace, rangeFrom: "measured" };
+    return { kind: "estimate", day, early, late, casesAhead, rawDays, pace: pace.pace, rangeFrom: "measured", holidayDays };
   }
-  let early = today + Math.round(casesAhead / pace.fast);
-  let late = today + Math.round(casesAhead / pace.slow);
+  let early = edge(pace.fast);
+  let late = edge(pace.slow);
   const floor = Math.max(MIN_BAND_DAYS, Math.round(rawDays * MIN_BAND_FRACTION));
   if (late - early < floor) {
     /*
@@ -394,5 +489,6 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
     rawDays,
     pace: pace.pace,
     rangeFrom: "pace",
+    holidayDays,
   };
 }

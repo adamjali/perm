@@ -866,6 +866,8 @@ describe('caveats as data, for a page in another language (Oct 28 2026)', () => 
       casesAhead: 30_000,
       pace: Math.round(PACE.pace),
       rawDays: Math.round(30_000 / PACE.pace),
+      // An undated pace window walks no calendar, so no holiday days.
+      holidayDays: 0,
     });
     expect(pace.rangeNote).toBe(rangeNoteText(pace.rangeFacts!));
   });

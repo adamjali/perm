@@ -4,6 +4,7 @@
     python3 scripts/ingest_state_news.py              # read the newsroom, write what's kept
     python3 scripts/ingest_state_news.py --dry-run    # read and decide, write nothing
     python3 scripts/ingest_state_news.py --from-file results.json
+    python3 scripts/ingest_state_news.py --bundle bundle.json   # the listing and its pages, copied in a browser
 
 WHERE IT COMES FROM (measured Oct 27 2026). travel.state.gov answers scripts
 with 403, and its old "Visas News" page now redirects to a new newsroom at
@@ -120,6 +121,7 @@ PAGE_TRIES = 6
 RETRY_PAUSE_S = 4
 PAGE_PAUSE_S = 2         # between two items' pages
 PAGES_PER_RUN = 4        # new items read in one run; the rest wait for the next
+BUNDLE_PAGE_BUDGET = 1000  # a copied bundle's pages are already here, so every item is decided in one run
 TIMEOUT_S = 45
 ABSTRACT_CHARS = 600
 MIN_PARSED_SHARE = 0.9   # rows that parse, or the list has changed shape
@@ -346,6 +348,7 @@ class Run:
     decided: dict = field(default_factory=dict)   # num -> {kept, why, day}, decided this run
     waiting: list[str] = field(default_factory=list)
     pages_read: int = 0
+    page_budget: int = 0          # a copied bundle reads every page it holds
 
 
 def row_of(item: dict, abstract: str | None, body: str) -> dict:
@@ -394,7 +397,7 @@ def decide_items(run: Run, db, fetch, sleep) -> None:
             if quick[0] is False and "Visas" in item["tags"]:
                 run.decided[num] = {"kept": False, "why": quick[1], "day": item["day"]}
             continue
-        if run.pages_read >= PAGES_PER_RUN:
+        if run.pages_read >= max(PAGES_PER_RUN, run.page_budget):
             run.waiting.append(item["title"])
             continue
         if run.pages_read:
@@ -425,11 +428,44 @@ def save_seen(db, decided: dict) -> None:
     write_doc(db, SEEN_DOC, {"decided": dict(newest)})
 
 
+def bundle_fetch(pages: dict) -> object:
+    """Serve item pages copied from a person's browser, by path (Nov 4 2026: every adoption.state.gov
+    request is sent to travel.state.gov, which refuses scripts). A page the copy doesn't hold reads as
+    one no server on the new site gave, so its item waits for the next copy."""
+    def fetch(url: str) -> str:
+        path = url[len(HOST):] if url.startswith(HOST) else url
+        text = pages.get(path)
+        if not isinstance(text, str):
+            raise OldSite("not in the copied pages")
+        return text
+    return fetch
+
+
+def read_bundle(path: str) -> tuple[str, dict]:
+    """(the listing's JSON text, {item path: page HTML}) from a bundle copied in a browser."""
+    d = json.loads(open(path, encoding="utf-8").read())
+    if not isinstance(d, dict) or not isinstance(d.get("listing"), str):
+        raise LostStructure("the copied bundle has no listing")
+    pages = d.get("pages") or {}
+    if not isinstance(pages, dict):
+        raise LostStructure("the copied bundle's pages aren't a map of path to page")
+    return d["listing"], pages
+
+
 def run(db=None, *, fetch=fetch_url, sleep=time.sleep, robots=robots_allowed, dry_run: bool = False,
-        from_file: str | None = None) -> int:
+        from_file: str | None = None, bundle: str | None = None) -> int:
     started = time.time()
     r = Run()
-    if from_file:
+    if bundle:
+        # Every page is already here: none waits for a server, and every item can be decided this run.
+        try:
+            text, pages = read_bundle(bundle)
+        except (LostStructure, ValueError) as e:
+            r.status, r.note, text = "broken", str(e), None
+            pages = {}
+        fetch, sleep = bundle_fetch(pages), (lambda _s: None)
+        r.page_budget = BUNDLE_PAGE_BUDGET
+    elif from_file:
         text = open(from_file, encoding="utf-8").read()
     elif not robots(LISTING_URL):
         r.status, r.note, text = "refused", "robots.txt disallows the newsroom endpoint", None
@@ -494,8 +530,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--from-file", help="a saved copy of the newsroom's results JSON")
+    ap.add_argument("--bundle", help='a copy made in a browser: {"listing": <results JSON text>, "pages": {path: html}}')
     args = ap.parse_args()
-    return run(None if args.dry_run else Database(), dry_run=args.dry_run, from_file=args.from_file)
+    return run(None if args.dry_run else Database(), dry_run=args.dry_run, from_file=args.from_file, bundle=args.bundle)
 
 
 if __name__ == "__main__":

@@ -78,15 +78,18 @@ POLICY_DATASETS = (
     "policy-notices-congress",  # congress.gov bills (ingest_congress_bills.py)
     "policy-comments",          # regulations.gov comment counts on open proposals (ingest_regulations_gov.py)
     "policy-notices-courts",    # federal court opinions, from CourtListener (ingest_court_opinions.py)
+    "policy-notices-dockets",   # filings in the cases followed by name, from CourtListener's RECAP (ingest_court_dockets.py)
     "policy-notices-balca",     # BALCA's decisions, from OALJ's caselists (ingest_balca.py)
     "policy-notices-doj",       # DOJ's releases, IER's settlements and OCAHO's orders (ingest_doj_enforcement.py)
+    "policy-notices-embassies", # the U.S. embassies' Visas feeds, read in a browser (ingest_embassy_notices.py)
     "rule-pipeline",            # OIRA, public inspection and the Register by RIN (ingest_rule_pipeline.py)
     "rule-pipeline-agenda",     # the Unified Agenda (the same)
 )
 
 # Where a row came from. Stored, so the page and the checks never guess from a type.
 SOURCES = ("federal-register", "public-inspection", "white-house", "oflc", "uscis-news",
-           "uscis-policy-manual", "dol-news", "state-news", "congress", "courtlistener", "balca", "doj")
+           "uscis-policy-manual", "dol-news", "state-news", "congress", "courtlistener", "courtlistener-dockets", "balca", "doj",
+           "embassies")
 # A Register document's stage: on public inspection, published, or taken off
 # public inspection without being published.
 STATUSES = ("public-inspection", "published", "withdrawn")
@@ -354,8 +357,9 @@ def record_quiet_run(db: Database, script: str, *, written: int, note: str = "",
     return record_run(db, script, status="ok", rows_written=written, note=note, started_at=started_at)
 
 
-def expire_policy_page(log=print) -> bool | None:
-    """Ask the site to rebuild the policy page now, after a write.
+def expire_policy_page(log=print, route: str = "/api/revalidate-policy") -> bool | None:
+    """Ask the site to rebuild the policy page now, after a write. `route` names another
+    refresh route a source's rows also show on (the embassies' notices: the consulate pages).
 
     Reads REVALIDATE_SECRET and REVALIDATE_BASE (default https://permtracker.app;
     the server sets http://127.0.0.1:8081, nginx, which sends the call to both
@@ -373,19 +377,19 @@ def expire_policy_page(log=print) -> bool | None:
     headers = {"x-revalidate-secret": secret, "User-Agent": "permtracker policy feed"}
     if "127.0.0.1" in base or "localhost" in base:
         headers["Host"] = "permtracker.app"
-    req = urllib.request.Request(base + "/api/revalidate-policy", data=b"", method="POST", headers=headers)
+    req = urllib.request.Request(base + route, data=b"", method="POST", headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
             ok = r.status == 200
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            log("::warning::revalidate-policy answered 404; the route isn't live yet")
+            log(f"::warning::{route} answered 404; the route isn't live yet")
             return True
-        log(f"::warning::revalidate-policy answered HTTP {e.code}")
+        log(f"::warning::{route} answered HTTP {e.code}")
         return False
     except Exception as e:  # noqa: BLE001
-        log(f"::warning::revalidate-policy unreachable ({type(e).__name__})")
+        log(f"::warning::{route} unreachable ({type(e).__name__})")
         return False
     if not ok:
-        log("::warning::revalidate-policy did not answer 200")
+        log(f"::warning::{route} did not answer 200")
     return ok

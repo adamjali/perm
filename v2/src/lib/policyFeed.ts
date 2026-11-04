@@ -23,16 +23,20 @@ export const DOL_TYPE = "DOL news release";
 export const STATE_TYPE = "State Department visa news";
 /** A Justice Department release, IER settlement or OCAHO case about a work-visa sponsor (ingest_doj_enforcement.py). */
 export const DOJ_TYPE = "Justice Department action";
+/** A U.S. embassy's own visa notice, from its Visas feed read in a browser (ingest_embassy_notices.py). */
+export const EMBASSY_TYPE = "Embassy notice";
 export const PRESIDENTIAL_TYPE = "Presidential Document";
 /** A bill or joint resolution in Congress (`scripts/ingest_congress_bills.py`). */
 export const BILL_TYPE = "Bill";
 export const COURT_TYPE = "Court opinion";
 export const BALCA_TYPE = "BALCA decision";
+/** A filing in a case this site follows by name (ingest_court_dockets.py): an opinion, an order, a status report. */
+export const FILING_TYPE = "Court filing";
 /** Decisions on these programs, a court's or BALCA's: not Register documents. */
-export const DECISION_TYPES: readonly string[] = [COURT_TYPE, BALCA_TYPE];
+export const DECISION_TYPES: readonly string[] = [COURT_TYPE, BALCA_TYPE, FILING_TYPE];
 
 /** Posts an agency made on its own site, which aren't Register documents. */
-export const ANNOUNCEMENT_TYPES: readonly string[] = [OFLC_TYPE, USCIS_TYPE, PM_TYPE, DOL_TYPE, STATE_TYPE, DOJ_TYPE];
+export const ANNOUNCEMENT_TYPES: readonly string[] = [OFLC_TYPE, USCIS_TYPE, PM_TYPE, DOL_TYPE, STATE_TYPE, DOJ_TYPE, EMBASSY_TYPE];
 
 export interface FeedDoc extends PolicyNotice {
   /** Corrections the Register published to this document, newest first. */

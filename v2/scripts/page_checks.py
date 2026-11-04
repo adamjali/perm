@@ -100,8 +100,13 @@ def run(check: dict) -> dict:
     # A failing check's report keeps its findings, not merely its last lines:
     # the phone sweep prints a line for every page at both widths, and on Oct 26
     # 2026 its last 12 lines were the clean 320 pass while the problem sat at 390.
+    # A check that ran out of time (Nov 3 2026: the phone sweep, 900 s, three 90 s load timeouts) says how far it
+    # got and which pages were slowest, since dropping the clean lines also drops every load time.
+    timed = sorted(((float(m.group(1)), ln) for ln in lines if (m := re.search(r"\(([\d.]+) s\)\s*$", ln))), reverse=True)
     if code != 0 and check.get("clean"):
         lines = [ln for ln in lines if not re.search(check["clean"], ln)] or lines
+        if code == -1 and timed:
+            lines += [f"reached {len(timed)} page loads before the limit; the slowest:", *(ln for _s, ln in timed[:5])]
     findings = [ln.strip()[:300] for ln in lines if check.get("keep") and re.search(check["keep"], ln)]
     return {
         "key": check["key"],

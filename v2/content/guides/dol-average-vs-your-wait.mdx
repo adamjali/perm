@@ -2,6 +2,7 @@
 title: "Why DOL's average wait isn't your wait"
 description: "DOL's average days, the month DOL is working, and your case's own estimate are three different numbers. What each measures and which one fits your case."
 date: "2026-10-17"
+updated: "2026-11-03"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/dol-average-vs-your-wait.webp"
 imageAlt: "How fast DOL's PERM queue has advanced, month by month, on permtracker.app"
@@ -14,7 +15,7 @@ featured: false
 published: true
 ---
 
-If your employer filed a PERM application for you, you've probably seen three numbers that don't agree: DOL's average wait, the filing month DOL says it's working, and a date for your own case. They aren't competing guesses at one thing. Each measures something different, and only one of them is about your case. To see where your own case stands, type its number into PERM Tracker's free [case lookup](/perm-case-status), which asks DOL's own case-status service, pending cases included.
+If your employer filed a PERM application for you, you've probably seen three numbers that don't agree: DOL's average wait, the filing month DOL is working, and a date for your own case. They aren't competing guesses at one thing. Each measures something different, and only one of them is about your case. To see where your own case stands, type its number into PERM Tracker's free [case lookup](/perm-case-status), which asks DOL's own case-status service, pending cases included.
 
 <Callout type="info" title="DOL's two figures, today">
 <DolNow />
@@ -26,15 +27,15 @@ DOL's average measures how long finished cases took, the month DOL is working sh
 
 | The number | What it measures | Where it comes from | What it's good for |
 |---|---|---|---|
-| DOL's average | Calendar days from filing to decision, averaged over the cases DOL decided in one month | DOL's [processing times page](https://flag.dol.gov/processingtimes) | How long finished cases took, slow ones included |
-| The month DOL is working | The filing month analyst review has reached | The same DOL page | Where the front of the line is today |
+| DOL's average | Calendar days from filing to decision, averaged over the cases DOL decided in the last 30, 90 or 180 days | DOL's [processing times page](https://flag.dol.gov/processingtimes) | How long finished cases took, slow ones included |
+| The month DOL is working | The filing month analyst review has reached | PERM Tracker's daily check of DOL's case statuses: DOL stopped printing it on October 31, 2026 | Where the front of the line is today |
 | Your case's estimate | The cases ahead of yours in line, at the pace DOL has been deciding | Your case page on this site | When your own case is likely to be decided |
 
 DOL's average right now is <DolNow show="average" />. It's DOL's own figure, and a fair one. It just answers a question about the past.
 
 ## Why the average runs long for a case at the front
 
-The average is taken over every case DOL decided in a month. That includes cases that sat in an RFI, on hold, in an audit or on appeal, because those get decided eventually too, and they take much longer. A handful of slow cases pulls an average up a lot.
+The average is taken over every case DOL decided in a window: since October 31, 2026, the last 30, 90 and 180 days. That includes cases that sat in an RFI, on hold, in an audit or on appeal, because those get decided eventually too, and they take much longer. A handful of slow cases pulls an average up a lot.
 
 A case that stays in the ordinary queue, analyst review, moves in filing order. Its wait is set by how many cases are ahead of it and how fast DOL is deciding them. That's why a case near the front can be decided well before its filing date plus DOL's average.
 
@@ -58,30 +59,22 @@ At DOL's recent pace, the line reaches the end of January 2026 around November 1
 
 ## How well the estimates have held
 
-An estimate is only worth reading if it's checked. Every night this site rebuilds the queue as it stood on earlier days and scores its dates against what DOL did. On October 16, 2026, the [estimate scorecard](/estimate-scorecard) read:
+An estimate is only worth reading if it's checked, so every night the site checks its own. It rebuilds DOL's line as it stood a few weeks earlier, works out the date it would have given each case then, and sets each one against the day DOL actually decided it.
 
-<ComparisonTable
-  headers={["Test", "Result"]}
-  rows={[
-    ["Typical miss, 10,407 cases DOL decided September 25 to October 15, 2026", "4 days"],
-    ["Decided within a week of the date given", "76%"],
-    ["Decided inside the printed range, near the front of the line", "60% of 5,292 cases"],
-    ["Daily sample of pending cases, graded so far", "65, typically 5 days off"],
-  ]}
-/>
+<EstimateChecksNow scope="perm" />
 
-Those results are for dates within about a month. The scorecard says plainly that dates further out haven't come due yet, so the long-range test hasn't really started. A date six months away is an estimate of the pace holding for six months, and nobody's tested that yet.
+The [estimate scorecard](/estimate-scorecard) shows every check in full. They cover dates within about a month. Dates further out haven't come due yet, so the long-range test hasn't really started. A date six months away is an estimate of the pace holding for six months, and nobody's tested that yet.
 
 ## Which number to use
 
-Use your case's page for your own case, DOL's analyst review month for the front of the line, and DOL's average for the history.
+Use your case's page for your own case, the month DOL is working for the front of the line, and DOL's average for the history.
 
 <StepByStep>
 <Step number={1} title="For your own case, use your case's page">
 Put your case number into the [case lookup](/perm-case-status). It shows DOL's current status, where the case sits in line, and an estimated date with its range.
 </Step>
 <Step number={2} title="For the front of the line, use the month">
-DOL's analyst review month says whether DOL has reached your filing month. If it has passed your month and your case is still open, it's likely outside the ordinary queue, and the status will say why.
+The month DOL is working, on the [PERM queue](/perm-queue) page, says whether DOL has reached your filing month. If it has passed your month and your case is still open, it's likely outside the ordinary queue, and the status will say why.
 </Step>
 <Step number={3} title="For the history, use the average">
 DOL's average is a fair answer to "how long did PERM take for cases decided recently?" It's a weak answer to "when will mine be decided?"

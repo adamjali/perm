@@ -9,7 +9,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BriefcaseIcon, HeartIcon, UsersThreeIcon } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, BriefcaseIcon, HeartIcon, MegaphoneSimpleIcon, UsersThreeIcon } from "@phosphor-icons/react/ssr";
 
 import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -21,7 +21,8 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { behindLabel, IV_CATEGORIES, IV_CATEGORY_LABEL, IV_TOOL_URL, monthsBehind, type IvCategory } from "@/lib/consular/scheduling";
-import { getConsularIndex, getPostDetail, type PostDetail } from "@/lib/db/consularPosts";
+import { embassyVisasUrl, shortExcerpt } from "@/lib/consular/embassies";
+import { getConsularIndex, getEmbassyNotices, getPostDetail, type EmbassyNotices, type PostDetail } from "@/lib/db/consularPosts";
 import { EMPLOYMENT_CATEGORIES, monthName } from "@/lib/db/visaIssuances";
 import { formatInt } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -120,6 +121,7 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
   const { post: slug } = await params;
   const [post, index] = await Promise.all([getPostDetail(slug), getConsularIndex()]);
   if (!post) notFound();
+  const embassy = await getEmbassyNotices(post.key);
   const path = `/consular-posts/${post.slug}`;
   const asOf = index.asOf;
   const now = post.now;
@@ -169,6 +171,8 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
         </p>
       )}
 
+      {embassy ? <EmbassyNoticeList data={embassy} /> : null}
+
       {charted ? (
         <FigurePlate
           title="How far back NVC was scheduling, update by update"
@@ -180,7 +184,7 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3 [&>*]:min-w-0">
             {IV_CATEGORIES.map((c) => (
               <div key={c}>
-                <h3 className="font-heading text-lg font-bold">{IV_CATEGORY_LABEL[c]}</h3>{" "}
+                <p className="font-heading text-lg font-bold">{IV_CATEGORY_LABEL[c]}</p>{" "}
                 <ColumnChart
                   columns={behindColumns(post, c)}
                   label={`${post.name}, ${IV_CATEGORY_LABEL[c]}: months back NVC was scheduling at each update`}
@@ -258,7 +262,56 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
           { href: "/visa-issuances", label: "Visas issued abroad", note: "every category, month by month" },
         ]}
       />
-      <DataProvenance datasets={["iv-scheduling", "visa-issuances"]} />
+      <DataProvenance
+        datasets={embassy ? ["iv-scheduling", "visa-issuances", "policy-notices-embassies"] : ["iv-scheduling", "visa-issuances"]}
+      />
     </div>
+  );
+}
+
+/**
+ * The embassy's own visa notices: what it posted about its operations, newest first, linked to its own post. The
+ * hand-kept pause record above says what State filed in court; these are what the embassy told its applicants.
+ */
+function EmbassyNoticeList({ data }: { data: EmbassyNotices }) {
+  const { embassy, notices } = data;
+  const own = embassyVisasUrl(embassy);
+  return (
+    <section aria-labelledby="embassy-notices" className="mt-10 max-w-4xl">
+      <h2 id="embassy-notices" className="flex items-center gap-2 font-heading text-2xl font-bold">
+        <MegaphoneSimpleIcon aria-hidden="true" weight="bold" className="size-6 shrink-0" /> From the {embassy.name}
+      </h2>{" "}
+      {notices.length ? (
+        <>
+          <p className="mt-2 text-base text-muted-foreground">
+            Its own notices on consular operations and immigrant visas, newest first, as the embassy posted them.
+          </p>{" "}
+          <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+            {notices.map((n) => (
+              <li key={n.url} className="py-4">
+                <p className="text-sm font-semibold tabular-nums text-muted-foreground">{longDate(n.day) ?? n.day}</p>{" "}
+                <a href={n.url} target="_blank" rel="noopener noreferrer" className="link inline-flex min-h-11 items-center font-heading text-lg font-bold">
+                  {n.title}
+                </a>{" "}
+                {n.excerpt ? <p className="mt-1 max-w-3xl text-base leading-relaxed">{shortExcerpt(n.excerpt)}</p> : null}
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : (
+        <p className="mt-2 text-base text-muted-foreground">
+          The embassy hasn&apos;t posted a notice on consular operations or immigrant visas in the last year that this site
+          has read.
+        </p>
+      )}{" "}
+      <a
+        href={own}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="link mt-4 inline-flex min-h-11 items-center gap-2 text-base"
+      >
+        Every visa post on the embassy&apos;s own site <ArrowSquareOutIcon aria-hidden="true" className="size-4" />
+      </a>
+    </section>
   );
 }

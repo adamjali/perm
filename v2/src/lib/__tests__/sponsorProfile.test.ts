@@ -23,6 +23,14 @@ describe("sponsor profile words", () => {
     expect(partBasis(part({ id: "perm_recent", value: 233, n: 233 }))).toBe("filed in the last 12 months");
   });
 
+  it("words PERM cases per 100 new H-1B workers as a comparison, never a pass rate", () => {
+    const p = part({ id: "perm_per_h1b", label: "PERM cases for every 100 new H-1B workers, last 3 fiscal years", value: 84.4, n: 1250 });
+    expect(partValue(p)).toBe("84");
+    expect(partBasis(p)).toBe("PERM cases DOL decided, against the 1,250 new H-1B workers USCIS approved");
+    expect(partRank(p)).toBe("Higher than 26% of the 2,179 sponsors with 20 or more new H-1B workers.");
+    expect(partBasis(p)).not.toMatch(/pass rate|success/i);
+  });
+
   it("places it among the sponsors it was ranked against, with their count", () => {
     // The PERM rate is ranked among sponsors at the employer page's own floor.
     const among = `the 2,179 sponsors with ${MIN_DECIDED_FOR_RATE} or more decided cases.`;

@@ -8,6 +8,7 @@ import {
   isGradedOutcome,
   PWD_DAY_MODEL,
   PWD_MODEL,
+  storedModel,
   type Cell,
   type Program,
   summarise,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/scorecard/score";
 import { scorecardAlarms } from "@/lib/scorecard/alarms";
 import type { BacktestRangeFields } from "@/lib/rangeCoverage";
+import type { PassedScore } from "@/lib/scorecard/verdict";
 import { isCurrentMethod, parseNextCutoff, parseSupplyDivision, readMethods, readNextCutoff, readOurs, readRival, readSupplyDivision } from "@/lib/scorecard/verdict";
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
 import { timingView, viewEstimate } from "@/lib/seasonalTiming";
@@ -376,7 +378,7 @@ export async function predictOurs(today: string): Promise<{
       caseNumber: c.caseNumber,
       filingDate: c.filingDate,
       status: c.status,
-      model: est.modelId,
+      model: storedModel(est.modelId),
       predicted: est.estimatedDate,
       bandEarly: est.earliestDate,
       bandLate: est.latestDate,
@@ -517,7 +519,7 @@ export async function predictWatched(today: string): Promise<NewPrediction[]> {
       if (!est || est.kind !== "date") continue;
       out.push({
         source: "watched", program: "perm", caseNumber: c.caseNumber, filingDate: c.filingDate, status: c.status,
-        model: est.modelId, predicted: est.estimatedDate, bandEarly: est.earliestDate, bandLate: est.latestDate, casesAhead,
+        model: storedModel(est.modelId), predicted: est.estimatedDate, bandEarly: est.earliestDate, bandLate: est.latestDate, casesAhead,
       });
     }
   }
@@ -836,7 +838,20 @@ export interface EstimatorBacktest {
   /** The measured ranges by distance and their out-of-sample test (src/lib/rangeCoverage.ts reads them). */
   rangeModel?: BacktestRangeFields["rangeModel"];
   servedRange?: BacktestRangeFields["servedRange"];
+  /**
+   * Cases DOL's line had already passed, dated by the measured rate DOL finishes them, beside DOL's own average
+   * (scripts/backtest_queue.py, "passed"). Read only through `estimateChecks`, which checks every number.
+   */
+  passed?: { frontierMonth?: unknown; rate?: PassedCell | null; dolAverage?: PassedCell | null; today?: PassedCell | null } | null;
+  /** A case at an RFI, dated from its own RFI day, and its test once the record is long enough ("rfiClock"). */
+  rfiClock?: { watched?: unknown; test?: { judged?: unknown; decided?: unknown; typicalMissDays?: unknown; insideShare?: unknown } };
   computedAt: number;
+}
+
+/** One way of dating the passed cases: the scorecard's verdict reads `missAtLeastDays`, the checks the rest. */
+export interface PassedCell extends PassedScore {
+  typicalMissDays?: number | null;
+  within7Share?: number | null;
 }
 
 /** The nightly standing backtest (scripts/backtest_queue.py), one point read. */

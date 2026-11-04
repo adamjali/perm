@@ -116,7 +116,7 @@ export function CaseEstimatePanel({
               {est.nextStep.to.toLowerCase()}
             </b>
             {est.nextStep.to.toUpperCase() === "ANALYST REVIEW"
-              ? " - back into the ordinary queue, where DOL's published position applies again."
+              ? ", back into the ordinary queue, where the line's position applies again."
               : "."}{" "}
             <span className="text-muted-foreground">
               How long that takes is not something we can measure yet.

@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times|news> <file>|state-page issuances <file> <YYYY-MM> <fsc|post>|embassy-notices <file>|browser-check <name> [note]>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -13,6 +13,14 @@ fail(){ python3 scripts/record_ingest_failure.py --script "$1" --note "oracle ti
 # this one failed run kept the health check red for its whole window.
 ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; record_run(Database(), sys.argv[1], status="ok", note=sys.argv[2])' "$1" "oracle timer ($job): $2" || echo "could not record the ok row"; }
 rc=0
+# A reader that asks the site to rebuild its pages (lib_policy_feed.expire_policy_page and its siblings) reads
+# these two; without them it takes the run for a local one and asks nothing, silently. nginx sends the call to
+# both web copies. The secret is the site's own, read from its env file and never printed.
+site_refresh_env(){
+  export REVALIDATE_BASE=http://127.0.0.1:8081
+  REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
+  export REVALIDATE_SECRET
+}
 case "$job" in
   i485)
     python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; }
@@ -44,17 +52,13 @@ case "$job" in
   # www.dol.gov doesn't. DOL updates it quarterly; read weekly, and a week with nothing new writes nothing.
   # The employer pages whose cases moved are rebuilt through nginx, which sends the call to both web copies.
   whd)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 30m nice -n 10 python3 scripts/ingest_whd.py || { rc=1; fail ingest_whd.py "exited non-zero or ran past 30m"; } ;;
   # OSHA's inspections of PERM sponsors (Oct 31 2026): two files from data.dol.gov, 1.5 and 2.3 GB, stored
   # uncompressed. They go to /var/tmp on disk (ingest_osha.py), since /tmp here is memory. OSHA updates daily; read
   # weekly, and a week with nothing new writes nothing. Pages whose inspections moved rebuild through nginx.
   osha)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 60m nice -n 10 python3 scripts/ingest_osha.py || { rc=1; fail ingest_osha.py "exited non-zero or ran past 60m"; } ;;
   # USCIS's processing-times page as posted, every day since March 2022 (Oct 31 2026): the daily copies an
   # open-source project publishes on GitHub (ingest_uscis_posted_times.py says why and how). Read daily; a day the
@@ -92,6 +96,61 @@ case "$job" in
     else
       rc=1; fail ingest_iv_scheduling.py "the IV scheduling table ($f) was refused"
     fi ;;
+  # Two more State pages copied out of a person's browser (Nov 3 2026), for the bulletin's reason: NVC's
+  # timeframes (weekly) and Global Visa Wait Times (monthly). The page's text, or its table as HTML with the
+  # "Last updated" line, goes in a file; each reader's own parser and checks decide whether it's written.
+  #   sudo -u permtracker permtracker-uscis state-page nvc /tmp/nvc.html
+  #   sudo -u permtracker permtracker-uscis state-page wait-times /tmp/wait-times.html
+  # Both pages refresh themselves daily, so nothing is expired here. Since Nov 4 2026 two more come the same
+  # way: State's visa news (the newsroom's listing and each Visas item's page, as one JSON bundle; the
+  # reader asks nginx to rebuild /policy-changes when it writes) and a month's issuance file (the .xlsx
+  # State links, its bytes copied from the page; the loader checks it against State's own grand total):
+  #   sudo -u permtracker permtracker-uscis state-page news /tmp/state-news.json
+  #   sudo -u permtracker permtracker-uscis state-page issuances /tmp/iv-2026-03-post.xlsx 2026-03 post
+  state-page)
+    kind="${2:-}"; f="${3:-}"
+    usage="usage: permtracker-uscis state-page <nvc|wait-times|news> <file> | state-page issuances <file> <YYYY-MM> <fsc|post>"
+    if [ -z "$f" ]; then echo "$usage"; exit 2; fi
+    case "$kind" in
+      nvc) s=ingest_nvc_timeframes.py; set -- --from-file "$f" ;;
+      wait-times) s=ingest_visa_wait_times.py; set -- --from-file "$f" ;;
+      news) s=ingest_state_news.py; set -- --bundle "$f" ;;
+      issuances)
+        m="${4:-}"; d="${5:-}"
+        if ! [[ "$m" =~ ^[0-9]{4}-[0-9]{2}$ ]] || ! [[ "$d" =~ ^(fsc|post)$ ]]; then echo "$usage"; exit 2; fi
+        s=ingest_visa_issuances.py; set -- --local "$f" --month "$m" --dim "$d" ;;
+      *) echo "$usage"; exit 2 ;;
+    esac
+    site_refresh_env
+    if ! timeout 10m python3 "scripts/$s" "$@"; then
+      rc=1; fail "$s" "the $kind copy from a browser ($f) was refused"
+    fi ;;
+  # The U.S. embassies' Visas feeds copied out of a person's browser (Nov 4 2026): every usembassy.gov site
+  # answers scripts with CloudFront's 403, so the session timer embassy-read reads the 20 feeds in
+  # scripts/data/embassy_feeds.json in Chrome and hands them over as one JSON copy. The reader keeps the
+  # consular notices, writes them to the policy feed and asks nginx to rebuild /policy-changes and the
+  # consulate pages.
+  #   sudo -u permtracker permtracker-uscis embassy-notices /tmp/embassies.json
+  embassy-notices)
+    f="${2:-}"
+    if [ -z "$f" ]; then echo "usage: permtracker-uscis embassy-notices <file>"; exit 2; fi
+    site_refresh_env
+    if ! timeout 10m python3 scripts/ingest_embassy_notices.py --bundle "$f"; then
+      rc=1; fail ingest_embassy_notices.py "the embassies' copy from a browser ($f) was refused"
+    fi ;;
+  # A browser timer's heartbeat (Nov 3 2026): the jobs that run in a Claude Code session in the owner's Chrome
+  # (the bulletin, State's IV table, NVC and wait times, USCIS's times, the Search Console round) record one
+  # every time they fire, due or not, so check_browser_timers in the health check can say when one stopped.
+  # The note says what the firing did; one starting "could not read" is a run that couldn't read its page.
+  #   sudo -u permtracker permtracker-uscis browser-check state-pages-read "checked, nothing due"
+  browser-check)
+    name="${2:-}"; note="${3:-checked}"
+    case "$name" in
+      bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round|embassy-read) ;;
+      *) echo "usage: permtracker-uscis browser-check <bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round|embassy-read> [note]"; exit 2 ;;
+    esac
+    python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; sys.exit(0 if record_run(Database(), "browser-timer:" + sys.argv[1], status="ok", note=sys.argv[2][:300]) else 1)' "$name" "$note" \
+      || { rc=1; echo "the heartbeat for $name was not recorded"; } ;;
   posted-times)
     if timeout 20m nice -n 10 python3 scripts/ingest_uscis_posted_times.py; then
       REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
@@ -104,23 +163,17 @@ case "$job" in
   # SAM.gov's exclusions of PERM sponsors (Oct 31 2026): one public file a day, no key. Read weekly; pages whose
   # exclusions moved rebuild through nginx.
   sam)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 15m nice -n 10 python3 scripts/ingest_sam_exclusions.py || { rc=1; fail ingest_sam_exclusions.py "exited non-zero or ran past 15m"; } ;;
   # DOL's Trade Adjustment Assistance petitions of PERM sponsors (Oct 31 2026): one 48 MB file from data.dol.gov. The
   # program stopped on July 1 2022, so the file is closed; read monthly to catch a correction or the file moving.
   taa)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 15m nice -n 10 python3 scripts/ingest_taa.py || { rc=1; fail ingest_taa.py "exited non-zero or ran past 15m"; } ;;
   # SBA's PPP loans to PERM sponsors (Oct 31 2026): thirteen CSVs from data.sba.gov, 5.2 GB, read one at a time into
   # /var/tmp and deleted. The program closed in May 2021 and SBA's release is a snapshot; read monthly.
   ppp)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     timeout 90m nice -n 10 python3 scripts/ingest_ppp.py || { rc=1; fail ingest_ppp.py "exited non-zero or ran past 90m"; } ;;
   i140)
     t=$(mktemp -d)
@@ -192,9 +245,7 @@ case "$job" in
   # sends the call to both web copies). DOL's newsroom and OFLC are read from
   # GitHub's runners (www.dol.gov refuses this server).
   policy-watch)
-    export REVALIDATE_BASE=http://127.0.0.1:8081
-    REVALIDATE_SECRET="$(sed -n 's/^REVALIDATE_SECRET=//p' /srv/permtracker/app/env/production.env | head -1)"
-    export REVALIDATE_SECRET
+    site_refresh_env
     # One source down is that source's failure row (the health check and the
     # morning report name it), not this unit's failure: reginfo.gov's 502s and
     # a cut-off robots.txt failed the unit every 30 minutes on Oct 30 and 31
@@ -237,6 +288,9 @@ case "$job" in
     # can take minutes, so it has its own limit. COURTLISTENER_TOKEN in
     # uscis.env, when set, is sent as CourtListener asks.
     step 12m ingest_court_opinions.py
+    # The filings in the court cases followed by name (scripts/data/court_dockets.json), from CourtListener's
+    # RECAP archive (Nov 3 2026): it reads its own last run and asks at most every 6 hours, three requests.
+    step 6m ingest_court_dockets.py
     # Sundays at 3 AM Eastern, a five-page walk for opinions posted late.
     if [ "$(TZ=America/New_York date +%u)" = 7 ] && [ "$h" = 3 ] && [ "$m" -lt 30 ]; then
       step 20m ingest_court_opinions.py --pages 5

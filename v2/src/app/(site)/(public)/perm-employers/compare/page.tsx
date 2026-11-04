@@ -122,6 +122,7 @@ export default async function CompareEmployersPage({
     { label: "H-1B LCAs certified, last 24 months", value: (s) => partCell(s, "lca_24m", "none") },
     { label: "H-1B positions that were transfers", value: (s) => partCell(s, "transfer_share", "too few positions to rate"), note: "a change of employer, over the newest 24 months of LCA detail" },
     { label: "USCIS H-1B approval rate", value: (s) => partCell(s, "uscis_rate", "too few decisions to rate"), note: "last three fiscal years of USCIS's Employer Data Hub" },
+    { label: "PERM cases for every 100 new H-1B workers", value: (s) => partCell(s, "perm_per_h1b", "too few new H-1B workers to compare"), note: "PERM cases DOL decided against new H-1B workers USCIS approved, the same three fiscal years; a comparison, not a pass rate" },
   ];
 
   const facetList = (s: Side, kind: "occupation" | "state") =>

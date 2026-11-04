@@ -72,6 +72,7 @@ export type DataSection =
   | "lca-wages"
   | "wage-levels"
   | "soc-codes"
+  | "bright-outlook"
   | "compare-offer"
   | "wage-sources"
   | "visa-bulletin"
@@ -211,6 +212,7 @@ export const SECTIONS: DataNavSection[] = [
   t("compare-offer", "Wages", "Compare my offer", "/tools/compare-my-offer", "Where an offer sits among certified filings."),
   s("wage-sources", "Wages", "H-1B wage sources", "/lca-wage-sources"),
   t("soc-codes", "Wages", "Find a SOC code", "/soc-codes", "The codes employers filed a job title under, and how often."),
+  s("bright-outlook", "Wages", "Fast-growing jobs", "/bright-outlook-jobs"),
 
   s("lca-cases", "Other visas", "H-1B LCAs", "/lca-cases"),
   s("h1b-lottery", "Other visas", "H-1B lottery odds", "/h1b-lottery-odds"),

@@ -374,6 +374,14 @@ PAGE_HTML = """
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Worksites_FY2025_Q4.xlsx">LCA_Worksites_FY2025_Q4.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2020_Q1.xlsx">LCA_FY2020_Q1.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_Disclosure_Data_FY2019.xlsx">H-1B FY2019.xlsx</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_Disclosure_Data_FY2018_EOY.xlsx">H-1B FY2018</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_FY14_Q4.xlsx">H-1B FY2014</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_FY2013.xlsx">LCA FY2013</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_iCert_LCA_FY2011_Q4.xlsx">FY2011</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/Icert_ LCA_ FY2009.xlsx">iCert FY2009</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/H-1B_Case_Data_FY2008.xlsx">FY2008</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_FY2020_AppendixA.xlsx">FY2020 Appendix A</a>
+<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_FY2020_Worksites.xlsx">FY2020 worksites</a>
 <a href="https://www.dol.gov/media/PW_Disclosure_Data_FY2026_Q3.xlsx">PW_Disclosure_Data_FY2026_Q3.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/FY26Q3/PW_Worksites_FY2026_Q3.xlsx">PW_Worksites_FY2026_Q3.xlsx</a>
 <a href="/sites/dolgov/files/ETA/oflc/pdfs/PW_Disclosure_Data_FY2025_Q4.xlsx">PW_Disclosure_Data_FY2025.xlsx</a>
@@ -492,10 +500,15 @@ def check_fixture(tmp: str, writer_name: str, write) -> None:
 
 def check_discovery() -> None:
     lca = discover_links(PAGE_HTML, PROGRAMS["lca"]["file_pattern"], HOST)
-    check("LCA: exactly the disclosure files match, not Appendix A or worksites",
-          sorted(lca), ["LCA_Disclosure_Data_FY2020_Q1.xlsx",
-                        "LCA_Disclosure_Data_FY2025_Q4.xlsx",
-                        "LCA_Disclosure_Data_FY2026_Q3.xlsx"])
+    check("LCA: exactly the disclosure files match, every era, not Appendix A or worksites",
+          sorted(lca), sorted(["LCA_Disclosure_Data_FY2020_Q1.xlsx",
+                               "LCA_Disclosure_Data_FY2025_Q4.xlsx",
+                               "LCA_Disclosure_Data_FY2026_Q3.xlsx",
+                               "H-1B_Disclosure_Data_FY2019.xlsx",
+                               "H-1B_Disclosure_Data_FY2018_EOY.xlsx",
+                               "H-1B_FY14_Q4.xlsx", "LCA_FY2013.xlsx",
+                               "H-1B_iCert_LCA_FY2011_Q4.xlsx",
+                               "Icert_ LCA_ FY2009.xlsx", "H-1B_Case_Data_FY2008.xlsx"]))
     newest = pick_latest(lca)
     check("LCA: the newest file is FY2026 Q3", newest, "LCA_Disclosure_Data_FY2026_Q3.xlsx")
 
@@ -787,6 +800,111 @@ def check_backfill_pw_detail() -> None:
     check("every column pw-detail writes is one the wage-request file fills", sorted(group - filled), [])
 
 
+# Each pre-FY2020 layout's real header, as DOL's files printed them on a GitHub runner (Nov 4 2026, the
+# loader's own "Header was" line; FY2015 and FY2010 in full, the others' fields this map reads).
+OLD_LCA_HEADERS = {
+    "H-1B_Case_Data_FY2008.xlsx": ["CASE_NO", "APPROVAL_STATUS", "SUBMITTED_DATE", "DOL_DECISION_DATE", "NAME",
+                                   "JOB_TITLE", "JOB_CODE", "OCCUPATIONAL_TITLE", "WAGE_RATE_1", "RATE_PER_1",
+                                   "CITY_1", "STATE_1", "STATE", "NBR_IMMIGRANTS", "PREVAILING_WAGE_1", "PROGRAM"],
+    "H-1B_FY2010.xlsx": ["DECISION_DATE", "LCA_CASE_EMPLOYER_NAME", "LCA_CASE_JOB_TITLE", "LCA_CASE_NAICS_CODE",
+                         "LCA_CASE_NUMBER", "LCA_CASE_SOC_CODE", "LCA_CASE_SOC_NAME", "LCA_CASE_SUBMIT",
+                         "LCA_CASE_WAGE_RATE_FROM", "PW_1", "PW_UNIT_1", "STATUS", "TOTAL_WORKERS",
+                         "WORK_LOCATION_CITY1", "WORK_LOCATION_STATE1"],
+    "H-1B_FY14_Q4.xlsx": ["DECISION_DATE", "LCA_CASE_EMPLOYER_NAME", "LCA_CASE_NUMBER", "LCA_CASE_SUBMIT",
+                          "LCA_CASE_WAGE_RATE_FROM", "LCA_CASE_WAGE_RATE_UNIT", "LCA_CASE_WORKLOC1_CITY",
+                          "LCA_CASE_WORKLOC1_STATE", "STATUS", "VISA_CLASS", "TOTAL_WORKERS"],
+    "H-1B_Disclosure_Data_FY15_Q4.xlsx": ["AGENT_ATTORNEY_NAME", "CASE_NUMBER", "CASE_STATUS", "CASE_SUBMITTED",
+                                          "DECISION_DATE", "EMPLOYER_NAME", "H-1B_DEPENDENT", "JOB_TITLE",
+                                          "NAIC_CODE", "PREVAILING_WAGE", "PW_UNIT_OF_PAY", "PW_WAGE_LEVEL",
+                                          "SOC_CODE", "SOC_NAME", "TOTAL WORKERS", "VISA_CLASS",
+                                          "WAGE_RATE_OF_PAY", "WAGE_UNIT_OF_PAY", "WILLFUL VIOLATOR",
+                                          "WORKSITE_CITY", "WORKSITE_STATE"],
+    # FY2019's real header (dumped on GitHub Nov 4 2026): its worksite and wage columns are numbered, one set
+    # per worksite up to ten, and the first set is the one read.
+    "H-1B_Disclosure_Data_FY2019.xlsx": ["AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME", "CASE_NUMBER", "CASE_STATUS",
+                                         "CASE_SUBMITTED", "DECISION_DATE", "EMPLOYER_NAME", "H-1B_DEPENDENT",
+                                         "JOB_TITLE", "NAICS_CODE", "SOC_CODE", "SOC_TITLE", "VISA_CLASS",
+                                         "TOTAL_WORKER_POSITIONS", "PREVAILING_WAGE_1", "PREVAILING_WAGE_2",
+                                         "PW_UNIT_OF_PAY_1", "PW_WAGE_LEVEL_1", "PW_OES_YEAR_1", "PW_OTHER_SOURCE_1",
+                                         "PW_NON-OES_YEAR_1", "PW_SURVEY_NAME_1", "PW_SURVEY_PUBLISHER_1",
+                                         "PW_TRACKING_NUMBER_1", "WAGE_RATE_OF_PAY_FROM_1", "WAGE_RATE_OF_PAY_FROM_2",
+                                         "WAGE_RATE_OF_PAY_TO_1", "WAGE_UNIT_OF_PAY_1", "WORKSITE_CITY_1",
+                                         "WORKSITE_CITY_2", "WORKSITE_STATE_1", "WORKSITE_STATE_2"],
+}
+
+# What each file must read where, beyond the required fields (the numbered FY2019 set is easy to miss).
+OLD_LCA_EXPECT = {
+    "H-1B_Disclosure_Data_FY2019.xlsx": {
+        "wage": "WAGE_RATE_OF_PAY_FROM_1", "wage_unit": "WAGE_UNIT_OF_PAY_1", "state": "WORKSITE_STATE_1",
+        "city": "WORKSITE_CITY_1", "wage_level": "PW_WAGE_LEVEL_1", "pw_wage": "PREVAILING_WAGE_1",
+        "pw_unit": "PW_UNIT_OF_PAY_1", "pw_other_year": "PW_NON-OES_YEAR_1", "pw_case": "PW_TRACKING_NUMBER_1",
+    },
+    "H-1B_Disclosure_Data_FY15_Q4.xlsx": {"wage": "WAGE_RATE_OF_PAY", "soc_title": "SOC_NAME", "workers": "TOTAL WORKERS"},
+    "H-1B_FY2010.xlsx": {"wage": "LCA_CASE_WAGE_RATE_FROM", "state": "WORK_LOCATION_STATE1", "pw_wage": "PW_1"},
+    "H-1B_Case_Data_FY2008.xlsx": {"wage": "WAGE_RATE_1", "wage_unit": "RATE_PER_1", "state": "STATE_1",
+                                   "visa": "PROGRAM", "workers": "NBR_IMMIGRANTS"},
+}
+
+
+def check_old_lca_layouts() -> None:
+    lca = PROGRAMS["lca"]
+    for name, cols in OLD_LCA_HEADERS.items():
+        try:
+            colmap, _ = fd.resolve_columns({i: c for i, c in enumerate(cols)}, lca, name)
+        except SystemExit as e:  # the loader refuses a header it can't map: a failure here, not a crash
+            check(f"{name}: the header maps", str(e), "")
+            continue
+        got = {f: cols[i] for i, f in colmap.items()}
+        check(f"{name}: every required field resolves",
+              [f for f in fd.REQUIRED_FIELDS if f not in got], [])
+        check(f"{name}: the offered wage, never the prevailing wage, is the wage",
+              got.get("wage") in (None, "WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY_FROM_1", "WAGE_RATE_OF_PAY",
+                                  "LCA_CASE_WAGE_RATE_FROM", "WAGE_RATE_1"), True)
+        for field, column in OLD_LCA_EXPECT.get(name, {}).items():
+            check(f"{name}: {field} reads {column}", got.get(field), column)
+        # The site names law firms, never people: FY2015 to FY2018 print the individual attorney only.
+        check(f"{name}: an attorney's own name is never read as the firm",
+              got.get("attorney") in (None, "AGENT_ATTORNEY_LAW_FIRM_BUSINESS_NAME"), True)
+        # The e-file JOB_CODE is a three-digit DOT code, not a SOC code.
+        check(f"{name}: a DOT job code is never read as a SOC code", got.get("soc_code") != "JOB_CODE", True)
+    row = {"case_status": "CERTIFIED-WITHDRAWN", "visa_class": None, "case_number": "I-200-10012-123456",
+           "wage_unit": "PER YEAR"}
+    fd.lca_era_fixups(row)
+    check("an old status, unit and missing visa read in the newer files' words", row,
+          {"case_status": "CERTIFIED - WITHDRAWN", "visa_class": "H-1B", "case_number": "I-200-10012-123456",
+           "wage_unit": "YEAR"})
+    efile = {"case_status": "CERTIFIED", "visa_class": "S", "case_number": "I-08090-4182485", "wage_unit": "MTH"}
+    fd.lca_era_fixups(efile)
+    check("an e-file visa letter and pay unit read as the visa and unit they stand for",
+          (efile["visa_class"], efile["wage_unit"]), ("H-1B1 Singapore", "MONTH"))
+    for letter, visa in (("R", "H-1B"), ("A", "E-3 Australian"), ("C", "H-1B1 Chile")):
+        r = {"case_status": "CERTIFIED", "visa_class": letter, "case_number": "I-08090-1", "wage_unit": "YR"}
+        fd.lca_era_fixups(r)
+        check(f"e-file {letter} is {visa}", (r["visa_class"], r["wage_unit"]), (visa, "YEAR"))
+    unpicked = {"case_status": "CERTIFIED", "visa_class": "H-1B", "case_number": "I-200-12012-1",
+                "wage_unit": "Select Pay Range", "pw_unit": "Select Pay Range"}
+    fd.lca_era_fixups(unpicked)
+    check("the form's 'Select Pay Range' is no unit", (unpicked["wage_unit"], unpicked["pw_unit"]), (None, None))
+    check("a file before FY2020 goes to the history table, FY2020 on to lca_cases, a year-less name nowhere old",
+          [fd.table_for("lca", n, "lca_cases") for n in ("H-1B_Case_Data_FY2008.xlsx", "H-1B_FY14_Q4.xlsx",
+           "H-1B_Disclosure_Data_FY2019.xlsx", "LCA_Disclosure_Data_FY2020_Q1.xlsx", "LCA_Disclosure_Data.xlsx")]
+          + [fd.table_for("pw", "PW_Disclosure_Data_FY2019.xlsx", "pwd_cases")],
+          ["lca_cases_history", "lca_cases_history", "lca_cases_history", "lca_cases", "lca_cases", "pwd_cases"])
+    check("FY2015's one-cell wage range reads its bottom, and nothing else is guessed",
+          [fd.parse_wage(v) for v in ("85000.00 - 95000.00", "20000 -", "20000 - 0", "$61,256.00 - $0.00",
+                                      "abc - 1", "-5", "1 - 2 - 3")],
+          [85000.0, 20000.0, 20000.0, 61256.0, None, None, None])
+    placeholder = {"case_status": "CERTIFIED", "visa_class": "Select Visa Classification",
+                   "case_number": "I-203-16012-1", "wage_unit": "YEAR"}
+    fd.lca_era_fixups(placeholder)
+    check("the form's own 'Select Visa Classification' takes the case number's visa", placeholder["visa_class"],
+          "E-3 Australian")
+    kept = {"case_status": "CERTIFIED", "visa_class": "E-3 Australian", "case_number": "I-203-21012-1", "wage_unit": "HOUR"}
+    fd.lca_era_fixups(kept)
+    check("a row already in the newer words is left as it is", kept,
+          {"case_status": "CERTIFIED", "visa_class": "E-3 Australian", "case_number": "I-203-21012-1", "wage_unit": "HOUR"})
+
+
 def main() -> int:
     print("flag disclosure parser contract")
     check_units()
@@ -794,6 +912,7 @@ def main() -> int:
     check_backfill_place()
     check_backfill_pw_detail()
     check_discovery()
+    check_old_lca_layouts()
     check_freshness_is_keyed_on_the_file()
     with tempfile.TemporaryDirectory() as tmp:
         for writer_name, write in available_writers():

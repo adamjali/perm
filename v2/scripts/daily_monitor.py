@@ -1264,7 +1264,7 @@ def lca_db_checks(doc: dict, now_ms: int) -> tuple[list[str], list[str], list[st
 
 # Methods the case page no longer uses: the keys of RETIRED_METHODS in
 # src/lib/scorecard/verdict.ts (test_daily_monitor.py holds the two equal).
-RETIRED_METHODS = {"dol-average", "pwd-queue-request-month", "pwd-day"}
+RETIRED_METHODS = {"dol-average", "pwd-queue-request-month", "pwd-day", "decision-pace"}
 # The wage-request methods in use, in the words the report prints.
 WAGE_METHODS = (("pwd-workday", "wage-request days"), ("pwd-queue", "wage-request months"))
 
