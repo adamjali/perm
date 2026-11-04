@@ -165,7 +165,15 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         // pass; the form sends it as `turnstilePass`, it rides the profile to
         // createOrUpdateUser below, which uses it up and refuses a new
         // password account without one. It is never written to the user.
-        const validatedName = validateUserName(params.name as string | undefined);
+        // Its refusal as a ConvexError, like the password rule below: a plain Error is masked as
+        // "Server Error" in production, which the sign-up page reads as "this email already has an
+        // account" (isExistingAccountError), so a name the server refused said the wrong thing.
+        let validatedName: string;
+        try {
+          validatedName = validateUserName(params.name as string | undefined);
+        } catch (e) {
+          throw new ConvexError(e instanceof Error ? e.message : "Invalid name");
+        }
         // Normalize email at the source: the Password provider uses the returned
         // email as the account id, and createOrUpdateUser links accounts by an
         // exact email-index match. Without normalization, "Name@X.com" (password)
