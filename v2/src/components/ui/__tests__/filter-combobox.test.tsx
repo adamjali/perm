@@ -160,6 +160,17 @@ describe("FilterCombobox", () => {
     expect(new FormData(form).get("firm")).toBe("");
   });
 
+  it("opens on the first row when the chosen option sits past the rows drawn", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<Harness initial="Fragomen, Del Rey, Bernsen & Loewy LLP" />);
+    // Act
+    await user.click(screen.getByRole("combobox", { name: "Law firm" }));
+    // Assert
+    const search = screen.getByRole("combobox", { name: "Find law firms" });
+    expect(document.getElementById(search.getAttribute("aria-activedescendant")!)).toHaveTextContent("Any (321)");
+  });
+
   it("marks the chosen row and opens on it", async () => {
     // Arrange
     const user = userEvent.setup();

@@ -112,7 +112,7 @@ function socFromLink(params: URLSearchParams, occupations: readonly WageOption[]
 }
 
 export function CompareMyOffer({ occupations, states }: Props) {
-  const ids = { soc: useId(), state: useId(), offer: useId(), unit: useId() };
+  const ids = { soc: useId(), state: useId(), offer: useId() };
   const params = useUrlSearchParams();
   const [soc, setSoc] = useState(() => socFromLink(params, occupations));
   const [state, setState] = useState("");

@@ -99,7 +99,8 @@ export function FilterCombobox({
    */
   function startRow(text: string): number {
     const offset = emptyLabel !== undefined ? 1 : 0;
-    const list = filterOptions(options, text);
+    // Only the drawn rows can be highlighted: a chosen option past the limit opens on the first row.
+    const list = filterOptions(options, text).slice(0, limit);
     if (text.trim()) return list.length ? offset : -1;
     if (!value) return offset || list.length ? 0 : -1;
     const at = list.findIndex((o) => o.value === value);
@@ -216,7 +217,7 @@ export function FilterCombobox({
               setActive(startRow(e.target.value));
             }}
             onKeyDown={onSearchKey}
-            className="block min-h-11 w-full border-b-2 border-border bg-card px-3 text-base outline-none focus-visible:bg-tint"
+            className="block min-h-11 w-full min-w-0 border-b-2 border-border bg-card px-3 text-base outline-none focus-visible:bg-tint"
           />{" "}
           <p role="status" aria-live="polite" className="px-3 pt-1.5 pb-1 text-sm text-soft">
             {counted}
