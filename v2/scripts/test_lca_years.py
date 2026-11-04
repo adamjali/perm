@@ -65,6 +65,19 @@ def main() -> int:
           bool(db.lca.conn.execute("SELECT name FROM sqlite_master WHERE name = 'lca_cases_years'").fetchall()), True)
     ly.build(db)
     check("a rerun writes the same rows, never doubles them", table(db), got)
+    # A spelling a year no longer holds goes; the year's other rows stay. The first version deleted a
+    # whole year before inserting it, so an insert that failed emptied it (Nov 4 2026).
+    db.execute("UPDATE lca_cases_history SET employer_slug = 'acme' WHERE case_number = 'I-200-17001-2'")
+    ly.build(db, 2017)
+    check("a spelling the year no longer holds is removed, and its LCAs counted where they went",
+          [r for r in table(db) if r[1] == 2017], [("acme", 2017, 1, 0, 1)])
+    db.execute("UPDATE lca_cases_history SET employer_slug = 'acme-inc' WHERE case_number = 'I-200-17001-2'")
+    ly.build(db, 2017)
+    check("and put back when the spelling returns", table(db), got)
+    check("the years are read from the ends of an index, not every row",
+          all("DISTINCT" not in q for q in ly.SPANS.values()), True)
+    check("a fiscal year starts on October 1", (ly.fiscal_year_of("2020-09-30"), ly.fiscal_year_of("2020-10-01")),
+          (2020, 2021))
     db.execute("UPDATE lca_cases SET case_status = 'CERTIFIED' WHERE case_number = 'I-200-21001-2'")
     ly.build(db, 2021)
     check("one year rebuilt alone replaces only that year", table(db),

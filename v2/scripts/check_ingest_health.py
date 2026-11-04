@@ -32,6 +32,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from lib_flag_serials import code_to_date  # noqa: E402
 from lib_db import Database, query_rows, rows_of  # noqa: E402
 import lca_numbers  # noqa: E402
+from build_lca_years import fiscal_year_of  # noqa: E402
 
 
 def parse_as_of(raw: str) -> datetime.date | None:
@@ -568,6 +569,32 @@ def check_lca_numbers(db) -> int:
     print(f"  {published:,} published, {listed:,} listed  {'ok' if ok else 'DIFFERENT'}")
     if not ok:
         print("  repair: python3 scripts/lca_numbers.py")
+    return 0 if ok else 1
+
+
+def check_lca_years(db) -> int:
+    """Fail when the employer pages' H-1B year chart is behind the LCA filings it's built from.
+
+    `lca_cases_years` (build_lca_years.py) is rebuilt by the FLAG disclosure workflow after each LCA load, and
+    nothing else ages when that step stops running: no doc, no freshness row. Its newest fiscal year must reach
+    the fiscal year of the newest decision in `lca_cases` (Nov 4 2026).
+    """
+    print("lca years")
+    try:
+        newest = db.scalar("SELECT MAX(decision_date) FROM lca_cases")
+        built = db.scalar("SELECT MAX(fy) FROM lca_cases_years")
+    except Exception as e:  # noqa: BLE001 - a missing table is itself the finding
+        print(f"  FAIL: could not read: {e}")
+        return 1
+    if not newest:
+        print("  FAIL: lca_cases holds no decision")
+        return 1
+    want = fiscal_year_of(str(newest))
+    ok = built is not None and int(built) >= want
+    print(f"  newest decision {newest} (FY{want}), year chart through "
+          f"{'FY' + str(built) if built is not None else 'nothing'}  {'ok' if ok else 'BEHIND'}")
+    if not ok:
+        print("  repair: python3 scripts/build_lca_years.py")
     return 0 if ok else 1
 
 
@@ -1135,6 +1162,7 @@ def main() -> int:
     docs_bad = check_precomputed_docs(db)
     views_bad = check_wage_views(db)
     lca_numbers_bad = check_lca_numbers(db)
+    lca_years_bad = check_lca_years(db)
     handread_bad = check_hand_read_figures()
 
     print()
@@ -1177,7 +1205,7 @@ def main() -> int:
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
             or coverage_bad or gapsweep_bad or builders_bad or watched_bad or docs_bad or views_bad
-            or lca_numbers_bad or handread_bad or unparseable):
+            or lca_numbers_bad or lca_years_bad or handread_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "

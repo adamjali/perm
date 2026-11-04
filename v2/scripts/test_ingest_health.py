@@ -602,6 +602,7 @@ def main() -> int:
     check_main_combines_every_check()
     check_wage_views_rules()
     check_lca_numbers_rules()
+    check_lca_years_rules()
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 
@@ -734,7 +735,7 @@ def check_capped_partial_is_not_broken() -> None:
 CHECKS = ("check_runs", "check_frontier", "check_discovery_yield", "check_backfill", "check_gap_sweep",
           "check_nightly_builders",
           "check_watched", "check_lookup_demand", "check_coverage_stated", "check_precomputed_docs",
-          "check_wage_views", "check_lca_numbers")
+          "check_wage_views", "check_lca_numbers", "check_lca_years")
 
 
 def check_main_combines_every_check() -> None:
@@ -823,6 +824,32 @@ def check_lca_numbers_rules() -> None:
     check("lca numbers: a list behind the table fails", counted(5, 4) == 1)
     check("lca numbers: an empty LCA table fails", counted(0, 0) == 1)
     check("lca numbers: no list at all fails", counted(5, 0, with_list=False) == 1)
+
+
+
+def check_lca_years_rules() -> None:
+    """The employer pages' H-1B year chart must reach the newest LCA decision's fiscal year."""
+    import contextlib
+    import io
+    from lib_sqlite_shim import SplitSqlite
+
+    def years(newest: str | None, built: int | None, with_table: bool = True) -> int:
+        db = SplitSqlite()
+        db.script(["CREATE TABLE lca_cases (case_number TEXT PRIMARY KEY, decision_date TEXT)"])
+        if newest:
+            db.execute("INSERT INTO lca_cases VALUES (?, ?)", ["I-200-26001-000001", newest])
+        if with_table:
+            db.script(["CREATE TABLE lca_cases_years (employer_slug TEXT, fy INTEGER, PRIMARY KEY (employer_slug, fy))"])
+            if built is not None:
+                db.execute("INSERT INTO lca_cases_years VALUES (?, ?)", ["acme", built])
+        with contextlib.redirect_stdout(io.StringIO()):
+            return health.check_lca_years(db)
+    check("lca years: a chart through the newest decision's year is a pass", years("2026-06-30", 2026) == 0)
+    check("lca years: a chart a year behind fails", years("2026-06-30", 2025) == 1)
+    check("lca years: October starts the next fiscal year", years("2026-10-02", 2026) == 1)
+    check("lca years: an empty chart fails", years("2026-06-30", None) == 1)
+    check("lca years: no chart table fails", years("2026-06-30", None, with_table=False) == 1)
+    check("lca years: no LCA decision at all fails", years(None, 2026) == 1)
 
 
 if __name__ == "__main__":
