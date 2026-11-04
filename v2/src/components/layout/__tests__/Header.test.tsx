@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import { createMockUser, NAV_LINKS } from "../../../../test-utils/ui-fixtures";
 import Header from "../Header";
@@ -92,6 +92,25 @@ describe("Header", () => {
     const { container } = renderWithProviders(<Header />);
     expect(container.querySelector("header")).toBeInTheDocument();
     expect(container.querySelector("nav")).toBeInTheDocument();
+  });
+});
+
+describe("Header's phone menu", () => {
+  it("dims the page behind the sheet, closes on a tap there or Escape, and gives focus back to the button", () => {
+    mockUseQuery.mockReturnValue(createMockUser());
+    renderWithProviders(<Header />);
+    const button = screen.getByRole("button", { name: /Menu/ });
+    fireEvent.click(button);
+    const backdrop = screen.getByTestId("app-mobile-menu-backdrop");
+    expect(backdrop.className).toContain("bg-black/50");
+    fireEvent.click(backdrop);
+    expect(screen.queryByTestId("app-mobile-menu-backdrop")).toBeNull();
+    expect(button).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(button);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByTestId("app-mobile-menu-backdrop")).toBeNull();
+    expect(button).toHaveFocus();
   });
 });
 

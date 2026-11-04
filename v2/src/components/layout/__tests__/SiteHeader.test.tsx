@@ -88,6 +88,20 @@ describe("SiteHeader", () => {
     expect(button).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("dims the page behind the phone menu, and a tap on the dimmed page closes it", () => {
+    pathname.value = "/";
+    render(<SiteHeader />);
+    const button = screen.getByRole("button", { name: /Menu/ });
+    fireEvent.click(button);
+    const backdrop = screen.getByTestId("mobile-menu-backdrop");
+    expect(backdrop).toHaveAttribute("aria-hidden", "true");
+    expect(backdrop.className).toContain("bg-black/50");
+    fireEvent.click(backdrop);
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+    expect(screen.queryByTestId("mobile-menu-backdrop")).toBeNull();
+    expect(button).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("closes the Data panel when one of its links is tapped", () => {
     pathname.value = "/perm-employers";
     const { container } = render(<SiteHeader />);

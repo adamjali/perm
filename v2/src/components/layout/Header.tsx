@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useState, useEffect } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -144,6 +144,19 @@ export default function Header(): React.ReactElement {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  // Escape closes the open sheet and gives focus back to the Menu button, as a dialog would.
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setIsMobileMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isMobileMenuOpen]);
+
   // Handle mobile sign out
   async function handleMobileSignOut(): Promise<void> {
     if (isSigningOut) return;
@@ -231,6 +244,7 @@ export default function Header(): React.ReactElement {
           </div>
 
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="flex h-11 items-center gap-2 px-2 text-base font-semibold text-foreground hover:bg-accent lg:hidden"
@@ -242,6 +256,17 @@ export default function Header(): React.ReactElement {
           </button>
         </nav>
       </div>
+
+      {/* The page behind the open sheet dims, as it does behind a dialog, and a tap on it closes
+          the sheet. Not focusable: the Menu button and Escape are the keyboard's way out. */}
+      {isMobileMenuOpen && (
+        <div
+          aria-hidden="true"
+          data-testid="app-mobile-menu-backdrop"
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="fixed inset-x-0 bottom-0 top-[calc(4rem+2px)] bg-black/50 lg:hidden"
+        />
+      )}
 
       {/* The phone's menu: one sheet */}
       {isMobileMenuOpen && (

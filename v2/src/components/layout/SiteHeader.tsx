@@ -332,6 +332,17 @@ export default function SiteHeader() {
 
       {/* The phone's menu: one sheet, two levels at most. Rendered only while
           open; the desktop panels above already carry every link in the HTML. */}
+      {/* The page behind the open sheet dims, as it does behind a dialog, so the sheet reads as the
+          layer in front; a tap on the dimmed page closes it. Not focusable: the menu button and
+          Escape stay the keyboard's way out. */}
+      {menu === "mobile" ? (
+        <div
+          aria-hidden="true"
+          data-testid="mobile-menu-backdrop"
+          onClick={close}
+          className="fixed inset-x-0 bottom-0 top-[var(--site-header-h)] bg-black/50 lg:hidden"
+        />
+      ) : null}
       {menu === "mobile" ? (
         <div
           id="mobile-menu"
