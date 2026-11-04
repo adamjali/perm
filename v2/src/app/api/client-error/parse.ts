@@ -9,6 +9,12 @@
  */
 
 export const OUTCOMES = ["shown", "reload", "redirect-login", "reload-stale"] as const;
+
+/**
+ * The error screens that report here (logClientError's callers). Anything else is
+ * a stranger's body, refused before it reaches the log or Sentry.
+ */
+export const BOUNDARIES = ["GlobalError", "RouteError", "PublicDataError"] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
 export interface ClientErrorReport {
@@ -31,8 +37,8 @@ const cut = (v: unknown, max: number): string | null =>
 export function parseClientError(body: unknown): ClientErrorReport | null {
   if (!body || typeof body !== "object") return null;
   const b = body as Record<string, unknown>;
-  const boundary = cut(b.boundary, 40);
-  if (!boundary || !/^[A-Za-z]+$/.test(boundary)) return null;
+  const boundary = BOUNDARIES.find((x) => x === b.boundary);
+  if (!boundary) return null;
   const outcome = OUTCOMES.find((o) => o === b.outcome);
   if (!outcome) return null;
   const path = cut(b.path, 200);

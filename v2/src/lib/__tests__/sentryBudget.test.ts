@@ -68,4 +68,13 @@ describe("the Sentry budget", () => {
     c.advance(HOUR_MS);
     expect(b.log({ attributes: {} })?.attributes?.["budget.held_before"]).toBe(40);
   });
+
+  // The error screens' reports are posted by browsers, so anyone can send them; they
+  // have their own allowance in their route and must not spend the server's hour.
+  it("leaves the error screens' reports to their own route's allowance", () => {
+    const b = createSentryBudget(clock().now);
+    const client = { message: "a stranger's report", tags: { report: "client" } };
+    for (let i = 0; i < ERRORS_PER_HOUR * 2; i++) expect(b.error({ ...client, message: `r${i}` })).not.toBeNull();
+    expect(b.error(err("the server's own error"))).not.toBeNull();
+  });
 });

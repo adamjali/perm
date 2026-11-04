@@ -55,6 +55,10 @@ export function createSentryBudget(now: () => number = Date.now) {
   return {
     /** Sentry's beforeSend: the event, or null to drop it. */
     error<E extends ErrorLike>(event: E): E | null {
+      // The error screens' reports have their own allowance in their route
+      // (api/client-error/budget.ts): a stranger can post them, so they mustn't
+      // spend the hour meant for the server's own errors.
+      if (event.tags?.report === "client") return event;
       roll();
       const key = errorKey(event);
       const seen = perKey.get(key) ?? 0;

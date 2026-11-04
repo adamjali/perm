@@ -16,7 +16,11 @@ import { POST } from "../route";
 import { chunkFileOf, dplOf, groupingKey, parseClientError } from "../parse";
 
 const good = { boundary: "GlobalError", outcome: "redirect-login", name: "Error", message: "Not authenticated", path: "/dashboard?case=G-100-1" };
-const post = (body: string) => POST(new Request("https://permtracker.app/api/client-error", { method: "POST", body }));
+// Each post comes from its own address unless a test names one, so the per-address cap
+// doesn't decide tests about something else.
+let nextAddress = 0;
+const post = (body: string, address = `198.51.100.${++nextAddress}`) =>
+  POST(new Request("https://permtracker.app/api/client-error", { method: "POST", body, headers: { "x-real-ip": address } }));
 
 describe("parseClientError", () => {
   it("keeps the fields it knows, capped, and drops the query string", () => {
@@ -29,6 +33,11 @@ describe("parseClientError", () => {
   it("refuses what isn't a report", () => {
     expect(parseClientError(null)).toBeNull();
     expect(parseClientError({ ...good, boundary: "<script>" })).toBeNull();
+    // Only the site's own error screens report here.
+    expect(parseClientError({ ...good, boundary: "AnyNameAtAll" })).toBeNull();
+    for (const boundary of ["GlobalError", "RouteError", "PublicDataError"]) {
+      expect(parseClientError({ ...good, boundary })?.boundary).toBe(boundary);
+    }
     expect(parseClientError({ ...good, outcome: "anything" })).toBeNull();
     expect(parseClientError({ ...good, path: "https://elsewhere.test/" })).toBeNull();
   });
@@ -144,6 +153,20 @@ describe("POST /api/client-error", () => {
       "GlobalError: Error: Not authenticated",
       expect.objectContaining({ tags: expect.objectContaining({ component: "GlobalError", outcome: "redirect-login" }) }),
     );
+  });
+
+  it("tags every report so the server's own Sentry budget leaves it to this route's", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await post(JSON.stringify(good));
+    expect(vi.mocked(Sentry.captureMessage).mock.calls[0]![1]).toMatchObject({ tags: expect.objectContaining({ report: "client" }) });
+  });
+
+  it("drops what one address sends past its few a minute", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    for (let i = 0; i < 10; i++) {
+      expect((await post(JSON.stringify({ ...good, message: `one ${i}` }), "203.0.113.9")).status).toBe(204);
+    }
+    expect(log).toHaveBeenCalledTimes(6);
   });
 
   it("refuses a malformed or oversized body", async () => {
