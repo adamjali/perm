@@ -28,7 +28,7 @@ describe("readNotices", () => {
     const [first, second] = rows.mock.calls;
     // A bill's day is its latest action's (`dates`), not the day it was introduced.
     expect(first?.[0]).toContain("CASE WHEN type = 'Bill'");
-    expect(first?.[0]).toContain("type NOT IN ('Court opinion', 'BALCA decision')");
+    expect(first?.[0]).toContain("type NOT IN ('Court opinion', 'BALCA decision', 'Court filing')");
     // Decisions: first held this week, decided in the last 120 days, three at most.
     expect(second?.[0]).toContain("first_seen_at >= ?");
     expect(second?.[0]).toContain("'-120 days'");

@@ -28,8 +28,10 @@ export const PRESIDENTIAL_TYPE = "Presidential Document";
 export const BILL_TYPE = "Bill";
 export const COURT_TYPE = "Court opinion";
 export const BALCA_TYPE = "BALCA decision";
+/** A filing in a case this site follows by name (ingest_court_dockets.py): an opinion, an order, a status report. */
+export const FILING_TYPE = "Court filing";
 /** Decisions on these programs, a court's or BALCA's: not Register documents. */
-export const DECISION_TYPES: readonly string[] = [COURT_TYPE, BALCA_TYPE];
+export const DECISION_TYPES: readonly string[] = [COURT_TYPE, BALCA_TYPE, FILING_TYPE];
 
 /** Posts an agency made on its own site, which aren't Register documents. */
 export const ANNOUNCEMENT_TYPES: readonly string[] = [OFLC_TYPE, USCIS_TYPE, PM_TYPE, DOL_TYPE, STATE_TYPE, DOJ_TYPE];

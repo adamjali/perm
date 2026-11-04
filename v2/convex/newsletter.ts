@@ -237,6 +237,7 @@ const NOTICE_KIND: Record<string, string> = {
   Bill: "Bill in Congress",
   "Court opinion": "Court opinion",
   "BALCA decision": "BALCA",
+  "Court filing": "Court filing",
 };
 
 /**
@@ -253,7 +254,7 @@ export async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
   const list = await rows(
     `SELECT title, html_url AS url, ${day} AS publication_date, type, document_number FROM policy_notices ` +
       `WHERE ${day} >= ? AND (status IS NULL OR status = 'published') AND superseded_by IS NULL ` +
-      `AND type NOT IN ('Court opinion', 'BALCA decision') ` +
+      `AND type NOT IN ('Court opinion', 'BALCA decision', 'Court filing') ` +
       `ORDER BY ${day} DESC, document_number DESC LIMIT 8`,
     [sinceIso],
   );
@@ -265,7 +266,7 @@ export async function readNotices(sinceIso: string): Promise<DigestNotice[]> {
   const sinceMs = Date.parse(`${sinceIso}T04:00:00Z`);
   const decided = await rows(
     "SELECT title, html_url AS url, publication_date, type, document_number FROM policy_notices " +
-      "WHERE type IN ('Court opinion', 'BALCA decision') AND first_seen_at >= ? " +
+      "WHERE type IN ('Court opinion', 'BALCA decision', 'Court filing') AND first_seen_at >= ? " +
       "AND publication_date >= date(?, '-120 days') ORDER BY publication_date DESC, document_number DESC LIMIT 3",
     [sinceMs, sinceIso],
   );

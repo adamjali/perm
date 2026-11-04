@@ -18,7 +18,7 @@ import { MIN_DECIDED_FOR_RATE } from "@/lib/entityPayload";
 export const SPONSOR_SHARE_MIN = 20;
 
 export interface SponsorPart {
-  id: "perm_rate" | "perm_recent" | "lca_24m" | "transfer_share" | "senior_share" | "uscis_rate";
+  id: "perm_rate" | "perm_recent" | "lca_24m" | "transfer_share" | "senior_share" | "uscis_rate" | "perm_per_h1b";
   label: string;
   value: number;
   n: number;
@@ -79,6 +79,10 @@ export function partBasis(p: SponsorPart): string {
       return "filed in the last 12 months";
     case "lca_24m":
       return "certified in the last 24 months";
+    case "perm_per_h1b":
+      // Not a pass rate: no one publishes how often an employer's labor market test fails (a failed test is never
+      // filed). PERM cases DOL decided for it against the new H-1B workers USCIS approved, the same three years.
+      return `PERM cases DOL decided, against the ${int(p.n)} new H-1B workers USCIS approved`;
   }
 }
 
@@ -91,6 +95,7 @@ export function partRank(p: SponsorPart): string {
     transfer_share: `sponsors with ${SPONSOR_SHARE_MIN} or more certified positions`,
     senior_share: `sponsors with ${SPONSOR_SHARE_MIN} or more leveled LCAs`,
     uscis_rate: `sponsors with ${SPONSOR_SHARE_MIN} or more USCIS decisions`,
+    perm_per_h1b: `sponsors with ${SPONSOR_SHARE_MIN} or more new H-1B workers`,
   };
   const share = Math.round(p.pct * 100);
   const lead = share >= 100 ? "At the top of" : share <= 0 ? "At the bottom of" : `Higher than ${share}% of`;

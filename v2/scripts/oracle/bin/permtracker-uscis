@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times> <file>>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -91,6 +91,23 @@ case "$job" in
         http://127.0.0.1:8081/api/revalidate-consular || true
     else
       rc=1; fail ingest_iv_scheduling.py "the IV scheduling table ($f) was refused"
+    fi ;;
+  # Two more State pages copied out of a person's browser (Nov 3 2026), for the bulletin's reason: NVC's
+  # timeframes (weekly) and Global Visa Wait Times (monthly). The page's text, or its table as HTML with the
+  # "Last updated" line, goes in a file; each reader's own parser and checks decide whether it's written.
+  #   sudo -u permtracker permtracker-uscis state-page nvc /tmp/nvc.html
+  #   sudo -u permtracker permtracker-uscis state-page wait-times /tmp/wait-times.html
+  # Both pages refresh themselves daily, so nothing is expired here.
+  state-page)
+    kind="${2:-}"; f="${3:-}"
+    case "$kind" in
+      nvc) s=ingest_nvc_timeframes.py ;;
+      wait-times) s=ingest_visa_wait_times.py ;;
+      *) echo "usage: permtracker-uscis state-page <nvc|wait-times> <file>"; exit 2 ;;
+    esac
+    if [ -z "$f" ]; then echo "usage: permtracker-uscis state-page <nvc|wait-times> <file>"; exit 2; fi
+    if ! timeout 10m python3 "scripts/$s" --from-file "$f"; then
+      rc=1; fail "$s" "the $kind page copied from a browser ($f) was refused"
     fi ;;
   posted-times)
     if timeout 20m nice -n 10 python3 scripts/ingest_uscis_posted_times.py; then
@@ -237,6 +254,9 @@ case "$job" in
     # can take minutes, so it has its own limit. COURTLISTENER_TOKEN in
     # uscis.env, when set, is sent as CourtListener asks.
     step 12m ingest_court_opinions.py
+    # The filings in the court cases followed by name (scripts/data/court_dockets.json), from CourtListener's
+    # RECAP archive (Nov 3 2026): it reads its own last run and asks at most every 6 hours, three requests.
+    step 6m ingest_court_dockets.py
     # Sundays at 3 AM Eastern, a five-page walk for opinions posted late.
     if [ "$(TZ=America/New_York date +%u)" = 7 ] && [ "$h" = 3 ] && [ "$m" -lt 30 ]; then
       step 20m ingest_court_opinions.py --pages 5

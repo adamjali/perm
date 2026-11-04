@@ -9,6 +9,7 @@ import {
   BILL_TYPE,
   billActionDay,
   COURT_TYPE,
+  FILING_TYPE,
   commentWindow,
   DECISION_TYPES,
   DOJ_TYPE,
@@ -52,7 +53,7 @@ export function typeLabel(type: string): string {
   if (type === STATE_TYPE) return "State";
   if (type === DOJ_TYPE) return "DOJ";
   if (type === BILL_TYPE) return "Bill";
-  if (type === COURT_TYPE) return "Court";
+  if (type === COURT_TYPE || type === FILING_TYPE) return "Court";
   if (type === BALCA_TYPE) return "BALCA";
   return "Notice";
 }
@@ -68,7 +69,7 @@ function badgeFill(type: string): string {
   // Soft purple carries its own ink in each theme, so the text follows the theme.
   if (type === BILL_TYPE) return "border-foreground bg-soft-purple text-foreground";
   // Sage darkens in dark mode, so its text follows the theme too.
-  if (type === COURT_TYPE || type === BALCA_TYPE) return "border-foreground bg-chart-sage text-foreground";
+  if (type === COURT_TYPE || type === BALCA_TYPE || type === FILING_TYPE) return "border-foreground bg-chart-sage text-foreground";
   return "border-foreground bg-chart-blue text-black";
 }
 
@@ -81,6 +82,7 @@ function readOn(doc: PolicyNotice): string {
   if (doc.type === DOJ_TYPE) return "Read it on justice.gov";
   if (doc.type === BILL_TYPE) return "Read it on congress.gov";
   if (doc.type === COURT_TYPE) return "Read the opinion on CourtListener";
+  if (doc.type === FILING_TYPE) return "Read the filing on CourtListener";
   if (doc.type === BALCA_TYPE) return "See it on OALJ's caselist";
   if (doc.type === OFLC_TYPE || doc.type === DOL_TYPE) return "Read it on DOL's page";
   return "Read it on the Federal Register";

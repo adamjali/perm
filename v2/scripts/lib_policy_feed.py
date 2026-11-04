@@ -78,6 +78,7 @@ POLICY_DATASETS = (
     "policy-notices-congress",  # congress.gov bills (ingest_congress_bills.py)
     "policy-comments",          # regulations.gov comment counts on open proposals (ingest_regulations_gov.py)
     "policy-notices-courts",    # federal court opinions, from CourtListener (ingest_court_opinions.py)
+    "policy-notices-dockets",   # filings in the cases followed by name, from CourtListener's RECAP (ingest_court_dockets.py)
     "policy-notices-balca",     # BALCA's decisions, from OALJ's caselists (ingest_balca.py)
     "policy-notices-doj",       # DOJ's releases, IER's settlements and OCAHO's orders (ingest_doj_enforcement.py)
     "rule-pipeline",            # OIRA, public inspection and the Register by RIN (ingest_rule_pipeline.py)
@@ -86,7 +87,7 @@ POLICY_DATASETS = (
 
 # Where a row came from. Stored, so the page and the checks never guess from a type.
 SOURCES = ("federal-register", "public-inspection", "white-house", "oflc", "uscis-news",
-           "uscis-policy-manual", "dol-news", "state-news", "congress", "courtlistener", "balca", "doj")
+           "uscis-policy-manual", "dol-news", "state-news", "congress", "courtlistener", "courtlistener-dockets", "balca", "doj")
 # A Register document's stage: on public inspection, published, or taken off
 # public inspection without being published.
 STATUSES = ("public-inspection", "published", "withdrawn")

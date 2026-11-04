@@ -2169,3 +2169,33 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
   grid, so a short figure lengthened its track and the bars didn't compare.
 - **The age-out calculator sits in the I-140 group**: Consulates made the green card line group ten, past the nine the
   rail allows, and the CSPA rule subtracts the time the I-140 was pending.
+
+## Nov 3 2026 (evening): holidays in the estimate, followed court cases, State pages by browser
+
+- **PERM dates walk DOL's calendar** (`daysToClear`, `seasonFactor` in `convex/lib/perm/calculators/decisionPace.ts`;
+  twin `scripts/lib_pace_walk.py`, both held to `scripts/fixtures/pace_walk.json`): a working day at the measured
+  working-day rate, a weekend or federal holiday at the off-day rate, and the Friday after Thanksgiving (0.43),
+  Dec 21 to 31 (0.67) and Jan 2 to 5 (0.67), each the median of ten seasons in DOL's own files. Out of sample it
+  beat the flat pace (540 starts: 6.0 against 6.5 days typical, at two months 10 against 13) and tied or beat it on
+  the nightly backtest's six start days, which now date cases the same way and keep the flat pace beside it
+  (`flat`). The pace reader passes each day's date; a pace without the two rates walks flat. The scorecard stores
+  these dates as `decision-pace-calendar` (`storedModel`, `PACE_MODEL`); `decision-pace` retired Nov 4 2026.
+- **Court cases followed by name** (`scripts/ingest_court_dockets.py`, list `scripts/data/court_dockets.json`, type
+  "Court filing", source `courtlistener-dockets`, dataset `policy-notices-dockets`, in `policy-watch` every 6 hours):
+  CourtListener's opinion search never held CLINIC v. Rubio's Aug 21 2026 ruling; its RECAP docket does, read
+  with `COURTLISTENER_TOKEN` (server `uscis.env`; the docket endpoints refuse without one). It keeps opinions,
+  judgments, stay and injunction rulings, notices of appeal and the government's status reports and sworn
+  declarations, titled from the case's short name and the entry's kind: an entry's own words name plaintiffs and
+  are never stored. Add a case by its docket id there.
+- **State pages read in Adam's Chrome**: `permtracker-uscis state-page <nvc|wait-times> <file>` loads NVC's
+  timeframes or Global Visa Wait Times copied from the page; the session timer `state-pages-read` gates on each
+  dataset's `as_of` and copies only what's due (`iv-tool-read` does State's IV scheduling table). The NVC route was
+  run end to end Nov 3 (as of Nov 2: document review at Aug 24, 70 days).
+- **Embassy notices aren't scriptable**: every usembassy.gov site answered scripts 403 (CloudFront's "Technical
+  Difficulties" page) from this Mac and the server on Nov 3 2026, and the Archive's copies of their feeds are a
+  month old. Not built.
+- **"PERM cases for every 100 new H-1B workers"** (`perm_per_h1b` in `scripts/build_sponsor_index.py`, shown on
+  employer pages and /perm-employers/compare): PERM cases DOL decided for the employer against the new H-1B workers
+  USCIS approved for it (new employment plus change of employer), the same three fiscal years, ranked among sponsors
+  with 20+. No one publishes a labor market test pass rate (a failed test is never filed); this is the nearest
+  honest comparison, and the page says it isn't a pass rate.

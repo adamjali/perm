@@ -47,6 +47,7 @@ def seed() -> SqliteTurso:
         "CREATE TABLE perm_live_only_index (slug TEXT PRIMARY KEY, name TEXT)",
         "CREATE TABLE warn_notices (employer_slug TEXT, notice_date TEXT, employees INTEGER)",
         "CREATE TABLE cap_exempt_employers (slug TEXT PRIMARY KEY, kind TEXT, requests INTEGER, answered INTEGER)",
+        "CREATE TABLE perm_employer_years (slug TEXT, fy INTEGER, certified INTEGER, denied INTEGER, withdrawn INTEGER)",
     ])
     # Three sponsors with 20+ decided cases (ranked), one with 5 (not ranked on the rate).
     for slug, total, cert, den, recent, state in [
@@ -103,6 +104,12 @@ def seed() -> SqliteTurso:
                    [f"I-{n}", "CERTIFIED", "2026-02-01", "beta", 1, 1, "II", None, 1 if i == 0 else 0])
     db.execute("INSERT INTO uscis_h1b_employers VALUES (2026,'alpha-com-inc',30,0,0,0,0,0,0,0,0,0,0,0)")
     db.execute("INSERT INTO uscis_h1b_employers VALUES (2023,'alpha',0,99,0,0,0,0,0,0,0,0,0,0)")
+    # alpha's new H-1B workers in the window: 30 new above, 10 more from other employers (chg) in 2025.
+    db.execute("INSERT INTO uscis_h1b_employers VALUES (2025,'alpha',0,0,5,0,0,0,0,0,10,0,0,0)")
+    # Its PERM cases over the same three fiscal years (2024 to 2026): 12, and 50 outside them.
+    db.execute("INSERT INTO perm_employer_years VALUES ('alpha',2025,10,1,1)")
+    db.execute("INSERT INTO perm_employer_years VALUES ('alpha',2022,50,0,0)")
+    db.execute("INSERT INTO perm_employer_years VALUES ('beta',2025,9,0,0)")
     db.execute("INSERT INTO debarments VALUES ('gamma','H-2A','2026-01-01','2027-01-01')")
     db.execute("INSERT INTO debarments VALUES ('beta','PERM','2020-01-01','2021-01-01')")
     db.execute("INSERT INTO warn_notices VALUES ('beta','2026-05-01',120)")
@@ -129,6 +136,10 @@ def main() -> int:
     check("senior share over LCAs with a level", by["alpha"]["senior_share"], round(15 / 26, 4))
     check("a sponsor with no PERM filings this year isn't ranked on them", "perm_recent" in parts["gamma"], False)
     check("USCIS's last three fiscal years only", by["alpha"]["uscis_rate"], 1.0)
+    check("PERM cases for every 100 new H-1B workers, the same three years",
+          parts["alpha"]["perm_per_h1b"]["value"], 30.0)
+    check("its count is the new H-1B workers (new employment and change of employer)", parts["alpha"]["perm_per_h1b"]["n"], 40)
+    check("a sponsor with too few new H-1B workers isn't ranked on it", "perm_per_h1b" in parts["beta"], False)
     check("dependent is the newest declaration, not any", by["alpha"]["dependent"], 0)
     check("willful violator is a fact, with its count", "willful" in facts["beta"], True)
     check("WARN in the last two years only", by["beta"]["warn_2y"], 1)

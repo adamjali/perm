@@ -161,6 +161,12 @@ PARTS = [
     Part("transfer_share", "Share of H-1B positions that were transfers", "transfer_share", "positions", MIN_N),
     Part("senior_share", "Share of H-1B LCAs at wage level III or IV", "senior_share", "leveled", MIN_N),
     Part("uscis_rate", "USCIS H-1B approval rate, last 3 fiscal years", "uscis_rate", "uscis_n", MIN_N),
+    # How often an employer goes on to file PERM for the H-1B workers it takes on (Nov 3 2026). No one publishes a
+    # "labor market test" pass rate (a test that fails is never filed), so this is the nearest honest figure: PERM
+    # cases DOL decided for the employer against the new H-1B workers USCIS approved for it (new employment plus a
+    # change of employer), over the same three fiscal years. Not every PERM case is an H-1B worker's, and a PERM
+    # case often follows the H-1B by years, so it compares an employer with others, never with 100.
+    Part("perm_per_h1b", "PERM cases for every 100 new H-1B workers, last 3 fiscal years", "perm_per_h1b", "new_h1b", MIN_N),
 ]
 # Parts measured over the LCA detail window rather than the calendar.
 DETAIL_PARTS = {"transfer_share", "senior_share"}
@@ -262,13 +268,26 @@ def read(db: Database, today: dt.date) -> dict:
             kinds = ("new", "cont", "same", "conc", "chg", "amend")
             appr = " + ".join(f"COALESCE({k}_appr, 0)" for k in kinds)
             den = " + ".join(f"COALESCE({k}_den, 0)" for k in kinds)
-            for slug, a, d in rows_of(db.execute(
-                    f"SELECT employer_slug, SUM({appr}), SUM({den}) FROM uscis_h1b_employers "
-                    "WHERE fy >= ? AND employer_slug IS NOT NULL GROUP BY employer_slug", [int(num(top)) - 2])):
+            for slug, a, d, new in rows_of(db.execute(
+                    f"SELECT employer_slug, SUM({appr}), SUM({den}), SUM(COALESCE(new_appr, 0) + COALESCE(chg_appr, 0)) "
+                    "FROM uscis_h1b_employers WHERE fy >= ? AND employer_slug IS NOT NULL GROUP BY employer_slug",
+                    [int(num(top)) - 2])):
                 s = sponsors.get(page_of.get(str(slug), ""))
                 if s is not None:
                     s["uscis_appr"] += int(num(a))
                     s["uscis_den"] += int(num(d))
+                    s["new_h1b"] += int(num(new))
+            # The PERM side over the same three fiscal years, on the page's own slug (ingest_perm_history.py).
+            try:
+                for slug, n in rows_of(db.execute(
+                        "SELECT slug, SUM(certified + denied + withdrawn) FROM perm_employer_years "
+                        "WHERE fy BETWEEN ? AND ? GROUP BY slug", [int(num(top)) - 2, int(num(top))])):
+                    s = sponsors.get(str(slug))
+                    if s is not None:
+                        s["perm_3y"] = int(num(n))
+            except Exception as e:  # noqa: BLE001
+                if "no such table" not in str(e):
+                    raise
     except Exception as e:  # noqa: BLE001
         if "no such table" not in str(e):
             raise
@@ -312,7 +331,7 @@ def blank_sponsor(slug: str, name: str) -> dict:
         "slug": slug, "name": name, "perm_total": 0, "certified": 0, "denied": 0, "perm_recent": 0,
         "state": None, "state_n": 0,
         "lca": 0, "positions": 0, "transfers": 0, "leveled": 0, "senior": 0,
-        "dep_yes": None, "dep_no": None, "willful": 0, "uscis_appr": 0, "uscis_den": 0,
+        "dep_yes": None, "dep_no": None, "willful": 0, "uscis_appr": 0, "uscis_den": 0, "new_h1b": 0, "perm_3y": 0,
         "debarred": [], "warn": 0, "warn_workers": 0, "industry": defaultdict(int),
         "live_only": 1, "pending_now": 0, "latest_filed": None, "acwia": 0,
     }
@@ -387,6 +406,7 @@ def plan(data: dict, today: dt.date) -> list[list]:
         s["senior_share"] = s["senior"] / s["leveled"] if s["leveled"] else None
         s["uscis_n"] = s["uscis_appr"] + s["uscis_den"]
         s["uscis_rate"] = s["uscis_appr"] / s["uscis_n"] if s["uscis_n"] else None
+        s["perm_per_h1b"] = 100 * s["perm_3y"] / s["new_h1b"] if s.get("new_h1b") else None
         coded = sum(s["industry"].values())
         hi_ed = sum(n for k, n in s["industry"].items() if k.startswith(HIGHER_ED_NAICS))
         by_naics = bool(coded and hi_ed / coded >= CAP_EXEMPT_SHARE)

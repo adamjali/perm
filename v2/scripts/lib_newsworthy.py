@@ -323,6 +323,7 @@ DOC_SOURCES = {
     "state-news": "the State Department's newsroom",
     "congress": "congress.gov",
     "courtlistener": "CourtListener",
+    "courtlistener-dockets": "CourtListener's RECAP archive",
     "balca": "OALJ's caselists",
     "doj": "the Justice Department's releases and IER's settlements list",
 }
@@ -393,6 +394,8 @@ def document_sentence(d: dict) -> str:
         return f"The State Department posted visa news on {day_label(d.get('publication_date'))}: {t}."
     if src == "courtlistener":
         return f"A federal court ({_agency(d)}) decided {t} on {day_label(d.get('publication_date'))}."
+    if src == "courtlistener-dockets":
+        return f"A new filing in a case this site follows: {t}, dated {day_label(d.get('publication_date'))}."
     if src == "balca":
         return f"BALCA decided {t} on {day_label(d.get('publication_date'))}."
     if src == "doj":

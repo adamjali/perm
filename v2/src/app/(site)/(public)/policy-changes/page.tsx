@@ -284,6 +284,7 @@ export default async function PolicyChangesPage() {
           "policy-notices-congress",
           "policy-comments",
           "policy-notices-courts",
+          "policy-notices-dockets",
           "policy-notices-balca",
         ]}
       />
