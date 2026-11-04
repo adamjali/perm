@@ -1640,5 +1640,20 @@
    1020
   ],
   "mask": "figures"
+ },
+ {
+  "slug": "bright-outlook-jobs",
+  "path": "/bright-outlook-jobs",
+  "title": "Fast-growing jobs that get sponsored",
+  "label": "O*NET's Bright Outlook jobs, with BLS growth to 2035 and the PERM cases and H-1B LCAs filed for each.",
+  "shot": "bright-outlook-jobs.png",
+  "crop": [
+   0,
+   0,
+   1504,
+   1016
+  ],
+  "from": "The ones employers sponsor most",
+  "mask": "figures"
  }
 ]
