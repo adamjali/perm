@@ -18,6 +18,7 @@
  */
 
 import { createLogger } from "./logging";
+import { redactDeep, redactEmails } from "./redactEmails";
 
 const log = createLogger("Sentry");
 
@@ -65,8 +66,17 @@ export async function reportError(
     return;
   }
 
-  const errorObj =
+  const raw =
     error instanceof Error ? error : new Error(String(error));
+  // No email address leaves for Sentry: each becomes a stable short label (convex/lib/redactEmails.ts). The
+  // message, the stack (which repeats it), the resource id and every string in `extra`; the user id is opaque.
+  const errorObj = {
+    name: raw.name,
+    message: await redactEmails(raw.message),
+    stack: raw.stack ? await redactEmails(raw.stack) : undefined,
+  };
+  const resourceId = context?.resourceId ? await redactEmails(context.resourceId) : undefined;
+  const extra = context?.extra ? ((await redactDeep(context.extra)) as Record<string, unknown>) : undefined;
 
   const event = {
     event_id: crypto.randomUUID().replace(/-/g, ""),
@@ -82,8 +92,8 @@ export async function reportError(
     },
     user: context?.userId ? { id: context.userId } : undefined,
     extra: {
-      ...(context?.resourceId && { resourceId: context.resourceId }),
-      ...context?.extra,
+      ...(resourceId && { resourceId }),
+      ...extra,
     },
     exception: {
       values: [
