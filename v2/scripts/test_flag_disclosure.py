@@ -873,6 +873,23 @@ def check_old_lca_layouts() -> None:
     check("an old status, unit and missing visa read in the newer files' words", row,
           {"case_status": "CERTIFIED - WITHDRAWN", "visa_class": "H-1B", "case_number": "I-200-10012-123456",
            "wage_unit": "YEAR"})
+    efile = {"case_status": "CERTIFIED", "visa_class": "S", "case_number": "I-08090-4182485", "wage_unit": "MTH"}
+    fd.lca_era_fixups(efile)
+    check("an e-file visa letter and pay unit read as the visa and unit they stand for",
+          (efile["visa_class"], efile["wage_unit"]), ("H-1B1 Singapore", "MONTH"))
+    for letter, visa in (("R", "H-1B"), ("A", "E-3 Australian"), ("C", "H-1B1 Chile")):
+        r = {"case_status": "CERTIFIED", "visa_class": letter, "case_number": "I-08090-1", "wage_unit": "YR"}
+        fd.lca_era_fixups(r)
+        check(f"e-file {letter} is {visa}", (r["visa_class"], r["wage_unit"]), (visa, "YEAR"))
+    unpicked = {"case_status": "CERTIFIED", "visa_class": "H-1B", "case_number": "I-200-12012-1",
+                "wage_unit": "Select Pay Range", "pw_unit": "Select Pay Range"}
+    fd.lca_era_fixups(unpicked)
+    check("the form's 'Select Pay Range' is no unit", (unpicked["wage_unit"], unpicked["pw_unit"]), (None, None))
+    check("a file before FY2020 goes to the history table, FY2020 on to lca_cases, a year-less name nowhere old",
+          [fd.table_for("lca", n, "lca_cases") for n in ("H-1B_Case_Data_FY2008.xlsx", "H-1B_FY14_Q4.xlsx",
+           "H-1B_Disclosure_Data_FY2019.xlsx", "LCA_Disclosure_Data_FY2020_Q1.xlsx", "LCA_Disclosure_Data.xlsx")]
+          + [fd.table_for("pw", "PW_Disclosure_Data_FY2019.xlsx", "pwd_cases")],
+          ["lca_cases_history", "lca_cases_history", "lca_cases_history", "lca_cases", "lca_cases", "pwd_cases"])
     placeholder = {"case_status": "CERTIFIED", "visa_class": "Select Visa Classification",
                    "case_number": "I-203-16012-1", "wage_unit": "YEAR"}
     fd.lca_era_fixups(placeholder)

@@ -70,7 +70,9 @@ DB_SETTINGS = {
 # One request never mixes the two: a join between `lca_cases` and a table in the
 # main file can't run, so it fails loudly here instead of half-running. What the
 # main file needs to know about published LCAs is in `lca_case_numbers` there.
-LCA_TABLE_RE = re.compile(r"\blca_cases\b")
+# The LCA database holds two tables: FY2020 on, and DOL's FY2008 to FY2019 files (`lca_cases_history`).
+LCA_TABLES = ("lca_cases", "lca_cases_history")
+LCA_TABLE_RE = re.compile(r"\blca_cases(?:_history)?\b")
 _TXN_CONTROL = re.compile(r"^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b", re.I)
 
 
@@ -113,7 +115,7 @@ def lca_joins(sql: str) -> set[str]:
         return set()
     own = {m.group(1).lower() for m in _CTE_NAME.finditer(sql)}
     return {t for t in (m.group(1) for m in _TABLE_REF.finditer(sql))
-            if t.lower() not in own and t.lower() not in _NOT_TABLES and t != "lca_cases"}
+            if t.lower() not in own and t.lower() not in _NOT_TABLES and t not in LCA_TABLES}
 
 
 _READ = re.compile(r"^\s*(SELECT|WITH|EXPLAIN)\b", re.I)

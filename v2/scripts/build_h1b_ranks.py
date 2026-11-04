@@ -168,8 +168,36 @@ def read_pages(db: Database) -> tuple[dict[str, str], dict[str, str]]:
     return page_of, names
 
 
+# DOL's FY2008 to FY2019 H-1B files are in a table of their own (ingest_flag_disclosure.HISTORY_TABLES).
+HISTORY_TABLE, HISTORY_BEFORE = "lca_cases_history", 2020
+
+
+def lca_table(fy: int) -> str:
+    return HISTORY_TABLE if fy < HISTORY_BEFORE else "lca_cases"
+
+
+def lca_years_held(db: Database) -> list[int]:
+    """Every fiscal year either LCA table holds; a history table not loaded yet adds none."""
+    years: set[int] = set()
+    for table in ("lca_cases", HISTORY_TABLE):
+        try:
+            # The table is one of the two names above, never input.
+            # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
+            for (fy,) in rows_of(db.execute(
+                    f"SELECT DISTINCT fiscal_year FROM {table} WHERE fiscal_year IS NOT NULL")):
+                if table == "lca_cases" or num(fy) < HISTORY_BEFORE:
+                    years.add(num(fy))
+        except Exception as e:  # noqa: BLE001
+            if "no such table" not in str(e):
+                raise
+    return sorted(years)
+
+
 def read_lca(db: Database, fy: int, page_of: dict[str, str]):
-    """One fiscal year's certified H-1B LCAs, folded onto pages and places."""
+    """One fiscal year's certified H-1B LCAs, folded onto pages and places. A year before FY2020 is read from
+    the history table; its older layouts lack the job-change and wage-level columns, which then count nothing
+    and stay unshown (a share needs 20 leveled LCAs)."""
+    table = lca_table(fy)
     agg: dict[tuple[str, str], dict] = defaultdict(blank)
     spell: dict[str, Counter] = defaultdict(Counter)
     dep: dict[str, list] = defaultdict(lambda: [0, 0])  # LCAs declaring dependent, not dependent
@@ -182,7 +210,7 @@ def read_lca(db: Database, fy: int, page_of: dict[str, str]):
             "SUM(CASE WHEN h1b_dependent = 1 THEN 1 ELSE 0 END), "
             "SUM(CASE WHEN h1b_dependent = 0 THEN 1 ELSE 0 END), "
             "SUM(CASE WHEN willful_violator = 1 THEN 1 ELSE 0 END) "
-            f"FROM lca_cases WHERE {where} AND employer_slug IS NOT NULL GROUP BY employer_slug, worksite_state",
+            f"FROM {table} WHERE {where} AND employer_slug IS NOT NULL GROUP BY employer_slug, worksite_state",
             [fy])):
         page = page_of.get(str(slug), str(slug))
         spell[page][str(name or slug)] += num(n)
@@ -198,13 +226,13 @@ def read_lca(db: Database, fy: int, page_of: dict[str, str]):
         willful[page] += num(wil)
     lo, hi = FLAG_BAND
     for slug, st, w, n in rows_of(db.execute(
-            f"SELECT employer_slug, worksite_state, ROUND({ANNUAL_WAGE_SQL}), COUNT(*) FROM lca_cases "
+            f"SELECT employer_slug, worksite_state, ROUND({ANNUAL_WAGE_SQL}), COUNT(*) FROM {table} "
             f"WHERE {where} AND employer_slug IS NOT NULL AND wage IS NOT NULL AND wage > 0 "
             f"AND ({ANNUAL_WAGE_SQL}) BETWEEN ? AND ? GROUP BY 1, 2, 3", [fy, lo, hi])):
         page = page_of.get(str(slug), str(slug))
         for p in {NATION, place(st)} - {None}:
             agg[(page, p)]["wages"][float(w)] += num(n)
-    through = rows_of(db.execute(f"SELECT MAX(decision_date) FROM lca_cases WHERE {where}", [fy]))[0][0]
+    through = rows_of(db.execute(f"SELECT MAX(decision_date) FROM {table} WHERE {where}", [fy]))[0][0]
     dependent = {}
     for page, (yes, no) in dep.items():
         if yes or no:
@@ -370,8 +398,7 @@ def main() -> int:
     page_of, names = read_pages(db)
     pages = set(names)
     current = read_current(db, page_of, today)
-    lca_years = [num(r[0]) for r in rows_of(db.execute(
-        "SELECT DISTINCT fiscal_year FROM lca_cases WHERE fiscal_year IS NOT NULL ORDER BY 1"))]
+    lca_years = lca_years_held(db)
     uscis_years = [num(r[0]) for r in rows_of(db.execute("SELECT DISTINCT fy FROM uscis_h1b_employers ORDER BY 1"))]
     hub_through = None
     for (as_of,) in rows_of(db.execute("SELECT as_of FROM data_freshness WHERE dataset = 'uscis-h1b-hub'")):

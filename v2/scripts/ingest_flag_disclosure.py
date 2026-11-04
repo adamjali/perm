@@ -558,7 +558,29 @@ def index_ddl(table: str) -> list[str]:
         # in the file for them (15 to 20 s under load, Sentry 59, Nov 1 2026), this index answers in 0.03 s.
         # Created on production by hand on Nov 2 2026.
         f"CREATE INDEX IF NOT EXISTS {table}_emp_title ON {table} (employer_slug, received_date, job_title)",
-    ] if table == "lca_cases" else [])
+    ] if table == "lca_cases" else []) + ([
+        # The yearly rankings and an employer's years read a whole fiscal year at a time (build_h1b_ranks.py,
+        # build_lca_years.py); the current table is read the same way and is a third the size.
+        f"CREATE INDEX IF NOT EXISTS {table}_fy ON {table} (fiscal_year, case_status, visa_class)",
+    ] if table.endswith("_history") else [])
+
+
+# DOL's H-1B files before FY2020 (FY2008 to FY2019, three older layouts) go to a table of their own in the LCA
+# database, `lca_cases_history`, as PERM's FY2016 to FY2023 do (`perm_cases_history`). `lca_cases` keeps
+# FY2020 on, so everything built from it stays as it was: the salary explorer's figures, the SOC finder's
+# titles (the older years filed 2010 SOC codes), the employer map and the searches' index plans. Readers that
+# want every year (a case by its number, the case search, an employer's years) read both.
+HISTORY_TABLES = {"lca": ("lca_cases_history", 2020)}
+
+
+def table_for(program: str, name: str, default: str) -> str:
+    """The table a file is written to: the program's own, or its history table for a file older than the
+    history boundary (by the fiscal year in DOL's file name). Pure."""
+    history = HISTORY_TABLES.get(program)
+    # A name with no fiscal year in it (0) is never taken for an old one.
+    if history and 0 < file_fiscal_year(name) < history[1]:
+        return history[0]
+    return default
 
 
 # ---------------------------------------------------------------------------
@@ -908,11 +930,21 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
 LCA_VISA_BY_PREFIX = {"I-200": "H-1B", "I-201": "H-1B1 Chile", "I-202": "H-1B1 Singapore", "I-203": "E-3 Australian"}
 
 
+# The FY2008 and FY2009 e-file workbooks write the visa as one letter, DOL's own record layouts say what each
+# means (H-1B_Record_Layout_FY08.doc and "H-1B Efile Record Layout FY09.rtf", read Nov 4 2026): "R = H-1B;
+# A = E-3 Australian; C = H-1B1 Chile; S = H-1B1 Singapore". Their pay units are abbreviated; the layouts
+# give no list, and each one's median wage in the FY2008 file says what it is (YR 60,000, HR 25.20, MTH
+# 4,899, WK 1,012.81, BI 2,176.80).
+EFILE_PROGRAMS = {"R": "H-1B", "A": "E-3 Australian", "C": "H-1B1 Chile", "S": "H-1B1 Singapore"}
+EFILE_UNITS = {"YR": "YEAR", "HR": "HOUR", "MTH": "MONTH", "WK": "WEEK", "BI": "BI-WEEKLY"}
+
+
 def lca_era_fixups(row: dict) -> None:
     """Older LCA files in the newer files' words, so every year counts the same way.
 
     "CERTIFIED-WITHDRAWN" (FY2009 to FY2019) is the newer "CERTIFIED - WITHDRAWN"; a row with no visa column
-    takes the visa its case-number prefix names; a unit spelled "Year" or "Per Year" is "YEAR".
+    takes the visa its case-number prefix names, and an e-file letter its visa's name (EFILE_PROGRAMS); a unit
+    spelled "Year", "Per Year" or "YR" is "YEAR", and the form's "Select Pay Range" is no unit.
     """
     status = row.get("case_status")
     if status:
@@ -920,9 +952,16 @@ def lca_era_fixups(row: dict) -> None:
     if not row.get("visa_class") or str(row["visa_class"]).upper().startswith("SELECT "):
         # FY2016 has one row whose visa is the form's own "Select Visa Classification".
         row["visa_class"] = LCA_VISA_BY_PREFIX.get(row["case_number"][:5])
-    unit = row.get("wage_unit")
-    if unit:
-        row["wage_unit"] = re.sub(r"^PER\s+", "", unit.strip(), flags=re.I)
+    visa = (row.get("visa_class") or "").strip().upper()
+    if visa in EFILE_PROGRAMS:
+        row["visa_class"] = EFILE_PROGRAMS[visa]
+    for field in ("wage_unit", "pw_unit"):
+        unit = row.get(field)
+        if not unit:
+            continue
+        unit = re.sub(r"^PER\s+", "", unit.strip(), flags=re.I)
+        # FY2009 to FY2013 hold the form's own "Select Pay Range" where no unit was picked: no unit.
+        row[field] = None if unit.upper().startswith("SELECT ") else EFILE_UNITS.get(unit.upper(), unit)
 
 
 class ParseStats:
@@ -998,6 +1037,7 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
     colmap: dict[int, str] = {}
     events: dict[int, int] = {}
     seen: set[str] = set()
+    raw_left = 0
     for cells in iter_rows(archive, sheet, shared):
         if not colmap:
             colmap, events = resolve_columns(cells, cfg, filename)
@@ -1010,6 +1050,14 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
                 log(f"    all {len(header)} header names:")
                 for name in header:
                     log(f"      {name}")
+                raw_left = 3
+            continue
+        if dump_header:
+            # Each read field's cell as the file holds it, for three cases: a value the parser can't read
+            # (FY2015's wage) shows here as DOL wrote it.
+            log(f"    raw: {json.dumps({colmap[i]: v for i, v in sorted(cells.items()) if i in colmap}, ensure_ascii=False)}")
+            raw_left -= 1
+            if raw_left <= 0:
                 return
             continue
         stats.sheet_rows += 1
@@ -1083,7 +1131,7 @@ def write_summary_doc(db: Database, program: str, table: str) -> dict:
         "latestDecision": latest,
         "files": files,
     }
-    write_doc(db, summary_key(program), doc)
+    write_doc(db, summary_key(program) + ("_history" if table.endswith("_history") else ""), doc)
     log(f"  summary   {doc['rows']:,} rows, received from {doc['earliestReceived']}, "
         f"decided through {doc['latestDecision']}, {len(files)} file(s)")
     return doc
@@ -1383,6 +1431,15 @@ def main() -> int:
             log(f"Downloading {name}")
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)
             log(f"  {size / 1e6:.1f} MB  sha256 {sha[:16]}")
+
+        table = table_for(args.program, name, cfg["table"])
+        if table != cfg["table"]:
+            log(f"  {name} is before FY{HISTORY_TABLES[args.program][1]}: it goes to {table}")
+            # The workflow rebuilds only what reads the history table after such a load.
+            out = os.environ.get("GITHUB_OUTPUT")
+            if out:
+                with open(out, "a", encoding="utf-8") as fh:
+                    fh.write("history=true\n")
 
         # Is this the newest file DOL publishes? Only that file may stamp
         # freshness or move the "latest quarter" pointer; anything else is
