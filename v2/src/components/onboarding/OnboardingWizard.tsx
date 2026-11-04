@@ -25,6 +25,15 @@ const WIZARD_STEPS: OnboardingWizardStep[] = [
   "completion",
 ];
 
+/** What each step is, in the words its own heading uses. */
+const STEP_NAMES: Record<OnboardingWizardStep, string> = {
+  welcome: "Welcome",
+  role: "Your role",
+  create_case: "Your first case",
+  value_preview: "What you get",
+  completion: "Done",
+};
+
 export function OnboardingWizard() {
   const { step, showWizard, advanceWizardStep, skipWizard, startTour, skipTour } =
     useOnboarding();
@@ -92,14 +101,29 @@ export function OnboardingWizard() {
           </button>
         )}
 
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 pt-4 sm:pt-6 pb-2 px-4 sm:px-6 flex-shrink-0">
-          {WIZARD_STEPS.map((s, i) => (
-            <div
-              key={s}
-              className={cn("size-2.5", i <= currentIndex ? "bg-primary-text" : "bg-muted")}
-            />
-          ))}
+        {/* Progress: one joined rail, filled to the step you're on, with the step said in words. Five
+            loose dots had said neither which step this was nor that the steps run in one line. */}
+        <div className="flex flex-shrink-0 flex-col items-center gap-2 px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+          <p className="text-sm font-semibold text-muted-foreground">
+            Step {currentIndex + 1} of {WIZARD_STEPS.length}: {STEP_NAMES[currentStep]}
+          </p>{" "}
+          <ol aria-label="Setup steps" className="flex w-full max-w-xs border-2 border-input">
+            {WIZARD_STEPS.map((s, i) => (
+              <li
+                key={s}
+                aria-current={i === currentIndex ? "step" : undefined}
+                className={cn(
+                  "h-2 flex-1",
+                  i > 0 && "border-l-2 border-background",
+                  i <= currentIndex ? "bg-primary-text" : "bg-muted",
+                )}
+              >
+                <span className="sr-only">
+                  {`${STEP_NAMES[s]}${i < currentIndex ? ", done" : i === currentIndex ? ", this step" : ""} `}
+                </span>
+              </li>
+            ))}
+          </ol>
         </div>
 
         {/* Step content — scrollable with generous max height */}

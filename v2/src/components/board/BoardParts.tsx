@@ -37,8 +37,10 @@ const n = (x: number) => x.toLocaleString("en-US");
 
 /**
  * The four steps in a row. On a wide screen a rail runs above them, one
- * numbered lime stop over each step, so the order reads as one line; on a
- * phone the steps stack and carry their own numbers.
+ * numbered lime stop over each step, so the order reads as one line; below
+ * 1024px the steps stack in one column, each carrying its own number, with a
+ * line from one card down to the next (`.track-stack` in globals.css). Two
+ * columns there had read as a grid, not as steps in order.
  */
 export function Track({ steps, children }: { steps: readonly string[]; children: ReactNode }) {
   return (
@@ -55,7 +57,7 @@ export function Track({ steps, children }: { steps: readonly string[]; children:
           </Fragment>
         ))}
       </div>{" "}
-      <ol aria-label="The four steps, in order" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 [&>*]:min-w-0">
+      <ol aria-label="The four steps, in order" className="track-stack grid max-w-xl grid-cols-1 gap-6 lg:max-w-none lg:grid-cols-4 lg:gap-8 [&>*]:min-w-0">
         {children}
       </ol>
     </div>

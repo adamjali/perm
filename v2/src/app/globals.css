@@ -563,6 +563,26 @@ html {
     border: 2px solid var(--object-border);
     box-shadow: var(--object-shadow);
   }
+
+  /* /today's four steps, stacked below 1024px: a line runs from each card's number square down
+     to the next card, so the stack still reads as one track in order (from 1024px the rail
+     above the cards carries it). The line sits under the square's middle: the card's 1.25rem
+     padding plus half the 2rem square, less half the 4px line; it bridges the card's 2px edge,
+     the 1.5rem gap and the next card's edge. */
+  @media (max-width: 1023px) {
+    .track-stack > li {
+      position: relative;
+    }
+    .track-stack > li:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: calc(1.25rem + 1rem - 2px);
+      top: 100%;
+      width: 4px;
+      height: calc(1.5rem + 4px);
+      background-color: var(--foreground);
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------------
