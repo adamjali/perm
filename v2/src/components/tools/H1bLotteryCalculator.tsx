@@ -7,6 +7,8 @@ import { PlusIcon, WarningIcon, XIcon } from "@phosphor-icons/react";
 import { ChartTips } from "@/components/data/ChartTips";
 import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { ChoiceRow } from "@/components/ui/choice-row";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { WEIGHTED_ESTIMATE } from "@/lib/h1bLottery";
 import {
   LOTTERY_RULE,
@@ -38,6 +40,8 @@ import { AreaLoadFailure, areaPlaceholder, useWageAreas } from "@/components/too
 const FIELD =
   "mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const MAX_SITES = 3;
+/** The Label component's look, for the rows that aren't one field and so aren't a <label>. */
+const LABEL = "block text-sm font-semibold leading-none";
 
 const STATES = Object.entries(US_STATE_NAMES)
   .map(([code, name]) => ({ code, name }))
@@ -73,17 +77,20 @@ function Worksite({
   index,
   site,
   seriesYear,
+  stateId,
+  areaId,
   onChange,
   onRemove,
 }: {
   index: number;
   site: Site;
   seriesYear: number;
+  /** Given by the calculator, so a press of its button can put the cursor on a missing field. */
+  stateId: string;
+  areaId: string;
   onChange: (s: Site) => void;
   onRemove: (() => void) | null;
 }) {
-  const stateId = useId();
-  const areaId = useId();
   const stateName = STATES.find((s) => s.code === site.state)?.name ?? "";
   // The first area is picked when a list arrives; `site` and `onChange` are read as they are then.
   const { areas, failure, retry } = useWageAreas(stateName, seriesYear, (list) => {
@@ -146,13 +153,22 @@ function Worksite({
   );
 }
 
+const UNITS = [
+  { value: "year", label: "per year" },
+  { value: "hour", label: "per hour" },
+] as const;
+
 export function H1bLotteryCalculator() {
   const socId = useId();
   const offerId = useId();
-  const unitId = useId();
-  const yearId = useId();
+  const siteId = useId();
   const currentSeries = useMemo(() => seriesYearFor(new Date().toISOString().slice(0, 10)), []);
-  const [soc, setSoc] = useState("");
+  // An occupation page or a shared link can name the job (?soc=15-1252); a code it can't read is ignored.
+  const params = useUrlSearchParams();
+  const [soc, setSoc] = useState(() => {
+    const raw = params.get("soc") ?? "";
+    return SOC_CODE_RE.test(raw.trim()) ? (socGroup(raw) ?? "") : "";
+  });
   const [offerRaw, setOfferRaw] = useState("");
   const [unit, setUnit] = useState<PayUnit>("year");
   const [seriesYear, setSeriesYear] = useState(currentSeries);
@@ -160,12 +176,31 @@ export function H1bLotteryCalculator() {
   const [result, setResult] = useState<Result>({ kind: "idle" });
 
   const offer = parseOffer(offerRaw);
-  const ready =
-    SOC_CODE_RE.test(soc.trim()) && offer !== null && sites.every((s) => s.area !== "") && result.kind !== "loading";
+  const stateIdOf = (key: number) => `${siteId}-${key}-state`;
+  const areaIdOf = (key: number) => `${siteId}-${key}-area`;
+  const siteName = (i: number) => (sites.length > 1 ? ` for worksite ${i + 1}` : "");
+  // What a press of the button still needs, first first. The button never greys out: a press with
+  // something missing names it beside the button and puts the cursor on it.
+  const needs = ((): { id: string; message: string } | null => {
+    if (!SOC_CODE_RE.test(soc.trim())) return { id: socId, message: "Type a job title and pick its code, or type the code." };
+    if (offer === null) return { id: offerId, message: "Enter the offered wage as a number." };
+    for (const [i, site] of sites.entries()) {
+      if (!site.state) return { id: stateIdOf(site.key), message: `Pick a state${siteName(i)}.` };
+      if (!site.area) return { id: areaIdOf(site.key), message: `Pick an area${siteName(i)}.` };
+    }
+    return null;
+  })();
+  const [tried, setTried] = useState(false);
 
   async function calculate(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!ready || offer === null) return;
+    if (result.kind === "loading") return;
+    if (needs || offer === null) {
+      setTried(true);
+      if (needs) document.getElementById(needs.id)?.focus();
+      return;
+    }
+    setTried(false);
     setResult({ kind: "loading" });
     try {
       const answers = await Promise.all(
@@ -216,22 +251,24 @@ export function H1bLotteryCalculator() {
             />{" "}
             <p className="mt-1 text-sm text-muted-foreground">A range counts by its lowest wage.</p>
           </div>{" "}
+          <ChoiceRow
+            label="Paid"
+            labelClassName={LABEL}
+            options={UNITS}
+            value={unit}
+            onChange={(v) => setUnit(v as PayUnit)}
+          />{" "}
           <div>
-            <Label htmlFor={unitId}>Paid</Label>{" "}
-            <select id={unitId} value={unit} onChange={(e) => setUnit(e.target.value as PayUnit)} className={FIELD}>
-              <option value="year">per year</option>
-              <option value="hour">per hour</option>
-            </select>
-          </div>{" "}
-          <div>
-            <Label htmlFor={yearId}>Wage series</Label>{" "}
-            <select id={yearId} value={seriesYear} onChange={(e) => setSeriesYear(Number(e.target.value))} className={FIELD}>
-              {[currentSeries, currentSeries - 1].map((y) => (
-                <option key={y} value={y}>
-                  July {y} to June {y + 1}
-                </option>
-              ))}
-            </select>{" "}
+            <ChoiceRow
+              label="Wage series"
+              labelClassName={LABEL}
+              options={[currentSeries, currentSeries - 1].map((y) => ({
+                value: String(y),
+                label: `July ${y} to June ${y + 1}`,
+              }))}
+              value={String(seriesYear)}
+              onChange={(v) => setSeriesYear(Number(v))}
+            />{" "}
             <p className="mt-1 text-sm text-muted-foreground">The one current when the registration is filed.</p>
           </div>
         </div>{" "}
@@ -243,6 +280,8 @@ export function H1bLotteryCalculator() {
                 index={i}
                 site={s}
                 seriesYear={seriesYear}
+                stateId={stateIdOf(s.key)}
+                areaId={areaIdOf(s.key)}
                 onChange={(next) => setSites((all) => all.map((x) => (x.key === s.key ? next : x)))}
                 onRemove={i > 0 ? () => setSites((all) => all.filter((x) => x.key !== s.key)) : null}
               />
@@ -252,7 +291,7 @@ export function H1bLotteryCalculator() {
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            disabled={!ready}
+            disabled={result.kind === "loading"}
             className={buttonVariants({ variant: "default", size: "lg" })}
           >
             {result.kind === "loading" ? "Asking DOL" : "Work out the level and the odds"}
@@ -265,6 +304,11 @@ export function H1bLotteryCalculator() {
             >
               <PlusIcon size={16} weight="bold" aria-hidden="true" /> Add another worksite
             </button>
+          ) : null}{" "}
+          {tried && needs ? (
+            <p role="alert" className="basis-full text-base font-semibold text-destructive">
+              {needs.message}
+            </p>
           ) : null}
         </div>
       </form>

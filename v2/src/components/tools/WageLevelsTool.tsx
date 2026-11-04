@@ -5,6 +5,7 @@ import { WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, type WageLevel } from "@/lib/wageLevels";
@@ -143,7 +144,6 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   const stateId = useId();
   const areaId = useId();
   const socId = useId();
-  const yearId = useId();
   const currentSeries = useMemo(() => seriesYearFor(new Date().toISOString().slice(0, 10)), []);
   const [state, setState] = useState("");
   const [seriesYear, setSeriesYear] = useState(currentSeries);
@@ -163,7 +163,17 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   const { areas, failure, retry } = useWageAreas(stateName, seriesYear, (list) => setArea(list[0] ? String(list[0].value) : ""));
 
 
-  const ready = SOC_CODE_RE.test(soc.trim()) && area !== "" && result.kind !== "loading";
+  // What a press of the button still needs, first first. The button never greys out: a press with
+  // something missing names it beside the button and puts the cursor on it (a disabled button said
+  // nothing about why).
+  const missing: { id: string; message: string } | null = !SOC_CODE_RE.test(soc.trim())
+    ? { id: socId, message: "Type a job title and pick its code, or type the code." }
+    : !state
+      ? { id: stateId, message: "Pick the state the job is in." }
+      : area === ""
+        ? { id: areaId, message: "Pick the area the job is in." }
+        : null;
+  const [tried, setTried] = useState(false);
 
   function loadHistory(code: string, areaCode: string) {
     const ask = { id: historyAsk.current.id + 1, code, area: areaCode };
@@ -185,7 +195,13 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
 
   async function lookUp(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!ready) return;
+    if (result.kind === "loading") return;
+    if (missing) {
+      setTried(true);
+      document.getElementById(missing.id)?.focus();
+      return;
+    }
+    setTried(false);
     setResult({ kind: "loading" });
     loadHistory(soc.trim(), area);
     try {
@@ -239,24 +255,29 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           <SelectedInFull label={areas?.find((a) => String(a.value) === area)?.label} />{" "}
           <AreaLoadFailure failure={failure} retry={retry} />
         </div>{" "}
-        <div>
-          <Label htmlFor={yearId}>Wage series</Label>{" "}
-          <select id={yearId} value={seriesYear} onChange={(e) => setSeriesYear(Number(e.target.value))} className={SELECT}>
-            {[currentSeries, currentSeries - 1, currentSeries - 2].map((y) => (
-              <option key={y} value={y}>
-                July {y} to June {y + 1}
-              </option>
-            ))}
-          </select>
-        </div>{" "}
-        <div className="sm:col-span-2 lg:col-span-4">
+        <ChoiceRow
+          className="sm:col-span-2 lg:col-span-4"
+          label="Wage series"
+          options={[currentSeries, currentSeries - 1, currentSeries - 2].map((y) => ({
+            value: String(y),
+            label: `July ${y} to June ${y + 1}`,
+          }))}
+          value={String(seriesYear)}
+          onChange={(v) => setSeriesYear(Number(v))}
+        />{" "}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:col-span-2 lg:col-span-4">
           <button
             type="submit"
-            disabled={!ready}
+            disabled={result.kind === "loading"}
             className={buttonVariants({ variant: "default", size: "lg" })}
           >
             {result.kind === "loading" ? "Asking DOL" : "Look up the four levels"}
-          </button>
+          </button>{" "}
+          {tried && missing ? (
+            <p role="alert" className="text-base font-semibold text-destructive">
+              {missing.message}
+            </p>
+          ) : null}
         </div>
       </form>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
 import { H1bLotteryCalculator } from "@/components/tools/H1bLotteryCalculator";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { WEIGHTED_ESTIMATE, WEIGHTED_FROM } from "@/lib/h1bLottery";
 import { LOTTERY_RULE } from "@/lib/h1bLotteryCalc";
@@ -69,7 +70,11 @@ export default function H1bLotteryCalculatorPage() {
         </p>
       </header>
       <section data-embed="h1b-lottery" className="mt-10">
-        <H1bLotteryCalculator />
+        {/* The calculator reads ?soc= (a link can name the job). The boundary keeps the page static:
+            its fallback is the calculator itself with no query. */}
+        <SearchParamsBoundary>
+          <H1bLotteryCalculator />
+        </SearchParamsBoundary>
       </section>
       <p className="mt-4 max-w-3xl text-base text-soft">
         Every year&apos;s registrations and selections, from USCIS&apos;s own table, are on{" "}

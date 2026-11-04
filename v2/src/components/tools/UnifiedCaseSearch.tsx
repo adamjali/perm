@@ -1270,10 +1270,20 @@ export function UnifiedCaseSearch({
               {OLD_FORM_NOTE}
             </p>{" "}
             {lcaOnlySet && can.wageSource.on ? (
-              <p className="mb-3 border-l-4 border-border pl-3 text-sm font-semibold leading-relaxed">
-                The worker&apos;s details are off while a prevailing wage source is set: that field is in
-                DOL&apos;s LCA file, and they are in the PERM file. Clear the wage source to use them.
-              </p>
+              <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-l-4 border-border pl-3">
+                <p className="text-sm font-semibold leading-relaxed">
+                  The worker&apos;s details are off while a prevailing wage source is set: that field is in
+                  DOL&apos;s LCA file, and they are in the PERM file. Clear the wage source to use them.
+                </p>{" "}
+                {/* The way out, right where it's named, rather than a hunt for the control further down. */}
+                <button
+                  type="button"
+                  onClick={() => setWageSourceInput("")}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  Clear the wage source
+                </button>
+              </div>
             ) : null}{" "}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
               <Field label={FILTER_LABEL.industry} state={can.industry} describedBy={`${uid}-ind-why`}>

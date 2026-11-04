@@ -3,6 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { H1bLotteryCalculator } from "../H1bLotteryCalculator";
 
+const nav = vi.hoisted(() => ({ params: new URLSearchParams() }));
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), back: vi.fn(), forward: vi.fn() }),
+  usePathname: () => "/tools/h1b-lottery-odds-calculator",
+  useSearchParams: () => nav.params,
+}));
+
 /**
  * The calculator end to end against a stubbed DOL: the areas list, the four
  * figures, the level the rule assigns and DHS's estimate at it. The arithmetic
@@ -42,7 +50,10 @@ async function fill() {
 }
 
 describe("H1bLotteryCalculator", () => {
-  beforeEach(() => vi.unstubAllGlobals());
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    nav.params = new URLSearchParams();
+  });
   afterEach(() => vi.unstubAllGlobals());
 
   it("asks DOL for the job in the chosen area and prints the level and DHS's estimate", async () => {
@@ -66,5 +77,47 @@ describe("H1bLotteryCalculator", () => {
     await fill();
     expect(await screen.findByText(/DOL publishes no OEWS wage/)).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("The level the rule assigns");
+  });
+
+  it("keeps its button live and, pressed too soon, names the first thing missing and puts the cursor there", () => {
+    // Arrange
+    stub(LEVELS);
+    render(<H1bLotteryCalculator />);
+    const go = screen.getByRole("button", { name: /Work out the level/ });
+    // Act
+    fireEvent.click(go);
+    // Assert
+    expect(go).toBeEnabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Type a job title and pick its code, or type the code.");
+    expect(screen.getByLabelText("Job title or SOC code")).toHaveFocus();
+  });
+
+  it("names the worksite that still needs an area", () => {
+    // Arrange
+    stub(LEVELS);
+    render(<H1bLotteryCalculator />);
+    fireEvent.change(screen.getByLabelText("Job title or SOC code"), { target: { value: "15-1252" } });
+    fireEvent.change(screen.getByLabelText("Offered wage"), { target: { value: "130000" } });
+    fireEvent.click(screen.getByRole("button", { name: /Add another worksite/ }));
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: /Work out the level/ }));
+    // Assert
+    expect(screen.getByRole("alert")).toHaveTextContent("Pick a state for worksite 1.");
+    expect(screen.getByLabelText("Work state")).toHaveFocus();
+  });
+
+  it("opens on the job a link names, and takes the pay period and the series in one tap", () => {
+    // Arrange
+    nav.params = new URLSearchParams("soc=15-1252.00");
+    stub(LEVELS);
+    // Act
+    render(<H1bLotteryCalculator />);
+    fireEvent.click(screen.getByRole("button", { name: "per hour" }));
+    // Assert
+    expect(screen.getByLabelText("Job title or SOC code")).toHaveValue("15-1252");
+    expect(screen.getByRole("group", { name: "Paid" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "per hour" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Offered wage")).toHaveAttribute("placeholder", "52.50");
+    expect(screen.getByRole("group", { name: "Wage series" })).toBeInTheDocument();
   });
 });

@@ -132,6 +132,19 @@ describe("the worker, job and industry filters", () => {
     renderIt();
     expect(screen.getByText(/doesn't carry them\./)).toBeInTheDocument();
   });
+
+  it("offers the way out beside the note that a wage source turned the worker's fields off", () => {
+    // Arrange
+    renderIt();
+    fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Prevailing wage source" }), { target: { value: "survey" } });
+    expect(screen.getByText(/Clear the wage source to use them\./)).toBeInTheDocument();
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Clear the wage source" }));
+    // Assert
+    expect(screen.getByRole("combobox", { name: "Prevailing wage source" })).toHaveValue("");
+    expect(screen.queryByText(/Clear the wage source to use them\./)).not.toBeInTheDocument();
+  });
 });
 
 describe("the answer", () => {

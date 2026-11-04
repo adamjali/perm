@@ -293,6 +293,11 @@ describe('RecruitmentSection', () => {
       const secondSelect = container.querySelector('#method-1') as HTMLSelectElement;
       const jobFairOption = secondSelect.querySelector('option[value="job_fair"]');
       expect(jobFairOption).toHaveAttribute('disabled');
+      // A greyed option says why, rather than looking broken.
+      expect(jobFairOption?.textContent).toMatch(/\(already added\)$/);
+      // The row that holds it still reads it plainly.
+      const firstSelect = document.getElementById('method-0') as HTMLSelectElement;
+      expect(firstSelect.querySelector('option[value="job_fair"]')?.textContent).not.toMatch(/already added/);
     });
 
     it('allows adding and removing methods', async () => {

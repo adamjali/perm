@@ -689,7 +689,8 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             value={method.method}
                             onChange={(e) => handleMethodTypeChange(index, e.target.value)}
                             className={cn(
-                              "flex h-10 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-sm",
+                              // 16px on a phone (iOS zooms into anything smaller) and 44px tall to tap.
+                              "flex min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base md:text-sm",
                               "ring-offset-background placeholder:text-muted-foreground",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",
@@ -697,15 +698,15 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             )}
                           >
                             <option value="">Select method</option>
-                            {RECRUITMENT_METHODS.map((opt) => (
-                              <option
-                                key={opt.value}
-                                value={opt.value}
-                                disabled={selectedMethods.includes(opt.value) && method.method !== opt.value}
-                              >
-                                {opt.label}
-                              </option>
-                            ))}
+                            {RECRUITMENT_METHODS.map((opt) => {
+                              // A method on another row can't be picked twice; the option says why it's greyed.
+                              const taken = selectedMethods.includes(opt.value) && method.method !== opt.value;
+                              return (
+                                <option key={opt.value} value={opt.value} disabled={taken}>
+                                  {taken ? `${opt.label} (already added)` : opt.label}
+                                </option>
+                              );
+                            })}
                           </select>
                         </FormField>
 
