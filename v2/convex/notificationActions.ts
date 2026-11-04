@@ -37,7 +37,7 @@ import { DeadlineDigest } from "../src/emails/DeadlineDigest";
 import { ReengagementNudge } from "../src/emails/ReengagementNudge";
 import type { DigestContent } from "./lib/digestHelpers";
 import type { DeadlineDigestItem } from "./lib/reminderDigest";
-import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
+import { weeklyUnsubscribeUrl } from "./lib/prefsLink";
 import { extractUserIdFromAction } from "./lib/auth";
 import { SITE_URL } from "./lib/links";
 import { deadlineDigestWords } from "./lib/deadlineDigestWords";
@@ -49,11 +49,7 @@ function getAppUrl(): string {
 
 /** One-click unsubscribe URL for an email (weekly digest / nudge), or undefined if unconfigured. */
 async function buildUnsubscribeUrl(email: string): Promise<string | undefined> {
-  const secret = process.env.UNSUBSCRIBE_SECRET;
-  const siteUrl = process.env.CONVEX_SITE_URL;
-  if (!secret || !siteUrl) return undefined;
-  const token = await makeUnsubscribeToken(email, secret);
-  return `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
+  return weeklyUnsubscribeUrl(email, process.env.UNSUBSCRIBE_SECRET);
 }
 
 /** RFC 8058 List-Unsubscribe headers for the one-click URL (spread into the send; {} if none). */

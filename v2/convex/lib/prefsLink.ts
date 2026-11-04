@@ -21,3 +21,14 @@ export function oneClickUnsubscribeUrl(token: string, kind: string, id?: string)
   const base = actionUrl("/prefs/unsubscribe", token);
   return `${base}&kind=${encodeURIComponent(kind)}${id ? `&id=${encodeURIComponent(id)}` : ""}`;
 }
+
+/**
+ * The weekly case summary's and the re-engagement email's one-click unsubscribe, or undefined without a signing
+ * secret. On the public site like every other emailed link (convex/lib/links.ts); `next.config.ts` and nginx relay
+ * `/unsubscribe` to the Convex route, which still answers on its own host for links sent before Nov 4 2026. The
+ * token is the bare, unscoped one that route has always verified, so old and new links differ only in host.
+ */
+export async function weeklyUnsubscribeUrl(email: string, secret: string | undefined): Promise<string | undefined> {
+  if (!secret) return undefined;
+  return actionUrl("/unsubscribe", await makeUnsubscribeToken(email, secret));
+}
