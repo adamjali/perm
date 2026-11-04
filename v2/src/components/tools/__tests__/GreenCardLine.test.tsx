@@ -115,7 +115,7 @@ describe("a shared link", () => {
         <GreenCardLine snapshot={lineSnapshot()} pace={{}} />
       </StrictMode>,
     );
-    expect((screen.getByLabelText("Category") as HTMLSelectElement).value).toBe("EW3");
+    expect(screen.getByRole("button", { name: "EB-3 Other Workers" })).toHaveAttribute("aria-pressed", "true");
     expect((screen.getByLabelText("Country of chargeability") as HTMLSelectElement).value).toBe("worldwide");
     expect((screen.getByLabelText(/priority date/i) as HTMLInputElement).value).toBe("2023-05-01");
     expect(window.location.search).toBe("?category=EW3&country=worldwide&pd=2023-05-01");

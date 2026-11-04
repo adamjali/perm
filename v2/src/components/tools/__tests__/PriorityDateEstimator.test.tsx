@@ -202,7 +202,8 @@ describe("PriorityDateEstimator: USCIS chart guidance", () => {
     // Default selection is Final Action Dates, so nothing to flag yet.
     expect(screen.queryByText(/which is the other one/i)).not.toBeInTheDocument();
 
-    selectByLabel(/^chart$/i, "datesForFiling");
+    // The chart is a one-tap row now.
+    fireEvent.click(screen.getByRole("button", { name: "Dates for filing" }));
     expect(screen.getByText(/which is the other one/i)).toBeInTheDocument();
   });
 
@@ -498,7 +499,7 @@ describe("PriorityDateEstimator: selectors", () => {
     // Final action for EB-2 India is U in the newest bulletin.
     expect(screen.getByText(/this category was closed that month/i)).toBeInTheDocument();
 
-    selectByLabel(/^chart$/i, "datesForFiling");
+    fireEvent.click(screen.getByRole("button", { name: "Dates for filing" }));
     // Dates for filing is 01JAN15 throughout, so the same date is now current
     // and nothing of the closed-category answer may survive the switch.
     expect(screen.queryByText(/this category was closed that month/i)).not.toBeInTheDocument();
@@ -521,7 +522,7 @@ describe("PriorityDateEstimator: selectors", () => {
     // 2026-06 went backwards from 15JUL14 to 01SEP13, and 2026-07 went to U.
     expect(screen.getByText(/June 2026, July 2026/)).toBeInTheDocument();
 
-    selectByLabel(/^chart$/i, "datesForFiling");
+    fireEvent.click(screen.getByRole("button", { name: "Dates for filing" }));
     expect(screen.queryByText(/this cutoff has gone backwards/i)).not.toBeInTheDocument();
   });
 });

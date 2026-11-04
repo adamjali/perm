@@ -4,7 +4,15 @@ import { useId, useMemo, useState } from "react";
 
 import { ROUTE_LABEL } from "@/components/tools/greenCardRoute";
 import { Label } from "@/components/ui/label";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { calculateGreenCardFees, FEE_SCHEDULE, GREEN_CARD_ROUTES, STATE_FEES, type FeeInput, type GreenCardRoute } from "@/lib/perm";
+
+/** The three fee rates USCIS charges an I-140's asylum program fee at, each one tap. */
+const PETITIONERS: readonly { value: FeeInput["petitioner"]; label: string }[] = [
+  { value: "regular", label: "Employer, 26+ employees" },
+  { value: "small", label: "Employer, 25 or fewer" },
+  { value: "nonprofit", label: "Nonprofit" },
+];
 
 /**
  * USCIS fees for one employment-based case, from Form G-1055.
@@ -34,7 +42,6 @@ function Count({ id, label, value, onChange, note }: { id: string; label: string
 }
 
 export function GreenCardFeesCalculator() {
-  const petitionerId = useId();
   const onlineId = useId();
   const premiumId = useId();
   const adultsId = useId();
@@ -86,12 +93,13 @@ export function GreenCardFeesCalculator() {
       </fieldset>{" "}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
         <div>
-          <Label htmlFor={petitionerId}>Petitioner</Label>{" "}
-          <select id={petitionerId} value={petitioner} onChange={(e) => setPetitioner(e.target.value as FeeInput["petitioner"])} className={NUMBER}>
-            <option value="regular">Employer, 26+ employees</option>
-            <option value="small">Employer, 25 or fewer</option>
-            <option value="nonprofit">Nonprofit</option>
-          </select>{" "}
+          <ChoiceRow
+            label="Petitioner"
+            labelClassName="block text-sm font-semibold leading-none"
+            options={PETITIONERS}
+            value={petitioner}
+            onChange={setPetitioner}
+          />{" "}
           <p className="mt-1 text-sm text-muted-foreground">Sets the asylum program fee USCIS charges with every I-140, counted in full-time employees. A self-petitioner pays the 25-or-fewer amount.</p>
         </div>{" "}
         <div className="flex flex-col justify-end gap-3">

@@ -21,10 +21,16 @@ import { WEBHOOK_EVENTS, WEBHOOK_EVENT_LABELS, type WebhookEvent } from "@convex
 import { checkedLabel } from "@/lib/time";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/lib/toast";
 import { SettingsCard } from "./SettingsCard";
+
+const WATCH_KINDS = [
+  { value: "case", label: "A case" },
+  { value: "employer", label: "An employer" },
+] as const;
 
 const STATUS_WORDS: Record<string, string> = {
   pending: "Waiting to send",
@@ -280,23 +286,21 @@ export default function WebhooksSection() {
           </p>
         ) : (
           <form
-            className="grid grid-cols-1 gap-3 sm:grid-cols-[10rem_1fr_auto] sm:items-end [&>*]:min-w-0"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-end [&>*]:min-w-0"
             onSubmit={(ev) => {
               ev.preventDefault();
               void watch();
             }}
           >
-            <label className="block text-sm font-semibold">
-              Watch
-              <select
-                className="mt-1 h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base md:text-sm"
-                value={watchKind}
-                onChange={(ev) => setWatchKind(ev.target.value === "employer" ? "employer" : "case")}
-              >
-                <option value="case">A case</option>
-                <option value="employer">An employer</option>
-              </select>
-            </label>{" "}
+            {/* A case or an employer: two choices, one tap each. */}
+            <ChoiceRow
+              label="Watch"
+              labelClassName="block text-sm font-semibold"
+              rowClassName="mt-1 flex-nowrap gap-1"
+              options={WATCH_KINDS}
+              value={watchKind}
+              onChange={setWatchKind}
+            />{" "}
             <label className="block text-sm font-semibold">
               {watchKind === "case" ? "Case number" : "Employer page (the end of its address)"}
               <Input

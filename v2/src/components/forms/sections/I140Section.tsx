@@ -18,6 +18,16 @@ import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import type { I140Category } from "@/lib/processing-times/i140ProcessingTimes";
 import { CheckCircleIcon as CheckCircle2, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { CharLimit } from "@/components/ui/char-limit";
+import { ChoiceRow } from "@/components/ui/choice-row";
+
+type ServiceCenter = "" | "Texas" | "Nebraska" | "California" | "Vermont";
+const SERVICE_CENTERS: readonly { value: ServiceCenter; label: string }[] = [
+  { value: "", label: "Not set" },
+  { value: "Texas", label: "Texas" },
+  { value: "Nebraska", label: "Nebraska" },
+  { value: "California", label: "California" },
+  { value: "Vermont", label: "Vermont" },
+];
 
 // ============================================================================
 // TYPES
@@ -340,7 +350,8 @@ export function I140Section(props: I140SectionProps) {
               value={values.i140Category || ""}
               onChange={handleInputChange}
               className={cn(
-                "flex h-10 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-sm",
+                // 16px on a phone (iOS zooms into anything smaller) and 44px tall to tap.
+                "flex min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base md:text-sm",
                 "ring-offset-background placeholder:text-muted-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:text-muted-foreground",
@@ -401,35 +412,23 @@ export function I140Section(props: I140SectionProps) {
             />
           </FormField>
 
-          {/* Service Center */}
-          <FormField
-            label="Service center"
-            name="i140ServiceCenter"
-            error={errors?.i140ServiceCenter}
-            hint="USCIS service center handling the case (optional)"
-          >
-            <select
-              id="i140ServiceCenter"
+          {/* Service center: four centers, one tap each, and a way to leave it unset. */}
+          <div>
+            <ChoiceRow
+              label="Service center"
+              labelClassName="block text-sm font-semibold"
               name="i140ServiceCenter"
-              value={values.i140ServiceCenter || ""}
-              onChange={handleInputChange}
-              className={cn(
-                "flex h-10 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-sm",
-                "ring-offset-background placeholder:text-muted-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                "disabled:cursor-not-allowed disabled:text-muted-foreground",
-                "transition-colors shadow-hard-sm",
-                errors?.i140ServiceCenter && "border-destructive"
-              )}
-              aria-invalid={!!errors?.i140ServiceCenter}
-            >
-              <option value="">Select service center (optional)</option>
-              <option value="Texas">Texas Service Center</option>
-              <option value="Nebraska">Nebraska Service Center</option>
-              <option value="California">California Service Center</option>
-              <option value="Vermont">Vermont Service Center</option>
-            </select>
-          </FormField>
+              options={SERVICE_CENTERS}
+              value={(values.i140ServiceCenter || "") as ServiceCenter}
+              onChange={(v) => onChange("i140ServiceCenter", v || undefined)}
+            />{" "}
+            <p className="mt-1.5 text-sm text-muted-foreground">USCIS service center handling the case (optional)</p>
+            {errors?.i140ServiceCenter ? (
+              <p className="mt-1 text-sm text-destructive" role="alert">
+                {errors.i140ServiceCenter}
+              </p>
+            ) : null}
+          </div>
 
           {/* Premium Processing (Full Width) */}
           <FormField

@@ -22,6 +22,7 @@ import type { DecidedFeed } from "@/lib/db/decidedDays";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { choiceVariants } from "@/components/ui/choice";
+import { ChoiceRow } from "@/components/ui/choice-row";
 
 /**
  * Everything DOL moved on a day, searchable, filterable and sortable.
@@ -529,28 +530,19 @@ export function ChangeFeedBrowser({
             })}
           </select>
         </div>{" "}
-        <div>
-          <label htmlFor={`${id}-size`} className={LABEL}>
-            Rows per page
-          </label>{" "}
-          <select
-            id={`${id}-size`}
-            value={pageSize}
-            disabled={!ready}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              reset();
-            }}
-            className={`${CONTROL} mt-1`}
-          >
-            {PAGE_SIZES.map((n) => (
-              <Fragment key={n}>
-                <option value={n}>{n}</option>
-              {" "}
-              </Fragment>
-            ))}
-          </select>
-        </div>{" "}
+        {/* Four page sizes, one tap each. */}
+        <ChoiceRow
+          label="Rows per page"
+          labelClassName={LABEL}
+          rowClassName="mt-1 flex-nowrap gap-1"
+          options={PAGE_SIZES.map((n) => ({ value: String(n), label: String(n), ariaLabel: `${n} rows per page` }))}
+          value={String(pageSize)}
+          disabled={!ready}
+          onChange={(v) => {
+            setPageSize(Number(v));
+            reset();
+          }}
+        />{" "}
         <div className="flex items-end gap-3 sm:col-span-2">
           <button
             type="button"

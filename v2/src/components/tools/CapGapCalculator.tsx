@@ -5,11 +5,17 @@ import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { DateRuler } from "@/components/tools/DateRuler";
 import { RuleNotes } from "@/components/tools/RuleNotes";
 import { formatInt } from "@/lib/format";
 import { calculateCapGap, calculateOptUnemployment } from "@/lib/perm";
 import { cn } from "@/lib/utils";
+
+const STEM_CHOICES = [
+  { value: "no", label: "No: post-completion OPT" },
+  { value: "yes", label: "Yes: 24-month STEM OPT" },
+] as const;
 
 /**
  * Two F-1 dates, each from its regulation: how far the cap-gap carries a student's status and OPT to the H-1B, and
@@ -23,8 +29,6 @@ const localToday = () => {
 };
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
-const SELECT =
-  "mt-1.5 block min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const INPUT =
   "mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
@@ -117,8 +121,8 @@ export function CapGapPart() {
 }
 
 export function OptDaysPart() {
-  const ids = { stem: useId(), used: useId(), since: useId() };
-  const [stem, setStem] = useState("no");
+  const ids = { used: useId(), since: useId() };
+  const [stem, setStem] = useState<"no" | "yes">("no");
   const [used, setUsed] = useState("");
   const [since, setSince] = useState("");
   const today = useMemo(() => localToday(), []);
@@ -137,13 +141,13 @@ export function OptDaysPart() {
   return (
     <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
-        <div>
-          <Label htmlFor={ids.stem}>STEM extension granted</Label>{" "}
-          <select id={ids.stem} value={stem} onChange={(e) => setStem(e.target.value)} className={SELECT}>
-            <option value="no">No: post-completion OPT</option>
-            <option value="yes">Yes: 24-month STEM OPT</option>
-          </select>
-        </div>{" "}
+        <ChoiceRow
+          label="STEM extension granted"
+          labelClassName="block text-sm font-semibold leading-none"
+          options={STEM_CHOICES}
+          value={stem}
+          onChange={setStem}
+        />{" "}
         <div>
           <Label htmlFor={ids.used}>Days without work so far</Label>{" "}
           <input

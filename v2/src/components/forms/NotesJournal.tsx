@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ToneBadge } from "@/components/ui/badge";
 import { choiceVariants } from "@/components/ui/choice";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import type {
   NoteEntry,
   NotePriority,
@@ -75,6 +76,11 @@ const NOTE_FILTERS: ReadonlyArray<{ id: FilterOption; label: string; count: "tot
 
 /** The note controls' small native selects, at the 44px floor. */
 const NOTE_SELECT = "h-11 border border-input bg-card px-3 text-sm";
+const NOTE_SORTS: readonly { value: SortOption; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "priority", label: "By priority" },
+];
 
 // ============================================================================
 // HELPERS
@@ -394,20 +400,16 @@ export function NotesJournal({
         {/* New note options (priority, category) */}
           {showNewNoteOptions && (
             <div className="flex flex-wrap items-center gap-4">
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                Priority
-                <select
-                  value={newNotePriority}
-                  onChange={(e) => setNewNotePriority(e.target.value as NotePriority)}
-                  className={NOTE_SELECT}
-                >
-                  {NOTE_PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                      {PRIORITY_CONFIG[p].label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {/* Three priorities, one tap each. */}
+              <ChoiceRow
+                className="flex flex-wrap items-center gap-2"
+                label="Priority"
+                labelClassName="text-sm text-muted-foreground"
+                rowClassName="mt-0 gap-1"
+                options={NOTE_PRIORITIES.map((p) => ({ value: p, label: PRIORITY_CONFIG[p].label }))}
+                value={newNotePriority}
+                onChange={setNewNotePriority}
+              />{" "}
 
               <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 Category
@@ -446,19 +448,16 @@ export function NotesJournal({
             ))}
           </div>
 
-          {/* Sort dropdown */}
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            Sort
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className={NOTE_SELECT}
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="priority">By priority</option>
-            </select>
-          </label>
+          {/* The three orders, one tap each. */}
+          <ChoiceRow
+            className="flex flex-wrap items-center gap-2"
+            label="Sort"
+            labelClassName="text-sm text-muted-foreground"
+            rowClassName="mt-0 gap-1"
+            options={NOTE_SORTS}
+            value={sortBy}
+            onChange={setSortBy}
+          />
         </div>
       )}
 

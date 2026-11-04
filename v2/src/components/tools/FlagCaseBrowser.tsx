@@ -33,6 +33,7 @@ import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { choiceVariants } from "@/components/ui/choice";
 import { FilterCombobox } from "@/components/ui/filter-combobox";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { buttonVariants } from "@/components/ui/button";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { ISO_MONTH_RE } from "@convex/lib/months";
@@ -113,6 +114,11 @@ export const SEASONAL_PROGRAM: FlagBrowserProgram = {
 
 
 const PAGE_SIZE = 50;
+
+const ORDER_CHOICES = [
+  { value: "newest", label: "Newest filing first" },
+  { value: "oldest", label: "Oldest filing first" },
+] as const;
 
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
@@ -814,20 +820,19 @@ export function FlagCaseBrowser({
             ))}
           </div>{" "}
           <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-2 lg:max-w-3xl [&>*]:min-w-0">
-            <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold">
-              <span className="shrink-0">Order</span>{" "}
-              <select
-                value={order}
-                onChange={(e) => {
-                  setOrder(e.target.value === "oldest" ? "oldest" : "newest");
-                  setCursors([]);
-                }}
-                className="min-h-[44px] w-full min-w-0 flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <option value="newest">{"Newest filing first "}</option>
-                <option value="oldest">{"Oldest filing first "}</option>
-              </select>
-            </label>{" "}
+            {/* Two orders, one tap each. */}
+            <ChoiceRow
+              className="flex flex-wrap items-center gap-2"
+              label="Order"
+              labelClassName="text-sm font-bold"
+              rowClassName="mt-0 gap-1"
+              options={ORDER_CHOICES}
+              value={order}
+              onChange={(v) => {
+                setOrder(v);
+                setCursors([]);
+              }}
+            />{" "}
             <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold">
               <span className="shrink-0">Filed in</span>{" "}
               <select

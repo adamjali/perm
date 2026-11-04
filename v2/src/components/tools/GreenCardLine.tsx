@@ -7,6 +7,7 @@ import { ChartHit } from "@/components/data/ChartHit";
 import { ChartTips } from "@/components/data/ChartTips";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { bulletinCheckSentence, waitMarks, type BulletinCheck } from "@/lib/bulletinCheck";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
@@ -131,26 +132,18 @@ export function GreenCardLine({
           <UsersThreeIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-bold leading-tight">Who is ahead of you?</h2>
         </div>{" "}
-        <div className={cn("mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0", lockCategory ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
+        <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
           {lockCategory ? null : (
-            <div>
-              <Label htmlFor={`${uid}-cat`} className="text-sm font-bold">
-                Category
-              </Label>
-              <select
-                id={`${uid}-cat`}
-                value={category}
-                onChange={(e) => setCategory(e.target.value as LineCategory)}
-                className={SELECT_CLASS}
-              >
-                {LINE_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {LINE_CATEGORY_LABEL[c]}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+            // Three lines, one tap each, across the top so their names fit.
+            <ChoiceRow
+              className="sm:col-span-2"
+              label="Category"
+              labelClassName="block text-sm font-bold"
+              options={LINE_CATEGORIES.map((c) => ({ value: c, label: LINE_CATEGORY_LABEL[c] }))}
+              value={category}
+              onChange={setCategory}
+            />
+          )}{" "}
           <div>
             <Label htmlFor={`${uid}-country`} className="text-sm font-bold">
               Country of chargeability

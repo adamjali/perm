@@ -37,6 +37,7 @@ import {
 } from "@/components/tools/chartTicks";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { CaveatBox } from "@/components/ui/note";
 import { cn } from "@/lib/utils";
 import { MS_PER_DAY } from "@/lib/time";
@@ -307,7 +308,6 @@ export function PriorityDateEstimator({
   const dateId = useId();
   const catId = useId();
   const countryId = useId();
-  const chartId = useId();
   const hatchId = useId();
   const clipId = useId();
 
@@ -636,21 +636,15 @@ export function PriorityDateEstimator({
             </select>
           </div>
           <div>
-            <Label htmlFor={chartId} className="text-sm font-bold">
-              Chart
-            </Label>
-            <select
-              id={chartId}
+            {/* The bulletin's two charts, one tap each. */}
+            <ChoiceRow
+              label="Chart"
+              labelClassName="block text-sm font-bold"
+              rowClassName="mt-2"
+              options={CHARTS.map((c) => ({ value: c.code, label: c.label }))}
               value={chart}
-              onChange={(e) => setChart(e.target.value as ChartKind)}
-              className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              {CHARTS.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+              onChange={setChart}
+            />
             <p className="mt-2 text-sm text-muted-foreground">
               {CHARTS.find((c) => c.code === chart)?.note}
             </p>

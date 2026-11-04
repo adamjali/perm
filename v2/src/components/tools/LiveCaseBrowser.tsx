@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { CaseStatusChip } from "@/components/ui/badge";
 import { choiceVariants } from "@/components/ui/choice";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { ISO_MONTH_RE } from "@convex/lib/months";
 import { entityHref } from "@/lib/entityPayload";
 
@@ -46,6 +47,12 @@ import { entityHref } from "@/lib/entityPayload";
  */
 
 const PAGE_SIZE = 50;
+
+const SORT_CHOICES: readonly { value: LiveSort; label: string }[] = [
+  { value: "filed", label: "Filing date" },
+  { value: "employer", label: "Employer" },
+  { value: "status", label: "Status" },
+];
 
 const KIND_LABEL: Record<LiveKind, string> = {
   all: "All",
@@ -226,7 +233,7 @@ export function LiveCaseBrowser({
           <div
             className={cn(
               "grid grid-cols-1 items-center gap-2 [&>*]:min-w-0",
-              fixedMonth ? "sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]",
+              fixedMonth ? "" : "sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]",
             )}
           >
             <label className="flex min-h-[44px] w-full items-center gap-2 border-2 border-input bg-card px-3 text-sm font-bold">
@@ -239,18 +246,6 @@ export function LiveCaseBrowser({
                 aria-label="Search the live cases"
                 className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
               />
-            </label>{" "}
-            <label className="flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold">
-              <span className="shrink-0">Sort by</span>{" "}
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as LiveSort)}
-                className="min-h-[44px] w-full min-w-0 flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <option value="filed">Filing date</option>
-                <option value="employer">Employer</option>
-                <option value="status">Status</option>
-              </select>
             </label>{" "}
             <label className={cn("flex min-h-[44px] w-full min-w-0 items-center gap-2 text-sm font-bold", fixedMonth && "hidden")}>
               <span className="shrink-0">Filed in</span>{" "}
@@ -266,7 +261,17 @@ export function LiveCaseBrowser({
                   </option>
                 ))}
               </select>
-            </label>
+            </label>{" "}
+            {/* Three orders, one tap each, on a line of their own so the row's widths never move. */}
+            <ChoiceRow
+              className={cn("flex flex-wrap items-center gap-2", !fixedMonth && "sm:col-span-2")}
+              label="Sort by"
+              labelClassName="text-sm font-bold"
+              rowClassName="mt-0"
+              options={SORT_CHOICES}
+              value={sort}
+              onChange={setSort}
+            />
           </div>
         </div>
 

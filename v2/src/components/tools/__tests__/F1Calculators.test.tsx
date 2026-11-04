@@ -33,7 +33,7 @@ describe("the OPT days part", () => {
     render(<OptDaysPart />);
     fill("Days without work so far", "88");
     expect(screen.getByText("88 of 90")).toBeTruthy();
-    fill("STEM extension granted", "yes");
+    fireEvent.click(screen.getByRole("button", { name: "Yes: 24-month STEM OPT" }));
     expect(screen.getByText("88 of 150")).toBeTruthy();
   });
 

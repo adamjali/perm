@@ -5,6 +5,7 @@ import { CheckCircleIcon, WarningIcon, XCircleIcon, HourglassMediumIcon } from "
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { DateRuler } from "@/components/tools/DateRuler";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { RuleNotes } from "@/components/tools/RuleNotes";
@@ -13,6 +14,17 @@ import { formatInt } from "@/lib/format";
 import { calculateCspa, CSPA_FINAL_ACTION_POLICY_FROM, parseCutoff, type Age, type ChartKind, type CountryKey, type CspaResult } from "@/lib/perm";
 import { bulletinsOf, type BulletinLine, type LineChartSet } from "@/lib/bulletinLineHistory";
 import { cn } from "@/lib/utils";
+
+/** The Label component's look, for the rows that are a group rather than one field. */
+const LABEL = "block text-sm font-semibold leading-none";
+const ROUTES: readonly { value: LineChartSet; label: string }[] = [
+  { value: "employment", label: "A job (employment-based)" },
+  { value: "family", label: "Family" },
+];
+const FILING_CHARTS: readonly { value: ChartKind; label: string }[] = [
+  { value: "finalAction", label: "Final Action Dates" },
+  { value: "datesForFiling", label: "Dates for Filing" },
+];
 
 /**
  * Whether a child still counts as under 21 for a parent's green card, by the Child Status Protection Act.
@@ -144,14 +156,12 @@ export function CspaCalculator({
   const today = useMemo(() => localToday(), []);
   const ids = {
     birth: useId(),
-    set: useId(),
     category: useId(),
     country: useId(),
     pd: useId(),
     filed: useId(),
     approved: useId(),
     sought: useId(),
-    chart: useId(),
   };
   const [birth, setBirth] = useState("");
   const [set, setSet] = useState<LineChartSet>("employment");
@@ -218,23 +228,17 @@ export function CspaCalculator({
           <Label htmlFor={ids.birth}>The child&apos;s date of birth</Label>{" "}
           <DateInput id={ids.birth} value={birth} onChange={(e) => setBirth(e.target.value)} className="mt-1.5" />
         </div>{" "}
-        <div>
-          <Label htmlFor={ids.set}>Green card through</Label>{" "}
-          <select
-            id={ids.set}
-            value={set}
-            onChange={(e) => {
-              const next = e.target.value as LineChartSet;
-              setSet(next);
-              const list = next === "family" ? familyCategories : employmentCategories;
-              setCategory(list.includes("EB2") ? "EB2" : (list[0] ?? ""));
-            }}
-            className={SELECT}
-          >
-            <option value="employment">A job (employment-based)</option>
-            <option value="family">Family</option>
-          </select>
-        </div>{" "}
+        <ChoiceRow
+          label="Green card through"
+          labelClassName={LABEL}
+          options={ROUTES}
+          value={set}
+          onChange={(next) => {
+            setSet(next);
+            const list = next === "family" ? familyCategories : employmentCategories;
+            setCategory(list.includes("EB2") ? "EB2" : (list[0] ?? ""));
+          }}
+        />{" "}
         <div>
           <Label htmlFor={ids.category}>Category</Label>{" "}
           <select id={ids.category} value={category} onChange={(e) => setCategory(e.target.value)} className={SELECT}>
@@ -276,11 +280,13 @@ export function CspaCalculator({
         </div>{" "}
         {formerPolicyFiling ? (
           <div>
-            <Label htmlFor={ids.chart}>Chart USCIS named for filing</Label>{" "}
-            <select id={ids.chart} value={chart} onChange={(e) => setChart(e.target.value as ChartKind)} className={SELECT}>
-              <option value="finalAction">Final Action Dates</option>
-              <option value="datesForFiling">Dates for Filing</option>
-            </select>{" "}
+            <ChoiceRow
+              label="Chart USCIS named for filing"
+              labelClassName={LABEL}
+              options={FILING_CHARTS}
+              value={chart}
+              onChange={setChart}
+            />{" "}
             <p className="mt-1 text-sm text-muted-foreground">Filed before Aug 15, 2025: the chart USCIS named that month.</p>
           </div>
         ) : null}

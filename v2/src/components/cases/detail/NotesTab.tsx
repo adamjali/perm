@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo, type CSSProperties } from "react";
-import { CalendarDotsIcon, CaretLeftIcon, CaretRightIcon, ChatCircleIcon, CheckCircleIcon, FlagIcon, PaperPlaneTiltIcon as Send, PencilIcon, TagIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react";
+import { CalendarDotsIcon, CaretLeftIcon, CaretRightIcon, ChatCircleIcon, CheckCircleIcon, PaperPlaneTiltIcon as Send, PencilIcon, TagIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react";
 import {
   NOTE_CATEGORY_LABELS,
   NOTE_PRIORITIES,
@@ -22,6 +22,7 @@ const ITEMS_PER_PAGE = 10;
 import { fmtTimestamp } from "./case-detail-utils";
 import { CharLimit, CharLimitNote, useCharLimit } from "@/components/ui/char-limit";
 import { NOTES_PER_CASE_MAX, liveNotes, notesLimitMessage } from "@/components/forms/notesLimit";
+import { ChoiceRow } from "@/components/ui/choice-row";
 
 const PRIORITY_LABELS: Record<NotePriority, string> = {
   high: "High",
@@ -509,28 +510,16 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     alignItems: "center",
                   }}
                 >
-                  {/* Priority */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <FlagIcon className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
-                    <select
-                      value={newPriority}
-                      onChange={(e) => setNewPriority(e.target.value as NotePriority)}
-                      style={{
-                        height: 26,
-                        minWidth: 0, // see the date input below
-                        padding: "0 6px",
-                        border: "1px solid var(--border)",
-                        background: "var(--background)",
-                        color: "var(--foreground)",
-                        fontSize: "0.875rem",
-                        fontWeight: 700,
-                        }}
-                    >
-                      {NOTE_PRIORITIES.map((p) => (
-                        <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Priority: three choices, one tap each (a 26px select had been the smallest target on the page). */}
+                  <ChoiceRow
+                    className="flex flex-wrap items-center gap-2"
+                    label="Priority"
+                    labelClassName="text-sm text-muted-foreground"
+                    rowClassName="mt-0 gap-1"
+                    options={NOTE_PRIORITIES.map((p) => ({ value: p, label: PRIORITY_LABELS[p] }))}
+                    value={newPriority}
+                    onChange={setNewPriority}
+                  />{" "}
 
                   {/* Category */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

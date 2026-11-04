@@ -82,7 +82,7 @@ describe("FlagCaseBrowser search filters", () => {
 
   it("asks the list for the oldest filings first when chosen", () => {
     render(<FlagCaseBrowser summary={null} program={PWD_PROGRAM} />);
-    fireEvent.change(screen.getByLabelText("Order"), { target: { value: "oldest" } });
+    fireEvent.click(screen.getByRole("button", { name: "Oldest filing first" }));
     const urls = usePublicQuery.mock.calls.map((c) => String(c[0]));
     expect(urls.some((u) => u.includes("action=list") && u.includes("order=oldest"))).toBe(true);
   });

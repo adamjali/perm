@@ -3,6 +3,7 @@
 import { useId, type ReactNode } from "react";
 
 import { DateInput } from "@/components/forms/DateInput";
+import { ChoiceRow } from "@/components/ui/choice-row";
 import { Label } from "@/components/ui/label";
 import { ROUTE_LABEL } from "@/components/tools/greenCardRoute";
 import { GREEN_CARD_ROUTES, milestoneLabel, type Milestone } from "@/lib/perm";
@@ -73,15 +74,14 @@ export function CaseInputs({ state, set }: { state: PlanUrlState; set: (patch: R
         ) : (
           required.map(dateBox)
         )}{" "}
-        <Field id={ids("cat")} label="Category">
-          <select id={ids("cat")} value={state.category} onChange={(e) => set(planPatch({ category: e.target.value as PlanCategory }))} className={FIELD}>
-            {PLAN_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABEL[c].long}
-              </option>
-            ))}
-          </select>
-        </Field>{" "}
+        {/* Two categories, one tap each. */}
+        <ChoiceRow
+          label="Category"
+          labelClassName="block text-sm font-semibold leading-none"
+          options={PLAN_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABEL[c].long }))}
+          value={state.category}
+          onChange={(c) => set(planPatch({ category: c }))}
+        />{" "}
         <Field id={ids("country")} label="Country of birth">
           <select id={ids("country")} value={state.country} onChange={(e) => set(planPatch({ country: e.target.value as PlanCountry }))} className={FIELD}>
             {PLAN_COUNTRIES.map((c) => (

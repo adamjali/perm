@@ -46,4 +46,16 @@ describe("debarment filters", () => {
     fireEvent.change(screen.getByLabelText("Search the lists"), { target: { value: "nobody" } });
     expect(screen.getByRole("status")).toHaveTextContent(/Nothing on DOL's lists matches/);
   });
+
+  it("narrows by today's status in one tap, the pick pressed", () => {
+    // Arrange
+    render(<DebarmentBrowser rows={ROWS} sections={SECTIONS} />);
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "Ordered, not started" }));
+    // Assert
+    expect(screen.getByRole("group", { name: "Status today" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ordered, not started" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("heading", { name: "PERM" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "H-2A" })).toBeInTheDocument();
+  });
 });

@@ -411,7 +411,8 @@ describe("I140Section - Form Fields", () => {
     expect(screen.getByLabelText(/Receipt number/i)).toHaveValue("WAC2412345678");
     expect(screen.getByLabelText(/Approval date/i)).toHaveValue("2025-01-15");
     expect(screen.getByLabelText(/Category/i)).toHaveValue("EB-2");
-    expect(screen.getByLabelText(/Service center/i)).toHaveValue("Texas");
+    expect(screen.getByRole("group", { name: "Service center" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Texas" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByLabelText(/Premium processing/i)).toBeChecked();
   });
 });

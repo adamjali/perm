@@ -9,6 +9,7 @@ import { formatInt } from "@/lib/format";
 import { rankFuzzy } from "@/lib/fuzzy";
 import { shortDate } from "@convex/lib/months";
 import { Pagination } from "@/components/ui/pagination";
+import { ChoiceRow } from "@/components/ui/choice-row";
 
 export type DebarmentView = Debarment & { phase: DebarmentPhase };
 
@@ -36,6 +37,18 @@ const day = (iso: string) => shortDate(iso) ?? iso;
 const CONTROL =
   "mt-1 block w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
+
+const STATUS_CHOICES: readonly { value: DebarmentStatus; label: string }[] = [
+  { value: "", label: "Any" },
+  { value: "in-force", label: "In force" },
+  { value: "upcoming", label: "Ordered, not started" },
+  { value: "ended", label: "Ended" },
+];
+const SORT_CHOICES: readonly { value: DebarmentSort; label: string }[] = [
+  { value: "start", label: "Newest bar first" },
+  { value: "end", label: "Ending soonest first" },
+  { value: "name", label: "Name, A to Z" },
+];
 
 /**
  * The rows a query keeps, in the order it asks for. Searched across the name,
@@ -158,33 +171,23 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
             className={CONTROL}
           />
         </label>{" "}
-        <label className="block" htmlFor={`${id}-status`}>
-          <span className={LABEL}>Status today</span>{" "}
-          <select
-            id={`${id}-status`}
-            value={q.status}
-            onChange={(e) => setQ({ ...q, status: e.target.value as DebarmentStatus })}
-            className={CONTROL}
-          >
-            <option value="">{"Any "}</option>
-            <option value="in-force">{"In force "}</option>
-            <option value="upcoming">{"Ordered, not started "}</option>
-            <option value="ended">{"Ended "}</option>
-          </select>
-        </label>{" "}
-        <label className="block" htmlFor={`${id}-sort`}>
-          <span className={LABEL}>Order</span>{" "}
-          <select
-            id={`${id}-sort`}
-            value={q.sort}
-            onChange={(e) => setQ({ ...q, sort: e.target.value as DebarmentSort })}
-            className={CONTROL}
-          >
-            <option value="start">{"Newest bar first "}</option>
-            <option value="end">{"Ending soonest first "}</option>
-            <option value="name">{"Name, A to Z "}</option>
-          </select>
-        </label>{" "}
+        {/* Four statuses and three orders, each one tap, the one in use lime. */}
+        <ChoiceRow
+          className="sm:col-span-2"
+          label="Status today"
+          labelClassName={LABEL}
+          options={STATUS_CHOICES}
+          value={q.status}
+          onChange={(v) => setQ({ ...q, status: v })}
+        />{" "}
+        <ChoiceRow
+          className="sm:col-span-2 lg:col-span-3"
+          label="Order"
+          labelClassName={LABEL}
+          options={SORT_CHOICES}
+          value={q.sort}
+          onChange={(v) => setQ({ ...q, sort: v })}
+        />{" "}
         {types.length > 1 ? (
           <label className="block" htmlFor={`${id}-type`}>
             <span className={LABEL}>Who was barred</span>{" "}

@@ -6,6 +6,7 @@ import { shortDate } from "@convex/lib/months";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { buttonVariants } from "@/components/ui/button";
+import { ChoiceRadios } from "@/components/ui/choice-radios";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
 import { ROW_LINK } from "@/components/entities/caseRows";
 import { findSponsors, resolveJob, type FinderRow, type JobPick } from "@/lib/db/sponsorFinder";
@@ -242,27 +243,25 @@ export default async function SponsorFinderPage({
               ))}
             </select>
           </label>{" "}
-          <label className="block text-sm font-bold">
-            PERM filings in the last 12 months
-            <select name="recent" defaultValue={String(f.minRecent)} className={`mt-1 ${FIELD}`}>
-              {RECENT_STEPS.map((n) => (
-                <option key={n} value={n}>
-                  {`At least ${formatInt(n)}`}
-                </option>
-              ))}
-            </select>
-          </label>{" "}
-          <label className="block text-sm font-bold">
-            Approval rate
-            <select name="rate" defaultValue={f.minRate === null ? "" : String(f.minRate)} className={`mt-1 ${FIELD}`}>
-              <option value="">Any</option>
-              {RATE_STEPS.map((r) => (
-                <option key={r} value={r}>
-                  {`${formatApprovalRate(r)} or higher`}
-                </option>
-              ))}
-            </select>
-          </label>{" "}
+          {/* Four steps each: real radios drawn as one-tap choices, so the plain GET form still sends
+              `recent` and `rate` under the names every link to this page uses. */}
+          <ChoiceRadios
+            legend="PERM filings in the last 12 months"
+            legendClassName="block text-sm font-bold"
+            name="recent"
+            options={RECENT_STEPS.map((n) => ({ value: String(n), label: `At least ${formatInt(n)}` }))}
+            defaultValue={String(f.minRecent)}
+          />{" "}
+          <ChoiceRadios
+            legend="Approval rate"
+            legendClassName="block text-sm font-bold"
+            name="rate"
+            options={[
+              { value: "", label: "Any" },
+              ...RATE_STEPS.map((r) => ({ value: String(r), label: `${formatApprovalRate(r)} or higher` })),
+            ]}
+            defaultValue={f.minRate === null ? "" : String(f.minRate)}
+          />{" "}
           <label className="block text-sm font-bold">
             Median offered wage
             <select name="wage" defaultValue={f.minWage === null ? "" : String(f.minWage)} className={`mt-1 ${FIELD}`}>
