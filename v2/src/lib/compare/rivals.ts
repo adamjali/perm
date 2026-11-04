@@ -392,7 +392,7 @@ export const RIVALS: readonly Tracker[] = [
     },
     bestFor: "Priority-date forecasts and visa bulletin alerts",
     dataFrom: "DOL's published figures, USCIS's I-485 inventory and the bulletin",
-    beatsUs: ["Consular interview reports and a 221(g) tracker from applicants", "A browser notification for each new visa bulletin"],
+    beatsUs: ["Consular interview reports and a 221(g) tracker from applicants"],
     strengths: [
       "A priority-date estimate built on USCIS's I-485 inventory and the visa bulletin, with three scenarios",
       "An email and a browser alert for each new visa bulletin, by country and category",

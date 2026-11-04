@@ -5,7 +5,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'PERM Tracker',
     short_name: 'PERM Tracker',
     description: 'Live PERM data and automatic deadline tracking, free',
-    start_url: '/dashboard',
+    // Signed in to the dashboard, everyone else to the homepage (src/proxy.ts, /start).
+    start_url: '/start',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#22c55e', // green-500, matching icon-192.png and viewport theme

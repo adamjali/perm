@@ -543,6 +543,9 @@ export const sweep = internalAction({
     // Webhook subscribers hear of a new month from this same read
     // (bulletin.published). Scheduled, so it can't hold up the emails.
     await ctx.scheduler.runAfter(0, internal.webhookSweeps.bulletinSeen, { month: latest.month });
+    // Browsers following a line hear of each new bulletin too (bulletinPushAlerts.ts); claimed per row, so
+    // the hourly runs send once.
+    await ctx.scheduler.runAfter(0, internal.bulletinPushAlertsSweep.sweep, {});
 
     const subs = await ctx.runQuery(internal.bulletinAlerts.liveSubscriptions, {});
     let sent = 0;

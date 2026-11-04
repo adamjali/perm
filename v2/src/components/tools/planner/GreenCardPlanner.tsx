@@ -4,6 +4,7 @@ import { LinkSimpleIcon } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
+import { PrintButton } from "@/components/ui/print-button";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePublicQuery } from "@/hooks/usePublicQuery";
@@ -175,6 +176,7 @@ export function GreenCardPlanner({
         <button type="button" onClick={copyLink} className="link inline-flex min-h-11 items-center gap-1.5">
           <LinkSimpleIcon aria-hidden="true" className="size-4" weight="bold" /> Copy a link to these dates
         </button>{" "}
+        <PrintButton label="Print the plan or save it as a PDF" />{" "}
         <span role="status" className="text-sm text-soft">
           {copied ? "Link copied" : ""}
         </span>

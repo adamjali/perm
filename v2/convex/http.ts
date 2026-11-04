@@ -1994,6 +1994,83 @@ http.route({
   }),
 });
 
+/**
+ * Browser push when a new visa bulletin is out, for one category and country (bulletinPushAlerts.ts). The
+ * same shape as the case routes above: POST subscribes; POST /stop with the endpoint closes this browser's
+ * bulletin lines. Limits live in the internal mutation; the address is hashed here.
+ */
+http.route({
+  path: "/bulletin-alert/push",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/push",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
+    const { category, country, subscription } = body as Record<string, unknown>;
+    if (typeof category !== "string" || typeof country !== "string" || typeof subscription !== "string") {
+      return json({ ok: false, message: "A category, a country and a browser subscription are all required." }, 400);
+    }
+    if (category.length > 8 || country.length > 16 || subscription.length > 2000) return json({ ok: false, message: "Malformed request." }, 400);
+    const ipHash = await sha256Hex(`push:${callerIp(req)}`);
+    let endpoint: string | null = null;
+    try {
+      const parsed = JSON.parse(subscription) as { endpoint?: unknown };
+      endpoint = typeof parsed.endpoint === "string" && parsed.endpoint.length <= 1000 ? parsed.endpoint : null;
+    } catch {
+      endpoint = null;
+    }
+    if (!endpoint) return json({ ok: false, message: "The browser did not hand back a usable subscription." }, 400);
+    const endpointHash = await sha256Hex(endpoint);
+    const result = await ctx.runMutation(internal.bulletinPushAlerts.subscribe, { category, country, subscription, endpointHash, ipHash });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/push/stop",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/bulletin-alert/push/stop",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const endpoint = typeof body === "object" && body !== null ? (body as Record<string, unknown>).endpoint : null;
+    if (typeof endpoint !== "string" || endpoint.length === 0 || endpoint.length > 1000) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const result = await ctx.runMutation(internal.bulletinPushAlerts.stop, { endpointHash: await sha256Hex(endpoint) });
+    return json(result, 200);
+  }),
+});
+
 // ============================================================================
 // The server's watched-case check (scripts/check_watched_cases.py --from-convex)
 // ============================================================================

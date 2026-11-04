@@ -2337,6 +2337,27 @@ export default defineSchema({
     .index("by_endpoint_case", ["endpointHash", "caseNumber"]),
 
   /**
+   * Browser push when a new visa bulletin is out, for one category and country (convex/bulletinPushAlerts.ts).
+   * Like caseStatusPushAlerts: no account and no email, the browser's subscription is the only address.
+   */
+  bulletinPushAlerts: defineTable({
+    category: v.string(),
+    country: v.string(),
+    subscription: v.string(),
+    endpointHash: v.string(),
+    /** The newest bulletin this row has been told about (or seeded with), "YYYY-MM", and its cutoff then. */
+    lastSeenBulletin: v.optional(v.string()),
+    lastSeenCutoff: v.optional(v.string()),
+    createdAt: v.number(),
+    lastCheckedAt: v.optional(v.number()),
+    closedAt: v.optional(v.number()),
+    failures: v.number(),
+  })
+    .index("by_closed", ["closedAt"])
+    .index("by_endpoint", ["endpointHash"])
+    .index("by_endpoint_line", ["endpointHash", "category", "country"]),
+
+  /**
    * Contact-form submissions. Stored first, THEN forwarded by a scheduled
    * action, so a Resend outage loses nothing - the message is already here.
    */

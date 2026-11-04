@@ -17,7 +17,7 @@ import { useId, useMemo, useState } from "react";
 import {
   ArrowSquareOutIcon,
   CalendarCheckIcon,
-  CalendarPlusIcon,
+  CalendarPlusIcon, PrinterIcon,
   CopyIcon,
   InfoIcon,
   WarningIcon,
@@ -483,6 +483,10 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               >
                 <CalendarPlusIcon aria-hidden="true" />
                 Add to calendar
+              </Button>{" "}
+              <Button type="button" variant="outline" onClick={() => window.print()} className="print:hidden">
+                <PrinterIcon aria-hidden="true" />
+                Print or save as PDF
               </Button>
             </div>{" "}
             <p className="mt-3 text-sm text-muted-foreground" role="status">

@@ -24,6 +24,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { lineIssuance, monthName } from "@/lib/db/visaIssuances";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
+import { BulletinPushAlert } from "@/components/tools/BulletinPushAlert";
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { bulletinMonthLabel, cutoffGap, cutoffLabel, gapLabel } from "@/lib/bulletinNext";
@@ -391,7 +392,9 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       </nav>
 
       <section className="mt-12">
-        <BulletinAlertForm source={`visa-bulletin/categories/${slug}`} />
+        <BulletinAlertForm source={`visa-bulletin/categories/${slug}`} />{" "}
+        {/* The same news as a browser notification, for this line only (convex/bulletinPushAlerts.ts). */}
+        <BulletinPushAlert category={category} country={country} className="mt-4" />
       </section>
 
       <DataProvenance datasets={["visa-bulletin", "uscis-eb-awaiting-visa", "i485-inventory", "visa-issuances"]} />
