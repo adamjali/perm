@@ -224,7 +224,16 @@ const summaryResult = v.object({
   caseNumber: v.string(),
   timelines: v.number(),
   stops: v.array(v.object({ id: v.string(), label: v.string(), verified: v.boolean(), count: v.number() })),
+  /** True when fewer than MIN_CASE_REPORTERS have added dates: every count is then 0. */
+  withheld: v.boolean(),
 });
+
+/**
+ * A case's counts show only once this many people have added dates for it. One case is one person's
+ * filing, so below it the counts are that person's own progress (an I-140 approved, an I-485 filed),
+ * which USCIS doesn't publish, readable by anyone who knows the case number (audit, Nov 4 2026).
+ */
+export const MIN_CASE_REPORTERS = 3;
 
 /**
  * What people have reported for ONE case: counts per stop, nothing personal.
@@ -248,15 +257,19 @@ export const caseSummary = internalQuery({
           .withIndex("by_case", (q) => q.eq("caseNumber", caseNumber))
           .take(PER_CASE_READ)
       : [];
+    // People, not rows: each saved timeline is one, and older single reports count once per address.
+    const reporters = rows.length + new Set(legacy.map((m) => m.ipHash)).size;
+    const withheld = reporters < MIN_CASE_REPORTERS;
     const stops = CASE_STOPS.filter((s) => !s.verified).map((s) => ({
       id: s.id as string,
       label: s.label as string,
       verified: false,
-      count:
-        rows.filter((r) => (r as unknown as Record<string, unknown>)[s.id] !== undefined).length +
-        legacy.filter((m) => LEGACY_STOP[m.kind] === s.id).length,
+      count: withheld
+        ? 0
+        : rows.filter((r) => (r as unknown as Record<string, unknown>)[s.id] !== undefined).length +
+          legacy.filter((m) => LEGACY_STOP[m.kind] === s.id).length,
     }));
-    return { caseNumber, timelines: rows.length, stops };
+    return { caseNumber, timelines: withheld ? 0 : rows.length, stops, withheld };
   },
 });
 

@@ -44,6 +44,8 @@ import { shortDate } from "@convex/lib/months";
 interface Summary {
   timelines: number;
   stops: { id: string; label: string; count: number }[];
+  /** Fewer than three people have added dates; the server sent no counts. Absent from an older backend. */
+  withheld?: boolean;
 }
 interface Mine {
   input: TimelineInput;
@@ -224,6 +226,9 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
               ))}
               .
             </>
+          ) : summary.withheld ? (
+            // One case is one person's filing, so a handful of reports would be their own progress.
+            "Dates people add for this case show here once three have added them."
           ) : !mine ? (
             "Nobody has added dates for this case yet."
           ) : null}

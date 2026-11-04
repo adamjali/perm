@@ -66,6 +66,20 @@ describe("CaseMilestones (the timeline form)", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  it("says the counts wait for three people when the server withholds them", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url.includes("/timeline/summary")
+          ? new Response(JSON.stringify({ caseNumber: CASE, timelines: 0, stops: [], withheld: true }), { status: 200 })
+          : new Response(JSON.stringify({ ok: true, mine: null }), { status: 200 }),
+      ),
+    );
+    render(<CaseMilestones caseNumber={CASE} />);
+    expect(await screen.findByText("Dates people add for this case show here once three have added them.")).toBeInTheDocument();
+    expect(screen.queryByText("Nobody has added dates for this case yet.")).toBeNull();
+  });
+
   it("names the reported stops from the summary route, and only those", async () => {
     render(<CaseMilestones caseNumber={CASE} />);
     const line = (await screen.findByText(/Reported for this case/)).textContent ?? "";

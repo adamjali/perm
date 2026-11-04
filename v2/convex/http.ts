@@ -36,6 +36,7 @@ import { createLogger } from "./lib/logging";
 import { watchedSecretOk, sharedSecretOk } from "./watchedCases";
 import { checkTurnstile } from "./lib/turnstileVerify";
 import { callerIp } from "./lib/callerIp";
+import { ipHash as hashIp } from "./lib/ipHash";
 
 const http = httpRouter();
 
@@ -1761,7 +1762,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
     const ip = callerIp(req);
-    const ipHash = await sha256Hex(`milestone:${ip}`);
+    const ipHash = await hashIp("milestone", ip);
     const result = await ctx.runMutation(internal.caseMilestones.report, { caseNumber, kind, eventDate, ipHash });
     return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
   }),
@@ -1862,7 +1863,7 @@ http.route({
     input.public = b.public === true;
     const ip = callerIp(req);
     const [ipHash, editKeyHash] = await Promise.all([
-      sha256Hex(`timeline:${ip}`),
+      hashIp("timeline", ip),
       sha256Hex(`timeline-key:${b.key as string}`),
     ]);
     const result = await ctx.runMutation(internal.communityTimelines.save, {
@@ -1964,7 +1965,7 @@ http.route({
     }
     if (caseNumber.length > 24 || subscription.length > 2000) return json({ ok: false, message: "Malformed request." }, 400);
     const ip = callerIp(req);
-    const ipHash = await sha256Hex(`push:${ip}`);
+    const ipHash = await hashIp("push", ip);
     let endpoint: string | null = null;
     try {
       const parsed = JSON.parse(subscription) as { endpoint?: unknown };
@@ -2042,7 +2043,7 @@ http.route({
       return json({ ok: false, message: "A category, a country and a browser subscription are all required." }, 400);
     }
     if (category.length > 8 || country.length > 16 || subscription.length > 2000) return json({ ok: false, message: "Malformed request." }, 400);
-    const ipHash = await sha256Hex(`push:${callerIp(req)}`);
+    const ipHash = await hashIp("push", callerIp(req));
     let endpoint: string | null = null;
     try {
       const parsed = JSON.parse(subscription) as { endpoint?: unknown };

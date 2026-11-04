@@ -254,10 +254,30 @@ describe("the case summary", () => {
       eventDate: "2026-05-15",
       ipHash: IP_B,
     });
+    await t.mutation(internal.caseMilestones.report, {
+      caseNumber: CASE,
+      kind: "i485-filed",
+      eventDate: "2026-06-01",
+      ipHash: "c".repeat(64),
+    });
     const s = await t.query(internal.communityTimelines.caseSummary, { caseNumber: CASE });
+    expect(s.withheld).toBe(false);
     expect(s.timelines).toBe(1);
     expect(s.stops.find((x) => x.id === "i140ApprovedOn")!.count).toBe(2);
     expect(s.stops.find((x) => x.id === "i140FiledOn")!.count).toBe(1);
+  });
+
+  // One case is one person's filing: until three people have added dates, the counts would be theirs.
+  it("withholds every count until three people have added dates for the case", async () => {
+    const t = createTestContext();
+    await t.mutation(internal.communityTimelines.save, save({ i140ApprovedOn: "2026-05-12" }));
+    await t.mutation(internal.caseMilestones.report, { caseNumber: CASE, kind: "i140-approved", eventDate: "2026-05-15", ipHash: IP_B });
+    // The same address twice is one person.
+    await t.mutation(internal.caseMilestones.report, { caseNumber: CASE, kind: "i485-filed", eventDate: "2026-06-01", ipHash: IP_B });
+    const s = await t.query(internal.communityTimelines.caseSummary, { caseNumber: CASE });
+    expect(s.withheld).toBe(true);
+    expect(s.timelines).toBe(0);
+    expect(s.stops.every((x) => x.count === 0)).toBe(true);
   });
 });
 
