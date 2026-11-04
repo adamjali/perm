@@ -98,7 +98,7 @@ export async function caseStatusMetadata(raw: string | undefined): Promise<Metad
     // The bare path on every variant. A result page is one of ~412,000, and
     // they are all the same page with a different argument.
     alternates: { canonical: "/perm-case-status" },
-    robots: hasCase ? { index: false, follow: true } : undefined,
+    ...(hasCase ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       ...openGraphBase,
       title: `${TITLE} | PERM Tracker`,

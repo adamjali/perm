@@ -39,4 +39,32 @@ describe("robots preview settings", () => {
     });
     expect(offenders).toEqual([]);
   });
+
+  // Next walks every key a page's metadata holds, an undefined one included, and
+  // resolveRobots(undefined) is null: `robots: cond ? undefined : {...}` dropped the
+  // root's settings on /perm-queue, its month pages and both case lookups until Nov 4 2026. Leave the
+  // key out instead (a spread).
+  it("no page sets robots to a value that can be undefined", () => {
+    const files = [...libFiles(join(process.cwd(), "src/app")), ...libFiles(join(process.cwd(), "src/lib"))];
+    expect(files.length).toBeGreaterThan(500);
+    const offenders = files.filter((f) => /robots:[^\n]*\bundefined\b/.test(readFileSync(f, "utf8")));
+    expect(offenders).toEqual([]);
+  });
+
+  it("the undefined check catches the shape it was written for", () => {
+    const re = /robots:[^\n]*\bundefined\b/;
+    expect(re.test("  robots: MIRROR_COMPLETE ? undefined : { index: false },")).toBe(true);
+    expect(re.test("  robots: shown ? { index: false } : undefined,")).toBe(true);
+    expect(re.test("  ...(MIRROR_COMPLETE ? {} : { robots: { index: false } }),")).toBe(false);
+  });
 });
+
+function libFiles(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) {
+      if (name !== "__tests__") libFiles(p, out);
+    } else if (/\.tsx?$/.test(name)) out.push(p);
+  }
+  return out;
+}

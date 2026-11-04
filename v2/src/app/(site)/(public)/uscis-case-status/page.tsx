@@ -69,7 +69,7 @@ export async function generateMetadata({
     title: TITLE,
     description: DESCRIPTION,
     alternates: { canonical: "/uscis-case-status" },
-    robots: hasReceipt ? { index: false, follow: true } : undefined,
+    ...(hasReceipt ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       ...openGraphBase,
       title: `${TITLE} | PERM Tracker`,

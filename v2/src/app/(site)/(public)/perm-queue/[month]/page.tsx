@@ -109,7 +109,7 @@ export async function generateMetadata({
     // 143 characters at the longest month name (September).
     description: `How many PERM cases filed in ${label} are still undecided, which DOL queue they're in, and how much of the backlog sits in front of them.`,
     alternates: { canonical: `/perm-queue/${month}` },
-    robots: MIRROR_COMPLETE ? undefined : { index: false, follow: true },
+    ...(MIRROR_COMPLETE ? {} : { robots: { index: false, follow: true } }),
     openGraph: { ...openGraphBase, title: `${title} | PERM Tracker`, url: `/perm-queue/${month}` },
   }, "perm-queue");
 }

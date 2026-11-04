@@ -18,4 +18,13 @@ describe("FieldPosition tooltips", () => {
     expect(tips[27]).toContain("1 of 10 in the field");
     expect(container.querySelector("[title]")).toBeNull();
   });
+
+  // The figure and the comparison after it read as one run of text to search engines
+  // and screen readers when nothing separates them ("380 daysslower than 90%", Nov 4 2026).
+  it("keeps a space between the figure and the comparison", () => {
+    const { container } = render(
+      <FieldPosition population={population} value={380} valueLabel="380 days" measure="Median days to decision" />,
+    );
+    expect(container.textContent).toMatch(/380 days \S/);
+  });
 });

@@ -129,8 +129,8 @@ export function FieldPosition({
           {measure}
         </p>{" "}
         <p className="font-mono text-sm font-bold tabular-nums">
-          {valueLabel}
-          <span className="ml-2 font-normal text-muted-foreground">
+          {valueLabel}{" "}
+          <span className="ml-1 font-normal text-muted-foreground">
             {ranked ? (
               <>
                 {aheadVerb} {aheadPct.toFixed(aheadPct >= 99 || aheadPct < 1 ? 1 : 0)}%

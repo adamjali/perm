@@ -81,7 +81,7 @@ export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-queue" },
-  robots: MIRROR_COMPLETE ? undefined : { index: false, follow: true },
+  ...(MIRROR_COMPLETE ? {} : { robots: { index: false, follow: true } }),
   openGraph: {
     ...openGraphBase,
     title: `${TITLE} | PERM Tracker`,
