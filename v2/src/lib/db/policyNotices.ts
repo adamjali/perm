@@ -24,7 +24,10 @@ export type PolicySource =
   | "state-news"
   | "congress"
   | "courtlistener"
-  | "balca";
+  | "courtlistener-dockets"
+  | "balca"
+  | "doj"
+  | "embassies";
 
 export interface PolicyNotice {
   documentNumber: string;
@@ -85,7 +88,7 @@ interface DbRow {
 
 const SOURCES: readonly PolicySource[] = [
   "federal-register", "public-inspection", "white-house", "oflc", "uscis-news", "uscis-policy-manual", "dol-news",
-  "state-news", "congress", "courtlistener", "balca",
+  "state-news", "congress", "courtlistener", "courtlistener-dockets", "balca", "doj", "embassies",
 ];
 const STATUSES = ["public-inspection", "published", "withdrawn"] as const;
 

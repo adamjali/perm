@@ -326,6 +326,7 @@ DOC_SOURCES = {
     "courtlistener-dockets": "CourtListener's RECAP archive",
     "balca": "OALJ's caselists",
     "doj": "the Justice Department's releases and IER's settlements list",
+    "embassies": "the embassy's own Visas feed",
 }
 
 # Congress's printed bill numbers (convex/lib/billNumber.ts, held to the same
@@ -392,6 +393,8 @@ def document_sentence(d: dict) -> str:
         return f"DOL posted a news release on {day_label(d.get('publication_date'))}: {t}."
     if src == "state-news":
         return f"The State Department posted visa news on {day_label(d.get('publication_date'))}: {t}."
+    if src == "embassies":
+        return f"The {_agency(d)} posted a visa notice on {day_label(d.get('publication_date'))}: {t}."
     if src == "courtlistener":
         return f"A federal court ({_agency(d)}) decided {t} on {day_label(d.get('publication_date'))}."
     if src == "courtlistener-dockets":

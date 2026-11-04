@@ -2211,3 +2211,21 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
   `browser-timer:<name>`): the five Chrome timers in `~/.claude/timers/registry.py` die with their Claude Code session,
   and one that loads only when its source moved left no trace on a quiet day. `check_browser_timers` in the health check
   warns, never fails, when a timer misses its interval plus a day or couldn't read its page; the morning report shows it.
+
+## Nov 4 2026 (early morning): embassy notices, State's visa news and the monthly issuances, by browser
+
+- **Twenty U.S. embassies' own visa notices** (`scripts/ingest_embassy_notices.py`, list `scripts/data/embassy_feeds.json`,
+  type "Embassy notice", source `embassies`, dataset `policy-notices-embassies`): the embassies whose posts issued the most
+  employment-based immigrant visas from March 2025 to February 2026, each read from WordPress's feed of its Visas
+  category in the owner's Chrome (usembassy.gov answers scripts 403). Kept: operations updates, interviews paused,
+  cancelled or resumed, immigrant visa processing; dropped: checklists, scam and health alerts, FAQs, visitor and student
+  notices, anything a year old. A feed with a DOCTYPE or ENTITY declaration is refused before parsing; robots.txt is read
+  from the same copy. They show on `/policy-changes` ("From the agencies"), on each consulate page ("From the U.S.
+  Embassy in ...", `getEmbassyNotices` by the key range `embassy-<code>-`), in the digest (three a week at most, named by
+  embassy) and in the evening check. A load refreshes the policy page and the consulate pages.
+- **State's visa news and the monthly issuances come the same way** (`state-page news <bundle>`, `state-page issuances
+  <file> <YYYY-MM> <fsc|post>`): the news bundle is State's newsroom list plus each Visas item's page, read in the page;
+  an issuance workbook is read inside the page and crosses as base64 through the clipboard, checked by its SHA-256, so no
+  download is driven. The loader still checks State's own grand total.
+- **The site's list of policy sources is held to the Python feed's** (`policy-sources-agree.test.ts`): court dockets,
+  DOJ and embassies had been written by the feed and read back with no source.

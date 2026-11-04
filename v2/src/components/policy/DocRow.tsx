@@ -15,6 +15,7 @@ import {
   DOJ_TYPE,
   DOL_TYPE,
   effectiveState,
+  EMBASSY_TYPE,
   OFLC_TYPE,
   PM_TYPE,
   PRESIDENTIAL_TYPE,
@@ -52,6 +53,7 @@ export function typeLabel(type: string): string {
   if (type === DOL_TYPE) return "DOL";
   if (type === STATE_TYPE) return "State";
   if (type === DOJ_TYPE) return "DOJ";
+  if (type === EMBASSY_TYPE) return "Embassy";
   if (type === BILL_TYPE) return "Bill";
   if (type === COURT_TYPE || type === FILING_TYPE) return "Court";
   if (type === BALCA_TYPE) return "BALCA";
@@ -80,6 +82,7 @@ function readOn(doc: PolicyNotice): string {
   if (doc.type === USCIS_TYPE || doc.type === PM_TYPE) return "Read it on uscis.gov";
   if (doc.type === STATE_TYPE) return "Read it on travel.state.gov";
   if (doc.type === DOJ_TYPE) return "Read it on justice.gov";
+  if (doc.type === EMBASSY_TYPE) return "Read it on the embassy's site";
   if (doc.type === BILL_TYPE) return "Read it on congress.gov";
   if (doc.type === COURT_TYPE) return "Read the opinion on CourtListener";
   if (doc.type === FILING_TYPE) return "Read the filing on CourtListener";

@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times> <file>|browser-check <name> [note]>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times|news> <file>|state-page issuances <file> <YYYY-MM> <fsc|post>|embassy-notices <file>|browser-check <name> [note]>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -97,17 +97,39 @@ case "$job" in
   # "Last updated" line, goes in a file; each reader's own parser and checks decide whether it's written.
   #   sudo -u permtracker permtracker-uscis state-page nvc /tmp/nvc.html
   #   sudo -u permtracker permtracker-uscis state-page wait-times /tmp/wait-times.html
-  # Both pages refresh themselves daily, so nothing is expired here.
+  # Both pages refresh themselves daily, so nothing is expired here. Since Nov 4 2026 two more come the same
+  # way: State's visa news (the newsroom's listing and each Visas item's page, as one JSON bundle; the
+  # reader asks nginx to rebuild /policy-changes when it writes) and a month's issuance file (the .xlsx
+  # State links, its bytes copied from the page; the loader checks it against State's own grand total):
+  #   sudo -u permtracker permtracker-uscis state-page news /tmp/state-news.json
+  #   sudo -u permtracker permtracker-uscis state-page issuances /tmp/iv-2026-03-post.xlsx 2026-03 post
   state-page)
     kind="${2:-}"; f="${3:-}"
+    usage="usage: permtracker-uscis state-page <nvc|wait-times|news> <file> | state-page issuances <file> <YYYY-MM> <fsc|post>"
+    if [ -z "$f" ]; then echo "$usage"; exit 2; fi
     case "$kind" in
-      nvc) s=ingest_nvc_timeframes.py ;;
-      wait-times) s=ingest_visa_wait_times.py ;;
-      *) echo "usage: permtracker-uscis state-page <nvc|wait-times> <file>"; exit 2 ;;
+      nvc) s=ingest_nvc_timeframes.py; set -- --from-file "$f" ;;
+      wait-times) s=ingest_visa_wait_times.py; set -- --from-file "$f" ;;
+      news) s=ingest_state_news.py; set -- --bundle "$f" ;;
+      issuances)
+        m="${4:-}"; d="${5:-}"
+        if ! [[ "$m" =~ ^[0-9]{4}-[0-9]{2}$ ]] || ! [[ "$d" =~ ^(fsc|post)$ ]]; then echo "$usage"; exit 2; fi
+        s=ingest_visa_issuances.py; set -- --local "$f" --month "$m" --dim "$d" ;;
+      *) echo "$usage"; exit 2 ;;
     esac
-    if [ -z "$f" ]; then echo "usage: permtracker-uscis state-page <nvc|wait-times> <file>"; exit 2; fi
-    if ! timeout 10m python3 "scripts/$s" --from-file "$f"; then
-      rc=1; fail "$s" "the $kind page copied from a browser ($f) was refused"
+    if ! timeout 10m python3 "scripts/$s" "$@"; then
+      rc=1; fail "$s" "the $kind copy from a browser ($f) was refused"
+    fi ;;
+  # The U.S. embassies' Visas feeds copied out of a person's browser (Nov 4 2026): every usembassy.gov site
+  # answers scripts with CloudFront's 403, so the session timer embassy-read reads the 20 feeds in
+  # scripts/data/embassy_feeds.json in Chrome and hands them over as one JSON copy. The reader keeps the
+  # consular notices, writes them to the policy feed and asks nginx to rebuild /policy-changes.
+  #   sudo -u permtracker permtracker-uscis embassy-notices /tmp/embassies.json
+  embassy-notices)
+    f="${2:-}"
+    if [ -z "$f" ]; then echo "usage: permtracker-uscis embassy-notices <file>"; exit 2; fi
+    if ! timeout 10m python3 scripts/ingest_embassy_notices.py --bundle "$f"; then
+      rc=1; fail ingest_embassy_notices.py "the embassies' copy from a browser ($f) was refused"
     fi ;;
   # A browser timer's heartbeat (Nov 3 2026): the jobs that run in a Claude Code session in the owner's Chrome
   # (the bulletin, State's IV table, NVC and wait times, USCIS's times, the Search Console round) record one
@@ -117,8 +139,8 @@ case "$job" in
   browser-check)
     name="${2:-}"; note="${3:-checked}"
     case "$name" in
-      bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round) ;;
-      *) echo "usage: permtracker-uscis browser-check <bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round> [note]"; exit 2 ;;
+      bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round|embassy-read) ;;
+      *) echo "usage: permtracker-uscis browser-check <bulletin-read|iv-tool-read|state-pages-read|uscis-times|gsc-round|embassy-read> [note]"; exit 2 ;;
     esac
     python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; sys.exit(0 if record_run(Database(), "browser-timer:" + sys.argv[1], status="ok", note=sys.argv[2][:300]) else 1)' "$name" "$note" \
       || { rc=1; echo "the heartbeat for $name was not recorded"; } ;;

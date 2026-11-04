@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { embassyForPost, noticeRange, type Embassy } from "@/lib/consular/embassies";
 import { IV_CATEGORIES, postName, postSlug, type IvCategory, type IvCell } from "@/lib/consular/scheduling";
 import { shiftMonth } from "@convex/lib/months";
 
@@ -161,4 +162,45 @@ export async function getPostDetail(slug: string): Promise<PostDetail | null> {
   }
   const months = [...byMonth.entries()].map(([month, byCategory]) => ({ month, byCategory }));
   return { ...post, history, months };
+}
+
+export interface EmbassyNotice {
+  title: string;
+  url: string;
+  /** The embassy's own day for the post (its time zone). */
+  day: string;
+  excerpt: string | null;
+}
+
+export interface EmbassyNotices {
+  embassy: Embassy;
+  /** The newest notices kept from the embassy's Visas feed, newest first. */
+  notices: EmbassyNotice[];
+}
+
+/** How many of an embassy's notices a consulate page lists. */
+const NOTICES_SHOWN = 5;
+
+/**
+ * The newest visa notices from the embassy that speaks for a consulate (`scripts/ingest_embassy_notices.py`, type
+ * "Embassy notice"), read by the primary key's range. Null for a post with no embassy feed read; an empty list
+ * before the first load or when the embassy posted nothing kept in the year.
+ */
+export async function getEmbassyNotices(postKey: string): Promise<EmbassyNotices | null> {
+  const embassy = embassyForPost(postKey);
+  if (!embassy) return null;
+  const [lo, hi] = noticeRange(embassy);
+  const list = await rows<{ title: string; html_url: string; publication_date: string; abstract: string | null }>(
+    "SELECT title, html_url, publication_date, abstract FROM policy_notices " +
+      "WHERE document_number >= ? AND document_number < ? AND type = 'Embassy notice' " +
+      "ORDER BY publication_date DESC, document_number DESC LIMIT ?",
+    [lo, hi, NOTICES_SHOWN],
+  ).catch((e) => {
+    if (missing(e)) return [];
+    throw e;
+  });
+  return {
+    embassy,
+    notices: list.map((r) => ({ title: r.title, url: r.html_url, day: r.publication_date, excerpt: r.abstract?.trim() || null })),
+  };
 }

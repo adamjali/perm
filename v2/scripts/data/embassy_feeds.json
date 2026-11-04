@@ -1,0 +1,26 @@
+{
+  "about": "The embassies whose visa notices are read in the owner's Chrome (ingest_embassy_notices.py), the 20 consulates that issued the most employment-based immigrant visas from March 2025 to February 2026 in State's monthly files (Manila 7,523 down to Lagos 433). Each feed is WordPress's own feed of the site's Visas category. posts: the consulate pages' keys, the issuance tables' group_key of the post's name. tz: the embassy's own time zone, for the day a notice was posted.",
+  "path": "/category/visas/feed/",
+  "embassies": [
+    {"code": "ph", "host": "ph.usembassy.gov", "name": "U.S. Embassy in the Philippines", "posts": [ "manila" ], "tz": "Asia/Manila"},
+    {"code": "china", "host": "china.usembassy-china.org.cn", "name": "U.S. Embassy and Consulates in China", "posts": [ "guangzhou" ], "tz": "Asia/Shanghai"},
+    {"code": "br", "host": "br.usembassy.gov", "name": "U.S. Embassy and Consulates in Brazil", "posts": [ "rio de janeiro" ], "tz": "America/Sao_Paulo"},
+    {"code": "kr", "host": "kr.usembassy.gov", "name": "U.S. Embassy in Korea", "posts": [ "seoul" ], "tz": "Asia/Seoul"},
+    {"code": "ca", "host": "ca.usembassy.gov", "name": "U.S. Embassy and Consulates in Canada", "posts": [ "montreal" ], "tz": "America/Toronto"},
+    {"code": "co", "host": "co.usembassy.gov", "name": "U.S. Embassy in Colombia", "posts": [ "bogota" ], "tz": "America/Bogota"},
+    {"code": "mx", "host": "mx.usembassy.gov", "name": "U.S. Embassy and Consulates in Mexico", "posts": [ "ciudad juarez" ], "tz": "America/Mexico_City"},
+    {"code": "ke", "host": "ke.usembassy.gov", "name": "U.S. Embassy in Kenya", "posts": [ "nairobi" ], "tz": "Africa/Nairobi"},
+    {"code": "vn", "host": "vn.usembassy.gov", "name": "U.S. Embassy and Consulate in Vietnam", "posts": [ "ho chi minh city" ], "tz": "Asia/Ho_Chi_Minh"},
+    {"code": "uk", "host": "uk.usembassy.gov", "name": "U.S. Embassy and Consulates in the United Kingdom", "posts": [ "london" ], "tz": "Europe/London"},
+    {"code": "pk", "host": "pk.usembassy.gov", "name": "U.S. Embassy and Consulates in Pakistan", "posts": [ "islamabad" ], "tz": "Asia/Karachi"},
+    {"code": "gh", "host": "gh.usembassy.gov", "name": "U.S. Embassy in Ghana", "posts": [ "accra" ], "tz": "Africa/Accra"},
+    {"code": "in", "host": "in.usembassy.gov", "name": "U.S. Embassy and Consulates in India", "posts": [ "mumbai" ], "tz": "Asia/Kolkata"},
+    {"code": "sa", "host": "sa.usembassy.gov", "name": "U.S. Embassy and Consulates in Saudi Arabia", "posts": [ "riyadh" ], "tz": "Asia/Riyadh"},
+    {"code": "ae", "host": "ae.usembassy.gov", "name": "U.S. Embassy and Consulate in the UAE", "posts": [ "abu dhabi" ], "tz": "Asia/Dubai"},
+    {"code": "qa", "host": "qa.usembassy.gov", "name": "U.S. Embassy in Qatar", "posts": [ "doha" ], "tz": "Asia/Qatar"},
+    {"code": "np", "host": "np.usembassy.gov", "name": "U.S. Embassy in Nepal", "posts": [ "kathmandu" ], "tz": "Asia/Kathmandu"},
+    {"code": "tr", "host": "tr.usembassy.gov", "name": "U.S. Embassy and Consulates in Türkiye", "posts": [ "ankara" ], "tz": "Europe/Istanbul"},
+    {"code": "ait", "host": "www.ait.org.tw", "name": "American Institute in Taiwan", "posts": [ "ait taipei" ], "tz": "Asia/Taipei"},
+    {"code": "ng", "host": "ng.usembassy.gov", "name": "U.S. Embassy and Consulate in Nigeria", "posts": [ "lagos" ], "tz": "Africa/Lagos"}
+  ]
+}

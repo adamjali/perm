@@ -822,6 +822,7 @@ BROWSER_TIMERS = {
     "state-pages-read": ("NVC timeframes and visa wait times", 2),
     "uscis-times": ("USCIS's processing times", 8),
     "gsc-round": ("the Search Console round", 2),
+    "embassy-read": ("the embassies' visa notices", 2),
 }
 # A heartbeat whose note starts this way ran but couldn't read its page (Chrome closed, a challenge it
 # couldn't clear by itself, the page moved).

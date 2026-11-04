@@ -208,6 +208,13 @@ def main() -> int:
           "Source: the Justice Department's releases and IER's settlements list." in words, str(words))
     check("an OCAHO case is dated by its newest order",
           any(w.startswith('OCAHO\'s newest order in "United States v. Cloudera') for w in words), str(words))
+    embassy = {"document_number": "embassy-ph-august-18-consular-operations-update", "publication_date": "2026-10-26",
+               "type": "Embassy notice", "title": "Consular Operations Update", "agencies": '["U.S. Embassy in the Philippines"]',
+               "source": "embassies", "first_seen_at": seen}
+    words = [nw.line(i) for i in nw.newsworthy(nw.Inputs(documents=[embassy]), morning, now)]
+    check("an embassy notice names its embassy",
+          'The U.S. Embassy in the Philippines posted a visa notice on Oct 26, 2026: "Consular Operations Update". '
+          "Source: the embassy's own Visas feed." in words, str(words))
     words = [nw.line(i) for i in nw.newsworthy(nw.Inputs(debarments=[
         {"program": "PERM", "entity": "Acme Staffing LLC", "start_date": "2026-10-20", "end_date": "2029-10-19", "first_seen_at": seen},
         {"program": "H-2A", "entity": "Old Farm", "start_date": "2024-01-01", "end_date": "2027-01-01", "first_seen_at": 0},
