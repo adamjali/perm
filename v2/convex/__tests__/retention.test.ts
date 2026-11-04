@@ -69,6 +69,34 @@ describe("unconfirmed case-alert sign-ups", () => {
   });
 });
 
+describe("unconfirmed queue, bulletin and employer sign-ups", () => {
+  setupSchedulerTests();
+
+  it("go past the same horizon; confirmed, stopped and recent ones stay", async () => {
+    const t = createTestContext();
+    const { UNCONFIRMED_CASE_ALERT_DAYS } = await import("../retention");
+    const now = Date.now();
+    const old = now - (UNCONFIRMED_CASE_ALERT_DAYS + 1) * DAY;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("dolQueueAlerts", { email: "q-never@example.com", filingMonth: "2026-01", createdAt: old });
+      await ctx.db.insert("dolQueueAlerts", { email: "q-yes@example.com", filingMonth: "2026-01", createdAt: old, confirmedAt: old });
+      await ctx.db.insert("dolQueueAlerts", { email: "q-new@example.com", filingMonth: "2026-01", createdAt: now });
+      await ctx.db.insert("bulletinAlerts", { email: "b-never@example.com", category: "EB2", country: "INDIA", createdAt: old });
+      await ctx.db.insert("bulletinAlerts", { email: "b-stopped@example.com", category: "EB2", country: "INDIA", createdAt: old, unsubscribedAt: old });
+      await ctx.db.insert("employerAlerts", { email: "e-never@example.com", slug: "acme", employerName: "Acme", createdAt: old });
+      await ctx.db.insert("employerAlerts", { email: "e-yes@example.com", slug: "acme", employerName: "Acme", createdAt: old, confirmedAt: old });
+    });
+    const res = await t.mutation(internal.retention.pruneOperationalLogs, { now });
+    expect(res.unconfirmedOtherAlerts).toBe(3);
+    const left = await t.run(async (ctx) => [
+      ...(await ctx.db.query("dolQueueAlerts").collect()),
+      ...(await ctx.db.query("bulletinAlerts").collect()),
+      ...(await ctx.db.query("employerAlerts").collect()),
+    ].map((r) => r.email).sort());
+    expect(left).toEqual(["b-stopped@example.com", "e-yes@example.com", "q-new@example.com", "q-yes@example.com"]);
+  });
+});
+
 describe("tool cache cleanup", () => {
   setupSchedulerTests();
 

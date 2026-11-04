@@ -46,6 +46,9 @@ const BATCH = 500;
  */
 export const UNCONFIRMED_CASE_ALERT_DAYS = 30;
 
+/** Rows a run reads from each of the queue, bulletin and employer sign-up tables. */
+const OTHER_ALERTS_LOOK = 2_000;
+
 export const pruneOperationalLogs = internalMutation({
   args: { now: v.optional(v.number()) },
   returns: v.object({
@@ -55,10 +58,19 @@ export const pruneOperationalLogs = internalMutation({
     emailDays: v.number(),
     chatConfirmations: v.number(),
     unconfirmedCaseAlerts: v.number(),
+    unconfirmedOtherAlerts: v.number(),
   }),
   handler: async (ctx, args) => {
     const now = args.now ?? Date.now();
-    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0, emailDays: 0, chatConfirmations: 0, unconfirmedCaseAlerts: 0 };
+    const out = {
+      systemErrors: 0,
+      marketingEvents: 0,
+      apiUsage: 0,
+      emailDays: 0,
+      chatConfirmations: 0,
+      unconfirmedCaseAlerts: 0,
+      unconfirmedOtherAlerts: 0,
+    };
     let more = false;
     for (const table of Object.keys(RETENTION_DAYS) as (keyof typeof RETENTION_DAYS)[]) {
       const cutoff = now - RETENTION_DAYS[table] * MS_PER_DAY;
@@ -88,6 +100,26 @@ export const pruneOperationalLogs = internalMutation({
       if (++out.unconfirmedCaseAlerts >= BATCH) {
         more = true;
         break;
+      }
+    }
+    // The queue, bulletin and employer sign-ups nobody confirmed go on the same horizon (audit, Nov 4 2026:
+    // they had been kept for good). These tables hold hundreds of rows, so a run reads at most
+    // OTHER_ALERTS_LOOK of the oldest; a run that stops on that limit doesn't reschedule (it would read the
+    // same confirmed rows again), and the next day's run carries on.
+    const sources = [
+      ctx.db.query("dolQueueAlerts").withIndex("by_created", (q) => q.lt("createdAt", staleBefore)),
+      ctx.db.query("employerAlerts").withIndex("by_created", (q) => q.lt("createdAt", staleBefore)),
+      ctx.db
+        .query("bulletinAlerts")
+        .withIndex("by_alert_sweep", (q) => q.eq("unsubscribedAt", undefined).lt("createdAt", staleBefore)),
+    ];
+    for (const source of sources) {
+      let seen = 0;
+      for await (const row of source) {
+        if (++seen > OTHER_ALERTS_LOOK) break;
+        if (row.confirmedAt !== undefined || row.unsubscribedAt !== undefined) continue;
+        await ctx.db.delete(row._id);
+        out.unconfirmedOtherAlerts++;
       }
     }
     // Guarded on progress, so an empty table can never spin a timer.
