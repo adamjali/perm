@@ -183,8 +183,8 @@ def lca_years_held(db: Database) -> list[int]:
         try:
             # The table is one of the two names above, never input.
             # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
-            for (fy,) in rows_of(db.execute(
-                    f"SELECT DISTINCT fiscal_year FROM {table} WHERE fiscal_year IS NOT NULL")):
+            found = db.execute(f"SELECT DISTINCT fiscal_year FROM {table} WHERE fiscal_year IS NOT NULL")
+            for (fy,) in rows_of(found):
                 if table == "lca_cases" or num(fy) < HISTORY_BEFORE:
                     years.add(num(fy))
         except Exception as e:  # noqa: BLE001

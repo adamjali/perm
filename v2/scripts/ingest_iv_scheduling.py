@@ -175,12 +175,15 @@ def parse(text: str, aliases: dict[str, str] | None = None) -> dict:
 
 
 def ensure_table(db: Database) -> None:
+    # TABLE is this module's constant, never input; a table name can't be a bound parameter.
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     db.execute(
         f"""CREATE TABLE IF NOT EXISTS {TABLE} (
             as_of TEXT NOT NULL, post_key TEXT NOT NULL, post TEXT NOT NULL, category TEXT NOT NULL,
             printed TEXT NOT NULL, month TEXT,
             PRIMARY KEY (as_of, post_key, category))"""
     )
+    # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
     db.execute(f"CREATE INDEX IF NOT EXISTS {TABLE}_post ON {TABLE} (post_key, as_of)")
 
 
