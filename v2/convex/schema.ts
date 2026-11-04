@@ -596,10 +596,13 @@ export default defineSchema({
     .index("by_user_and_updated_at", ["userId", "updatedAt"]) // ISS-009: Sorting index
     .index("by_deleted_at", ["deletedAt"])
     // Collect every watchable saved case across all accounts for the 5-minute
-    // DOL sweep (convex/appCaseWatch.ts): a range q.gte("caseNumber", "")
-    // returns exactly the cases that carry a DOL number, since undefined sorts
-    // before "". The cases without a number are skipped by the range, not read.
-    .index("by_case_number", ["caseNumber"])
+    // DOL sweep (convex/appCaseWatch.ts): eq("deletedAt", undefined) then a
+    // range q.gte("caseNumber", "") returns exactly the live cases that carry
+    // a DOL number, since undefined sorts before "". Deleted cases and cases
+    // without a number are skipped by the range, not read (Nov 4 2026: the
+    // sweep had walked `by_case_number` and filtered deleted cases in JS,
+    // reading each one whole every 5 minutes; nothing else read that index).
+    .index("by_deletedAt_caseNumber", ["deletedAt", "caseNumber"])
     // Chatbot-ready indexes for deadline queries
     .index("by_user_and_filing_deadline", ["userId", "filingWindowCloses"])
     .index("by_user_and_pwd_expiration", ["userId", "pwdExpirationDate"])

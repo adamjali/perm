@@ -330,3 +330,82 @@ describe("the per-case watch toggle (cases.setWatchEnabled)", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("overlapping runs (recordLiveChange)", () => {
+  // Two sweeps can read the same case before either writes: one sees ANALYST REVIEW move to RFI ISSUED, the next
+  // (minutes later, after DOL moved it again) sees CERTIFIED. Whichever lands second must not announce a move from
+  // a status the case no longer holds ("ANALYST REVIEW to CERTIFIED" after "ANALYST REVIEW to RFI ISSUED").
+  const change = (t: T, caseId: Id<"cases">, previousStatus: string, status: string) =>
+    t.mutation(internal.appCaseWatch.recordLiveChange, {
+      caseId,
+      previousStatus,
+      status,
+      isFinal: status === "CERTIFIED",
+    });
+
+  it.each([
+    ["RFI ISSUED", "CERTIFIED"],
+    ["CERTIFIED", "RFI ISSUED"],
+  ])("records the first of two changes from one reading (%s, then %s) and refuses the second", async (first, second) => {
+    const t = createTestContext();
+    const u = await makeUser(t);
+    const c = await makeCase(t, u, { caseNumber: "G-100-26100-111111", liveStatus: "ANALYST REVIEW" });
+
+    expect(await change(t, c, "ANALYST REVIEW", first)).toMatchObject({ changed: true, notified: true });
+    expect(await change(t, c, "ANALYST REVIEW", second)).toEqual({ changed: false, notified: false, emailed: false });
+
+    expect((await getCase(t, c))?.liveStatus).toBe(first);
+    const notes = await notifications(t);
+    expect(notes).toHaveLength(1);
+    expect(notes[0]!.message).toContain(`moved from ANALYST REVIEW to ${first}`);
+  });
+
+  it("still records a change read from the status the case holds", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t);
+    const c = await makeCase(t, u, { caseNumber: "G-100-26100-111111", liveStatus: "ANALYST REVIEW" });
+    await change(t, c, "ANALYST REVIEW", "RFI ISSUED");
+    expect(await change(t, c, "RFI ISSUED", "CERTIFIED")).toMatchObject({ changed: true, notified: true });
+    expect((await getCase(t, c))?.liveStatus).toBe("CERTIFIED");
+    expect(await notifications(t)).toHaveLength(2);
+  });
+});
+
+describe("the watchable read is bounded (collectWatchableCases)", () => {
+  const SOURCE = Object.values(
+    import.meta.glob("../appCaseWatch.ts", { query: "?raw", import: "default", eager: true }),
+  )[0] as string;
+
+  it("reads live cases through the index that leads with deletedAt, never the whole number index", () => {
+    const body = SOURCE.slice(SOURCE.indexOf("export async function collectWatchableCases"));
+    const fn = body.slice(0, body.indexOf("\n}\n"));
+    expect(fn.length).toBeGreaterThan(200);
+    expect(fn).toMatch(
+      /withIndex\("by_deletedAt_caseNumber", \(q\) =>\s*q\.eq\("deletedAt", undefined\)\.gte\("caseNumber", ""\)/,
+    );
+    expect(fn).not.toContain('"by_case_number"');
+  });
+
+  it("returns the same live cases as before: no deleted, sample, numberless or non-DOL case", async () => {
+    const t = createTestContext();
+    const u = await makeUser(t);
+    const live1 = await makeCase(t, u, { caseNumber: "G-100-26100-111111" });
+    await makeCase(t, u, { caseNumber: "G-100-26100-222222", deletedAt: Date.now() });
+    await makeCase(t, u, { caseNumber: "G-100-26100-333333", isSample: true });
+    await makeCase(t, u, { caseNumber: undefined });
+    await makeCase(t, u, { caseNumber: "" });
+    await makeCase(t, u, { caseNumber: "INTERNAL-REF-9" });
+    const live2 = await makeCase(t, u, {
+      caseNumber: "P-100-26100-444444",
+      isSample: false,
+      liveStatus: "IN PROCESS",
+    });
+
+    const res = await t.query(internal.appCaseWatch.watchableCases, {});
+    expect(res.capped).toBe(false);
+    expect(res.rows).toEqual([
+      { caseId: live1, userId: u, caseNumber: "G-100-26100-111111", liveStatus: undefined },
+      { caseId: live2, userId: u, caseNumber: "P-100-26100-444444", liveStatus: "IN PROCESS" },
+    ]);
+  });
+});

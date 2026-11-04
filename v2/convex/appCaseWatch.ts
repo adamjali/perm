@@ -80,6 +80,18 @@ const log = createLogger("appCaseWatch");
  */
 export const APP_WATCH_CAP = 2_000;
 
+/**
+ * The most live numbered cases one read walks, qualifying or not (sample, switched off, a number that isn't
+ * DOL's). Twice the cap: room for every watched case and as many skipped ones, without reading without end.
+ */
+export const APP_WATCH_READ_CAP = 4_000;
+
+/** How often the read checks its byte budget; a case document can hold a 50,000-character job description. */
+const READ_CHECK_EVERY = 100;
+
+/** Bytes kept back for the rest of the query that calls the read (the alert rows, the reply). */
+const READ_RESERVE_BYTES = 4 * 1024 * 1024;
+
 /** The IN-list size per mirror statement, so a single round trip stays bounded. */
 const MIRROR_CHUNK = 200;
 
@@ -102,10 +114,17 @@ export interface AppWatchRow {
  * normalises to a real DOL serial. A number that does not normalise (an
  * internal reference, a half-typed number) is simply not watchable.
  *
- * Read through `by_case_number`: a `gte("caseNumber", "")` range returns the
- * cases that carry a number and skips the drafts that do not, since undefined
- * sorts before "". Shared by the server union and the sweep so the two can
- * never disagree about which cases are watched.
+ * Read through `by_deletedAt_caseNumber`: `eq("deletedAt", undefined)` then a
+ * `gte("caseNumber", "")` range returns the live cases that carry a number, and
+ * never touches a deleted case or a draft without one (undefined sorts before
+ * ""). Until Nov 4 2026 it walked `by_case_number` and dropped deleted cases in
+ * JS, so every deleted case was read whole (a job description runs to 50,000
+ * characters) every 5 minutes. Shared by the server union and the sweep so the
+ * two can never disagree about which cases are watched.
+ *
+ * Bounded twice: `APP_WATCH_CAP` qualifying cases, and APP_WATCH_READ_CAP rows
+ * read or a read budget running low (a run of sample, switched-off or
+ * non-DOL cases still costs a read each). Either stop reports `capped`.
  */
 export async function collectWatchableCases(
   ctx: QueryCtx,
@@ -115,11 +134,18 @@ export async function collectWatchableCases(
 
   const cases = ctx.db
     .query("cases")
-    .withIndex("by_case_number", (q) => q.gte("caseNumber", ""));
+    .withIndex("by_deletedAt_caseNumber", (q) => q.eq("deletedAt", undefined).gte("caseNumber", ""));
 
+  let read = 0;
   for await (const c of cases) {
+    read += 1;
+    if (read > APP_WATCH_READ_CAP) return { rows, capped: true };
+    if (read % READ_CHECK_EVERY === 0) {
+      const metrics = await ctx.meta.getTransactionMetrics();
+      if (metrics.bytesRead.remaining < READ_RESERVE_BYTES) return { rows, capped: true };
+    }
     if (!c.caseNumber) continue; // the range should exclude these; belt and braces
-    if (c.deletedAt !== undefined) continue;
+    if (c.deletedAt !== undefined) continue; // the index range excludes these too
     if (c.isSample === true) continue;
     if (c.watchEnabled === false) continue;
 
@@ -384,6 +410,12 @@ export const recordLiveChange = internalMutation({
     if (!stillWatchable(caseDoc)) return { changed: false, notified: false, emailed: false };
     // A racing sweep already recorded this status: do not notify twice.
     if (caseDoc.liveStatus === args.status) {
+      return { changed: false, notified: false, emailed: false };
+    }
+    // The case no longer holds the status this change was read from: another run recorded a different move in
+    // between. Announcing "X to Z" after "X to Y" would name a status the case had already left; the next sweep
+    // reads the case afresh and reports "Y to Z" if DOL's status is still Z.
+    if (caseDoc.liveStatus !== args.previousStatus) {
       return { changed: false, notified: false, emailed: false };
     }
 
