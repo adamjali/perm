@@ -733,6 +733,19 @@ def main() -> int:
     check(all(f"name: {n}\n" in deploy_yml for n, _ in dm.DEPLOY_STEPS), "every timed step name is one oracle-deploy.yml has")
     check(dm.speed_lines([], {})[0] == "No deploys or test runs", "an empty day says so")
 
+    # PostHog's free million a billing period (30 days from Oct 22 2026, 12:39 UTC, as its overview gave).
+    utc = dt.timezone.utc
+    start, end = dm.posthog_period(dt.datetime(2026, 11, 4, 22, 0, tzinfo=utc))
+    check((start, end) == (dt.datetime(2026, 10, 22, 12, 39, 55, tzinfo=utc), dt.datetime(2026, 11, 21, 12, 39, 55, tzinfo=utc)),
+          f"the period is the one PostHog's overview gave ({start} to {end})")
+    check(dm.posthog_period(dt.datetime(2026, 11, 21, 13, 0, tzinfo=utc))[0] == dt.datetime(2026, 11, 21, 12, 39, 55, tzinfo=utc),
+          "the next period starts where the last ended")
+    line, warn = dm.posthog_allowance_line(514_341, dt.datetime(2026, 11, 4, 22, 0, tzinfo=utc))
+    check(warn and "514,341 of the free 1,000,000" in line and "stops recording in about" in line,
+          f"Nov 4's pace warns and says when it runs out ({line})")
+    line, warn = dm.posthog_allowance_line(200_000, dt.datetime(2026, 11, 4, 22, 0, tzinfo=utc))
+    check(not warn and "stops recording" not in line, f"a month well inside the million doesn't warn ({line})")
+
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
 

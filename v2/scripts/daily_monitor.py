@@ -940,6 +940,38 @@ def ai_referrals(key: str) -> tuple[str, list[str]]:
     return ai_referral_lines(rows, yday)
 
 
+# PostHog's free plan: a million events in each billing period, which ran Oct 22 2026 12:39 UTC to
+# Nov 21 12:39 UTC (the organization's billing overview, read Nov 4 2026: 30 days). Past the
+# million the free plan drops events, so the report warns while a projection can still be acted on.
+POSTHOG_FREE_EVENTS = 1_000_000
+POSTHOG_PERIOD_ANCHOR = dt.datetime(2026, 10, 22, 12, 39, 55, tzinfo=dt.timezone.utc)
+POSTHOG_PERIOD = dt.timedelta(days=30)
+POSTHOG_WARN_SHARE = 0.9
+
+
+def posthog_period(now: dt.datetime) -> tuple[dt.datetime, dt.datetime]:
+    """The billing period `now` falls in, in UTC."""
+    n = (now - POSTHOG_PERIOD_ANCHOR) // POSTHOG_PERIOD
+    start = POSTHOG_PERIOD_ANCHOR + n * POSTHOG_PERIOD
+    return start, start + POSTHOG_PERIOD
+
+
+def posthog_allowance_line(used: int, now: dt.datetime) -> tuple[str, bool]:
+    """The month's events against the free million, and whether to warn."""
+    start, end = posthog_period(now)
+    elapsed = max((now - start).total_seconds(), 3600) / 86400
+    total = (end - start).total_seconds() / 86400
+    projected = int(used / elapsed * total)
+    warn = projected >= POSTHOG_WARN_SHARE * POSTHOG_FREE_EVENTS
+    line = (f"PostHog events this billing period (from {start:%b} {start.day}): {used:,} of the free "
+            f"{POSTHOG_FREE_EVENTS:,}, on course for about {projected:,} by {end:%b} {end.day}")
+    if projected >= POSTHOG_FREE_EVENTS:
+        over = POSTHOG_FREE_EVENTS - used
+        days = over / (used / elapsed) if used else 0
+        line += f"; at this rate the free plan stops recording in about {days:.0f} days"
+    return line, warn
+
+
 def traffic_section() -> dict:
     key = os.environ.get("POSTHOG_PERSONAL_API_KEY")
     if not key:
@@ -972,6 +1004,18 @@ def traffic_section() -> dict:
         lines.append("Unusual: " + note)
         status = "warn"
     # Its own query: a failure here says so in a line and leaves the counts above standing.
+    try:
+        start, _ = posthog_period(dt.datetime.now(dt.timezone.utc))
+        q = f"SELECT count() FROM events WHERE timestamp >= toDateTime('{start:%Y-%m-%d %H:%M:%S}')"
+        used = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
+                         {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                         json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())["results"][0][0]
+        line, over = posthog_allowance_line(int(used), dt.datetime.now(dt.timezone.utc))
+        lines.append(line)
+        if over:
+            status = "warn"
+    except Exception as e:  # noqa: BLE001
+        lines.append(f"PostHog's event allowance could not be read ({type(e).__name__})")
     try:
         ai_summary, ai_lines = ai_referrals(key)
         lines.append(ai_summary)
