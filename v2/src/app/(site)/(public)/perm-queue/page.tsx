@@ -211,9 +211,11 @@ export default async function PermQueuePage() {
           <div className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-6 [&>*]:min-w-0">
             <NoteBanner>
               <p>
-                DOL publishes which month it&rsquo;s working and nothing about the
-                size of what&rsquo;s behind it. Its disclosure files carry no pending
-                rows, so the backlog cannot be derived from them.
+                DOL has never published how many cases wait in its line, and since
+                October 31, 2026 it doesn&rsquo;t print which month it&rsquo;s working
+                either. Its disclosure files carry no pending rows, so the backlog
+                can&rsquo;t be derived from them. PERM Tracker counts it from DOL&rsquo;s
+                own case statuses, case by case.
               </p>
             </NoteBanner>{" "}
             <SourceNote />

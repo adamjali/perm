@@ -97,7 +97,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-processing-times",
     label: "PERM processing times",
     blurb:
-      "Which filing month DOL is currently deciding, the average days to a determination, and how the queue frontier has moved. Read live from DOL's FLAG system.",
+      "Which filing month DOL is currently deciding, from PERM Tracker's daily check of DOL's case-status service, DOL's own average days to a decision, and how the queue frontier has moved.",
   },
   {
     path: "/perm-denial-risk",

@@ -210,7 +210,7 @@ export const ENTRIES: Entry[] = [
     what:
       "The ordinary queue. The case is in line for a human analyst and nothing has been asked of the employer.",
     unsourced:
-      "A workflow status rather than a regulatory term. This is where the overwhelming majority of pending cases sit, and DOL publishes which filing month its analysts have reached. There is a second status, IN PROCESS, holding a few dozen cases, and DOL documents no difference between the two.",
+      "A workflow status rather than a regulatory term. This is where the overwhelming majority of pending cases sit, worked in filing order. DOL stopped printing which filing month its analysts have reached on October 31, 2026, so this site finds it from DOL's own case statuses. There's a second status, IN PROCESS, holding a few dozen cases, and DOL documents no difference between the two.",
   },
 ];
 

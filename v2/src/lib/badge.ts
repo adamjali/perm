@@ -208,10 +208,10 @@ export const BADGE_DEFS: readonly BadgeDef[] = [
     },
   },
   queueMonth("PERM audits", "perm-audits", "/perm-rfi-audit",
-    "The filing month DOL is working in audit review, for cases audited rather than decided straight through.",
+    "The filing month DOL is working in audit review, for audited cases. DOL stopped printing it on October 31, 2026, so this badge shows no figure until DOL prints one again.",
     (d) => d.permQueueMonths.audit, "PERM audit review"),
   queueMonth("PERM recon", "perm-recon", "/perm-rfi-audit",
-    "The month DOL is working for reconsideration requests, filed after a denial.",
+    "The month DOL is working for reconsideration requests, filed after a denial. DOL stopped printing it on October 31, 2026, so this badge shows no figure until DOL prints one again.",
     (d) => d.permQueueMonths.recon, "PERM reconsideration requests"),
   {
     id: "perm-days", group: "DOL queues", label: "PERM decision", href: "/perm-processing-times",

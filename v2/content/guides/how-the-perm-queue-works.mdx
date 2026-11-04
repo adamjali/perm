@@ -1,8 +1,8 @@
 ---
 title: "How DOL works through the PERM queue"
-description: "PERM cases are decided roughly in filing-month order. What DOL's published frontier means, how much the employer initial is worth, and where it stops."
+description: "PERM cases are decided roughly in filing-month order. Where the front of DOL's line is, how much the employer initial is worth, and where it stops."
 date: "2026-09-03"
-updated: "2026-11-02"
+updated: "2026-11-03"
 author: "PERM Tracker data desk"
 image: "/images/content/heroes/guides/how-the-perm-queue-works.webp"
 imageAlt: "Where the PERM queue stands: the oldest filing month DOL still has open, the month it is reviewing and how fast it moves"
@@ -40,27 +40,37 @@ Not every case rides that queue the whole way. On our daily sweep in late Septem
 
 Only the first group moves in filing order. That's the honest answer to "DOL has passed my month and I still have nothing": a case in the second or third group has left the line, and its filing month stopped predicting anything the day it did.
 
-## What is the published frontier?
+## What is the frontier?
 
-Every week or two DOL publishes one sentence about the queue: the filing month its analysts are reviewing (above, beside our own check). Audited cases have their own, slower position: DOL's table names <DolNow show="auditMonth" />.
+The frontier is the filing month DOL's analysts are working through, shown above from PERM Tracker's daily check of DOL's own case statuses. Until October 31, 2026, DOL printed that month on its processing times page every week or two. It now prints only the average days to a decision over the last 30, 90 and 180 days, and no audit figure.
 
 That is the frontier. It's the front of the line, and it's the single most useful public fact about where a case stands. Subtract your filing month from it and you have your distance in queue terms.
 
 Two things about it catch people out.
 
-DOL overwrites the figure every time it publishes. Its own page can never say how fast the queue is moving, because it only ever shows today's position. Keeping every reading is the only way to see the steps, which is what [processing times](/perm-processing-times) does.
+DOL overwrote its month every time it published, so its own page never said how fast the queue was moving. Keeping every reading was the only way to see the steps, and [processing times](/perm-processing-times) keeps all of them, up to October 21, 2026, the last reading that carried a month.
 
 <ScreenshotFigure
   src="/images/content/figures/guides/how-the-perm-queue-works-dol-page.webp"
   alt="DOL's own PERM processing times table on flag.dol.gov: analyst review and audit review at December 2025, reconsideration at May 2026, and 336 days on average for August's decisions"
-  caption="DOL's own page: the filing month each queue is working and the average days for last month's decisions. DOL overwrites both each time it publishes."
+  caption="DOL's own page on October 15, 2026, when it still printed the filing month each queue was working, and the average days for last month's decisions."
   credit="Screenshot of flag.dol.gov, U.S. Department of Labor, October 15, 2026"
   creditHref="https://flag.dol.gov/processingtimes"
   aspectRatio={1600 / 625}
   step={1}
 />
 
-The second thing is that the frontier is DOL's own claim about itself. It doesn't count the pile. Scanning cases one by one finds the oldest filing month that isn't substantially decided yet, and that month can sit behind the one DOL publishes. The [PERM queue](/perm-queue) page shows the cases still waiting in every filing month beside DOL's own month. Both figures are shown as published, with neither adjusted towards the other. They measure slightly different things, and neither one is wrong.
+<ScreenshotFigure
+  src="/images/content/figures/guides/how-the-perm-queue-works-dol-page-now.webp"
+  alt="DOL's PERM processing times table as of October 31, 2026: analyst review decisions averaged 300 days over the last 30 days, 315 over 90 and 360 over 180, with no filing month"
+  caption="The same page from October 31, 2026: average days to a decision over three windows, and no filing month or audit figure."
+  credit="Screenshot of flag.dol.gov, U.S. Department of Labor, November 3, 2026"
+  creditHref="https://flag.dol.gov/processingtimes"
+  aspectRatio={1600 / 318}
+  step={2}
+/>
+
+The second thing is that DOL's month was its own claim about itself. It never counted the pile. Scanning cases one by one finds the oldest filing month that isn't substantially decided yet, and that month could sit behind the one DOL printed. With DOL printing no month now, that count is the measure left: the [PERM queue](/perm-queue) page shows the cases still waiting in every filing month and the month DOL is working by that count.
 
 ## Does the employer's first letter matter?
 
@@ -87,7 +97,7 @@ And at the front of the queue it has stopped showing. We rebuilt the queue as it
   credit="Screenshot of permtracker.app, October 15, 2026"
   creditHref="/perm-queue/2025-12"
   aspectRatio={1600 / 1347}
-  step={2}
+  step={3}
 />
 
 ## Why isn't a queue position a promise?
@@ -111,7 +121,7 @@ The frontier tells you about a month. Your case number tells you about your case
   credit="Screenshot of permtracker.app, October 15, 2026"
   creditHref="/perm-case-status?case=G-100-26283-292804"
   aspectRatio={1600 / 1587}
-  step={3}
+  step={4}
 />
 
 The [case status lookup](/perm-case-status) takes a case number and shows what DOL currently holds against it, including the status that says whether the case is still in analyst review or has stepped out of the line. If the number isn't already held, DOL is asked for it at that moment. No account is needed, and you can leave an email address to hear when the status changes.

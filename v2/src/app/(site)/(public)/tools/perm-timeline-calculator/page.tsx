@@ -75,7 +75,7 @@ const FAQS = [
   },
   {
     q: "My filing month has already passed and I have no decision. What does that mean?",
-    a: "It usually means the case is in audit, in supervised recruitment, or waiting on a response to a request for information. Those run on their own queues, which DOL publishes separately from analyst review. You do not have to guess which one: put the case number into the case status page and DOL's own status for it says which. If we do not already hold the number, we ask DOL for it right then.",
+    a: "It usually means the case is in audit, in supervised recruitment, or waiting on a response to a request for information. Those run on their own queues, apart from analyst review. You don't have to guess which one: put the case number into the case status page and DOL's own status for it says which. If we don't already hold the number, we ask DOL for it right then.",
   },
 ];
 
@@ -201,7 +201,7 @@ export default async function PermTimelineCalculatorPage() {
       <ToolPageFooter
         currentHref={"/tools/perm-timeline-calculator"}
         reading={[
-          { href: "/perm-processing-times", label: "DOL processing times", note: "Every queue DOL publishes, refreshed weekly, with the figures this calculator reads." },
+          { href: "/perm-processing-times", label: "DOL processing times", note: "DOL's own figures, read hourly on weekdays, with the ones this calculator reads." },
           { href: "/blog/perm-processing-times-2026", label: "What drives a PERM timeline", note: "Audits, supervised recruitment and the things that take a case out of order." },
         ]}
       />

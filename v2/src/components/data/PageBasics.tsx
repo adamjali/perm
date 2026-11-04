@@ -173,11 +173,13 @@ export const BASICS: Record<string, BasicsEntry[]> = {
         <>
           A case DOL has received and not yet decided, counted from the
           per-case status feed PERM Tracker reads from DOL at least twice a day. The
-          front of the queue - the filing month DOL is working now - is on the{" "}
+          front of the queue, the filing month DOL is working now, is found the
+          same way: DOL stopped printing that month on October 31, 2026. DOL&apos;s
+          own figures, the average days to a decision, are on the{" "}
           <Link href="/perm-processing-times" className={link}>
             processing times page
           </Link>
-          , from DOL&apos;s own publication.
+          .
         </>
       ),
     },

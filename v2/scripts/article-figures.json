@@ -572,6 +572,20 @@
   "source": "https://flag.dol.gov/processingtimes",
   "alt": "DOL's own PERM processing times table on flag.dol.gov: analyst review and audit review at December 2025, reconsideration at May 2026, and 336 days on average for August's decisions"
  },
+ "guides/how-the-perm-queue-works/dol-page-now": {
+  "capture": {
+   "url": "https://flag.dol.gov/processingtimes",
+   "wait": 6000,
+   "clip": "cap:PERM Processing Times",
+   "css": "#header, .usa-banner, .usa-header, .usa-overlay { display: none !important; } body { padding-top: 0 !important; }"
+  },
+  "credit": "Screenshot of flag.dol.gov, U.S. Department of Labor, November 3, 2026",
+  "source": "https://flag.dol.gov/processingtimes",
+  "alt": "DOL's PERM processing times table as of October 31, 2026: analyst review decisions averaged 300 days over the last 30 days, 315 over 90 and 360 over 180, with no filing month",
+  "trim": {
+   "bottom": 416
+  }
+ },
  "guides/getting-started/recent-activity": {
   "capture": {
    "url": "/iframe.html?viewMode=story&id=tour-app-pages--dashboard",

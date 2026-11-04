@@ -57,7 +57,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     term: "Analyst review",
     slug: "analyst-review",
     definition:
-      "DOL's status for a PERM in the ordinary queue: in line for a human analyst, with nothing asked of the employer. Around 94% of pending cases sit here, worked in filing order, and DOL publishes which filing month its analysts have reached.",
+      "DOL's status for a PERM in the ordinary queue: in line for a human analyst, with nothing asked of the employer. Most pending cases sit here, worked in filing order. Since October 31, 2026 DOL no longer prints which filing month its analysts have reached; PERM Tracker finds it from DOL's case statuses each day.",
     see: [{ label: "The queue by month", href: "/perm-queue" }, { label: "Every status, explained", href: "/perm-case-statuses#analyst-review" }],
   },
   {

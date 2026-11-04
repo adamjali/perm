@@ -130,7 +130,7 @@ const FAQ = [
   {
     question: "Can PERM be processed faster than the published average?",
     answer:
-      "There’s no premium processing for PERM. An individual case can take longer if DOL issues a request for information (RFI) or selects it for audit. Audited cases sit in a separate queue that DOL publishes its own date for.",
+      "There’s no premium processing for PERM. An individual case can take longer if DOL issues a request for information (RFI) or selects it for audit. Audited cases sit in a separate, slower queue, and DOL hasn’t printed where it stands since October 31, 2026.",
   },
   {
     question: "Where do these numbers come from?",
@@ -540,7 +540,7 @@ export default async function PermProcessingTimesPage() {
             <Chapter
               id="pace"
               title="How fast it advances"
-              dek="DOL publishes where the queue stands and overwrites it, so its own pages can never say how fast it is moving."
+              dek="DOL printed where the queue stood and overwrote it each time, so its own pages never said how fast it moved. It stopped printing a month on October 31, 2026."
             >
               {/* Method, not correction: it says how the series was built
                   rather than changing how the rate reads, so it collapses.
