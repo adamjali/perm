@@ -477,6 +477,66 @@ describe("notifyQueueReached", () => {
       scheduled.some((f) => f.name.includes("notifyQueueReached")),
     ).toBe(true);
   });
+
+  // A run claims a row before it sends and records it after, so a run that dies between the send and the record
+  // can't hand the same subscriber to the next run (Nov 4 2026: it sent, then marked notified, and a crash between
+  // the two sent the one alert twice).
+  const resendCalls = (calls: string[]) => calls.filter((u) => u.includes("resend.com"));
+  const onlyRow = async (t: ReturnType<typeof createTestContext>) =>
+    (await t.run(async (ctx) => ctx.db.query("dolQueueAlerts").collect()))[0]!;
+
+  it("a retried sweep after a crash between the send and the record does not send again", async () => {
+    const t = createTestContext();
+    await seedDue(t, 1);
+    const calls = stubResend(200);
+    const row = await onlyRow(t);
+    // The run that crashed had claimed the row and sent it, and died before recording it.
+    expect(await t.mutation(internal.queueAlerts.claimQueueSend, { id: row._id })).toBe(true);
+
+    const res = await t.action(internal.queueAlerts.notifyQueueReached, { frontier: "2025-09", asOf: "2026-08-20" });
+    expect(res).toMatchObject({ sent: 0, failed: 0 });
+    expect(resendCalls(calls)).toEqual([]);
+    expect((await onlyRow(t)).notifiedAt).toBeUndefined();
+  });
+
+  it("claims a row once: a second claim while the first is live is refused", async () => {
+    const t = createTestContext();
+    await seedDue(t, 1);
+    const row = await onlyRow(t);
+    expect(await t.mutation(internal.queueAlerts.claimQueueSend, { id: row._id })).toBe(true);
+    expect(await t.mutation(internal.queueAlerts.claimQueueSend, { id: row._id })).toBe(false);
+  });
+
+  it("clears the claim once the subscriber is told", async () => {
+    const t = createTestContext();
+    await seedDue(t, 1);
+    stubResend(200);
+    const res = await t.action(internal.queueAlerts.notifyQueueReached, { frontier: "2025-09", asOf: "2026-08-20" });
+    expect(res.sent).toBe(1);
+    const row = await onlyRow(t);
+    expect(row.notifiedAt).toBeGreaterThan(0);
+    expect(row.sendingAt).toBeUndefined();
+  });
+
+  it("frees the row when the delivery fails, so the next sweep tries again", async () => {
+    const t = createTestContext();
+    await seedDue(t, 1);
+    stubResend(422);
+    expect((await t.action(internal.queueAlerts.notifyQueueReached, { frontier: "2025-09", asOf: "2026-08-20" })).failed).toBe(1);
+    expect((await onlyRow(t)).sendingAt).toBeUndefined();
+
+    stubResend(200);
+    expect((await t.action(internal.queueAlerts.notifyQueueReached, { frontier: "2025-09", asOf: "2026-08-20" })).sent).toBe(1);
+  });
+
+  it("takes over a claim left more than 15 minutes ago", async () => {
+    const t = createTestContext();
+    await seedDue(t, 1);
+    const row = await onlyRow(t);
+    await t.run(async (ctx) => ctx.db.patch(row._id, { sendingAt: Date.now() - 16 * 60 * 1000 }));
+    stubResend(200);
+    expect((await t.action(internal.queueAlerts.notifyQueueReached, { frontier: "2025-09", asOf: "2026-08-20" })).sent).toBe(1);
+  });
 });
 
 // ---------------------------------------------------------------------------

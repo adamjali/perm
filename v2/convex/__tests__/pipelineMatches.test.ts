@@ -47,7 +47,7 @@ function hranaResult(rows: Record<string, string | number | null>[]) {
   };
 }
 
-function stub(fixture: Fixture) {
+function stub(fixture: Fixture, opts: { sendStatus?: number } = {}) {
   const sends: Record<string, unknown>[] = [];
   const permReads: string[][] = [];
   global.fetch = (async (url: unknown, init?: { body?: string }) => {
@@ -94,6 +94,12 @@ function stub(fixture: Fixture) {
       return new Response(JSON.stringify({ results }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     sends.push(init?.body ? JSON.parse(init.body) : {});
+    if (opts.sendStatus && opts.sendStatus >= 400) {
+      return new Response(JSON.stringify({ name: "validation_error", message: "stubbed failure" }), {
+        status: opts.sendStatus,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ id: "stub" }), { status: 200, headers: { "Content-Type": "application/json" } });
   }) as unknown as typeof fetch;
   return { sends, permReads, matches: () => sends.filter((s) => String(s.subject).includes("may be yours")) };
@@ -289,5 +295,73 @@ describe("the wage request to PERM match", () => {
       (await ctx.db.query("rateLimits").collect()).filter((r) => r.action === "pipeline_match_global"),
     );
     expect(charges).toHaveLength(1);
+  });
+});
+
+// A run reserves what it's about to tell before it sends and records it after, so a run that dies between the
+// send and the record can't hand the same PERM to the next run (Nov 4 2026: it sent, then recorded, and a crash
+// between the two told it twice). A failed delivery frees the reservation.
+describe("a send that dies before it's recorded", () => {
+  const PERM = "G-100-26286-296040";
+  const notices = (t: ReturnType<typeof createTestContext>) =>
+    t.run(async (ctx) => ctx.db.query("permMatchNotices").collect());
+
+  it("is not sent again by the next run", async () => {
+    const t = createTestContext();
+    const { matches } = stub({ pwd: { [PWD]: pwdRow }, perms: [permOf(PERM, "2026-10-13")] });
+    const id = await watch(t, "person@example.com");
+    // The run that crashed had reserved the PERM and sent it, and died before recording it.
+    const reserved = await t.mutation(internal.pipelineMatches.reserveTold, {
+      id,
+      email: "person@example.com",
+      pwdCaseNumber: PWD,
+      cases: [{ caseNumber: PERM, filingDate: "2026-10-13" }],
+    });
+    expect(reserved).toEqual([PERM]);
+
+    const res = await t.action(internal.pipelineMatches.sweep, {});
+    expect(res).toMatchObject({ sent: 0, failed: 0 });
+    expect(matches()).toHaveLength(0);
+  });
+
+  it("is recorded as told once it went, with no reservation left", async () => {
+    const t = createTestContext();
+    stub({ pwd: { [PWD]: pwdRow }, perms: [permOf(PERM, "2026-10-13")] });
+    await watch(t, "person@example.com");
+    expect((await t.action(internal.pipelineMatches.sweep, {})).sent).toBe(1);
+    const told = await notices(t);
+    expect(told.map((r) => [r.permCaseNumber, r.sendingAt])).toEqual([[PERM, undefined]]);
+  });
+
+  it("frees the PERM when the delivery fails, so the next run tells it", async () => {
+    const t = createTestContext();
+    stub({ pwd: { [PWD]: pwdRow }, perms: [permOf(PERM, "2026-10-13")] }, { sendStatus: 422 });
+    await watch(t, "person@example.com");
+    expect((await t.action(internal.pipelineMatches.sweep, {})).failed).toBe(1);
+    expect(await notices(t)).toEqual([]);
+
+    const { matches } = stub({ pwd: { [PWD]: pwdRow }, perms: [permOf(PERM, "2026-10-13")] });
+    expect((await t.action(internal.pipelineMatches.sweep, {})).sent).toBe(1);
+    expect(matches()).toHaveLength(1);
+  });
+
+  it("takes over a reservation left more than 15 minutes ago", async () => {
+    const t = createTestContext();
+    const { matches } = stub({ pwd: { [PWD]: pwdRow }, perms: [permOf(PERM, "2026-10-13")] });
+    const id = await watch(t, "person@example.com");
+    await t.mutation(internal.pipelineMatches.reserveTold, {
+      id,
+      email: "person@example.com",
+      pwdCaseNumber: PWD,
+      cases: [{ caseNumber: PERM, filingDate: "2026-10-13" }],
+    });
+    await t.run(async (ctx) => {
+      for (const r of await ctx.db.query("permMatchNotices").collect()) {
+        await ctx.db.patch(r._id, { sendingAt: Date.now() - 16 * 60 * 1000 });
+      }
+    });
+    expect((await t.action(internal.pipelineMatches.sweep, {})).sent).toBe(1);
+    expect(matches()).toHaveLength(1);
+    expect((await notices(t)).map((r) => r.sendingAt)).toEqual([undefined]);
   });
 });

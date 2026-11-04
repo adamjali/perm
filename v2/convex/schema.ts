@@ -1527,6 +1527,12 @@ export default defineSchema({
     lastConfirmationSentAt: v.optional(v.number()),
     /** Set once the queue reached their month and we sent the one alert. */
     notifiedAt: v.optional(v.number()),
+    /**
+     * A sweep is sending this row's alert (`queueAlerts.claimQueueSend`), set before the send and cleared when
+     * the alert is recorded or the send fails, so a run that dies between the two can't hand the same subscriber
+     * to the next run. A claim older than SEND_CLAIM_MS (convex/lib/alertDelivery.ts) is treated as abandoned.
+     */
+    sendingAt: v.optional(v.number()),
     /** Set when they opt out. Rows are kept so a later re-subscribe is honest. */
     unsubscribedAt: v.optional(v.number()),
 
@@ -1744,6 +1750,13 @@ export default defineSchema({
     /** Its filing day, "YYYY-MM-DD". */
     filingDate: v.string(),
     toldAt: v.number(),
+    /**
+     * Set while a sweep is sending the email that tells it (`pipelineMatches.reserveTold`), cleared once the
+     * email went (`recordTold`); the row is deleted if the send fails (`releaseTold`). A reservation counts as
+     * told for SEND_CLAIM_MS (convex/lib/alertDelivery.ts), so a run that dies between the send and the record
+     * can't tell it again on the next run.
+     */
+    sendingAt: v.optional(v.number()),
   })
     .index("by_subscription", ["subscriptionId"])
     .index("by_email_perm", ["email", "permCaseNumber"])

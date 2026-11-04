@@ -43,6 +43,19 @@ export type AlertRef = `${AlertKind}:${string}`;
 export const IMMEDIATE_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>(["case"]);
 
 /**
+ * How long a sweep's claim on a send holds. A sweep writes its claim in a mutation BEFORE it calls deliverAlert
+ * and records the alert AFTER, so a second run (or a retry) skips a row whose send may already have gone out; a
+ * failed delivery clears the claim. A claim older than this is treated as abandoned (the run died) and the row is
+ * free again. The same 15 minutes as case alerts' ALERT_SEND_CLAIM_MS (convex/caseAlerts.ts).
+ */
+export const SEND_CLAIM_MS = 15 * 60 * 1000;
+
+/** True while a claim stamped at `at` still holds. */
+export function claimHolds(at: number | undefined, now: number): boolean {
+  return at !== undefined && now - at < SEND_CLAIM_MS;
+}
+
+/**
  * Kinds where two waiting items for one row are different news, so a newer one
  * doesn't replace the older: an employer's moves, and the PERMs found for a
  * wage request on different days.

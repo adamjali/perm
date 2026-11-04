@@ -66,7 +66,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
-import { deliverAlert } from "./lib/alertDelivery";
+import { claimHolds, deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
@@ -743,7 +743,41 @@ export const markNotified = internalMutation({
   args: { id: v.id("dolQueueAlerts") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, { notifiedAt: Date.now() });
+    // Patching undefined deletes the claim with the send recorded.
+    await ctx.db.patch(args.id, { notifiedAt: Date.now(), sendingAt: undefined });
+    return null;
+  },
+});
+
+/**
+ * Claim a row's one alert before it is sent. False when the row is no longer due (told, opted out, unconfirmed)
+ * or another run's claim still holds (SEND_CLAIM_MS): that run may already have sent it. Written in its own
+ * mutation BEFORE deliverAlert, so a run that dies between the send and `markNotified` leaves the claim behind
+ * and the next run skips the row instead of sending the alert twice.
+ */
+export const claimQueueSend = internalMutation({
+  args: { id: v.id("dolQueueAlerts") },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    if (!row || row.confirmedAt === undefined || row.notifiedAt !== undefined || row.unsubscribedAt !== undefined) {
+      return false;
+    }
+    const now = Date.now();
+    if (claimHolds(row.sendingAt, now)) return false;
+    await ctx.db.patch(args.id, { sendingAt: now });
+    return true;
+  },
+});
+
+/** A claimed alert that didn't go out: free the row for the next sweep. */
+export const releaseQueueSend = internalMutation({
+  args: { id: v.id("dolQueueAlerts") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    if (!row || row.notifiedAt !== undefined) return null;
+    await ctx.db.patch(args.id, { sendingAt: undefined });
     return null;
   },
 });
@@ -819,6 +853,11 @@ export const notifyQueueReached = internalAction({
         : null;
 
     for (const row of batch) {
+      // Claimed before anything is built or sent, recorded after: a run that dies in between leaves the claim,
+      // and the next run skips this row rather than send its one alert twice. A row another run holds is that
+      // run's to finish.
+      if (!(await ctx.runMutation(internal.queueAlerts.claimQueueSend, { id: row._id }))) continue;
+      let delivered = false;
       try {
         const token = await makeUnsubscribeToken(
           row.email,
@@ -917,9 +956,11 @@ export const notifyQueueReached = internalAction({
             "queueAlerts.notifyQueueReached",
             new Error(`Resend: ${result.error}`),
           );
+          await ctx.runMutation(internal.queueAlerts.releaseQueueSend, { id: row._id });
           continue;
         }
 
+        delivered = true;
         await ctx.runMutation(internal.queueAlerts.markNotified, { id: row._id });
         sent += 1;
       } catch (error) {
@@ -927,6 +968,11 @@ export const notifyQueueReached = internalAction({
         failed += 1;
         log.error("alert send threw", { email: row.email, error });
         await recordError(ctx, "action", "queueAlerts.notifyQueueReached", error);
+        // Free the row only if nothing went out. After a delivery the claim stays, so the record that failed
+        // can't turn into a second send; it lapses after SEND_CLAIM_MS like a crashed run's.
+        if (!delivered) {
+          await ctx.runMutation(internal.queueAlerts.releaseQueueSend, { id: row._id }).catch(() => undefined);
+        }
       }
     }
 

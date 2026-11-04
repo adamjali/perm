@@ -28,9 +28,11 @@
  * One email per wage request per run, listing what's new, through
  * `deliverAlert` as kind "match", so the one-email-a-day bundling applies and
  * the case alert's own stop link (and the preference page) turns it off. Each
- * email claims one unit of the `pipelineMatch` pool before it's built. A PERM
- * is recorded in `permMatchNotices` only once the email is sent or queued, so
- * a failed send tries again tomorrow.
+ * email claims one unit of the `pipelineMatch` pool before it's built. Each
+ * PERM is reserved in `permMatchNotices` before the email goes (`reserveTold`)
+ * and recorded as told once it's sent or queued (`recordTold`), so a run that
+ * dies between the two can't tell it again; a failed send frees it
+ * (`releaseTold`) and tries again tomorrow.
  *
  * @module convex/pipelineMatches
  */
@@ -40,7 +42,7 @@ import type { ReactElement } from "react";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { deliverAlert } from "./lib/alertDelivery";
+import { claimHolds, deliverAlert } from "./lib/alertDelivery";
 import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
 import { dayDolActed, isPermWageRequest } from "./lib/alertNextSteps";
 import { createLogger } from "./lib/logging";
@@ -102,19 +104,28 @@ export const issuedWageWatches = internalQuery({
   },
 });
 
-/** What this address has already been told about, and which cases it already watches. */
+/**
+ * What this address has already been told about, and which cases it already watches. A PERM a run is still
+ * sending (a reservation younger than SEND_CLAIM_MS) counts as told; an older one was a run that died before it
+ * recorded, and is free again. `now` is passed in: a query doesn't read the clock.
+ */
 export const toldAndWatched = internalQuery({
-  args: { id: v.id("caseStatusAlerts"), email: v.string() },
+  args: { id: v.id("caseStatusAlerts"), email: v.string(), now: v.number() },
   returns: v.object({ toldForRequest: v.number(), told: v.array(v.string()), watched: v.array(v.string()) }),
   handler: async (ctx, args) => {
-    const forRequest = await ctx.db
-      .query("permMatchNotices")
-      .withIndex("by_subscription", (q) => q.eq("subscriptionId", args.id))
-      .take(MATCH_CAP * 4);
-    const forAddress = await ctx.db
-      .query("permMatchNotices")
-      .withIndex("by_email_perm", (q) => q.eq("email", args.email))
-      .take(MAX_CASES_PER_ADDRESS * MATCH_CAP);
+    const counts = (r: { sendingAt?: number }) => r.sendingAt === undefined || claimHolds(r.sendingAt, args.now);
+    const forRequest = (
+      await ctx.db
+        .query("permMatchNotices")
+        .withIndex("by_subscription", (q) => q.eq("subscriptionId", args.id))
+        .take(MATCH_CAP * 4)
+    ).filter(counts);
+    const forAddress = (
+      await ctx.db
+        .query("permMatchNotices")
+        .withIndex("by_email_perm", (q) => q.eq("email", args.email))
+        .take(MAX_CASES_PER_ADDRESS * MATCH_CAP)
+    ).filter(counts);
     const watched = await ctx.db
       .query("caseStatusAlerts")
       .withIndex("by_email", (q) => q.eq("email", args.email))
@@ -148,13 +159,46 @@ export const claimMatchBudget = internalMutation({
   },
 });
 
-export const recordTold = internalMutation({
-  args: {
-    id: v.id("caseStatusAlerts"),
-    email: v.string(),
-    pwdCaseNumber: v.string(),
-    cases: v.array(v.object({ caseNumber: v.string(), filingDate: v.string() })),
+const toldCases = v.array(v.object({ caseNumber: v.string(), filingDate: v.string() }));
+
+/**
+ * Reserve the PERMs an email is about to tell, before it is sent: a row per PERM with `sendingAt` set. Returns the
+ * PERMs reserved; one already told, or reserved by a run whose claim still holds, is left out (that run may have
+ * sent it), and one a dead run left is taken over. A run that dies between the send and `recordTold` leaves its
+ * reservations, so the next run doesn't tell the same PERM again.
+ */
+export const reserveTold = internalMutation({
+  args: { id: v.id("caseStatusAlerts"), email: v.string(), pwdCaseNumber: v.string(), cases: toldCases },
+  returns: v.array(v.string()),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const reserved: string[] = [];
+    for (const c of args.cases) {
+      const held = await ctx.db
+        .query("permMatchNotices")
+        .withIndex("by_email_perm", (q) => q.eq("email", args.email).eq("permCaseNumber", c.caseNumber))
+        .first();
+      if (held && (held.sendingAt === undefined || claimHolds(held.sendingAt, now))) continue;
+      const row = {
+        subscriptionId: args.id,
+        email: args.email,
+        pwdCaseNumber: args.pwdCaseNumber,
+        permCaseNumber: c.caseNumber,
+        filingDate: c.filingDate,
+        toldAt: now,
+        sendingAt: now,
+      };
+      if (held) await ctx.db.replace(held._id, row);
+      else await ctx.db.insert("permMatchNotices", row);
+      reserved.push(c.caseNumber);
+    }
+    return reserved;
   },
+});
+
+/** The email went (or waits in the outbox): the reserved PERMs are told. */
+export const recordTold = internalMutation({
+  args: { id: v.id("caseStatusAlerts"), email: v.string(), pwdCaseNumber: v.string(), cases: toldCases },
   returns: v.null(),
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -163,7 +207,11 @@ export const recordTold = internalMutation({
         .query("permMatchNotices")
         .withIndex("by_email_perm", (q) => q.eq("email", args.email).eq("permCaseNumber", c.caseNumber))
         .first();
-      if (held) continue;
+      if (held) {
+        // Patching undefined deletes the reservation.
+        if (held.sendingAt !== undefined) await ctx.db.patch(held._id, { sendingAt: undefined, toldAt: now });
+        continue;
+      }
       await ctx.db.insert("permMatchNotices", {
         subscriptionId: args.id,
         email: args.email,
@@ -172,6 +220,22 @@ export const recordTold = internalMutation({
         filingDate: c.filingDate,
         toldAt: now,
       });
+    }
+    return null;
+  },
+});
+
+/** The email didn't go: free the PERMs it reserved, so a later run can tell them. Told rows are never touched. */
+export const releaseTold = internalMutation({
+  args: { email: v.string(), caseNumbers: v.array(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    for (const caseNumber of args.caseNumbers) {
+      const held = await ctx.db
+        .query("permMatchNotices")
+        .withIndex("by_email_perm", (q) => q.eq("email", args.email).eq("permCaseNumber", caseNumber))
+        .first();
+      if (held && held.sendingAt !== undefined) await ctx.db.delete(held._id);
     }
     return null;
   },
@@ -302,7 +366,11 @@ export const sweep = internalAction({
     for (const watch of watches) {
       const request = requests.get(watch.caseNumber);
       if (!request) continue;
-      const state = await ctx.runQuery(internal.pipelineMatches.toldAndWatched, { id: watch._id, email: watch.email });
+      const state = await ctx.runQuery(internal.pipelineMatches.toldAndWatched, {
+        id: watch._id,
+        email: watch.email,
+        now: Date.now(),
+      });
       if (state.toldForRequest >= MATCH_CAP) continue;
       const rows = await permsSince(request.slug, request.issuedOn);
       const pick = pickCandidates({
@@ -321,7 +389,24 @@ export const sweep = internalAction({
     let sent = 0;
     let queued = 0;
     let failed = 0;
-    for (const { watch, request, send } of due.slice(0, granted)) {
+    for (const { watch, request, send: picked } of due.slice(0, granted)) {
+      // Reserved before the email is built or sent, recorded after: a run that dies in between leaves the
+      // reservation, and the next run doesn't tell these PERMs again. One another run holds is that run's.
+      const toldRef = { id: watch._id, email: watch.email, pwdCaseNumber: watch.caseNumber };
+      const reserved = new Set(
+        await ctx.runMutation(internal.pipelineMatches.reserveTold, {
+          ...toldRef,
+          cases: picked.map((c) => ({ caseNumber: c.caseNumber, filingDate: c.filingDate })),
+        }),
+      );
+      const send = picked.filter((c) => reserved.has(c.caseNumber));
+      if (send.length === 0) continue;
+      const release = () =>
+        ctx.runMutation(internal.pipelineMatches.releaseTold, {
+          email: watch.email,
+          caseNumbers: send.map((c) => c.caseNumber),
+        });
+      let delivered = false;
       try {
         const secret = unsubscribeSecret();
         const token = await makeUnsubscribeToken(watch.email, secret, "case-unsubscribe");
@@ -387,12 +472,12 @@ export const sweep = internalAction({
         if (result.status === "failed") {
           failed += 1;
           log.error("match send failed", { caseNumber: watch.caseNumber, error: result.error });
+          await release();
           continue;
         }
+        delivered = true;
         await ctx.runMutation(internal.pipelineMatches.recordTold, {
-          id: watch._id,
-          email: watch.email,
-          pwdCaseNumber: watch.caseNumber,
+          ...toldRef,
           cases: send.map((c) => ({ caseNumber: c.caseNumber, filingDate: c.filingDate })),
         });
         if (result.status === "sent") sent += 1;
@@ -401,6 +486,9 @@ export const sweep = internalAction({
         failed += 1;
         log.error("match send threw", { caseNumber: watch.caseNumber, error });
         await recordError(ctx, "action", "pipelineMatches.sweep", error);
+        // Free the PERMs only if nothing went out. After a delivery the reservation stays, so the record that
+        // failed can't turn into a second email; it lapses after SEND_CLAIM_MS like a crashed run's.
+        if (!delivered) await release().catch(() => undefined);
       }
     }
     if (granted < due.length) {
