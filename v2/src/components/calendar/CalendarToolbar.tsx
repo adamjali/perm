@@ -7,15 +7,17 @@
 
 "use client";
 
-import { useState, useCallback, useContext, useMemo, useEffect, useRef } from "react";
+import { Fragment, useState, useCallback, useContext, useMemo } from "react";
 import type { ToolbarProps, View } from "react-big-calendar";
 import { Navigate } from "react-big-calendar";
 import { CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon, ListIcon } from "@phosphor-icons/react/ssr";
 
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { CalendarListToggleContext } from "./calendar-view-context";
-import { MONTH_NAMES } from "@convex/lib/months";
+import { MONTH_ABBR, MONTH_NAMES } from "@convex/lib/months";
 import { buttonVariants } from "@/components/ui/button";
+import { choiceVariants } from "@/components/ui/choice";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -39,46 +41,20 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
   const toggleList = useContext(CalendarListToggleContext);
   const { label, onNavigate, onView, view, views, date } = props;
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const currentYear = date.getFullYear();
   const currentMonth = date.getMonth();
   const [pickerYear, setPickerYear] = useState(currentYear);
 
-  // Click outside to close
-  useEffect(() => {
-    if (!isPickerOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(target)
-      ) {
-        setIsPickerOpen(false);
-      }
-    };
-
-    const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleClickOutside);
-    }, 0);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isPickerOpen]);
-
-  // Handlers
-  const togglePicker = useCallback(() => {
-    setIsPickerOpen((prev) => {
-      if (!prev) setPickerYear(currentYear);
-      return !prev;
-    });
-  }, [currentYear]);
+  // The picker opens on the year on screen, and a press outside, Escape or a pick closes it
+  // (Radix's popover: it also flips above the label when there's no room below).
+  const onPickerOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) setPickerYear(currentYear);
+      setIsPickerOpen(open);
+    },
+    [currentYear]
+  );
 
   const selectMonth = useCallback(
     (monthIndex: number) => {
@@ -116,84 +92,88 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
 
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      {/* Month Label with Dropdown */}
-      <div className="relative flex items-center">
-        <button
-          ref={buttonRef}
-          onClick={togglePicker}
-          className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:bg-accent"
-          aria-expanded={isPickerOpen}
-        >
-          <h2 className="font-heading text-2xl font-bold">
-            {label}
-          </h2>
-          {isPickerOpen ? (
-            <CaretUpIcon className="size-5 text-muted-foreground" />
-          ) : (
-            <CaretDownIcon className="size-5 text-muted-foreground" />
-          )}
-        </button>
-
-        {/* Month Picker Dropdown */}
-        {isPickerOpen && (
-          <div
-            ref={dropdownRef}
-            className="absolute left-0 top-full mt-2 border-2 border-border bg-card p-4 shadow-hard-lg"
-            style={{ minWidth: 260, zIndex: 100 }}
-          >
-            {/* Year nav */}
-            <div className="flex items-center justify-between mb-3">
-              <button
-                type="button"
-                onClick={() => setPickerYear((y) => y - 1)}
-                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-              >
-                <CaretLeftIcon className="size-4" />
-              </button>
-              <span className="font-bold text-foreground">{pickerYear}</span>
-              <button
-                type="button"
-                onClick={() => setPickerYear((y) => y + 1)}
-                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-              >
-                <CaretRightIcon className="size-4" />
-              </button>
-            </div>
-
-            {/* Months grid */}
-            <div className="grid grid-cols-3 gap-1">
-              {MONTH_NAMES.map((name, i) => {
-                const isCurrent = pickerYear === currentYear && i === currentMonth;
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => selectMonth(i)}
-                    className={cn(
-                      "min-h-11 border px-2 text-sm transition-colors",
-                      isCurrent ? "border-primary-text bg-tint font-semibold" : "border-transparent hover:bg-accent",
-                    )}
-                  >
-                    {name.slice(0, 3)}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Today button */}
+      {/* The month on screen is the heading; the button inside it opens the month picker. A
+          heading can hold a button, never the other way round. */}
+      <Popover open={isPickerOpen} onOpenChange={onPickerOpenChange}>
+        <h2 className="flex items-center font-heading text-2xl font-bold">
+          <PopoverTrigger asChild>
             <button
               type="button"
-              onClick={() => {
-                onNavigate(Navigate.TODAY);
-                setIsPickerOpen(false);
-              }}
-              className={buttonVariants({ variant: "outline", className: "mt-3 w-full" })}
+              className="flex min-h-11 items-center gap-2 px-2 text-left transition-colors hover:bg-accent"
+              aria-haspopup="dialog"
             >
-              Today
+              {label}{" "}
+              {isPickerOpen ? (
+                <CaretUpIcon aria-hidden="true" className="size-5 text-muted-foreground" />
+              ) : (
+                <CaretDownIcon aria-hidden="true" className="size-5 text-muted-foreground" />
+              )}
+            </button>
+          </PopoverTrigger>
+        </h2>{" "}
+        <PopoverContent
+          align="start"
+          sideOffset={8}
+          collisionPadding={8}
+          aria-label="Pick a month"
+          className="w-[min(18rem,calc(100vw-1rem))] border-2 border-border bg-card p-4"
+        >
+          {/* Year nav */}
+          <div className="mb-3 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setPickerYear((y) => y - 1)}
+              className={buttonVariants({ variant: "ghost", size: "icon" })}
+              aria-label="Previous year"
+            >
+              <CaretLeftIcon aria-hidden="true" className="size-4" />
+            </button>{" "}
+            <span className="font-bold text-foreground" aria-live="polite">
+              {pickerYear}
+            </span>{" "}
+            <button
+              type="button"
+              onClick={() => setPickerYear((y) => y + 1)}
+              className={buttonVariants({ variant: "ghost", size: "icon" })}
+              aria-label="Next year"
+            >
+              <CaretRightIcon aria-hidden="true" className="size-4" />
             </button>
           </div>
-        )}
-      </div>
+
+          {/* Months grid: the month on screen is the lime pick, as every choice on the site is. */}
+          <div className="grid grid-cols-3 gap-1.5">
+            {MONTH_NAMES.map((name, i) => {
+              const isCurrent = pickerYear === currentYear && i === currentMonth;
+              return (
+                <Fragment key={name}>
+                  <button
+                    type="button"
+                    onClick={() => selectMonth(i)}
+                    aria-pressed={isCurrent}
+                    aria-label={`${name} ${pickerYear}`}
+                    className={cn(choiceVariants({ on: isCurrent }), "px-2")}
+                  >
+                    {MONTH_ABBR[i]}
+                  </button>{" "}
+                </Fragment>
+              );
+            })}
+          </div>
+
+          {/* Today button */}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate(Navigate.TODAY);
+              setIsPickerOpen(false);
+            }}
+            className={buttonVariants({ variant: "outline", className: "mt-3 w-full" })}
+          >
+            Today
+          </button>
+        </PopoverContent>
+      </Popover>
 
       {/* Navigation Row */}
       <div className="flex flex-wrap items-center gap-3">
