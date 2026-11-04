@@ -388,6 +388,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/green-card-fees`, lastModified: at("/tools/green-card-fees"), images: [`${base}/og/green-card-fees.jpg`] },
     { url: `${base}/tools/wage-levels`, lastModified: at("/tools/wage-levels"), images: [`${base}/og/wage-levels.jpg`] },
     { url: `${base}/soc-codes`, lastModified: at("/soc-codes"), images: [`${base}/og/soc-codes.jpg`] },
+    { url: `${base}/bright-outlook-jobs`, lastModified: at("/bright-outlook-jobs"), images: [`${base}/og/bright-outlook-jobs.jpg`] },
     // A page for each job title with 50+ filings (scripts/build_soc_titles.py), dated by the template.
     ...socTitleSlugs.map((slug) => ({
       url: `${base}/soc-codes/${slug}`,
