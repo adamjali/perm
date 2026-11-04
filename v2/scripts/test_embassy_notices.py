@@ -55,7 +55,7 @@ def main() -> int:
           all(p == " ".join(p.split()).casefold() for x in plan for p in x["posts"]))
 
     # --- the rules, on real titles ------------------------------------------------
-    keep = lambda t, x="": e.decide(t, x)[0]  # noqa: E731
+    keep = lambda t: e.decide(t)[0]  # noqa: E731
     check("an operations update is kept", keep("August 18 Consular Operations Update"))
     check("routine services resuming are kept", keep("Important Notice: Resumption of Routine Visa Services"))
     check("appointments cancelled for a protest are kept", keep("Notice: Visa Appointments Cancelled Due to Possible Protests"))
@@ -73,6 +73,15 @@ def main() -> int:
     check("an evergreen page that names a closure is kept", keep("Consular sections closed: what to bring instead of a checklist"))
     check("WordPress's 'appeared first on' line is dropped from an excerpt",
           e.text_of("<p>Interviews resume Monday.</p><p>The post <a>X</a> appeared first on <a>U.S. Embassy</a>.</p>") == "Interviews resume Monday.")
+    block = ('<section class="ga-title internaltitle-block"><h1>August 18 Consular Operations Update</h1><p>Aug 17</p></section>'
+             '<p>The U.S. Embassy canceled all visa appointments on August 18.</p><script>x()</script>')
+    check("the excerpt is the post's body, its title block and scripts gone",
+          e.body_text(block, "August 18 Consular Operations Update") == "The U.S. Embassy canceled all visa appointments on August 18.",
+          repr(e.body_text(block, "August 18 Consular Operations Update")))
+    check("a body that opens with its own heading drops it (Abu Dhabi's posts have no title block)",
+          e.body_text("<p>Important Notice: Resumption</p><p>Limited visa processing is available.</p>", "Important Notice: Resumption")
+          == "Limited visa processing is available.")
+    check("an I-730 information page is dropped though its body names petitions", not keep("Information for I-730 Applicants"))
     check("a day is the embassy's own: 23:30 UTC is the next morning in Manila",
           e.local_day("Mon, 17 Aug 2026 23:30:00 +0000", "Asia/Manila") == "2026-08-18")
     check("a feed with an entity declaration is refused before it's parsed", (lambda: _raises(lambda: e.parse_feed(
@@ -89,6 +98,10 @@ def main() -> int:
     names = [json.loads(r["agencies"]) if isinstance(r["agencies"], str) else r["agencies"] for r in rows]
     check("each row names its embassy", all(a and a[0].startswith(("U.S. Embassy", "American")) for a in names), str(names[:2]))
     check("each row links the embassy's own post", all(r["html_url"].startswith("https://") for r in rows))
+    aug = next((r for r in rows if r["document_number"] == "embassy-ph-august-18-consular-operations-update"), None)
+    check("a row's excerpt is the post's own words, not WordPress's 'appeared first on' line",
+          bool(aug) and (aug["abstract"] or "").startswith("The U.S. Embassy canceled"), str(aug and aug["abstract"]))
+    check("every kept row from the six feeds carries an excerpt", all(r["abstract"] for r in rows))
     check("nothing older than a year before the copy is kept", all(r["publication_date"] >= "2025-11-04" for r in rows))
     check("nothing from Korea or China is kept (checklists, permits, policy statements)",
           not any(n.startswith(("embassy-kr-", "embassy-china-")) for n in nums))

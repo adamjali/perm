@@ -22,7 +22,9 @@ feed whose robots.txt asks robots off is skipped.
 WHAT IT KEEPS. An embassy's Visas category holds two kinds of post: dated notices (an operations update,
 appointments cancelled for a protest, routine services resuming, a new appointment system) and evergreen
 pages filed as posts (document checklists, fraud warnings, how to visit). Only the first is news, and only
-a recent one (KEEP_DAYS). The rule, in order (`decide`), on the title and the excerpt:
+a recent one (KEEP_DAYS). The rule, in order (`decide`), on the title alone (the body only supplies the
+excerpt a reader sees, from content:encoded, since WordPress's description is just "The post X appeared first
+on Y"):
   1. Older than KEEP_DAYS before the copy: dropped (a first load would otherwise add 2020's COVID notices).
   2. An evergreen page's title (a checklist, samples, fraud, an FAQ, required documents, a page about
      visiting): dropped, unless it also names an operations change ("closed", "resumption").
@@ -108,6 +110,24 @@ def text_of(fragment: str | None) -> str:
     return re.sub(r"\s+([,.;:)])", r"\1", t)
 
 
+# WordPress puts the post itself in content:encoded; its description is only "The post X appeared first on Y".
+CONTENT_NS = "{http://purl.org/rss/1.0/modules/content/}encoded"
+# The embassy theme opens each post with a title block (`ga-title`) that repeats the heading and the date.
+TITLE_BLOCK = re.compile(r'<section[^>]*class="[^"]*\bga-title\b[^"]*"[^>]*>[\s\S]*?</section>', re.I)
+
+
+def body_text(encoded: str | None, title: str) -> str:
+    """The post's own words: content:encoded without its scripts, styles and title block, and without the
+    heading again at its start (the posts with no title block repeat it as their first line)."""
+    if not encoded:
+        return ""
+    t = re.sub(r"<(script|style)[\s\S]*?</\1>", " ", encoded, flags=re.I)
+    t = text_of(TITLE_BLOCK.sub(" ", t, count=1))
+    if title and t.casefold().startswith(title.casefold()):
+        t = t[len(title):].lstrip(" :.-")
+    return t
+
+
 def cut_at_word(t: str, n: int = ABSTRACT_CHARS) -> str | None:
     if not t:
         return None
@@ -117,18 +137,21 @@ def cut_at_word(t: str, n: int = ABSTRACT_CHARS) -> str | None:
     return head + "..."
 
 
-def decide(title: str, excerpt: str) -> tuple[bool, str]:
-    """(kept, why) for one post, on its title and excerpt. See the module's docstring."""
-    both = f"{title} {excerpt}"
+def decide(title: str) -> tuple[bool, str]:
+    """(kept, why) for one post, on its title. See the module's docstring.
+
+    The title alone decides: a post's body (the excerpt readers see) names appointments, interviews and
+    petitions on almost every visa page, so a rule that read it kept the evergreen family-visa pages too
+    (Nov 4 2026: an I-130 filing page, an I-730 page and a widow's visa page)."""
     ops_in_title = OPERATIONS.search(title)
     if EVERGREEN.search(title) and not re.search(r"\b(closed|closures?|resum\w*|paus\w*|suspen\w*)\b", title, re.I):
         return False, "an evergreen page, not a notice"
     if NOT_VISAS.search(title):
         return False, "a message for U.S. citizens or a travel alert, not a visa matter"
-    work = WORK_OR_IMMIGRANT.search(both.replace("nonimmigrant", "").replace("Nonimmigrant", ""))
+    work = WORK_OR_IMMIGRANT.search(NONIMMIGRANT.sub("", title))
     if VISITOR_ONLY.search(title) and not work:
         return False, "visitor, student or exchange visas only"
-    if work and (ops_in_title or OPERATIONS.search(excerpt)):
+    if work and ops_in_title:
         return True, f"names {work.group(0)}"
     if ops_in_title:
         return True, f"consular operations ({ops_in_title.group(0).lower()})"
@@ -171,7 +194,7 @@ def parse_feed(text: str) -> list[dict]:
             continue
         out.append({
             "title": title, "link": link, "pub": it.findtext("pubDate") or "",
-            "excerpt": text_of(it.findtext("description")),
+            "excerpt": body_text(it.findtext(CONTENT_NS), title) or text_of(it.findtext("description")),
             "categories": [c.text.strip() for c in it.findall("category") if c.text],
         })
     return out
@@ -216,7 +239,7 @@ def read(bundle: dict, *, today: str, path: str, plan: list[dict]) -> tuple[list
                 report["newest"] = day
             if day < floor:
                 continue
-            kept, why = decide(p["title"], p["excerpt"])
+            kept, why = decide(p["title"])
             report["why"][f"{e['code']} {day} {p['title'][:70]}"] = ("kept: " if kept else "dropped: ") + why
             if not kept:
                 continue
