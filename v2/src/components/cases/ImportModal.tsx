@@ -932,8 +932,9 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("caseStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 border-2 border-input bg-background px-3 py-1",
-                              "text-sm ring-offset-background",
+                              // 16px on a phone (iOS zooms into anything smaller) and 44px tall to tap.
+                              "min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 py-1",
+                              "text-base md:text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",
                               "transition-colors duration-150",
@@ -959,8 +960,9 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("progressStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 border-2 border-input bg-background px-3 py-1",
-                              "text-sm ring-offset-background",
+                              // 16px on a phone (iOS zooms into anything smaller) and 44px tall to tap.
+                              "min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 py-1",
+                              "text-base md:text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",
                               "transition-colors duration-150",

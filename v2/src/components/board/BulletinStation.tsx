@@ -29,8 +29,9 @@ const categoryName = (c: string) => (c === "EW3" ? "EB-3 other workers" : c.repl
 /** The bulletin's catch-all column as people say it. */
 const countryName = (c: CountryKey) => (c === "worldwide" ? "Rest of world" : COUNTRY_LABEL[c]);
 
+// 16px on a phone: iOS zooms into a select set smaller.
 const SELECT =
-  "min-h-11 w-full min-w-0 border-2 border-input bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "min-h-11 w-full min-w-0 border-2 border-input bg-background px-2 text-base md:text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 /**
  * The bulletin's step on the board, for the reader's own line (Sabrina's notes, Oct 27

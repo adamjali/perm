@@ -6,6 +6,12 @@ import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
 import { DateRuler } from "@/components/tools/DateRuler";
 import { EAD_CATEGORIES, EXTENSION_DAYS, eadExtension, type EadVerdict } from "@/lib/eadExtension";
+import { SelectedInFull } from "@/components/tools/SelectedInFull";
+
+/** A category as the receipt prints it, "(c)(9)", with its name. */
+function categoryLabel(c: { code: string; label: string }): string {
+  return `(${c.code.slice(0, 1).toLowerCase()})(${Number(c.code.slice(1))}) ${c.label}`;
+}
 
 /**
  * Was my work permit automatically extended, and to when? From the card's
@@ -76,6 +82,7 @@ export function EadExtensionCalculator() {
   const [expires, setExpires] = useState("");
   const [received, setReceived] = useState("");
   const [category, setCategory] = useState("C09");
+  const chosenCategory = EAD_CATEGORIES.find((c) => c.code === category);
   const [same, setSame] = useState(true);
   const [i94, setI94] = useState("");
   const capsAtI94 = EAD_CATEGORIES.find((c) => c.code === category)?.capsAtI94 ?? false;
@@ -117,11 +124,14 @@ export function EadExtensionCalculator() {
           >
             {EAD_CATEGORIES.map((c) => (
               <option key={c.code} value={c.code}>
-                {`(${c.code.slice(0, 1).toLowerCase()})(${Number(c.code.slice(1))}) ${c.label}`}
+                {categoryLabel(c)}
               </option>
             ))}
             <option value="OTHER">Another category</option>
-          </select>
+          </select>{" "}
+          {/* The category names run long ("(c)(9) Pending adjustment of status ..."), and a phone's
+              select cuts them at the chevron: the pick is printed whole under it. */}
+          <SelectedInFull label={chosenCategory ? categoryLabel(chosenCategory) : undefined} />
         </div>{" "}
         {capsAtI94 ? (
           <div>

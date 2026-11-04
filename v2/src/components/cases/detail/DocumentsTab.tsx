@@ -32,8 +32,8 @@ interface DocumentsTabProps {
 
 const ITEMS_PER_PAGE = 10;
 
-/** A select at the controls' height (44px), the input's own outline. */
-const SELECT = "h-11 border border-input bg-card px-2 text-sm font-semibold text-foreground disabled:opacity-60";
+/** A select at the controls' height (44px), the input's own outline, 16px on a phone so iOS doesn't zoom in. */
+const SELECT = "min-h-11 border border-input bg-card px-2 text-base md:text-sm font-semibold text-foreground disabled:opacity-60";
 
 /** A file chosen and waiting to go up, with its category and, after a failed try, why. */
 interface PendingFile {
