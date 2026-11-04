@@ -10,11 +10,12 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { CONSULAR_PAGES, CONSULAR_PAGE_FAMILIES } from "./paths";
+import { secretMatches } from "@/lib/secretMatch";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = request.headers.get("x-revalidate-secret");
   const expected = process.env.REVALIDATE_SECRET;
-  if (!expected || secret !== expected) {
+  if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -28,6 +28,7 @@ import {
   RIVAL_SAMPLE,
   writeScorecardDocs,
 } from "@/lib/db/predictions";
+import { bearerMatches } from "@/lib/secretMatch";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -35,7 +36,7 @@ export const maxDuration = 300;
 export async function GET(request: Request): Promise<NextResponse> {
   const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!(await bearerMatches(auth, secret))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const today = new Date().toISOString().slice(0, 10);

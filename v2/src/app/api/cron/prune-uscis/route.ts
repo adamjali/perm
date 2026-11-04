@@ -14,13 +14,14 @@
 import { NextResponse } from "next/server";
 
 import { pruneUscisCaseStatus } from "@/lib/db/uscisCaseStatus";
+import { bearerMatches } from "@/lib/secretMatch";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request): Promise<NextResponse> {
   const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!(await bearerMatches(auth, secret))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

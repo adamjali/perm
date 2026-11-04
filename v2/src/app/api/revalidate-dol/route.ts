@@ -38,11 +38,12 @@ import { NextResponse } from "next/server";
 // handler names; anything else fails Next's route type generation during
 // `next build` (and nowhere earlier). See that file for what is in it and why.
 import { DOL_PAGES } from "./paths";
+import { secretMatches } from "@/lib/secretMatch";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = request.headers.get("x-revalidate-secret");
   const expected = process.env.REVALIDATE_SECRET;
-  if (!expected || secret !== expected) {
+  if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

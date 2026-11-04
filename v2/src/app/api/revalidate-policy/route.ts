@@ -20,11 +20,12 @@ import { NextResponse } from "next/server";
 import { postsUsing } from "@/lib/content";
 
 import { POLICY_PAGES, RULE_PARTS } from "./paths";
+import { secretMatches } from "@/lib/secretMatch";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = request.headers.get("x-revalidate-secret");
   const expected = process.env.REVALIDATE_SECRET;
-  if (!expected || secret !== expected) {
+  if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

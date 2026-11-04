@@ -35,6 +35,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { entityHref } from "@/lib/entityPayload";
+import { secretMatches } from "@/lib/secretMatch";
 
 /**
  * A global cap on the shared resource, not a per-caller one.
@@ -55,7 +56,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   // ingest, which keeps the parsing and the loop off a stranger's request.
   const secret = request.headers.get("x-revalidate-secret");
   const expected = process.env.REVALIDATE_SECRET;
-  if (!expected || secret !== expected) {
+  if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -10,12 +10,13 @@
 
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
+import { secretMatches } from "@/lib/secretMatch";
 
 export async function GET(request: Request): Promise<NextResponse> {
   const secret = request.headers.get("x-sentry-check-secret");
   const expected = process.env.SENTRY_CHECK_SECRET;
 
-  if (!expected || secret !== expected) {
+  if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

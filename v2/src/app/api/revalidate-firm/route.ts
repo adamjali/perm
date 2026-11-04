@@ -14,6 +14,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { entityHref } from "@/lib/entityPayload";
+import { secretMatches } from "@/lib/secretMatch";
 
 /** Firm slugs as `slugify` makes them, with room to spare. */
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
@@ -21,7 +22,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = request.headers.get("x-revalidate-secret");
   const expected = process.env.REVALIDATE_SECRET;
-  if (!expected || secret !== expected) {
+  if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body: unknown = await request.json().catch(() => null);

@@ -8,6 +8,7 @@ import {
   REPO,
   runTitle,
 } from "../jobs";
+import { bearerMatches } from "@/lib/secretMatch";
 
 /**
  * The server's clock, GitHub's runners.
@@ -53,7 +54,7 @@ export async function GET(
 ): Promise<NextResponse> {
   const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!(await bearerMatches(auth, secret))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
