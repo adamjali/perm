@@ -57,7 +57,7 @@ export function Track({ steps, children }: { steps: readonly string[]; children:
           </Fragment>
         ))}
       </div>{" "}
-      <ol aria-label="The four steps, in order" className="track-stack grid max-w-xl grid-cols-1 gap-6 lg:max-w-none lg:grid-cols-4 lg:gap-8 [&>*]:min-w-0">
+      <ol aria-label="The four steps, in order" className="track-stack grid grid-cols-1 gap-6 lg:grid-cols-4 lg:gap-8 [&>*]:min-w-0">
         {children}
       </ol>
     </div>
