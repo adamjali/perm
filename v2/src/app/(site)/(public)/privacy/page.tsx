@@ -1486,6 +1486,16 @@ export default function PrivacyPage() {
               sources are public government records, not data you gave us. To
               ask about one, write to the same address.
             </p>{" "}
+            <p className="text-soft leading-relaxed mt-4">
+              If you&apos;re named in the Department of Labor&apos;s records and
+              would like your name off our pages, email{" "}
+              <a href="mailto:support@permtracker.app" className="link">
+                support@permtracker.app
+              </a>
+              . We can show a neutral label in its place, such as &ldquo;Law firm
+              1&rdquo; or &ldquo;Employer 1&rdquo;. The Department of
+              Labor&apos;s own records stay public on its website.
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               California Residents (CCPA/CPRA)

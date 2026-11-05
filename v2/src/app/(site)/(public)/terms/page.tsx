@@ -283,8 +283,9 @@ export default function TermsPage() {
               it as that requires (for example, to show it shortened, beside a
               star count, or in figures combined with others), with the name you
               gave or without one. The license lasts until the submission is
-              removed. You may ask us to remove a review or rating at any time,
-              and you can remove a timeline yourself. Figures that already
+              removed. You may ask us to remove a review, a rating or a consulate
+              report at any time, and you can remove a timeline or a consulate
+              report yourself. Figures that already
               combine your submission with others, such as a median, needn’t be
               recalculated. You confirm that what you send is your own
               experience, is accurate, and names no one else.
