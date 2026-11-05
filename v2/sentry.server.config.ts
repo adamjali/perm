@@ -52,5 +52,9 @@ Sentry.init({
   integrations: [
     // Forward console.warn and console.error to Sentry Logs
     Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
+    // No request body ever reaches Sentry. The SDK's default ("medium") attaches up to 10 KB of the body to an error
+    // in that request, which here includes a sign-in's email and password. disableIncomingRequestSpans is the Next.js
+    // SDK's own setting for this integration (Next traces requests itself), kept because this entry replaces its own.
+    Sentry.httpIntegration({ disableIncomingRequestSpans: true, maxIncomingRequestBodySize: "none" }),
   ],
 });
