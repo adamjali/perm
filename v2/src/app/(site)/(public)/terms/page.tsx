@@ -205,6 +205,11 @@ export default function TermsPage() {
                 </Link>
               </li>{" "}
               <li>
+                Use the compiled dataset, or a substantial part of it, to build
+                a product or service that competes with PERM Tracker or stands in
+                for it, whether by copying it, by automated means or otherwise
+              </li>{" "}
+              <li>
                 Extract the compiled dataset in bulk, or redistribute it as a
                 dataset, whether by automated means or otherwise (see{" "}
                 <a href="#intellectual-property" className="link">
@@ -334,14 +339,20 @@ export default function TermsPage() {
               dataset, is not permitted under these Terms.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">
-              <strong>Two files are open.</strong> The visa bulletin archive and
+              <strong>Two files are open for non-commercial use.</strong> The visa bulletin archive and
               the history of DOL&rsquo;s processing-times readings, offered on{" "}
               <Link href="/open-data" className="link">
                 Open data
               </Link>
-              , are licensed under the Creative Commons Attribution 4.0
-              International licence (CC BY 4.0): you may copy, adapt and
-              publish them, commercially too, with credit to PERM Tracker. The
+              , are licensed under the Creative Commons
+              Attribution-NonCommercial 4.0 International licence (CC BY-NC
+              4.0): you may copy, adapt and publish them for non-commercial
+              purposes, with credit to PERM Tracker. In addition to that
+              licence, news reporting, research and teaching may use them with
+              credit and a link, including in a commercial publication. Any
+              other commercial use requires our written permission; write to
+              support@permtracker.app. Copies obtained before November 6, 2026
+              remain under the CC BY 4.0 licence they were offered under. The
               licence covers those files only.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">

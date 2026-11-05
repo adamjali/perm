@@ -282,7 +282,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/open-data",
     label: "Open data",
-    blurb: "Two datasets as CSV and JSON under CC BY 4.0: every visa bulletin cutoff (employment and family, final action and dates for filing, by category and country) back to June 2005, every one since October 2014, and every reading of DOL's PERM and prevailing wage processing-times page we've kept.",
+    blurb: "Two datasets as CSV and JSON, free for non-commercial reuse with credit under CC BY-NC 4.0 (news, research and teaching may use them in any publication): every visa bulletin cutoff (employment and family, final action and dates for filing, by category and country) back to June 2005, every one since October 2014, and every reading of DOL's PERM and prevailing wage processing-times page we've kept.",
   },
   {
     path: "/developers",

@@ -142,7 +142,7 @@ export const PERM_TRACKER: Tracker = {
     noAccount: { mark: "yes", evidence: { url: `${OURS}/perm-case-status` } },
     free: { mark: "yes", evidence: { url: `${OURS}/about` } },
     noAds: { mark: "yes" },
-    openData: { mark: "yes", note: "A free API and CC BY 4.0 files", evidence: { url: `${OURS}/open-data` } },
+    openData: { mark: "yes", note: "A free API and CC BY-NC 4.0 files", evidence: { url: `${OURS}/open-data` } },
   },
   strengths: [],
   bestFor: "Following one case's DOL status, in any DOL program, with a free email when it changes",

@@ -377,7 +377,7 @@ export interface DatasetSchemaInput {
   isBasedOn?: string;
   /**
    * A licence URL that replaces the default (our Terms). Only the open
-   * datasets pass one: they are offered under CC BY 4.0, and every other
+   * datasets pass one: they are offered under CC BY-NC 4.0, and every other
    * Dataset on the site stays under the Terms' compilation clause.
    */
   license?: string;
