@@ -237,6 +237,10 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "BEA's regional price parities: what the same basket costs in a state or metro area against the national level of 100.",
   "visa-issuances":
     "Immigrant visas State's consulates issued abroad each month, by visa class and by country or consulate. A green card granted inside the United States (adjustment of status at USCIS) is not in it, and for employment categories that is most of them.",
+  "niv-issuances":
+    "Nonimmigrant visas each US consulate issued each month, by visa class (H-1B, L-1, K-1 fiancé(e), visitors, students and the rest), from State's monthly tables, which State calls preliminary. Visas only: a change of status inside the United States isn't in it, and neither are refusals. Each month is checked against State's own grand total.",
+  "visa-refusals":
+    "Visa applications consular officers found ineligible each fiscal year, by ground of the law, and how many findings were overcome, for immigrant and nonimmigrant visas apart, from State's yearly Report of the Visa Office. Worldwide only: State publishes no count by consulate or month. An application can be refused on several grounds, and a refusal overcome in a later year counts in that year.",
   "iv-scheduling":
     "For each US consulate, the month of documentarily complete cases the National Visa Center is scheduling interviews for, in employment, family preference and immediate relative cases, as State's IV Scheduling Status Tool printed it at each monthly update. It's NVC's paperwork queue: it doesn't show an interview wait, or whether a post is holding interviews. Copied in a browser, since State's site refuses scripts.",
   // --- USCIS H-1B Employer Data Hub -------------------------------------------
@@ -385,6 +389,8 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "census-geo": "Census places and metros",
   "bea-rpp": "BEA price parities",
   "visa-issuances": "State visa issuances",
+  "niv-issuances": "State nonimmigrant visa issuances",
+  "visa-refusals": "State visa refusals by ground",
   "iv-scheduling": "State's IV scheduling table",
   "firm-email-domains": "Law firms' email domains",
   // Retired names still stamped on older rows.

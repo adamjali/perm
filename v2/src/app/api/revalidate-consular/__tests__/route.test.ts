@@ -75,13 +75,14 @@ describe("the lists match the pages that read State's scheduling table", () => {
     const missing: string[] = [];
     for (const file of pages) {
       const src = readFileSync(file, "utf8");
-      if (!/db\/consularPosts|getPlanReading/.test(src) || !/export const revalidate\s*=/.test(src)) continue;
+      // State's consular tables: the scheduling tool, the nonimmigrant issuances by post and the refusals by ground.
+      if (!/db\/(consularPosts|nivIssuances|visaRefusals)|getPlanReading/.test(src) || !/export const revalidate\s*=/.test(src)) continue;
       const route = routeOf(file);
       readers.push(route);
       if (families.has(route)) continue;
       if (!(CONSULAR_PAGES as readonly string[]).includes(route)) missing.push(route);
     }
-    expect(readers).toEqual(expect.arrayContaining(["/consular-posts", "/consular-posts/[post]"]));
+    expect(readers).toEqual(expect.arrayContaining(["/consular-posts", "/consular-posts/[post]", "/visa-refusals"]));
     expect(missing, `read State's table but aren't expired when one lands: ${missing.join(", ")}`).toEqual([]);
   });
 });

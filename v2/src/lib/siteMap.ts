@@ -85,6 +85,7 @@ export type DataSection =
   | "visa-issuances"
   | "consular-posts"
   | "visa-wait-times"
+  | "visa-refusals"
   | "risk"
   | "rfi-audit"
   | "uscis-rfe"
@@ -222,6 +223,7 @@ export const SECTIONS: DataNavSection[] = [
   t("six-year-limit", "Other visas", "H-1B six-year limit", "/tools/h1b-six-year-limit", "The end of six years and the 365-day rule."),
   s("seasonal-cases", "Other visas", "H-2A, H-2B and CW-1", "/seasonal-cases"),
   s("visa-wait-times", "Other visas", "Visa interview waits", "/visa-wait-times"),
+  s("visa-refusals", "Other visas", "Why visas are refused", "/visa-refusals"),
   s("cap-exempt", "Other visas", "H-1B cap-exempt employers", "/h1b-cap-exempt-employers"),
   s("wage-violations", "Other visas", "Visa wage violations", "/wage-violations"),
 

@@ -305,6 +305,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     // A page per consulate State's tables name, from the same read the index makes.
     ...consularPosts.map((p) => ({ url: `${base}/consular-posts/${p.slug}`, lastModified: at("/consular-posts/[post]") })),
     { url: `${base}/visa-wait-times`, lastModified: at("/visa-wait-times"), images: [`${base}/og/visa-wait-times.jpg`] },
+    // Its social card is still to be drawn; the image joins this entry with it.
+    { url: `${base}/visa-refusals`, lastModified: at("/visa-refusals") },
     { url: `${base}/perm-cities`, lastModified: at("/perm-cities"), images: [`${base}/og/perm-cities.jpg`] },
     { url: `${base}/perm-industries`, lastModified: at("/perm-industries"), images: [`${base}/og/perm-industries.jpg`] },
     { url: `${base}/perm-countries`, lastModified: at("/perm-countries"), images: [`${base}/og/perm-countries.jpg`] },

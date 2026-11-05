@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times|news> <file>|state-page issuances <file> <YYYY-MM> <fsc|post>|embassy-notices <file>|browser-check <name> [note]>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups|policy-watch|flag-notice|chat-models|firm-programs|whd|osha|posted-times|sam|taa|ppp|warn-archive|bulletin-tables <file> <YYYY-MM>|iv-tool <file|archive>|state-page <nvc|wait-times|news> <file>|state-page issuances <file> <YYYY-MM> <fsc|post>|state-page niv <file> <YYYY-MM>|state-page refusals <file> [<YYYY>]|niv-archive|embassy-notices <file>|browser-check <name> [note]>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -96,6 +96,15 @@ case "$job" in
     else
       rc=1; fail ingest_iv_scheduling.py "the IV scheduling table ($f) was refused"
     fi ;;
+  # The months of nonimmigrant issuances by post that only the Internet Archive still serves (State's PDFs, March
+  # 2017 to September 2022; Nov 5 2026). Run by hand: it loads only months not held, waits between requests, refuses
+  # February 2017's by-post-and-nationality layout, and when the Archive stops answering it keeps what it loaded
+  # and says where it stopped. The consulate pages rebuild after a write.
+  #   sudo -u permtracker permtracker-uscis niv-archive
+  niv-archive)
+    site_refresh_env
+    timeout 180m nice -n 10 python3 scripts/ingest_niv_issuances.py --archive \
+      || { rc=1; fail ingest_niv_issuances.py "the Internet Archive's months were refused or ran past 180m"; } ;;
   # Two more State pages copied out of a person's browser (Nov 3 2026), for the bulletin's reason: NVC's
   # timeframes (weekly) and Global Visa Wait Times (monthly). The page's text, or its table as HTML with the
   # "Last updated" line, goes in a file; each reader's own parser and checks decide whether it's written.
@@ -107,9 +116,15 @@ case "$job" in
   # State links, its bytes copied from the page; the loader checks it against State's own grand total):
   #   sudo -u permtracker permtracker-uscis state-page news /tmp/state-news.json
   #   sudo -u permtracker permtracker-uscis state-page issuances /tmp/iv-2026-03-post.xlsx 2026-03 post
+  # Since Nov 5 2026 two more: a month's NONIMMIGRANT issuances by post (the by-post .xlsx from State's monthly
+  # nonimmigrant page, checked against its GRAND TOTAL and that formula's range; the consulate pages rebuild), and
+  # a year's table of refusals by ground (the Report of the Visa Office's PDF, checked against its own total line;
+  # the year is read from its title, and a year given must match it):
+  #   sudo -u permtracker permtracker-uscis state-page niv /tmp/niv-2026-02.xlsx 2026-02
+  #   sudo -u permtracker permtracker-uscis state-page refusals /tmp/refusals-fy2024.pdf 2024
   state-page)
     kind="${2:-}"; f="${3:-}"
-    usage="usage: permtracker-uscis state-page <nvc|wait-times|news> <file> | state-page issuances <file> <YYYY-MM> <fsc|post>"
+    usage="usage: permtracker-uscis state-page <nvc|wait-times|news> <file> | state-page issuances <file> <YYYY-MM> <fsc|post> | state-page niv <file> <YYYY-MM> | state-page refusals <file> [<YYYY>]"
     if [ -z "$f" ]; then echo "$usage"; exit 2; fi
     case "$kind" in
       nvc) s=ingest_nvc_timeframes.py; set -- --from-file "$f" ;;
@@ -119,6 +134,15 @@ case "$job" in
         m="${4:-}"; d="${5:-}"
         if ! [[ "$m" =~ ^[0-9]{4}-[0-9]{2}$ ]] || ! [[ "$d" =~ ^(fsc|post)$ ]]; then echo "$usage"; exit 2; fi
         s=ingest_visa_issuances.py; set -- --local "$f" --month "$m" --dim "$d" ;;
+      niv)
+        m="${4:-}"
+        if ! [[ "$m" =~ ^[0-9]{4}-[0-9]{2}$ ]]; then echo "$usage"; exit 2; fi
+        s=ingest_niv_issuances.py; set -- --local "$f" --month "$m" ;;
+      refusals)
+        y="${4:-}"
+        if [ -n "$y" ] && ! [[ "$y" =~ ^[0-9]{4}$ ]]; then echo "$usage"; exit 2; fi
+        s=ingest_visa_refusals.py
+        if [ -n "$y" ]; then set -- --local "$f" --fy "$y"; else set -- --local "$f"; fi ;;
       *) echo "$usage"; exit 2 ;;
     esac
     site_refresh_env

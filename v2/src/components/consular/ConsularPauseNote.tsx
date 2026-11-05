@@ -55,6 +55,13 @@ export function ConsularPauseNote({
       </h2>{" "}
       <p className="mt-3 max-w-3xl text-base leading-relaxed">{pause.summary}</p>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed">{pause.reinterviewsExempt}</p>{" "}
+      <p className="mt-2 max-w-3xl text-base leading-relaxed">
+        How often consular officers have refused visas on public charge grounds, year by year, in State&apos;s own counts:{" "}
+        <Link href="/visa-refusals#public-charge" className="link">
+          visa refusals by ground
+        </Link>
+        .
+      </p>{" "}
       <p className="mt-2 text-sm text-muted-foreground">Checked against the sources below on {checked}.</p>{" "}
       <FinePrint summary="What State has said under oath" className="mt-2">
         <ul className="space-y-3">

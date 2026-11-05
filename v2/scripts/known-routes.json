@@ -212,6 +212,7 @@
   "/visa-issuances",
   "/consular-posts",
   "/visa-wait-times",
+  "/visa-refusals",
   "/perm-cities",
   "/perm-industries",
   "/perm-countries",

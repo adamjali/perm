@@ -1,0 +1,1733 @@
+{
+ "summary": {
+  "years": [
+   2000,
+   2001,
+   2002,
+   2003,
+   2004,
+   2005,
+   2006,
+   2007,
+   2008,
+   2009,
+   2010,
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "newest": 2024,
+  "totals": {
+   "2000": {
+    "iv_found": 273021,
+    "iv_overcome": 178163,
+    "niv_found": 2452185,
+    "niv_overcome": 310899
+   },
+   "2001": {
+    "iv_found": 232036,
+    "iv_overcome": 163889,
+    "niv_found": 2884787,
+    "niv_overcome": 371184
+   },
+   "2002": {
+    "iv_found": 223218,
+    "iv_overcome": 166031,
+    "niv_found": 2600367,
+    "niv_overcome": 443282
+   },
+   "2003": {
+    "iv_found": 239307,
+    "iv_overcome": 156339,
+    "niv_found": 2216198,
+    "niv_overcome": 552308
+   },
+   "2004": {
+    "iv_found": 275799,
+    "iv_overcome": 160558,
+    "niv_found": 2011939,
+    "niv_overcome": 435645
+   },
+   "2005": {
+    "iv_found": 309049,
+    "iv_overcome": 173947,
+    "niv_found": 1966858,
+    "niv_overcome": 433620
+   },
+   "2006": {
+    "iv_found": 323237,
+    "iv_overcome": 179962,
+    "niv_found": 1931434,
+    "niv_overcome": 438129
+   },
+   "2007": {
+    "iv_found": 288878,
+    "iv_overcome": 174438,
+    "niv_found": 2117241,
+    "niv_overcome": 470047
+   },
+   "2008": {
+    "iv_found": 334268,
+    "iv_overcome": 194648,
+    "niv_found": 2106894,
+    "niv_overcome": 541070
+   },
+   "2009": {
+    "iv_found": 344791,
+    "iv_overcome": 199978,
+    "niv_found": 1913115,
+    "niv_overcome": 587826
+   },
+   "2010": {
+    "iv_found": 353834,
+    "iv_overcome": 218135,
+    "niv_found": 1892999,
+    "niv_overcome": 645442
+   },
+   "2011": {
+    "iv_found": 381754,
+    "iv_overcome": 220590,
+    "niv_found": 2096703,
+    "niv_overcome": 772192
+   },
+   "2012": {
+    "iv_found": 371807,
+    "iv_overcome": 232847,
+    "niv_found": 2169186,
+    "niv_overcome": 752618
+   },
+   "2013": {
+    "iv_found": 341489,
+    "iv_overcome": 208855,
+    "niv_found": 2274777,
+    "niv_overcome": 716156
+   },
+   "2014": {
+    "iv_found": 294106,
+    "iv_overcome": 206263,
+    "niv_found": 2470225,
+    "niv_overcome": 676521
+   },
+   "2015": {
+    "iv_found": 325410,
+    "iv_overcome": 209882,
+    "niv_found": 3109399,
+    "niv_overcome": 691873
+   },
+   "2016": {
+    "iv_found": 363724,
+    "iv_overcome": 233632,
+    "niv_found": 3683812,
+    "niv_overcome": 730703
+   },
+   "2017": {
+    "iv_found": 332003,
+    "iv_overcome": 218470,
+    "niv_found": 3516581,
+    "niv_overcome": 744003
+   },
+   "2018": {
+    "iv_found": 460840,
+    "iv_overcome": 223052,
+    "niv_found": 3706541,
+    "niv_overcome": 779288
+   },
+   "2019": {
+    "iv_found": 433137,
+    "iv_overcome": 203132,
+    "niv_found": 3804717,
+    "niv_overcome": 834910
+   },
+   "2020": {
+    "iv_found": 170399,
+    "iv_overcome": 153713,
+    "niv_found": 1699630,
+    "niv_overcome": 400547
+   },
+   "2021": {
+    "iv_found": 214782,
+    "iv_overcome": 178033,
+    "niv_found": 618944,
+    "niv_overcome": 307816
+   },
+   "2022": {
+    "iv_found": 273926,
+    "iv_overcome": 244091,
+    "niv_found": 1791914,
+    "niv_overcome": 604222
+   },
+   "2023": {
+    "iv_found": 263212,
+    "iv_overcome": 221198,
+    "niv_found": 3125820,
+    "niv_overcome": 758450
+   },
+   "2024": {
+    "iv_found": 273845,
+    "iv_overcome": 216929,
+    "niv_found": 3891139,
+    "niv_overcome": 699371
+   }
+  },
+  "knownGaps": {
+   "2024": [
+    {
+     "column": "iv_found",
+     "rowsAddTo": 273928,
+     "stateTotal": 273845,
+     "ground": "101(a)(27)(D)(i)",
+     "why": "State's total for immigrant findings leaves out the table's first row, 101(a)(27)(D)(i) (Unqualified Special Immigrant, 83 findings), a ground the table carries for the first time in FY2024. Every other row adds up to the total exactly."
+    }
+   ]
+  },
+  "sources": {
+   "2024": "https://travel.state.gov/content/dam/visas/Statistics/AnnualReports/FY2024AnnualReport/Table%20XIX.pdf"
+  },
+  "changedOn": "2026-11-05"
+ },
+ "newest": [
+  {
+   "fy": 2024,
+   "line": 1,
+   "code": "101(a)(27)(D)(i)",
+   "ground": "Unqualified Special Immigrant",
+   "ivFound": 83,
+   "ivOvercome": 0,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 2,
+   "code": "203(c)",
+   "ground": "Failure to fulfill education and work experience requirement for Diversity Visa",
+   "ivFound": 1842,
+   "ivOvercome": 52,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 3,
+   "code": "204(a)(1)(I)",
+   "ground": "Failure to comply with Diversity Visa requirements/regulations",
+   "ivFound": 1379,
+   "ivOvercome": 45,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 4,
+   "code": "208(d)(6)",
+   "ground": "Knowingly made frivolous application for asylum",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 1,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 5,
+   "code": "212(a)(1)(A)(i)",
+   "ground": "Communicable Disease",
+   "ivFound": 191,
+   "ivOvercome": 228,
+   "nivFound": 12,
+   "nivOvercome": 4
+  },
+  {
+   "fy": 2024,
+   "line": 6,
+   "code": "212(a)(1)(A)(ii)",
+   "ground": "Immigrant lacking required vaccinations",
+   "ivFound": 547,
+   "ivOvercome": 276,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 7,
+   "code": "212(a)(1)(A)(iii)",
+   "ground": "Physical or mental disorder",
+   "ivFound": 624,
+   "ivOvercome": 387,
+   "nivFound": 260,
+   "nivOvercome": 21
+  },
+  {
+   "fy": 2024,
+   "line": 8,
+   "code": "212(a)(1)(A)(iv)",
+   "ground": "Drug Abuser or Addict",
+   "ivFound": 1771,
+   "ivOvercome": 1092,
+   "nivFound": 314,
+   "nivOvercome": 51
+  },
+  {
+   "fy": 2024,
+   "line": 9,
+   "code": "212(a)(2)(A)(i)(I)",
+   "ground": "Crime Involving Moral Turpitude",
+   "ivFound": 1861,
+   "ivOvercome": 211,
+   "nivFound": 8175,
+   "nivOvercome": 2476
+  },
+  {
+   "fy": 2024,
+   "line": 10,
+   "code": "212(a)(2)(A)(i)(II)",
+   "ground": "Controlled Substance Violators",
+   "ivFound": 645,
+   "ivOvercome": 37,
+   "nivFound": 5498,
+   "nivOvercome": 2014
+  },
+  {
+   "fy": 2024,
+   "line": 11,
+   "code": "212(a)(2)(B)",
+   "ground": "Multiple Criminal Convictions",
+   "ivFound": 192,
+   "ivOvercome": 4,
+   "nivFound": 500,
+   "nivOvercome": 101
+  },
+  {
+   "fy": 2024,
+   "line": 12,
+   "code": "212(a)(2)(C)(i)",
+   "ground": "Illicit Trafficker in Any Controlled Substance",
+   "ivFound": 525,
+   "ivOvercome": 3,
+   "nivFound": 3705,
+   "nivOvercome": 665
+  },
+  {
+   "fy": 2024,
+   "line": 13,
+   "code": "212(a)(2)(C)(ii)",
+   "ground": "Spouse, Son, or Daughter Who Benefited from Illicit Activities of Trafficker",
+   "ivFound": 35,
+   "ivOvercome": 6,
+   "nivFound": 813,
+   "nivOvercome": 26
+  },
+  {
+   "fy": 2024,
+   "line": 14,
+   "code": "212(a)(2)(D)(i)",
+   "ground": "Prostitution (within 10 years)",
+   "ivFound": 13,
+   "ivOvercome": 1,
+   "nivFound": 226,
+   "nivOvercome": 16
+  },
+  {
+   "fy": 2024,
+   "line": 15,
+   "code": "212(a)(2)(D)(ii)",
+   "ground": "Procuring (within 10 years)",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 21,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 16,
+   "code": "212(a)(2)(D)(iii)",
+   "ground": "Unlawful Commercialized Vice",
+   "ivFound": 3,
+   "ivOvercome": 0,
+   "nivFound": 5,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 17,
+   "code": "212(a)(2)(E)",
+   "ground": "Asserted immunity to avoid prosecution",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 1,
+   "nivOvercome": 1
+  },
+  {
+   "fy": 2024,
+   "line": 18,
+   "code": "212(a)(2)(G)",
+   "ground": "Foreign government officials who have engaged in violations of religious freedom",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 19,
+   "code": "212(a)(2)(H)",
+   "ground": "Significant traffickers in persons",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 9,
+   "nivOvercome": 2
+  },
+  {
+   "fy": 2024,
+   "line": 20,
+   "code": "212(a)(2)(I)",
+   "ground": "Money Laundering",
+   "ivFound": 5,
+   "ivOvercome": 0,
+   "nivFound": 51,
+   "nivOvercome": 18
+  },
+  {
+   "fy": 2024,
+   "line": 21,
+   "code": "212(a)(3)(A)(i)",
+   "ground": "Espionage, sabotage, technology transfer, etc.",
+   "ivFound": 3,
+   "ivOvercome": 0,
+   "nivFound": 136,
+   "nivOvercome": 18
+  },
+  {
+   "fy": 2024,
+   "line": 22,
+   "code": "212(a)(3)(A)(ii)",
+   "ground": "Other Unlawful Activity",
+   "ivFound": 37,
+   "ivOvercome": 0,
+   "nivFound": 105,
+   "nivOvercome": 5
+  },
+  {
+   "fy": 2024,
+   "line": 23,
+   "code": "212(a)(3)(A)(iii)",
+   "ground": "Act to Overthrow U.S. Government",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 24,
+   "code": "212(a)(3)(B)",
+   "ground": "Terrorist Activities",
+   "ivFound": 155,
+   "ivOvercome": 0,
+   "nivFound": 629,
+   "nivOvercome": 317
+  },
+  {
+   "fy": 2024,
+   "line": 25,
+   "code": "212(a)(3)(C)",
+   "ground": "Foreign Policy",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 6,
+   "nivOvercome": 1
+  },
+  {
+   "fy": 2024,
+   "line": 26,
+   "code": "212(a)(3)(D)",
+   "ground": "Immigrant Membership in Totalitarian Party",
+   "ivFound": 134,
+   "ivOvercome": 11,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 27,
+   "code": "212(a)(3)(E)(i)",
+   "ground": "Participants in Nazi Persecutions",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 28,
+   "code": "212(a)(3)(E)(ii)",
+   "ground": "Participants in Genocide",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 29,
+   "code": "212(a)(3)(E)(iii)",
+   "ground": "Commission of Acts of Torture or Extrajudicial Killings",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 2,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 30,
+   "code": "212(a)(3)(F)",
+   "ground": "Association with Terrorist Organizations",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 31,
+   "code": "212(a)(3)(G)",
+   "ground": "Recruitment or Use of Child Soldiers",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 1,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 32,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 1008,
+   "ivOvercome": 846,
+   "nivFound": 74,
+   "nivOvercome": 30
+  },
+  {
+   "fy": 2024,
+   "line": 33,
+   "code": "212(a)(5)(A)",
+   "ground": "Labor Certification (immigrants only)",
+   "ivFound": 252,
+   "ivOvercome": 194,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 34,
+   "code": "212(a)(5)(B)",
+   "ground": "Unqualified Physician (immigrants only)",
+   "ivFound": 5,
+   "ivOvercome": 0,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 35,
+   "code": "212(a)(5)(C)",
+   "ground": "Uncertified foreign health-care workers",
+   "ivFound": 2,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 36,
+   "code": "212(a)(6)(B)",
+   "ground": "Failure to attend removal proceedings",
+   "ivFound": 57,
+   "ivOvercome": 30,
+   "nivFound": 12,
+   "nivOvercome": 2
+  },
+  {
+   "fy": 2024,
+   "line": 37,
+   "code": "212(a)(6)(C)(i)",
+   "ground": "Misrepresentation",
+   "ivFound": 6422,
+   "ivOvercome": 1026,
+   "nivFound": 17726,
+   "nivOvercome": 4047
+  },
+  {
+   "fy": 2024,
+   "line": 38,
+   "code": "212(a)(6)(C)(ii)",
+   "ground": "Falsely claiming citizenship",
+   "ivFound": 424,
+   "ivOvercome": 0,
+   "nivFound": 1538,
+   "nivOvercome": 405
+  },
+  {
+   "fy": 2024,
+   "line": 39,
+   "code": "212(a)(6)(E)",
+   "ground": "Smugglers of aliens",
+   "ivFound": 4285,
+   "ivOvercome": 929,
+   "nivFound": 4670,
+   "nivOvercome": 816
+  },
+  {
+   "fy": 2024,
+   "line": 40,
+   "code": "212(a)(6)(F)",
+   "ground": "Subject of civil penalty (under INA 274C)",
+   "ivFound": 2,
+   "ivOvercome": 0,
+   "nivFound": 2,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 41,
+   "code": "212(a)(6)(G)",
+   "ground": "Student visa abusers",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 42,
+   "code": "212(a)(7)(B)",
+   "ground": "Documentation requirement for nonimmigrants",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 318,
+   "nivOvercome": 281
+  },
+  {
+   "fy": 2024,
+   "line": 43,
+   "code": "212(a)(8)(A)",
+   "ground": "Immigrant permanently ineligible for citizenship",
+   "ivFound": 5,
+   "ivOvercome": 0,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 44,
+   "code": "212(a)(8)(B)",
+   "ground": "Draft evader",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 4,
+   "nivOvercome": 1
+  },
+  {
+   "fy": 2024,
+   "line": 45,
+   "code": "212(a)(9)(A)(i)",
+   "ground": "Ordered removed upon arrival - expedited removal",
+   "ivFound": 472,
+   "ivOvercome": 278,
+   "nivFound": 1660,
+   "nivOvercome": 98
+  },
+  {
+   "fy": 2024,
+   "line": 46,
+   "code": "212(a)(9)(A)(i)",
+   "ground": "Ordered removed upon arrival - multiple removals",
+   "ivFound": 370,
+   "ivOvercome": 98,
+   "nivFound": 737,
+   "nivOvercome": 22
+  },
+  {
+   "fy": 2024,
+   "line": 47,
+   "code": "212(a)(9)(A)(i)",
+   "ground": "Ordered removed upon arrival - convicted aggravated felony",
+   "ivFound": 40,
+   "ivOvercome": 3,
+   "nivFound": 164,
+   "nivOvercome": 11
+  },
+  {
+   "fy": 2024,
+   "line": 48,
+   "code": "212(a)(9)(A)(ii)",
+   "ground": "Ordered removed or departed while removal order outstanding",
+   "ivFound": 551,
+   "ivOvercome": 300,
+   "nivFound": 543,
+   "nivOvercome": 52
+  },
+  {
+   "fy": 2024,
+   "line": 49,
+   "code": "212(a)(9)(A)(ii)",
+   "ground": "Ordered removed or departed while removal order outstanding - multiple removals",
+   "ivFound": 374,
+   "ivOvercome": 65,
+   "nivFound": 322,
+   "nivOvercome": 10
+  },
+  {
+   "fy": 2024,
+   "line": 50,
+   "code": "212(a)(9)(A)(ii)",
+   "ground": "Ordered removed or departed while removal order outstanding - convicted aggravated felony",
+   "ivFound": 247,
+   "ivOvercome": 8,
+   "nivFound": 509,
+   "nivOvercome": 32
+  },
+  {
+   "fy": 2024,
+   "line": 51,
+   "code": "212(a)(9)(B)(i)(I)",
+   "ground": "Unlawfully present 181-364 days (within 3 years)",
+   "ivFound": 139,
+   "ivOvercome": 85,
+   "nivFound": 819,
+   "nivOvercome": 155
+  },
+  {
+   "fy": 2024,
+   "line": 52,
+   "code": "212(a)(9)(B)(i)(I)",
+   "ground": "Unlawfully present 181-364 days (within 3 years) (provisional waiver)",
+   "ivFound": 47,
+   "ivOvercome": 49,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 53,
+   "code": "212(a)(9)(B)(i)(II)",
+   "ground": "Unlawfully present 365 or more days (within 10 years)",
+   "ivFound": 3502,
+   "ivOvercome": 2029,
+   "nivFound": 6812,
+   "nivOvercome": 498
+  },
+  {
+   "fy": 2024,
+   "line": 54,
+   "code": "212(a)(9)(B)(i)(II)",
+   "ground": "Unlawfully present 365 or more days (within 10 years) (provisional waiver)",
+   "ivFound": 15986,
+   "ivOvercome": 15982,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 55,
+   "code": "212(a)(9)(C)",
+   "ground": "Unlawfully present after previous immigration violations",
+   "ivFound": 4334,
+   "ivOvercome": 1147,
+   "nivFound": 12025,
+   "nivOvercome": 2300
+  },
+  {
+   "fy": 2024,
+   "line": 56,
+   "code": "212(a)(10)(A)",
+   "ground": "Practicing polygamist (immigrants only)",
+   "ivFound": 11,
+   "ivOvercome": 2,
+   "nivFound": null,
+   "nivOvercome": null
+  },
+  {
+   "fy": 2024,
+   "line": 57,
+   "code": "212(a)(10)(C)(i)",
+   "ground": "International child abductor",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 1,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 58,
+   "code": "212(a)(10)(C)(ii)",
+   "ground": "Aliens supporting abductors and relatives of abductors",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 59,
+   "code": "212(a)(10)(D)",
+   "ground": "Unlawful voter",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 1,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 60,
+   "code": "212(a)(10)(E)",
+   "ground": "Former U.S. citizen who renounced citizenship to avoid taxation",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 61,
+   "code": "212(e)",
+   "ground": "Foreign residence requirement: Former exchange visitors",
+   "ivFound": 15,
+   "ivOvercome": 11,
+   "nivFound": 53,
+   "nivOvercome": 37
+  },
+  {
+   "fy": 2024,
+   "line": 62,
+   "code": "212(f)",
+   "ground": "Presidential proclamation suspending the entry of any class of aliens",
+   "ivFound": 0,
+   "ivOvercome": 245,
+   "nivFound": 1102,
+   "nivOvercome": 48
+  },
+  {
+   "fy": 2024,
+   "line": 63,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 3010544,
+   "nivOvercome": 11910
+  },
+  {
+   "fy": 2024,
+   "line": 64,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 225278,
+   "ivOvercome": 191245,
+   "nivFound": 809735,
+   "nivOvercome": 672461
+  },
+  {
+   "fy": 2024,
+   "line": 65,
+   "code": "222(g)(2)",
+   "ground": "Alien in illegal status, required to apply for new nonimmigrant visa in country of alien's nationality",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 103,
+   "nivOvercome": 3
+  },
+  {
+   "fy": 2024,
+   "line": 66,
+   "code": "243(d)",
+   "ground": "National of a country denying or delaying accepting an alien",
+   "ivFound": 1,
+   "ivOvercome": 2,
+   "nivFound": 320,
+   "nivOvercome": 381
+  },
+  {
+   "fy": 2024,
+   "line": 67,
+   "code": "8 U.S.C. \u00a7 1182e",
+   "ground": "Any person who has been directly involved in the establishment or enforcement of forced abortion or sterilization",
+   "ivFound": 36,
+   "ivOvercome": 1,
+   "nivFound": 491,
+   "nivOvercome": 5
+  },
+  {
+   "fy": 2024,
+   "line": 68,
+   "code": "8 U.S.C. \u00a7 1182f",
+   "ground": "Direct Involvement in Coerced Organ/Tissue Transplantation",
+   "ivFound": 4,
+   "ivOvercome": 1,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 69,
+   "code": "Misc. Executive Orders",
+   "ground": "Treasury or State Designation for Sanctions",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 70,
+   "code": "22 U.S.C. \u00a7 10102",
+   "ground": "Sergei Magnitsky Rule of Law Accountability Act of 2012",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 71,
+   "code": "Sec. 5(a)(1) of the JADE Act",
+   "ground": "Visa restrictions for certain Burmese nationals under the JADE Act of 2008",
+   "ivFound": 4,
+   "ivOvercome": 0,
+   "nivFound": 12,
+   "nivOvercome": 2
+  },
+  {
+   "fy": 2024,
+   "line": 72,
+   "code": "Sec.103 Pub. Law 105-227",
+   "ground": "Disclosure/trafficking of confidential U.S. business information",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 73,
+   "code": "Sec. 401 Pub. Law 104-114",
+   "ground": "Helms-Burton refusal",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 74,
+   "code": "Sec. 402 Pub. Law 104-114",
+   "ground": "Conversion of confiscated U.S. property for gain",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 75,
+   "code": "Sec. 501 Pub. Law 112-158",
+   "ground": "Iranian Citizen Studying in Certain Energy- Related Fields",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 80,
+   "nivOvercome": 4
+  },
+  {
+   "fy": 2024,
+   "line": 76,
+   "code": "Sec. 306 Pub. Law 107-173",
+   "ground": "Inadmissible alien from a country that is a state sponsor of terrorism",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 271,
+   "nivOvercome": 8
+  },
+  {
+   "fy": 2024,
+   "line": 77,
+   "code": "Sec. 3205 Pub. Law 106-246",
+   "ground": "Individuals who aided and abetted Colombian insurgent and paramilitary groups",
+   "ivFound": 1,
+   "ivOvercome": 0,
+   "nivFound": 0,
+   "nivOvercome": 0
+  },
+  {
+   "fy": 2024,
+   "line": 78,
+   "code": "Sec. 7031(c), Pub. Law 116-94",
+   "ground": "Corruption and Gross Violation of Human Rights by Government Officials",
+   "ivFound": 2,
+   "ivOvercome": 0,
+   "nivFound": 21,
+   "nivOvercome": 16
+  }
+ ],
+ "tracked": [
+  {
+   "fy": 2000,
+   "line": 22,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 46450,
+   "ivOvercome": 30165,
+   "nivFound": 825,
+   "nivOvercome": 62
+  },
+  {
+   "fy": 2000,
+   "line": 51,
+   "code": "214(b)",
+   "ground": "Failure to Establish Entitlement to Nonimmigrant Status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1956137,
+   "nivOvercome": 61634
+  },
+  {
+   "fy": 2000,
+   "line": 52,
+   "code": "221(g)",
+   "ground": "Applications Do Not Comply With the Provisions of the Immigration and Nationality Act or Regulations Issued Pursuant Thereto",
+   "ivFound": 205683,
+   "ivOvercome": 144461,
+   "nivFound": 471524,
+   "nivOvercome": 246559
+  },
+  {
+   "fy": 2001,
+   "line": 23,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 27580,
+   "ivOvercome": 21689,
+   "nivFound": 1182,
+   "nivOvercome": 210
+  },
+  {
+   "fy": 2001,
+   "line": 52,
+   "code": "214(b)",
+   "ground": "Failure to Establish Entitlement to Nonimmigrant Status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2276611,
+   "nivOvercome": 69319
+  },
+  {
+   "fy": 2001,
+   "line": 53,
+   "code": "221(g)",
+   "ground": "Applications Do Not Comply With the Provisions of the Immigration and Nationality Act or Regulations Issued Pursuant Thereto",
+   "ivFound": 183480,
+   "ivOvercome": 134289,
+   "nivFound": 578784,
+   "nivOvercome": 299309
+  },
+  {
+   "fy": 2002,
+   "line": 25,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 17511,
+   "ivOvercome": 17825,
+   "nivFound": 2472,
+   "nivOvercome": 300
+  },
+  {
+   "fy": 2002,
+   "line": 54,
+   "code": "214(b)",
+   "ground": "Failure to Establish Entitlement to Nonimmigrant Status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1890995,
+   "nivOvercome": 51846
+  },
+  {
+   "fy": 2002,
+   "line": 55,
+   "code": "221(g)",
+   "ground": "Applications Do Not Comply With the Provisions of the Immigration and Nationality Act or Regulations Issued Pursuant Thereto",
+   "ivFound": 183862,
+   "ivOvercome": 142744,
+   "nivFound": 676022,
+   "nivOvercome": 388671
+  },
+  {
+   "fy": 2003,
+   "line": 20,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 10301,
+   "ivOvercome": 13988,
+   "nivFound": 3033,
+   "nivOvercome": 296
+  },
+  {
+   "fy": 2003,
+   "line": 45,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 1513241,
+   "nivOvercome": 25050
+  },
+  {
+   "fy": 2003,
+   "line": 46,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 208466,
+   "ivOvercome": 138900,
+   "nivFound": 677695,
+   "nivOvercome": 524155
+  },
+  {
+   "fy": 2004,
+   "line": 27,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 14271,
+   "ivOvercome": 14603,
+   "nivFound": 2302,
+   "nivOvercome": 878
+  },
+  {
+   "fy": 2004,
+   "line": 56,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1500383,
+   "nivOvercome": 28642
+  },
+  {
+   "fy": 2004,
+   "line": 57,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 235706,
+   "ivOvercome": 142248,
+   "nivFound": 489934,
+   "nivOvercome": 401783
+  },
+  {
+   "fy": 2005,
+   "line": 27,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 9559,
+   "ivOvercome": 13665,
+   "nivFound": 1341,
+   "nivOvercome": 223
+  },
+  {
+   "fy": 2005,
+   "line": 56,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1484342,
+   "nivOvercome": 28919
+  },
+  {
+   "fy": 2005,
+   "line": 57,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 270590,
+   "ivOvercome": 156456,
+   "nivFound": 456732,
+   "nivOvercome": 399101
+  },
+  {
+   "fy": 2006,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 6650,
+   "ivOvercome": 6155,
+   "nivFound": 717,
+   "nivOvercome": 83
+  },
+  {
+   "fy": 2006,
+   "line": 57,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 1425872,
+   "nivOvercome": 25199
+  },
+  {
+   "fy": 2006,
+   "line": 58,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 269608,
+   "ivOvercome": 168517,
+   "nivFound": 476859,
+   "nivOvercome": 407500
+  },
+  {
+   "fy": 2007,
+   "line": 27,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 5034,
+   "ivOvercome": 4247,
+   "nivFound": 560,
+   "nivOvercome": 43
+  },
+  {
+   "fy": 2007,
+   "line": 56,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1578178,
+   "nivOvercome": 19510
+  },
+  {
+   "fy": 2007,
+   "line": 57,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 240738,
+   "ivOvercome": 160633,
+   "nivFound": 507310,
+   "nivOvercome": 442474
+  },
+  {
+   "fy": 2008,
+   "line": 27,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 6862,
+   "ivOvercome": 5198,
+   "nivFound": 743,
+   "nivOvercome": 52
+  },
+  {
+   "fy": 2008,
+   "line": 56,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1481471,
+   "nivOvercome": 19837
+  },
+  {
+   "fy": 2008,
+   "line": 57,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 257177,
+   "ivOvercome": 169334,
+   "nivFound": 589418,
+   "nivOvercome": 510549
+  },
+  {
+   "fy": 2009,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 9521,
+   "ivOvercome": 6140,
+   "nivFound": 386,
+   "nivOvercome": 35
+  },
+  {
+   "fy": 2009,
+   "line": 57,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1257465,
+   "nivOvercome": 17552
+  },
+  {
+   "fy": 2009,
+   "line": 58,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 273227,
+   "ivOvercome": 178157,
+   "nivFound": 616284,
+   "nivOvercome": 558895
+  },
+  {
+   "fy": 2010,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 10869,
+   "ivOvercome": 7516,
+   "nivFound": 171,
+   "nivOvercome": 16
+  },
+  {
+   "fy": 2010,
+   "line": 57,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1159519,
+   "nivOvercome": 16457
+  },
+  {
+   "fy": 2010,
+   "line": 58,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 286889,
+   "ivOvercome": 185880,
+   "nivFound": 694620,
+   "nivOvercome": 617155
+  },
+  {
+   "fy": 2011,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 6861,
+   "ivOvercome": 6742,
+   "nivFound": 208,
+   "nivOvercome": 17
+  },
+  {
+   "fy": 2011,
+   "line": 57,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1218324,
+   "nivOvercome": 15868
+  },
+  {
+   "fy": 2011,
+   "line": 58,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 312968,
+   "ivOvercome": 190248,
+   "nivFound": 837477,
+   "nivOvercome": 743524
+  },
+  {
+   "fy": 2012,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 4901,
+   "ivOvercome": 5218,
+   "nivFound": 261,
+   "nivOvercome": 19
+  },
+  {
+   "fy": 2012,
+   "line": 57,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1308983,
+   "nivOvercome": 16563
+  },
+  {
+   "fy": 2012,
+   "line": 58,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 303166,
+   "ivOvercome": 197489,
+   "nivFound": 806773,
+   "nivOvercome": 724217
+  },
+  {
+   "fy": 2013,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 3544,
+   "ivOvercome": 3374,
+   "nivFound": 349,
+   "nivOvercome": 14
+  },
+  {
+   "fy": 2013,
+   "line": 56,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1437959,
+   "nivOvercome": 17015
+  },
+  {
+   "fy": 2013,
+   "line": 57,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 290369,
+   "ivOvercome": 180022,
+   "nivFound": 775201,
+   "nivOvercome": 680672
+  },
+  {
+   "fy": 2014,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 3112,
+   "ivOvercome": 3311,
+   "nivFound": 249,
+   "nivOvercome": 12
+  },
+  {
+   "fy": 2014,
+   "line": 58,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1708964,
+   "nivOvercome": 24377
+  },
+  {
+   "fy": 2014,
+   "line": 59,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 240876,
+   "ivOvercome": 169257,
+   "nivFound": 689379,
+   "nivOvercome": 633539
+  },
+  {
+   "fy": 2015,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 897,
+   "ivOvercome": 1011,
+   "nivFound": 35,
+   "nivOvercome": 9
+  },
+  {
+   "fy": 2015,
+   "line": 59,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2260638,
+   "nivOvercome": 23576
+  },
+  {
+   "fy": 2015,
+   "line": 60,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 258179,
+   "ivOvercome": 166378,
+   "nivFound": 767167,
+   "nivOvercome": 651248
+  },
+  {
+   "fy": 2016,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 1076,
+   "ivOvercome": 912,
+   "nivFound": 33,
+   "nivOvercome": 5
+  },
+  {
+   "fy": 2016,
+   "line": 59,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2793731,
+   "nivOvercome": 27708
+  },
+  {
+   "fy": 2016,
+   "line": 60,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 287802,
+   "ivOvercome": 188472,
+   "nivFound": 805668,
+   "nivOvercome": 678931
+  },
+  {
+   "fy": 2017,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 3237,
+   "ivOvercome": 2016,
+   "nivFound": 51,
+   "nivOvercome": 4
+  },
+  {
+   "fy": 2017,
+   "line": 59,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2624543,
+   "nivOvercome": 24530
+  },
+  {
+   "fy": 2017,
+   "line": 60,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 254478,
+   "ivOvercome": 169293,
+   "nivFound": 811238,
+   "nivOvercome": 697473
+  },
+  {
+   "fy": 2018,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 13450,
+   "ivOvercome": 7932,
+   "nivFound": 120,
+   "nivOvercome": 3
+  },
+  {
+   "fy": 2018,
+   "line": 59,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2771339,
+   "nivOvercome": 22482
+  },
+  {
+   "fy": 2018,
+   "line": 60,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 341128,
+   "ivOvercome": 159842,
+   "nivFound": 839146,
+   "nivOvercome": 742296
+  },
+  {
+   "fy": 2019,
+   "line": 28,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 20941,
+   "ivOvercome": 9622,
+   "nivFound": 255,
+   "nivOvercome": 10
+  },
+  {
+   "fy": 2019,
+   "line": 59,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2812693,
+   "nivOvercome": 24171
+  },
+  {
+   "fy": 2019,
+   "line": 60,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 334542,
+   "ivOvercome": 147806,
+   "nivFound": 916626,
+   "nivOvercome": 794229
+  },
+  {
+   "fy": 2020,
+   "line": 31,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 6541,
+   "ivOvercome": 6175,
+   "nivFound": 343,
+   "nivOvercome": 193
+  },
+  {
+   "fy": 2020,
+   "line": 62,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": 0,
+   "ivOvercome": 0,
+   "nivFound": 1204880,
+   "nivOvercome": 8112
+  },
+  {
+   "fy": 2020,
+   "line": 63,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 114784,
+   "ivOvercome": 106987,
+   "nivFound": 451357,
+   "nivOvercome": 381689
+  },
+  {
+   "fy": 2021,
+   "line": 31,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 621,
+   "ivOvercome": 3104,
+   "nivFound": 49,
+   "nivOvercome": 51
+  },
+  {
+   "fy": 2021,
+   "line": 62,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 205897,
+   "nivOvercome": 3079
+  },
+  {
+   "fy": 2021,
+   "line": 63,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 176446,
+   "ivOvercome": 137378,
+   "nivFound": 392776,
+   "nivOvercome": 296594
+  },
+  {
+   "fy": 2022,
+   "line": 31,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 678,
+   "ivOvercome": 2063,
+   "nivFound": 93,
+   "nivOvercome": 21
+  },
+  {
+   "fy": 2022,
+   "line": 62,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 1024270,
+   "nivOvercome": 7016
+  },
+  {
+   "fy": 2022,
+   "line": 63,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 217826,
+   "ivOvercome": 203434,
+   "nivFound": 728558,
+   "nivOvercome": 585467
+  },
+  {
+   "fy": 2023,
+   "line": 31,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 452,
+   "ivOvercome": 766,
+   "nivFound": 86,
+   "nivOvercome": 8
+  },
+  {
+   "fy": 2023,
+   "line": 62,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 2231447,
+   "nivOvercome": 11570
+  },
+  {
+   "fy": 2023,
+   "line": 63,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 220430,
+   "ivOvercome": 198217,
+   "nivFound": 829164,
+   "nivOvercome": 731596
+  },
+  {
+   "fy": 2024,
+   "line": 32,
+   "code": "212(a)(4)",
+   "ground": "Public Charge",
+   "ivFound": 1008,
+   "ivOvercome": 846,
+   "nivFound": 74,
+   "nivOvercome": 30
+  },
+  {
+   "fy": 2024,
+   "line": 63,
+   "code": "214(b)",
+   "ground": "Failure to establish entitlement to nonimmigrant status",
+   "ivFound": null,
+   "ivOvercome": null,
+   "nivFound": 3010544,
+   "nivOvercome": 11910
+  },
+  {
+   "fy": 2024,
+   "line": 64,
+   "code": "221(g)",
+   "ground": "Application does not comply with provisions of INA or regulations issued pursuant thereto",
+   "ivFound": 225278,
+   "ivOvercome": 191245,
+   "nivFound": 809735,
+   "nivOvercome": 672461
+  }
+ ]
+}

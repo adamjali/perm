@@ -56,13 +56,22 @@ async function safely(read: () => Promise<string | null>): Promise<string | null
   }
 }
 
+/** The Eastern day State's refusals-by-ground table last changed here, from its load's summary doc (a point read). */
+async function refusalsDay(): Promise<string | null> {
+  const r = await one<{ d: string | null }>(
+    "SELECT json_extract(json, '$.changedOn') AS d FROM perm_docs WHERE key = 'visa_refusals_summary'",
+  );
+  return r?.d ? String(r.d) : null;
+}
+
 export const getDateSources = cache(async (): Promise<DateSources> => {
-  const [dol, sweep, corpus, bulletin, consular] = await Promise.all([
+  const [dol, sweep, corpus, bulletin, consular, refusals] = await Promise.all([
     safely(dolAsOf),
     safely(async () => (await getSweepCoverage())?.finishedOn ?? null),
     safely(async () => (await getFreshness())["perm-cases"]?.asOf ?? null),
     safely(bulletinDay),
     safely(async () => (await getFreshness())["iv-scheduling"]?.asOf ?? null),
+    safely(refusalsDay),
   ]);
-  return { dol, sweep, corpus, bulletin, consular, posts: postsDay() };
+  return { dol, sweep, corpus, bulletin, consular, refusals, posts: postsDay() };
 });

@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
+import { NivByPost } from "@/components/consular/NivByPost";
 import { ConsularPostsTable } from "@/components/consular/ConsularPostsTable";
 import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -140,6 +141,8 @@ export default async function ConsularPostsPage() {
         </FigurePlate>
       ) : null}
 
+      <NivByPost pages={new Map(posts.map((p) => [p.key, p.slug]))} className="mt-10" />
+
       <section className="mt-12" aria-labelledby="every-post">
         <h2 id="every-post" className="font-heading text-2xl font-bold">
           Every consulate
@@ -187,7 +190,7 @@ export default async function ConsularPostsPage() {
           { href: "/nvc-waiting-list", label: "NVC waiting list", note: "how many wait at the consular stage" },
         ]}
       />
-      <DataProvenance datasets={["iv-scheduling", "visa-issuances"]} />
+      <DataProvenance datasets={["iv-scheduling", "visa-issuances", "niv-issuances"]} />
     </div>
   );
 }
