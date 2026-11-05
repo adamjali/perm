@@ -2240,3 +2240,27 @@ Research: `~/.claude/explanations/20261103_iv_pause/` (SUMMARY.md first).
 - **A chart's small headings are labels** (`PlateLabel`, or a `<p>`): the consulate page's per-category `h3`s sat
   under no `h2`, and the pre-ship heading check held a deploy for it on 122 pages once a shared module put the whole
   family on the check.
+
+## Nov 4 2026 (evening): the audit's fixes, in nine lines
+
+Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-2026-11-04.md).
+
+- **`robots: undefined` drops the root's robots tag**: Next merges every key, so a page that sets it undefined loses
+  large previews. Spread it in only when needed; `robots-preview.test.ts` fails any file that can set it undefined.
+- **A server read a page can live without logs its failure** (`softFail` in `src/lib/softRead.ts`, once a label per 10
+  minutes): 220 `.catch(() => null)` had dropped failed reads in silence.
+- **`queryStatic` reads Convex inside `unstable_cache`**, which stores only a read that came back, so Convex's HTTP-200
+  error reply is never kept for a page's window; the route table was identical before and after.
+- **The deploy checks the site through nginx after the switch** (health and the homepage, six rounds 10 s apart) and
+  switches back on a minute of no answer (exit 6); a failed release is never left where a rollback would go. Installed.
+- **A shared-pool test file mocks nothing but `server-only`** (`shared-pool-mocks.test.ts`); thirteen moved to
+  `unit-isolated`, and both projects pass in order and shuffled.
+- **convex-test 0.0.63+ stamps a mutation's `Date.now()` a millisecond past the frozen fake clock**: a test that runs
+  a step "after" a mutation at the same frozen instant must move the clock first (`vi.setSystemTime`, which fires no
+  timer). Storybook is 10.6.5 with no adapter patch.
+- **The error screens' reports have their own Sentry allowance and a per-address cap**; the browser sends Sentry the
+  user id only; a case's community-timeline counts need three reporters; stored address hashes are an HMAC.
+- **State's embassy directory (www.usembassy.gov) reads in Chrome, one page per country**: the consulate list matches it
+  for 138 of 142 posts. A hidden automation tab throttles `setTimeout`, so an in-page crawl runs on fetches alone.
+- **A full-page capture leaves reveal-on-scroll parts blank**: scroll the page through before reading a gap as a defect
+  (/today's phone layout looked broken until it was).
