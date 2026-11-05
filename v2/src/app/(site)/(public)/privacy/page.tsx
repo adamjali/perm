@@ -62,9 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          {/* REVIEW (date): set "Last Updated" to the day this version is published, and send the notice Section 19
-              promises for material changes (question 11). */}
-          Effective Date: February 17, 2026 | Last Updated: [DATE TO SET ON THE DAY THIS VERSION IS PUBLISHED]
+          Effective Date: February 17, 2026 | Last Updated: November 5, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -207,9 +205,6 @@ export default function PrivacyPage() {
                 A copy of each alert email waits with us until it’s sent, and is
                 deleted 30 days after that
               </li>{" "}
-              {/* REVIEW (question 2): the code keeps an opted-out address on its alert row with no end date, because
-                  that record is what refuses a restart without a new confirmation. This wording says so and offers
-                  deletion on request; a fixed period would need a code change. */}
               <li>
                 Every alert email has a link that stops it in one click, and a
                 link to a page listing everything your address receives, where
@@ -227,11 +222,6 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
 
-            {/* REVIEW (product updates): the owner chose opt-out for account holders on Nov 4 2026. Under CAN-SPAM
-                every product update must carry the unsubscribe link and the postal address (Resend's broadcasts add
-                the link). For visitors in the EEA and UK, sending these to account holders without a tick rests on
-                the existing-customer rule (PECR regulation 22(3), ePrivacy Article 13(2)); please confirm that fits,
-                or say if those visitors should be asked first. Nothing is sent under this wording until it's live. */}
             <h3 id="product-updates" className="font-heading text-lg font-bold mt-6 mb-3">
               Product Update Emails
             </h3>{" "}
@@ -349,10 +339,6 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
 
-            {/* REVIEW (question 9): a DOL case number saved in an account, or watched by email, notification or
-                webhook, that DOL knows and we didn't hold is added to our public case tables, which publish DOL's
-                record for it. The record is DOL's public information; this wording discloses it rather than
-                changing it. Not adding saved cases would be a code change. */}
             <h3 id="case-numbers" className="font-heading text-lg font-bold mt-6 mb-3">
               Case Numbers You Look Up or Save
             </h3>{" "}
@@ -456,9 +442,6 @@ export default function PrivacyPage() {
                 Send account holders occasional product updates, which you can
                 turn off (see Product Update Emails in Section 2)
               </li>{" "}
-              {/* REVIEW (question 6): the congratulations note goes to an alert subscriber's address, by hand from
-                  the press mailbox, two business days after DOL certifies or approves the watched case. It wasn't
-                  described before. Is describing it here enough, or does it need a line at sign-up? */}
               <li>
                 Send a personal note, written and sent by a person, after DOL
                 certifies or approves a case you asked us to watch
@@ -488,10 +471,6 @@ export default function PrivacyPage() {
                 <strong>Google profile photo</strong>. We show the photo in your
                 Settings; your browser loads it from Google&apos;s servers
               </li>{" "}
-              {/* REVIEW (Google sign-in): this bullet said Google's data was used "solely for authentication". The
-                  address from Google sign-in now also receives the account emails and, unless turned off, product
-                  updates, so it's worded as what we do. Please check it against the Google API Services User Data
-                  Policy for the basic profile and email scopes. */}
               <li>
                 This information is used to sign you in, to identify your
                 account, and to send you the email described in Section 2
@@ -872,8 +851,6 @@ export default function PrivacyPage() {
                 The script in your browser removes request contents before it
                 sends an error. Cookies aren&apos;t sent
               </li>{" "}
-              {/* REVIEW (server error reports): true from the Nov 5 2026 2 AM deploy (commit 1a82294a turned off
-                  Sentry's default of attaching up to 10 KB of a failed request's body). This branch ships after it. */}
               <li>
                 Error reports from the website&apos;s own server carry the page
                 address and the error, never what was sent in the request that
@@ -1059,9 +1036,6 @@ export default function PrivacyPage() {
             <h3 id="push-without-account" className="font-heading text-lg font-bold mt-6 mb-3">
               Without an Account
             </h3>{" "}
-            {/* REVIEW (question 4): a stopped account-free subscription keeps its row, subscription included, marked
-                stopped, and nothing deletes it; the code never sends to it again. This wording says so. Deleting them
-                when they stop would be a code change and would let this say "deleted when it stops". */}
             <p className="text-soft leading-relaxed">
               You can also turn on a browser notification for one case&apos;s DOL
               status, or for each new visa bulletin for one category and
@@ -1073,8 +1047,8 @@ export default function PrivacyPage() {
               press stop on the page, when your browser or its push service ends
               the subscription, or when deliveries to it keep failing; a case
               notification also stops when DOL decides the case. A stopped
-              subscription is kept in our records, marked stopped, and never used
-              again.
+              subscription is kept in our records, marked stopped and never used
+              again, and deleted 90 days after it stopped.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -1314,9 +1288,6 @@ export default function PrivacyPage() {
               .
             </p>{" "}
 
-            {/* REVIEW (Section 13): the old sentence said every provider is "prohibited from using it for their own
-                purposes"; Gemini's unpaid tier and Senja aren't. Whether those two still count as CCPA service
-                providers, and so whether "we don't share" holds as written, is the attorney's call. */}
             <div className="bg-tint p-4 mt-4 border-2 border-black shadow-hard-sm">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>
@@ -1545,8 +1516,8 @@ export default function PrivacyPage() {
               You also have the right to lodge a complaint with your local data
               protection authority (in the UK, the Information
               Commissioner&apos;s Office). International transfers of your data to
-              the United States rely on Standard Contractual Clauses (see Section
-              16). We don’t engage in solely-automated decision-making that
+              the United States rely, where a provider offers them, on Standard
+              Contractual Clauses (see Section 16). We don’t engage in solely-automated decision-making that
               produces legal or similarly significant effects.
             </p>
           </details>{" "}
@@ -1563,13 +1534,10 @@ export default function PrivacyPage() {
               States by our service providers (Convex, Cloudflare, Resend,
               Google, Zoho, Sentry, PostHog and the AI chat providers).
             </p>{" "}
-            {/* REVIEW (Section 16): nobody has confirmed that every provider's terms carry SCCs or a data processing
-                agreement (Gemini's unpaid tier, Senja and Zoho are the ones to check). The attorney decides whether
-                this sentence stays, narrows to the providers that do, or goes. */}
             <p className="text-soft leading-relaxed mt-4">
-              These transfers are protected by Standard Contractual Clauses (SCCs)
-              approved by the European Commission, as well as Data Processing
-              Agreements with our service providers.
+              Where a provider offers them, these transfers rely on the Standard
+              Contractual Clauses (SCCs) approved by the European Commission,
+              through that provider&apos;s data processing terms.
             </p>
           </details>{" "}
 
@@ -1578,8 +1546,6 @@ export default function PrivacyPage() {
               <h2 id="childrens-privacy" className="font-heading text-2xl font-bold m-0">17. Children&apos;s Privacy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            {/* REVIEW (question 10): Option A, adults for accounts and the rest of the site open to anyone, chosen to
-                match Terms Section 3. Option B (the whole service for people 18 and older) is in the review notes. */}
             <p className="text-soft leading-relaxed">
               An account requires you to be at least 18 (Terms of Service,
               Section 3). The rest of the site isn&apos;t directed to children
@@ -1622,11 +1588,6 @@ export default function PrivacyPage() {
               <h2 id="changes-to-this-policy" className="font-heading text-2xl font-bold m-0">19. Changes to This Policy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            {/* REVIEW (question 11): which of this version's changes are material, and does the email notice go to
-                account holders only or to alert subscribers too? Several describe processing the policy never named
-                (alerts without an account, timelines, account-free notifications, the congratulations note, Zoho,
-                Gmail, Senja, backups, case numbers added to the public tables, product updates by default). The
-                Oct 29 notice about the AI providers is still unsent and could go in the same email. */}
             <p className="text-soft leading-relaxed">
               We may update this Privacy Policy from time to time. We’ll notify
               you of any changes by:

@@ -60,9 +60,7 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          {/* REVIEW (date): set "Last Updated" to the day this version is published, and send the notice Section 14
-              promises for material changes (question 11). */}
-          Effective Date: February 17, 2026 | Last Updated: [DATE TO SET ON THE DAY THIS VERSION IS PUBLISHED]
+          Effective Date: February 17, 2026 | Last Updated: November 5, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -137,8 +135,6 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Eligibility
             </h3>{" "}
-            {/* REVIEW (question 10): Option A, an age requirement for accounts only. Option B, the whole Service for
-                people 18 and older, would keep this paragraph as it was ("to use the Service"). */}
             <p className="text-soft leading-relaxed">
               You must be at least 18 years old and able to form a legally binding
               contract to create an account. By creating one, you confirm that you
@@ -275,9 +271,6 @@ export default function TermsPage() {
               reason.
             </p>{" "}
 
-            {/* REVIEW (license for what is shared): proposed wording for the attorney to shape. It ends on removal
-                because the Privacy Policy and the review form promise removal. "Material that describes the Service"
-                is meant to cover the homepage, the rating in the site's structured data and its social cards. */}
             <h3 id="shared-content" className="font-heading text-lg font-bold mt-6 mb-3">
               Reviews, Ratings, Timelines and Other Things You Share
             </h3>{" "}
@@ -800,10 +793,7 @@ export default function TermsPage() {
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Provide legal advice or participate in attorney-client relationships</li>{" "}
               <li>Make decisions about your cases or client matters</li>{" "}
-              {/* REVIEW (question 9): a saved case's DOL case number is checked with DOL and, if DOL knows it and we
-                  didn't hold it, DOL's public record for it joins our case tables (Privacy Policy, Section 2, "Case
-                  Numbers You Look Up or Save"). Please read this promise against that. */}
-              <li>Share your data with third parties except as required for service operation</li>
+              <li>Share your data with third parties except as required for service operation. A DOL case number you save or look up is added to our case tables only as DOL&apos;s public record shows it, never with anything that identifies you or your account</li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
               Authorized PERM Tracker personnel have technical access to the

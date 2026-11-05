@@ -73,9 +73,8 @@ export default function ApiTermsPage() {
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">API terms</h1>{" "}
-        {/* REVIEW (date): set the effective date to the day this version is published (Section 11). */}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: [DATE TO SET ON THE DAY THIS VERSION IS PUBLISHED]
+          Effective Date: November 5, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />{" "}
@@ -175,9 +174,6 @@ export default function ApiTermsPage() {
         </Section>
 
         <Section id="the-data" title="6. The data">
-          {/* REVIEW (O*NET): "underlying records" is narrowed to "case records" so the public-domain sentence
-              doesn't sit against the CC BY 4.0 license for O*NET text below. The site's statement of O*NET's terms is
-              its own (src/components/reference/OnetCredit.tsx); O*NET's license page wasn't re-read for this. */}
           <p>
             The case records come from the U.S. Department of Labor and the U.S. Department of State. As works of the
             United States Government they are not subject to copyright (17 U.S.C. §105), and nothing in these terms
