@@ -2337,3 +2337,30 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
 - **A card's capture lifts its top whenever a line crosses a box**, the hidden data menu's boxes included: on a page whose
   figures start below the lead, hide the menu for the card (`css` in `scripts/page-cards.json`) and frame from the
   boxes (`fromEl`). Live times aren't figures to the mask: hide their line for the card.
+
+## Nov 5 2026 (afternoon): every visa at each consulate, refusals by reason, removals that mask
+
+- **The consulates page covers every kind of visa**: the scheduling chart switches between employment, family preference
+  and immediate relative; each post shows its nonimmigrant visas from State's monthly "NIV Issuances by Post and Visa
+  Class" (`niv_issuances`, `scripts/ingest_niv_issuances.py`, Oct 2022 on; each workbook's GRAND TOTAL row, usually a
+  `=SUM` formula, is checked), work visas first; `/consular-posts` ranks posts by H-1B, L-1 or K-1. Read in Chrome, step
+  6b of the `state-pages-read` timer.
+- **`/visa-refusals`**: State's yearly ineligibility table, FY2000 to FY2024 (`visa_refusals`, `scripts/ingest_visa_refusals.py`),
+  found by its title (Table XX to FY2019, XIX from FY2020; FY2000-12's "Table XIX" is something else). Step 6c, twice a month.
+- **Visitor reports on each consulate page**, any visa, no account, name or case number, shown once 3 people report
+  (`convex/lib/consularReport.ts`, label `SELF_REPORTED`). The Privacy Policy and Terms cover them.
+- **Open data is CC BY-NC 4.0 from Nov 6 2026** (`OPEN_DATA_LICENSE` in `src/lib/openData.ts`): news, research and
+  teaching may use it anywhere, other commercial use needs our permission, and copies taken before Nov 6 keep CC BY.
+  The Terms add a no-replacement rule (§4). The API's terms are unchanged until pricing exists.
+- **A removal masks the name and keeps every row** (owner's call, Nov 5, reversing Oct 17): the name shows as a
+  numbered label across the whole site ("Law firm 1", "Employer 2") linking a noindex neutral page with the full record;
+  the old URL answers 404 and never redirects; a search by the name finds nothing; counts, ranks and cards stay.
+  `WITHHELD_EMPLOYERS`, `WITHHELD_FIRMS`, `WITHHELD_NUMBERS` (server env, GitHub secrets, Convex prod), read through
+  `convex/lib/withheldNames.ts`. `python3 scripts/withhold.py add|remove|refresh [--firm] [--no-deploy]`; runbook in
+  `v2/docs/PRIVACY_REMOVALS.md`. Search Console and Bing removals are still by hand, a prefix for every slug.
+- **Every image, film and icon answered 404 from 2:23 PM EST** for a release: `cp -r public "$S/public"` nests the folder
+  when the target exists, and Next's file tracing had created `public/fonts`. Fixed on the server by copying
+  `public/public/.` up and restarting both web copies (Next's standalone server lists public files once, at start).
+  The package step copies the folder's contents and fails on any file missing from the package; nginx serves
+  `/videos` from disk with the other public folders.
+- **The homepage's approval figure is one bar** (`ApprovalBar`, `approvalRate().parts`): certified, denied, withdrawn.
