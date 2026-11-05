@@ -1,26 +1,28 @@
-# PERM Tracker v2
+# PERM Tracker app
 
-**Production:** https://permtracker.app
+The code behind [permtracker.app](https://permtracker.app). The [main README](../README.md) says what it does.
 
-Developer guide, patterns, and troubleshooting → **[CLAUDE.md](CLAUDE.md)**.
-Full project overview → **[root README.md](../README.md)**.
-
-## Quick Start
+## Run it
 
 ```bash
+cp .env.example .env.local    # then fill it in
 pnpm install
-npx convex dev     # Terminal 1
-pnpm dev           # Terminal 2
+npx convex dev                # terminal 1
+pnpm dev                      # terminal 2
 ```
 
-http://localhost:3000
+Then open http://localhost:3000.
 
-## Key Docs
+## Check it
 
-| | |
-|---|---|
-| [CLAUDE.md](CLAUDE.md) | Developer guide |
-| [TEST_README.md](TEST_README.md) | Test commands |
-| [docs/API.md](docs/API.md) | Convex API reference |
-| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Design tokens |
-| [.planning/codebase/](../.planning/codebase/) | Codebase deep-dives (7 docs) |
+```bash
+pnpm check       # before you push
+pnpm test:run    # every test
+```
+
+## Docs
+
+- [CLAUDE.md](CLAUDE.md): the developer guide
+- [TEST_README.md](TEST_README.md): tests
+- [docs/API.md](docs/API.md): the Convex API
+- [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md): the design system
