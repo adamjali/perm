@@ -154,7 +154,9 @@ export const getMarketingSubscriptionStatus = action({
         `/contacts/${encodeURIComponent(email)}`,
         apiKey
       );
-      if (res.status === 404) return null; // expected: new user, no contact yet
+      // Not on the list means not subscribed: the switch shows off, and turning it on adds them. It answered
+      // null here, which hid the switch ("Not available") for everyone who joined after April 12 2026.
+      if (res.status === 404) return false;
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         await recordError(
@@ -193,6 +195,21 @@ export const updateMarketingSubscription = action({
       apiKey,
       { method: "PATCH", body: { unsubscribed: !args.subscribed } }
     );
+
+    // Not on the list: everyone who joined after the one-time sync of April 12 2026. The switch only ever
+    // PATCHed, so for them it failed both ways (Nov 4 2026). Off needs nothing; on adds them, subscribed.
+    if (res.status === 404) {
+      if (!args.subscribed) return false;
+      const created = await resendFetch("/contacts", apiKey, {
+        method: "POST",
+        body: { email, unsubscribed: false, segment_ids: [SEGMENT_ID] },
+      });
+      if (!created.ok) {
+        const text = await created.text();
+        throw new Error(`Failed to subscribe: ${created.status} ${text}`);
+      }
+      return true;
+    }
 
     if (!res.ok) {
       const text = await res.text();

@@ -144,6 +144,40 @@ describe("marketingEmail subscription actions — IDOR protection (C1)", () => {
     expect(JSON.parse(calledInit.body as string)).toEqual({ unsubscribed: true });
   });
 
+  // Everyone who joined after the April 12 2026 sync has no contact, and the switch failed for them (Nov 4 2026).
+  it("turning updates on for someone not on the list adds them, subscribed, to the list", async () => {
+    const t = createTestContext();
+    const { ctx } = await seedCaller(t, "new@example.com");
+    mockFetch
+      .mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({}), text: async () => "not found" })
+      .mockResolvedValueOnce({ ok: true, status: 201, json: async () => ({ id: "c1" }), text: async () => "{}" });
+    const result = await ctx.action(api.marketingEmail.updateMarketingSubscription, { email: "x", subscribed: true });
+    expect(result).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    const [url, init] = mockFetch.mock.calls[1] as [string, RequestInit];
+    expect(url).toMatch(/\/contacts$/);
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(init.body as string);
+    expect(body).toMatchObject({ email: "new@example.com", unsubscribed: false });
+    expect(body.segment_ids).toHaveLength(1);
+  });
+
+  it("someone not on the list reads as not subscribed, so the switch shows, off", async () => {
+    const t = createTestContext();
+    const { ctx } = await seedCaller(t, "new@example.com");
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({}), text: async () => "not found" });
+    expect(await ctx.action(api.marketingEmail.getMarketingSubscriptionStatus, { email: "x" })).toBe(false);
+  });
+
+  it("turning updates off for someone not on the list needs nothing", async () => {
+    const t = createTestContext();
+    const { ctx } = await seedCaller(t, "new@example.com");
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({}), text: async () => "not found" });
+    const result = await ctx.action(api.marketingEmail.updateMarketingSubscription, { email: "x", subscribed: false });
+    expect(result).toBe(false);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
   it("getMarketingSubscriptionStatus returns null for an unauthenticated caller (no Resend call)", async () => {
     const t = createTestContext();
 
