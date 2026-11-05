@@ -26,7 +26,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { git, inputsOf, pageFiles, routeOf } from "./lib_page_inputs.mjs";
+import { alwaysNoindex, git, inFamily, inputsOf, pageFiles, routeOf } from "./lib_page_inputs.mjs";
 
 const LEDGER = "../.planning/gsc-index-priority.md";
 const PUBLIC = `src${path.sep}app${path.sep}(site)${path.sep}(public)${path.sep}`;
@@ -96,13 +96,12 @@ const families = [];
 // pages for one) is warmed and purged like any other, since people read it,
 // but never requested from Google or sent to IndexNow: a request for a noindex
 // page spends a slot on an answer of "excluded by noindex".
-const NOINDEX = /robots\s*:\s*\{[^}]*\bindex\s*:\s*false/;
 const noindex = new Set();
 for (const { file, route, inputs } of pages) {
   const isNew = added.has(file);
   const touched = isNew || inputs.some((f) => changed.has(f) && (reach.get(f) ?? 0) <= SHARED_MIN);
   if (!touched) continue;
-  if (NOINDEX.test(readFileSync(file, "utf8"))) noindex.add(route);
+  if (alwaysNoindex(readFileSync(file, "utf8"))) noindex.add(route);
   if (route.includes("[")) families.push(route);
   else if (route !== "/" && !KNOWN.has(route)) console.error(`note: ${route} changed but isn't in scripts/known-routes.json (not public, or not registered)`);
   else (isNew ? fresh : edited).push(route);
@@ -143,7 +142,7 @@ if (WARM) {
 if (INDEXNOW) {
   const paths = [
     ...new Set([...fresh, ...edited, ...[...new Set(families)].flatMap((f) => SAMPLE[f] ?? [])]),
-  ].filter((r) => !noindex.has(r) && ![...noindex].some((f) => f.includes("[") && r.startsWith(f.slice(0, f.indexOf("[")))));
+  ].filter((r) => !noindex.has(r) && ![...noindex].some((f) => f.includes("[") && inFamily(r, f)));
   if (paths.length) console.log(paths.join("\n"));
   process.exit(0);
 }

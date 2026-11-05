@@ -18,6 +18,33 @@ const SKIP_FILE = /\.(test|spec|stories)\.|__tests__/;
 const RESOLVE = ["", ".tsx", ".ts", ".mdx", ".json", "/index.tsx", "/index.ts"];
 const DEPTH = 2;
 
+/**
+ * True when a page's source asks not to be indexed on every render: a plain
+ * `robots: { index: false ... }`. One written inside a condition
+ * (`...(FLAG ? {} : { robots: { index: false } })`, `cond ? { robots: ... } : {}`)
+ * is indexable some of the time, and /perm-queue and its month pages are indexable
+ * while their switch is on, so a conditional one doesn't count.
+ */
+const NOINDEX_LINE = /robots\s*:\s*\{[^}]*\bindex\s*:\s*false/;
+export function alwaysNoindex(src) {
+  return src.split("\n").some((line) => {
+    const at = line.search(NOINDEX_LINE);
+    if (at < 0) return false;
+    const before = line.slice(0, at);
+    return !/\.\.\.\s*\(|\?/.test(before);
+  });
+}
+
+/**
+ * True when `route` is a page of `family`: the same segments, a [param] standing for any one segment.
+ * /perm-queue/2026-01 is in /perm-queue/[month] and not in /perm-queue/[month]/[day].
+ */
+export function inFamily(route, family) {
+  const a = route.split("/");
+  const b = family.split("/");
+  return a.length === b.length && b.every((seg, i) => (seg.startsWith("[") ? a[i] !== "" : seg === a[i]));
+}
+
 export function git(args) {
   return execFileSync("git", args, { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
 }
