@@ -1891,6 +1891,7 @@ Still to request:
 2. Live since 2:28 AM and changed by it, each crawled before then: `/perm-processing-times`, `/visa-bulletin`,
    `/policy-changes`, `/perm-decision-activity`, `/h1b-employers`, `/perm-case-status`, `/debarments`,
    `/estimate-scorecard`.
-3. After the Fri Nov 6 2:00 AM EST run ships 02085b0c or later (check `ssh permtracker 'sudo permtracker-deploy status'`):
-   `/filings-by-day` (new), then `/today`, `/pwd-cases`, `/perm-cases`, `/case-search`, `/lca-cases`, `/layoffs`.
+3. Live since Thu Nov 5 2026, 2:23 PM EST (942bbf1f shipped by hand, `-f when=now`, carrying 02085b0c):
+   `/consular-posts` (the category switch), `/filings-by-day` (new), then `/today`, `/pwd-cases`, `/perm-cases`,
+   `/case-search`, `/lca-cases`, `/layoffs`.
 Then `node scripts/gsc_queue.mjs --since 57f4ea8a` for anything else.
