@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { TimelineWire } from "./communityTimelines";
+import type { ReportWire } from "./consularReports";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
@@ -1928,6 +1929,113 @@ http.route({
     return new Response(JSON.stringify(summary), {
       headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
     });
+  }),
+});
+
+/**
+ * Consulate reports: what happened at a consulate's interview (convex/consularReports.ts).
+ *
+ * The same shape as the timelines above: the browser keeps a random 64-hex edit key per consulate, only its
+ * SHA-256 is stored, and reading your own report is a POST so the key never sits in a URL or an access log.
+ * The body's length is capped before it's parsed, every field is narrowed to a short string or nothing, and
+ * the address is hashed here. Every limit lives in the internal mutation.
+ */
+const REPORT_BODY_MAX = 2_000;
+
+async function reportBody(
+  req: Request,
+): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; status: number; message: string }> {
+  const text = await req.text();
+  if (text.length > REPORT_BODY_MAX) return { ok: false, status: 400, message: "Malformed request." };
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return { ok: false, status: 400, message: "Malformed request." };
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return { ok: false, status: 400, message: "Malformed request." };
+  }
+  const b = body as Record<string, unknown>;
+  if (typeof b.post !== "string" || b.post.length > 60) return { ok: false, status: 400, message: "A consulate is required." };
+  if (typeof b.key !== "string" || !HEX64_KEY.test(b.key)) return { ok: false, status: 400, message: "Malformed request." };
+  return { ok: true, body: b };
+}
+
+const REPORT_FIELDS = [
+  "category", "mode", "nvcCompleteMonth", "scheduledOn", "interviewOn", "outcome", "refusalGround", "approvedOn",
+  "resolvedOn", "slipColor", "askedToEmailDocs",
+] as const;
+
+for (const path of ["/consular-report/save", "/consular-report/mine", "/consular-report/remove"]) {
+  http.route({
+    path,
+    method: "OPTIONS",
+    handler: httpAction(async (_ctx, req) => {
+      return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+    }),
+  });
+}
+
+http.route({
+  path: "/consular-report/save",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    const parsed = await reportBody(req);
+    if (!parsed.ok) return json({ ok: false, message: parsed.message }, parsed.status);
+    const b = parsed.body;
+    // Narrow every field to a short string or nothing; the mutation validates meaning.
+    const input: Record<string, string> = {};
+    for (const k of REPORT_FIELDS) {
+      const x = b[k];
+      if (x === undefined || x === null || x === "") continue;
+      if (typeof x !== "string" || x.length > 24) return json({ ok: false, message: "Malformed request." }, 400);
+      input[k] = x;
+    }
+    const [ipHash, editKeyHash] = await Promise.all([
+      hashIp("consular", callerIp(req)),
+      sha256Hex(`consular-key:${b.key as string}`),
+    ]);
+    const result = await ctx.runMutation(internal.consularReports.save, {
+      post: b.post as string,
+      editKeyHash,
+      ipHash,
+      input: input as ReportWire,
+    });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/consular-report/mine",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    const parsed = await reportBody(req);
+    if (!parsed.ok) return json({ ok: false, message: parsed.message }, parsed.status);
+    const editKeyHash = await sha256Hex(`consular-key:${parsed.body.key as string}`);
+    const mine = await ctx.runQuery(internal.consularReports.mine, { post: parsed.body.post as string, editKeyHash });
+    return json({ ok: true, mine });
+  }),
+});
+
+http.route({
+  path: "/consular-report/remove",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    const parsed = await reportBody(req);
+    if (!parsed.ok) return json({ ok: false, message: parsed.message }, parsed.status);
+    const editKeyHash = await sha256Hex(`consular-key:${parsed.body.key as string}`);
+    const result = await ctx.runMutation(internal.consularReports.remove, { post: parsed.body.post as string, editKeyHash });
+    return json(result, result.ok ? 200 : 400);
   }),
 });
 

@@ -276,15 +276,16 @@ export default function TermsPage() {
             </h3>{" "}
             <p className="text-soft leading-relaxed">
               When you send us something meant to be shown on the Service, such
-              as a review, a rating, a timeline for the public board or a firm
-              profile, you grant us a non-exclusive, worldwide, royalty-free
+              as a review, a rating, a timeline for the public board, a
+              consulate interview report or a firm profile, you grant us a non-exclusive, worldwide, royalty-free
               license to host, store, copy, display and publish it on the
               Service and in material that describes the Service, and to adapt
               it as that requires (for example, to show it shortened, beside a
               star count, or in figures combined with others), with the name you
               gave or without one. The license lasts until the submission is
-              removed. You may ask us to remove a review or rating at any time,
-              and you can remove a timeline yourself. Figures that already
+              removed. You may ask us to remove a review, a rating or a consulate
+              report at any time, and you can remove a timeline or a consulate
+              report yourself. Figures that already
               combine your submission with others, such as a median, needn’t be
               recalculated. You confirm that what you send is your own
               experience, is accurate, and names no one else.
@@ -326,7 +327,9 @@ export default function TermsPage() {
               classification of records, the resolution of employers and law
               firms into single entities, the derived statistics, and the live
               index of pending cases we build by checking DOL every day are our
-              original work, and are reserved to the extent the law allows.
+              original work, and are reserved to the extent the law allows. The
+              consulate interview reports visitors submit, as gathered, combined
+              and counted on the Service, form part of this compilation.
               Extracting the compiled dataset in bulk, or redistributing it as a
               dataset, is not permitted under these Terms.
             </p>{" "}

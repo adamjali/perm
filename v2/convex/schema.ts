@@ -2329,6 +2329,86 @@ export default defineSchema({
     .index("by_perm_checked", ["permCheckedAt"]),
 
   /**
+   * Consulate reports: what happened at a US consulate's visa interview or drop box, as the person waiting
+   * reports it (convex/consularReports.ts, rules in convex/lib/consularReport.ts). Self-reported, and
+   * labelled so wherever it renders: never State's data.
+   *
+   * No account, no case number, no name and no free text: a post, a kind of visa, an outcome, dates and a few
+   * choices from fixed lists. Whoever
+   * holds the edit key (32 random bytes the browser keeps for that consulate) can change or remove the
+   * report; only its SHA-256 is stored. `ipHash` (a keyed hash of the address) caps how many reports one
+   * connection adds for one post, and is cleared about a day after the report is saved
+   * (`consularReports.clearIpHashes`, hourly, from `ipHashUntil`).
+   */
+  consularReports: defineTable({
+    post: v.string(),
+    /** Every kind of visa (owner, Nov 5 2026): everyone goes through the same posts. */
+    category: v.union(
+      v.literal("employment"),
+      v.literal("h1b"),
+      v.literal("h4"),
+      v.literal("l1"),
+      v.literal("l2"),
+      v.literal("family"),
+      v.literal("immediate"),
+      v.literal("k1"),
+      v.literal("f1"),
+      v.literal("b1b2"),
+      v.literal("other"),
+    ),
+    /** A nonimmigrant visa only: an interview, or a drop box with no interview. */
+    mode: v.optional(v.union(v.literal("interview"), v.literal("dropbox"))),
+    /** YYYY-MM: when NVC said the case was documentarily complete. Immigrant visas and the K-1 only. */
+    nvcCompleteMonth: v.optional(v.string()),
+    /** When the interview letter came. */
+    scheduledOn: v.optional(v.string()),
+    /** The interview, or the day the documents went into the drop box. */
+    interviewOn: v.optional(v.string()),
+    outcome: v.union(
+      v.literal("waiting"),
+      v.literal("approved"),
+      v.literal("issued"),
+      v.literal("passport-returned"),
+      v.literal("221g"),
+      v.literal("refused"),
+      v.literal("cancelled"),
+      v.literal("rescheduled"),
+    ),
+    /** Only with outcome "refused". */
+    refusalGround: v.optional(v.union(v.literal("214b"), v.literal("public-charge"), v.literal("other"))),
+    /** Approved at the window (or the drop box approved), before the visa is printed. */
+    approvedOn: v.optional(v.string()),
+    /** The visa issued, the passport back, or the 221(g) cleared. */
+    resolvedOn: v.optional(v.string()),
+    /** A nonimmigrant visa's 221(g): the slip's colour. */
+    slipColor: v.optional(
+      v.union(
+        v.literal("white"),
+        v.literal("yellow"),
+        v.literal("pink"),
+        v.literal("blue"),
+        v.literal("green"),
+        v.literal("unsure"),
+      ),
+    ),
+    /** A nonimmigrant visa's 221(g): whether the officer asked for documents by email. */
+    askedToEmailDocs: v.optional(v.union(v.literal("yes"), v.literal("no"), v.literal("unsure"))),
+    editKeyHash: v.string(),
+    /** Cleared about a day after the report is saved. */
+    ipHash: v.optional(v.string()),
+    /** When `ipHash` is cleared; gone with it. */
+    ipHashUntil: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    /** Set by an admin to take a report off every figure without deleting it. */
+    hidden: v.optional(v.boolean()),
+  })
+    .index("by_post", ["post"])
+    .index("by_post_key", ["post", "editKeyHash"])
+    .index("by_post_ip", ["post", "ipHash"])
+    .index("by_ip_until", ["ipHashUntil"]),
+
+  /**
    * Browser push subscriptions for case-status changes, with no account and
    * no email. A row is one browser watching one case; the subscription JSON
    * is the browser's delivery address and identifies a device, not a person.

@@ -6,6 +6,7 @@ import { internalAction, internalMutation, internalQuery, query, type ActionCtx 
 import {
   BOARD_OPENS_AT,
   CASE_STOPS,
+  MIN_CASE_REPORTERS,
   PERM_CASE,
   computeMetrics,
   summarizeRfes,
@@ -228,12 +229,8 @@ const summaryResult = v.object({
   withheld: v.boolean(),
 });
 
-/**
- * A case's counts show only once this many people have added dates for it. One case is one person's
- * filing, so below it the counts are that person's own progress (an I-140 approved, an I-485 filed),
- * which USCIS doesn't publish, readable by anyone who knows the case number (audit, Nov 4 2026).
- */
-export const MIN_CASE_REPORTERS = 3;
+/** The three-person floor lives with the pure rules, so the consulate reports read the same number. */
+export { MIN_CASE_REPORTERS };
 
 /**
  * What people have reported for ONE case: counts per stop, nothing personal.

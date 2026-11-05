@@ -100,6 +100,14 @@ export const BOARD_OPENS_AT = 25;
 /** A median is printed only over at least this many timelines. */
 export const METRIC_MIN_N = 5;
 
+/**
+ * A case's counts show only once this many people have added dates for it. One case is one person's
+ * filing, so below it the counts are that person's own progress (an I-140 approved, an I-485 filed),
+ * which USCIS doesn't publish, readable by anyone who knows the case number (audit, Nov 4 2026).
+ * The consulate reports (convex/lib/consularReport.ts) hold every figure to the same floor.
+ */
+export const MIN_CASE_REPORTERS = 3;
+
 /** PERM numbers only: the FLAG form and the older A- form. */
 export const PERM_CASE = /^(G-\d{3}-\d{5}-\d{6}|A-\d{5}-\d{5})$/;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
