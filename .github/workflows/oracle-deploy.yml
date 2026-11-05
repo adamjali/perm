@@ -224,9 +224,11 @@ jobs:
           mkdir -p "$S/.next/static" "$S/public"
           cp -r .next/static/. "$S/.next/static/"
           cp -r public/. "$S/public/"
-          missing=$(cd public && find . -type f | while read -r f; do [ -f "$S/public/$f" ] || echo "$f"; done | head -5)
+          # $S is relative, so compare from here (never cd into public/), and read the whole
+          # list (awk, not head, so nothing upstream dies of SIGPIPE under pipefail).
+          missing=$(find public -type f | sed 's#^public/##' | while read -r f; do [ -f "$S/public/$f" ] || echo "$f"; done)
           if [ -n "$missing" ] || [ -d "$S/public/public" ]; then
-            echo "::error::the package is missing public files: $missing"; exit 1
+            echo "::error::the package is missing public files: $(printf '%s\n' "$missing" | awk 'NR<=5' | tr '\n' ' ')"; exit 1
           fi
           # The pages this push changed, which the server warms before the
           # rest: the same list the Cloudflare step below drops copies of. None
