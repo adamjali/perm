@@ -19,7 +19,8 @@ import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
-import { behindLabel, IV_TOOL_URL, monthsBehind } from "@/lib/consular/scheduling";
+import { PanelTabs } from "@/components/ui/panel-tabs";
+import { behindLabel, IV_CATEGORIES, IV_CATEGORY_LABEL, IV_TOOL_URL, monthsBehind, type IvCategory } from "@/lib/consular/scheduling";
 import { getConsularIndex } from "@/lib/db/consularPosts";
 import { monthName } from "@/lib/db/visaIssuances";
 import { formatInt } from "@/lib/format";
@@ -50,25 +51,35 @@ export default async function ConsularPostsPage() {
   const listed = posts.filter((p) => p.now);
   const caughtUp = asOf ? listed.filter((p) => monthsBehind(p.now?.employment, asOf) === 0).length : 0;
   const employmentAbroad = posts.reduce((a, p) => a + p.employment, 0);
-  const behind: BarRow[] = asOf
-    ? listed
-        .map((p) => ({ p, n: monthsBehind(p.now?.employment, asOf) }))
-        .filter((x): x is { p: (typeof listed)[number]; n: number } => x.n !== null && x.n > 0)
-        .sort((a, b) => b.n - a.n)
-        .map(({ p, n }) => ({
-          key: p.key,
-          label: (
-            <Link href={`/consular-posts/${p.slug}`} className="link">
-              {p.name}
-            </Link>
-          ),
-          sub: `Scheduling cases complete in ${p.now?.employment.printed}${p.employment ? `; ${formatInt(p.employment)} employment visas a year` : ""}`,
-          value: n,
-          text: behindLabel(p.now?.employment, asOf),
-          tone: "yellow" as const,
-          tip: `${p.name}\n${behindLabel(p.now?.employment, asOf)}\nScheduling cases complete in ${p.now?.employment.printed}`,
-        }))
-    : [];
+  // One chart per category of State's tool: employment, family preference and immediate relative.
+  const behindIn = (cat: IvCategory): BarRow[] =>
+    asOf
+      ? listed
+          .map((p) => ({ p, n: monthsBehind(p.now?.[cat], asOf) }))
+          .filter((x): x is { p: (typeof listed)[number]; n: number } => x.n !== null && x.n > 0)
+          .sort((a, b) => b.n - a.n)
+          .map(({ p, n }) => {
+            const yearly =
+              cat === "employment"
+                ? p.employment ? `; ${formatInt(p.employment)} employment visas a year` : ""
+                : p.issued ? `; ${formatInt(p.issued)} immigrant visas a year, every class` : "";
+            return {
+              key: p.key,
+              label: (
+                <Link href={`/consular-posts/${p.slug}`} className="link">
+                  {p.name}
+                </Link>
+              ),
+              sub: `Scheduling cases complete in ${p.now?.[cat].printed}${yearly}`,
+              value: n,
+              text: behindLabel(p.now?.[cat], asOf),
+              tone: "yellow" as const,
+              tip: `${p.name}\n${behindLabel(p.now?.[cat], asOf)}\nScheduling cases complete in ${p.now?.[cat].printed}`,
+            };
+          })
+      : [];
+  const behind = behindIn("employment");
+  const charts = IV_CATEGORIES.map((cat) => ({ cat, rows: cat === "employment" ? behind : behindIn(cat) }));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -77,7 +88,8 @@ export default async function ConsularPostsPage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">US consulates and immigrant visas</h1>{" "}
         <p className="mt-4 max-w-3xl text-lg leading-relaxed text-muted-foreground">
           In fiscal 2024, about one employment green card in three ended with an interview at a consulate abroad.
-          Here&apos;s where each consulate stands, from the State Department&apos;s own records.
+          Here&apos;s where each consulate stands for employment, family preference and immediate relative cases, from
+          the State Department&apos;s own records.
         </p>
       </header>
 
@@ -97,19 +109,34 @@ export default async function ConsularPostsPage() {
         <Figure
           label="Employment visas issued abroad"
           value={formatInt(employmentAbroad)}
-          note={index.issuedFrom && index.issuedTo ? `${monthName(index.issuedFrom)} to ${monthName(index.issuedTo)}, State's newest tables` : undefined}
+          note={
+            index.issuedFrom && index.issuedTo
+              ? `${monthName(index.issuedFrom)} to ${monthName(index.issuedTo)}. ${monthName(index.issuedTo)} is the newest month State has posted: it posts each month's issuances months later`
+              : undefined
+          }
         />
       </FigureRow>
 
-      {behind.length ? (
+      {charts.some((c) => c.rows.length) ? (
         <FigurePlate
-          title="How far back each post is scheduling employment cases"
+          title="How far back each post is scheduling cases"
           subject={asOf ? `State's update of ${longDate(asOf)}` : ""}
-          caption="Each bar is how many months before State's update the post's employment cases were completed. It's NVC's paperwork queue: a post at zero has no backlog on paper, and a post holding no interviews can still read zero."
+          caption="Pick a category. Each bar is how many months before State's update the post's cases in that category were completed. It's NVC's paperwork queue: a post at zero has no backlog on paper, and a post holding no interviews can still read zero. K-1 fiancé(e) visas aren't in State's tool: a K-1 is a nonimmigrant visa, and the tool lists immigrant visas only."
           source="U.S. Department of State, IV Scheduling Status Tool"
           className="mt-10"
         >
-          <BarRows inline rows={behind} label="Months back each post is scheduling employment cases" />
+          <PanelTabs
+            label="Category of immigrant visa"
+            tabs={charts.map(({ cat, rows }) => ({
+              id: `behind-${cat}`,
+              label: IV_CATEGORY_LABEL[cat],
+              panel: rows.length ? (
+                <BarRows inline rows={rows} label={`Months back each post is scheduling ${IV_CATEGORY_LABEL[cat].toLowerCase()} cases`} />
+              ) : (
+                <p className="text-base text-muted-foreground">Every post is caught up on paper in this category.</p>
+              ),
+            }))}
+          />
         </FigurePlate>
       ) : null}
 
