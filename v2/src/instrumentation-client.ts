@@ -31,6 +31,7 @@ import {
   fromServiceWorkerRegister,
 } from "@/lib/exceptionNoise";
 import { isFieldFocusClick, scrubClickEvent } from "@/lib/analyticsRedact";
+import { droppedForAllowance } from "@/lib/analyticsSample";
 import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 import { guardStorage } from "@/lib/storageGuard";
 import { isLocalDevHost } from "@/lib/localHost";
@@ -104,6 +105,9 @@ function startPostHog(key: string, country: string | null): void {
       // Field Core Web Vitals (LCP/CLS/FCP/INP), kept with the rest of the
       // analytics and loaded with no extra script.
       capture_performance: { web_vitals: true },
+      // Page leaves aren't sent, and web vitals come from one session in four (src/lib/analyticsSample.ts): the
+      // period's events ran past PostHog's free million (Nov 4 2026).
+      capture_pageleave: false,
       // COOKIE-FREE UNLESS SIGNED IN. Consent starts pending and
       // pending counts as a rejection, so everyone is counted with PostHog's
       // daily-salted server hash and nothing is written to the browser. A
@@ -161,6 +165,8 @@ function startPostHog(key: string, country: string | null): void {
         // event still carries the path, so the page is still measurable.
         // A click that only focused a field or opened a dropdown: its change event says what was chosen.
         if (isFieldFocusClick(event)) return null;
+        // Page leaves (in case the SDK sends one anyway) and three sessions in four of web vitals.
+        if (droppedForAllowance(event)) return null;
 
         redactCaseParam(event.properties);
         redactCaseParam(event.$set);
