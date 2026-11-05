@@ -32,6 +32,7 @@ import { longDate, MONTH_NAMES, monthYear } from "@convex/lib/months";
 import { RIVALS } from "@/lib/compare/rivals";
 import { checkedPhrase } from "@/lib/compare/trackers";
 import { FORM_PAGES } from "@/lib/uscisForms";
+import { softFail } from "@/lib/softRead";
 
 const BASE_URL = SITE_URL;
 
@@ -552,10 +553,10 @@ export async function GET() {
   const allPosts = getAllPosts();
 
   const [disclosure, dol, line] = await Promise.all([
-    getDisclosureStats().catch(() => null),
-    fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(() => null),
+    getDisclosureStats().catch(softFail("llms.txt/route.getDisclosureStats", null)),
+    fetchQuery(api.dolProcessingTimes.getLatest, {}).catch(softFail("llms.txt/route.fetchQuery", null)),
     // Where DOL is by our own daily check: the month once DOL's page stopped printing one (Oct 31 2026).
-    getPermLine().catch(() => null),
+    getPermLine().catch(softFail("llms.txt/route.getPermLine", null)),
   ]);
 
   // The file changes when an article does and when DOL republishes.

@@ -28,6 +28,7 @@ import { formatInt } from "@/lib/format";
 import { caseStatusTint, CASE_STATUS_FILL, type CaseStatusTint } from "@/lib/statusTone";
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/constants/site";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Every status word FLAG can show, with what it means, what the regulation
@@ -207,11 +208,11 @@ function FlagEntry({ e, anchor, n, max }: { e: FlagStatusEntry; anchor: string; 
 
 export default async function PermCaseStatusesPage() {
   const [census, sweep, pwd, lca, seasonal] = await Promise.all([
-    getLiveCensus().catch(() => null),
-    getSweepCoverage().catch(() => null),
-    getPwdSummary().catch(() => null),
-    getLcaSummary().catch(() => null),
-    getSeasonalSummary().catch(() => null),
+    getLiveCensus().catch(softFail("perm-case-statuses/page.getLiveCensus", null)),
+    getSweepCoverage().catch(softFail("perm-case-statuses/page.getSweepCoverage", null)),
+    getPwdSummary().catch(softFail("perm-case-statuses/page.getPwdSummary", null)),
+    getLcaSummary().catch(softFail("perm-case-statuses/page.getLcaSummary", null)),
+    getSeasonalSummary().catch(softFail("perm-case-statuses/page.getSeasonalSummary", null)),
   ]);
   const permAsOf = sweep?.finishedOn ?? census?.asOf ?? null;
   const permCount = (status: string): number | null => (census ? statusTotalFrom(census.matrix, status) : null);

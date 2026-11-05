@@ -12,6 +12,7 @@ import { getPlanReading } from "@/lib/db/planFigures";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { easternDay } from "@convex/lib/time";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The employment-based green card for one case, every step dated (owner, Oct 27 2026:
@@ -74,7 +75,7 @@ const FAQS = [
 ];
 
 export default async function GreenCardTimelinePage() {
-  const [reading, check] = await Promise.all([getPlanReading(), getBulletinCheck().catch(() => null)]);
+  const [reading, check] = await Promise.all([getPlanReading(), getBulletinCheck().catch(softFail("tools/green-card-timeline/page.getBulletinCheck", null))]);
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,

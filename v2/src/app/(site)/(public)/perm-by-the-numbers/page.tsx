@@ -50,6 +50,7 @@ import { getDatasetSchema } from "@/lib/structuredData";
 import { checkedLabel } from "@/lib/time";
 import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { longDate, monthDay, monthTick, monthYear, weekdayName } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 /**
  * PERM by the numbers: the totals DOL's own case records add up to, which DOL
@@ -124,7 +125,7 @@ export default async function PermByTheNumbersPage() {
       getPermWaitTrend(),
     ]);
   // Where DOL is in the line by our own check of DOL's records, dated by it; DOL's table is the fallback.
-  const permLine = await getPermLine().catch(() => null);
+  const permLine = await getPermLine().catch(softFail("perm-by-the-numbers/page.getPermLine", null));
 
   // The waiting line, by DOL's own month.
   const { stages: lineStages } = groupByStage(census.statuses);

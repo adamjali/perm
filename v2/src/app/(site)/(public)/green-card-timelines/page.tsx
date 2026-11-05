@@ -8,6 +8,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { buttonVariants } from "@/components/ui/button";
 import { NoteBanner } from "@/components/ui/note";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Green card timelines, as the people waiting report them.
@@ -46,7 +47,7 @@ async function fetchBoard() {
 
 
 export default async function GreenCardTimelinesPage() {
-  const board: Board | null = await fetchBoard().catch(() => null);
+  const board: Board | null = await fetchBoard().catch(softFail("green-card-timelines/page.fetchBoard", null));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">

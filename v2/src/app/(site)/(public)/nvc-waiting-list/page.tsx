@@ -26,6 +26,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { getNvcWaitingList } from "@/lib/db/nvcWaitingList";
 import { MONTH_ABBR } from "@convex/lib/months";
 import { AlertMark } from "@/components/ui/note";
+import { softFail } from "@/lib/softRead";
 
 export const revalidate = 86400;
 
@@ -101,7 +102,7 @@ function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: str
 }
 
 export default async function NvcWaitingListPage() {
-  const wl = await getNvcWaitingList().catch(() => null);
+  const wl = await getNvcWaitingList().catch(softFail("nvc-waiting-list/page.getNvcWaitingList", null));
 
   const series = wl ? [...wl.series].sort((a, z) => a.asOf.localeCompare(z.asOf)) : [];
   const newest = series[series.length - 1];

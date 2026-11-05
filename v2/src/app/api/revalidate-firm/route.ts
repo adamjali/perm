@@ -15,6 +15,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { entityHref } from "@/lib/entityPayload";
 import { secretMatches } from "@/lib/secretMatch";
+import { softFail } from "@/lib/softRead";
 
 /** Firm slugs as `slugify` makes them, with room to spare. */
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
@@ -25,7 +26,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const body: unknown = await request.json().catch(() => null);
+  const body: unknown = await request.json().catch(softFail("api/revalidate-firm/route.json", null));
   const slug = (body as { slug?: unknown } | null)?.slug;
   if (typeof slug !== "string" || slug.length > 120 || !SLUG_RE.test(slug)) {
     return NextResponse.json({ error: "Expected { slug: string }" }, { status: 400 });

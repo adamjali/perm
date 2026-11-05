@@ -23,6 +23,7 @@ import { newestYear, outcomeTotal, yearComplete, type LayoffDoc, type LayoffEmpl
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getDatasetSchema } from "@/lib/structuredData";
+import { softFail } from "@/lib/softRead";
 
 /**
  * What employers told DOL about layoffs on their PERM applications (Form 9089,
@@ -83,7 +84,7 @@ function faqs(doc: LayoffDoc | null) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const doc = await getLayoffDisclosures().catch(() => null);
+  const doc = await getLayoffDisclosures().catch(softFail("perm-layoff-disclosures/page.getLayoffDisclosures", null));
   const y = doc ? newestYear(doc) : null;
   const lead = y && doc ? `${formatInt(y.yes)} of ${formatInt(y.answered)} PERM applications decided in ${fyLabel(doc)} reported a layoff.` : "";
   const description = firstThatFits([

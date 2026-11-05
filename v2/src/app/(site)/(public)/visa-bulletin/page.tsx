@@ -54,6 +54,7 @@ import type { CountryKey, Cutoff } from "@/lib/perm";
 import { MoreText } from "@/components/data/MoreText";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { MONTH_NAMES, shiftMonth } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 const TITLE = "The Next Visa Bulletin, From Every Past One";
 const DESCRIPTION =
@@ -193,7 +194,7 @@ export default async function VisaBulletinPage() {
     getVisaBulletinSeries(),
     getBulletinBoard(),
     getI485Cells().catch(() => ({}) as Record<string, [number, number, number, number][]>),
-    getVisaAnnualLimits().catch(() => null),
+    getVisaAnnualLimits().catch(softFail("visa-bulletin/page.getVisaAnnualLimits", null)),
     getUscisCharts(),
   ]);
   const spill = latestLimits(limitsDoc);

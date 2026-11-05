@@ -18,6 +18,7 @@ import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/db/lcaCases";
 import { getSeasonalPublishedSummary, getSeasonalSummary } from "@/lib/db/seasonalCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { MoreText } from "@/components/data/MoreText";
+import { softFail } from "@/lib/softRead";
 
 /**
  * One search over every DOL filing this site holds.
@@ -57,14 +58,14 @@ export const revalidate = 86400;
 
 export default async function CaseSearchPage() {
   const [permMeta, permLive, pwd, pwdFile, lca, lcaFile, seasonal, seasonalFiles, historyYears, fieldOptions] = await Promise.all([
-    getMeta().catch(() => null),
-    getLiveRemainderSummary().catch(() => null),
-    getPwdSummary().catch(() => null),
-    getPwdDisclosureSummary().catch(() => null),
-    getLcaSummary().catch(() => null),
-    getLcaDisclosureSummary().catch(() => null),
-    getSeasonalSummary().catch(() => null),
-    getSeasonalPublishedSummary().catch(() => []),
+    getMeta().catch(softFail("case-search/page.getMeta", null)),
+    getLiveRemainderSummary().catch(softFail("case-search/page.getLiveRemainderSummary", null)),
+    getPwdSummary().catch(softFail("case-search/page.getPwdSummary", null)),
+    getPwdDisclosureSummary().catch(softFail("case-search/page.getPwdDisclosureSummary", null)),
+    getLcaSummary().catch(softFail("case-search/page.getLcaSummary", null)),
+    getLcaDisclosureSummary().catch(softFail("case-search/page.getLcaDisclosureSummary", null)),
+    getSeasonalSummary().catch(softFail("case-search/page.getSeasonalSummary", null)),
+    getSeasonalPublishedSummary().catch(softFail("case-search/page.getSeasonalPublishedSummary", [])),
     getPermHistoryYears(),
     getCaseFieldOptions(),
   ]);

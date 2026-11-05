@@ -50,6 +50,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { cn } from "@/lib/utils";
 import { checkedLabel } from "@/lib/time";
 import { monthDay, monthYear, shiftMonth, shortDate } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Where every step stands today: one page that gathers the answer each data
@@ -95,16 +96,16 @@ const BULLETIN_COUNTRIES: CountryKey[] = ["worldwide", "china", "india", "mexico
 
 export default async function TodayPage() {
   const [perm, pwd, census, observed, coverage, i140, bulletins, i485, i485History, bulletinBoard] = await Promise.all([
-    getPermBoard().catch(() => null),
-    getPwdBoard().catch(() => null),
-    getLiveCensus().catch(() => null),
-    getObservedDays(DECISION_DAYS).catch(() => []),
-    getSweepCoverage().catch(() => null),
+    getPermBoard().catch(softFail("today/page.getPermBoard", null)),
+    getPwdBoard().catch(softFail("today/page.getPwdBoard", null)),
+    getLiveCensus().catch(softFail("today/page.getLiveCensus", null)),
+    getObservedDays(DECISION_DAYS).catch(softFail("today/page.getObservedDays", [])),
+    getSweepCoverage().catch(softFail("today/page.getSweepCoverage", null)),
     getUscisFormHistory("I-140"),
-    getVisaBulletins().catch(() => []),
+    getVisaBulletins().catch(softFail("today/page.getVisaBulletins", [])),
     getUscisFormMedian("I-485", "Employment"),
     getUscisFormHistory("I-485"),
-    getBulletinBoard().catch(() => null),
+    getBulletinBoard().catch(softFail("today/page.getBulletinBoard", null)),
   ]);
 
   // How many PERM cases sit in each status now, from the census.

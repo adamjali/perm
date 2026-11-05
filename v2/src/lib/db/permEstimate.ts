@@ -20,6 +20,7 @@ import { ageByStatusFrom, exitMixFor, getStageStats, stageDurationFor } from "@/
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { getPermDayQueue } from "@/lib/db/permDayQueue";
 import type { DayCounts } from "@/lib/queueAhead";
+import { softFail } from "@/lib/softRead";
 
 export interface PermEstimateContext {
   backlog: Awaited<ReturnType<typeof getLiveBacklog>>;
@@ -38,13 +39,13 @@ export interface PermEstimateContext {
 export async function loadPermEstimateContext(): Promise<PermEstimateContext> {
   const [backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock, byDay] = await Promise.all([
     getLiveBacklog(),
-    getEstimatorData().catch(() => null),
-    getDecisionPace().catch(() => null),
-    getSweepCoverage().catch(() => null),
-    getStageStats().catch(() => null),
-    getStragglerRates().catch(() => null),
-    getRangeCoverage().catch(() => null),
-    getRfiClock().catch(() => null),
+    getEstimatorData().catch(softFail("permEstimate.getEstimatorData", null)),
+    getDecisionPace().catch(softFail("permEstimate.getDecisionPace", null)),
+    getSweepCoverage().catch(softFail("permEstimate.getSweepCoverage", null)),
+    getStageStats().catch(softFail("permEstimate.getStageStats", null)),
+    getStragglerRates().catch(softFail("permEstimate.getStragglerRates", null)),
+    getRangeCoverage().catch(softFail("permEstimate.getRangeCoverage", null)),
+    getRfiClock().catch(softFail("permEstimate.getRfiClock", null)),
     getPermDayQueue(),
   ]);
   return { backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock, byDay };

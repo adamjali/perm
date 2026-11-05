@@ -36,6 +36,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { entityHref } from "@/lib/entityPayload";
 import { secretMatches } from "@/lib/secretMatch";
+import { softFail } from "@/lib/softRead";
 
 /**
  * A global cap on the shared resource, not a per-caller one.
@@ -60,7 +61,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
+  const body: unknown = await request.json().catch(softFail("api/revalidate-live-employers/route.json", null));
   const raw = (body as { slugs?: unknown } | null)?.slugs;
   if (!Array.isArray(raw)) {
     return NextResponse.json({ error: "Expected { slugs: string[] }" }, { status: 400 });

@@ -4,6 +4,7 @@ import { analystReviewAverage, analystReviewQueue } from "@convex/lib/dolProcess
 import { getPermLine } from "./permLine";
 import { getProcessingTimes } from "./processingTimes";
 import { getPwdSummary } from "./pwdCases";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Where DOL is, in the three figures the data hub and the sign-up page print: the filing month analyst review is
@@ -27,9 +28,9 @@ export interface DolPosition {
 
 export async function getDolPosition(): Promise<DolPosition> {
   const [snapshot, line, pwd] = await Promise.all([
-    getProcessingTimes().catch(() => null),
-    getPermLine().catch(() => null),
-    getPwdSummary().catch(() => null),
+    getProcessingTimes().catch(softFail("dolPosition.getProcessingTimes", null)),
+    getPermLine().catch(softFail("dolPosition.getPermLine", null)),
+    getPwdSummary().catch(softFail("dolPosition.getPwdSummary", null)),
   ]);
   const dolMonth = snapshot ? (analystReviewQueue(snapshot.permQueues)?.priorityDate ?? null) : null;
   const dolPwd = snapshot?.pwdPermBacklog?.length ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0) : null;

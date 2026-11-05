@@ -17,6 +17,7 @@ import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { longDate } from "@convex/lib/months";
 import { getPwdBoard } from "@/lib/db/board";
 import { backlogTrend } from "@/lib/homeTrends";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Prevailing wage requests, findable by employer before the PERM exists.
@@ -58,12 +59,12 @@ export default async function PwdCasesPage() {
   const [summary, disclosure, times, line, dayData, nowDocs, pwdBoard] = await Promise.all([
     getPwdSummary(),
     getPwdDisclosureSummary(),
-    getProcessingTimes().catch(() => null),
+    getProcessingTimes().catch(softFail("pwd-cases/page.getProcessingTimes", null)),
     getPwdLine(),
-    getPwdDayData().catch(() => null),
+    getPwdDayData().catch(softFail("pwd-cases/page.getPwdDayData", null)),
     getPwdNowDocs(),
     // The board's 30-day filed-against-decided count, for which way the line moved.
-    getPwdBoard().catch(() => null),
+    getPwdBoard().catch(softFail("pwd-cases/page.getPwdBoard", null)),
   ]);
   // DOL's own position in the PERM wage-request line: the month it is issuing
   // determinations on, from its processing-times page.

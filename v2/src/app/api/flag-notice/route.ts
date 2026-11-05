@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { one } from "@/lib/db/client";
 import { liveFlagNotice } from "@/lib/flagNotice";
+import { softFail } from "@/lib/softRead";
 
 /**
  * DOL's current notice on FLAG, or null. Cached five minutes at the edge, so
@@ -10,7 +11,7 @@ import { liveFlagNotice } from "@/lib/flagNotice";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const row = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = ?", ["flag_notice"]).catch(() => null);
+  const row = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = ?", ["flag_notice"]).catch(softFail("api/flag-notice/route.one", null));
   let doc: unknown = null;
   try {
     doc = row ? JSON.parse(row.json) : null;

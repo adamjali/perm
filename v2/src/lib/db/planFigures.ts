@@ -27,6 +27,7 @@ import { doc } from "./publicData";
 import { getBulletinBoard } from "./bulletin";
 import { getRecruitmentSummary } from "./recruitment";
 import { getUscisFormHistory, type UscisFormHistoryPoint } from "./uscisQuarterly";
+import { softFail } from "@/lib/softRead";
 
 /** The categories the planner plans for, and the I-140 class each files under after a PERM. */
 const PLAN_I140_CLASS = { EB2: "E21", EB3: "E31" } as const;
@@ -130,16 +131,16 @@ const quarterOf = (points: readonly UscisFormHistoryPoint[], title: string): str
  */
 export const getPlanReading = cache(async (): Promise<PlanReading> => {
   const [perm, pwd, board, recruitment, i140, i485, i765, i131, nvcDoc, consular] = await Promise.all([
-    getPermBoard().catch(() => null),
-    getPwdBoard().catch(() => null),
-    getBulletinBoard().catch(() => null),
-    getRecruitmentSummary().catch(() => null),
+    getPermBoard().catch(softFail("planFigures.getPermBoard", null)),
+    getPwdBoard().catch(softFail("planFigures.getPwdBoard", null)),
+    getBulletinBoard().catch(softFail("planFigures.getBulletinBoard", null)),
+    getRecruitmentSummary().catch(softFail("planFigures.getRecruitmentSummary", null)),
     getUscisFormHistory(USCIS_ROWS.i140.form),
     getUscisFormHistory(USCIS_ROWS.i485.form),
     getUscisFormHistory(USCIS_ROWS.ead.form),
     getUscisFormHistory(USCIS_ROWS.ap.form),
-    doc<{ readings?: NvcReading[] }>("nvc_timeframes").catch(() => null),
-    getConsularIndex().catch(() => null),
+    doc<{ readings?: NvcReading[] }>("nvc_timeframes").catch(softFail("planFigures.doc", null)),
+    getConsularIndex().catch(softFail("planFigures.getConsularIndex", null)),
   ]);
   const nvc = nvcSpans(nvcDoc?.readings);
 

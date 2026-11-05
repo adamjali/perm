@@ -64,6 +64,7 @@ import { ISO_MONTH_RE } from "@convex/lib/months";
 import { statusCasesHref } from "@/components/queue/statusLinks";
 import { getPermLine } from "@/lib/db/permLine";
 import { getRangeCoverage } from "@/lib/db/rangeCoverage";
+import { softFail } from "@/lib/softRead";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -163,17 +164,17 @@ export default async function CohortPage({
     getPendingBefore(month),
     getAdjacentMonths(month),
     getEstimatorData(),
-    getLiveBacklog().catch(() => []),
-    getDecisionPace().catch(() => null),
-    getSweepCoverage().catch(() => null),
-    getMonthDetail(month).catch(() => null),
+    getLiveBacklog().catch(softFail("perm-queue/[month]/page.getLiveBacklog", [])),
+    getDecisionPace().catch(softFail("perm-queue/[month]/page.getDecisionPace", null)),
+    getSweepCoverage().catch(softFail("perm-queue/[month]/page.getSweepCoverage", null)),
+    getMonthDetail(month).catch(softFail("perm-queue/[month]/page.getMonthDetail", null)),
     // Without it the page drops the calendar rather than draw a month of empty days.
     getMonthDays(month).catch((e: unknown) => {
       console.warn("[perm-queue/month] day counts failed", e);
       return null;
     }),
     // The measured range by distance, the case page's own; without it, the pace rule's range.
-    getRangeCoverage().catch(() => null),
+    getRangeCoverage().catch(softFail("perm-queue/[month]/page.getRangeCoverage", null)),
     // The month at the end of the newest replayed day: what "since" compares against.
     getLatestCensusDayBefore(easternDay())
       .then(async (day) => (day ? { day, month: await getMonthCensusOn(day, month) } : null))
@@ -182,7 +183,7 @@ export default async function CohortPage({
         return null;
       }),
     // DOL's kept readings, for how its month moved (the queue page's own chip).
-    getProcessingTimesHistory(24).catch(() => []),
+    getProcessingTimesHistory(24).catch(softFail("perm-queue/[month]/page.getProcessingTimesHistory", [])),
   ]);
   if (!backlog || backlog.total === 0) notFound();
   const makeup = monthMakeup(backlog.statuses);
@@ -223,7 +224,7 @@ export default async function CohortPage({
   const split = groupByStage(backlog.statuses);
   const label = formatMonth(month) ?? month;
   // Where DOL is: our own daily check first, DOL's table when the check can't say (lib/permLine.ts).
-  const line = await getPermLine().catch(() => null);
+  const line = await getPermLine().catch(softFail("perm-queue/[month]/page.getPermLine", null));
   const dolMonth = line?.month ?? estimator.frontier?.analystQueueMonth ?? null;
   const dolAsOfIso = line ? line.asOf : (estimator.frontier?.asOf ?? null);
   const isNoted = month === OCTOBER_2025.month;

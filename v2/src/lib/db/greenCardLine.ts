@@ -9,6 +9,7 @@ import { getVisaAnnualLimits } from "./visaLimits";
 import type { LineSnapshot } from "@/lib/greenCardLine";
 import { buildLineSnapshot } from "@/lib/greenCardLineSnapshot";
 import type { TableVYear } from "@/lib/visaLimits";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The records the green-card line calculator reads, gathered once per render
@@ -22,10 +23,10 @@ import type { TableVYear } from "@/lib/visaLimits";
  */
 export const getLineSnapshot = cache(async (): Promise<LineSnapshot> => {
   const [awaiting, i140, limits, bulletins, i485] = await Promise.all([
-    getEbAwaitingVisa().catch(() => null),
-    getI140ClassCountry().catch(() => null),
-    getVisaAnnualLimits().catch(() => null),
-    getVisaBulletinSeries().catch(() => []),
+    getEbAwaitingVisa().catch(softFail("greenCardLine.getEbAwaitingVisa", null)),
+    getI140ClassCountry().catch(softFail("greenCardLine.getI140ClassCountry", null)),
+    getVisaAnnualLimits().catch(softFail("greenCardLine.getVisaAnnualLimits", null)),
+    getVisaBulletinSeries().catch(softFail("greenCardLine.getVisaBulletinSeries", [])),
     rows<{
       as_of: string;
       country: string;

@@ -140,6 +140,7 @@ import { fiscalYearOf, monthDay, monthYear, shortDate } from "@convex/lib/months
 import { FilingRows } from "@/components/entities/FilingRows";
 import { ROW_LINK } from "@/components/entities/caseRows";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
+import { softFail } from "@/lib/softRead";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -291,18 +292,18 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
   const empty = { cases: [], more: false };
   const [programs, fresh, wageLive, lcaLive, wageDets, lcaDets, seasonal, lcaProfile, uscisH1b, lottery, debarments, warn, whd] =
     await Promise.all([
-      getEmployerPrograms(slug).catch(() => null),
+      getEmployerPrograms(slug).catch(softFail("perm-employers/[slug]/page.getEmployerPrograms", null)),
       getFreshness(),
-      record.pwd && match ? searchPwdCases({ text: record.name, match, limit: 5 }).catch(() => []) : [],
-      record.lca && match ? searchLcaCases({ text: record.name, match, limit: 5 }).catch(() => []) : [],
-      record.pwd && match ? searchPwdDeterminations({ text: record.name, match, limit: 5 }).catch(() => []) : [],
-      record.lca && match ? searchLcaDisclosed({ text: record.name, match, limit: 5 }).catch(() => []) : [],
+      record.pwd && match ? searchPwdCases({ text: record.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchPwdCases", [])) : [],
+      record.lca && match ? searchLcaCases({ text: record.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchLcaCases", [])) : [],
+      record.pwd && match ? searchPwdDeterminations({ text: record.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchPwdDeterminations", [])) : [],
+      record.lca && match ? searchLcaDisclosed({ text: record.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchLcaDisclosed", [])) : [],
       record.h2a + record.h2b + record.cw1 > 0 && match
         ? seasonalEmployerCases(match, SEASONAL_CASE_LIMIT).catch(() => empty)
         : empty,
-      record.lca ? getLcaProfile(slug).catch(() => null) : null,
-      getUscisH1bRecord(slug).catch(() => null),
-      getEmployerLottery(slug).catch(() => null),
+      record.lca ? getLcaProfile(slug).catch(softFail("perm-employers/[slug]/page.getLcaProfile", null)) : null,
+      getUscisH1bRecord(slug).catch(softFail("perm-employers/[slug]/page.getUscisH1bRecord", null)),
+      getEmployerLottery(slug).catch(softFail("perm-employers/[slug]/page.getEmployerLottery", null)),
       // No catch: a failed read must fail the render (the last good page
       // stays), not cache a month of "no debarment, no layoffs".
       debarmentsForSlug(slug),
@@ -515,7 +516,7 @@ export async function generateMetadata({
   // Cases still waiting come first: a search like "adobe perm on hold" is
   // from someone whose case is one of them (lib/pendingSnippet). One indexed
   // point read, the same one the page makes for its live band.
-  const pending = await entityPending(KIND, found.canonicalSlug).catch(() => null);
+  const pending = await entityPending(KIND, found.canonicalSlug).catch(softFail("perm-employers/[slug]/page.entityPending", null));
   const waiting = pendingSentence(row.name, pending);
   // What every page in this branch shows, most useful first. The jobs and
   // places come from the nightly facets, which start at 3 filings
@@ -591,18 +592,18 @@ export default async function EmployerPage({
     const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery, liveDebarments, liveWarn, liveWhd] =
       await Promise.all([
         getFreshness(),
-        getEmployerStages().catch(() => null),
+        getEmployerStages().catch(softFail("perm-employers/[slug]/page.getEmployerStages", null)),
         getEmployerWait(slug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
-        getFieldWait().catch(() => null),
-        getFiledTodayEstimate().catch(() => null),
-        searchSeasonalCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
-        searchPwdCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
-        searchLcaCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
-        searchPwdDeterminations({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
-        searchLcaDisclosed({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
-        getLcaProfile(slug).catch(() => null),
-        getUscisH1bRecord(slug).catch(() => null),
-        getEmployerLottery(slug).catch(() => null),
+        getFieldWait().catch(softFail("perm-employers/[slug]/page.getFieldWait", null)),
+        getFiledTodayEstimate().catch(softFail("perm-employers/[slug]/page.getFiledTodayEstimate", null)),
+        searchSeasonalCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchSeasonalCases", [])),
+        searchPwdCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchPwdCases", [])),
+        searchLcaCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchLcaCases", [])),
+        searchPwdDeterminations({ text: live.record.name, match: liveMatch, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchPwdDeterminations", [])),
+        searchLcaDisclosed({ text: live.record.name, match: liveMatch, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchLcaDisclosed", [])),
+        getLcaProfile(slug).catch(softFail("perm-employers/[slug]/page.getLcaProfile", null)),
+        getUscisH1bRecord(slug).catch(softFail("perm-employers/[slug]/page.getUscisH1bRecord", null)),
+        getEmployerLottery(slug).catch(softFail("perm-employers/[slug]/page.getEmployerLottery", null)),
         debarmentsForSlug(slug),
         warnForSlug(slug),
         whdForSlug(slug),
@@ -710,23 +711,23 @@ export default async function EmployerPage({
       // DOL's quarterly publication. Indexed point
       // read over the small remainder table; degrades to an absent band.
       // One over what the box shows, so it can say more exist and link them.
-      recentLiveByEmployer(canonicalSlug, RECENT_LIVE_SHOWN + 1).catch(() => []),
+      recentLiveByEmployer(canonicalSlug, RECENT_LIVE_SHOWN + 1).catch(softFail("perm-employers/[slug]/page.recentLiveByEmployer", [])),
       // The steps BEFORE the PERM: the wage requests and H-1B LCAs this
       // employer has filed. Two halves each: the live table from DOL's daily
       // check (status, pending included) and DOL's quarterly file (decided,
       // with the wage). Read over the employer's own spellings, indexed, five
       // each; merged newest-first below.
-      searchPwdCases({ text: row.name, match, limit: 5 }).catch(() => []),
-      searchLcaCases({ text: row.name, match, limit: 5 }).catch(() => []),
-      searchPwdDeterminations({ text: row.name, match, limit: 5 }).catch(() => []),
-      searchLcaDisclosed({ text: row.name, match, limit: 5 }).catch(() => []),
-      getEmployerPrograms(canonicalSlug).catch(() => null),
-      getEmployerStages().catch(() => null),
+      searchPwdCases({ text: row.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchPwdCases", [])),
+      searchLcaCases({ text: row.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchLcaCases", [])),
+      searchPwdDeterminations({ text: row.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchPwdDeterminations", [])),
+      searchLcaDisclosed({ text: row.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchLcaDisclosed", [])),
+      getEmployerPrograms(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getEmployerPrograms", null)),
+      getEmployerStages().catch(softFail("perm-employers/[slug]/page.getEmployerStages", null)),
       debarmentsForSlug(canonicalSlug),
       warnForSlug(canonicalSlug),
       getEmployerWait(canonicalSlug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
-      getFieldWait().catch(() => null),
-      getFiledTodayEstimate().catch(() => null),
+      getFieldWait().catch(softFail("perm-employers/[slug]/page.getFieldWait", null)),
+      getFiledTodayEstimate().catch(softFail("perm-employers/[slug]/page.getFiledTodayEstimate", null)),
       // FY2008 onward, and the FY2020 to FY2023 cases: one PK read and one
       // indexed read (scripts/ingest_perm_history.py writes both tables).
       employerYears(canonicalSlug),
@@ -734,22 +735,22 @@ export default async function EmployerPage({
       workerFacets("employer", canonicalSlug),
       // H-2A, H-2B and CW-1, live record and quarterly file together: the
       // band shows only when the sponsor has any.
-      searchSeasonalCases({ text: row.name, match, limit: 5 }).catch(() => []),
+      searchSeasonalCases({ text: row.name, match, limit: 5 }).catch(softFail("perm-employers/[slug]/page.searchSeasonalCases", [])),
       // What the LCAs were for (new hires vs transfers, OES level, Section H),
       // over the same spellings as the program ledger.
-      getLcaProfile(canonicalSlug).catch(() => null),
+      getLcaProfile(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getLcaProfile", null)),
       // What USCIS then decided on the H-1B petitions (its Employer Data Hub).
-      getUscisH1bRecord(canonicalSlug).catch(() => null),
+      getUscisH1bRecord(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getUscisH1bRecord", null)),
       // Lottery registrations FY2021 to FY2024 (USCIS's FOIA release).
-      getEmployerLottery(canonicalSlug).catch(() => null),
+      getEmployerLottery(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getEmployerLottery", null)),
       // Each part of its record ranked against other sponsors (sponsor_index).
-      getSponsorProfile(canonicalSlug).catch(() => null),
+      getSponsorProfile(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getSponsorProfile", null)),
       // Wage determination to PERM filing, from the two files joined (perm_pwd_stats).
       getPwdLinks("employer", canonicalSlug),
       // What it put on its newest application: headcount and founding year. A failure only drops the fact.
-      getEmployerSize(canonicalSlug).catch(() => null),
+      getEmployerSize(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getEmployerSize", null)),
       // Its own answer to DOL on ACWIA (cap_exempt_employers): the cap-exempt note. A failure only drops the note's basis.
-      getAcwiaAnswer(canonicalSlug).catch(() => null),
+      getAcwiaAnswer(canonicalSlug).catch(softFail("perm-employers/[slug]/page.getAcwiaAnswer", null)),
       // DOL's Wage and Hour cases matched to this sponsor. No catch, as with debarments and layoffs.
       whdForSlug(canonicalSlug),
       // OSHA's inspections matched to this sponsor (published sponsors only: the join needs a PERM record).

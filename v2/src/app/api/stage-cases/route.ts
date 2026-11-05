@@ -5,6 +5,7 @@ import { STAGE_FEED_MAX } from "./limits";
 import { stageFromSlug, stageMeta } from "@/components/rfi/stageMeta";
 import { LISTABLE_STAGE_MAX, listStageCases } from "@/lib/db/rfi";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Every case at one review stage, as JSON or CSV.
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
 
   const [rows, sweep] = await Promise.all([
     listStageCases(status, STAGE_FEED_MAX, 0),
-    getSweepCoverage().catch(() => null),
+    getSweepCoverage().catch(softFail("api/stage-cases/route.getSweepCoverage", null)),
   ]);
   if (rows.length > LISTABLE_STAGE_MAX) {
     return bad("this stage is above the listable size; it is split by filing month on /perm-queue", 400);

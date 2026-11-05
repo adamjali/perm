@@ -15,6 +15,7 @@ import type { MeasuredPace, RangeCoverage, RfiClock } from "@/lib/perm";
 import type { PwdDayData } from "@/lib/pwdDay";
 import type { StragglerRates } from "@/lib/stragglerRates";
 import type { DayCounts } from "@/lib/queueAhead";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The case-INDEPENDENT corpus the signed-in app needs to estimate any case.
@@ -59,15 +60,15 @@ export async function getAppCaseCorpus(): Promise<AppCaseCorpus> {
   const [backlog, estimator, decisionPace, sweep, stragglers, rangeCoverage, rfiClock, byDay, stageStats, pwdDay] =
     await Promise.all([
       getLiveBacklog().catch((): LiveCohortMonth[] => []),
-      getEstimatorData().catch(() => null),
-      getDecisionPace().catch(() => null),
-      getSweepCoverage().catch(() => null),
-      getStragglerRates().catch(() => null),
-      getRangeCoverage().catch(() => null),
-      getRfiClock().catch(() => null),
-      getPermDayQueue().catch(() => null),
-      getStageStats().catch(() => null),
-      getPwdDayData().catch(() => null),
+      getEstimatorData().catch(softFail("appCaseCorpus.getEstimatorData", null)),
+      getDecisionPace().catch(softFail("appCaseCorpus.getDecisionPace", null)),
+      getSweepCoverage().catch(softFail("appCaseCorpus.getSweepCoverage", null)),
+      getStragglerRates().catch(softFail("appCaseCorpus.getStragglerRates", null)),
+      getRangeCoverage().catch(softFail("appCaseCorpus.getRangeCoverage", null)),
+      getRfiClock().catch(softFail("appCaseCorpus.getRfiClock", null)),
+      getPermDayQueue().catch(softFail("appCaseCorpus.getPermDayQueue", null)),
+      getStageStats().catch(softFail("appCaseCorpus.getStageStats", null)),
+      getPwdDayData().catch(softFail("appCaseCorpus.getPwdDayData", null)),
     ]);
   return {
     backlog,

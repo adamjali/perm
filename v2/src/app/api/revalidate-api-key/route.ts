@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 
 import { forgetKeys } from "@/lib/api/auth";
 import { secretMatches } from "@/lib/secretMatch";
+import { softFail } from "@/lib/softRead";
 
 const KEY_ID_RE = /^[0-9A-Za-z]{8}$/;
 const MAX_IDS = 20;
@@ -23,7 +24,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!(await secretMatches(secret, expected))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const body: unknown = await request.json().catch(() => null);
+  const body: unknown = await request.json().catch(softFail("api/revalidate-api-key/route.json", null));
   const ids = (body as { keyIds?: unknown } | null)?.keyIds;
   if (
     !Array.isArray(ids) ||

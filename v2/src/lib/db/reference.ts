@@ -7,6 +7,7 @@ import { socGroup } from "@/lib/socCode";
 import { zoneLabelOf } from "@/lib/socFinder";
 import { predecessorsOf, SOC_2018_FIRST_WAGE_YEAR } from "@/lib/socCrosswalk";
 import { HOURS_PER_YEAR } from "@/lib/wageFormat";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The reference data beside the PERM record: what a job is (O*NET), what it
@@ -59,8 +60,8 @@ export const onetForSoc = cache(async (code: string): Promise<OnetForSoc | null>
     rows<OnetRow>(
       "SELECT onet_code, title, description, job_zone, bright, detail FROM onet_occupations WHERE soc7 = ? ORDER BY onet_code",
       [soc],
-    ).catch(() => []),
-    one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'onet_reference'").catch(() => null),
+    ).catch(softFail("reference.rows", [])),
+    one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'onet_reference'").catch(softFail("reference.one", null)),
   ]);
   if (!got.length) return null;
   const occupations = got.map((r): OnetOccupation => {
@@ -96,7 +97,7 @@ export const onetForSoc = cache(async (code: string): Promise<OnetForSoc | null>
 
 /** O*NET's Job Zone names and the database version, from the doc the O*NET loader writes. Never throws. */
 export const onetReference = cache(async (): Promise<{ zones: Record<string, JobZone>; version: string | null }> => {
-  const ref = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'onet_reference'").catch(() => null);
+  const ref = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'onet_reference'").catch(softFail("reference.one", null));
   try {
     const doc = ref ? (JSON.parse(String(ref.json)) as { jobZones?: Record<string, JobZone>; version?: string }) : {};
     return { zones: doc.jobZones ?? {}, version: doc.version ?? null };
@@ -230,7 +231,7 @@ const OEWS_COLS =
 export const marketPayNational = cache(async (code: string): Promise<MarketPay | null> => {
   const soc = socGroup(code);
   if (!soc) return null;
-  const r = await one<OewsRow>(`SELECT ${OEWS_COLS} FROM bls_oews WHERE soc7 = ? AND area = '99'`, [soc]).catch(() => null);
+  const r = await one<OewsRow>(`SELECT ${OEWS_COLS} FROM bls_oews WHERE soc7 = ? AND area = '99'`, [soc]).catch(softFail("reference.one", null));
   return r ? marketPay(r) : null;
 });
 

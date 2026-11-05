@@ -5,6 +5,7 @@ import { cache } from "react";
 import type { WageSourceYear } from "@/lib/wageSourceYears";
 
 import { one } from "./client";
+import { softFail } from "@/lib/softRead";
 
 export type { WageSourceYear };
 
@@ -25,7 +26,7 @@ export interface WageSourcesDoc {
 }
 
 export const getWageSources = cache(async (): Promise<WageSourcesDoc | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'lca_wage_sources'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'lca_wage_sources'").catch(softFail("wageSources.one", null));
   if (!r) return null;
   try {
     return JSON.parse(String(r.json)) as WageSourcesDoc;

@@ -79,6 +79,7 @@ import { comparables, fieldDistribution } from "@/lib/db/entities";
 import { caseSearchHref } from "@/lib/caseSearchPlan";
 import { getPwdLinks } from "@/lib/db/pwdLinks";
 import { PwdToPerm } from "@/components/entities/PwdToPerm";
+import { softFail } from "@/lib/softRead";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -276,7 +277,7 @@ export default async function AttorneyPage({
     // What a firm that claimed this page says about itself (convex/firmClaims.ts),
     // read on the page's own window; a profile change refreshes the page through
     // /api/revalidate-firm. A failed read shows no block rather than an error.
-    queryStatic(api.firmClaims.publishedProfile, { slug: canonicalSlug }, revalidate).catch(() => null),
+    queryStatic(api.firmClaims.publishedProfile, { slug: canonicalSlug }, revalidate).catch(softFail("perm-attorneys/[slug]/page.queryStatic", null)),
     // Wage determination to PERM filing, from the two files joined (perm_pwd_stats).
     getPwdLinks("attorney", canonicalSlug),
   ]);

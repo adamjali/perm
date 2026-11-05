@@ -50,6 +50,7 @@ import {
 import { formatInt } from "@/lib/format";
 import { MS_PER_DAY } from "@/lib/time";
 import { SITE_URL } from "@/lib/constants/site";
+import { softFail } from "@/lib/softRead";
 
 const TITLE = "PERM Decision Activity";
 const DESCRIPTION =
@@ -103,13 +104,13 @@ export default async function DecisionActivityPage() {
     // instrument: the browser below fetches the rest on its own, once, through
     // a cached route. Putting 1,090 rows here would add ~267 KB to every
     // regeneration of a page that revalidates six-hourly.
-    getChangeActivity(null, 60).catch(() => null),
+    getChangeActivity(null, 60).catch(softFail("perm-decision-activity/page.getChangeActivity", null)),
     // WHAT EACH RECORD CAN ANSWER, read once per regeneration rather than
     // per visitor. Six index seeks. It moves only when a quarterly file
     // lands or the sweep runs, so a hardcoded pair of dates would silently
     // under-report coverage for months.
     getCoverageWindows().catch((): CoverageWindows => ({ decided: null, observed: null })),
-    getSweepCoverage().catch(() => null),
+    getSweepCoverage().catch(softFail("perm-decision-activity/page.getSweepCoverage", null)),
   ]);
 
   const disclosure = series.find((s) => s.source === "dol-disclosure");

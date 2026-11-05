@@ -4,10 +4,11 @@ import { cache } from "react";
 
 import { parseGroupTiming, type H2bGroupTiming } from "@/lib/h2bGroups";
 import { one } from "./client";
+import { softFail } from "@/lib/softRead";
 
 /** perm_docs['h2b_group_timing'], one point read. */
 export const getH2bGroupTiming = cache(async (): Promise<H2bGroupTiming | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'h2b_group_timing'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'h2b_group_timing'").catch(softFail("h2bGroups.one", null));
   return r ? parseGroupTiming(String(r.json)) : null;
 });
 

@@ -7,6 +7,7 @@ import { one } from "./client";
 import { employerMatch, type EmployerMatch } from "./employerSlugs";
 import { ANNUAL_WAGE_SQL, YEARLY_BAND } from "@/lib/wageFormat";
 import { PWD_VISA_CLASS } from "@/lib/changeProgram";
+import { softFail } from "@/lib/softRead";
 
 /**
  * One employer's wage-request and LCA record, as counts and a median.
@@ -147,7 +148,7 @@ export const getEmployerPrograms = cache(async (slug: string): Promise<EmployerP
     programLine("perm", match),
     programLine("pwd", match),
     programLine("lca", match),
-    seasonalLine(match).catch(() => null),
+    seasonalLine(match).catch(softFail("employerPrograms.seasonalLine", null)),
   ]);
   return { perm, pwd, lca, seasonal, match: { basis: match.basis, spellings: match.spellings } };
 });

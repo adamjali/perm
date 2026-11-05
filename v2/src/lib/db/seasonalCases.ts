@@ -1,6 +1,7 @@
 import "server-only";
 import { one } from "./client";
 import { makeFlagProgram, parseDisclosureSummaryDoc, type FlagDisclosureSummary } from "./flagCases";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The temporary-labor programs on DOL's FLAG counter: H-2A applications
@@ -124,8 +125,8 @@ export async function lookupSeasonalRecord(caseNumber: string): Promise<Seasonal
         `SELECT ${BASE_COLS}, workers, workers_certified, begin_date, end_date, worksite_county ` +
           "FROM seasonal_cases WHERE case_number = ?",
         [cn],
-      ).catch(() => null)
-    : await one<RecordRow>(`SELECT ${BASE_COLS} FROM pwd_cases WHERE case_number = ?`, [cn]).catch(() => null);
+      ).catch(softFail("seasonalCases.one", null))
+    : await one<RecordRow>(`SELECT ${BASE_COLS} FROM pwd_cases WHERE case_number = ?`, [cn]).catch(softFail("seasonalCases.one", null));
   if (!r) return null;
   return {
     caseNumber: String(r.case_number),
@@ -187,7 +188,7 @@ export async function lookupSeasonalPosting(caseNumber: string): Promise<Seasona
       "worksite_city, worksite_county, worksite_state, job_order_number, pwd_number, submitted_date, accepted_date " +
       "FROM seasonal_postings WHERE case_number = ?",
     [cn],
-  ).catch(() => null);
+  ).catch(softFail("seasonalCases.one", null));
   if (!r) return null;
   return {
     caseNumber: String(r.case_number),
@@ -229,7 +230,7 @@ export async function getSeasonalPublishedSummary(): Promise<
       const r = await one<{ json: string; computed_at: number }>(
         "SELECT json, computed_at FROM perm_docs WHERE key = ?",
         [key],
-      ).catch(() => null);
+      ).catch(softFail("seasonalCases.one", null));
       const summary = r ? parseDisclosureSummaryDoc(String(r.json), Number(r.computed_at)) : null;
       return summary && summary.rows > 0 ? { visa, summary } : null;
     }),

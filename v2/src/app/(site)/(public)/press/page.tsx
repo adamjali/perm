@@ -25,6 +25,7 @@ import { pressCreditHtml } from "@/lib/pressCredit";
 import { withSocialCard } from "@/lib/socialCard";
 import { getEmployerStages } from "@/lib/db/employerStages";
 import { buttonVariants } from "@/components/ui/button";
+import { softFail } from "@/lib/softRead";
 
 const TITLE = "Press and Data for Journalists";
 const DESCRIPTION =
@@ -62,7 +63,7 @@ const SOURCES = [
 const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export default async function PressPage() {
-  const doc = await getEmployerStages().catch(() => null);
+  const doc = await getEmployerStages().catch(softFail("press/page.getEmployerStages", null));
   const held = doc ? heldRanking(doc.employers, 5, 5) : [];
   const onHold = doc ? doc.nationwide[HOLD_STATUS] ?? 0 : 0;
   const rows: BarRow[] = held.map((r) => ({

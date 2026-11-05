@@ -42,6 +42,7 @@ import { getPostHogClient } from '@/lib/posthog-server';
 import { chatDebug, createTools, truncateForLog } from './create-tools';
 import { CHAT_MAX_OUTPUT_TOKENS, CHAT_MAX_STEPS, chatIpLimitBody, chatUserLimitBody, cutShortFrom } from '@/lib/ai/limits';
 import { CHAT_LIMITS, CONVERSATION_FULL_MESSAGE } from '@convex/lib/chatLimits';
+import { softFail } from "@/lib/softRead";
 
 // Up to 60 seconds for streaming responses (extra time for fallbacks + tool
 // calls), for platforms that read maxDuration. On our own server `next start`
@@ -267,7 +268,7 @@ export async function POST(req: Request) {
     // Fetch action mode + user profile in parallel (profile needed for PostHog attribution)
     let actionMode: ActionMode = 'confirm'; // Default to safest mode
     const actionModePromise = fetchQuery(api.users.getActionMode, {}, { token });
-    const profilePromise = fetchQuery(api.users.currentUserProfile, {}, { token }).catch(() => null);
+    const profilePromise = fetchQuery(api.users.currentUserProfile, {}, { token }).catch(softFail("api/chat/route.fetchQuery", null));
     try {
       const userActionMode = await actionModePromise;
       actionMode = userActionMode as ActionMode;

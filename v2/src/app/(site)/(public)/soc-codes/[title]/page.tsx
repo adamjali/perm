@@ -28,6 +28,7 @@ import { codeHref, zoneLabelOf, type TitleAnswer, type TitleCode } from "@/lib/s
 import { keyOfSlug } from "@/lib/socTitleKey";
 import { finderHref, DEFAULT_FILTERS } from "@/lib/sponsorFinder";
 import { withSocialCard } from "@/lib/socialCard";
+import { softFail } from "@/lib/softRead";
 
 // The titles move with the quarterly loads.
 export const revalidate = 604800;
@@ -117,7 +118,7 @@ export default async function SocTitlePage({ params }: { params: Promise<{ title
   const onetOnly = a.codes.filter((c) => c.filings === 0);
   const top = filed[0] ?? null;
   const [pays, summaries, onet] = await Promise.all([
-    Promise.all(filed.slice(0, 8).map((c) => marketPayNational(c.soc).catch(() => null))),
+    Promise.all(filed.slice(0, 8).map((c) => marketPayNational(c.soc).catch(softFail("soc-codes/[title]/page.marketPayNational", null)))),
     codeSummaries(filed.slice(0, 12).map((c) => c.soc)),
     onetReference(),
   ]);

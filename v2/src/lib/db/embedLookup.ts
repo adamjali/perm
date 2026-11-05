@@ -9,6 +9,7 @@ import { lca } from "./lcaCases";
 import { pwd } from "./pwdCases";
 import { seasonal } from "./seasonalCases";
 import { isUnsettledMiss } from "@/lib/dolMiss";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The lookup behind `/embed/case-status`: ask DOL live, under a cap, and fall
@@ -203,7 +204,7 @@ export async function lookupForEmbed(
     // A case we hold: read DOL's status now, charge the site-wide budget,
     // and write nothing (see the header).
     const prefix = program === "perm" ? undefined : FLAG[program].config.budgetPrefix;
-    const allowed = await underDailyBudget(now, prefix).catch(() => false);
+    const allowed = await underDailyBudget(now, prefix).catch(softFail("embedLookup.underDailyBudget", false));
     const answer = allowed ? await askDol(caseNumber, f) : null;
     if (!answer || answer.kind !== "found") return fromStored(false, answer?.kind === "unavailable");
     const rec = answer.rec;

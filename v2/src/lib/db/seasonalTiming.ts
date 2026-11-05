@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { parseSeasonalCheck, parseSeasonalTiming, type SeasonalCheck, type SeasonalTiming } from "@/lib/seasonalTiming";
 import { one } from "./client";
+import { softFail } from "@/lib/softRead";
 
 /**
  * perm_docs['seasonal_timing'], written by scripts/build_seasonal_timing.py
@@ -11,7 +12,7 @@ import { one } from "./client";
  * and the case card then shows no timing line rather than a guess.
  */
 export const getSeasonalTiming = cache(async (): Promise<SeasonalTiming | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'seasonal_timing'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'seasonal_timing'").catch(softFail("seasonalTiming.one", null));
   return r ? parseSeasonalTiming(String(r.json)) : null;
 });
 
@@ -21,6 +22,6 @@ export const getSeasonalTiming = cache(async (): Promise<SeasonalTiming | null> 
  * missing, and the panel then prints no "tested on" line.
  */
 export const getSeasonalCheck = cache(async (): Promise<SeasonalCheck | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'seasonal_backtest'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'seasonal_backtest'").catch(softFail("seasonalTiming.one", null));
   return r ? parseSeasonalCheck(String(r.json)) : null;
 });

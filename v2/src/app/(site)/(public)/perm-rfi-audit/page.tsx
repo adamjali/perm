@@ -63,6 +63,7 @@ import {
 import { MoreText } from "@/components/data/MoreText";
 import { SITE_URL } from "@/lib/constants/site";
 import { monthDay, monthYear } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 const TITLE = "PERM RFI, Audits and Appeals";
 // 148 characters unescaped. Measure the UNESCAPED text: house style is
@@ -96,13 +97,13 @@ export default async function PermRfiAuditPage() {
       getStageCohorts(REVIEW_STATUSES),
       getRfiOccupations(),
       getSmallStageRecords(),
-      getProcessingTimes().catch(() => null),
-      getStageStats().catch(() => null),
-      getRfiClock().catch(() => null),
+      getProcessingTimes().catch(softFail("perm-rfi-audit/page.getProcessingTimes", null)),
+      getStageStats().catch(softFail("perm-rfi-audit/page.getStageStats", null)),
+      getRfiClock().catch(softFail("perm-rfi-audit/page.getRfiClock", null)),
       // Every decision our sweep has seen, for the RFI cases' comparison.
-      getObservedDays(150).catch(() => []),
+      getObservedDays(150).catch(softFail("perm-rfi-audit/page.getObservedDays", [])),
       // Where DOL is by our own daily check; DOL's table can sit weeks old (lib/permLine.ts).
-      getPermLine().catch(() => null),
+      getPermLine().catch(softFail("perm-rfi-audit/page.getPermLine", null)),
     ]);
 
   const pending = stages.reduce((n, s) => n + s.cases, 0);

@@ -68,6 +68,7 @@ import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { getPwdLinks } from "@/lib/db/pwdLinks";
 import { PwdToPerm } from "@/components/entities/PwdToPerm";
+import { softFail } from "@/lib/softRead";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -259,7 +260,7 @@ export default async function OccupationPage({
     workerFacets("occupation", slug),
     // The same job's certified H-1B LCAs (FY2020 onward), from the salary
     // explorer's own read: precomputed for 5,000+ filings, live below that.
-    row.code ? getLcaWageStats({ socCode: row.code, status: "certified" }).catch(() => null) : Promise.resolve(null),
+    row.code ? getLcaWageStats({ socCode: row.code, status: "certified" }).catch(softFail("perm-wages/[slug]/page.getLcaWageStats", null)) : Promise.resolve(null),
     // Wage determination to PERM filing for the job, keyed by its SOC group (perm_pwd_stats).
     socKey ? getPwdLinks("occupation", socKey) : Promise.resolve(null),
   ]);

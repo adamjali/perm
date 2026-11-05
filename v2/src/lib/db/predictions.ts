@@ -35,6 +35,7 @@ import { pickGroup } from "@/lib/h2bGroups";
 import { loadPermEstimateContext, estimatePermCase } from "@/lib/db/permEstimate";
 import { easternDay } from "@/lib/time";
 import { shiftMonth } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The automatic scorecard: record a day's predictions, grade the ones DOL has
@@ -237,7 +238,7 @@ const dayBefore = (day: string, n: number): string => {
  * showed that day.
  */
 export async function predictSeasonal(recordedOn: string): Promise<NewPrediction[]> {
-  const timing = await getSeasonalTiming().catch(() => null);
+  const timing = await getSeasonalTiming().catch(softFail("predictions.getSeasonalTiming", null));
   if (!timing) return [];
   const since = dayBefore(recordedOn, SEASONAL_RECENT_DAYS);
   const picked: { case_number: string; filed: string }[] = [];
@@ -280,7 +281,7 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
           `SELECT case_number, peak, grp FROM h2b_groups WHERE case_number IN (${h2b.map(() => "?").join(",")})`,
           h2b,
         ).catch(() => []),
-        getH2bGroupTiming().catch(() => null),
+        getH2bGroupTiming().catch(softFail("predictions.getH2bGroupTiming", null)),
       ])
     : [[], null];
   const groupOf = new Map(groupRows.map((r) => [r.case_number, r]));
@@ -356,8 +357,8 @@ export async function predictOurs(today: string): Promise<{
 }> {
   const [ctx, pwdEst, pwdDay] = await Promise.all([
     loadPermEstimateContext(),
-    getPwdEstimatorData().catch(() => null),
-    getPwdDayData().catch(() => null),
+    getPwdEstimatorData().catch(softFail("predictions.getPwdEstimatorData", null)),
+    getPwdDayData().catch(softFail("predictions.getPwdDayData", null)),
   ]);
   const { backlog } = ctx;
 
@@ -478,7 +479,7 @@ export async function predictOurs(today: string): Promise<{
  * never put to a rival or shown by number: the public doc carries counts only.
  */
 export async function predictWatched(today: string): Promise<NewPrediction[]> {
-  const doc = await one<{ json: string }>(`SELECT json FROM perm_docs WHERE key = 'watched_cases'`).catch(() => null);
+  const doc = await one<{ json: string }>(`SELECT json FROM perm_docs WHERE key = 'watched_cases'`).catch(softFail("predictions.one", null));
   let numbers: string[] = [];
   try {
     const d = doc ? (JSON.parse(String(doc.json)) as { caseNumbers?: unknown }) : null;
@@ -513,7 +514,7 @@ export async function predictWatched(today: string): Promise<NewPrediction[]> {
     for (const x of found) {
       if (!x.filing_date) continue;
       const status = x.current_status.trim().toUpperCase();
-      const rfiEntered = status === "RFI ISSUED" ? await rfiEnteredOn(x.case_number).catch(() => null) : null;
+      const rfiEntered = status === "RFI ISSUED" ? await rfiEnteredOn(x.case_number).catch(softFail("predictions.rfiEnteredOn", null)) : null;
       const c = { caseNumber: x.case_number, filingDate: x.filing_date, employerName: x.employer_name, status, rfiEnteredOn: rfiEntered };
       const { estimate: est, casesAhead } = estimatePermCase(ctx, c, today);
       if (!est || est.kind !== "date") continue;
@@ -524,7 +525,7 @@ export async function predictWatched(today: string): Promise<NewPrediction[]> {
     }
   }
   if (pwdNums.length) {
-    const day = await getPwdDayData().catch(() => null);
+    const day = await getPwdDayData().catch(softFail("predictions.getPwdDayData", null));
     if (day) {
       const found = await inChunks<{ case_number: string; filing_date: string | null }>(
         pwdNums,
@@ -584,7 +585,7 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
     const seen = await one<{ t: number | string }>(
       "SELECT first_seen_at AS t FROM bulletin_first_seen WHERE bulletin_month = ?",
       [month],
-    ).catch(() => null);
+    ).catch(softFail("predictions.one", null));
     if (!seen) continue;
     graded += await exec(
       `UPDATE estimate_predictions SET decided_on = ?, outcome = 'PUBLISHED', scored_at = ? WHERE id = ? AND outcome IS NULL`,
@@ -752,10 +753,10 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
     today,
   );
   const mine = perm.bySource.ours;
-  const backtest = await getEstimatorBacktest().catch(() => null);
+  const backtest = await getEstimatorBacktest().catch(softFail("predictions.getEstimatorBacktest", null));
   const bulletinDoc = await one<{ json: string }>(
     `SELECT json FROM perm_docs WHERE key = 'bulletin_backtest'`,
-  ).catch(() => null);
+  ).catch(softFail("predictions.one", null));
   const ages = await rows<{ key: string; computed_at: number | string }>(
     `SELECT key, computed_at FROM perm_docs WHERE key IN ('estimator_backtest', 'seasonal_backtest', 'pwd_backtest')`,
   ).catch(() => []);
@@ -773,7 +774,7 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
     pwd: pub.pwd,
     seasonal: pub.seasonal,
     bulletin: pub.bulletin,
-    seasonalChecks: await getSeasonalCheck().catch(() => null),
+    seasonalChecks: await getSeasonalCheck().catch(softFail("predictions.getSeasonalCheck", null)),
     alarms,
     headToHead: h2h,
     // The sentences every surface prints (scorecard/verdict.ts), stored so the

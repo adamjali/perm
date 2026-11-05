@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { softFail } from "@/lib/softRead";
 
 /**
  * GET /api/sweep-stamp: when our DOL sweep last finished (epoch ms), the time
@@ -11,7 +12,7 @@ import { getSweepCoverage } from "@/lib/db/sweepCoverage";
  * is on record.
  */
 export async function GET() {
-  const sweep = await getSweepCoverage().catch(() => null);
+  const sweep = await getSweepCoverage().catch(softFail("api/sweep-stamp/route.getSweepCoverage", null));
   return NextResponse.json(
     { checkedAt: sweep?.checkedAt ?? null },
     { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=60" } },

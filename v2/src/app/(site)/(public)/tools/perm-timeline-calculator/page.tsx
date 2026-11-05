@@ -25,6 +25,7 @@ import { getPermDayQueue } from "@/lib/db/permDayQueue";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
 import { buttonVariants } from "@/components/ui/button";
+import { softFail } from "@/lib/softRead";
 /**
  * PERM decision-date calculator.
  *
@@ -89,19 +90,19 @@ export default async function PermTimelineCalculatorPage() {
     // `pace` below (decisions per WORKING day, a display figure over a much
     // longer series). Both null-safe: without either the model is omitted and
     // the month-granular ones answer as before.
-    getDecisionPace().catch(() => null),
-    getSweepCoverage().catch(() => null),
+    getDecisionPace().catch(softFail("tools/perm-timeline-calculator/page.getDecisionPace", null)),
+    getSweepCoverage().catch(softFail("tools/perm-timeline-calculator/page.getSweepCoverage", null)),
     // How fast DOL is finishing the in-line cases its queue has passed: the
     // answer for a filing month DOL has left behind. Null-safe like the rest.
-    getStragglerRates().catch(() => null),
+    getStragglerRates().catch(softFail("tools/perm-timeline-calculator/page.getStragglerRates", null)),
     // The nightly backtest's measured range coverage, quoted under the range.
-    getRangeCoverage().catch(() => null),
+    getRangeCoverage().catch(softFail("tools/perm-timeline-calculator/page.getRangeCoverage", null)),
     // The line by filing day: a typed date counts its own month's earlier days.
     getPermDayQueue(),
   ]);
   // DOL's published month and average, dated: the page's first sentence (one
   // indexed row, the newest snapshot).
-  const [times, permLine] = await Promise.all([getProcessingTimes().catch(() => null), getPermLine().catch(() => null)]);
+  const [times, permLine] = await Promise.all([getProcessingTimes().catch(softFail("tools/perm-timeline-calculator/page.getProcessingTimes", null)), getPermLine().catch(softFail("tools/perm-timeline-calculator/page.getPermLine", null))]);
   const pace = businessDayPace(daily, 28);
 
   const today = new Date().toISOString().slice(0, 10);

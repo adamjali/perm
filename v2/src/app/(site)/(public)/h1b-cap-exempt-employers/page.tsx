@@ -31,6 +31,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { MONTH_ABBR, MONTH_NAMES } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The employers whose wage requests tell DOL that ACWIA covers them, the kinds
@@ -69,7 +70,7 @@ function abbr(ym: string): string {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const doc = await getCapExempt().catch(() => null);
+  const doc = await getCapExempt().catch(softFail("h1b-cap-exempt-employers/page.getCapExempt", null));
   const lead = doc ? `${formatInt(doc.employers)} employers tell DOL that ACWIA covers them.` : "";
   const description = firstThatFits([
     `${lead} The colleges, affiliated nonprofits and research organizations that hire H-1B workers outside the lottery, from DOL's own files.`,

@@ -21,6 +21,7 @@ import { howLongSentence } from "@/lib/dolNow";
 import { getPermBoard } from "@/lib/db/board";
 import { getPermLine } from "@/lib/db/permLine";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { softFail } from "@/lib/softRead";
 
 const START_LINKS = [
   { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now", Icon: ClockIcon },
@@ -180,11 +181,11 @@ const LEARN_MORE = [
 
 export default async function FAQPage() {
   const [times, permBoard, permLine, casesMeta, observed] = await Promise.all([
-    getProcessingTimes().catch(() => null),
-    getPermBoard().catch(() => null),
-    getPermLine().catch(() => null),
-    getCasesMeta<CasesMeta>().catch(() => null),
-    getObservedDays().catch(() => []),
+    getProcessingTimes().catch(softFail("faq/page.getProcessingTimes", null)),
+    getPermBoard().catch(softFail("faq/page.getPermBoard", null)),
+    getPermLine().catch(softFail("faq/page.getPermLine", null)),
+    getCasesMeta<CasesMeta>().catch(softFail("faq/page.getCasesMeta", null)),
+    getObservedDays().catch(softFail("faq/page.getObservedDays", [])),
   ]);
   const howLong = howLongSentence(permBoard, times, permLine);
   const rate = approvalRate(casesMeta, observed);

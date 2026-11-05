@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { one, rows } from "./client";
+import { softFail } from "@/lib/softRead";
 
 /**
  * DOL's debarment lists, as `scripts/ingest_debarments.py` stores them.
@@ -89,7 +90,7 @@ export const listDebarments = cache(async (): Promise<Debarment[]> => {
 });
 
 export const getDebarmentsSummary = cache(async (): Promise<DebarmentsSummary | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'debarments_summary'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'debarments_summary'").catch(softFail("debarments.one", null));
   if (!r?.json) return null;
   try {
     const d = JSON.parse(String(r.json)) as Record<string, unknown>;

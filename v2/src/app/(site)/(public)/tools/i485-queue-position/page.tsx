@@ -4,6 +4,7 @@ import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
 import { getBulletinBoard } from "@/lib/db/bulletin";
 import { getBulletinCheck } from "@/lib/db/bulletinCheck";
 import { paceByLine, type CountryKey } from "@/lib/perm";
+import { softFail } from "@/lib/softRead";
 
 /** The bulletin's country keys, spelled the way USCIS's inventory does. */
 const I485_COUNTRY: Record<CountryKey, string> = {
@@ -96,8 +97,8 @@ const FAQS = [
 
 export default async function I485QueuePositionPage() {
   const [board, check] = await Promise.all([
-    getBulletinBoard().catch(() => null),
-    getBulletinCheck().catch(() => null),
+    getBulletinBoard().catch(softFail("tools/i485-queue-position/page.getBulletinBoard", null)),
+    getBulletinCheck().catch(softFail("tools/i485-queue-position/page.getBulletinCheck", null)),
   ]);
   // Keyed the way the tool keys its own table (USCIS spellings), so the
   // client picks the cell with the same pairKey it already uses.
@@ -110,7 +111,7 @@ export default async function I485QueuePositionPage() {
     getI485Options().catch((): { country: string; categories: string[] }[] => []),
     getI485Trend().catch((): { asOf: string; total: number }[] => []),
     getFreshness().catch((): Record<string, DatasetFreshness> => ({})),
-    getVisaBulletinSeries().catch(() => []),
+    getVisaBulletinSeries().catch(softFail("tools/i485-queue-position/page.getVisaBulletinSeries", [])),
   ]);
 
   const asOf = freshness["i485-inventory"]?.asOf ?? null;

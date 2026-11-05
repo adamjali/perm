@@ -5,6 +5,7 @@ import { parseI140Snapshot, type I140Snapshot } from "@/lib/uscisI140Shape";
 
 import { api } from "@convex/_generated/api";
 import { doc } from "./publicData";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The newest USCIS I-140 quarter: the database copy first, Convex second.
@@ -16,7 +17,7 @@ import { doc } from "./publicData";
  * Convex stays as the fallback for a database that has never held a quarter.
  */
 export async function getI140Snapshot(revalidateSeconds: number): Promise<I140Snapshot | null> {
-  const fromDb = parseI140Snapshot(await doc<unknown>("uscis_i140").catch(() => null));
+  const fromDb = parseI140Snapshot(await doc<unknown>("uscis_i140").catch(softFail("uscisI140.doc", null)));
   if (fromDb) return fromDb;
-  return queryStatic(api.uscisI140.getLatest, {}, revalidateSeconds).catch(() => null);
+  return queryStatic(api.uscisI140.getLatest, {}, revalidateSeconds).catch(softFail("uscisI140.queryStatic", null));
 }

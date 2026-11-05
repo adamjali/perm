@@ -75,6 +75,7 @@ import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
 import { cn } from "@/lib/utils";
+import { softFail } from "@/lib/softRead";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -152,15 +153,15 @@ export default async function PermProcessingTimesPage() {
     getEstimatorData(),
     // After PERM: the community timelines' stage medians (PERM dates checked
     // against DOL, the rest self-reported). Null leaves the section out.
-    queryStatic(api.communityTimelines.board, {}, revalidate).catch(() => null),
+    queryStatic(api.communityTimelines.board, {}, revalidate).catch(softFail("perm-processing-times/page.queryStatic", null)),
     // What the cases DOL decided on its last working day had waited: the live answer to "how long".
-    getPermBoard().catch(() => null),
+    getPermBoard().catch(softFail("perm-processing-times/page.getPermBoard", null)),
     // Where DOL really is in the wage-request line, by our own daily check: its table trails it by weeks.
     getPwdLine(),
     // How long each month's decisions waited: DOL's files, then our own sweep (build_wait_trends.py).
     getPermWaitTrend(),
     // Where DOL really is in the PERM line, by our own daily check: its table can sit unchanged for weeks.
-    getPermLine().catch(() => null),
+    getPermLine().catch(softFail("perm-processing-times/page.getPermLine", null)),
   ]);
   const howLong = howLongSentence(permBoard, snapshot, permLine);
   const faq = FAQ.map((f) => ({ ...f, answer: f.answer.replace(HOW_LONG_NOW, howLong) }));

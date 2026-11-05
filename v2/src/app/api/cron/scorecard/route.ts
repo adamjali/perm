@@ -29,6 +29,7 @@ import {
   writeScorecardDocs,
 } from "@/lib/db/predictions";
 import { bearerMatches } from "@/lib/secretMatch";
+import { softFail } from "@/lib/softRead";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -56,7 +57,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
     if (dry) {
       const [{ perm, pwd, sample }, seasonal, watched] = await Promise.all([
-        predictOurs(today), predictSeasonal(recordedOn), predictWatched(today).catch(() => []),
+        predictOurs(today), predictSeasonal(recordedOn), predictWatched(today).catch(softFail("api/cron/scorecard/route.predictWatched", [])),
       ]);
       // Watched cases are counted, never listed: the dry answer is read in a terminal.
       return NextResponse.json({ dry: true, recordedOn, sampled: sample.length, perm, pwd, seasonal, watched: watched.length });
@@ -64,7 +65,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     await ensurePredictionsTable();
     const { perm, pwd, sample, pendingBefore } = await predictOurs(today);
     const seasonal = await predictSeasonal(recordedOn);
-    const release = await predictBulletinRelease(recordedOn).catch(() => []);
+    const release = await predictBulletinRelease(recordedOn).catch(softFail("api/cron/scorecard/route.predictBulletinRelease", []));
     // Subscribers' own cases, once each; recorded with ours, never put to a rival.
     const watched = await predictWatched(today).catch((e) => {
       console.error("[scorecard] watched cases not recorded", e);

@@ -64,6 +64,7 @@ import { homeMonths } from "@/lib/homeMonths";
 import { easternDay } from "@convex/lib/time";
 import { PermPulse } from "@/components/pulse/PermPulse";
 import { SITE_URL } from "@/lib/constants/site";
+import { softFail } from "@/lib/softRead";
 
 // One live DOL figure on the page: a day's window, expired on demand.
 // The disclosure files are quarterly, so an hourly window bought
@@ -156,21 +157,21 @@ export default async function HomePage() {
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
-    getObservedDays().catch(() => []),
-    getSweepCoverage().catch(() => null),
+    getObservedDays().catch(softFail("home/page.getObservedDays", [])),
+    getSweepCoverage().catch(softFail("home/page.getSweepCoverage", null)),
     // The site's approved reviews; never throws (falls back to the last recorded rating).
     getSiteReviews(),
     // The census doc the queue pages read: every filing month, decided and
     // waiting. A failed read draws the hero without its chart.
-    getBacklogMatrix().catch(() => []),
+    getBacklogMatrix().catch(softFail("home/page.getBacklogMatrix", [])),
     // /today's board, saved by each sweep: the wait of the cases DOL decided on its last working day.
-    getPermBoard().catch(() => null),
+    getPermBoard().catch(softFail("home/page.getPermBoard", null)),
     // Where DOL is by our own daily check, ahead of DOL's own table, which can sit unchanged for weeks.
-    getPermLine().catch(() => null),
+    getPermLine().catch(softFail("home/page.getPermLine", null)),
     // The wage requests still waiting, by our own check (DOL's table is a month or more older).
-    getPwdSummary().catch(() => null),
+    getPwdSummary().catch(softFail("home/page.getPwdSummary", null)),
     // DOL's files' outcome totals, for the approval-rate sentence; a failed read drops only the sentence.
-    getCasesMeta<CasesMeta>().catch(() => null),
+    getCasesMeta<CasesMeta>().catch(softFail("home/page.getCasesMeta", null)),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)

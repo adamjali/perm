@@ -8,6 +8,7 @@ import { getBulletinCheck } from "./bulletinCheck";
 import { getEstimatorBacktest } from "./predictions";
 import { getPwdDayData } from "./pwdDayQueue";
 import { getSeasonalCheck } from "./seasonalTiming";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Every check the site runs on its own estimates, read once a render (src/lib/scorecard/checks.ts builds the rows).
@@ -15,10 +16,10 @@ import { getSeasonalCheck } from "./seasonalTiming";
  */
 export const getEstimateChecks = cache(async (): Promise<CheckRow[]> => {
   const [perm, pwd, bulletin, seasonal] = await Promise.all([
-    getEstimatorBacktest().catch(() => null),
-    getPwdDayData().catch(() => null),
-    getBulletinCheck().catch(() => null),
-    getSeasonalCheck().catch(() => null),
+    getEstimatorBacktest().catch(softFail("estimateChecks.getEstimatorBacktest", null)),
+    getPwdDayData().catch(softFail("estimateChecks.getPwdDayData", null)),
+    getBulletinCheck().catch(softFail("estimateChecks.getBulletinCheck", null)),
+    getSeasonalCheck().catch(softFail("estimateChecks.getSeasonalCheck", null)),
   ]);
   return estimateChecks({
     perm,

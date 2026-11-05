@@ -15,6 +15,7 @@ import { SEASONAL_FORMS } from "@/lib/seasonalForms";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { formatInt } from "@/lib/format";
 import { longDate } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 /**
  * H-2A, H-2B and CW-1 filings, findable by employer as DOL confirms them.
@@ -75,7 +76,7 @@ function combine(series: readonly (readonly DailyDecisions[])[]): DailyDecisions
 export default async function SeasonalCasesPage() {
   const [summary, published, ...decided] = await Promise.all([
     getSeasonalSummary(),
-    getSeasonalPublishedSummary().catch(() => []),
+    getSeasonalPublishedSummary().catch(softFail("seasonal-cases/page.getSeasonalPublishedSummary", [])),
     // A series that can't be read draws nothing; the page never fails for it.
     ...DECIDED_SERIES.map((s) => getDailyDecisions(s.source).catch(() => [] as DailyDecisions[])),
   ]);

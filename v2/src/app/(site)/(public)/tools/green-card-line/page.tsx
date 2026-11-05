@@ -12,6 +12,7 @@ import { getBulletinBoard } from "@/lib/db/bulletin";
 import { getBulletinCheck } from "@/lib/db/bulletinCheck";
 import { getLineSnapshot } from "@/lib/db/greenCardLine";
 import { paceByLine } from "@/lib/perm";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The whole employment-based line in front of one priority date: approved
@@ -78,8 +79,8 @@ const PACE_CATEGORIES = new Set(["EB2", "EB3", "EW3"]);
 export default async function GreenCardLinePage() {
   const [snapshot, board, check] = await Promise.all([
     getLineSnapshot(),
-    getBulletinBoard().catch(() => null),
-    getBulletinCheck().catch(() => null),
+    getBulletinBoard().catch(softFail("tools/green-card-line/page.getBulletinBoard", null)),
+    getBulletinCheck().catch(softFail("tools/green-card-line/page.getBulletinCheck", null)),
   ]);
   const pace = paceByLine(board?.finalAction ?? [], (c) => (PACE_CATEGORIES.has(c.category) ? `${c.category}|${c.country}` : null));
 

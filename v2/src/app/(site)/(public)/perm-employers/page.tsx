@@ -33,6 +33,7 @@ import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
 import { entityHref } from "@/lib/entityPayload";
+import { softFail } from "@/lib/softRead";
 const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
   "Every company that filed a PERM case: volume, approval rate and median days per sponsor, searchable and sortable, from DOL's own disclosure files.";
@@ -72,7 +73,7 @@ export default async function PermEmployersPage() {
       fetchEntitySeed("employer"),
       pendingLeaders(10),
       getFreshness(),
-      getFieldWait().catch(() => null),
+      getFieldWait().catch(softFail("perm-employers/page.getFieldWait", null)),
     ]);
   const mirrorAsOf = freshness["perm-case-status"]?.asOf ?? null;
 

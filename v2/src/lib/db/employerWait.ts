@@ -12,6 +12,7 @@ import { getEstimatorData } from "@/lib/db/estimate";
 import { getLiveBacklog } from "@/lib/db/publicData";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { MS_PER_DAY } from "@/lib/time";
+import { softFail } from "@/lib/softRead";
 
 /**
  * How long one employer's PERM cases are taking, against every employer's,
@@ -85,10 +86,10 @@ export interface FiledToday {
 export const getFiledTodayEstimate = cache(async (): Promise<FiledToday | null> => {
   const today = new Date().toISOString().slice(0, 10);
   const [backlog, estimator, decisionPace, sweep, byDay] = await Promise.all([
-    getLiveBacklog().catch(() => []),
-    getEstimatorData().catch(() => null),
-    getDecisionPace().catch(() => null),
-    getSweepCoverage().catch(() => null),
+    getLiveBacklog().catch(softFail("employerWait.getLiveBacklog", [])),
+    getEstimatorData().catch(softFail("employerWait.getEstimatorData", null)),
+    getDecisionPace().catch(softFail("employerWait.getDecisionPace", null)),
+    getSweepCoverage().catch(softFail("employerWait.getSweepCoverage", null)),
     getPermDayQueue(),
   ]);
   // Early in a new month, before the census holds it, casesAhead is null and

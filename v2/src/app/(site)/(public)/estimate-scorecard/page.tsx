@@ -22,6 +22,7 @@ import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatInt } from "@/lib/format";
 import { MS_PER_DAY } from "@/lib/time";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The estimate scorecard, in three layers, strongest evidence first.
@@ -97,11 +98,11 @@ function SampleCells({ cell, since }: { cell: Cell; since: string | null }) {
 export default async function EstimateScorecardPage() {
   const [rows, sweep, sample, backtest, checks, everyCheck] = await Promise.all([
     getScorecard(),
-    getSweepCoverage().catch(() => null),
-    getScorecardSummary().catch(() => null),
-    getEstimatorBacktest().catch(() => null),
-    getSeasonalCheck().catch(() => null),
-    getEstimateChecks().catch(() => []),
+    getSweepCoverage().catch(softFail("estimate-scorecard/page.getSweepCoverage", null)),
+    getScorecardSummary().catch(softFail("estimate-scorecard/page.getScorecardSummary", null)),
+    getEstimatorBacktest().catch(softFail("estimate-scorecard/page.getEstimatorBacktest", null)),
+    getSeasonalCheck().catch(softFail("estimate-scorecard/page.getSeasonalCheck", null)),
+    getEstimateChecks().catch(softFail("estimate-scorecard/page.getEstimateChecks", [])),
   ]);
   const today = new Date().toISOString().slice(0, 10);
   const asOf = sweep?.finishedOn ?? null;

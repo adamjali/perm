@@ -47,6 +47,7 @@ import { getVisaBulletins } from "@/lib/db/publicData";
 import { DAYS_PER_MONTH, easternDay } from "@/lib/time";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { softFail } from "@/lib/softRead";
 
 // A bulletin changes once a month and USCIS's counts monthly or quarterly.
 export const revalidate = 86400;
@@ -87,7 +88,7 @@ function names(category: string, country: CountryKey) {
 
 export async function generateStaticParams() {
   // At build, an unreadable archive prerenders nothing; each line renders on its first request.
-  const bulletins = await loadArchive().catch(() => []);
+  const bulletins = await loadArchive().catch(softFail("visa-bulletin/categories/[line]/page.loadArchive", []));
   return lineSlugs(categoriesIn(bulletins)).map((line) => ({ line }));
 }
 
@@ -137,7 +138,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
   const { cat, where } = names(category, country);
   const [counts, issued, uscisCharts] = await Promise.all([
     getLineCounts(category, country),
-    lineIssuance(category, country).catch(() => null),
+    lineIssuance(category, country).catch(softFail("visa-bulletin/categories/[line]/page.lineIssuance", null)),
     getUscisCharts(),
   ]);
   const years = fiscalYearMoves(fa.states);

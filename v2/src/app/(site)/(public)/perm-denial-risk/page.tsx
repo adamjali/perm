@@ -42,6 +42,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { SITE_URL } from "@/lib/constants/site";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import { CaveatBox } from "@/components/ui/note";
+import { softFail } from "@/lib/softRead";
 
 // "Approval rate" is what people and answer engines ask for (owner, Nov 4 2026); the page answers it first.
 const TITLE = "PERM Approval and Denial Rates";
@@ -108,8 +109,8 @@ export default async function PermDenialRiskPage() {
     getDisclosureStats(),
     getWageDenialBands(),
     // The approval-rate sentence: DOL's files' totals, then our check's newest 30 days. Either failing drops it.
-    getCasesMeta<CasesMeta>().catch(() => null),
-    getObservedDays().catch(() => []),
+    getCasesMeta<CasesMeta>().catch(softFail("perm-denial-risk/page.getCasesMeta", null)),
+    getObservedDays().catch(softFail("perm-denial-risk/page.getObservedDays", [])),
   ]);
   const approval = approvalRate(casesMeta, observed);
   const risk = stats?.risk ?? null;

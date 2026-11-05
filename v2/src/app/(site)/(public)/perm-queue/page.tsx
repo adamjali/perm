@@ -45,6 +45,7 @@ import { getEbSplit } from "@/lib/db/ebSplit";
 import { statusCasesHref } from "@/components/queue/statusLinks";
 import { getPermLine } from "@/lib/db/permLine";
 import { permLineNote } from "@/lib/permLine";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Where DOL's PERM queue stands right now, from a per-case scan.
@@ -105,24 +106,24 @@ export default async function PermQueuePage() {
     getEstimatorData(),
     // Its own document and its own writer, so a missing one is a missing
     // panel rather than a missing page.
-    getAlphabet().catch(() => null),
+    getAlphabet().catch(softFail("perm-queue/page.getAlphabet", null)),
     // The days the wall can be shown on. Without them the wall shows today alone.
     getCensusDays().catch((e: unknown) => {
       console.warn("[perm-queue] past days unreadable", e);
       return [] as string[];
     }),
     // Its own document (scripts/build_eb_split.py); a missing one is a missing panel.
-    getEbSplit().catch(() => null),
+    getEbSplit().catch(softFail("perm-queue/page.getEbSplit", null)),
     // DOL's line at the end of each replayed day; without it the wall carries no line chart.
     getStatusByDay(ANALYST_REVIEW).catch((e: unknown) => {
       console.warn("[perm-queue] the line by day is unreadable", e);
       return [] as { date: string; value: number }[];
     }),
     // The cards' directions: the homepage's own 30-day flow, and DOL's kept readings.
-    getPermBoard().catch(() => null),
-    getProcessingTimesHistory(24).catch(() => []),
+    getPermBoard().catch(softFail("perm-queue/page.getPermBoard", null)),
+    getProcessingTimesHistory(24).catch(softFail("perm-queue/page.getProcessingTimesHistory", [])),
     // Where DOL is by our own daily check; DOL's table can sit unchanged for weeks (lib/permLine.ts).
-    getPermLine().catch(() => null),
+    getPermLine().catch(softFail("perm-queue/page.getPermLine", null)),
   ]);
 
   // The whole line at the end of the newest replayed day before today, for "since".

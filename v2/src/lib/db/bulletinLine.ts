@@ -7,6 +7,7 @@ import { getEbAwaitingVisa } from "./uscisQuarterly";
 import { inventoryRange, uscisCode } from "@/lib/bulletinLines";
 import { USCIS_COUNTRY } from "@/lib/greenCardLineSnapshot";
 import type { CountryKey } from "@/lib/perm";
+import { softFail } from "@/lib/softRead";
 
 /**
  * USCIS's own counts for one bulletin line: approved petitions waiting for a
@@ -27,7 +28,7 @@ export interface LineCounts {
 
 const counts = cache(async () => {
   const [awaiting, inv] = await Promise.all([
-    getEbAwaitingVisa().catch(() => null),
+    getEbAwaitingVisa().catch(softFail("bulletinLine.getEbAwaitingVisa", null)),
     rows<{ as_of: string; country: string; category: string; status: string; c: number; s: number }>(
       `SELECT as_of, country, category, status,
               coalesce(sum(count), 0) AS c, coalesce(sum(suppressed), 0) AS s

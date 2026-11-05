@@ -5,6 +5,7 @@ import { cache } from "react";
 import { one, rows } from "./client";
 import type { SeventyFiveMonth } from "@/lib/consular/seventyFive";
 import { shiftMonth } from "@convex/lib/months";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The State Department's monthly immigrant visa issuances, as loaded by
@@ -31,7 +32,7 @@ export interface IssuanceSummary {
 }
 
 export const issuanceSummary = cache(async (): Promise<IssuanceSummary | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'visa_issuances_summary'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'visa_issuances_summary'").catch(softFail("visaIssuances.one", null));
   if (!r) return null;
   try {
     const doc = JSON.parse(String(r.json)) as IssuanceSummary;

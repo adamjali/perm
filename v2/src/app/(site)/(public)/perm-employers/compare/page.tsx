@@ -13,6 +13,7 @@ import { entityFacets, entityPending, resolveEntity, type EntityFacets, type Ent
 import { getSponsorProfile } from "@/lib/db/sponsorIndex";
 import { partValue, type SponsorPart } from "@/lib/sponsorProfile";
 import { formatDollars, formatInt, formatPercent } from "@/lib/format";
+import { softFail } from "@/lib/softRead";
 
 /**
  * Two employers side by side.
@@ -58,7 +59,7 @@ async function loadSide(slug: string): Promise<Side | null> {
   const [pending, facets, profile] = await Promise.all([
     entityPending("employer", entity.canonicalSlug),
     entityFacets("employer", entity.canonicalSlug),
-    getSponsorProfile(entity.canonicalSlug).catch(() => null),
+    getSponsorProfile(entity.canonicalSlug).catch(softFail("perm-employers/compare/page.getSponsorProfile", null)),
   ]);
   return { entity, pending, facets, parts: new Map((profile?.parts ?? []).map((p) => [p.id, p])) };
 }

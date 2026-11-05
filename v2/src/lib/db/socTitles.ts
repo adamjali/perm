@@ -18,6 +18,7 @@ import { SUGGEST_MAX_LENGTH } from "@/lib/search/limits";
 import { rows } from "./client";
 import { doc } from "./publicData";
 import { codeSummaries, firstSentence } from "./reference";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The job code finder's reads: soc_titles and the two docs scripts/build_soc_titles.py writes.
@@ -61,7 +62,7 @@ export function getSocCodes(): Promise<SocCodesDoc | null> {
  * since a table that loses its links still beats one that fails.
  */
 export async function withSocSlugs<T extends { socCode?: string | null }>(items: T[]): Promise<(T & { socSlug: string | null })[]> {
-  const codes = items.length ? await getSocCodes().catch(() => null) : null;
+  const codes = items.length ? await getSocCodes().catch(softFail("socTitles.getSocCodes", null)) : null;
   return items.map((t) => {
     const group = t.socCode ? socGroup(t.socCode) : null;
     return { ...t, socSlug: (group && codes?.codes.get(group)?.slug) || null };

@@ -41,6 +41,7 @@ import {
 } from "@/lib/uscisForms";
 import { monthsLabel, quarterLabel } from "@/lib/uscisQuarterlyShape";
 import { approvalMoved, countMoved, medianMoved } from "@/lib/uscisTrends";
+import { softFail } from "@/lib/softRead";
 
 // The workbook changes four times a year; the quarterly ingest's new quarter is
 // picked up within a week, as on the hub.
@@ -124,7 +125,7 @@ export default async function UscisFormPage({ params }: { params: Promise<{ form
   const page = formPage((await params).form);
   if (!page) notFound();
   const path = `/uscis-processing-times/${page.slug}`;
-  const [rows, history] = await Promise.all([getUscisFormRows(page.form), getHistoricalMedians().catch(() => null)]);
+  const [rows, history] = await Promise.all([getUscisFormRows(page.form), getHistoricalMedians().catch(softFail("uscis-processing-times/[form]/page.getHistoricalMedians", null))]);
   const slots = quarterSlots(rows);
   const lines = page.lines
     .map((line) => ({ line, points: lineSeries(rows, line, slots) }))

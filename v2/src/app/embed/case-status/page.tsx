@@ -11,6 +11,7 @@ import { getStatusMeaning } from "@/lib/permStatus";
 import { lookupForEmbed, type EmbedCaseAnswer } from "@/lib/db/embedLookup";
 import { EASTERN_TIMEZONE } from "@/lib/time";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { softFail } from "@/lib/softRead";
 
 /**
  * The embeddable case lookup: one box, one answer card.
@@ -158,12 +159,12 @@ export default async function CaseStatusEmbed({
   const sp = await searchParams;
   const site = embedSiteFor((await headers()).get("referer"), sp.site);
   const typed = (sp.case ?? "").trim().slice(0, 40);
-  const answer = typed ? await lookupForEmbed(typed, site).catch(() => null) : null;
+  const answer = typed ? await lookupForEmbed(typed, site).catch(softFail("embed/case-status/page.lookupForEmbed", null)) : null;
   // Before anything is typed, where DOL stands: the frame carries a live figure
   // rather than a lone box. A failed read shows nothing, never a stale guess.
   const now = typed
     ? null
-    : dolNow(await getProcessingTimes().catch(() => null), await getPermLine().catch(() => null));
+    : dolNow(await getProcessingTimes().catch(softFail("embed/case-status/page.getProcessingTimes", null)), await getPermLine().catch(softFail("embed/case-status/page.getPermLine", null)));
 
   return (
     <EmbedFrame slug="case-status">

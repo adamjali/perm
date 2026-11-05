@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { one, rows } from "./client";
 import { tableColumns } from "./tableColumns";
+import { softFail } from "@/lib/softRead";
 
 /**
  * ICE's top-200 OPT and CPT employer lists, as scripts/ingest_sevp_top_employers.py
@@ -37,7 +38,7 @@ export const getSevpLists = cache(async (): Promise<SevpList[]> => {
     rows<Record<string, unknown>>(
       "SELECT year, list, rank, employer, total, opt, stem_opt, cpt FROM sevp_top_employers ORDER BY year DESC, list DESC, rank",
     ),
-    one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'sevp_top_employers'").catch(() => null),
+    one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'sevp_top_employers'").catch(softFail("sevpEmployers.one", null)),
   ]);
   let printed: Record<string, { as_printed?: string[] }> = {};
   try {

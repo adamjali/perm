@@ -6,10 +6,11 @@ import type { RfiClock } from "@/lib/perm";
 import { parseRfiClock } from "@/lib/rfiClockDoc";
 import { DIRECT_EVENT_SOURCE } from "./rfi";
 import { one } from "./client";
+import { softFail } from "@/lib/softRead";
 
 /** The RFI clock the nightly backtest measures (perm_docs['estimator_backtest'].rfiClock). */
 export const getRfiClock = cache(async (): Promise<RfiClock | null> => {
-  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'estimator_backtest'").catch(() => null);
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'estimator_backtest'").catch(softFail("rfiClock.one", null));
   return r ? parseRfiClock(String(r.json)) : null;
 });
 
