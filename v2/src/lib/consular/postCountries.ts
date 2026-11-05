@@ -8,6 +8,12 @@
  * file); a post the tool adds later still shows, it just isn't found by its country until it's
  * added here. A second name for a country (Burma, Myanmar) goes after a comma: the picker searches
  * every word, and the first name is the one shown.
+ *
+ * Checked Nov 4 2026 against State's own directory (www.usembassy.gov, each country's page, read in a
+ * browser because the site refuses scripts): 138 of the 142 posts are named on their country's page,
+ * four of them under State's spelling of the country (Kyrgyz Republic, Republic of Congo, Trinidad &
+ * Tobago, Bosnia & Herzegovina). Almaty, Guayaquil and Sydney aren't named on their country's page, and
+ * Taiwan has none (its post is the American Institute in Taiwan).
  */
 export const POST_COUNTRY: Readonly<Record<string, string>> = {
   abidjan: "Côte d'Ivoire, Ivory Coast",
@@ -31,7 +37,7 @@ export const POST_COUNTRY: Readonly<Record<string, string>> = {
   belgrade: "Serbia",
   belmopan: "Belize",
   bern: "Switzerland",
-  bishkek: "Kyrgyzstan",
+  bishkek: "Kyrgyzstan, Kyrgyz Republic",
   bogota: "Colombia",
   bratislava: "Slovakia",
   brazzaville: "Republic of the Congo",
