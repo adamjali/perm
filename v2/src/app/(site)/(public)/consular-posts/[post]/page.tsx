@@ -1,7 +1,8 @@
 /**
  * One US consulate: the month NVC is scheduling in each category at every State update held, and
  * the immigrant visas the post issued each month, from State's two tables (see the index page).
- * The interview pause is the hand-kept record, dated.
+ * The interview pause is the hand-kept record, dated. Under State's figures, "What people report": visitors'
+ * own interview reports (convex/consularReports.ts), labelled self-reported at every figure, with the form.
  *
  * Expired with the index by /api/revalidate-consular.
  */
@@ -11,7 +12,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowSquareOutIcon, BriefcaseIcon, HeartIcon, MegaphoneSimpleIcon, UsersThreeIcon } from "@phosphor-icons/react/ssr";
 
+import { api } from "@convex/_generated/api";
 import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
+import { ConsularReports } from "@/components/consular/ConsularReports";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -20,6 +23,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
+import { queryStatic } from "@/lib/convexStatic";
+import { softFail } from "@/lib/softRead";
 import { behindLabel, IV_CATEGORIES, IV_CATEGORY_LABEL, IV_TOOL_URL, monthsBehind, type IvCategory } from "@/lib/consular/scheduling";
 import { embassyVisasUrl, shortExcerpt } from "@/lib/consular/embassies";
 import { getConsularIndex, getEmbassyNotices, getPostDetail, type EmbassyNotices, type PostDetail } from "@/lib/db/consularPosts";
@@ -121,7 +126,12 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
   const { post: slug } = await params;
   const [post, index] = await Promise.all([getPostDetail(slug), getConsularIndex()]);
   if (!post) notFound();
-  const embassy = await getEmbassyNotices(post.key);
+  // Visitors' own reports (convex/consularReports.ts): a page that can't read them still renders State's figures.
+  const [embassy, reports, everyPost] = await Promise.all([
+    getEmbassyNotices(post.key),
+    queryStatic(api.consularReports.forPost, { post: post.slug }, revalidate).catch(softFail("consular-posts/post.reports", null)),
+    queryStatic(api.consularReports.overview, {}, revalidate).catch(softFail("consular-posts/post.overview", null)),
+  ]);
   const path = `/consular-posts/${post.slug}`;
   const asOf = index.asOf;
   const now = post.now;
@@ -254,6 +264,15 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
         {asOf ? `, update of ${longDate(asOf)}` : ""}, and its monthly immigrant visa issuances by post
         {index.issuedTo ? ` through ${monthName(index.issuedTo)}` : ""}.
       </p>
+
+      <ConsularReports
+        name={post.name}
+        post={post.slug}
+        view={reports}
+        all={everyPost?.all ?? null}
+        className="mt-12 border-t-2 border-border pt-10"
+      />
+
       <ToolPageFooter
         currentHref={path}
         reading={[

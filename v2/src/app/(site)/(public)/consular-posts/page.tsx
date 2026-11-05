@@ -13,6 +13,7 @@ import Link from "next/link";
 
 import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
 import { ConsularPostsTable } from "@/components/consular/ConsularPostsTable";
+import { ReportedPosts } from "@/components/consular/ReportedPosts";
 import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
@@ -21,11 +22,14 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { PanelTabs } from "@/components/ui/panel-tabs";
 import { behindLabel, IV_CATEGORIES, IV_CATEGORY_LABEL, IV_TOOL_URL, monthsBehind, type IvCategory } from "@/lib/consular/scheduling";
+import { queryStatic } from "@/lib/convexStatic";
 import { getConsularIndex } from "@/lib/db/consularPosts";
 import { monthName } from "@/lib/db/visaIssuances";
 import { formatInt } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { softFail } from "@/lib/softRead";
 import { withSocialCard } from "@/lib/socialCard";
+import { api } from "@convex/_generated/api";
 import { longDate } from "@convex/lib/months";
 
 export const revalidate = 86400;
@@ -46,7 +50,11 @@ export const metadata: Metadata = withSocialCard(
 );
 
 export default async function ConsularPostsPage() {
-  const index = await getConsularIndex();
+  // Visitors' own reports (convex/consularReports.ts): the page renders State's figures without them.
+  const [index, reports] = await Promise.all([
+    getConsularIndex(),
+    queryStatic(api.consularReports.overview, {}, revalidate).catch(softFail("consular-posts.reports", null)),
+  ]);
   const { asOf, posts } = index;
   const listed = posts.filter((p) => p.now);
   const caughtUp = asOf ? listed.filter((p) => monthsBehind(p.now?.employment, asOf) === 0).length : 0;
@@ -139,6 +147,8 @@ export default async function ConsularPostsPage() {
           />
         </FigurePlate>
       ) : null}
+
+      {reports ? <ReportedPosts busiest={reports.busiest} posts={posts} className="mt-10" /> : null}
 
       <section className="mt-12" aria-labelledby="every-post">
         <h2 id="every-post" className="font-heading text-2xl font-bold">

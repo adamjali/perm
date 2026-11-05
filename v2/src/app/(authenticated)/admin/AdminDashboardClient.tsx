@@ -17,6 +17,7 @@ import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { FirmClaimsPanel } from "@/components/admin/FirmClaimsPanel";
 import { AlertRatingsPanel } from "@/components/admin/AlertRatingsPanel";
 import { ReviewsPanel } from "@/components/admin/ReviewsPanel";
+import { ConsularReportsPanel } from "@/components/admin/ConsularReportsPanel";
 import { InboxFilterPanel } from "@/components/admin/InboxFilterPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +38,7 @@ export default function AdminDashboardClient() {
   const firmClaims = useQuery(api.firmClaims.listForAdmin, skip ? "skip" : {});
   const reviews = useQuery(api.siteReviews.listForAdmin, skip ? "skip" : {});
   const alertRatings = useQuery(api.alertRatings.forAdmin, skip ? "skip" : {});
+  const consularReports = useQuery(api.consularReports.listForAdmin, skip ? "skip" : {});
   const inboxFilter = useQuery(api.inboundFilter.forAdmin, skip ? "skip" : {});
 
   const dashboardData = useQuery(
@@ -244,6 +246,7 @@ export default function AdminDashboardClient() {
               <div className="space-y-10">
                 <ReviewsPanel data={reviews} />
                 <AlertRatingsPanel data={alertRatings} />
+                <ConsularReportsPanel data={consularReports} />
               </div>
             ),
           },
