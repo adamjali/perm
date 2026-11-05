@@ -956,19 +956,27 @@ def posthog_period(now: dt.datetime) -> tuple[dt.datetime, dt.datetime]:
     return start, start + POSTHOG_PERIOD
 
 
-def posthog_allowance_line(used: int, now: dt.datetime) -> tuple[str, bool]:
-    """The month's events against the free million, and whether to warn."""
+def posthog_allowance_line(used: int, now: dt.datetime, last_day: int | None = None) -> tuple[str, bool]:
+    """The month's events against the free million, and whether to warn.
+
+    With `last_day` (the events of the last 24 hours) the rest of the period is projected at that pace: a change to
+    what the site sends shows the next morning, where the period's own average would warn for weeks after a fix
+    (Nov 5 2026). Without it, the period's average pace."""
     start, end = posthog_period(now)
     elapsed = max((now - start).total_seconds(), 3600) / 86400
     total = (end - start).total_seconds() / 86400
-    projected = int(used / elapsed * total)
+    left = max(total - elapsed, 0)
+    per_day = last_day if last_day is not None else (used / elapsed)
+    projected = int(used + per_day * left)
+    pace = "the last day's pace" if last_day is not None else "this period's pace"
     warn = projected >= POSTHOG_WARN_SHARE * POSTHOG_FREE_EVENTS
     line = (f"PostHog events this billing period (from {start:%b} {start.day}): {used:,} of the free "
-            f"{POSTHOG_FREE_EVENTS:,}, on course for about {projected:,} by {end:%b} {end.day}")
+            f"{POSTHOG_FREE_EVENTS:,}, on course for about {projected:,} by {end:%b} {end.day} at {pace} "
+            f"({int(per_day):,} a day)")
     if projected >= POSTHOG_FREE_EVENTS:
         over = POSTHOG_FREE_EVENTS - used
-        days = over / (used / elapsed) if used else 0
-        line += f"; at this rate the free plan stops recording in about {days:.0f} days"
+        days = over / per_day if per_day else 0
+        line += f"; at that pace the free plan stops recording in about {days:.0f} days"
     return line, warn
 
 
@@ -1006,11 +1014,12 @@ def traffic_section() -> dict:
     # Its own query: a failure here says so in a line and leaves the counts above standing.
     try:
         start, _ = posthog_period(dt.datetime.now(dt.timezone.utc))
-        q = f"SELECT count() FROM events WHERE timestamp >= toDateTime('{start:%Y-%m-%d %H:%M:%S}')"
-        used = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
-                         {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                         json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())["results"][0][0]
-        line, over = posthog_allowance_line(int(used), dt.datetime.now(dt.timezone.utc))
+        q = ("SELECT count(), countIf(timestamp >= now() - INTERVAL 1 DAY) FROM events "
+             f"WHERE timestamp >= toDateTime('{start:%Y-%m-%d %H:%M:%S}')")
+        used, last_day = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
+                                   {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                                   json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())["results"][0][:2]
+        line, over = posthog_allowance_line(int(used), dt.datetime.now(dt.timezone.utc), int(last_day))
         lines.append(line)
         if over:
             status = "warn"

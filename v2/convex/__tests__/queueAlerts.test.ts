@@ -481,7 +481,14 @@ describe("notifyQueueReached", () => {
   // A run claims a row before it sends and records it after, so a run that dies between the send and the record
   // can't hand the same subscriber to the next run (Nov 4 2026: it sent, then marked notified, and a crash between
   // the two sent the one alert twice).
-  const resendCalls = (calls: string[]) => calls.filter((u) => u.includes("resend.com"));
+  const resendCalls = (calls: string[]) =>
+    calls.filter((u) => {
+      try {
+        return new URL(u).hostname === "api.resend.com";
+      } catch {
+        return false;
+      }
+    });
   const onlyRow = async (t: ReturnType<typeof createTestContext>) =>
     (await t.run(async (ctx) => ctx.db.query("dolQueueAlerts").collect()))[0]!;
 

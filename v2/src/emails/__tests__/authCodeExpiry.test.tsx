@@ -37,8 +37,8 @@ describe("sign-in and reset codes expire when their emails say", () => {
     ["VerificationCode", () => VerificationCode({ code: "ABCDEFGHJKLM" })],
     ["PasswordResetCode", () => PasswordResetCode({ code: "ABCDEFGHJKLM" })],
   ])("%s tells the reader the same number of minutes", async (_label, build) => {
-    const html = await render(build());
-    const text = html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+    // React Email's own plain-text render, never a tag-stripping regex over the HTML.
+    const text = (await render(build(), { plainText: true })).replace(/\s+/g, " ");
     expect(text).toContain(`expires in ${AUTH_CODE_MAX_AGE_S / 60} minutes`);
   });
 });

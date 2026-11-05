@@ -2283,3 +2283,26 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
 - **The dev server reloads every page every few seconds** (Nov 5: 9 loads in 15 s on /about, a "Compiled" line before
   each, nothing in the tree changing); production loads once. Capture dev pages with scripts off, or retry between
   reloads. Not chased yet.
+
+## Nov 5 2026 (midday): the causes behind the morning report's warnings
+
+- **Cloudflare's navigation data is dropped on each deploy** (Sentry 5N, 32 times Nov 2 to 5, each within about 90
+  minutes of a deploy). Every chunk's name changes per deploy, and Cloudflare kept the build before's `?_rsc=` payloads up
+  to 70 minutes, so the live page loaded files it couldn't use and reloaded. nginx tags stored navigation data
+  `Cache-Tag: rsc` (`$pt_cache_tag`, by `RSC: 1` or a non-empty `_rsc`; Cloudflare strips the header), and
+  `oracle-deploy.yml` drops the tag after the switch. Pages keep their stored copies. Proved live Nov 5: a tag purge made
+  the data MISS while `/perm-queue` stayed HIT. Next 16 answers an `_rsc` token that doesn't match its headers with a 307
+  to the one it expects, so a hand-made request needs `Next-Router-State-Tree` too.
+- **The page-cache cap fits the disk** (`fit` in `bin/permtracker-prune`, `KEEP_FREE` 30 GB): every cache at its budget
+  leaves 30 GB free, the live budget shrinking first and the standby's 6 GB going only when nothing else fits. The LCA
+  history grew both databases to 16 GB, and full budgets left 20 GB, the alarm's own line: it started and cleared three
+  times in a day. On Nov 5 the cap chose 25 GB a live folder. The report records `fitted` and `keepFreeGB`.
+- **Web vitals are drawn once per page load** (`keepsVitals`): in cookie-free mode no event carries `$session_id` when
+  `before_send` runs, so hashing it kept every event. The morning report projects PostHog's allowance at the last day's
+  pace (`posthog_allowance_line`), so a trim shows the next morning.
+- **Sort marks and arrows are Phosphor icons** (`SortMark` in `src/components/ui/sort-mark.tsx`): a typed "↕" drew as a
+  grey emoji box on an iPhone. `sort-marks-and-glyphs.test.ts` fails a typed arrow or emoji-prone symbol in a component
+  or article, and an `aria-sort` header without `<SortMark>`.
+- **Sentry 59** (a 20-second query deadline) fired only during Wednesday's LCA history loads; the FY2008 load, the last,
+  finished green Nov 5.
+- **This Mac had 3.6 GB free on Nov 5**: a test that reads the real disk (`shutil.disk_usage`) must pin it.

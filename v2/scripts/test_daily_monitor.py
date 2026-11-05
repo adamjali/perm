@@ -745,6 +745,12 @@ def main() -> int:
           f"Nov 4's pace warns and says when it runs out ({line})")
     line, warn = dm.posthog_allowance_line(200_000, dt.datetime(2026, 11, 4, 22, 0, tzinfo=utc))
     check(not warn and "stops recording" not in line, f"a month well inside the million doesn't warn ({line})")
+    # Nov 5 2026: the period's average kept warning after the site sent less. The last day's pace decides.
+    line, warn = dm.posthog_allowance_line(560_000, dt.datetime(2026, 11, 5, 14, 0, tzinfo=utc), last_day=18_000)
+    check(not warn and "the last day's pace (18,000 a day)" in line,
+          f"a smaller last day projects at its own pace and doesn't warn ({line})")
+    line, warn = dm.posthog_allowance_line(560_000, dt.datetime(2026, 11, 5, 14, 0, tzinfo=utc), last_day=40_000)
+    check(warn and "stops recording in about 11 days" in line, f"a heavy last day still warns ({line})")
 
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
