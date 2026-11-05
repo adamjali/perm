@@ -2300,6 +2300,13 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
 - **Web vitals are drawn once per page load** (`keepsVitals`): in cookie-free mode no event carries `$session_id` when
   `before_send` runs, so hashing it kept every event. The morning report projects PostHog's allowance at the last day's
   pace (`posthog_allowance_line`), so a trim shows the next morning.
+- **Clicks come from the same one page load in four, and automatic field-change and form-submit events stop** (owner's
+  call, Nov 5 2026, `CLICKS_ONE_IN`, `DROPPED_AUTOCAPTURE`): the day before, 60,000 events (clicks 19,600, page views
+  13,800, vitals 10,600, field changes 4,600, submits 1,800), and the period was on course past the free million around
+  Nov 14. Expected about 27,000 a day: about 984,000 this period, 800,000 a month after. The report warns over 90% until
+  Nov 21, and tomorrow's line still reads the old pace (it covers 18 hours before the night deploy).
+- **The speed job leaves the nightly employer map's read out of its warnings** (`BULK_READ_SHAPES` in
+  `bin/permtracker-perf`, matched by its own shape); a page's read that starts the same way still warns.
 - **Sort marks and arrows are Phosphor icons** (`SortMark` in `src/components/ui/sort-mark.tsx`): a typed "↕" drew as a
   grey emoji box on an iPhone. `sort-marks-and-glyphs.test.ts` fails a typed arrow or emoji-prone symbol in a component
   or article, and an `aria-sort` header without `<SortMark>`.

@@ -11,10 +11,22 @@
  * session on its own server, after `before_send` has run, so no event had one there and every one was kept: on Nov 5
  * vitals ran at 1.1 for each page view, more than before. A signed-in browser does carry a session id and still
  * hashes it; everyone else is drawn once per page load.
+ *
+ * CLICKS TOO (Nov 5 2026, owner's call). With page leaves off and vitals sampled the period still ran past the free
+ * million (about 48,000 events a day, clicks 19,600 of them), so PostHog would have stopped recording around Nov 14.
+ * Clicks now come from the same one page load in four as its vitals, and the automatic field-change and form-submit
+ * events stop: the site's own events (case_lookup_submitted, alert_signup and the rest) already count what those
+ * did. Rage clicks, page views and every event of the site's own stay whole. About 27,000 a day, 800,000 a month.
  */
 
 /** The share of page loads (or signed-in sessions) whose web vitals are sent: one in this many. */
 export const VITALS_ONE_IN = 4;
+
+/** The share of page loads whose automatic click events are sent: one in this many. */
+export const CLICKS_ONE_IN = 4;
+
+/** Automatic events of these kinds are never sent: the site's own events count the same moments. */
+const DROPPED_AUTOCAPTURE = new Set(["change", "submit"]);
 
 /** FNV-1a over the session id: the same session is always in or always out, so its figures stay whole. */
 function hash(text: string): number {
@@ -45,5 +57,9 @@ export function droppedForAllowance(
 ): boolean {
   if (event.event === "$pageleave") return true;
   if (event.event === "$web_vitals") return !keepsVitals(event.properties?.$session_id, draw);
+  if (event.event === "$autocapture") {
+    if (DROPPED_AUTOCAPTURE.has(String(event.properties?.$event_type ?? ""))) return true;
+    return draw >= 1 / CLICKS_ONE_IN;
+  }
   return false;
 }
