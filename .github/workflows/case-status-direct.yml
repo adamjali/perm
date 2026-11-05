@@ -213,6 +213,21 @@ jobs:
             echo "not Monday; the seasonal and bulletin backtests run weekly"
           fi
 
+      # How many were filed each day, every program, the live record and DOL's
+      # files together (build_filings_by_day.py): /filings-by-day and the day
+      # pages read it. After every pass, so today's count follows the walk; about
+      # 40 seconds. A failure is recorded and turns the run red at the end; the
+      # page keeps the last good counts, and the health check fails the doc past 2 days.
+      - name: Count each day's filings
+        if: success() || failure()
+        working-directory: v2
+        run: |
+          timeout 10m python3 scripts/build_filings_by_day.py \
+            || { python3 scripts/record_ingest_failure.py \
+                   --script "build_filings_by_day.py" \
+                   --note "filings by day: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; \
+                 echo "filings-by-day" >> "$RUNNER_TEMP/pt-failed-steps"; }
+
       # Employer pages cache for 30 days, right for their quarterly figures and
       # too long for the live band, so the pages whose live rows moved are
       # expired by path. The rebuild above writes the list, busiest first. A

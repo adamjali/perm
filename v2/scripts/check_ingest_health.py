@@ -421,6 +421,8 @@ PRECOMPUTED_DOCS = {
     "pwd_day_queue": (3, "the wage-request lookup's estimated day and the wage-request page's cards"),
     # Rebuilt after every full sweep (build_wait_trends.py): how long each month's decisions waited.
     "perm_wait_trend": (3, "the processing-times page's \"Is PERM getting faster?\" chart"),
+    # Rewritten after each case-status pass (build_filings_by_day.py): /filings-by-day and the day pages' counts.
+    "filings_by_day": (2, "the daily filings page, /filings-by-day"),
     "pwd_wait_trend": (3, "the wage-request page's monthly wait"),
     "h2b_group_timing": (3, "the H-2B lookup's assignment-group timing"),
     "estimator_backtest": (3, "the case page's measured range and the estimate scorecard's backtest, nightly"),

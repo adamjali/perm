@@ -539,6 +539,13 @@ def index_ddl(table: str) -> list[str]:
         f"CREATE INDEX IF NOT EXISTS {table}_state_st_dec ON {table} (worksite_state, case_status, decision_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_soc_dec ON {table} (substr(soc_code, 1, 7), decision_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_soc_st_dec ON {table} (substr(soc_code, 1, 7), case_status, decision_date)",
+        # One received day (the filed-on-day pages, scripts/build_filings_by_day.py): a day is a few hundred to two
+        # thousand filings, and without this every day read scans the table. On every table: a BROAD employer name
+        # on lca_cases reads newest-first on it too (`disclosureByDateIndex`, `BROAD_NAME_ROWS` in
+        # src/lib/db/flagCases.ts: "Am" reaches 168,861 LCAs, sorting them ran 40 s, Sentry 59, Oct 27 2026; on this
+        # index the search stops at its 200 in 0.6 s). Built on production by hand: lca_cases Oct 27 2026 (56 s),
+        # pwd_cases and seasonal_cases Nov 5 2026.
+        f"CREATE INDEX IF NOT EXISTS {table}_recv ON {table} (received_date, employer_slug)",
     ] + ([
         # A search naming both a job and a state (the H-1B wage explorer's live selections, the case search's two
         # leads together). With no ANALYZE on the server, SQLite took the state index for "cost estimators,
@@ -547,12 +554,6 @@ def index_ddl(table: str) -> list[str]:
         # lca_cases, the one table big enough to need it; created on production by hand that night.
         f"CREATE INDEX IF NOT EXISTS {table}_soc_state_st_dec ON {table} "
         "(substr(soc_code, 1, 7), worksite_state, case_status, decision_date)",
-        # A broad employer name read newest-first (`disclosureByDateIndex`,
-        # `BROAD_NAME_ROWS` in src/lib/db/flagCases.ts): "Am" reaches 168,861
-        # LCAs, and sorting them all ran 40 s (Sentry 59, Oct 27 2026); on this
-        # index the search stops at its 200 in 0.6 s. Created on production by
-        # hand that evening (56 s).
-        f"CREATE INDEX IF NOT EXISTS {table}_recv ON {table} (received_date, employer_slug)",
         # A name with a job title (`disclosureByTitleIndex`): the title is in the index, so the search tests it
         # without opening each filing. "EMC" holds 2,204 LCAs and 37 under one title; newest-first walked every LCA
         # in the file for them (15 to 20 s under load, Sentry 59, Nov 1 2026), this index answers in 0.03 s.

@@ -184,6 +184,8 @@ SEARCH_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_pch_socg_dec ON perm_cases_history(substr(soc_code, 1, 7), decision_date)",
     "CREATE INDEX IF NOT EXISTS idx_pch_att_dec ON perm_cases_history(attorney_slug, decision_date)",
     "CREATE INDEX IF NOT EXISTS idx_pch_cit_dec ON perm_cases_history(citizenship, decision_date)",
+    # One received day, for the filed-on-day pages (built on production by hand Nov 5 2026).
+    "CREATE INDEX IF NOT EXISTS idx_pch_recv ON perm_cases_history(received_date)",
 ]
 
 
