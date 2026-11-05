@@ -1,6 +1,7 @@
 /**
  * The open datasets: the visa bulletin archive and DOL's processing-times
- * readings, as CSV and JSON under CC BY 4.0.
+ * readings, as CSV and JSON under CC BY-NC 4.0 (news, research and teaching
+ * allowed in any publication; other commercial use by permission).
  *
  * Every figure here (counts, spans, the preview rows) is read from the same
  * tables the files are built from, so the page can't describe a file that
@@ -19,7 +20,9 @@ import { withSocialCard } from "@/lib/socialCard";
 import { getDatasetSchema } from "@/lib/structuredData";
 import {
   OPEN_DATA_CREDIT,
+  OPEN_DATA_EXTRA,
   OPEN_DATA_LICENSE,
+  OPEN_DATA_NC_FROM,
   OPEN_DATA_PATHS,
   bulletinRows,
   openDataCreditHtml,
@@ -30,11 +33,11 @@ import {
 import { getProcessingTimesArchive, getVisaBulletinsArchive } from "@/lib/db/openData";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
-import { MONTH_ABBR, shortDate } from "@convex/lib/months";
+import { longDate, MONTH_ABBR, shortDate } from "@convex/lib/months";
 
 const TITLE = "Open Data: Visa Bulletin and DOL History";
 const DESCRIPTION =
-  "Visa bulletin cutoffs back to 2005 and every DOL processing-times reading we've kept, as CSV and JSON, free to reuse under CC BY 4.0.";
+  "Visa bulletin cutoffs back to 2005 and every DOL processing-times reading we've kept, as CSV and JSON, free for non-commercial reuse with credit.";
 
 export const metadata: Metadata = withSocialCard(
   {
@@ -195,11 +198,11 @@ export default async function OpenDataPage() {
       <section className="mt-12 border-3 shadow-hard p-5 sm:p-6 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold">Credit</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
-          Free to copy, change and publish, commercially too, under{" "}
+          Free to copy, change and publish for non-commercial use under{" "}
           <a href={OPEN_DATA_LICENSE.url} className="link" rel="license">
             {OPEN_DATA_LICENSE.short}
           </a>
-          . Credit us like this:
+          . {OPEN_DATA_EXTRA.allowed} {OPEN_DATA_EXTRA.ask} Credit us like this:
         </p>{" "}
         <p className="mt-4 bg-tint px-4 py-3 tabular-nums text-sm break-words border-2 border-border">
           Source: {OPEN_DATA_CREDIT}, from U.S. Department of State and Department of Labor records. {OPEN_DATA_LICENSE.short}.
@@ -222,6 +225,7 @@ export default async function OpenDataPage() {
               months gathered in one place, the cells parsed, the readings kept.
             </p>{" "}
             <p>
+              Copies downloaded before {longDate(OPEN_DATA_NC_FROM)} keep the CC BY 4.0 licence they were offered under.
               It covers these two files only. The rest of the site&rsquo;s compiled data stays under{" "}
               <a href="/terms#acceptable-use" className="link">
                 the Terms

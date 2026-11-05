@@ -1,6 +1,8 @@
 /**
  * The open datasets: two histories this site has kept, offered as files under
- * CC BY 4.0.
+ * CC BY-NC 4.0, with news, research and teaching allowed in any publication
+ * (OPEN_DATA_EXTRA). CC BY 4.0 until Nov 6 2026 (owner's call, Nov 5 2026:
+ * commercial reuse by written permission only); copies taken before then keep it.
  *
  * WHY THESE TWO AND NOT THE REST. Both are histories the agencies themselves
  * don't keep in one place: the State Department posts each visa bulletin as
@@ -18,17 +20,26 @@ import { parseCutoff } from "@/lib/perm";
 import { csvCell } from "@/lib/caseSearchCsv";
 
 export const OPEN_DATA_LICENSE = {
-  name: "Creative Commons Attribution 4.0 International",
-  short: "CC BY 4.0",
-  url: "https://creativecommons.org/licenses/by/4.0/",
+  name: "Creative Commons Attribution-NonCommercial 4.0 International",
+  short: "CC BY-NC 4.0",
+  url: "https://creativecommons.org/licenses/by-nc/4.0/",
 } as const;
 
-/** The credit line CC BY asks for, ready to paste. */
+/** The permission we give beyond the licence, and where to ask for the rest. One sentence each, shown wherever the licence is. */
+export const OPEN_DATA_EXTRA = {
+  allowed: "News reporting, research and teaching may also use them with credit and a link, in a commercial publication too.",
+  ask: "Any other commercial use needs our written permission: email support@permtracker.app.",
+} as const;
+
+/** The day the licence changed from CC BY 4.0; a copy taken before it keeps the old licence. */
+export const OPEN_DATA_NC_FROM = "2026-11-06";
+
+/** The credit line the licence asks for, ready to paste. */
 export const OPEN_DATA_CREDIT = "PERM Tracker (permtracker.app)";
 
 /**
  * The same credit for a web page, with the link a reader can follow back to
- * the files. CC BY asks for the source; a link is how a reader finds it.
+ * the files. The licence asks for the source; a link is how a reader finds it.
  */
 export function openDataCreditHtml(siteUrl: string): string {
   const base = siteUrl.replace(/\/$/, "");

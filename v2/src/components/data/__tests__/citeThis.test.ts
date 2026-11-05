@@ -23,7 +23,7 @@ describe("the open-data credit for a web page", () => {
   it("links to the files and the licence", () => {
     const html = openDataCreditHtml("https://permtracker.app/");
     expect(html).toContain('<a href="https://permtracker.app/open-data">PERM Tracker</a>');
-    expect(html).toContain('<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>');
+    expect(html).toContain('<a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>');
   });
 });
 
