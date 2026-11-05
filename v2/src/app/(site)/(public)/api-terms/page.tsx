@@ -73,7 +73,10 @@ export default function ApiTermsPage() {
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">API terms</h1>{" "}
-        <p className="mb-8 mt-4 text-lg text-muted-foreground">Effective Date: October 31, 2026</p>{" "}
+        {/* REVIEW (date): set the effective date to the day this version is published (Section 11). */}
+        <p className="mb-8 mt-4 text-lg text-muted-foreground">
+          Effective Date: [DATE TO SET ON THE DAY THIS VERSION IS PUBLISHED]
+        </p>{" "}
 
         <SectionIndex sections={SECTIONS} />{" "}
 
@@ -135,7 +138,8 @@ export default function ApiTermsPage() {
           </p>{" "}
           <p>
             Where you show results from the API, you must credit &ldquo;PERM Tracker (permtracker.app)&rdquo; in a
-            way your users can see, with a link to permtracker.app where the medium allows one.
+            way your users can see, with a link to permtracker.app where the medium allows one. Where a result
+            includes O*NET text, the credit in section 6 applies as well.
           </p>
         </Section>
 
@@ -171,11 +175,23 @@ export default function ApiTermsPage() {
         </Section>
 
         <Section id="the-data" title="6. The data">
+          {/* REVIEW (O*NET): "underlying records" is narrowed to "case records" so the public-domain sentence
+              doesn't sit against the CC BY 4.0 license for O*NET text below. The site's statement of O*NET's terms is
+              its own (src/components/reference/OnetCredit.tsx); O*NET's license page wasn't re-read for this. */}
           <p>
-            The underlying records come from the U.S. Department of Labor and the U.S. Department of State. As works
-            of the United States Government they are not subject to copyright (17 U.S.C. §105), and nothing in these
-            terms restricts them. Our selection, arrangement and presentation of them, and the estimates we compute,
-            are covered by section 6 of the Terms of Service.
+            The case records come from the U.S. Department of Labor and the U.S. Department of State. As works of the
+            United States Government they are not subject to copyright (17 U.S.C. §105), and nothing in these terms
+            restricts them. Our selection, arrangement and presentation of them, and the estimates we compute, are
+            covered by section 6 of the Terms of Service.
+          </p>{" "}
+          <p>
+            Some answers carry text from the O*NET Database and O*NET OnLine by the U.S. Department of Labor,
+            Employment and Training Administration (USDOL/ETA): an occupation&rsquo;s description, its core tasks and
+            the name of its Job Zone. That text is used under the Creative Commons Attribution 4.0 International
+            license (CC BY 4.0), and the answer&rsquo;s source field says so. Where you show it, you must credit
+            O*NET and USDOL/ETA, name the license, and indicate that the text may have been modified, as our own
+            pages do. O*NET is a trademark of USDOL/ETA, which has not approved, endorsed or tested any
+            modification.
           </p>{" "}
           <p>
             Estimates are estimates. They describe how comparable cases have moved and are not a promise about any

@@ -60,7 +60,9 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 31, 2026
+          {/* REVIEW (date): set "Last Updated" to the day this version is published, and send the notice Section 14
+              promises for material changes (question 11). */}
+          Effective Date: February 17, 2026 | Last Updated: [DATE TO SET ON THE DAY THIS VERSION IS PUBLISHED]
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -125,19 +127,23 @@ export default function TermsPage() {
               Registration
             </h3>{" "}
             <p className="text-soft leading-relaxed">
-              To use the Service, you must create an account by providing accurate
-              and complete information. You may register using email/password or
-              Google OAuth.
+              Some parts of the Service need an account: the case manager, the
+              AI assistant, calendar sync and API keys. Public lookups, data
+              pages and email alerts don’t. To create an account, you must give
+              accurate and complete information. You may register with an email
+              address and password, or with Google.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Eligibility
             </h3>{" "}
+            {/* REVIEW (question 10): Option A, an age requirement for accounts only. Option B, the whole Service for
+                people 18 and older, would keep this paragraph as it was ("to use the Service"). */}
             <p className="text-soft leading-relaxed">
               You must be at least 18 years old and able to form a legally binding
-              contract to use the Service. By creating an account, you represent
-              that you meet these requirements and that the information you provide
-              is accurate.
+              contract to create an account. By creating one, you confirm that you
+              meet these requirements and that the information you give is
+              accurate.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -168,9 +174,13 @@ export default function TermsPage() {
             <p className="text-soft leading-relaxed">
               You may delete your account at any time from Settings, or by
               contacting us. Deletion begins a 30-day grace period during which
-              you may cancel it; after that, your account and its data are
-              permanently deleted, as described in our Privacy Policy. We reserve
-              the right to suspend or terminate accounts that violate these Terms.
+              you may cancel it, or you may choose in Settings to delete it at
+              once. After that, your account and its data are permanently
+              deleted, and the email alerts sent to its address stop, as
+              described in our Privacy Policy. Reviews, ratings and messages you
+              sent us aren’t part of your account and stay unless you ask us to
+              remove them, as the Privacy Policy also describes. We reserve the
+              right to suspend or terminate accounts that violate these Terms.
             </p>
           </details>{" "}
 
@@ -263,6 +273,28 @@ export default function TermsPage() {
               accurate and names no individual. It’s free. We may decline a
               claim, and edit, hide or remove a profile, at any time and for any
               reason.
+            </p>{" "}
+
+            {/* REVIEW (license for what is shared): proposed wording for the attorney to shape. It ends on removal
+                because the Privacy Policy and the review form promise removal. "Material that describes the Service"
+                is meant to cover the homepage, the rating in the site's structured data and its social cards. */}
+            <h3 id="shared-content" className="font-heading text-lg font-bold mt-6 mb-3">
+              Reviews, Ratings, Timelines and Other Things You Share
+            </h3>{" "}
+            <p className="text-soft leading-relaxed">
+              When you send us something meant to be shown on the Service, such
+              as a review, a rating, a timeline for the public board or a firm
+              profile, you grant us a non-exclusive, worldwide, royalty-free
+              license to host, store, copy, display and publish it on the
+              Service and in material that describes the Service, and to adapt
+              it as that requires (for example, to show it shortened, beside a
+              star count, or in figures combined with others), with the name you
+              gave or without one. The license lasts until the submission is
+              removed. You may ask us to remove a review or rating at any time,
+              and you can remove a timeline yourself. Figures that already
+              combine your submission with others, such as a median, needn’t be
+              recalculated. You confirm that what you send is your own
+              experience, is accurate, and names no one else.
             </p>
           </details>{" "}
 
@@ -563,9 +595,9 @@ export default function TermsPage() {
               <a href="/privacy" className="link">
                 Privacy Policy
               </a>
-              . AI conversation data is retained for 90 days and then
-              automatically deleted. You may delete individual conversations at
-              any time from the AI chat interface.
+              . AI conversations are deleted automatically 90 days after they
+              were last used. You may delete individual conversations at any
+              time from the AI chat interface.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -586,10 +618,11 @@ export default function TermsPage() {
               session replays for advertising and never sell them, and we honor
               the Global Privacy Control (GPC) browser signal by sending no
               analytics at all from your browser. We also use Cloudflare
-              Turnstile on our sign-up and password-reset forms to prevent
-              automated abuse; it processes limited device and
-              interaction signals but doesn’t read the contents of form fields. We additionally enforce per-IP and per-email rate
-              limits on these endpoints. By using the Service, you consent to
+              Turnstile on our sign-up, password-reset and contact forms to
+              prevent automated abuse; it processes limited device and
+              interaction signals but doesn’t read the contents of form fields.
+              We additionally enforce per-IP and per-email rate limits on these
+              forms and on sign-in. By using the Service, you consent to
               this data collection as described in our{" "}
               <a href="/privacy" className="link">
                 Privacy Policy
@@ -767,6 +800,9 @@ export default function TermsPage() {
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Provide legal advice or participate in attorney-client relationships</li>{" "}
               <li>Make decisions about your cases or client matters</li>{" "}
+              {/* REVIEW (question 9): a saved case's DOL case number is checked with DOL and, if DOL knows it and we
+                  didn't hold it, DOL's public record for it joins our case tables (Privacy Policy, Section 2, "Case
+                  Numbers You Look Up or Save"). Please read this promise against that. */}
               <li>Share your data with third parties except as required for service operation</li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
@@ -789,7 +825,10 @@ export default function TermsPage() {
             </p>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Encryption in transit (TLS/HTTPS) and at rest</li>{" "}
-              <li>Row-level security ensuring users can’t access other users&apos; data</li>{" "}
+              <li>
+                Access checks in every backend function, so each signed-in user
+                can read and change only their own data
+              </li>{" "}
               <li>Regular security audits and updates</li>{" "}
               <li>Internal database access restricted to authorized personnel for service operation only (see Service Provider Status above)</li>
             </ul>{" "}
