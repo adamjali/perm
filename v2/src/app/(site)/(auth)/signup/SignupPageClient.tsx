@@ -589,6 +589,7 @@ export function SignupPageClient() {
             Privacy Policy
           </a>
           . PERM Tracker isn&apos;t a law firm, and an account doesn&apos;t make you anyone&apos;s client.
+          {" "}We&apos;ll send occasional product updates; turn them off anytime in Settings.
         </p>
 
         <div className="pt-4 text-center border-t-2 border-border">
