@@ -20,6 +20,7 @@ import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import Link from "next/link";
 import { hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
+import { realCities } from "@/lib/facetClean";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { pendingSentence, profileLine, whereTheyStand } from "@/lib/pendingSnippet";
@@ -847,7 +848,7 @@ export default async function EmployerPage({
   }
 
   // What the sponsor is, in three cells: the job it files for most, where, and its industry.
-  const topCity = facets.city?.[0];
+  const topCity = realCities(facets.city ?? [])[0];
   const topIndustry = facets.industry ? groupIndustries(facets.industry)[0] : undefined;
   const share = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its filings`;
   const facts: ProfileFact[] = ([
@@ -963,7 +964,7 @@ export default async function EmployerPage({
             with publication; until then the case number carries the reader
             to its own live status. */}
         {recentLive.length > 0 ? (
-          <section className="mt-6 border-2 border-border bg-card p-5 shadow-hard sm:p-6" aria-labelledby="latest-live">
+          <section className={`mt-6 ${CARD}`} aria-labelledby="latest-live">
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
               <h3 id="latest-live" className="font-heading text-xl font-bold">
                 Its newest filings
@@ -1107,10 +1108,11 @@ export default async function EmployerPage({
             ask="title"
             jobs={facets.occupation ?? []}
             states={facets.state ?? []}
-            className="mb-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6"
+            className={`mb-6 ${CARD}`}
           />{" "}
-          {/* Two even columns: every box in a row is stretched to the row's height and keeps its note on one line. */}
-          <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2">
+          {/* Two even columns: every box in a row is stretched to the row's height and keeps its note on one line,
+              and a box left alone on the last row takes the row whole. */}
+          <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2 md:[&>*:last-child:nth-child(odd)]:col-span-2">
             {facets.occupation ? (
               <OccupationMix
                 rows={facets.occupation}
@@ -1118,8 +1120,9 @@ export default async function EmployerPage({
                 filingsHref={(r) => (r.key ? caseSearchHref({ q: row.name, occupation: r.key }) : null)}
               />
             ) : null}
-            {facets.industry ? <IndustryMix rows={facets.industry} /> : null}
-            {facets.state || facets.city ? (
+            {/* The header already names one industry and one worksite; a box would only repeat it. */}
+            {facets.industry && groupIndustries(facets.industry).length > 1 ? <IndustryMix rows={facets.industry} /> : null}
+            {(facets.state?.length ?? 0) > 1 || realCities(facets.city ?? []).length > 1 ? (
               <PlaceMix states={facets.state ?? []} cities={facets.city ?? []} total={row.total} />
             ) : null}
             {facets.attorney ? (

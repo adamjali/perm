@@ -1,4 +1,5 @@
 import type { FacetRow } from "@/lib/db/entityDetail";
+import { socGroup } from "@/lib/socCode";
 
 /**
  * Tidying the free-text facets DOL's filers type, before a page lists them.
@@ -70,4 +71,23 @@ export function cleanPapers(rows: readonly FacetRow[]): FacetRow[] {
  */
 export function realCities(rows: readonly FacetRow[]): FacetRow[] {
   return rows.filter((r) => !/^\s*\d/.test(r.label));
+}
+
+/**
+ * One row per job. DOL prints a job's code two ways (`51-2092.00` and `51-2092`), and the site keeps a page for
+ * each spelling, so on Nov 4 2026 Stoughton Trailers' page listed "Team Assemblers" (1,590) and "TEAM ASSEMBLERS"
+ * (254) as two jobs. Rows in the same SOC occupation with the same title, whatever its case, join; the busier row
+ * names and links the job, and the counts are summed. O*NET's finer jobs inside one occupation (`15-1299.08`,
+ * `15-1299.09`) carry their own titles and stay apart, and a row with no code is never joined.
+ */
+export function mergeSocSpellings(rows: readonly FacetRow[]): FacetRow[] {
+  const groups = new Map<string, FacetRow>();
+  let alone = 0;
+  for (const r of [...rows].sort((x, y) => y.n - x.n)) {
+    const group = socGroup(r.code);
+    const key = group ? `${group}|${letters(r.label)}` : `alone|${alone++}`;
+    const into = groups.get(key);
+    groups.set(key, into ? { ...into, n: into.n + r.n, certified: into.certified + r.certified, denied: into.denied + r.denied } : { ...r });
+  }
+  return [...groups.values()].sort((x, y) => y.n - x.n);
 }

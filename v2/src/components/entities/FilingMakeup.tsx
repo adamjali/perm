@@ -494,11 +494,29 @@ export function RecruitmentMix({
   // Every case with a first step and a filing date falls in exactly one band.
   const recorded = lead.reduce((a, r) => a + r.n, 0);
   const byBand = new Map(lead.map((r) => [r.key, r.n]));
-  // As many columns as boxes, so two boxes share the row instead of leaving a third of it empty.
-  const boxes = (paperRows.length ? 1 : 0) + (steps.length ? 1 : 0) + (recorded > 0 ? 1 : 0);
+  // One paper is a fact, not a chart: a single full bar in a box stretched to its neighbour's height read as an empty
+  // box (Stoughton Trailers, Nov 4 2026). It sits as a line above the boxes instead.
+  const onePaper = paperRows.length === 1 ? paperRows[0]! : null;
+  // As many columns as boxes, so two boxes share the row and one box takes it whole.
+  const boxes = (paperRows.length > 1 ? 1 : 0) + (steps.length ? 1 : 0) + (recorded > 0 ? 1 : 0);
   return (
-    <div className={cn("grid grid-cols-1 gap-4 [&>*]:min-w-0", boxes >= 3 ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-2", className)}>
-      {paperRows.length ? (
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 [&>*]:min-w-0",
+        boxes >= 3 ? "md:grid-cols-2 xl:grid-cols-3" : boxes === 2 ? "md:grid-cols-2" : "",
+        className,
+      )}
+    >
+      {onePaper ? (
+        <p className="col-span-full">
+          <span className="block text-sm text-muted-foreground">Newspaper it advertised in</span>{" "}
+          <span className="font-bold">{onePaper.label}</span>{" "}
+          <span className="font-mono text-sm tabular-nums text-muted-foreground">
+            &middot; {formatInt(onePaper.n)} {onePaper.n === 1 ? "case" : "cases"}, its only paper
+          </span>
+        </p>
+      ) : null}{" "}
+      {paperRows.length > 1 ? (
         <Shell
           title="Newspapers it advertised in"
           note="The newspaper or professional journal named for each case's two print ads, one count per paper per case, however the filer spelled it."

@@ -30,6 +30,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 
 import type { EntityKind } from "@/lib/entityPayload";
+import { mergeSocSpellings } from "@/lib/facetClean";
 
 import { getEntityBySlug } from "./publicData";
 import { one, rows } from "./client";
@@ -289,6 +290,8 @@ export async function entityFacets(kind: EntityKind, slug: string): Promise<Enti
       denied: r.denied,
     });
   }
+  // One job printed under both code spellings is one row on every page that lists jobs.
+  if (out.occupation) out.occupation = mergeSocSpellings(out.occupation);
   return out;
 }
 

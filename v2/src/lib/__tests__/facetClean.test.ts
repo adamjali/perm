@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cleanPapers, realCities } from "@/lib/facetClean";
+import { cleanPapers, mergeSocSpellings, realCities } from "@/lib/facetClean";
 
 const row = (label: string, n: number) => ({ key: label.toLowerCase(), label, code: null, n, certified: n, denied: 0 });
 
@@ -35,5 +35,38 @@ describe("cleanPapers", () => {
 describe("realCities", () => {
   it("drops a street address typed into the city field", () => {
     expect(realCities([row("Stoughton, WI", 1877), row("1111 Veterans Dr., WI", 1)]).map((r) => r.label)).toEqual(["Stoughton, WI"]);
+  });
+});
+
+describe("mergeSocSpellings", () => {
+  const job = (key: string, label: string, code: string | null, n: number, denied = 0) => ({ key, label, code, n, certified: n - denied, denied });
+
+  it("joins one job printed under both code spellings, the busier row naming and linking it", () => {
+    const out = mergeSocSpellings([
+      job("team-assemblers", "Team Assemblers", "51-2092.00", 1590, 2),
+      job("team-assemblers-2", "TEAM ASSEMBLERS", "51-2092", 254),
+      job("welders", "Welders, Cutters, Solderers, and Brazers", "51-4121.00", 30),
+    ]);
+    expect(out).toEqual([
+      { key: "team-assemblers", label: "Team Assemblers", code: "51-2092.00", n: 1844, certified: 1842, denied: 2 },
+      job("welders", "Welders, Cutters, Solderers, and Brazers", "51-4121.00", 30),
+    ]);
+  });
+
+  it("re-sorts when the joined row outgrows a row above it", () => {
+    const out = mergeSocSpellings([job("a", "Accountants", "13-2011.00", 50), job("b", "Cooks", "35-2014.00", 40), job("c", "ACCOUNTANTS", "13-2011", 20)]);
+    expect(out.map((r) => [r.label, r.n])).toEqual([["Accountants", 70], ["Cooks", 40]]);
+  });
+
+  it("keeps O*NET's finer jobs inside one occupation apart: their titles differ", () => {
+    const out = mergeSocSpellings([
+      job("a", "Data Warehousing Specialists", "15-1299.08", 9),
+      job("b", "Information Technology Project Managers", "15-1299.09", 7),
+    ]);
+    expect(out).toHaveLength(2);
+  });
+
+  it("never joins rows with no code, even when their titles match", () => {
+    expect(mergeSocSpellings([job("a", "Cooks", null, 5), job("b", "COOKS", null, 3)])).toHaveLength(2);
   });
 });

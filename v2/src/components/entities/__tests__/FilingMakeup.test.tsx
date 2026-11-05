@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import type { FacetRow } from "@/lib/db/entityDetail";
 
-import { groupIndustries, IndustryMix, OccupationMix, PartyMix, StateMix } from "../FilingMakeup";
+import { groupIndustries, IndustryMix, OccupationMix, PartyMix, RecruitmentMix, StateMix } from "../FilingMakeup";
 
 function facet(over: Partial<FacetRow> = {}): FacetRow {
   return {
@@ -147,5 +147,26 @@ describe("IndustryMix", () => {
     render(<IndustryMix rows={rows} />);
     expect(screen.getAllByText("Software Publishers")).toHaveLength(1);
     expect(screen.getByText(/NAICS 513210, 51121, 511210, 51321/)).toBeInTheDocument();
+  });
+});
+
+describe("RecruitmentMix", () => {
+  const paper = (label: string, n: number): FacetRow => ({ key: null, label, code: null, n, certified: n, denied: 0 });
+  const lead: FacetRow[] = [{ key: "150-180", label: "150 to 180 days", code: null, n: 40, certified: 40, denied: 0 }];
+
+  it("states one paper as a line, not as a chart of one full bar in its own box", () => {
+    render(<RecruitmentMix papers={[paper("Wisconsin State Journal", 1626)]} lead={lead} />);
+    expect(screen.queryByText("Newspapers it advertised in")).toBeNull();
+    expect(screen.getByText("Newspaper it advertised in")).toBeInTheDocument();
+    expect(screen.getByText("Wisconsin State Journal")).toBeInTheDocument();
+    expect(screen.getByText(/1,626 cases, its only paper/)).toBeInTheDocument();
+    // The one box left takes the row whole: no two-column grid for a single box.
+    expect(screen.getByText("How long before filing it began").closest("div.grid")?.className).not.toMatch(/md:grid-cols-2/);
+  });
+
+  it("keeps the chart when there are several papers to compare", () => {
+    render(<RecruitmentMix papers={[paper("The Seattle Times", 40), paper("Seattle Weekly", 3)]} lead={lead} />);
+    expect(screen.getByText("Newspapers it advertised in")).toBeInTheDocument();
+    expect(screen.getByText("How long before filing it began").closest("div.grid")?.className).toMatch(/md:grid-cols-2/);
   });
 });
