@@ -8,6 +8,8 @@
     python3 scripts/withhold.py check             # the live checks and IndexNow alone, nothing saved
     python3 scripts/withhold.py status            # counts only; --show prints the lists locally
     python3 scripts/withhold.py purge             # run by the deploy, after the switch
+    (--no-deploy on add, remove or refresh saves without releasing, so several changes ship in one release:
+     then run `gh workflow run oracle-deploy.yml -f when=now` and `withhold.py check`.)
 
 What a removal does (convex/lib/withheldNames.ts): the name is masked everywhere as a numbered
 label ("Law firm 3", "Employer 1") that links to a neutral page; every row, count, rank and chart
@@ -144,7 +146,14 @@ def write_convex(values: dict[str, str]) -> None:
     print("Convex production: updated")
 
 
+NO_DEPLOY = False
+
+
 def redeploy(wait: bool) -> None:
+    if NO_DEPLOY:
+        # --no-deploy: save several changes, then ship them in one release (each release empties the page cache).
+        print("deploy: skipped (--no-deploy). Ship with: gh workflow run oracle-deploy.yml -f when=now, then withhold.py check")
+        return
     before = sh("gh", "run", "list", "--workflow", "oracle-deploy.yml", "--limit", "1", "--json", "databaseId",
                 "-q", ".[0].databaseId", check=False).strip()
     sh("gh", "workflow", "run", "oracle-deploy.yml", "--ref", "main", "-f", "when=now")
@@ -436,6 +445,8 @@ def cmd_purge() -> None:
 
 
 def main(argv: list[str]) -> None:
+    global NO_DEPLOY
+    NO_DEPLOY = "--no-deploy" in argv
     wait = "--no-wait" not in argv
     yes = "--yes" in argv
     label: str | None = None
