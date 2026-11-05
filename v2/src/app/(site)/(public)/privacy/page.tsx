@@ -339,6 +339,49 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
 
+            <h3 id="consulate-reports" className="font-heading text-lg font-bold mt-6 mb-3">
+              Consulate Reports
+            </h3>{" "}
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
+              <li>
+                On a consulate’s page, anyone who had a visa appointment there
+                can report it: the kind of visa, whether it was an interview or
+                a drop box, the month NVC said the case was complete, the dates
+                of the appointment letter, the interview, the approval and the
+                visa, and what happened (such as a 221(g) with its slip colour
+                and whether you were asked to email documents, or a refusal and
+                its ground). Each is a date or a choice from a fixed list.
+                There’s no free-text box
+              </li>{" "}
+              <li>
+                No account is needed, and we never ask for or keep a name or a
+                case number. Your browser keeps a random key for that
+                consulate, and we keep only a one-way hash of it. Anyone using
+                that browser can change or remove the report, and removing it
+                deletes it
+              </li>{" "}
+              <li>
+                We keep a hash of your IP address with the report, to limit how
+                many reports one address can add. It’s made with a secret key,
+                so it can’t be turned back into your address by trying every
+                address, and it’s deleted from the report about a day after you
+                save it. The record our limits keep of each save is deleted
+                about a day later too. We treat both as personal data
+              </li>{" "}
+              <li>
+                Reports count toward the figures on that consulate’s page and on
+                the consulates page, which say they’re self-reported by
+                visitors and not the State Department’s data. They never show a
+                single report, and show no figure from fewer than 3 reports
+              </li>{" "}
+              <li>
+                We keep a report until you remove it, or until we take it down.
+                To have one removed without the browser that saved it, email
+                support@permtracker.app with the consulate, the kind of visa and
+                the dates you gave
+              </li>
+            </ul>{" "}
+
             <h3 id="case-numbers" className="font-heading text-lg font-bold mt-6 mb-3">
               Case Numbers You Look Up or Save
             </h3>{" "}
@@ -1154,8 +1197,8 @@ export default function PrivacyPage() {
                 mode settings, UI preferences, temporary authentication state
                 during OAuth redirects, for one day the sealed review link from
                 our email (see Reviews above), your saved USCIS receipt numbers,
-                and the key that lets you change a timeline you saved (see
-                Section 2)
+                and the keys that let you change a timeline or a consulate
+                report you saved (see Section 2)
               </li>{" "}
               <li>
                 <strong>Error Monitoring:</strong> Sentry’s script runs only on
