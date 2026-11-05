@@ -237,6 +237,14 @@ export const MIN_TOTAL_FOR_PAGE = 1;
  */
 export const MIN_TOTAL_FOR_BULK = 5;
 
+/**
+ * Cases a law firm must have filed for one employer before its page calls
+ * that employer its "biggest client". Below it the top of the client list is
+ * a firm with a handful of filings spread one or two apiece, and naming one of
+ * them as the biggest says more than the files do.
+ */
+export const BIGGEST_CLIENT_MIN_CASES = 5;
+
 /** Does this entity have a page, or is it search-only? */
 export function hasOwnPage(row: { total: number }): boolean {
   return row.total >= MIN_TOTAL_FOR_PAGE;

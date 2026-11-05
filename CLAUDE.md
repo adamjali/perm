@@ -866,10 +866,11 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
 - **The pre-push hook typechecks the working tree**, uncommitted edits included: an unfinished edit blocks pushing a
   finished commit.
 - **A person's name can be withheld at their request, in one command** (owner's decision per request, no rule):
-  `python3 scripts/withhold.py add "slug|name|label|cases"`; the runbook, legal notes and reply template are in
-  `v2/docs/PRIVACY_REMOVALS.md`. The list lives only in `WITHHELD_EMPLOYERS` (server production.env, mirrored to a
-  GitHub secret), never in this public repo: every read (`rows()`) drops what names it, a live answer shows a
-  neutral label, and every deploy clears Cloudflare's copies of the pages it was on.
+  `python3 scripts/withhold.py add <slug>` (`--firm` for a law firm); the runbook, legal notes and reply template are
+  in `v2/docs/PRIVACY_REMOVALS.md`. *(Since Nov 5 2026 a removal MASKS the name instead of dropping rows: every row and
+  number stays, the name reads "Law firm 3" and links to a noindex neutral page, the old URL answers 404. The rule is
+  `convex/lib/withheldNames.ts`; the lists are `WITHHELD_EMPLOYERS` and `WITHHELD_FIRMS` on the server, as GitHub
+  secrets and on Convex, never in this public repo.)*
 - **Every 404 shows the site's header and footer.** Next renders a 404 inside the root layout alone, so production served
   bare 404s; the root `not-found.tsx` draws them itself, and `(site)/not-found.tsx` answers a public page's `notFound()`
   inside the site's own (the dev server renders that case in-layout, production didn't). `NotFoundBody` is shared.

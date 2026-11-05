@@ -12,6 +12,7 @@ import {
   type DecidedNarrow,
 } from "@/lib/db/decidedDays";
 import { MS_PER_DAY } from "@/lib/time";
+import { isWithheldQuery } from "@/lib/privacy/withheld";
 
 /**
  * What DOL DECIDED in a date range, from the quarterly disclosure files.
@@ -127,6 +128,16 @@ export async function GET(request: Request): Promise<NextResponse> {
   const cap = Number.isFinite(raw)
     ? Math.min(Math.max(1, Math.floor(raw)), DECIDED_ROW_CAP)
     : DECIDED_ROW_CAP;
+
+  // A name withheld at its owner's request filters to nothing, and its counts
+  // with it: the day's totals by that name would say the name had filings.
+  if (isWithheldQuery("attorney", narrow.attorney) || isWithheldQuery("employer", narrow.employer)) {
+    const none = Object.fromEntries(programs.map((pr) => [pr, 0])) as Record<ChangeProgram, number>;
+    return NextResponse.json(
+      { feed: { range: { from, to }, cases: [], totals: none, capped: false, refused: null }, noMatch: true },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   let feed: Awaited<ReturnType<typeof getDecidedFeed>>;
   try {

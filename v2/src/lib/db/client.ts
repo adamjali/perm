@@ -27,7 +27,7 @@ import "server-only";
 // tracer does not copy the linux-arm64 add-on, so every read failed there.
 import { createClient, type Client } from "@libsql/client/http";
 
-import { withhold } from "@/lib/privacy/withheld";
+import { maskRowsIndexed, prepareStatement, type MaskOptions } from "@/lib/privacy/withheld";
 
 import { lcaJoins, statementHome, type DatabaseHome } from "./lcaRoute";
 
@@ -232,14 +232,29 @@ async function withDeadline<T>(
   }
 }
 
-/** Rows as plain objects, with libSQL's bigints narrowed to numbers. */
-export async function rows<T = Record<string, unknown>>(
+/**
+ * How a read treats a name withheld at its owner's request
+ * (src/lib/privacy/withheld.ts). By default the row stays and the name is
+ * masked; `withheld: "drop"` is for navigation lists only (the sitemap, the A
+ * to Z pages, the name suggestions), where a masked row would make the
+ * neutral page a search result of its own.
+ */
+export interface RowsOptions {
+  withheld?: "mask" | "drop";
+}
+
+async function readRows<T>(
   sql: string,
-  args: unknown[] = [],
-): Promise<T[]> {
-  const db = homeOf(sql) === "lca" ? lcaDatabase() : database();
+  args: unknown[],
+  opts: RowsOptions,
+): Promise<{ rows: T[]; read: number; kept: number[]; byReal: boolean }> {
+  // Every read passes here, so a name withheld at its owner's request is
+  // masked on every page, list, sitemap and API answer at once, and a read
+  // asked by its neutral slug reads the real record.
+  const prepared = prepareStatement(sql, args);
+  const db = homeOf(prepared.sql) === "lca" ? lcaDatabase() : database();
   const rs = await withDeadline(
-    () => db.execute({ sql, args: args as never[] }),
+    () => db.execute({ sql: prepared.sql, args: prepared.args as never[] }),
     sql.slice(0, 80),
     { retryTransient: true },
   );
@@ -254,16 +269,47 @@ export async function rows<T = Record<string, unknown>>(
     }
     return o as T;
   });
-  // Every read passes here, so a name withheld at the person's request is
-  // taken out of every page, list, sitemap and API answer at once.
-  return withhold(out);
+  const mask: MaskOptions = { drop: opts.withheld === "drop" };
+  const masked = maskRowsIndexed(out, prepared.ctx, mask);
+  return { rows: masked.rows, read: out.length, kept: masked.kept, byReal: prepared.ctx.byReal.size > 0 };
+}
+
+/** Rows as plain objects, with libSQL's bigints narrowed to numbers. */
+export async function rows<T = Record<string, unknown>>(
+  sql: string,
+  args: unknown[] = [],
+  opts: RowsOptions = {},
+): Promise<T[]> {
+  return (await readRows<T>(sql, args, opts)).rows;
+}
+
+/**
+ * A page of rows read as `LIMIT take + 1`, counted on the rows the database
+ * returned rather than the rows kept, so a row withheld from the answer can't
+ * end the paging early or shift the next page's offset. `page` holds the
+ * kept rows among the first `take` read; `consumed` is how many rows the
+ * page used up; `more` says whether a row beyond it exists.
+ */
+export async function rowsPaged<T = Record<string, unknown>>(
+  sql: string,
+  args: unknown[],
+  take: number,
+  opts: RowsOptions = {},
+): Promise<{ page: T[]; more: boolean; consumed: number }> {
+  const { rows: kept, read, kept: index, byReal } = await readRows<T>(sql, args, opts);
+  const page = kept.filter((_, i) => (index[i] ?? 0) < take);
+  // A list asked for by a withheld name's real slug finds nothing: a page it
+  // emptied ends the paging, rather than offering a Next page of nothing.
+  const more = read > take && !(byReal && page.length === 0);
+  return { page, more, consumed: Math.min(read, take) };
 }
 
 export async function one<T = Record<string, unknown>>(
   sql: string,
   args: unknown[] = [],
+  opts: RowsOptions = {},
 ): Promise<T | null> {
-  const r = await rows<T>(sql, args);
+  const r = await rows<T>(sql, args, opts);
   return r[0] ?? null;
 }
 

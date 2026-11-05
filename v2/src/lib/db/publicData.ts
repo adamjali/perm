@@ -164,6 +164,8 @@ export async function getEntitySlugWindow(
       WHERE kind = ? AND rank > ? AND rank <= ? AND total >= ?
       ORDER BY rank`,
     [kind, lo, lo + size, MIN_TOTAL_FOR_PAGE],
+    // A withheld entity's old URL answers 404 and its neutral page is noindex: neither is listed.
+    { withheld: "drop" },
   );
   return found.map((r) => r.slug);
 }
@@ -212,6 +214,8 @@ export async function getLiveOnlySlugWindow(chunk: number, size: number): Promis
   const found = await rows<{ slug: string; last_changed: string | null }>(
     "SELECT slug, last_changed FROM perm_live_only_index WHERE rank > ? AND rank <= ? ORDER BY rank",
     [lo, lo + size],
+    // A withheld employer is no sitemap entry, under either slug.
+    { withheld: "drop" },
   );
   return found.map((r) => ({ slug: r.slug, lastChanged: r.last_changed ?? null }));
 }

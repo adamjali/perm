@@ -68,6 +68,7 @@ import { sizeNote } from "@/lib/employerSize";
 import { PwdToPerm } from "@/components/entities/PwdToPerm";
 import { similarSponsors } from "@/lib/db/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
+import { neutralPageEntry } from "@/lib/privacy/withheld";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
 import { LcaYears } from "@/components/entities/LcaYears";
@@ -230,6 +231,16 @@ const LIVE_ONLY_CASE_LIMIT = 50;
 const SEASONAL_CASE_LIMIT = 25;
 
 /**
+ * A case search by an employer's name. Undefined on a withheld employer's
+ * neutral page (src/lib/privacy/withheld.ts): the search reads names by
+ * prefix, the label names no filings, and a prefix on the real name would
+ * list other employers under the label.
+ */
+function nameSearch(slug: string, name: string, extra: Partial<Record<"occupation" | "firm", string>> = {}): string | undefined {
+  return neutralPageEntry(KIND, slug) ? undefined : caseSearchHref({ q: name, ...extra });
+}
+
+/**
  * Last stop before a 404: a spelling with no page of its own that the nightly
  * map assigns to another page ("salesforce-com-inc" to Salesforce's), or an
  * employer page that merged into another. A permanent redirect, so an old
@@ -335,7 +346,7 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
         nextStep={
           <CaseNextStep
             question={`Waiting on a filing with ${record.name}?`}
-            searchHref={caseSearchHref({ q: record.name })}
+            searchHref={nameSearch(slug, record.name)}
             searchLabel="Find it among their filings"
             numberKind="DOL"
             source="employer-page-other"
@@ -350,7 +361,7 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
               lca={record.lca ? programs.lca : null}
               seasonal={programs.seasonal}
               stages={null}
-              searchHref={caseSearchHref({ q: record.name })}
+              searchHref={nameSearch(slug, record.name)}
               spellings={programs.match.basis === "map" ? programs.match.spellings : null}
             />
           ) : null
@@ -644,7 +655,7 @@ export default async function EmployerPage({
           nextStep={
             <CaseNextStep
               question={`Waiting on a case with ${live.record.name}?`}
-              searchHref={caseSearchHref({ q: live.record.name })}
+              searchHref={nameSearch(slug, live.record.name)}
               searchLabel="Find it among their filings"
               extra={{ href: "#follow", label: "Or follow this employer by email" }}
               source="employer-page-live"
@@ -678,6 +689,11 @@ export default async function EmployerPage({
   // Every read below keys on the SURVIVING slug, not the URL: a retired
   // spelling has no rows of its own in the facet or pending tables.
   const canonicalSlug = found.canonicalSlug;
+  // An employer withheld at its owner's request is shown here under its label
+  // (src/lib/privacy/withheld.ts): every figure stays; its spellings and the
+  // searches by its name don't render.
+  const neutral = neutralPageEntry(KIND, canonicalSlug) !== null;
+  const byName = nameSearch(canonicalSlug, row.name);
   // Below the page threshold the page still RENDERS - an attorney searched a
   // two-case firm she knows, found it, and a result that 404s on click is
   // worse than absence. The doorway-page defense moved to metadata: sub-floor
@@ -902,7 +918,7 @@ export default async function EmployerPage({
         aside={
           <CaseNextStep
             question={`Waiting on a case with ${row.name}?`}
-            searchHref={caseSearchHref({ q: row.name })}
+            searchHref={byName}
             searchLabel="Find it among their filings"
             extra={{ href: "#follow", label: "Or follow this employer by email" }}
             source="employer-page"
@@ -969,9 +985,11 @@ export default async function EmployerPage({
               <h3 id="latest-live" className="font-heading text-xl font-bold">
                 Its newest filings
               </h3>{" "}
-              <Link href={caseSearchHref({ q: row.name })} className={`${ROW_LINK} text-sm font-semibold`}>
-                Every filing in the case search
-              </Link>
+              {byName ? (
+                <Link href={byName} className={`${ROW_LINK} text-sm font-semibold`}>
+                  Every filing in the case search
+                </Link>
+              ) : null}
             </div>{" "}
             <FilingRows
               className="mt-4"
@@ -1014,7 +1032,7 @@ export default async function EmployerPage({
           seasonal={programs?.seasonal ?? null}
           stages={stageRow}
           logFrom={stagesDoc?.logFrom ?? null}
-          searchHref={caseSearchHref({ q: row.name })}
+          searchHref={byName}
           spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
           heading={false}
         />{" "}
@@ -1102,14 +1120,16 @@ export default async function EmployerPage({
           id="work"
           title="What they file, and where"
         >
-          <FilingsSearch
-            subject={`${row.name}'s`}
-            fixed={{ q: row.name }}
-            ask="title"
-            jobs={facets.occupation ?? []}
-            states={facets.state ?? []}
-            className={`mb-6 ${CARD}`}
-          />{" "}
+          {byName ? (
+            <FilingsSearch
+              subject={`${row.name}'s`}
+              fixed={{ q: row.name }}
+              ask="title"
+              jobs={facets.occupation ?? []}
+              states={facets.state ?? []}
+              className={`mb-6 ${CARD}`}
+            />
+          ) : null}{" "}
           {/* Two even columns: every box in a row is stretched to the row's height and keeps its note on one line,
               and a box left alone on the last row takes the row whole. */}
           <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2 md:[&>*:last-child:nth-child(odd)]:col-span-2">
@@ -1117,7 +1137,7 @@ export default async function EmployerPage({
               <OccupationMix
                 rows={facets.occupation}
                 total={row.total}
-                filingsHref={(r) => (r.key ? caseSearchHref({ q: row.name, occupation: r.key }) : null)}
+                filingsHref={(r) => (r.key ? nameSearch(canonicalSlug, row.name, { occupation: r.key }) ?? null : null)}
               />
             ) : null}
             {/* The header already names one industry and one worksite; a box would only repeat it. */}
@@ -1132,7 +1152,7 @@ export default async function EmployerPage({
                 title="Who files for them"
                 note="The law firm named on the application."
                 hrefBase="/perm-attorneys"
-                filingsHref={(r) => (r.key ? caseSearchHref({ q: row.name, firm: r.key }) : null)}
+                filingsHref={(r) => (r.key ? nameSearch(canonicalSlug, row.name, { firm: r.key }) ?? null : null)}
               />
             ) : null}
           </div>{" "}
@@ -1173,7 +1193,9 @@ export default async function EmployerPage({
       ) : null}
 
       <Chapter id="notes" title="Notes on these numbers">
-        <NameSpellings variants={variants} absorbed={absorbed} subject="sponsor" hrefBase={BASE} rank={row.rank} className="mb-6" />{" "}
+        {neutral ? null : (
+          <NameSpellings variants={variants} absorbed={absorbed} subject="sponsor" hrefBase={BASE} rank={row.rank} className="mb-6" />
+        )}{" "}
         <LimitsPanel
           items={[
             wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "they" }),

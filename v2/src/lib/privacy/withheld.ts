@@ -1,131 +1,85 @@
 /**
- * Employers whose names are withheld from the site, each at that person's own
- * request and by the owner's decision for that request alone.
+ * Names withheld from the site, each at that person's or firm's own request
+ * and by the owner's decision for that request alone: the site's instance of
+ * the one rule in convex/lib/withheldNames.ts (read that header first; Convex
+ * applies the same rule to its own reads in convex/lib/publicMirror.ts).
  *
- * The list is never in this repository, which is public: a name kept here to
- * hide it would publish it, and even a hash can be matched against DOL's own
- * files. It lives in WITHHELD_EMPLOYERS, set on the server
- * (/srv/permtracker/app/env/production.env) and as a GitHub Actions secret for
+ * The lists are never in this repository, which is public. They live in
+ * WITHHELD_EMPLOYERS and WITHHELD_FIRMS, set on the server
+ * (/srv/permtracker/app/env/production.env) and as GitHub Actions secrets for
  * the build, which prerenders pages from the same database. Unset, nothing is
- * withheld.
+ * withheld and every function below is a no-op.
  *
- * Format: entries separated by ";", each "slug|name|label|case numbers", the
- * case numbers comma-separated, for example
- * "jane-q-example|Jane Q Example|Private household employer|G-100-25001-000001".
- * The case numbers catch the cases whatever spelling a later DOL file prints.
- *
- * DOL's record is untouched in the database. A withheld employer's own page
- * answers 404, and it and its cases leave every list, search and sitemap, so
- * no row stands out as the one taken down; totals computed in SQL still count
- * them. A lookup by the case's own number asks DOL live, shows the entry's
- * label, and is never recorded (`withheld` on DOL's answer). Applied in
- * one place for the database (`rows()` in ../db/client.ts, which every read
- * goes through) and one for DOL's live service (`askDol` in
- * ../db/caseDiscovery.ts, which every live lookup goes through).
+ * Applied in one place for the database (`rows()` in ../db/client.ts, which
+ * every read goes through) and one for DOL's live service (`askDol` in
+ * ../db/caseDiscovery.ts, which every live lookup goes through). A name is
+ * masked, never its row: counts, ranks and charts stay as they were, the name
+ * reads "Law firm 3" and links to that label's neutral page.
  */
 
-export type WithheldEntry = {
-  readonly slug: string;
-  readonly name: string;
-  readonly label: string;
-  readonly cases: readonly string[];
-};
+import {
+  makeMasker,
+  neutralPath,
+  parseWithheld,
+  parseWithheldEnv,
+  shownLabel,
+  withheldKindOf,
+  type MaskOptions,
+  type PreparedStatement,
+  type StatementContext,
+  type WithheldEntry,
+  type WithheldKind,
+} from "@convex/lib/withheldNames";
 
-const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+export type { MaskOptions, PreparedStatement, StatementContext, WithheldEntry, WithheldKind };
+export { makeMasker, neutralPath, parseWithheld, parseWithheldEnv, shownLabel, withheldKindOf };
 
-/** Entries from the setting's text; a malformed entry is skipped, never guessed at. */
-export function parseWithheld(raw: string | undefined): WithheldEntry[] {
-  if (!raw) return [];
-  const out: WithheldEntry[] = [];
-  for (const part of raw.split(";")) {
-    const [slug, name, label, cases] = part.split("|").map((s) => s.trim());
-    if (!slug || !name || !label) continue;
-    out.push({
-      slug: normalize(slug),
-      name: normalize(name),
-      label,
-      cases: (cases ?? "").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean),
-    });
-  }
-  return out;
-}
+const shipped = makeMasker(parseWithheldEnv(process.env));
 
-/** The two checks, for a list of entries. A cell is compared only when its length matches one. */
-export function makeWithholder(entries: readonly WithheldEntry[]) {
-  const bySlug = new Map(entries.map((e) => [e.slug, e]));
-  const byName = new Map(entries.map((e) => [e.name, e]));
-  const byCase = new Map(entries.flatMap((e) => e.cases.map((c) => [c.toLowerCase(), e] as const)));
-  const sizes = new Set(entries.flatMap((e) => [e.slug.length, e.name.length, ...e.cases.map((c) => c.length)]));
+/** Whether anything is withheld on this deployment. */
+export const withholdingActive = shipped.active;
 
-  const match = (v: unknown): { kind: "slug" | "name" | "case"; entry: WithheldEntry } | null => {
-    if (typeof v !== "string") return null;
-    const n = normalize(v);
-    if (!sizes.has(n.length)) return null;
-    const s = bySlug.get(n);
-    if (s) return { kind: "slug", entry: s };
-    const m = byName.get(n);
-    if (m) return { kind: "name", entry: m };
-    const c = byCase.get(n);
-    return c ? { kind: "case", entry: c } : null;
-  };
+/** A statement with its neutral slugs rewritten to the real ones, and what it was asked by. */
+export const prepareStatement = shipped.prepare;
 
-  /**
-   * A stored summary (a JSON document in one cell) that ever lists the name:
-   * the name is replaced in place, which keeps the JSON valid. No summary
-   * holds one today; this keeps a future one from bringing it back.
-   */
-  const inText = entries.map((e) => ({
-    label: e.label,
-    re: new RegExp(e.name.split(" ").map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+"), "gi"),
-  }));
-  const scrubText = (v: string): string => {
-    let out = v;
-    for (const { re, label } of inText) out = out.replace(re, label);
-    return out;
-  };
+/** Rows as the public may see them (see the rule's header). */
+export const maskRows = shipped.mask;
 
-  /** The name to show: the entry's label for a withheld name or case, else as given. */
-  const shownName = (name: string | null | undefined, caseNumber?: string): string | null => {
-    const byNumber = caseNumber ? byCase.get(caseNumber.trim().toLowerCase()) : undefined;
-    if (byNumber) return byNumber.label;
-    if (name == null) return null;
-    const m = match(name);
-    return m?.kind === "name" ? m.entry.label : name;
-  };
+/** The same, with each kept row's index among the rows read. */
+export const maskRowsIndexed = shipped.maskIndexed;
 
-  /**
-   * Rows with a withheld employer taken out: any row that names it or is tied
-   * to its page by a slug (the page, a ranking, a sitemap entry, one of its
-   * cases, DOL's live status record of one) is dropped. A lookup by the case's
-   * own number then misses here and asks DOL live, where `shownName` applies.
-   */
-  const withhold = <T>(rows: T[]): T[] => {
-    if (!entries.length) return rows;
-    const out: T[] = [];
-    for (const row of rows) {
-      if (!row || typeof row !== "object") {
-        out.push(row);
-        continue;
-      }
-      const cells = Object.entries(row as Record<string, unknown>);
-      if (cells.some(([, v]) => match(v))) continue;
-      let copy: Record<string, unknown> | null = null;
-      for (const [k, v] of cells) {
-        if (typeof v !== "string" || v.length < 64) continue;
-        const scrubbed = scrubText(v);
-        if (scrubbed === v) continue;
-        copy ??= { ...(row as Record<string, unknown>) };
-        copy[k] = scrubbed;
-      }
-      out.push((copy ?? row) as T);
-    }
-    return out;
-  };
-
-  return { shownName, withhold };
-}
-
-const shipped = makeWithholder(parseWithheld(process.env.WITHHELD_EMPLOYERS));
-
+/** The employer's name on DOL's live answer: the label for a withheld name or case. */
 export const shownName = shipped.shownName;
-export const withhold = shipped.withhold;
+
+/** Text with every withheld name replaced: for prose that isn't a database row. */
+export const scrubWithheldText = shipped.scrubText;
+
+/**
+ * True when a search's or a filter's words are a withheld entity's real name
+ * or slug. The search then answers "no match", never the next-closest name.
+ * `kind` takes the site's entity kinds ("attorney" is a firm).
+ */
+export function isWithheldQuery(kind: string, text: string | null | undefined): boolean {
+  const k = kind === "any" ? "any" : withheldKindOf(kind);
+  return k ? shipped.isWithheldQuery(k, text) : false;
+}
+
+/** The withheld entry a neutral slug stands for on this kind's pages, or null. */
+export function neutralPageEntry(kind: string, slug: string | null | undefined): WithheldEntry | null {
+  const k = withheldKindOf(kind);
+  return k ? shipped.neutralEntry(k, slug) : null;
+}
+
+/** True for a neutral page's path ("/perm-attorneys/law-firm-3"): it asks not to be indexed. */
+export function isNeutralPath(path: string): boolean {
+  return shipped.neutralForPath(path) !== null;
+}
+
+/** The entry a real or a neutral slug names, for a refusal (a firm can't claim a withheld page). */
+export function withheldBySlug(kind: string, slug: string | null | undefined): WithheldEntry | null {
+  const k = withheldKindOf(kind);
+  return k ? shipped.withheldBySlug(k, slug) : null;
+}
+
+/** Every entry, for the deploy's checks and the live check. */
+export const withheldEntries = shipped.entries;

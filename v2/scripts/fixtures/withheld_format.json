@@ -1,0 +1,45 @@
+{
+  "about": "Made-up entries, read by scripts/test_withhold.py and convex/lib/withheldNames.test.ts so the two readers of WITHHELD_EMPLOYERS and WITHHELD_FIRMS agree. Never a real name.",
+  "settings": {
+    "WITHHELD_EMPLOYERS": "jane-q-example|Jane  Q Example|Private household employer|g-100-25001-000001, P-100-25001-000009|2||;acme-x-holdings|Acme X Holdings|Employer|G-100-25001-000077",
+    "WITHHELD_FIRMS": "example-law-group-pllc|Example Law Group, PLLC|Law firm||3|example-law-group-pllc-2,Exampel-Law-Group|EXAMPLE LAW GROUP PLLC^Exampel Law Group;only-a-slug"
+  },
+  "entries": [
+    {
+      "kind": "employer",
+      "slug": "jane-q-example",
+      "name": "Jane Q Example",
+      "label": "Private household employer",
+      "cases": ["G-100-25001-000001", "P-100-25001-000009"],
+      "number": 2,
+      "slugs": ["jane-q-example"],
+      "names": ["Jane Q Example"],
+      "shown": "Private household employer 2",
+      "neutralPath": "/perm-employers/private-household-employer-2"
+    },
+    {
+      "kind": "employer",
+      "slug": "acme-x-holdings",
+      "name": "Acme X Holdings",
+      "label": "Employer",
+      "cases": ["G-100-25001-000077"],
+      "number": null,
+      "slugs": ["acme-x-holdings"],
+      "names": ["Acme X Holdings"],
+      "shown": "Employer",
+      "neutralPath": null
+    },
+    {
+      "kind": "firm",
+      "slug": "example-law-group-pllc",
+      "name": "Example Law Group, PLLC",
+      "label": "Law firm",
+      "cases": [],
+      "number": 3,
+      "slugs": ["example-law-group-pllc", "example-law-group-pllc-2", "exampel-law-group"],
+      "names": ["Example Law Group, PLLC", "EXAMPLE LAW GROUP PLLC", "Exampel Law Group"],
+      "shown": "Law firm 3",
+      "neutralPath": "/perm-attorneys/law-firm-3"
+    }
+  ]
+}

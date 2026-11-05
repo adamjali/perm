@@ -40,7 +40,7 @@ import { socGroupClause } from "@/lib/socCode";
 import { slugify } from "@/lib/entitySlug";
 
 import { getCasesMeta } from "./publicData";
-import { one, rows } from "./client";
+import { one, rows, rowsPaged } from "./client";
 import { ISO_MONTH_RE, shiftMonth } from "@convex/lib/months";
 import { LIKE_ESCAPE, likeContains } from "./like";
 
@@ -372,17 +372,20 @@ export async function listCases(args: ListCasesArgs): Promise<CasePage> {
   const offset = parseCursor(args.cursor);
   const direction = args.order === "oldest" ? "ASC" : "DESC";
 
-  const found = await rows<CaseDbRow>(
+  // Counted on the rows read, not the rows kept: a row withheld from the
+  // answer (src/lib/privacy/withheld.ts) must neither end the paging early nor
+  // shift the next page back over rows already shown.
+  const found = await rowsPaged<CaseDbRow>(
     `SELECT ${CASE_COLS} FROM perm_cases WHERE ${plan.where} ` +
       `ORDER BY decision_date ${direction} LIMIT ? OFFSET ?`,
     [...plan.args, take + 1, offset],
+    take,
   );
 
-  const page = found.slice(0, take).map(toCaseRow);
   return {
-    page,
-    isDone: found.length <= take,
-    continueCursor: String(offset + page.length),
+    page: found.page.map(toCaseRow),
+    isDone: !found.more,
+    continueCursor: String(offset + found.consumed),
   };
 }
 

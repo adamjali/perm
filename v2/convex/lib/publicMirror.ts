@@ -39,6 +39,8 @@
  * @module convex/lib/publicMirror
  */
 
+import { maskerForEnv } from "./withheldNames";
+
 /** A cell as Hrana returns it. Integers arrive as strings to protect precision. */
 type HranaValue =
   | { type: "null" }
@@ -126,6 +128,13 @@ function config(): { url: string; token: string } {
 export async function query(statements: Statement[]): Promise<Row[][]> {
   if (statements.length === 0) return [];
   for (const s of statements) assertReadOnly(s.sql);
+  // A name withheld at its owner's request (./withheldNames.ts) is masked on
+  // every read Convex makes, as the site masks it on every page: no email,
+  // alert, digest or webhook prints it, and a claim or follow by the old name
+  // finds nothing. The lists are WITHHELD_EMPLOYERS and WITHHELD_FIRMS on this
+  // deployment; unset, nothing changes.
+  const masker = maskerForEnv(process.env);
+  const prepared = statements.map((s) => masker.prepare(s.sql, s.args ?? []));
 
   const { url, token } = config();
   const response = await fetch(`${url}/v2/pipeline`, {
@@ -136,9 +145,9 @@ export async function query(statements: Statement[]): Promise<Row[][]> {
     },
     body: JSON.stringify({
       requests: [
-        ...statements.map((s) => ({
+        ...prepared.map((s) => ({
           type: "execute",
-          stmt: { sql: s.sql, args: (s.args ?? []).map(lit) },
+          stmt: { sql: s.sql, args: (s.args as (string | number | null)[]).map(lit) },
         })),
         { type: "close" },
       ],
@@ -169,16 +178,16 @@ export async function query(statements: Statement[]): Promise<Row[][]> {
     // means the mapping from statement to result stays positional for the
     // statements themselves, which is what callers destructure on.
     if (!result) continue;
-    out.push(
-      result.rows.map((row) => {
-        const o: Row = {};
-        result.cols.forEach((c, i) => {
-          const v = row[i];
-          o[c.name] = v === undefined ? null : cell(v);
-        });
-        return o;
-      }),
-    );
+    const read = result.rows.map((row) => {
+      const o: Row = {};
+      result.cols.forEach((c, i) => {
+        const v = row[i];
+        o[c.name] = v === undefined ? null : cell(v);
+      });
+      return o;
+    });
+    const ctx = prepared[out.length]?.ctx;
+    out.push(ctx ? masker.mask(read, ctx) : read);
   }
   return out;
 }

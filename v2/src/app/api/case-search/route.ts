@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { planCaseSearch } from "@/lib/caseSearchRequest";
+import { NO_MATCH_MESSAGE, planCaseSearch } from "@/lib/caseSearchRequest";
 import { unifiedSearch } from "@/lib/db/unifiedSearch";
 import { casesToCsv } from "@/lib/caseSearchCsv";
 
@@ -51,6 +51,24 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Every guard, the lead and the filters it can carry: src/lib/caseSearchRequest.ts.
     const plan = await planCaseSearch(p);
     if (plan.kind === "bad") return bad(plan.message);
+
+    if (plan.kind === "noMatch") {
+      // A filled box that names nothing: said in words, never answered by
+      // dropping the box or by the closest other name.
+      if (plan.csv) return bad(NO_MATCH_MESSAGE[plan.field]);
+      return NextResponse.json({
+        rows: [],
+        counts: { perm: 0, pwd: 0, lca: 0, seasonal: 0 },
+        truncated: false,
+        capped: false,
+        skipped: { live: false, published: false, because: [] },
+        lead: null,
+        resolved: plan.resolved,
+        dropped: [],
+        needsLead: false,
+        noMatch: { field: plan.field, message: NO_MATCH_MESSAGE[plan.field] },
+      });
+    }
 
     if (plan.kind === "needsLead") {
       // A download of nothing is a refusal, not an empty file: a spreadsheet

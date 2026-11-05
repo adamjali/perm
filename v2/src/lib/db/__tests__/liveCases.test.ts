@@ -16,7 +16,15 @@ vi.mock("server-only", () => ({}));
 
 const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
-vi.mock("../client", () => ({ rows, one }));
+vi.mock("../client", () => ({
+  rows,
+  one,
+  // The pagers count the rows read (rowsPaged); these tests read through `rows`.
+  rowsPaged: async (sql: string, args: unknown[], take: number) => {
+    const r = await rows(sql, args);
+    return { page: r.slice(0, take), more: r.length > take, consumed: Math.min(r.length, take) };
+  },
+}));
 
 const {
   LIVE_DEFAULT_ITEMS,
