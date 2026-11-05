@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { ArrowSquareOutIcon, BriefcaseIcon, HeartIcon, MegaphoneSimpleIcon, UsersThreeIcon } from "@phosphor-icons/react/ssr";
 
 import { ConsularPauseNote } from "@/components/consular/ConsularPauseNote";
+import { WorkVisasAtPost } from "@/components/consular/WorkVisasAtPost";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -230,6 +231,8 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
         </FigurePlate>
       ) : null}
 
+      <WorkVisasAtPost postKey={post.key} name={post.name} className="mt-12" />
+
       <FinePrint summary="How to read State's scheduling month" className="mt-8">
         <p className="max-w-3xl text-base leading-relaxed">
           State says the tool shows{" "}
@@ -263,7 +266,11 @@ export default async function ConsularPostPage({ params }: { params: Promise<{ p
         ]}
       />
       <DataProvenance
-        datasets={embassy ? ["iv-scheduling", "visa-issuances", "policy-notices-embassies"] : ["iv-scheduling", "visa-issuances"]}
+        datasets={
+          embassy
+            ? ["iv-scheduling", "visa-issuances", "niv-issuances", "policy-notices-embassies"]
+            : ["iv-scheduling", "visa-issuances", "niv-issuances"]
+        }
       />
     </div>
   );

@@ -479,7 +479,13 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/consular-posts",
     label: "Where each US consulate stands for immigrant visas",
     blurb:
-      "State's IV Scheduling Status Tool at every monthly update this site holds: for each consulate, the month of completed cases NVC is scheduling for employment, family preference and immediate relative visas, beside the immigrant visas that post issued each month, with the worldwide interview pause since about August 25 2026 dated from State's sworn court filings. A paperwork queue: it doesn't show an interview wait.",
+      "State's IV Scheduling Status Tool at every monthly update this site holds: for each consulate, the month of completed cases NVC is scheduling for employment, family preference and immediate relative visas, beside the immigrant visas that post issued each month, with the worldwide interview pause since about August 25 2026 dated from State's sworn court filings. A paperwork queue: it doesn't show an interview wait. Each consulate's page also has the work visas it issued (H-1B, L-1 and the rest) and every nonimmigrant class, K-1 fiancé(e) included, from State's monthly nonimmigrant tables, and the index ranks the consulates by H-1B, L-1 and K-1 visas.",
+  },
+  {
+    path: "/visa-refusals",
+    label: "Why visas are refused, by ground",
+    blurb:
+      "State's yearly table of visa ineligibilities by ground of the law, from the Report of the Visa Office, each year reconciled against State's own total line: public charge (212(a)(4)), 221(g) and 214(b) across the years, and every ground, for immigrant and nonimmigrant visas apart, found ineligible and overcome. Worldwide and yearly only; State's dash (not applicable) is never shown as zero.",
   },
   {
     path: "/visa-wait-times",

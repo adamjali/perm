@@ -1584,6 +1584,15 @@
   "css": "#work li[data-tip] > span.font-mono{visibility:hidden!important} #work li[data-tip]:nth-of-type(n+4){display:none!important} #work > div > ul > li:nth-of-type(n+3){display:none!important}"
  },
  {
+  "slug": "visa-refusals",
+  "path": "/visa-refusals",
+  "title": "Why visas are refused",
+  "label": "Visa refusals by ground of the law, year by year, from the State Department's own yearly tables: public charge first.",
+  "shot": "visa-refusals.png",
+  "from": "Public charge, year by year",
+  "mask": "figures"
+ },
+ {
   "slug": "perm-case-alerts",
   "path": "/perm-case-alerts",
   "title": "Free PERM case alerts",

@@ -1,7 +1,8 @@
 /**
- * Expire the consulate pages the day a new IV Scheduling Status Tool table is stored.
+ * Expire the consulate pages the day one of State's consular tables is stored: a new IV Scheduling
+ * Status Tool table, a month of nonimmigrant issuances by post, or a year of refusals by ground.
  *
- * The table is copied in a browser monthly (State refuses scripts) and loaded on the server, which
+ * Each is copied in a browser (State refuses scripts) and loaded on the server, which
  * POSTs here through nginx to both web copies. Takes no input, like `revalidate-bulletin`: a caller
  * either knows the secret and expires this fixed set, or does nothing.
  */

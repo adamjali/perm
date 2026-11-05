@@ -39,7 +39,9 @@ export type DateSource =
   /** The day this site first held the newest visa bulletin (Eastern). */
   | "bulletin"
   /** State's newest IV Scheduling Status Tool update held (its own "Last Updated" day). */
-  | "consular";
+  | "consular"
+  /** The Eastern day State's refusals-by-ground table last changed here (a new year, or a corrected one). */
+  | "refusals";
 
 export type DateSources = { readonly [K in DateSource]?: string | null };
 
@@ -86,8 +88,8 @@ export const TEMPLATE_DAY: Readonly<Record<string, string>> = {
   // Oct 28 2026: the form pages are new.
   "/uscis-processing-times/[form]": "2026-10-28",
   "/visa-bulletin/[month]": "2026-10-17",
-  // Nov 3 2026: the consulate pages are new.
-  "/consular-posts/[post]": "2026-11-03",
+  // Nov 3 2026: the consulate pages are new. Nov 5 2026: each gained the work visas it issued and every nonimmigrant class.
+  "/consular-posts/[post]": "2026-11-05",
   "/visa-bulletin/categories/[line]": "2026-10-16",
 };
 
@@ -166,6 +168,8 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
 
   "/consular-posts": "consular",
   "/consular-posts/[post]": "consular",
+
+  "/visa-refusals": "refusals",
 };
 
 /**

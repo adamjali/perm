@@ -99,7 +99,8 @@ describe("dataset coverage", () => {
     expect(policyIds.length).toBeGreaterThanOrEqual(10);
     const policy = ids.filter((d) => /^(policy-|rule-pipeline)/.test(d));
     expect([...policy].sort()).toEqual([...policyIds].sort());
-    expect(ids.length - warnStates.length - policy.length).toBeLessThanOrEqual(55);
+    // 57 on Nov 5 2026: State's nonimmigrant issuances by post and its refusals by ground added two.
+    expect(ids.length - warnStates.length - policy.length).toBeLessThanOrEqual(57);
     const read = new Set<string>();
     for (const f of ["ingest_warn.py", "warn_states.py"]) {
       const src = readFileSync(join(ROOT, "scripts", f), "utf8");

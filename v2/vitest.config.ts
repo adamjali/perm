@@ -52,6 +52,9 @@ const ISOLATED_UNIT_FILES = [
   // Added 2026-11-04: mocks the database client under consularPosts; in the shared pool a file that
   // loaded consularPosts first left the real client in place (CI red on 714e620f).
   "src/lib/db/__tests__/embassyNotices.test.ts",
+  // Added 2026-11-05: each mocks the database client under State's nonimmigrant issuances and its refusals by ground.
+  "src/lib/db/__tests__/nivIssuances.test.ts",
+  "src/lib/db/__tests__/visaRefusals.test.ts",
   // Added 2026-11-04: mocks the database client and the employer map under lcaYears.
   "src/lib/db/__tests__/lcaYears.test.ts",
   "src/lib/db/__tests__/tableColumns.test.ts",
