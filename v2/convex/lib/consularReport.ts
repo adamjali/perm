@@ -122,7 +122,7 @@ export const POST_SLUG = /^[a-z0-9-]{2,60}$/;
 export const MIN_REPORTS = MIN_CASE_REPORTERS;
 
 /** The label every figure built from these reports carries. */
-export const SELF_REPORTED = "Self-reported by visitors, not State's data";
+export const SELF_REPORTED = "Visitors' own reports, unchecked";
 
 /** The two windows the figures count. */
 export const REPORT_WINDOWS = [30, 90] as const;

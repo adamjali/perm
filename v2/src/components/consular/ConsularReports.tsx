@@ -144,9 +144,8 @@ export function ConsularReports({
         <ChatsCircleIcon aria-hidden="true" weight="bold" className="size-6 shrink-0" /> What people report
       </h2>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
-        What the consulate in {name} is doing, from the people who had an appointment there, whatever the visa: one
-        report that the post called someone tells everyone waiting whether it&apos;s moving. {SELF_REPORTED}: no name, no
-        case number, and nobody checks them. A figure shows once {MIN_REPORTS} people have reported.
+        What people who had an appointment in {name} report, for any visa. {SELF_REPORTED}; a figure shows once{" "}
+        {MIN_REPORTS} people have reported.
       </p>
 
       {view && w30 && w90 ? (

@@ -88,7 +88,7 @@ export function RefusalYearTable({ years, initial }: { years: readonly number[];
                 <tr key={r.line} className="border-b border-border">
                   <th scope="row" className="px-3 py-3 align-top font-normal">
                     <span className="block font-mono text-sm font-bold">{r.code}</span>{" "}
-                    <span className="block">{r.ground}</span>
+                    <span className="block">{r.ground}</span>{" "}
                   </th>
                   <Cell value={r.ivFound} />
                   <Cell value={r.ivOvercome} />

@@ -233,9 +233,8 @@ export function ConsularReportForm({ post, name, className }: { post: string; na
         Share your interview
       </h3>{" "}
       <p className="mt-2 text-base leading-relaxed text-soft">
-        For anyone interviewing at a U.S. consulate: a green card, a work visa stamping, a drop box, a K-1, a student or a
-        visitor visa. Had an appointment in {name}, or waiting for one? Add what happened. No account, no name and no
-        case number. It counts toward this consulate&apos;s figures, which show once {MIN_REPORTS} people have reported.
+        Had an appointment in {name}, or waiting for one? Add what happened, for any visa. No account, no name, no case
+        number.
       </p>
 
       <details

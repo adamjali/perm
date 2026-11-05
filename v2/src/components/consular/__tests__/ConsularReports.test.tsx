@@ -53,7 +53,7 @@ describe("ConsularReports: the three-report floor", () => {
     // The one kind past the floor is listed; the rest are one line, never a row each.
     expect(text).toMatch(/Too few reports yet for every other kind of visa/);
     expect(text).not.toMatch(/Employment green card/);
-    expect((text.match(/Self-reported by visitors, not State's data/g) ?? []).length).toBeGreaterThanOrEqual(6);
+    expect((text.match(/Visitors' own reports, unchecked/g) ?? []).length).toBeGreaterThanOrEqual(6);
   });
 
   it("never prints a median after the interview without the count still waiting", () => {
@@ -90,7 +90,7 @@ describe("ReportedPosts: the index panel", () => {
     expect(screen.getByText(/25% of 4 results ended in 221\(g\)/)).toBeInTheDocument();
     expect(screen.getByText(/Too few results yet/)).toBeInTheDocument();
     expect(screen.queryByText(/made-up-post/)).toBeNull();
-    expect(screen.getByText(/Self-reported by visitors, not State's data/)).toBeInTheDocument();
+    expect(screen.getByText(/Visitors' own reports, unchecked/)).toBeInTheDocument();
   });
 
   it("says so when no consulate has three reports yet", () => {
