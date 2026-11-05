@@ -45,6 +45,7 @@ import sys
 import time
 import urllib.error
 import urllib.parse
+from collections.abc import Iterable, Iterator
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import POLITE_PAUSE_S, STATE_CLOSED, fetch, log, state_refused  # noqa: E402
@@ -144,13 +145,14 @@ def listing(html: str) -> dict[tuple[str, str], str]:
     return found
 
 
-def total_check(rows: dict[tuple[str, str], int], grand: int | None, label: str) -> None:
+def total_check(rows: dict[tuple[str, str], int], grand: int | None, label: str, min_rows: int | None = None) -> None:
     if grand is None:
         raise Refusal(f"{label}: no GRAND TOTAL row")
     got = sum(rows.values())
     if got != grand:
         raise Refusal(f"{label}: rows add to {got:,}, GRAND TOTAL says {grand:,}")
-    if len(rows) < MIN_ROWS:
+    floor = MIN_ROWS if min_rows is None else min_rows
+    if len(rows) < floor:
         raise Refusal(f"{label}: only {len(rows)} rows")
 
 
@@ -181,9 +183,11 @@ def lines_of(words: list[dict]) -> list[list[dict]]:
     return [sorted(line, key=lambda w: float(w["x0"])) for line in lines]
 
 
-def parse_line(line: list[dict]) -> tuple[str, str | None, int | None]:
+def parse_line(line: list[dict], symbol: re.Pattern[str] = SYMBOL) -> tuple[str, str | None, int | None]:
     """(name, symbol, count) from one line's words; symbol None for a line
-    that isn't a table row. A count's pieces are joined when they touch."""
+    that isn't a table row. A count's pieces are joined when they touch.
+    `symbol` is the class pattern: the nonimmigrant tables' classes ("B1/B2",
+    "NATO2") need their own (ingest_niv_issuances.NIV_CLASS)."""
     texts = [w["text"] for w in line]
     i = len(line)
     while i > 0 and NUMBER.match(texts[i - 1]) and (
@@ -193,34 +197,45 @@ def parse_line(line: list[dict]) -> tuple[str, str | None, int | None]:
         return " ".join(texts), None, None
     count = int("".join(texts[i:]).replace(",", ""))
     head = texts[:i]
-    if head and SYMBOL.match(head[-1]) and not (len(head) >= 2 and head[-2].upper() == "GRAND"):
+    if head and symbol.match(head[-1]) and not (len(head) >= 2 and head[-2].upper() == "GRAND"):
         return " ".join(head[:-1]), head[-1], count
     return " ".join(head), None, count
 
 
-def from_pdf(data: bytes, label: str) -> dict[tuple[str, str], int]:
-    import pdfplumber  # the server has it; only PDF months need it
-
+def rows_from_lines(lines: Iterable[list[dict]], label: str, symbol: re.Pattern[str] = SYMBOL,
+                    min_rows: int | None = None) -> dict[tuple[str, str], int]:
+    """A table's (name, symbol) counts from its lines of words, checked against its GRAND TOTAL."""
     rows: dict[tuple[str, str], int] = {}
     grand = None
     name = ""
+    for line in lines:
+        text, sym, count = parse_line(line, symbol)
+        if text.upper().startswith("GRAND TOTAL") and count is not None:
+            grand = count
+            continue
+        if sym is None or count is None:
+            continue
+        # A row whose name cell is empty belongs to the name above it.
+        name = text or name
+        if not name:
+            continue
+        key = (name, sym)
+        rows[key] = rows.get(key, 0) + count
+    total_check(rows, grand, label, min_rows)
+    return rows
+
+
+def pdf_lines(data: bytes) -> Iterator[list[dict]]:
+    """Every page's lines of words, in reading order."""
+    import pdfplumber  # the server has it; only PDF months need it
+
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         for page in pdf.pages:
-            for line in lines_of(page.extract_words(keep_blank_chars=False, use_text_flow=False)):
-                text, symbol, count = parse_line(line)
-                if text.upper().startswith("GRAND TOTAL") and count is not None:
-                    grand = count
-                    continue
-                if symbol is None or count is None:
-                    continue
-                # A row whose name cell is empty belongs to the name above it.
-                name = text or name
-                if not name:
-                    continue
-                key = (name, symbol)
-                rows[key] = rows.get(key, 0) + count
-    total_check(rows, grand, label)
-    return rows
+            yield from lines_of(page.extract_words(keep_blank_chars=False, use_text_flow=False))
+
+
+def from_pdf(data: bytes, label: str) -> dict[tuple[str, str], int]:
+    return rows_from_lines(pdf_lines(data), label)
 
 
 def parse(data: bytes, url: str) -> dict[tuple[str, str], int]:

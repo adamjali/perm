@@ -21,7 +21,7 @@ import zipfile
 from collections.abc import Iterator, Sequence
 from xml.etree.ElementTree import iterparse
 
-from lib_gov_data import SPREADSHEET_NS, iter_rows, read_shared_strings
+from lib_gov_data import SPREADSHEET_NS, column_index, iter_rows, read_shared_strings
 
 from lib_db import (Database, canon_hash, insert_stmts, query_rows, read_doc, run_stmts, stmt,
                        write_doc)
@@ -133,3 +133,51 @@ def sheet_rows(xlsx: bytes, name: str | None = None) -> Iterator[list[str]]:
     for row in iter_rows(archive, path, shared):
         width = max(row) + 1 if row else 0
         yield [row.get(i, "") for i in range(width)]
+
+
+def sheet_cells(xlsx: bytes, name: str | None = None) -> Iterator[tuple[int, list[str], dict[int, str]]]:
+    """Each row of one sheet as (its row number, its cells as text, its formulas by column).
+
+    `sheet_rows` gives the values alone. A file whose total is a formula needs the row
+    numbers and the formula too: State's monthly nonimmigrant tables end in a GRAND TOTAL
+    cell holding "SUM(C3:C4145)" (and, when Excel saved it, the cached sum), so a reader can
+    check the range covers exactly the rows it read. A formula cell with no cached value has
+    no text here, only its formula.
+    """
+    archive = zipfile.ZipFile(io.BytesIO(xlsx))
+    paths = sheet_paths(archive)
+    if name is None:
+        path = next(iter(paths.values()))
+    elif name in paths:
+        path = paths[name]
+    else:
+        raise KeyError(f"no sheet named {name!r} (has {list(paths)})")
+    shared = read_shared_strings(archive)
+    last = 0
+    with archive.open(path) as handle:
+        for _, element in iterparse(handle, events=("end",)):
+            if element.tag != SPREADSHEET_NS + "row":
+                continue
+            values: dict[int, str] = {}
+            formulas: dict[int, str] = {}
+            for cell in element.findall(SPREADSHEET_NS + "c"):
+                col = column_index(cell.get("r", "A1"))
+                f = cell.find(SPREADSHEET_NS + "f")
+                if f is not None and f.text:
+                    formulas[col] = f.text.strip()
+                v = cell.find(SPREADSHEET_NS + "v")
+                if v is None or v.text is None:
+                    if cell.get("t") == "inlineStr":
+                        values[col] = "".join(t.text or "" for t in cell.iter(SPREADSHEET_NS + "t"))
+                    continue
+                if cell.get("t") == "s":
+                    i = int(v.text)
+                    values[col] = shared[i] if i < len(shared) else ""
+                else:
+                    values[col] = v.text
+            # A row's own r= is its number; Excel may leave it out, and then it follows the last.
+            number = int(element.get("r") or last + 1)
+            last = number
+            width = max([*values, *formulas]) + 1 if (values or formulas) else 0
+            element.clear()
+            yield number, [values.get(i, "") for i in range(width)], formulas

@@ -26,13 +26,26 @@ def _col(j: int) -> str:
     return s
 
 
+class Formula:
+    """A cell holding a formula, with Excel's cached value when it has one (`cached=None` writes
+    none, the way a workbook saved by a tool that doesn't calculate looks)."""
+
+    def __init__(self, formula: str, cached: int | float | None = None):
+        self.formula = formula
+        self.cached = cached
+
+
+def _cell(ref: str, v) -> str:
+    if isinstance(v, Formula):
+        cached = "" if v.cached is None else f"<v>{v.cached}</v>"
+        return f'<c r="{ref}"><f>{escape(v.formula)}</f>{cached}</c>'
+    return f'<c r="{ref}" t="inlineStr"><is><t xml:space="preserve">{escape(str(v))}</t></is></c>'
+
+
 def _sheet(rows: list[list]) -> str:
     out = []
     for i, row in enumerate(rows, start=1):
-        cells = "".join(
-            f'<c r="{_col(j)}{i}" t="inlineStr"><is><t xml:space="preserve">{escape(str(v))}</t></is></c>'
-            for j, v in enumerate(row) if v is not None and v != ""
-        )
+        cells = "".join(_cell(f"{_col(j)}{i}", v) for j, v in enumerate(row) if v is not None and v != "")
         out.append(f'<row r="{i}">{cells}</row>')
     return f'<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="{NS}"><sheetData>{"".join(out)}</sheetData></worksheet>'
 
