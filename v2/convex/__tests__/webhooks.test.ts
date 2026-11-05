@@ -41,6 +41,23 @@ async function endpoint(t: T, userId: Id<"users">, events = ["case.status_change
   return r;
 }
 
+/**
+ * One delivery pass, a moment after whatever queued the work, as the cron runs it. From convex-test 0.0.63 a
+ * mutation stamps Date.now() a millisecond past the frozen test clock, so a pass at the same frozen instant would
+ * find nothing due yet; in production the pass always comes later. setSystemTime moves the clock without firing
+ * any timer, so no scheduled function runs beside the pass.
+ */
+async function deliverPass(t: T) {
+  aMomentLater();
+  return await t.action(internal.webhookDelivery.deliverDue, {});
+}
+
+/** The test clock a second on, for a step that must come after what a mutation just stamped. */
+function aMomentLater(): number {
+  vi.setSystemTime(Date.now() + 1000);
+  return Date.now();
+}
+
 /** Every outbound request the tests make, answered by `answer`. */
 let sent: { url: string; init: RequestInit }[] = [];
 let answer: () => Response = () => new Response("ok", { status: 200 });
@@ -223,7 +240,7 @@ describe("failures, retries and pausing", () => {
     await endpoint(t, userId);
     answer = () => new Response("nope", { status: 500 });
     await watchedChange(t, userId);
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     const d = (await t.run((ctx) => ctx.db.query("webhookDeliveries").collect()))[0]!;
     expect(d).toMatchObject({ status: "pending", attempts: 1, lastStatusCode: 500 });
     expect(d.nextAttemptAt).toBeGreaterThan(Date.now());
@@ -235,7 +252,7 @@ describe("failures, retries and pausing", () => {
     await endpoint(t, userId);
     answer = () => new Response(null, { status: 302, headers: { location: "https://elsewhere.example.com" } });
     await watchedChange(t, userId);
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect((sent[0]!.init as RequestInit).redirect).toBe("manual");
     const d = (await t.run((ctx) => ctx.db.query("webhookDeliveries").collect()))[0]!;
     expect(d.lastError).toMatch(/redirect/);
@@ -262,7 +279,7 @@ describe("failures, retries and pausing", () => {
         createdAt: Date.now(),
       }),
     );
-    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, attempt: 7, ok: false, statusCode: 503, now: Date.now() });
+    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, attempt: 7, ok: false, statusCode: 503, now: aMomentLater() });
 
     const after = await t.run((ctx) => ctx.db.query("webhookDeliveries").collect());
     expect(after.map((x) => x.status).sort()).toEqual(["failed", "held"]);
@@ -339,7 +356,7 @@ describe("delivering safely", () => {
         { status: 200 },
       );
     await pending(t, userId);
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect(pulled).toBeLessThanOrEqual(1);
     expect(cancelled).toBe(true);
     expect((await t.run((ctx) => ctx.db.query("webhookDeliveries").first()))!.status).toBe("delivered");
@@ -351,7 +368,7 @@ describe("delivering safely", () => {
     await endpoint(t, userId);
     const d = await pending(t, userId, { attempts: 3, firstAttemptAt: Date.now() - RETRY_WINDOW_MS - 60_000, nextAttemptAt: Date.now() - 1 });
     sent = [];
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect(sent).toHaveLength(0);
     expect((await t.run((ctx) => ctx.db.get(d._id)))!.status).toBe("failed");
     const e = (await t.run((ctx) => ctx.db.query("webhookEndpoints").first()))!;
@@ -363,7 +380,7 @@ describe("delivering safely", () => {
     const userId = await makeUser(t, "dev@example.com");
     await endpoint(t, userId);
     const d = await pending(t, userId);
-    const now = Date.now();
+    const now = aMomentLater();
     const first = await t.mutation(internal.webhookDelivery.claimDue, { now, limit: 10 });
     expect(first.map((c) => c.attempt)).toEqual([1]);
     // The first run's lease runs out; another run claims the same row.
@@ -381,7 +398,7 @@ describe("delivering safely", () => {
     const userId = await makeUser(t, "dev@example.com");
     await endpoint(t, userId);
     await pending(t, userId);
-    const now = Date.now();
+    const now = aMomentLater();
     await t.mutation(internal.webhookDelivery.claimDue, { now, limit: 10 });
     // 25 sends at 10 seconds each would be 250 seconds; a run five minutes later still can't take it.
     expect(await t.mutation(internal.webhookDelivery.claimDue, { now: now + 5 * 60_000, limit: 10 })).toEqual([]);
@@ -393,7 +410,7 @@ describe("delivering safely", () => {
     await endpoint(t, userId, ["case.status_changed"], "https://private.example.com/hook");
     const d = await pending(t, userId);
     sent = [];
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect(sent.filter((x) => x.url.includes("private.example.com"))).toHaveLength(0);
     expect((await t.run((ctx) => ctx.db.get(d._id)))!.lastError).toMatch(/private address/);
   });
@@ -405,7 +422,7 @@ describe("delivering safely", () => {
     await endpoint(t, userId, ["case.status_changed"], "https://hooks.example.com/perm");
     await watchedChange(t, userId);
     sent = [];
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect(sent.map((x) => x.url)).toEqual(["https://hooks.example.com/perm"]);
     const rows = await t.run(async (ctx) => {
       const out: Record<string, { status: string; attempts: number }> = {};
@@ -428,7 +445,7 @@ describe("delivering safely", () => {
     });
     await watchedChange(t, userId);
     sent = [];
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect(sent).toHaveLength(0);
     const [d] = await t.run(async (ctx) => ctx.db.query("webhookDeliveries").collect());
     expect(d).toMatchObject({ status: "pending", attempts: 0 });
@@ -445,7 +462,7 @@ describe("delivering safely", () => {
     const d = await pending(t, userId);
     vi.stubEnv("PAYWALL_ENFORCED", "1");
     sent = [];
-    await t.action(internal.webhookDelivery.deliverDue, {});
+    await deliverPass(t);
     expect(sent).toHaveLength(0);
     expect((await t.run((ctx) => ctx.db.get(d._id)))!).toMatchObject({ status: "failed" });
   });

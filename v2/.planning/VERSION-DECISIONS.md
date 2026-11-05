@@ -309,3 +309,18 @@ patches (`fetch`, `Date`, timers and others; `PATCHABLE_GLOBALS` in its dist), a
 should make them "failed" and "held", and the redirect test's stub is never called). The rest of #73
 (Storybook 10.6.5, `vite` 8.3.5) waits with it. To take it: make the webhook tests' fetch stub reach the
 delivery action under 0.0.66 (read its isolation notes first), then take the whole group.
+
+## November 4 2026 (evening): `convex-test` 0.0.66, Storybook 10.6.5 and `vite` 8.3.5 (Dependabot #73)
+
+Taken together, as #73 grouped them. **`convex-test` 0.0.66**: from 0.0.63 a mutation stamps `Date.now()` a
+millisecond past the frozen fake-timer clock, so a webhook delivery pass run at the same frozen instant found
+nothing due (attempts 0, status pending). Production always runs the pass later, so the tests were changed, not the
+code: `deliverPass` and `aMomentLater` in `convex/__tests__/webhooks.test.ts` move the clock a second with
+`vi.setSystemTime`, which fires no timer. The file passes under 0.0.62 and 0.0.66 alike. The whole Convex project
+passed apart from two tests whose first request loads the HTTP router (about 6 s alone, past 15 s at a load
+average near 26); they get 60 s. **0.0.67** (Nov 2) is inside the release floor until Nov 9.
+
+**Storybook 10.6.5, every part together**, so the `@storybook/nextjs-vite` patch and its `patchedDependencies`
+line are gone: 10.6.5 carries the `parentRenderTree` fix upstream (read in its build). Checked in Storybook on
+this Mac: all 13 tour stories render with no error, the dashboard with its 21 `next/link` links, the reminder
+email inside its frame.

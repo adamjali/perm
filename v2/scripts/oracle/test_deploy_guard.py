@@ -142,7 +142,6 @@ def check_site_ok() -> None:
     check(rc == 1 and calls == 6, f"a minute with no answer fails it, six rounds asked ({rc}, {calls} requests)")
     rc, _ = site_ok_with([0, 22] * 6)
     check(rc == 1, "health alone isn't enough: the homepage must answer too")
-    text = SCRIPT.read_text()
     check("127.0.0.1:8081" in lifted("site_ok"), "it asks through nginx's own port, as visitors reach the site")
 
 

@@ -28,13 +28,15 @@ const post = (t: ReturnType<typeof createTestContext>, body: unknown, key?: stri
 describe("/inbound-email", () => {
   afterEach(() => vi.unstubAllEnvs());
 
+  // The first request in a file loads the whole HTTP router (about 6 s on this Mac, alone), so this test gets
+  // room for a loaded machine: under a load average near 26 it passed 15 s (Nov 4 2026).
   it("is off without its secret, and shut to a wrong key", async () => {
     const t = createTestContext();
     expect((await post(t, message, KEY)).status).toBe(503);
     vi.stubEnv("INBOUND_EMAIL_SECRET", KEY);
     expect((await post(t, message)).status).toBe(401);
     expect((await post(t, message, "wrong")).status).toBe(401);
-  });
+  }, 60_000);
 
   it("stores a message once, however often it arrives", async () => {
     vi.stubEnv("INBOUND_EMAIL_SECRET", KEY);
