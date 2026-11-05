@@ -20,7 +20,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = withSocialCard({
   title: "Privacy policy",
   description:
-    "Privacy policy for PERM Tracker. Learn how we protect your immigration case data with bank-level encryption and row-level security.",
+    "Privacy policy for PERM Tracker: what we collect, how we use it, who processes it and how we protect immigration case data.",
   alternates: {
     canonical: "/privacy",
   },
@@ -62,7 +62,9 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: November 2, 2026
+          {/* REVIEW (date): set "Last Updated" to the day this version is published, and send the notice Section 19
+              promises for material changes (question 11). */}
+          Effective Date: February 17, 2026 | Last Updated: [DATE TO SET ON THE DAY THIS VERSION IS PUBLISHED]
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -101,17 +103,28 @@ export default function PrivacyPage() {
             </h3>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
-                <strong>Email address</strong>: Used for account creation,
-                authentication, and notifications
+                <strong>Email address</strong>: used to sign you in, to confirm
+                the address is yours, to send the email you’ve asked for, and to
+                send occasional product updates you can turn off (see Product
+                Update Emails below)
               </li>{" "}
               <li>
-                <strong>Name</strong>: Obtained via Google OAuth or entered
-                during signup
+                <strong>Name</strong>: from Google if you sign in with Google,
+                or typed at sign-up, where it’s optional
               </li>{" "}
               <li>
-                <strong>Password</strong>: If you use email/password
-                authentication, your password is securely hashed and never stored
-                in plain text (managed by our authentication provider)
+                <strong>Profile photo</strong>: if you sign in with Google, the
+                address of your Google profile photo (see Section 4)
+              </li>{" "}
+              <li>
+                <strong>Password</strong>: if you sign up with an email address
+                and a password, we store only a one-way hash of the password,
+                never the password itself
+              </li>{" "}
+              <li>
+                <strong>One-time codes</strong>: to confirm your address, and
+                when you reset your password, we email you a one-time code. It
+                works once and expires after 10 minutes
               </li>
             </ul>{" "}
 
@@ -142,18 +155,102 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 Name, email address and message text you submit through the
-                contact form, plus the submitting IP address (used only for
-                abuse rate-limiting)
+                contact form, plus the submitting IP address, which we use only
+                to limit abuse and keep with the message
               </li>{" "}
               <li>
-                Submissions are stored and forwarded to our support inbox so we
-                can reply; they’re never used for marketing and never shared
+                Submissions are stored and forwarded to the inbox we read, in
+                Gmail, so we can reply. They’re never used for marketing and
+                never shared. We keep them, and the email you send to an
+                @permtracker.app address, until you ask us to delete them (see
+                Section 14)
               </li>{" "}
               <li>
                 Each submission, like each email sent to an @permtracker.app
                 address, goes through a spam check first (see Section 9). A
                 message the check holds is stored for us to read and deleted 30
                 days later
+              </li>
+            </ul>{" "}
+
+            <h3 id="email-alerts" className="font-heading text-lg font-bold mt-6 mb-3">
+              Email Alerts Without an Account
+            </h3>{" "}
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
+              <li>
+                You can ask for an email when DOL changes a case’s status, when
+                DOL’s queue reaches your filing month, when a visa bulletin
+                cutoff moves, or when DOL moves an employer’s cases as a group.
+                No account is needed. For each, we keep your email address, what
+                you asked to follow (a case number, a filing month, a bulletin
+                category and country, or an employer’s page), the page you signed
+                up on, and when we confirmed, checked and emailed. The queue
+                alert also asks, if you choose to say, whether you’re an
+                attorney, an applicant or an employer
+              </li>{" "}
+              <li>
+                Nothing is sent until you click the link in our confirmation
+                email. An alert you never confirm is deleted after 30 days. If
+                you’re signed in with a confirmed address and choose to watch
+                your own case during setup, that alert starts at once
+              </li>{" "}
+              <li>
+                Your IP address is used only to limit how many sign-ups one
+                address can make. It’s kept in our rate-limit records, not with
+                the alert, and those are deleted within a day
+              </li>{" "}
+              <li>
+                A case alert keeps watching for a year after DOL decides the
+                case, in case it’s appealed or reopened, and then stops
+              </li>{" "}
+              <li>
+                A copy of each alert email waits with us until it’s sent, and is
+                deleted 30 days after that
+              </li>{" "}
+              {/* REVIEW (question 2): the code keeps an opted-out address on its alert row with no end date, because
+                  that record is what refuses a restart without a new confirmation. This wording says so and offers
+                  deletion on request; a fixed period would need a code change. */}
+              <li>
+                Every alert email has a link that stops it in one click, and a
+                link to a page listing everything your address receives, where
+                you can turn any of it off. When you stop an alert, we keep a
+                note that your address opted out, so it can’t be restarted
+                without a new confirmation. To have that note deleted too, write
+                to{" "}
+                <a href="mailto:support@permtracker.app" className="link">
+                  support@permtracker.app
+                </a>
+              </li>{" "}
+              <li>
+                If you delete your account, the alerts sent to its email address
+                stop as well
+              </li>
+            </ul>{" "}
+
+            {/* REVIEW (product updates): the owner chose opt-out for account holders on Nov 4 2026. Under CAN-SPAM
+                every product update must carry the unsubscribe link and the postal address (Resend's broadcasts add
+                the link). For visitors in the EEA and UK, sending these to account holders without a tick rests on
+                the existing-customer rule (PECR regulation 22(3), ePrivacy Article 13(2)); please confirm that fits,
+                or say if those visitors should be asked first. Nothing is sent under this wording until it's live. */}
+            <h3 id="product-updates" className="font-heading text-lg font-bold mt-6 mb-3">
+              Product Update Emails
+            </h3>{" "}
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
+              <li>
+                If you have an account, we may email you occasional product
+                updates: new features and changes to PERM Tracker. You can turn
+                them off at any time in Settings, under Notifications, or with
+                the unsubscribe link in any of them. Turning them off doesn’t
+                stop the reminders, alerts and account emails you’ve set up
+              </li>{" "}
+              <li>
+                Without an account, you get product updates only if you tick the
+                box for them when you sign up for an alert, and then confirm it
+              </li>{" "}
+              <li>
+                We send them through Resend, which keeps your email address,
+                your first name if you gave one, and whether you’ve turned them
+                off (see Section 13)
               </li>
             </ul>{" "}
 
@@ -204,6 +301,90 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
 
+            <h3 id="community-timelines" className="font-heading text-lg font-bold mt-6 mb-3">
+              Your Timeline After PERM
+            </h3>{" "}
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
+              <li>
+                On a case’s page you can save the dates that came after PERM
+                (the I-140, the I-485, a work permit, a travel document, an
+                interview, the green card) and a few choices from fixed lists,
+                such as your category and country. There’s no free-text box. The
+                PERM dates come from DOL’s own record and are never typed by you
+              </li>{" "}
+              <li>
+                No account is needed. Your browser keeps a random key for that
+                case, and we keep only a one-way hash of it. Anyone using that
+                browser can change or remove the timeline, and removing it
+                deletes it
+              </li>{" "}
+              <li>
+                We also keep a hash of your IP address with the timeline, to
+                limit how many timelines one address can save. It’s made with a
+                secret key, so it can’t be turned back into your address by
+                trying every address; timelines saved before November 4, 2026
+                carry an older hash made without that key. We treat both as
+                personal data
+              </li>{" "}
+              <li>
+                If you tick &quot;Show my timeline on the public board&quot;,
+                it’s listed there with its filing month and how many days each
+                step took. The board never shows the case number, the employer or
+                an exact PERM date, and it lists nothing until 25 people have
+                shared
+              </li>{" "}
+              <li>
+                Whether or not you tick that box, your dates count toward the
+                anonymous medians on the green card timelines page, which show no
+                figure from fewer than 5 timelines
+              </li>{" "}
+              <li>
+                Anyone who looks up the same case number can see how many
+                timelines were saved for it and how many report each step, but
+                only once at least 3 people have added dates for that case. They
+                can never see the dates
+              </li>{" "}
+              <li>
+                We keep a timeline until you remove it, or until we take it down
+              </li>
+            </ul>{" "}
+
+            {/* REVIEW (question 9): a DOL case number saved in an account, or watched by email, notification or
+                webhook, that DOL knows and we didn't hold is added to our public case tables, which publish DOL's
+                record for it. The record is DOL's public information; this wording discloses it rather than
+                changing it. Not adding saved cases would be a code change. */}
+            <h3 id="case-numbers" className="font-heading text-lg font-bold mt-6 mb-3">
+              Case Numbers You Look Up or Save
+            </h3>{" "}
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
+              <li>
+                When you look up a DOL case number we don’t hold yet, we ask
+                DOL’s public case-status service about it. If DOL has a record,
+                we add it to our case tables, where it shows like any other case
+                DOL publishes: its number, status, employer, job title and filing
+                date. Nothing about you is stored with it
+              </li>{" "}
+              <li>
+                A DOL case number you save in your account, and any case number
+                someone asks us to watch by email, browser notification or
+                webhook, is checked with DOL every 5 minutes on weekdays from 7
+                AM to 9 PM Eastern, and every 30 minutes at other times. We send
+                DOL the case number only. What DOL returns goes into the same
+                case tables, so a saved case DOL knows becomes part of the case
+                records we show. You can turn this off for one saved case, or
+                for every case in your account, in the app
+              </li>{" "}
+              <li>
+                Our analytics removes case numbers from page addresses before
+                anything is sent
+              </li>{" "}
+              <li>
+                The USCIS lookup can keep up to 12 of your receipt numbers, with
+                a label for each, on this device. They stay in your browser’s
+                storage, and we never receive them
+              </li>
+            </ul>{" "}
+
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Technical Information
             </h3>{" "}
@@ -221,13 +402,22 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 If you make an API key, we keep its name, a one-way hash of it
-                (never the key itself) and the date you made it, until you
-                revoke it or delete your account
+                (never the key itself), its scopes, when you made it, and when it
+                stops if you gave it a lifetime. A key you revoke keeps that
+                record, marked revoked, so a call with it can be told the key was
+                revoked. The records go when you delete your account
               </li>{" "}
               <li>
-                How many calls each key made per day, under a random account
-                number that names nobody, kept to enforce your plan&rsquo;s
-                limits and to show your usage in Settings
+                How many calls each key made each day and when it was last used,
+                under a random account number that names nobody. We keep these
+                counts for 400 days, to enforce your plan&rsquo;s limits and show
+                your usage in Settings. If you delete your account, the counts
+                stay under that random number, which then points to no one
+              </li>{" "}
+              <li>
+                If you register a webhook, its address, the events it receives
+                and its signing secret, stored encrypted. We keep a log of
+                deliveries for 30 days
               </li>
             </ul>{" "}
 
@@ -258,7 +448,21 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Provide and maintain the PERM tracking service</li>{" "}
               <li>Authenticate your account and ensure security</li>{" "}
-              <li>Send email and push notifications about upcoming deadlines</li>{" "}
+              <li>
+                Send the deadline reminders, case alerts and other email and
+                browser notifications you ask for
+              </li>{" "}
+              <li>
+                Send account holders occasional product updates, which you can
+                turn off (see Product Update Emails in Section 2)
+              </li>{" "}
+              {/* REVIEW (question 6): the congratulations note goes to an alert subscriber's address, by hand from
+                  the press mailbox, two business days after DOL certifies or approves the watched case. It wasn't
+                  described before. Is describing it here enough, or does it need a line at sign-up? */}
+              <li>
+                Send a personal note, written and sent by a person, after DOL
+                certifies or approves a case you asked us to watch
+              </li>{" "}
               <li>Power the AI chat assistant with case context for relevant responses</li>{" "}
               <li>Sync deadlines to your Google Calendar (if enabled)</li>{" "}
               <li>Monitor application errors and improve reliability</li>{" "}
@@ -279,13 +483,18 @@ export default function PrivacyPage() {
             </p>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
-                We access only your <strong>email address</strong> and{" "}
-                <strong>display name</strong>
+                We receive your <strong>email address</strong>, your{" "}
+                <strong>name</strong> and the address of your{" "}
+                <strong>Google profile photo</strong>. We show the photo in your
+                Settings; your browser loads it from Google&apos;s servers
               </li>{" "}
+              {/* REVIEW (Google sign-in): this bullet said Google's data was used "solely for authentication". The
+                  address from Google sign-in now also receives the account emails and, unless turned off, product
+                  updates, so it's worded as what we do. Please check it against the Google API Services User Data
+                  Policy for the basic profile and email scopes. */}
               <li>
-                This information is used{" "}
-                <strong>solely for authentication</strong> and account
-                identification
+                This information is used to sign you in, to identify your
+                account, and to send you the email described in Section 2
               </li>{" "}
               <li>
                 We do <strong>not</strong> access your Google contacts, calendar
@@ -360,6 +569,22 @@ export default function PrivacyPage() {
                 <strong>Employer FEIN:</strong> Federal Employer Identification
                 Numbers are encrypted at rest using AES-256-GCM and decrypted
                 only when displayed to the authenticated case owner
+              </li>{" "}
+              <li>
+                <strong>Backups:</strong> each night we copy our databases to
+                Cloudflare R2 storage. The copies that hold your account, your
+                cases, our alert lists and the website&apos;s own database are
+                sealed before they leave our systems, so that only a key kept
+                off our servers and out of R2 can open them. The one copy that
+                isn&apos;t sealed holds only DOL&apos;s published H-1B LCA
+                records. We keep the newest 15 nightly copies and the first copy
+                of each of the last 3 months, so something you delete leaves our
+                backups within about three months
+              </li>{" "}
+              <li>
+                <strong>Signing out:</strong> when you&apos;re signed in, the app
+                signs you out after 30 minutes without activity, and warns you
+                two minutes before
               </li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
@@ -634,15 +859,32 @@ export default function PrivacyPage() {
             </h3>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
-                <code>sendDefaultPii</code> is disabled, so cookies, user agent strings with PII, and request bodies aren’t sent
-              </li>{" "}
-              <li>Request body data is stripped before transmission to Sentry</li>{" "}
-              <li>
-                Sentry automatically scrubs credit card numbers, SSNs, and other
-                PII patterns
+                When you&apos;re signed in, Sentry is told only your account
+                number, never your name or email address, so an error can be
+                traced to the account it happened in
               </li>{" "}
               <li>
-                Development environment events are suppressed (not sent to Sentry)
+                Email addresses in the message and details of an error report
+                from your browser or from our backend are replaced by a short
+                code before the report is sent
+              </li>{" "}
+              <li>
+                The script in your browser removes request contents before it
+                sends an error. Cookies aren&apos;t sent
+              </li>{" "}
+              {/* REVIEW (server error reports): the website server's Sentry setup keeps Sentry's default, which can
+                  attach part of a failed request's body to its report; nobody has read a real server report to see.
+                  This wording discloses that. Setting the Sentry option maxIncomingRequestBodySize to "none" (a
+                  one-line change) would let this say request contents are never sent. */}
+              <li>
+                Error reports from the website&apos;s own server can include the
+                page address and details of the request that failed, which for a
+                form can include part of what was sent. We use them only to fix
+                the error
+              </li>{" "}
+              <li>
+                Sentry runs only on the live site; copies we run for development
+                send nothing
               </li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
@@ -705,19 +947,23 @@ export default function PrivacyPage() {
             </h3>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
-                <strong>Sign-up:</strong> widget is always visible
+                <strong>Sign-up:</strong> required. It runs out of sight for most
+                visitors and asks for a click only when Cloudflare&apos;s risk
+                analysis wants one
               </li>{" "}
               <li>
-                <strong>Password reset:</strong> widget is always visible
+                <strong>Password reset:</strong> the widget is always visible
               </li>{" "}
               <li>
-                <strong>Sign-in:</strong> widget is invisible for most
-                visitors; an interactive challenge only appears if Cloudflare&apos;s
-                risk analysis flags the attempt as suspicious
+                <strong>Contact form:</strong> it runs out of sight for most
+                visitors. A message whose check fails is refused. If the check
+                couldn&apos;t run, the message isn&apos;t lost: it goes through
+                the spam check below with that taken into account
               </li>{" "}
               <li>
-                <strong>Contact form:</strong> invisible for most visitors, the
-                same as sign-in
+                <strong>Sign-in:</strong> there&apos;s no Turnstile check.
+                Sign-in is protected by your password and by limits on how many
+                attempts one IP address and one email address can make
               </li>
             </ul>{" "}
 
@@ -779,24 +1025,25 @@ export default function PrivacyPage() {
               and per-user limits on hot backend mutations (case create,
               conversation create, notification marks, knowledge search,
               etc.). When a limit is reached, requests return an HTTP 429
-              response for the duration of the rate-limit window. We
-              retain only the minimum counter state needed (request count
-              + timestamp) and an internal abuse blocklist of IP addresses
-              that trip limits repeatedly (auto-expired after 24 hours).
-              Counter state is automatically purged when the window closes.
+              response for the duration of the rate-limit window. We keep
+              only the minimum counter state needed (a request count and a
+              timestamp) and an internal blocklist of IP addresses that hit
+              our limits three times within 15 minutes. A blocked address is
+              unblocked automatically after one hour. Counter records are
+              deleted within a day.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Automated Account Protection
             </h3>{" "}
             <p className="text-soft leading-relaxed">
-              If we detect an abnormal volume of failed sign-in attempts
-              against the same account (for example, 10 failures within 30 minutes, which is the signature of credential-stuffing), we
-              automatically place the account in a temporarily locked
-              state for up to 24 hours to protect the legitimate owner. We
-              notify our security team and record the event for audit.
-              Owners of accounts placed in this state can contact support
-              to appeal and have the lock lifted earlier.
+              If one account has 10 failed sign-in attempts within 30
+              minutes while our limits are also catching an IP address
+              flooding sign-in, which is the signature of credential
+              stuffing, we lock that account for one hour to protect its
+              owner. We record the lock and are told about it by email. If
+              you&apos;re locked out, write to support and we can lift it
+              sooner.
             </p>
           </details>{" "}
 
@@ -806,10 +1053,31 @@ export default function PrivacyPage() {
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
-              When you enable push notifications, your browser generates a unique
-              subscription including an endpoint URL and encryption keys. We store
-              this subscription data on your user profile to deliver deadline
-              reminders and case alerts.
+              When you turn on browser notifications, your browser makes a
+              subscription: an address at its push service and two encryption
+              keys. If you&apos;re signed in, we store it on your user profile to
+              deliver deadline reminders and case alerts.
+            </p>{" "}
+
+            <h3 id="push-without-account" className="font-heading text-lg font-bold mt-6 mb-3">
+              Without an Account
+            </h3>{" "}
+            {/* REVIEW (question 4): a stopped account-free subscription keeps its row, subscription included, marked
+                stopped, and nothing deletes it; the code never sends to it again. This wording says so. Deleting them
+                when they stop would be a code change and would let this say "deleted when it stops". */}
+            <p className="text-soft leading-relaxed">
+              You can also turn on a browser notification for one case&apos;s DOL
+              status, or for each new visa bulletin for one category and
+              country, without an account or an email address. We keep the
+              subscription, a one-way hash of it, the case number or the bulletin
+              line, and the last status we told you about. Your IP address is
+              used only to limit how many subscriptions one address can make, and
+              that record is deleted within a day. A notification stops when you
+              press stop on the page, when your browser or its push service ends
+              the subscription, or when deliveries to it keep failing; a case
+              notification also stops when DOL decides the case. A stopped
+              subscription is kept in our records, marked stopped, and never used
+              again.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -825,19 +1093,22 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
-              This data doesn’t contain personally identifiable information and
-              consists of technical identifiers generated by your browser.
+              This data identifies a browser and doesn&apos;t name anyone.
+              Because it can be tied to the case you asked about, we treat it as
+              personal data.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Delivery Services
             </h3>{" "}
             <p className="text-soft leading-relaxed">
-              Notifications are delivered through your browser&apos;s push service
-              (Google FCM for Chrome, Mozilla Push Service for Firefox, Apple Push
-              Notification service for Safari). These services may collect
-              technical device metadata. Notification content is encrypted
-              end-to-end where supported.
+              Notifications are delivered through your browser&apos;s push
+              service: Google&apos;s (Chrome, Edge on Android and other Chromium
+              browsers), Mozilla&apos;s (Firefox), Microsoft&apos;s Windows push
+              service (Edge on Windows) or Apple&apos;s (Safari). We only send to
+              those services. They may collect technical device data.
+              Notification content is encrypted end to end where the browser
+              supports it.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -847,7 +1118,13 @@ export default function PrivacyPage() {
               <li>Push notifications require explicit opt-in via browser permission</li>{" "}
               <li>Disable anytime in browser settings or in-app notification preferences</li>{" "}
               <li>Configure quiet hours and notification types in Settings</li>{" "}
-              <li>Subscription data is deleted when you revoke permissions or delete your account</li>
+              <li>
+                If you&apos;re signed in, your subscription is removed from your
+                profile when you turn notifications off in the app, when your
+                browser&apos;s push service tells us it has ended (for example
+                after you block notifications in the browser), or when you
+                delete your account
+              </li>
             </ul>
           </details>{" "}
 
@@ -904,8 +1181,10 @@ export default function PrivacyPage() {
               <li>
                 <strong>LocalStorage:</strong> Stores preferences such as dark
                 mode settings, UI preferences, temporary authentication state
-                during OAuth redirects, and, for one day, the sealed review link
-                from our email (see Reviews above)
+                during OAuth redirects, for one day the sealed review link from
+                our email (see Reviews above), your saved USCIS receipt numbers,
+                and the key that lets you change a timeline you saved (see
+                Section 2)
               </li>{" "}
               <li>
                 <strong>Error Monitoring:</strong> Sentry’s script runs only on
@@ -955,13 +1234,31 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>Resend:</strong> Transactional email delivery
-                (notifications, OTP verification, password resets) and, if you
-                opt in, marketing and product-update emails (we sync your email
-                address and first name to Resend for this purpose)
+                (notifications, OTP verification, password resets) and product
+                update emails. For product updates we give Resend the email
+                address and first name of each account holder, and of each person
+                without an account who asked for them; Resend keeps whether
+                you&apos;ve turned them off (see Product Update Emails in Section
+                2)
               </li>{" "}
               <li>
-                <strong>Google:</strong> OAuth authentication and Calendar API
-                integration
+                <strong>Google:</strong> sign-in with Google, the Calendar API,
+                and Gmail, which receives a copy of every message sent to an
+                @permtracker.app address and every contact-form message, so we can
+                read and answer them
+              </li>{" "}
+              <li>
+                <strong>Zoho Mail:</strong> the mailbox our press address runs on.
+                When we write to you by hand from it, such as a note after DOL
+                certifies a case you watched or a reply to a message you sent,
+                the message and your address are kept in that mailbox
+              </li>{" "}
+              <li>
+                <strong>Senja:</strong> the review form we used before October 23,
+                2026. Some emails we sent before then link to it. Reviews left
+                there are copied once a day into our own reviews, where they wait
+                for approval like any other. Senja keeps its own copy under its
+                own policy
               </li>{" "}
               <li>
                 <strong>PostHog:</strong> Product analytics and event tracking
@@ -989,13 +1286,14 @@ export default function PrivacyPage() {
                 <strong>Cloudflare, Inc.:</strong> DNS, encryption and the network
                 edge in front of the site (rate limiting and bot mitigation),
                 Turnstile on authentication and contact forms, email routing for
-                @permtracker.app addresses, and Workers AI for the spam check on
-                that email and contact form messages (see Section 9)
+                @permtracker.app addresses, Workers AI for the spam check on
+                that email and contact form messages (see Section 9), and R2
+                storage for our nightly backups (see Section 5)
               </li>{" "}
               <li>
                 <strong>Browser Push Services:</strong> Google FCM, Mozilla Push
-                Service, and Apple APNs for push notification delivery (see
-                Section 10)
+                Service, Microsoft Windows Push Notification Services and Apple
+                APNs, for browser notifications (see Section 10)
               </li>{" "}
               <li>
                 <strong>USCIS (U.S. Citizenship and Immigration Services):</strong>{" "}
@@ -1047,9 +1345,30 @@ export default function PrivacyPage() {
                 at any time from Settings
               </li>{" "}
               <li>
-                Upon deletion request, your account enters a 30-day grace
-                period during which you can cancel. After the grace period,
-                all data is permanently deleted
+                When you ask to delete your account, it enters a 30-day grace
+                period during which you can cancel, or you can choose to delete
+                it at once. Then your account, your cases and the rest of your
+                account&apos;s data are permanently deleted, and the email alerts
+                sent to its address stop. Copies in our backups leave them within
+                about three months (see Section 5)
+              </li>{" "}
+              <li>
+                <strong>What deleting an account doesn&apos;t remove:</strong>{" "}
+                reviews you wrote, emails you sent to our support address,
+                messages you sent through the contact form, and star ratings you
+                tapped in an alert email. These aren&apos;t part of your account:
+                they&apos;re records of what was published on the site or said to
+                us, so we keep them, with the email address they came from if
+                they had one, after the account is gone. A note we sent you by hand stays in the
+                mailbox it was sent from. To have any of them removed, write to{" "}
+                <a href="mailto:support@permtracker.app" className="link">
+                  support@permtracker.app
+                </a>{" "}
+                with the address you used
+              </li>{" "}
+              <li>
+                <strong>Email alert sign-ups</strong> you never confirm are
+                deleted after 30 days
               </li>{" "}
               <li>
                 <strong>AI conversation data</strong> is automatically deleted
@@ -1210,11 +1529,14 @@ export default function PrivacyPage() {
               </li>{" "}
               <li>
                 <strong>Legitimate interests</strong>: to secure the service,
-                prevent abuse, and improve the product (including analytics).
+                prevent abuse, and improve the product (including analytics),
+                and to send account holders occasional product updates, which
+                you can turn off at any time.
               </li>{" "}
               <li>
-                <strong>Consent</strong>: for optional features such as
-                marketing emails, which you can withdraw at any time.
+                <strong>Consent</strong>: for optional features such as product
+                updates for people without an account, which you can withdraw at
+                any time.
               </li>
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
@@ -1251,11 +1573,14 @@ export default function PrivacyPage() {
               <h2 id="childrens-privacy" className="font-heading text-2xl font-bold m-0">17. Children&apos;s Privacy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
+            {/* REVIEW (question 10): Option A, adults for accounts and the rest of the site open to anyone, chosen to
+                match Terms Section 3. Option B (the whole service for people 18 and older) is in the review notes. */}
             <p className="text-soft leading-relaxed">
-              PERM Tracker isn’t intended for use by individuals under the age of
-              13. We don’t knowingly collect personal information from children
-              under 13. If you become aware that a child has provided us with
-              personal information, please contact us immediately.
+              An account requires you to be at least 18 (Terms of Service,
+              Section 3). The rest of the site isn&apos;t directed to children
+              under 13, and we don&apos;t knowingly collect personal information
+              from them. If you learn that a child under 13 has given us personal
+              information, contact us and we&apos;ll delete it.
             </p>
           </details>{" "}
 
@@ -1292,6 +1617,11 @@ export default function PrivacyPage() {
               <h2 id="changes-to-this-policy" className="font-heading text-2xl font-bold m-0">19. Changes to This Policy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
+            {/* REVIEW (question 11): which of this version's changes are material, and does the email notice go to
+                account holders only or to alert subscribers too? Several describe processing the policy never named
+                (alerts without an account, timelines, account-free notifications, the congratulations note, Zoho,
+                Gmail, Senja, backups, case numbers added to the public tables, product updates by default). The
+                Oct 29 notice about the AI providers is still unsent and could go in the same email. */}
             <p className="text-soft leading-relaxed">
               We may update this Privacy Policy from time to time. We’ll notify
               you of any changes by:
