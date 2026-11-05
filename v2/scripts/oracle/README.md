@@ -97,8 +97,12 @@ why). An urgent fix: `gh workflow run oracle-deploy.yml -f when=now`. Each deplo
 Oct 17 to 18 eight of the thirteen people shown the busy page came within an hour of one (fifteen deploys that Saturday).
 
 A deploy copies the release to `<release>.w2`, starts BOTH copies of the idle slot, checks both, warms them
-(the core pages and the 300 busiest employers, two at a time, 4 minutes at most), points nginx at both, then stops
-the old slot's second copy. A rollback switches to the other slot's first copy at once, then starts its second copy
+(the core pages and the 300 busiest employers, two at a time, 4 minutes at most), points nginx at both, asks the
+site through nginx (127.0.0.1:8081: the health route and the homepage, up to six rounds 10 s apart), then stops the
+old slot's second copy. If no round answers, it switches back to the old slot (both its copies are still running)
+and exits 6. A release that fails a check is never left where a rollback would go: the idle slot gets back the
+release it held before, its first copy running again if it was (`restore_idle`, since Nov 4 2026; before that a
+failed build sat in the rollback slot). A rollback switches to the other slot's first copy at once, then starts its second copy
 and moves traffic onto both. `second` starts a missing second copy for the live slot (used once, Oct 2 2026).
 Refresh calls (`/api/revalidate-*`) go to the first copy and nginx mirrors them to the second, because each copy
 keeps its own memory of which pages are stale.

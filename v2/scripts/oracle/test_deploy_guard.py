@@ -111,6 +111,89 @@ def check_stop() -> None:
           f"a clean stop clears nothing and says nothing ({out!r})")
 
 
+def lifted(name: str) -> str:
+    text = SCRIPT.read_text()
+    start = text.index(name + "(){")
+    return text[start:text.index("\n}\n", start) + 3]
+
+
+def site_ok_with(answers: list[int]) -> tuple[int, int]:
+    """The deploy's own site_ok(), with curl answering from `answers` in turn
+    (0 a page, 22 curl's HTTP-error code). Returns its exit and the curl calls."""
+    with tempfile.TemporaryDirectory() as tmp:
+        log = pathlib.Path(tmp) / "calls"
+        seq = " ".join(str(a) for a in answers)
+        stubs = (
+            f'answers=({seq})\n'
+            f'curl(){{ n=$(wc -l < "{log}" 2>/dev/null || echo 0); echo x >> "{log}"; '
+            'return "${answers[$n]:-22}"; }\nsleep(){ :; }\n'
+        )
+        r = subprocess.run(["bash", "-c", stubs + lifted("site_ok") + "site_ok"], capture_output=True, text=True, timeout=30)
+        calls = len(log.read_text().splitlines()) if log.exists() else 0
+    return r.returncode, calls
+
+
+def check_site_ok() -> None:
+    rc, calls = site_ok_with([0, 0])
+    check(rc == 0 and calls == 2, f"a site that answers passes at once ({rc}, {calls} requests)")
+    rc, calls = site_ok_with([22, 0, 22, 0, 0, 0])
+    check(rc == 0 and calls == 5, f"a busy first round or two doesn't fail it ({rc}, {calls} requests)")
+    rc, calls = site_ok_with([22] * 12)
+    check(rc == 1 and calls == 6, f"a minute with no answer fails it, six rounds asked ({rc}, {calls} requests)")
+    rc, _ = site_ok_with([0, 22] * 6)
+    check(rc == 1, "health alone isn't enough: the homepage must answer too")
+    text = SCRIPT.read_text()
+    check("127.0.0.1:8081" in lifted("site_ok"), "it asks through nginx's own port, as visitors reach the site")
+
+
+def restore_with(prev: bool, was_up: bool, healthy: bool) -> tuple[int, str, pathlib.Path, pathlib.Path]:
+    """The deploy's own restore_idle(), with the service calls stood in for and
+    real links in a scratch app folder."""
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    for d in ("slots", "releases/old-1", "releases/old-1.w2", "releases/new-2", "releases/new-2.w2"):
+        (tmp / d).mkdir(parents=True, exist_ok=True)
+    os.symlink(tmp / "releases/new-2", tmp / "slots/green")
+    os.symlink(tmp / "releases/new-2.w2", tmp / "slots/green2")
+    p1 = str(tmp / "releases/old-1") if prev else ""
+    p2 = str(tmp / "releases/old-1.w2") if prev else ""
+    stubs = (
+        f'A="{tmp}"\n'
+        'stop_copy(){ echo "stop $1"; }\nsystemctl(){ echo "systemctl $*"; }\n'
+        f'healthy(){{ return {0 if healthy else 1}; }}\nport_of(){{ echo 3002; }}\nlog(){{ echo "log $*"; }}\n'
+    )
+    r = subprocess.run(["bash", "-c", stubs + lifted("restore_idle") + f'restore_idle green "{p1}" "{p2}" "{1 if was_up else ""}"'],
+                       capture_output=True, text=True, timeout=30)
+    return r.returncode, r.stdout + r.stderr, tmp / "slots/green", tmp / "slots/green2"
+
+
+def check_restore() -> None:
+    rc, out, s1, s2 = restore_with(prev=True, was_up=True, healthy=True)
+    check(rc == 0 and os.readlink(s1).endswith("old-1") and os.readlink(s2).endswith("old-1.w2"),
+          "a failed release gives the idle slot back to the release it held")
+    check("systemctl restart permtracker-web@green" in out and "stop green2" in out and "ready for a rollback" in out,
+          f"its first copy runs that release again, its second stops ({out!r})")
+    rc, out, s1, _ = restore_with(prev=True, was_up=True, healthy=False)
+    check("stop green\n" in out + "\n" and "rollback refuses" in out,
+          f"if the old release won't come back, the copy stops, so a rollback can't land on it ({out!r})")
+    rc, out, s1, s2 = restore_with(prev=True, was_up=False, healthy=True)
+    check(os.readlink(s1).endswith("old-1") and "systemctl restart" not in out and "stop green\n" in out + "\n",
+          f"a copy that wasn't running before stays stopped, on the old release ({out!r})")
+    rc, out, s1, s2 = restore_with(prev=False, was_up=False, healthy=True)
+    check(not os.path.lexists(s1) and not os.path.lexists(s2) and "stays empty" in out,
+          f"a slot that held nothing before is emptied, not left on the failed build ({out!r})")
+    text = SCRIPT.read_text()
+    deploy = text[text.index("  deploy)"):text.index("  prune-releases)")]
+    check(deploy.index("prev_idle=$(readlink") < deploy.index('ln -sfn "$A/releases/$rel" "$A/slots/$idle"'),
+          "the deploy reads what the idle slot held before it repoints it")
+    fail = deploy[deploy.index("NEW RELEASE FAILED"):deploy.index("exit 4")]
+    check("restore_idle" in fail, "a failed health check puts the idle slot back")
+    after = deploy[deploy.index('switch_to "$idle"'):]
+    checked = "site_ok" in after and 'stop_copy "${active}2"' in after and "exit 6" in after
+    check(checked and after.index("site_ok") < after.index('stop_copy "${active}2"')
+          and 'switch_to "$active"' in after[:after.index("exit 6")],
+          "after the switch the site is checked before the old second copy stops, and a failure switches back")
+
+
 PRUNE_SHARED = 'find "$A/shared/_next/static" -type f -mtime +21 -delete'
 
 
@@ -161,6 +244,8 @@ def main() -> int:
     check_reload()
     check_stop()
     check_stamp()
+    check_site_ok()
+    check_restore()
     if platform.system() != "Linux":
         print("skipped the rest: Linux only (CI and the server run it)")
         print(f"\n{len(failures)} failure(s)")

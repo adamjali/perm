@@ -1,7 +1,9 @@
 #!/bin/bash
 # The ONLY thing GitHub's deploy key may run on this server.
 #   deploy <release-id>   read a .tar.zst release on stdin, start it on the
-#                         idle copy, health-check it, then switch traffic
+#                         idle copy, health-check it, switch traffic, then
+#                         check the site through nginx and switch back if it
+#                         serves nothing for a minute (exit 6)
 #   rollback              switch traffic back to the other copy
 #   second                start the live slot's second copy and add it
 #   status                print which copy serves and what each runs
@@ -151,6 +153,43 @@ healthy(){ # $1 port
     sleep 2
   done; return 1
 }
+site_ok(){ # the live site as visitors reach it: through nginx, after a switch
+  # Passes on the first of six rounds, 10 s apart, where nginx answers both the
+  # app's health route and the homepage. The copies passed healthy() on their
+  # own ports; this catches what only shows once traffic arrives through nginx
+  # (an upstream file pointing nowhere, copies that fall over under the first
+  # real requests). A minute with no page at all is what counts as failed, so
+  # a cold cache's busy page for a few seconds doesn't roll a good build back.
+  local i
+  for i in 1 2 3 4 5 6; do
+    if curl -fsS -o /dev/null --max-time 15 -H "Host: permtracker.app" "http://127.0.0.1:8081/api/health" \
+       && curl -fsS -o /dev/null --max-time 30 -H "Host: permtracker.app" "http://127.0.0.1:8081/"; then return 0; fi
+    [ "$i" = 6 ] || sleep 10
+  done; return 1
+}
+restore_idle(){ # $1 idle slot; $2 and $3 its two copies' releases before this deploy; $4 1 if its first copy was running
+  # A release that failed is never left where `rollback` would go. Before this
+  # (Nov 4 2026) a release that failed its health check stayed in the idle
+  # slot, so the instant rollback the previous release gave was gone, and a
+  # rollback would have tried the failed build.
+  stop_copy "${1}2"
+  if [ -n "$3" ] && [ -d "$3" ]; then ln -sfn "$3" "$A/slots/${1}2"; else rm -f "$A/slots/${1}2"; fi
+  if [ -n "$2" ] && [ -d "$2" ]; then
+    ln -sfn "$2" "$A/slots/$1"
+    if [ "$4" = 1 ]; then
+      systemctl restart "permtracker-web@$1"
+      if healthy "$(port_of "$1")"; then
+        log "$1 is back on $(basename "$2"), ready for a rollback"
+      else
+        log "$1 did not come back on $(basename "$2"); stopped, so a rollback refuses"; stop_copy "$1"
+      fi
+    else
+      stop_copy "$1"; log "$1 is back on $(basename "$2") (it wasn't running before this deploy)"
+    fi
+  else
+    rm -f "$A/slots/$1"; stop_copy "$1"; log "$1 held no release before this deploy; it stays empty"
+  fi
+}
 
 case "$action" in
   status)
@@ -204,6 +243,10 @@ case "$action" in
       || log "could not date this release's build files in shared/; the prune may take a still-used one (nginx then asks the app)"
     # The second copy's own folder, copied while it holds only the build.
     rm -rf "$A/releases/$rel.w2"; cp -a "$A/releases/$rel" "$A/releases/$rel.w2"
+    # What the idle slot held, so a failure can put it back (restore_idle).
+    prev_idle=$(readlink -f "$A/slots/$idle" 2>/dev/null || true)
+    prev_idle2=$(readlink -f "$A/slots/${idle}2" 2>/dev/null || true)
+    idle_was_up=$(systemctl is-active --quiet "permtracker-web@$idle" && echo 1 || true)
     ln -sfn "$A/releases/$rel" "$A/slots/$idle"
     ln -sfn "$A/releases/$rel.w2" "$A/slots/${idle}2"
     ensure_env "${idle}2"
@@ -212,7 +255,7 @@ case "$action" in
       if ! healthy "$(port_of "$w")"; then
         log "NEW RELEASE FAILED its health check on $w; traffic stays on $active"
         journalctl -u "permtracker-web@$w" -n 30 --no-pager | tail -30
-        stop_copy "${idle}2"
+        restore_idle "$idle" "$prev_idle" "$prev_idle2" "$idle_was_up"
         exit 4
       fi
     done
@@ -229,6 +272,14 @@ case "$action" in
     warm "$(port_of "$idle")" "$A/releases/$rel" & warm "$(port_of "${idle}2")" "$A/releases/$rel.w2" & wait || true
     for w in "$idle" "${idle}2"; do systemctl set-property --runtime "permtracker-web@$w" CPUWeight=200; done
     switch_to "$idle"
+    # Checked through nginx before the previous release's second copy stops, so
+    # switching back puts both of its copies straight into traffic.
+    if ! site_ok; then
+      log "THE SITE DID NOT ANSWER through nginx on $idle ($rel); switching back to $active"
+      switch_to "$active"
+      restore_idle "$idle" "$prev_idle" "$prev_idle2" "$idle_was_up"
+      exit 6
+    fi
     # The previous release keeps its first copy running (instant rollback); its
     # second copy stops.
     stop_copy "${active}2"
