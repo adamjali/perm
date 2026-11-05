@@ -177,6 +177,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/db/__tests__/otherEmployers.test.ts",
   "src/lib/db/__tests__/firmPrograms.test.ts",
   "src/lib/db/__tests__/seasonalEmployers.test.ts",
+  // Added 2026-11-04: stands in for next/cache and fetch.
+  "src/lib/__tests__/convexStatic.test.ts",
 ];
 
 export default defineConfig({

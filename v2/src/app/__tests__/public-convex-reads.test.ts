@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
  * 2026-09-26 one such read turned `/perm-processing-times` from prerendered
  * into a server render per visit, and two calculators had been dynamic in
  * production that way for weeks. Public pages read Convex through
- * `queryStatic` (src/lib/convexStatic.ts), which sends the page's own window.
+ * `queryStatic` (src/lib/convexStatic.ts), which caches a good read for the page's own window.
  */
 const ROOT = join(__dirname, "..", "(site)", "(public)");
 

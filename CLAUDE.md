@@ -1172,7 +1172,7 @@ Built on branch `preview/image-led`; the owner saw the four previews and kept al
   days later (`scrubDeclined`). Convex sets `x-forwarded-for` itself (measured: a faked header is replaced).
 - **Convex answers HTTP 200 for a failed query, and Next's data cache keeps any 200**, so a `queryStatic` read that
   failed (a function not deployed yet, a transient error) is served for the page's whole window. Deploy Convex before
-  the site whenever a page starts reading a new function. A fix for the general case is still open.
+  the site whenever a page starts reading a new function. *(Fixed Nov 4 2026: `queryStatic` wraps the read in `unstable_cache`, which stores only a read that came back, with the inner fetch no-store; `src/lib/__tests__/convexStatic.test.ts` reproduces the old defect.)*
 - **An index file costs the page-change walker no import level** (`scripts/lib_page_inputs.mjs`): the homepage reaches
   its sections through `components/home/index.ts`, so at two levels a change to the rating line reached no list. The
   same walk feeds the Search Console queue, the deploy's Cloudflare purge, IndexNow and the sitemap's dates.
