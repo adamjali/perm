@@ -447,7 +447,8 @@ def cmd_purge() -> None:
 def main(argv: list[str]) -> None:
     global NO_DEPLOY
     NO_DEPLOY = "--no-deploy" in argv
-    wait = "--no-wait" not in argv
+    # Nothing shipped yet with --no-deploy, so the live checks would read the old site: they run after the release.
+    wait = "--no-wait" not in argv and not NO_DEPLOY
     yes = "--yes" in argv
     label: str | None = None
     args: list[str] = []

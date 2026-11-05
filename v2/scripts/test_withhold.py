@@ -270,6 +270,18 @@ def main() -> int:
     finally:
         w.server_state = real_state
 
+    # --no-deploy ships nothing, so it must not run the live checks against the old site
+    seen: list[bool] = []
+    real_refresh = w.cmd_refresh
+    try:
+        w.cmd_refresh = lambda yes, wait: seen.append(wait)
+        w.main(["refresh", "--no-deploy", "--yes"])
+        w.main(["refresh", "--yes"])
+    finally:
+        w.cmd_refresh = real_refresh
+        w.NO_DEPLOY = False
+    check(seen == [False, True], "--no-deploy skips the live checks; a plain run keeps them", f)
+
     wf = open(os.path.join(HERE, "..", "..", ".github", "workflows", "oracle-deploy.yml")).read()
     step = wf[wf.find("Drop Cloudflare's copies of pages a withheld name was on"):]
     step = step[:step.find("- name:")]
