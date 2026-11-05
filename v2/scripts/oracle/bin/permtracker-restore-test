@@ -17,7 +17,7 @@ trap 'rm -rf "$work"' EXIT
 
 newest_in(){ rclone lsjson "r2:permtracker-backups/$1/" | python3 -c '
 import json, sys
-rows = [r for r in json.load(sys.stdin) if r["Name"].endswith(".sql.zst")]
+rows = [r for r in json.load(sys.stdin) if r["Name"].endswith((".sql.zst", ".sql.zst.cms"))]
 print(max(rows, key=lambda r: r["ModTime"])["Name"] if rows else "")'; }
 
 restore_lca(){
@@ -43,8 +43,23 @@ newest=$(newest_in db)
 [ -n "$newest" ] || { echo "restore test: no backup in R2"; exit 1; }
 
 rclone copyto "r2:permtracker-backups/db/$newest" "$work/$newest" -q
-zstd -q -t "$work/$newest"
-zstd -dc "$work/$newest" | sqlite3 "$work/restore.db"
+dump="$work/$newest"
+case "$newest" in
+  *.cms)
+    # Sealed since Nov 4 2026: only the owner's Mac can open it. So R2's copy must be byte for byte the file that
+    # was uploaded (OFFSITE_SHA), and the plain local copy of the same night is the one loaded. The Mac proves the
+    # key opens it (the runbook's monthly step).
+    want=$(awk -v n="$newest" '$1 == n {print $2}' "$B/OFFSITE_SHA" 2>/dev/null || true)
+    got=$(sha256sum "$work/$newest" | cut -d' ' -f1)
+    [ -n "$want" ] || { echo "restore test: no recorded checksum for $newest"; exit 1; }
+    [ "$got" = "$want" ] || { echo "restore test: R2's $newest is not the file that was uploaded"; exit 1; }
+    rm -f "$work/$newest"
+    dump="$B/${newest%.cms}"
+    [ -f "$dump" ] || { echo "restore test: no local copy of ${newest%.cms} to load"; exit 1; }
+    ;;
+esac
+zstd -q -t "$dump"
+zstd -dc "$dump" | sqlite3 "$work/restore.db"
 
 read -r tables rows < <(python3 - "$work/restore.db" <<'PY'
 import sqlite3, sys
@@ -57,5 +72,5 @@ PY
 [ "$tables" -ge 40 ] && [ "$rows" -ge 6000000 ] || { echo "restore test: only $tables tables / $rows rows"; exit 1; }
 printf '%s %s %s %s\n' "$(date -u +%FT%TZ)" "$newest" "$tables" "$rows" > "$B/RESTORE_OK"
 echo "restore test ok: $newest restored $tables tables, $rows rows"
-rm -f "$work/restore.db" "$work/$newest"
+rm -f "$work/restore.db" "$work/$newest"  # never the local copy: $work only
 restore_lca
