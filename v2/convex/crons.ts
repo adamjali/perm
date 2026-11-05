@@ -404,6 +404,18 @@ crons.daily(
 );
 
 /**
+ * Consulate reports: clear the address hash from every report saved more than a day ago
+ * (convex/consularReports.ts), so the privacy policy's "deleted about a day later" holds within the hour.
+ * :25 past each hour, clear of the other hourly jobs.
+ */
+crons.hourly(
+  "consular-report-ip-clear",
+  { minuteUTC: 25 },
+  internal.consularReports.clearIpHashes,
+  {}
+);
+
+/**
  * The weekly digest. Composes Tuesday's issue from what the ingests
  * already hold (DOL's queue, the newest bulletin's moves, the week's Federal
  * Register documents) and stores it as a preview. Sending is gated on the
