@@ -304,6 +304,32 @@ jobs:
           ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=20 \
             "deploy@$ORACLE_HOST" "deploy ${GITHUB_SHA::12}-${GITHUB_RUN_NUMBER}" < "$RUNNER_TEMP/release.tar.zst"
 
+      # Every chunk's name changes with each deploy (chunkLoadingGlobal), so
+      # navigation data Cloudflare stored from the build before names files
+      # the live page can't use: the page showed an error and reloaded itself
+      # (Sentry 5N, Nov 2 to 5 2026, all within about 90 minutes of a deploy).
+      # nginx tags that data "rsc" (permtracker.conf, $pt_cache_tag) and this
+      # drops the tag once traffic has switched; pages keep their stored
+      # copies. Skips cleanly without the secrets and never fails the deploy;
+      # a refusal fails this step, so it shows.
+      - name: Drop Cloudflare's navigation data from the build before
+        if: steps.plan.outputs.ship == 'true'
+        continue-on-error: true
+        env:
+          CF_PURGE_TOKEN: ${{ secrets.CF_PURGE_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          if [ -z "$CF_PURGE_TOKEN" ] || [ -z "$CF_ZONE_ID" ]; then
+            echo "::notice::CF_PURGE_TOKEN or CF_ZONE_ID not set: the build before's navigation data stays at Cloudflare up to an hour"; exit 0
+          fi
+          curl -sS --max-time 30 -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CF_PURGE_TOKEN" -H "Content-Type: application/json" \
+            --data '{"tags":["rsc"]}' \
+            | python3 -c 'import json,sys
+          j = json.load(sys.stdin)
+          print("purge: navigation data from the build before is dropped" if j.get("success") else "::error::purge refused: " + json.dumps(j.get("errors"))[:200])
+          sys.exit(0 if j.get("success") else 1)'
+
       # Cloudflare keeps each page's HTML up to a day (s-maxage=86400) and a
       # deploy does not clear it, so a fix shipped here stayed invisible until
       # the copy expired (Oct 5 2026). This drops the copies of exactly the

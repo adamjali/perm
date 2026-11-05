@@ -249,6 +249,20 @@ def run(conf_text: str) -> None:
     check("an address containing 'private' is still stored",
           "stale-while-revalidate=86400" in edge(page, "/perm-employers/private-equity-partners-llc", ""))
     check("an answer with no label is never stored", edge("", "/perm-employers/adobe-inc", "") == "")
+    # Navigation data Cloudflare stores carries the tag "rsc", and only that: each deploy drops the tag after it
+    # switches, so the build before's payloads can't reach the live page (Sentry 5N, Nov 5 2026).
+    # eval_map can't read pt_cdn_cc's quoted values, so the edge label comes from map_label above.
+    tag = lambda cc, path, rsc, hdr="": eval_map(head, "pt_cache_tag",
+                                                 {"pt_cdn_cc": edge(cc, path, rsc), "arg__rsc": rsc, "http_rsc": hdr})
+    check("stored navigation data is tagged for the deploy's purge", tag(page, "/perm-queue", "1a2b3") == "rsc",
+          tag(page, "/perm-queue", "1a2b3"))
+    check("an employer page's stored navigation data is tagged too", tag(page, "/perm-employers/adobe-inc", "x9") == "rsc")
+    check("a page itself is never tagged, so a deploy keeps Cloudflare's copies of pages",
+          tag(page, "/perm-employers/adobe-inc", "") == "" and tag(page, "/", "") == "")
+    check("a private answer is never tagged", tag("private, no-store", "/perm-queue", "1a2b3") == "")
+    check("navigation data asked for by Next's RSC header alone is tagged", tag(page, "/perm-queue", "", "1") == "rsc")
+    check("the tag is sent from the server block every page location inherits",
+          "add_header Cache-Tag $pt_cache_tag;" in server.split("location", 1)[0])
     browser = re.search(r"map \$upstream_http_cache_control \$pt_browser_cc\s*\{([^}]*)\}", head)
     check("browsers revalidate shareable pages and their navigation data",
           browser is not None and re.search(r'"~\*s-maxage"\s+"public, max-age=0, must-revalidate";', browser.group(1)) is not None
@@ -554,6 +568,9 @@ def probe() -> None:
         "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
         "php probes sent to the app": good.replace("        return 404;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
         "WordPress folders matched anywhere in the path": good.replace("|^/(wp-admin|", "|/(wp-admin|", 1),
+        "navigation data left untagged": good.replace("    add_header Cache-Tag $pt_cache_tag;\n", "", 1),
+        "pages tagged with their navigation data": good.replace('"~^[^|]+\\|.+$" rsc;', '"~^[^|]+\\|" rsc;', 1),
+        "private answers tagged": good.replace('"~^[^|]+\\|.+$" rsc;', '"~\\|.+$" rsc;', 1),
     }
     global failures
     for name, text in mutations.items():
