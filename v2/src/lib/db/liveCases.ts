@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { MS_PER_DAY } from "@/lib/time";
-import { one, rows } from "./client";
+import { one, rows, rowsPaged } from "./client";
 import { ISO_MONTH_RE, shiftMonth } from "@convex/lib/months";
 import { INITIAL_RE, OTHER_INITIAL } from "@/lib/employerInitial";
 import { LIKE_ESCAPE, likeContains } from "./like";
@@ -201,17 +201,18 @@ export async function listLiveCases(args: LiveListArgs): Promise<LiveListPage> {
   const order = args.order === "oldest" ? "oldest" : "newest";
   const dir = order === "oldest" ? "ASC" : "DESC";
 
-  const found = await rows<LiveListDbRow>(
+  // Counted on the rows read (see rowsPaged), so a withheld row can't end the paging early.
+  const found = await rowsPaged<LiveListDbRow>(
     `SELECT ${LIVE_COLS} FROM perm_live_recent WHERE ${plan.where} ` +
       `ORDER BY ${liveOrderBy(args.sort, dir)} LIMIT ? OFFSET ?`,
     [...plan.params, take + 1, offset],
+    take,
   );
 
-  const page = found.slice(0, take).map(toRow);
   return {
-    rows: page,
-    isDone: found.length <= take,
-    continueCursor: String(offset + page.length),
+    rows: found.page.map(toRow),
+    isDone: !found.more,
+    continueCursor: String(offset + found.consumed),
     kind: args.kind,
     month,
     order,

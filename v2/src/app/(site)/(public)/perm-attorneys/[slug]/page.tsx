@@ -18,7 +18,8 @@
 import type { Metadata } from "next";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import Link from "next/link";
-import { hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
+import { BIGGEST_CLIENT_MIN_CASES, hasOwnPage, MIN_DECIDED_FOR_RATE, ENTITY_BASE, entityHref } from "@/lib/entityPayload";
+import { neutralPageEntry } from "@/lib/privacy/withheld";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits, seeCandidates } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
@@ -242,6 +243,10 @@ export default async function AttorneyPage({
   // Every read below keys on the SURVIVING slug, not the URL: a retired
   // spelling has no rows of its own in the facet or pending tables.
   const canonicalSlug = found.canonicalSlug;
+  // A firm withheld at its own request (src/lib/privacy/withheld.ts) is shown
+  // here under its label: every figure stays, and the blocks that are its name
+  // (spellings, its own profile, the claim form) don't render.
+  const neutral = neutralPageEntry(KIND, canonicalSlug) !== null;
   // Below the page threshold the page still RENDERS - an attorney searched a
   // two-case firm she knows, found it, and a result that 404s on click is
   // worse than absence. The doorway-page defense moved to metadata: sub-floor
@@ -277,7 +282,9 @@ export default async function AttorneyPage({
     // What a firm that claimed this page says about itself (convex/firmClaims.ts),
     // read on the page's own window; a profile change refreshes the page through
     // /api/revalidate-firm. A failed read shows no block rather than an error.
-    queryStatic(api.firmClaims.publishedProfile, { slug: canonicalSlug }, revalidate).catch(softFail("perm-attorneys/[slug]/page.queryStatic", null)),
+    neutral
+      ? Promise.resolve(null)
+      : queryStatic(api.firmClaims.publishedProfile, { slug: canonicalSlug }, revalidate).catch(softFail("perm-attorneys/[slug]/page.queryStatic", null)),
     // Wage determination to PERM filing, from the two files joined (perm_pwd_stats).
     getPwdLinks("attorney", canonicalSlug),
   ]);
@@ -317,9 +324,10 @@ export default async function AttorneyPage({
 
   const today = new Date().toISOString().slice(0, 10);
   const share = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its cases`;
+  // The top of the client list is only "the biggest client" with enough cases behind it.
   const topClient = facets.employer?.[0];
   const facts: ProfileFact[] = ([
-    topClient
+    topClient && topClient.n >= BIGGEST_CLIENT_MIN_CASES
       ? { label: "Biggest client", value: topClient.label, href: topClient.key ? entityHref("employer", topClient.key) : undefined, note: share(topClient.n) }
       : null,
     topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? entityHref("occupation", topOcc.key) : undefined, note: share(topOcc.n) } : null,
@@ -338,7 +346,7 @@ export default async function AttorneyPage({
     ...(hasPractice ? [{ id: "practice", label: "The practice" }] : []),
     ...(hasPrograms ? [{ id: "programs", label: "Every program" }] : []),
     { id: "compare", label: "Against others" },
-    { id: "firm", label: firmProfile ? "From the firm" : "For the firm" },
+    ...(neutral ? [] : [{ id: "firm", label: firmProfile ? "From the firm" : "For the firm" }]),
     { id: "notes", label: "Notes" },
   ];
 
@@ -512,32 +520,36 @@ export default async function AttorneyPage({
         />
       </Chapter>
 
-      <Chapter id="firm" title={firmProfile ? "From the firm" : "For the firm"}>
-        <FirmProfileBlock firmName={row.name} profile={firmProfile} />{" "}
-        <FirmClaimPanel slug={canonicalSlug} firmName={row.name} claimed={firmProfile != null} />{" "}
-        <div className="mt-8 max-w-2xl border-2 shadow-hard-sm p-6 bg-card border-border">
-          <h3 className="font-heading text-lg font-bold">Running the practice?</h3>{" "}
-          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-            The{" "}
-            <Link href="/signup" className="link">
-              free tracker
-            </Link>{" "}
-            carries the deadlines on every case, from the wage request to the I-140.
-          </p>
-        </div>
-      </Chapter>
+      {neutral ? null : (
+        <Chapter id="firm" title={firmProfile ? "From the firm" : "For the firm"}>
+          <FirmProfileBlock firmName={row.name} profile={firmProfile} />{" "}
+          <FirmClaimPanel slug={canonicalSlug} firmName={row.name} claimed={firmProfile != null} />{" "}
+          <div className="mt-8 max-w-2xl border-2 shadow-hard-sm p-6 bg-card border-border">
+            <h3 className="font-heading text-lg font-bold">Running the practice?</h3>{" "}
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+              The{" "}
+              <Link href="/signup" className="link">
+                free tracker
+              </Link>{" "}
+              carries the deadlines on every case, from the wage request to the I-140.
+            </p>
+          </div>
+        </Chapter>
+      )}
 
       <Chapter id="notes" title="Notes on these numbers">
-        <NameSpellings
-          variants={variants}
-          absorbed={absorbed}
-          subject="firm"
-          hrefBase={BASE}
-          rank={row.rank}
-          className="mt-0"
-        />
+        {neutral ? null : (
+          <NameSpellings
+            variants={variants}
+            absorbed={absorbed}
+            subject="firm"
+            hrefBase={BASE}
+            rank={row.rank}
+            className="mt-0"
+          />
+        )}
         <LimitsPanel
-          className="mt-12"
+          className={neutral ? "mt-0" : "mt-12"}
           items={[
             wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "their clients" }),
             {

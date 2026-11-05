@@ -10,6 +10,12 @@ import { mergeJobChoices } from "@/lib/socFinder";
 import { titleKey } from "@/lib/socTitleKey";
 import { ENTITY_BASE } from "@/lib/entityPayload";
 import { getSocTitle } from "./socTitles";
+import { isWithheldQuery, neutralPageEntry } from "@/lib/privacy/withheld";
+
+/** "Law firm 3" and "law-firm-3" as the slug they'd be. */
+function neutralSlugOfText(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
 
 export type { NameSuggestion, SuggestKind };
 
@@ -76,6 +82,8 @@ async function readSource(src: Source): Promise<{ slug: string; name: string; n:
     const part = await rows<{ slug: string; name: string; n: number | string }>(
       `SELECT slug, name, ${src.count} AS n FROM ${src.table} WHERE ${src.where} rank > ? AND rank <= ?`,
       [lo, lo + WINDOW],
+      // A withheld name is never suggested, and its neutral page is no search result of its own.
+      { withheld: "drop" },
     );
     out.push(...part);
     if (part.length === 0) break;
@@ -161,6 +169,9 @@ const SUGGEST_MIN_SCORE = 0.7;
 export async function suggestNames(kind: SuggestKind, query: string, limit = 5): Promise<NameSuggestion[]> {
   const q = query.trim();
   if (q.length < SEARCH_TEXT_MIN || q.length > SUGGEST_MAX_LENGTH) return [];
+  // A name withheld at its owner's request is a search that finds nothing.
+  // "Did you mean" the next-closest name would answer it with a stranger.
+  if (isWithheldQuery(kind, q)) return [];
   const index = await indexFor(kind);
   return index.search(q, { limit, min: SUGGEST_MIN_SCORE }).map(({ item, score, weighted }) => ({
     kind,
@@ -183,7 +194,14 @@ export async function suggestNames(kind: SuggestKind, query: string, limit = 5):
 export async function nameCandidates(kind: SuggestKind, text: string, limit: number): Promise<NameSuggestion[]> {
   const q = text.trim();
   if (!q) return [];
-  const [exact, close] = await Promise.all([getBySlug(kind, q), suggestNames(kind, q, limit)]);
+  // A withheld name or slug resolves to nothing, never to a similar name.
+  if (isWithheldQuery(kind, q)) return [];
+  // A neutral page's label or slug ("Law firm 3", "law-firm-3") is that page.
+  const neutral = neutralPageEntry(kind, neutralSlugOfText(q));
+  const [exact, close] = await Promise.all([
+    getBySlug(kind, neutral ? neutralSlugOfText(q) : q),
+    neutral ? Promise.resolve([] as NameSuggestion[]) : suggestNames(kind, q, limit),
+  ]);
   const first: NameSuggestion[] = exact
     ? [{ kind, name: exact.name, slug: exact.slug, href: `${ENTITY_BASE[kind]}/${exact.slug}`, cases: exact.total, score: 1, published: true }]
     : [];

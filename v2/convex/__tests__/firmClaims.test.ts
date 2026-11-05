@@ -154,6 +154,23 @@ describe("the request takes the firm's name from our records", () => {
   });
 });
 
+describe("a firm withheld at its own request", () => {
+  it("can't be claimed under its real slug or its neutral one, and shows no words of its own", async () => {
+    vi.stubEnv("WITHHELD_FIRMS", `${SLUG}|Smith Immigration PLLC|Law firm||1||`);
+    const t = createTestContext();
+    stub(TIED);
+    for (const slug of [SLUG, "law-firm-1"]) {
+      const res = await t.fetch("/firm-claim/request", {
+        method: "POST",
+        body: JSON.stringify({ email: "jane@smithlaw.com", slug, role: "Partner", profile: PROFILE }),
+      });
+      expect(res.status, slug).toBe(400);
+      expect(await t.query(api.firmClaims.publishedProfile, { slug })).toBeNull();
+    }
+    expect(await claimRow(t, "jane@smithlaw.com")).toBeNull();
+  });
+});
+
 describe("confirming a claim", () => {
   it("confirms a claim from a domain DOL ties to the firm, holds its words for review, and hands back an edit link", async () => {
     vi.useFakeTimers();

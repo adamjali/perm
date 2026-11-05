@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { MS_PER_DAY } from "@/lib/time";
-import { exec, one, rows } from "./client";
+import { exec, one, rows, rowsPaged } from "./client";
 import { slugify } from "@/lib/entitySlug";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { LIVE_SEARCH_MAX, narrowingClauses } from "./cases";
@@ -591,16 +591,17 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     const off = Number(args.cursor ?? 0);
     const offset = Number.isFinite(off) && off >= 0 ? Math.floor(off) : 0;
     const dir = args.order === "oldest" ? "ASC" : "DESC";
-    const found = await rows<FlagDbRow>(
+    // Counted on the rows read (see rowsPaged), so a withheld row can't end the paging early.
+    const found = await rowsPaged<FlagDbRow>(
       `SELECT ${FLAG_COLS} FROM ${table} WHERE ${where} ` +
         `ORDER BY filing_date ${dir}, case_number ${dir} LIMIT ? OFFSET ?`,
       [...params, take + 1, offset],
+      take,
     );
-    const page = found.slice(0, take).map(toFlagRow);
     return {
-      rows: page,
-      isDone: found.length <= take,
-      continueCursor: String(offset + page.length),
+      rows: found.page.map(toFlagRow),
+      isDone: !found.more,
+      continueCursor: String(offset + found.consumed),
       kind: args.kind,
       month,
     };

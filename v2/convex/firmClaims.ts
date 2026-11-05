@@ -72,6 +72,7 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { makeExpiringToken, verifyExpiringToken } from "./lib/expiringToken";
 import { one, rows } from "./lib/publicMirror";
+import { maskerForEnv } from "./lib/withheldNames";
 import { recordError } from "./lib/errorRecording";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { connectionThrottleReply } from "./lib/throttleReply";
@@ -165,6 +166,10 @@ export function firmPagePath(slug: string): string {
 /** The firm's name for a slug, from our records; null when we hold no such firm. */
 export async function firmNameFor(slug: string): Promise<string | null> {
   if (!FIRM_SLUG_RE.test(slug)) return null;
+  // A firm withheld at its own request (./lib/withheldNames.ts) can't be
+  // claimed under either slug: a claim would publish words about it under the
+  // name it asked to take down, or tie its label to its real domain.
+  if (maskerForEnv(process.env).withheldBySlug("firm", slug)) return null;
   const r = await one("SELECT name FROM perm_entities WHERE kind = 'attorney' AND slug = ?", [slug]);
   return typeof r?.name === "string" && r.name ? r.name : null;
 }
@@ -925,6 +930,8 @@ export const publishedProfile = query({
   ),
   handler: async (ctx, args) => {
     if (!FIRM_SLUG_RE.test(args.slug)) return null;
+    // A withheld firm's own words show nowhere: on the neutral page they'd say who it is.
+    if (maskerForEnv(process.env).withheldBySlug("firm", args.slug)) return null;
     const p = await ctx.db
       .query("firmProfiles")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))

@@ -358,6 +358,9 @@ export async function nameVariants(
     "SELECT slug, name, total FROM perm_entities WHERE kind = ? "
       + "AND merge_key >= ? AND merge_key < ? AND slug <> ? ORDER BY total DESC LIMIT ?",
     [kind, root, `${root}!`, slug, MAX_VARIANTS + 1],
+    // A withheld spelling isn't listed as another page's variant: its label beside
+    // this name would say which name it was.
+    { withheld: "drop" },
   );
   // One over the cap means the root is commoner than it looked, so the list
   // would be a directory rather than a variant set. Withhold instead.

@@ -156,6 +156,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/db/__tests__/clientRetry.test.ts",
   // Same reason: mocks `@libsql/client` and resets modules per case.
   "src/lib/db/__tests__/clientRoute.test.ts",
+  // Same again, and it sets the withheld-name settings before each import.
+  "src/lib/db/__tests__/clientWithheld.test.ts",
   // Added 2026-09-27. Each mocks ./client (and caseLookupHistory also mocks
   // ./caseDiscovery). In the shared pool caseLookupHistory's discoverCase mock
   // leaked into caseDiscovery.test.ts, which then read null for a real hit:

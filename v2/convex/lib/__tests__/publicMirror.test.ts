@@ -141,6 +141,38 @@ describe("result decoding", () => {
   });
 });
 
+describe("a name withheld at its owner's request", () => {
+  // Made up, like every name in this public repository.
+  const FIRMS = "example-law-group-pllc|Example Law Group, PLLC|Law firm||3|exampel-law-group|Exampel Law Group";
+
+  it("is masked in every row Convex reads, so no email or alert prints it", async () => {
+    vi.stubEnv("WITHHELD_FIRMS", FIRMS);
+    stubPipeline(() => [
+      { case_number: "G-100-24001-000002", employer_name: "Acme Corp", attorney_name: "Exampel Law Group", attorney_slug: "exampel-law-group" },
+    ]);
+    const got = await rows("SELECT * FROM perm_cases WHERE employer_slug = ?", ["acme-corp"]);
+    expect(got).toEqual([
+      { case_number: "G-100-24001-000002", employer_name: "Acme Corp", attorney_name: "Law firm 3", attorney_slug: "law-firm-3" },
+    ]);
+  });
+
+  it("can't be found by its real slug, and its neutral slug reads the real record", async () => {
+    vi.stubEnv("WITHHELD_FIRMS", FIRMS);
+    const sent: unknown[][] = [];
+    stubPipeline(() => [{ name: "Example Law Group, PLLC" }]);
+    // Record the arguments each request carries, then answer as the stub does.
+    const stubbed = global.fetch;
+    global.fetch = (async (url: unknown, init?: { body?: string }) => {
+      const body = JSON.parse(init?.body ?? "{}") as { requests: { stmt?: { args: { value?: string }[] } }[] };
+      sent.push((body.requests[0]?.stmt?.args ?? []).map((a) => a.value));
+      return stubbed(url as string, init as RequestInit);
+    }) as unknown as typeof fetch;
+    expect(await one("SELECT name FROM perm_entities WHERE kind = 'attorney' AND slug = ?", ["example-law-group-pllc"])).toBeNull();
+    expect(await one("SELECT name FROM perm_entities WHERE kind = 'attorney' AND slug = ?", ["law-firm-3"])).toEqual({ name: "Law firm 3" });
+    expect(sent[1]).toEqual(["example-law-group-pllc"]);
+  });
+});
+
 describe("placeholders", () => {
   it("returns null for an empty list so callers must branch", () => {
     // `WHERE case_number IN ()` is a syntax error, and building it from a

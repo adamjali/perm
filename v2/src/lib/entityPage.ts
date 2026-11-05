@@ -14,6 +14,7 @@ import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { listByKind, PRERENDERED_ENTITY_HEAD } from "@/lib/db/entities";
 import type { DatasetFreshness } from "@/lib/db/publicData";
+import { isNeutralPath } from "@/lib/privacy/withheld";
 
 /** DOL's own denial rate, used when the aggregate document cannot be read. */
 export const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
@@ -47,8 +48,11 @@ export function entityMetadata({
   path: string;
   noindex?: boolean;
 }): Metadata {
+  // A withheld entity's neutral page ("/perm-attorneys/law-firm-3") is for the
+  // links that reach it, never a search result of its own.
+  const hidden = noindex || isNeutralPath(path);
   return {
-    ...(noindex ? { robots: { index: false, follow: true } } : {}),
+    ...(hidden ? { robots: { index: false, follow: true } } : {}),
     title: absolute ? { absolute: title } : title,
     description,
     alternates: { canonical: path },

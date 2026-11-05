@@ -199,6 +199,8 @@ interface SearchResponse {
   resolved: { firm: ResolvedEntity | null; occupation: ResolvedEntity | null };
   dropped: FilterKey[];
   needsLead: boolean;
+  /** A law firm, job or employer box whose words name nothing: said, never searched around. */
+  noMatch?: { field: "employer" | "firm" | "occupation"; message: string };
   /** Absent on a `needsLead` answer, which ran no search. */
   permOnly?: string[];
   /** The LCA-only filters set, in words: the answer is published LCAs alone. */
@@ -727,7 +729,7 @@ export function UnifiedCaseSearch({
   // An employer search that found nothing: the closest employer names on
   // file, each running the search again under that name.
   const emptyNameSearch =
-    searching && Boolean(data) && !data?.needsLead && data?.rows.length === 0 && query.search.trim().length >= 3;
+    searching && Boolean(data) && !data?.needsLead && !data?.noMatch && data?.rows.length === 0 && query.search.trim().length >= 3;
   const { suggestions: employerSuggestions, loading: employerSuggesting } = useNameSuggestions("employer", query.search, emptyNameSearch);
 
   // How many filters each fold holds, said on its closed summary so a set
@@ -1491,6 +1493,15 @@ export function UnifiedCaseSearch({
         </div>
       ) : null}
 
+      {data?.noMatch ? (
+        <div role="status" className="bg-tint p-5 border-2 border-border">
+          <p className="text-base leading-relaxed">
+            {data.noMatch.message} Nothing was searched, so no other name&apos;s filings stand in for it.
+            Check the spelling, or clear that box and search by another field.
+          </p>
+        </div>
+      ) : null}
+
       {data && !data.needsLead && data.resolved.firm ? (
         <div className="bg-tint p-4 border-2 border-border">
           <p className="text-base leading-relaxed">
@@ -1630,7 +1641,7 @@ export function UnifiedCaseSearch({
         </div>
       ) : null}
 
-      {searching && data && !data.needsLead && data.rows.length === 0 ? (
+      {searching && data && !data.needsLead && !data.noMatch && data.rows.length === 0 ? (
         <div className="bg-tint p-5 border-2 border-border">
           <p className="text-base leading-relaxed">
             Nothing matched. Try a shorter form of the employer name: DOL spells

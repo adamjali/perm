@@ -8,7 +8,16 @@ vi.mock("server-only", () => ({}));
 const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 const exec = vi.fn<(sql: string, args?: unknown[]) => Promise<number>>();
-vi.mock("../client", () => ({ rows, one, exec }));
+vi.mock("../client", () => ({
+  rows,
+  one,
+  exec,
+  // The pagers count the rows read (rowsPaged); these tests read through `rows`.
+  rowsPaged: async (sql: string, args: unknown[], take: number) => {
+    const r = await rows(sql, args);
+    return { page: r.slice(0, take), more: r.length > take, consumed: Math.min(r.length, take) };
+  },
+}));
 
 const { LCA_FINAL_STATUSES, listLcaCases, lookupLcaDisclosed, normaliseLcaCaseNumber, searchLcaCases, searchLcaDisclosed } =
   await import("../lcaCases");

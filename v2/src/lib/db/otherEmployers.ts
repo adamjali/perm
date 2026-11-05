@@ -98,6 +98,8 @@ export async function getOtherEmployerSlugWindow(
       rows<{ slug: string; last_changed: string | null }>(
         `SELECT slug, last_changed FROM ${table} WHERE rank > ? AND rank <= ? ORDER BY rank`,
         [lo, lo + size],
+        // A withheld employer is no sitemap entry, under either slug.
+        { withheld: "drop" },
       ),
     [],
   );

@@ -36,6 +36,7 @@ import {
 import { SEARCH_TEXT_MAX, SEARCH_TEXT_MIN } from "@/lib/search/limits";
 import { CHANGE_PROGRAMS, isChangeProgram, type ChangeProgram } from "@/lib/changeProgram";
 import { ISO_MONTH_RE } from "@convex/lib/months";
+import { isWithheldQuery } from "@/lib/privacy/withheld";
 
 const STATE_RE = /^[A-Z]{2}$/;
 const FY_RE = /^\d{4}$/;
@@ -104,10 +105,27 @@ export interface Resolved {
   occupation: ResolvedEntity | null;
 }
 
+/** A box whose words name nothing we can search by. */
+export type NoMatchField = "employer" | "firm" | "occupation";
+
 export type CaseSearchRequest =
   | { kind: "bad"; message: string }
   | { kind: "needsLead"; csv: boolean; resolved: Resolved }
+  /**
+   * A law firm or job box matched no page, or the words are a name withheld at
+   * its owner's request. Said, never answered by ignoring the box or by the
+   * next-closest name: either would show a stranger's filings as if they were
+   * what was asked for.
+   */
+  | { kind: "noMatch"; csv: boolean; field: NoMatchField; resolved: Resolved }
   | { kind: "search"; csv: boolean; args: UnifiedSearchArgs; resolved: Resolved; dropped: FilterKey[] };
+
+/** The words the page and the API say for a box that matched nothing. */
+export const NO_MATCH_MESSAGE: Record<NoMatchField, string> = {
+  employer: "No employer matches those words.",
+  firm: "No law firm matches those words.",
+  occupation: "No occupation matches those words.",
+};
 
 const fail = (message: string): CaseSearchRequest => ({ kind: "bad", message });
 
@@ -199,6 +217,12 @@ export async function planCaseSearch(
     firmText ? resolveEntity("attorney", firmText) : Promise.resolve(null),
     occText ? resolveEntity("occupation", occText) : Promise.resolve(null),
   ]);
+  const resolved = { firm, occupation };
+  // A box that was filled and matched nothing is the answer: no match.
+  if (firmText && !firm) return { kind: "noMatch", csv, field: "firm", resolved };
+  if (occText && !occupation) return { kind: "noMatch", csv, field: "occupation", resolved };
+  // An employer withheld at its owner's request: its name is a search that finds nothing.
+  if (employer && isWithheldQuery("employer", employer)) return { kind: "noMatch", csv, field: "employer", resolved };
 
   const lead = chooseLead({
     ...(caseNumber ? { caseNumber } : {}),

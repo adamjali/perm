@@ -111,7 +111,9 @@ export const browseBucket = cache(async function browseBucket(
   const sql = ranges.map(() => clause).join(" UNION ALL ");
   const args = ranges.flatMap(([lo, hi]) => [kind, MIN_TOTAL_FOR_PAGE, lo, hi]);
 
-  const found = await rows<BrowseDbRow>(sql, args);
+  // A withheld entity leaves the A to Z list: listed as its label, it would sit
+  // under its real name's letter.
+  const found = await rows<BrowseDbRow>(sql, args, { withheld: "drop" });
   const all = found
     .map((r) => ({ slug: r.slug, name: r.name, total: r.total, rank: r.rank }))
     .sort(

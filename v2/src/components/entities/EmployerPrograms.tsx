@@ -44,8 +44,8 @@ export function EmployerPrograms({
   stages: EmployerStageRow | null;
   /** The first day of the site's status-change record, which dates a hold. */
   logFrom?: string | null;
-  /** The unified search prefilled with this employer. */
-  searchHref: string;
+  /** The unified search prefilled with this employer; absent on a withheld employer's neutral page. */
+  searchHref?: string;
   /** How many spellings of the employer's name the files were read under, when the nightly map named them. */
   spellings?: number | null;
 }) {
@@ -131,11 +131,13 @@ export function EmployerPrograms({
           .
         </p>
       ) : null}{" "}
-      <p className="mt-3 text-sm">
-        <Link href={searchHref} className="link font-semibold">
-          Every case across these programs, in the case search
-        </Link>
-      </p>{" "}
+      {searchHref ? (
+        <p className="mt-3 text-sm">
+          <Link href={searchHref} className="link font-semibold">
+            Every case across these programs, in the case search
+          </Link>
+        </p>
+      ) : null}{" "}
       <FinePrint summary="How these are counted" className="mt-1">
         <p>
           Medians are of the published rows with a usable wage, annualised from

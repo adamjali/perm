@@ -24,7 +24,7 @@
 import "server-only";
 
 import { casesToCsv, csvCell } from "@/lib/caseSearchCsv";
-import { planCaseSearch } from "@/lib/caseSearchRequest";
+import { NO_MATCH_MESSAGE, planCaseSearch } from "@/lib/caseSearchRequest";
 import { SITE_URL } from "@/lib/constants/site";
 import type { EntityKind } from "@/lib/entityPayload";
 import { UNIFIED_MAX, unifiedSearch, type UnifiedCase } from "@/lib/db/unifiedSearch";
@@ -125,6 +125,8 @@ export async function runExport(kind: ExportKind, url: URL, plan: ApiPlan): Prom
         message: "An export needs an employer (q), case number, law firm, state, occupation or stage to search by.",
       };
     }
+    // Refused with a 404 and nothing counted: a box naming nothing is no export.
+    if (plan2.kind === "noMatch") return { ok: false, status: 404, code: "not_found", message: NO_MATCH_MESSAGE[plan2.field] };
     const result = await unifiedSearch(plan2.args);
     const notes = [
       result.truncated ? `More cases matched than this export holds (${limit.toLocaleString("en-US")}); narrow the search to reach the rest.` : null,
