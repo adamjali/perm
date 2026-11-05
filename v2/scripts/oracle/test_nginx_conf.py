@@ -392,7 +392,7 @@ def run(conf_text: str) -> None:
     touch = r"~ ^/apple-touch-icon(-[0-9]+x[0-9]+)?(-precomposed)?\.png$"
     check("an iPhone's touch-icon variants get the site's one icon, from disk",
           "try_files /apple-touch-icon.png @app;" in locs.get(touch, "") and "root /srv/permtracker/app/live/public;" in locs.get(touch, ""))
-    for sel in ("/_next/static/", "~ ^/(images|og|lottie|about|agency)/", icons, touch):
+    for sel in ("/_next/static/", "~ ^/(images|og|lottie|about|agency|videos)/", icons, touch):
         b = locs.get(sel, "")
         check(f"{sel}: no limits on files from disk", not zones_in(b, "limit_req") and not zones_in(b, "limit_conn"))
 

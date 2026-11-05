@@ -217,8 +217,17 @@ jobs:
         run: |
           S=$(dirname "$(find .next/standalone -name server.js -not -path '*/node_modules/*' | head -1)")
           test -f "$S/server.js"
-          cp -r .next/static "$S/.next/static"
-          cp -r public "$S/public"
+          # Copy the CONTENTS: Next's tracing can create $S/public first (the share
+          # picture's fonts, Nov 5 2026), and `cp -r public "$S/public"` then nests
+          # everything at public/public, which took every picture, film and icon
+          # off the site from 2:23 PM EST that day.
+          mkdir -p "$S/.next/static" "$S/public"
+          cp -r .next/static/. "$S/.next/static/"
+          cp -r public/. "$S/public/"
+          missing=$(cd public && find . -type f | while read -r f; do [ -f "$S/public/$f" ] || echo "$f"; done | head -5)
+          if [ -n "$missing" ] || [ -d "$S/public/public" ]; then
+            echo "::error::the package is missing public files: $missing"; exit 1
+          fi
           # The pages this push changed, which the server warms before the
           # rest: the same list the Cloudflare step below drops copies of. None
           # on a manual run (no "before"); a failure here never fails the deploy.

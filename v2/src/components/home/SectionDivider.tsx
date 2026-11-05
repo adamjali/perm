@@ -93,8 +93,14 @@ export function SectionDivider({
   className?: string;
 }) {
   const edge = EDGES[kind];
+  // The stretched SVG's bottom edge lands between device pixels on a phone (3x), and the strip behind it showed
+  // through as a light hairline across the band below (Nov 5 2026, iPhone). The wrapper's last 2px are painted in
+  // the band's own colour, so whatever the rounding, the seam meets the band.
+  const background = fill
+    ? `linear-gradient(to bottom, ${above ?? "transparent"} calc(100% - 2px), ${fill} calc(100% - 2px))`
+    : above;
   return (
-    <div className={className} aria-hidden="true" style={{ lineHeight: 0, background: above }}>
+    <div className={className} aria-hidden="true" style={{ lineHeight: 0, background }}>
       <svg
         viewBox="0 0 1440 64"
         preserveAspectRatio="none"
