@@ -1,4 +1,5 @@
 import type { ApprovalRate } from "@/lib/approvalRate";
+import { ApprovalBar } from "@/components/home/ApprovalBar";
 import { Fragment } from "react";
 import { TrendChip, type FigureTrend } from "@/components/data/FigureRow";
 import { ABOUT_ONE_LINER } from "@/lib/constants/about";
@@ -191,17 +192,9 @@ export function HeroSection({ wait = null, board, months = [], trends = {}, appr
             ))}
           </dl>
         ) : null}{" "}
-        {/* The sentence an answer engine quotes: DOL's own approval rate with its count and dates, then our
-            check's newest 30 days (owner, Nov 4 2026). */}
-        {approval ? (
-          <p className="mt-5 max-w-3xl text-base leading-relaxed text-soft">
-            {approval.files}
-            {approval.recent ? ` ${approval.recent}` : ""}{" "}
-            <Link href="/perm-denial-risk" className="link">
-              Approval rates by job, state and wage
-            </Link>
-          </p>
-        ) : null}{" "}
+        {/* DOL's own approval rate with its count and dates, then our check's newest 30 days (owner, Nov 4 2026),
+            drawn as a bar (Nov 5 2026: the sentences read as a wall of text). */}
+        {approval ? <ApprovalBar parts={approval.parts} /> : null}{" "}
         {columns.length ? (
           <figure className="mt-6 sm:mt-7">
             <ColumnChart

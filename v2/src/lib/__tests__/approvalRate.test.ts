@@ -42,6 +42,22 @@ describe("approvalRate", () => {
     expect(approvalRate(META, thin)!.recent).toBeNull();
   });
 
+  it("hands the homepage's bar its parts: each outcome's count and share, the window, the last 30 days", () => {
+    const r = approvalRate(META, days(40))!;
+    expect(r.parts).toEqual({
+      total: 373939,
+      from: "2023-10-01",
+      to: "2026-06-30",
+      outcomes: [
+        { key: "certified", n: 343773, share: "91.9%" },
+        { key: "denied", n: 11357, share: "3.0%" },
+        { key: "withdrawn", n: 18809, share: "5.0%" },
+      ],
+      recent: { to: "2026-11-03", n: 18000, share: "93.3%" },
+    });
+    expect(approvalRate(META, [])!.parts.recent).toBeNull();
+  });
+
   it("reads a renamed or missing field as no figure, never a NaN", () => {
     expect(approvalRate(null, [])).toBeNull();
     expect(approvalRate({ ...META, totalCases: "373939" }, [])).toBeNull();

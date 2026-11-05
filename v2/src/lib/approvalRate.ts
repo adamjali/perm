@@ -30,6 +30,18 @@ export interface DecidedDay {
   withdrawn: number;
 }
 
+/** The figures behind the sentences, for a picture of them (the homepage's bar). */
+export interface ApprovalParts {
+  total: number;
+  /** DOL's files' first and last decision days. */
+  from: string;
+  to: string;
+  /** Certified, denied and withdrawn, each with its share of `total` ("91.9%"); a status the files lack is left out. */
+  outcomes: { key: "certified" | "denied" | "withdrawn"; n: number; share: string }[];
+  /** The last 30 days our check saw, or null with too few decisions. */
+  recent: { to: string; n: number; share: string } | null;
+}
+
 export interface ApprovalRate {
   /** The files' certified share, to one place ("91.9%"). */
   rate: string;
@@ -37,6 +49,7 @@ export interface ApprovalRate {
   files: string;
   /** "In the 30 days to November 3, 2026, our daily check saw ... certified." Null with too few decisions. */
   recent: string | null;
+  parts: ApprovalParts;
 }
 
 /** Fewer decisions than this in 30 days and the recent share isn't quoted: a holiday fortnight reads as a trend. */
@@ -72,6 +85,7 @@ export function approvalRate(meta: CasesMeta | null, days: readonly DecidedDay[]
 
   const newest = days.reduce<string | null>((m, d) => (m && m > d.date ? m : d.date), null);
   let recent: string | null = null;
+  let recentPart: ApprovalParts["recent"] = null;
   if (newest) {
     const start = new Date(`${newest}T12:00:00Z`);
     start.setUTCDate(start.getUTCDate() - 29);
@@ -81,7 +95,13 @@ export function approvalRate(meta: CasesMeta | null, days: readonly DecidedDay[]
     const c = window.reduce((s, d) => s + d.certified, 0);
     if (n >= RECENT_MIN_DECISIONS) {
       recent = `In the 30 days to ${longDate(newest)}, our daily check of DOL's case status saw ${formatInt(n)} PERM decisions, and ${formatApprovalRate(c / n)} of them were certified.`;
+      recentPart = { to: newest, n, share: formatApprovalRate(c / n) };
     }
   }
-  return { rate, files, recent };
+  const outcomes: ApprovalParts["outcomes"] = [
+    { key: "certified" as const, n: certified },
+    { key: "denied" as const, n: denied },
+    { key: "withdrawn" as const, n: withdrawn },
+  ].flatMap((o) => (o.n === null ? [] : [{ key: o.key, n: o.n, share: o.key === "certified" ? rate : formatShareOf(o.n, total) }]));
+  return { rate, files, recent, parts: { total, from, to, outcomes, recent: recentPart } };
 }
