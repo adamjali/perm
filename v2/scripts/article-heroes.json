@@ -1290,6 +1290,15 @@
    "css": "main figure li:nth-child(n+9){display:none!important}"
   },
   "credit": "Screenshot of permtracker.app, November 3, 2026",
-  "alt": "The consulates page: how far back each post is scheduling employment cases, Dhaka, Manila, Ciudad Ju\u00e1rez and Guangzhou first"
+  "alt": "The consulates page: how far back each post is scheduling employment cases, Dhaka, Manila, Ciudad Juárez and Guangzhou first"
+ },
+ "changelog/every-visa-at-each-consulate": {
+  "capture": {
+   "url": "/consular-posts",
+   "clip": "sel:main figure",
+   "css": "main figure li:nth-child(n+9){display:none!important}"
+  },
+  "credit": "Screenshot of permtracker.app, November 5, 2026",
+  "alt": "The consulates page: how far back each post is scheduling cases, with a switch for employment, family preference and immediate relative visas"
  }
 }
