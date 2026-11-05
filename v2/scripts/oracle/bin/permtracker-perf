@@ -84,11 +84,19 @@ BULK_READS = {
     "SELECT case_number,status,received_date,decision_date,days,fiscal_year,employer_name,": "a PERM load reading a case table",
 }
 # The site's own reads join columns with ", ", so none of them can match a prefix above.
+# A job whose reads do join with ", " is matched by its own shape: no file under src/ selects a
+# case number's prefix this way (Nov 5 2026: build_employer_map.py's per-slice group-by over every
+# program's filings averaged 1.3 s over 61 runs each night and warned in the morning report).
+BULK_READ_SHAPES = {
+    re.compile(r"^SELECT s\.employer_slug, s\.\w+, substr\(s\.case_number, 1, length\(s\.case_number\) - 12\)"):
+        "the nightly employer map grouping a program's filings",
+}
 
 
 def bulk_read(sql: str) -> str | None:
     """The load job a statement belongs to, or None when it may be a page's."""
-    return next((job for start, job in BULK_READS.items() if sql.startswith(start)), None)
+    return (next((job for start, job in BULK_READS.items() if sql.startswith(start)), None)
+            or next((job for shape, job in BULK_READ_SHAPES.items() if shape.match(sql)), None))
 REGRESSION = 2.0          # twice the week's typical hour
 
 ENTITY_FAMILIES = ("/perm-employers/*", "/perm-attorneys/*", "/perm-wages/*")

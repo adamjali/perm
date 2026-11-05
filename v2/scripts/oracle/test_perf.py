@@ -214,6 +214,12 @@ def test_judge() -> None:
     load = "SELECT case_number,status,received_date,decision_date,days,fiscal_year,employer_name,employer_slug FROM perm_cases WHERE case_number > ? ORDER BY case_number LIMIT ?"
     w = perf.judge(None, None, [{"runs": 19, "meanMs": 3000, "sql": load}], None, [])
     check("a load job's paged read of a whole table isn't a warning", w == [], str(w))
+    emap = ("SELECT s.employer_slug, s.employer_name, substr(s.case_number, 1, length(s.case_number) - 12), COUNT(*), "
+            "MIN(s.filing_date), MAX(s.filing_date) FROM lca_case_status s WHERE s.employer_slug >= ? GROUP BY 1, 2, 3")
+    w = perf.judge(None, None, [{"runs": 61, "meanMs": 1300, "sql": emap}], None, [])
+    check("the nightly employer map's group-by isn't a warning", w == [], str(w))
+    w = perf.judge(None, None, [{"runs": 6, "meanMs": 1500, "sql": "SELECT s.employer_slug, s.employer_name FROM perm_live_recent s WHERE s.employer_slug = ?"}], None, [])
+    check("a page's read that starts the same way still is", len(w) == 1, str(w))
     page = "SELECT case_number, status, received_date, decision_date, days, fiscal_year, employer_name FROM perm_cases WHERE employer_slug = ?"
     w = perf.judge(None, None, [{"runs": 6, "meanMs": 1500, "sql": page}], None, [])
     check("a page's read of the same columns still is", len(w) == 1, str(w))
