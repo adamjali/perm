@@ -179,6 +179,21 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/db/__tests__/seasonalEmployers.test.ts",
   // Added 2026-11-04: stands in for next/cache and fetch.
   "src/lib/__tests__/convexStatic.test.ts",
+  // Added 2026-11-04: every other shared-pool file that mocked a module
+  // (shared-pool-mocks.test.ts now fails on a new one).
+  "src/lib/__tests__/errors.test.ts",
+  "src/lib/__tests__/funnelEvents.test.tsx",
+  "src/lib/ai/__tests__/providers.test.ts",
+  "src/lib/db/__tests__/bulletin.test.ts",
+  "src/lib/db/__tests__/changes.test.ts",
+  "src/lib/db/__tests__/entityBrowse.test.ts",
+  "src/lib/db/__tests__/liveEmployers.test.ts",
+  "src/lib/db/__tests__/rfiBlend.test.ts",
+  "src/lib/db/__tests__/visaIssuances.test.ts",
+  "src/lib/db/entityLinks.test.ts",
+  "src/lib/db/uscisCaseStatus.test.ts",
+  "src/lib/forms/__tests__/formText.test.ts",
+  "src/lib/uscis/__tests__/torchClient.test.ts",
 ];
 
 export default defineConfig({
