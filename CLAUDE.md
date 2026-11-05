@@ -1267,8 +1267,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 25 2026: WARN notices from
   queue has passed, a renamed label, a shortcut pressed before the script listens). Run `./run-e2e-tests.sh` against
   the dev server after a change to a public flow.
 - **Cloudflare inserts its Web Analytics script into every page** (automatic setup on the zone since Sep 28 2026), and
-  the site's script policy blocks it, so it has never recorded a visit and every page logs one console error. The
-  owner decides whether to switch it off or allow it.
+  the site's script policy blocks it, so it never recorded a visit and every page logged one console error. **Switched
+  off Oct 25 2026 (owner: "switch it off", and again Oct 26); no live page carries it (checked Nov 5). Decided: never ask again.**
 - **The morning report checks `/perm-by-the-numbers` and `/layoffs`** with the other daily pages, and prints a clean
   `pnpm audit` as a line even on a day with another warning.
 
@@ -2264,3 +2264,22 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
   for 138 of 142 posts. A hidden automation tab throttles `setTimeout`, so an in-page crawl runs on fetches alone.
 - **A full-page capture leaves reveal-on-scroll parts blank**: scroll the page through before reading a gap as a defect
   (/today's phone layout looked broken until it was).
+
+## Nov 5 2026 (morning): a filing month as a picture to share
+
+- **`/perm-queue/<month>/share.png`** (`src/lib/monthShare.ts` builds it, `src/lib/monthShareImage.tsx` draws it, the
+  route sits beside the month page): where the month stands, dated to the census day it was counted, 1200 by 630. It shows
+  a dated count. It makes no forecast, and it isn't the page's social card (a card carries no live figure). Built on first
+  request and kept six hours like the page (force-static, empty `generateStaticParams`); a non-month or an empty month
+  is a 404, an unreadable census throws so the last good picture stays. Its Cache-Control carries s-maxage, which nginx
+  turns into `max-age=0, must-revalidate` for browsers.
+- **The month page and the picture share one status bar** (`monthParts`) and one withdrawal threshold
+  (`WITHDRAWALS_LEAD` in `src/lib/monthMakeup.ts`); the page's big share now goes through `formatShareOf`.
+- **"Share <month>" on the month page** (`MonthShareBlock`): copy the picture (`ClipboardItem`, with a plain message
+  where a browser can't), save it, copy the page's link, copy an embed that links back. Each success sends
+  `month_share` to PostHog with the action and the month.
+- **Satori reads TTF files, and next/font serves woff2**, so the picture's faces are ASCII-only Space Grotesk 700 and Inter
+  500/700 in `public/fonts/`, with their OFL licences, read off disk once a process.
+- **The dev server reloads every page every few seconds** (Nov 5: 9 loads in 15 s on /about, a "Compiled" line before
+  each, nothing in the tree changing); production loads once. Capture dev pages with scripts off, or retry between
+  reloads. Not chased yet.

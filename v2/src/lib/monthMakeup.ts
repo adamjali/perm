@@ -23,6 +23,13 @@ export interface MonthMakeup {
   outside: number;
 }
 
+/**
+ * At this share of a month's decisions, withdrawals ARE the decisions: DOL
+ * hasn't worked the month, its employers have pulled cases. The month page and
+ * the month's share image both say so from here, never from a copy.
+ */
+export const WITHDRAWALS_LEAD = 0.8;
+
 export function monthMakeup(statuses: readonly StatusCount[]): MonthMakeup {
   const m: MonthMakeup = { total: 0, decided: 0, certified: 0, denied: 0, withdrawn: 0, otherDecided: 0, inLine: 0, outside: 0 };
   for (const s of statuses) {

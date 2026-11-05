@@ -47,7 +47,10 @@ import { getLiveBacklog } from "@/lib/db/publicData";
 import { getDecisionPace } from "@/lib/db/decisionPace";
 import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { monthEndDate, type MonthEnd } from "@/lib/caseEstimateInputs";
-import { monthMakeup, type MonthMakeup } from "@/lib/monthMakeup";
+import { monthMakeup, type MonthMakeup, WITHDRAWALS_LEAD } from "@/lib/monthMakeup";
+import { buildMonthShare, monthParts, type MonthPartKey } from "@/lib/monthShare";
+import { MonthShareBlock } from "@/components/queue/MonthShareBlock";
+import { getLiveCensus } from "@/lib/db/liveCensus";
 import { dolDecisions, weekOnWeek, type MonthDetail } from "@/lib/monthDetail";
 import { getMonthDetail } from "@/lib/db/monthDetail";
 import { keepLinkableSlugs } from "@/lib/db/entityLinks";
@@ -55,7 +58,7 @@ import { MonthEmployers } from "@/components/queue/MonthEmployers";
 import { getMonthDays } from "@/lib/db/filingDay";
 import { MonthDays } from "@/components/queue/MonthDays";
 import { easternDay } from "@convex/lib/time";
-import { formatShare } from "@/lib/format";
+import { formatShare, formatShareOf } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { buttonVariants } from "@/components/ui/button";
 import { monthDay, shortDate } from "@convex/lib/months";
@@ -227,6 +230,12 @@ export default async function CohortPage({
   const line = await getPermLine().catch(softFail("perm-queue/[month]/page.getPermLine", null));
   const dolMonth = line?.month ?? estimator.frontier?.analystQueueMonth ?? null;
   const dolAsOfIso = line ? line.asOf : (estimator.frontier?.asOf ?? null);
+  // The month's share picture says what the page says, from the same census
+  // (React-cached, no extra read); without a census day it isn't offered.
+  const census = await getLiveCensus().catch(softFail("perm-queue/[month]/page.getLiveCensus", null));
+  const share = census
+    ? buildMonthShare({ month, makeup, asOf: census.asOf, line: line ? { month: line.month, asOf: line.asOf } : null })
+    : null;
   const isNoted = month === OCTOBER_2025.month;
   // An alert on a month DOL has already reached would fire at once, so the
   // form is offered only for a month still ahead of DOL.
@@ -434,6 +443,8 @@ export default async function CohortPage({
         </section>
       ) : null}{" "}
 
+      {share ? <MonthShareBlock month={month} label={label} alt={share.alt} /> : null}{" "}
+
       <nav
         aria-label="Nearby filing months"
         className="mt-8 flex flex-wrap items-stretch justify-between gap-3"
@@ -496,7 +507,7 @@ function WithdrawalNote({
   const withdrawn = decided
     .filter((s) => s.status.toUpperCase() === "WITHDRAWN")
     .reduce((n, s) => n + s.count, 0);
-  if (total === 0 || withdrawn / total < 0.8) return null;
+  if (total === 0 || withdrawn / total < WITHDRAWALS_LEAD) return null;
   const other = total - withdrawn;
   return (
     <>
@@ -558,6 +569,19 @@ function dolPlace(month: string, dolMonth: string, asOfIso: string | null, check
   return gap ? `${gap} ${gap === 1 ? "month" : "months"} before this one${by}` : `Before this month${by}`;
 }
 
+/**
+ * Soft colours by meaning, no black or grey (round 3, Oct 15 2026), the status
+ * chips' own: certified green, denied red, withdrawn purple, in DOL's line
+ * yellow, out of order blue. The share picture paints the same hues.
+ */
+const PART_FILL: Record<MonthPartKey, string> = {
+  certified: "bg-primary",
+  denied: "bg-chart-red",
+  withdrawn: "bg-chart-purple",
+  inLine: "bg-chart-yellow",
+  outside: "bg-chart-blue",
+};
+
 function MonthHeadline({
   makeup: m,
   label,
@@ -586,21 +610,12 @@ function MonthHeadline({
   /** How DOL's month moved over about a month of its readings. */
   dolMoved?: FigureTrend;
 }) {
-  const pct = m.total ? m.decided / m.total : 0;
-  const parts = [
-    // Soft colours by meaning, no black or grey (round 3, Oct 15 2026), the
-    // status chips' own: certified green, denied red, withdrawn purple, in
-    // DOL's line yellow, out of order blue.
-    { key: "certified", n: m.certified + m.otherDecided, cls: "bg-primary", text: "certified" },
-    { key: "denied", n: m.denied, cls: "bg-chart-red", text: "denied" },
-    { key: "withdrawn", n: m.withdrawn, cls: "bg-chart-purple", text: "withdrawn by the employer" },
-    { key: "line", n: m.inLine, cls: "bg-chart-yellow", text: "in DOL's line" },
-    { key: "outside", n: m.outside, cls: "bg-chart-blue", text: "on hold, at an RFI or on appeal" },
-  ].filter((p) => p.n > 0);
+  // The month's share picture reads the same parts (lib/monthShare.ts).
+  const parts = monthParts(m).map((p) => ({ key: p.key, n: p.count, text: p.text, cls: PART_FILL[p.key] }));
   return (
     <div className="mt-5">
       <p className="font-heading text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
-        {formatShare(pct)} <span className="text-2xl sm:text-3xl">decided</span>
+        {m.total ? formatShareOf(m.decided, m.total) : formatShare(0)} <span className="text-2xl sm:text-3xl">decided</span>
       </p>{" "}
       <p className="mt-2 text-lg text-soft">
         {`${formatInt(m.decided)} of the ${formatInt(m.total)} applications filed in ${label} have a decision.`}
