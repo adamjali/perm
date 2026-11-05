@@ -88,6 +88,15 @@ def main() -> int:
     check("a year before FY2020 reads the history table, FY2020 on the current one",
           [ly.source(y) for y in (2008, 2019, 2020, 2026)],
           ["lca_cases_history", "lca_cases_history", "lca_cases", "lca_cases"])
+    # A big year goes in small writes (FY2019's one INSERT ... SELECT ran past sqld's transaction limit, Nov 4 2026).
+    want = {f"e{i:04d}": (i % 5, 0, 1) for i in range(450)}
+    held = {f"e{i:04d}": (i % 5, 0, 1) for i in range(100)} | {"gone-a": (1, 0, 0), "gone-b": (2, 0, 0)}
+    writes = ly.year_writes(2019, want, held)
+    sizes = [len(r[0]["stmt"]["args"]) // 5 if "INSERT" in r[0]["stmt"]["sql"] else len(r[0]["stmt"]["args"]) - 1
+             for r in writes]
+    check("a big year is written 200 rows at a time, only the rows that changed", sizes, [200, 150, 2])
+    check("writes come before removals", ["INSERT" in r[0]["stmt"]["sql"] for r in writes], [True, True, False])
+    check("a year already right writes nothing", ly.year_writes(2019, want, dict(want)), [])
     print()
     print(f"{CHECKS} checks")
     if FAILURES:

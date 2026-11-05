@@ -9,11 +9,12 @@ them, one row per spelling (employer_slug) and fiscal year: certified, denied an
 ("CERTIFIED - WITHDRAWN" counts as withdrawn, as the case search's buckets do). Only the H-1B visa class:
 H-1B1 and E-3 LCAs are other visas.
 
-THE WORK STAYS ON THE SERVER. Each year is one INSERT ... SELECT that updates the counts in place, then one
-DELETE of the spellings the year no longer holds, so nothing large crosses the tunnel (whose 100-second cut
-has stopped bigger reads). Either step failing leaves the year's old counts, never an empty year: the first
-version deleted the year and then inserted it, so an insert that failed or timed out emptied every employer's
-chart for that year until the next load (audit, Nov 4 2026). A rerun writes nothing. A page sums its own
+Each year is read as one grouped query (about 60,000 spellings at most, a few MB), compared with what the table
+holds, and only the rows that changed are written, 200 to a write, then the spellings the year no longer holds
+removed. One INSERT ... SELECT per year held the write lock too long for FY2019 (Nov 4 2026). A run that stops part
+way leaves the year's old counts, never an empty year: the first version deleted the year and then inserted it, so
+an insert that failed emptied every employer's chart for that year until the next load (audit, Nov 4 2026). A rerun
+writes nothing. A page sums its own
 spellings at render (src/lib/db/lcaYears.ts, through employer_page_map), so this needs no map of its own.
 
 Run by the FLAG disclosure workflow after every LCA load, older files included.
@@ -82,8 +83,11 @@ def years_held(db) -> list[int]:
     return sorted(found)
 
 
-def year_statements(fy: int) -> list[dict]:
-    """One year brought up to date from its own table: counts upserted, then spellings it no longer has removed.
+BATCH = 200
+
+
+def year_counts(db, fy: int) -> dict[str, tuple[int, int, int]]:
+    """A year's certified, denied and withdrawn H-1B LCAs by spelling, read from its own table.
 
     The decided range rides `_decided` on lca_cases, which has no fiscal-year index; the history table's
     `_fy` index leads with the year. A fiscal year is October 1 to September 30, by the decision date.
@@ -91,38 +95,65 @@ def year_statements(fy: int) -> list[dict]:
     table = source(fy)
     # The table is one of two fixed names (source()), never input.
     # nosemgrep: python.lang.security.audit.formatted-sql-query.formatted-sql-query
-    year = (
-        f"FROM {table} WHERE fiscal_year = ? AND decision_date >= ? AND decision_date <= ? "
-        "AND visa_class = 'H-1B' AND employer_slug IS NOT NULL AND employer_slug <> '' "
-    )
-    upsert = (
-        f"INSERT INTO {TABLE} (employer_slug, fy, certified, denied, withdrawn) "
-        "SELECT employer_slug, fiscal_year, "
+    sql = (
+        "SELECT employer_slug, "
         "SUM(CASE WHEN case_status = 'CERTIFIED' THEN 1 ELSE 0 END), "
         "SUM(CASE WHEN case_status = 'DENIED' THEN 1 ELSE 0 END), "
         "SUM(CASE WHEN case_status IN ('WITHDRAWN', 'CERTIFIED - WITHDRAWN') THEN 1 ELSE 0 END) "
-        + year + "GROUP BY employer_slug, fiscal_year "
-        "ON CONFLICT (employer_slug, fy) DO UPDATE SET certified = excluded.certified, "
-        "denied = excluded.denied, withdrawn = excluded.withdrawn "
-        "WHERE certified <> excluded.certified OR denied <> excluded.denied OR withdrawn <> excluded.withdrawn"
+        f"FROM {table} WHERE fiscal_year = ? AND decision_date >= ? AND decision_date <= ? "
+        "AND visa_class = 'H-1B' AND employer_slug IS NOT NULL AND employer_slug <> '' "
+        "GROUP BY employer_slug"
     )
-    # The subquery never holds a NULL (the year's WHERE drops them), so NOT IN can't match nothing.
-    gone = f"DELETE FROM {TABLE} WHERE fy = ? AND employer_slug NOT IN (SELECT employer_slug " + year + ")"
-    lo, hi = f"{fy - 1}-10-01", f"{fy}-09-30"
-    return [stmt(upsert, [fy, lo, hi]), stmt(gone, [fy, fy, lo, hi]), {"type": "close"}]
+    rows = rows_of(db.execute(sql, [fy, f"{fy - 1}-10-01", f"{fy}-09-30"]))
+    return {str(r[0]): (int(r[1] or 0), int(r[2] or 0), int(r[3] or 0)) for r in rows}
+
+
+def held_counts(db, fy: int) -> dict[str, tuple[int, int, int]]:
+    """What the table holds for a year now (libSQL may hand integers back as text: both sides are int()ed)."""
+    rows = rows_of(db.execute(f"SELECT employer_slug, certified, denied, withdrawn FROM {TABLE} WHERE fy = ?", [fy]))
+    return {str(r[0]): (int(r[1] or 0), int(r[2] or 0), int(r[3] or 0)) for r in rows}
+
+
+def year_writes(fy: int, want: dict, held: dict) -> list[list[dict]]:
+    """The requests that bring a year from `held` to `want`: changed rows upserted first, 200 to a statement, then
+    spellings the year no longer holds removed, 200 at a time. Each write is small, so none holds the database's
+    write lock for long: FY2019 written as one INSERT ... SELECT (578,640 LCAs) ran past sqld's transaction limit on
+    Nov 4 2026 ("Transaction timed out"), while every smaller year fitted. Writes come before removals, so a run that
+    stops part way leaves the year's old counts, never an empty year."""
+    changed = [(slug, *c) for slug, c in sorted(want.items()) if held.get(slug) != c]
+    gone = sorted(set(held) - set(want))
+    out: list[list[dict]] = []
+    for i in range(0, len(changed), BATCH):
+        part = changed[i:i + BATCH]
+        args: list = []
+        for slug, cert, den, wd in part:
+            args += [slug, fy, cert, den, wd]
+        out.append([stmt(
+            f"INSERT INTO {TABLE} (employer_slug, fy, certified, denied, withdrawn) VALUES "
+            + ",".join(["(?,?,?,?,?)"] * len(part))
+            + " ON CONFLICT (employer_slug, fy) DO UPDATE SET certified = excluded.certified, "
+            "denied = excluded.denied, withdrawn = excluded.withdrawn", args)])
+    for i in range(0, len(gone), BATCH):
+        part = gone[i:i + BATCH]
+        out.append([stmt(f"DELETE FROM {TABLE} WHERE fy = ? AND employer_slug IN ({','.join('?' * len(part))})",
+                         [fy, *part])])
+    return out
 
 
 def build(db, only: int | None = None) -> dict[int, int]:
-    """Rebuild every year (or one); the rows written for each."""
+    """Rebuild every year (or one); the rows each year holds after."""
     db.script(DDL)
     out: dict[int, int] = {}
     for fy in [only] if only else years_held(db):
         t = time.time()
-        db.pipeline(year_statements(fy))
-        n = int(db.scalar(f"SELECT COUNT(*) FROM {TABLE} WHERE fy = ?", [fy]) or 0)
-        if n:  # a year inside the span with no LCAs is cleared, not reported
-            out[fy] = n
-        print(f"  FY{fy}: {n:,} spellings from {source(fy)} ({time.time() - t:.1f}s)", flush=True)
+        want = year_counts(db, fy)
+        writes = year_writes(fy, want, held_counts(db, fy))
+        for request in writes:
+            db.pipeline([*request, {"type": "close"}])
+        if want:  # a year inside the span with no LCAs is cleared, not reported
+            out[fy] = len(want)
+        print(f"  FY{fy}: {len(want):,} spellings from {source(fy)}, {len(writes)} write(s) "
+              f"({time.time() - t:.1f}s)", flush=True)
     return out
 
 
