@@ -1862,3 +1862,35 @@ Next round, after the Thu Nov 5 2:00 AM EST run (check `ssh permtracker 'sudo pe
 2. `/tools/ead-extension` and `/tools/priority-date-retention` (new H-4 and job-change answers).
 3. `/perm-employers/google-llc` (the H-1B year-by-year chart reaching back past FY2020, once the older LCA files load).
 Then `node scripts/gsc_queue.mjs --since 958137bf` for anything else.
+
+### Round, Thursday Nov 5 2026 (about 11:14 to 11:23 AM EST)
+
+What's live is 57f4ea8a (release 505), switched at 2:28 AM EST by the night run. It carries every commit up to
+57f4ea8a. Today's commits (the daily filings page and the fixes behind the morning report) wait for the 2:00 AM EST
+run on Fri Nov 6, so the pages they touch were left alone (`node scripts/gsc_queue.mjs --since 57f4ea8a` lists 18,
+`/filings-by-day` among them).
+
+Requested (5, then Quota Exceeded on the sixth):
+- `/`: crawled Nov 4, 8:34 PM, before the night deploy.
+- `/compare`: crawled Oct 30, 4:24 AM.
+- `/perm-queue`: crawled Nov 2, 9:15 PM.
+- `/for-attorneys`: crawled Nov 2, 5:28 PM.
+- `/tools/ead-extension`: crawled Nov 2, 9:15 PM.
+
+Refused by the quota: `/tools/priority-date-retention` (crawled Nov 1, 6:19 PM).
+
+Skipped, crawled after the 2:28 AM switch: `/bright-outlook-jobs` (2:43 AM, indexed), `/faq` (4:44 AM).
+
+Found on the way: `gsc_queue.mjs` listed `/perm-queue`, its month pages and `/uscis-case-status` as noindex
+("not requested") and left them out of IndexNow. Each carries its noindex only inside a condition, and each serves
+"index, follow". Fixed in 27def9fd (`alwaysNoindex` and `inFamily` in `scripts/lib_page_inputs.mjs`, held by
+`gsc-queue-noindex.test.ts`).
+
+Still to request:
+1. `/tools/priority-date-retention`, then `/perm-employers/google-llc` (its H-1B chart reaches back to FY2008 now).
+2. Live since 2:28 AM and changed by it, each crawled before then: `/perm-processing-times`, `/visa-bulletin`,
+   `/policy-changes`, `/perm-decision-activity`, `/h1b-employers`, `/perm-case-status`, `/debarments`,
+   `/estimate-scorecard`.
+3. After the Fri Nov 6 2:00 AM EST run ships 02085b0c or later (check `ssh permtracker 'sudo permtracker-deploy status'`):
+   `/filings-by-day` (new), then `/today`, `/pwd-cases`, `/perm-cases`, `/case-search`, `/lca-cases`, `/layoffs`.
+Then `node scripts/gsc_queue.mjs --since 57f4ea8a` for anything else.
