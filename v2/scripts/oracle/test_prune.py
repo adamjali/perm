@@ -88,11 +88,12 @@ with tempfile.TemporaryDirectory() as tmp:
     for slot, rel in (("blue", "a"), ("blue2", "a.w2"), ("green", "b")):
         (app / "slots" / slot).symlink_to(app / "releases" / rel)
     (app / "active").write_text("blue")
-    saved = (prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR)
+    saved = (prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR, prune.disk_free)
     try:
         prune.APP, prune.HEALTH = str(app), str(pathlib.Path(tmp) / "prune.json")
         prune.BUDGET = {"live": 12_000, "standby": 4_000, "old": 0}   # 3 pages, 1 page, none
         prune.FREE_FLOOR = 0
+        prune.disk_free = lambda: 1000 * prune.GB     # a roomy disk, so the budgets stay as set
         prune.main()
         report = {r["release"]: r for r in _json.loads(pathlib.Path(prune.HEALTH).read_text())["releases"]}
         check("both live folders keep their 3 newest pages", report["a"]["pages"] == 3 and report["a.w2"]["pages"] == 3,
@@ -105,7 +106,51 @@ with tempfile.TemporaryDirectory() as tmp:
         check("the report records what Next really holds beside what was counted",
               all("serverGB" in r for r in report.values()))
     finally:
-        prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR = saved
+        prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR, prune.disk_free = saved
+
+# The budgets fit the disk (Nov 5 2026): every cache at its budget leaves KEEP_FREE free.
+G = prune.GB
+b, f = prune.fit(prune.BUDGET, 100 * G, 10 * G, 2, 2)
+check("with room to spare the budgets stay as set", b == prune.BUDGET and not f, str(b))
+# Nov 5 2026 on the server: 63 GB free, the caches holding 27.7 GB, two live and two standby folders.
+b, f = prune.fit(prune.BUDGET, 63 * G, int(27.7 * G), 2, 2)
+at_cap = 63 * G + int(27.7 * G) - (b["live"] * 2 + b["standby"] * 2)
+check("a disk that has grown shrinks the live budget", f and b["live"] < prune.BUDGET["live"], str(b))
+check("every cache at its fitted budget leaves 30 GB free", abs(at_cap - prune.KEEP_FREE) < G, f"{at_cap / G:.1f} GB")
+check("the standby keeps its budget while the live one can still shrink", b["standby"] == prune.BUDGET["standby"])
+b, f = prune.fit(prune.BUDGET, 35 * G, 5 * G, 2, 2)
+check("a disk with little room drops the standby first", b["standby"] == 0 and b["live"] >= prune.TIGHT["live"], str(b))
+b, f = prune.fit(prune.BUDGET, 25 * G, 0, 2, 2)
+check("the live budget never goes under the tight one", b["live"] == prune.TIGHT["live"], str(b))
+
+# The whole run with a crowded disk records the fitted budget, which the alarm reads.
+with tempfile.TemporaryDirectory() as tmp:
+    app = pathlib.Path(tmp) / "app"
+    for rel in ("a", "a.w2"):
+        r = app / "releases" / rel
+        (r / ".next" / "server").mkdir(parents=True)
+        (r / "server.js").write_text("")
+        for i in range(5):
+            page(r / f".next/server/route-cache/APP_PAGE/h{i}/$/p{i}")
+    (app / "slots").mkdir()
+    for slot, rel in (("blue", "a"), ("blue2", "a.w2")):
+        (app / "slots" / slot).symlink_to(app / "releases" / rel)
+    (app / "active").write_text("blue")
+    saved = (prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR, prune.KEEP_FREE, prune.disk_free)
+    try:
+        prune.APP, prune.HEALTH = str(app), str(pathlib.Path(tmp) / "prune.json")
+        prune.BUDGET = {"live": 20_000, "standby": 4_000, "old": 0}
+        prune.TIGHT = {"live": 4_000, "standby": 0, "old": 0}
+        prune.FREE_FLOOR, prune.KEEP_FREE = 0, 30_000
+        prune.disk_free = lambda: 18_000          # with 40,000 cached: room 28,000, 14,000 a folder
+        prune.main()
+        rep = _json.loads(pathlib.Path(prune.HEALTH).read_text())
+        by = {r["release"]: r for r in rep["releases"]}
+        check("the run fits the budgets and says so", rep["fitted"] is True and rep["keepFreeGB"] == 0, str(rep))
+        check("each live folder keeps what the fitted budget allows (3 of 5 pages)",
+              by["a"]["pages"] == 3 and by["a.w2"]["pages"] == 3, str({k: v["pages"] for k, v in by.items()}))
+    finally:
+        (prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR, prune.KEEP_FREE, prune.disk_free) = saved
 
 # Every slot runs two copies, each in its own folder with the slot's role, so
 # a folder's budget is half the slot's: two live folders must fit 60 GB.

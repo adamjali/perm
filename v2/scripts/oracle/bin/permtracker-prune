@@ -28,6 +28,15 @@ one takes 0.1 to 2.6 s to build again, so every GB kept is speed. The disk held
 24 GB of everything else that day (database 6.8, releases 8.6, backups 0.5), so
 both budgets full still leaves over 60 GB free for the database to grow.
 
+THE BUDGETS FIT THE DISK (Nov 5 2026). Every cache at its budget may never
+leave less than KEEP_FREE (30 GB) free: when the rest of the disk has grown,
+the live folders' budget shrinks to what fits (the standby keeps its 6 GB
+until even that won't fit). By Nov 5 the two databases held 16 GB each after
+the LCA history loads, and full budgets would have left 20 GB, the alarm's own
+line: it started and cleared three times in a day as the caches refilled after
+each deploy. The report records the budget used and whether it was fitted, and
+the alarm and the morning report read their headroom from it.
+
 Writes /srv/permtracker/health/prune.json, which the health job reports.
 `--dry-run` prints what it would remove and changes nothing.
 """
@@ -50,6 +59,7 @@ COPIES = 2
 BUDGET = {"live": 60 * GB // COPIES, "standby": 6 * GB // COPIES, "old": 0}
 TIGHT = {"live": 8 * GB // COPIES, "standby": 0, "old": 0}
 FREE_FLOOR = 20 * GB
+KEEP_FREE = 30 * GB
 # A page group: the .meta file names it; these are its other pieces.
 PIECES = (".html", ".rsc", ".body", ".meta")
 # Pages rendered within two minutes of the unpack (the deploy's own health
@@ -151,6 +161,25 @@ def remove(stem: str) -> int:
     return freed + before - tree_size(seg)
 
 
+def disk_free() -> int:
+    return shutil.disk_usage("/").free
+
+
+def fit(budgets: dict, free: int, cached: int, live_n: int, standby_n: int) -> tuple[dict, bool]:
+    """The budgets, shrunk so every cache at its budget still leaves KEEP_FREE
+    free; whether they had to shrink. `cached` is what the caches hold now (it
+    comes back if they're cut, so it's room they may use), `live_n` and
+    `standby_n` the folders with each role."""
+    room = free + cached - KEEP_FREE
+    standby = budgets["standby"]
+    if room - standby * standby_n < TIGHT["live"] * max(1, live_n):
+        standby = 0
+    live = (room - standby * standby_n) // max(1, live_n)
+    live = min(budgets["live"], max(TIGHT["live"], live))
+    out = {"live": live, "standby": standby, "old": budgets.get("old", 0)}
+    return out, out != budgets
+
+
 def main() -> int:
     live = read(os.path.join(APP, "active"))
     # Each slot runs its release twice (blue/blue2, green/green2), the second
@@ -160,17 +189,26 @@ def main() -> int:
              for s in ("blue", "blue2", "green", "green2")
              if os.path.exists(os.path.join(APP, "slots", s))}
     live_dirs = {slots[s] for s in (live, live + "2") if s in slots}
-    free = shutil.disk_usage("/").free
-    budgets = TIGHT if free < FREE_FLOOR else BUDGET
-    report = {"at": int(time.time()), "freeGB": round(free / GB, 1),
-              "tight": budgets is TIGHT, "releases": []}
+    free = disk_free()
     releases_dir = os.path.join(APP, "releases")
+    found = []
     for name in sorted(os.listdir(releases_dir)):
         rel = os.path.realpath(os.path.join(releases_dir, name))
         role = ("live" if rel in live_dirs else
                 "standby" if rel in slots.values() else "old")
         pages = sorted(groups(rel))                     # least recently used first
-        total = sum(size for _u, size, _s in pages)
+        found.append((name, rel, role, pages, sum(size for _u, size, _s in pages)))
+    fitted = False
+    if free < FREE_FLOOR:
+        budgets = TIGHT
+    else:
+        budgets, fitted = fit(BUDGET, free, sum(t for *_x, t in found),
+                              sum(1 for f in found if f[2] == "live"),
+                              sum(1 for f in found if f[2] == "standby"))
+    report = {"at": int(time.time()), "freeGB": round(free / GB, 1),
+              "tight": budgets is TIGHT, "fitted": fitted,
+              "keepFreeGB": round(KEEP_FREE / GB), "releases": []}
+    for name, rel, role, pages, total in found:
         removed = freed = planned = 0
         for _used, size, stem in pages:
             if total - planned <= budgets[role]:
@@ -190,7 +228,7 @@ def main() -> int:
             "serverGB": server_gb})
         print(f"{name} {role}: {len(pages) - removed} pages, {(total - freed) / GB:.2f} GB"
               f" (removed {removed}, freed {freed / GB:.2f} GB, budget {budgets[role] / GB:.0f} GB)")
-    report["freeGBAfter"] = round(shutil.disk_usage("/").free / GB, 1)
+    report["freeGBAfter"] = round(disk_free() / GB, 1)
     if DRY_RUN:
         print("dry run: nothing removed, nothing recorded")
         return 0
@@ -201,7 +239,8 @@ def main() -> int:
     os.chmod(tmp, 0o644)
     os.replace(tmp, HEALTH)
     print(f"disk free {report['freeGB']} GB -> {report['freeGBAfter']} GB"
-          + (" (below the floor: tight budgets)" if report["tight"] else ""))
+          + (" (below the floor: tight budgets)" if report["tight"] else "")
+          + (f" (budgets fitted to keep {report['keepFreeGB']} GB free)" if fitted else ""))
     return 0
 
 
