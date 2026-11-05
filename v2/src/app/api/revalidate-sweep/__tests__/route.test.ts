@@ -93,11 +93,14 @@ describe("the list covers every cached page that reads a sweep-written figure", 
     "getPwdLine",
     "getPwdNowDocs",
     "getPermWaitTrend",
+    // How many were filed each day, rewritten after each pass (scripts/build_filings_by_day.py).
+    "getFilingsByDay",
   ];
   const EXCLUDED: Record<string, string> = {
     "/perm-queue/[month]":
       "~40 generated pages on a six-hour window; expiring a generated tail in one call is the cost the employer endpoint exists to avoid",
     "/perm-rfi-audit/[stage]": "generated per stage on its own window, for the same reason",
+    "/perm-queue/[month]/[day]": "thousands of noindex day pages on a six-hour window, read only when someone opens one",
     "/perm-case-status": "fully dynamic, so there is no cached copy to expire",
     "/perm-employers/[slug]":
       "a 30-day tail of ~100,000 pages; the ones whose figures moved are expired one by one by /api/revalidate-live-employers",

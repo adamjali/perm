@@ -89,6 +89,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "How many pending cases sit in a request for information, an audit or an appeal, and the measured funnel of how RFIs resolve.",
   },
   {
+    path: "/filings-by-day",
+    label: "Cases filed each day",
+    blurb:
+      "How many PERM cases, wage requests, H-1B LCAs and H-2A, H-2B and CW-1 filings DOL received today, yesterday and each day since October 2019, each day opening its cases.",
+  },
+  {
     path: "/perm-decision-activity",
     label: "PERM daily decision activity",
     blurb:

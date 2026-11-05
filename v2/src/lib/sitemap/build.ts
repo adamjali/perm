@@ -460,6 +460,7 @@ export async function pagesEntries(): Promise<Entry[]> {
       lastModified: at("/perm-rfi-audit/[stage]"),
     })),
     { url: `${base}/perm-decision-activity`, lastModified: at("/perm-decision-activity"), images: [`${base}/og/perm-decision-activity.jpg`] },
+    { url: `${base}/filings-by-day`, lastModified: at("/filings-by-day"), images: [`${base}/og/filings-by-day.jpg`] },
     { url: `${base}/contact`, lastModified: at("/contact"), images: [`${base}/og/contact.jpg`] },
     { url: `${base}/terms`, lastModified: at("/terms"), images: [`${base}/og/terms.jpg`] },
     { url: `${base}/privacy`, lastModified: at("/privacy"), images: [`${base}/og/privacy.jpg`] },

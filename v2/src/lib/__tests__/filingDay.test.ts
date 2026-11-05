@@ -47,7 +47,7 @@ describe("dayView", () => {
   it("filters by status and letter together", () => {
     const v = dayView(CASES, { status: "ANALYST REVIEW", letter: "A", page: 1 });
     expect(v.total).toBe(2);
-    expect(v.rows.map((r) => r.employer)).toEqual(["Amazon.com Services LLC", "amazon web services"]);
+    expect(v.rows.map((r) => r.employer).sort()).toEqual(["Amazon.com Services LLC", "amazon web services"]);
   });
 
   it("pages the list and keeps a page past the end on the last page", () => {
@@ -72,5 +72,31 @@ describe("filingDayOf", () => {
     expect(filingDayOf("2026-01", "5", "2026-10-28")).toBeNull();
     expect(filingDayOf("2026-13", "01", "2026-10-28")).toBeNull();
     expect(filingDayOf("2026-11", "02", "2026-10-28")).toBeNull();
+  });
+});
+
+describe("dayView, searched and sorted", () => {
+  const rows: DayCase[] = [
+    { ...c(7, "Bloomberg L.P.", "CERTIFIED", true), decided: "2026-05-01" },
+    { ...c(8, "Amazon.com Services LLC", "ANALYST REVIEW"), jobTitle: "Data Scientist" },
+    { ...c(9, "Apple Inc.", "CERTIFIED", true), decided: "2026-06-02" },
+  ];
+
+  it("finds every word in the case number, employer or job, whatever the punctuation", () => {
+    expect(dayView(rows, { status: null, letter: null, page: 1, q: "amazon data" }).rows.map((r) => r.employer)).toEqual(["Amazon.com Services LLC"]);
+    expect(dayView(rows, { status: null, letter: null, page: 1, q: "26015 000009" }).total).toBe(1);
+    expect(dayView(rows, { status: null, letter: null, page: 1, q: "nobody" }).total).toBe(0);
+  });
+
+  it("orders by employer unless asked, and by the newest decision with undecided cases last", () => {
+    expect(dayView(rows, { status: null, letter: null, page: 1 }).rows.map((r) => r.employer)).toEqual(["Amazon.com Services LLC", "Apple Inc.", "Bloomberg L.P."]);
+    expect(dayView(rows, { status: null, letter: null, page: 1, sort: "decided" }).rows.map((r) => r.employer)).toEqual(["Apple Inc.", "Bloomberg L.P.", "Amazon.com Services LLC"]);
+  });
+
+  it("keeps the day's status and letter counts whatever is searched", () => {
+    expect(dayView(rows, { status: null, letter: null, page: 1, q: "apple" }).statuses).toEqual([
+      { status: "CERTIFIED", n: 2 },
+      { status: "ANALYST REVIEW", n: 1 },
+    ]);
   });
 });

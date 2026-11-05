@@ -1240,6 +1240,22 @@
   ]
  },
  {
+  "slug": "filings-by-day",
+  "path": "/filings-by-day",
+  "title": "Cases filed each day",
+  "label": "How many were filed today, yesterday and on any day since 2019.",
+  "mask": "figures",
+  "fromEl": "section[aria-label='PERM filings now']",
+  "css": "nav[aria-label=\"Data sections\"] { display: none !important; } section[aria-label=\"PERM filings now\"] p.text-soft { visibility: hidden !important; }",
+  "shot": "filings-by-day.png",
+  "crop": [
+   0,
+   0,
+   1504,
+   1028
+  ]
+ },
+ {
   "slug": "perm-decision-activity",
   "path": "/perm-decision-activity",
   "title": "Daily decisions",

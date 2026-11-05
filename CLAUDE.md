@@ -2313,3 +2313,26 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
 - **Sentry 59** (a 20-second query deadline) fired only during Wednesday's LCA history loads; the FY2008 load, the last,
   finished green Nov 5.
 - **This Mac had 3.6 GB free on Nov 5**: a test that reads the real disk (`shutil.disk_usage`) must pin it.
+
+## Nov 5 2026 (late morning): how many were filed each day, every program
+
+- **`perm_docs['filings_by_day']`** (`scripts/build_filings_by_day.py`, tested in `scripts/test_filings_by_day.py`, a
+  step of `case-status-direct.yml` after every pass, about 40 s; the health check fails it past 2 days): one row a
+  filing day since FY2020 for PERM, wage requests, H-1B LCAs and H-2A, H-2B and CW-1, as [day, filed, waiting,
+  fileOnly, mismatch]. A case counts once by case number: on the live record's filing day when it holds the case, else
+  on the first file's received day. Nov 5: PERM 926,677 filed (479,998 only in a file, 8,303 dated otherwise),
+  LCAs 3,896,171, wage requests 1,166,828, seasonal 336,768. 250 KB.
+- **`/filings-by-day`** (data menu, PERM group): today so far, yesterday against the same weekday's usual, the last 7
+  and 30 days, every program in one table, then `FilingsExplorer` (program, period or picked days, a chart by day up
+  to two months, by week up to two years, by month beyond, the period's totals, a sortable day table, a jump to any
+  day). The page carries 100 days; an older period is asked of `/api/filings-by-day` (2,300 days at most).
+- **The day pages list every program, live and published together** (`getFiledOnProgram` in `src/lib/db/filingDay.ts`):
+  a live case with what its file adds (decision day, state, wage) and the file's day when it differs, a decided case
+  only a file holds, the same rule as the count. PERM and wage requests come with the page; LCAs and the seasonal
+  programs from `/api/filed-on` on opening their tab (empty fields left out: a day of LCAs is 1,500 rows). Search,
+  order and every pick live in the address. Old days work: Mar 2 2021 lists 313 PERM cases from the files.
+- **Received-day indexes on the published tables** (`idx_pch_recv`, `pwd_cases_recv`, `seasonal_cases_recv`; built on
+  production by hand Nov 5, 1 to 2 s each; the loaders declare them).
+- **A card's capture lifts its top whenever a line crosses a box**, the hidden data menu's boxes included: on a page whose
+  figures start below the lead, hide the menu for the card (`css` in `scripts/page-cards.json`) and frame from the
+  boxes (`fromEl`). Live times aren't figures to the mask: hide their line for the card.

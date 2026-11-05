@@ -127,3 +127,71 @@ describe("FiledOnDay employer links", () => {
     expect(screen.getByText("No Page LLC")).toBeTruthy();
   });
 });
+
+describe("FiledOnDay, every program and both sources", () => {
+  it("searches the day by case number, employer or job, and keeps the words in the address", async () => {
+    vi.useFakeTimers();
+    try {
+      render(<FiledOnDay perm={[mk(1, { employer: "Acme Corp" }), mk(2, { employer: "Beta LLC", jobTitle: "Data Scientist" })]} pwd={[]} dayLabel="x" />);
+      fireEvent.change(screen.getByRole("searchbox", { name: /Search the day/ }), { target: { value: "data" } });
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(nav.get()).toBe("q=data");
+      expect(caseLinks()).toHaveLength(1);
+      expect(screen.getByText("Beta LLC")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("says what DOL's file adds, and when a case is only in the file or the file dates it otherwise", () => {
+    render(
+      <FiledOnDay
+        perm={[
+          mk(1, { employer: "Acme Corp", source: "both", decided: "2026-05-01", state: "CA", wage: "$145,000 per year", fileDate: "2026-01-14" }),
+          mk(2, { employer: "Beta LLC", source: "file", final: true, status: "CERTIFIED" }),
+        ]}
+        pwd={[]}
+        dayLabel="x"
+      />,
+    );
+    expect(screen.getByText("Decided May 1, 2026")).toBeInTheDocument();
+    expect(screen.getByText("$145,000 per year")).toBeInTheDocument();
+    expect(screen.getByText("DOL's file dates it January 14, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Only in DOL's published files")).toBeInTheDocument();
+  });
+
+  it("orders by the newest decision when asked", () => {
+    act(() => nav.set("sort=decided"));
+    render(
+      <FiledOnDay
+        perm={[mk(1, { employer: "Acme", decided: "2026-02-01" }), mk(2, { employer: "Beta", decided: "2026-06-01" })]}
+        pwd={[]}
+        dayLabel="x"
+      />,
+    );
+    expect(caseLinks().map((a) => a.textContent)).toEqual(["G-100-26015-200002", "G-100-26015-200001"]);
+  });
+
+  it("offers the LCA and seasonal tabs only with a day, and loads one when opened", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ cases: [mk(5, { caseNumber: "I-200-26015-400000", employer: "Infosys" })], capped: false }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const { unmount } = render(<FiledOnDay perm={[mk(1)]} pwd={[]} dayLabel="x" />);
+      expect(screen.queryByRole("button", { name: /H-1B LCAs/ })).toBeNull();
+      unmount();
+      render(<FiledOnDay perm={[mk(1)]} pwd={[]} dayLabel="x" day="2026-01-15" counts={{ lca: 1, seasonal: 0 }} />);
+      fireEvent.click(screen.getByRole("button", { name: /H-1B LCAs/ }));
+      expect(await screen.findByText("Infosys")).toBeInTheDocument();
+      expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/api/filed-on?day=2026-01-15&program=lca");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});

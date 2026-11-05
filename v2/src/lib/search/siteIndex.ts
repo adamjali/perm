@@ -51,6 +51,7 @@ export const PAGE_KEYWORDS: Readonly<Record<string, string>> = {
   "/perm-countries": "country countries citizenship nationality birth",
   "/perm-by-state": "state states worksite location",
   "/perm-decision-activity": "decided decisions day certified denied withdrawn",
+  "/filings-by-day": "filed today yesterday daily new filings how many filed received per day lca wage request",
   "/pwd-cases": "prevailing wage request p-100 pwd",
   "/lca-cases": "lca h-1b labor condition i-200",
   "/seasonal-cases": "h-2a h-2b h2a h2b cw-1 cw1 seasonal farm agricultural temporary h-300 h-400 p-400 p-500 jo-a-300 c-500 job order northern mariana",

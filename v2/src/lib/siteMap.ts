@@ -50,6 +50,7 @@ export type DataSection =
   | "timeline-calculator"
   | "queue"
   | "activity"
+  | "filings"
   | "pwd-wait"
   | "uscis-times"
   | "timelines"
@@ -168,6 +169,7 @@ export const SECTIONS: DataNavSection[] = [
   t("timeline-calculator", "PERM", "Timeline calculator", "/tools/perm-timeline-calculator", "The likely decision day and its range."),
   s("queue", "PERM", "Queue backlog", "/perm-queue"),
   s("activity", "PERM", "Daily decisions", "/perm-decision-activity"),
+  s("filings", "PERM", "Filed each day", "/filings-by-day"),
   s("risk", "PERM", "Denial rates", "/perm-denial-risk"),
   s("rfi-audit", "PERM", "RFI and audits", "/perm-rfi-audit"),
   t("rfi-deadline", "PERM", "RFI deadline", "/tools/rfi-deadline", "Thirty days from the date on DOL's letter."),
