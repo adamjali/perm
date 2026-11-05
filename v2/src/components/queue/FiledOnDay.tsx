@@ -168,7 +168,7 @@ export function FiledOnDay({
                 name="q"
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
-                placeholder="Case number, employer or job"
+                placeholder="Case, employer or job"
                 className="min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base font-normal"
               />
             </label>{" "}
