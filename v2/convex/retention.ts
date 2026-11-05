@@ -2,7 +2,8 @@
  * Retention for the backend's operational logs.
  *
  * These tables have no other cleanup: systemErrors, marketingEvents,
- * apiUsage, emailDays and chatConfirmations. They're records of what the machinery did, not anyone's data,
+ * apiUsage, emailDays and chatConfirmations. It also deletes browser notifications
+ * stopped STOPPED_PUSH_DAYS ago. They're records of what the machinery did, not anyone's data,
  * and none is read past a few
  * weeks: the admin panel shows recent errors, the morning report reads one
  * day of usage. So each keeps a margin well past its readers and the rest goes,
@@ -46,6 +47,13 @@ const BATCH = 500;
  */
 export const UNCONFIRMED_CASE_ALERT_DAYS = 30;
 
+/**
+ * A browser notification someone stopped (or that ended: the case reached a final status, the browser
+ * revoked it) is deleted this many days after it stopped (owner, Nov 5 2026). Until then the row stays,
+ * marked stopped and never used; a browser that comes back gets a fresh row either way.
+ */
+export const STOPPED_PUSH_DAYS = 90;
+
 /** Rows a run reads from each of the queue, bulletin and employer sign-up tables. */
 const OTHER_ALERTS_LOOK = 2_000;
 
@@ -59,6 +67,7 @@ export const pruneOperationalLogs = internalMutation({
     chatConfirmations: v.number(),
     unconfirmedCaseAlerts: v.number(),
     unconfirmedOtherAlerts: v.number(),
+    stoppedPush: v.number(),
   }),
   handler: async (ctx, args) => {
     const now = args.now ?? Date.now();
@@ -70,6 +79,7 @@ export const pruneOperationalLogs = internalMutation({
       chatConfirmations: 0,
       unconfirmedCaseAlerts: 0,
       unconfirmedOtherAlerts: 0,
+      stoppedPush: 0,
     };
     let more = false;
     for (const table of Object.keys(RETENTION_DAYS) as (keyof typeof RETENTION_DAYS)[]) {
@@ -121,6 +131,18 @@ export const pruneOperationalLogs = internalMutation({
         await ctx.db.delete(row._id);
         out.unconfirmedOtherAlerts++;
       }
+    }
+    // Stopped browser notifications, STOPPED_PUSH_DAYS after they stopped. An open row's closedAt is
+    // undefined, which sorts before every number, so the range reads stopped rows only.
+    const stoppedBefore = now - STOPPED_PUSH_DAYS * MS_PER_DAY;
+    for (const table of ["caseStatusPushAlerts", "bulletinPushAlerts"] as const) {
+      const old = await ctx.db
+        .query(table)
+        .withIndex("by_closed", (q) => q.gte("closedAt", 0).lt("closedAt", stoppedBefore))
+        .take(BATCH + 1);
+      for (const row of old.slice(0, BATCH)) await ctx.db.delete(row._id);
+      out.stoppedPush += Math.min(old.length, BATCH);
+      if (old.length > BATCH) more = true;
     }
     // Guarded on progress, so an empty table can never spin a timer.
     if (more) await ctx.scheduler.runAfter(0, internal.retention.pruneOperationalLogs, { now });

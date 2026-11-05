@@ -134,3 +134,29 @@ describe("tool cache cleanup", () => {
     expect(await remaining(t)).toEqual([]);
   });
 });
+
+describe("stopped browser notifications", () => {
+  setupSchedulerTests();
+
+  it("deletes a stopped subscription 90 days after it stopped, and keeps open and recently stopped ones", async () => {
+    const t = createTestContext();
+    const { STOPPED_PUSH_DAYS } = await import("../retention");
+    expect(STOPPED_PUSH_DAYS).toBe(90);
+    const now = Date.now();
+    await t.run(async (ctx) => {
+      const base = { subscription: "{}", failures: 0, createdAt: now - 200 * DAY };
+      await ctx.db.insert("caseStatusPushAlerts", { ...base, caseNumber: "G-100-25001-000001", endpointHash: "old" , closedAt: now - 91 * DAY });
+      await ctx.db.insert("caseStatusPushAlerts", { ...base, caseNumber: "G-100-25001-000002", endpointHash: "recent", closedAt: now - 30 * DAY });
+      await ctx.db.insert("caseStatusPushAlerts", { ...base, caseNumber: "G-100-25001-000003", endpointHash: "open" });
+      await ctx.db.insert("bulletinPushAlerts", { ...base, category: "EB2", country: "INDIA", endpointHash: "old", closedAt: now - 120 * DAY });
+      await ctx.db.insert("bulletinPushAlerts", { ...base, category: "EB3", country: "INDIA", endpointHash: "open" });
+    });
+    const out = await t.mutation(internal.retention.pruneOperationalLogs, { now });
+    expect(out.stoppedPush).toBe(2);
+    const left = await t.run(async (ctx) => ({
+      cases: (await ctx.db.query("caseStatusPushAlerts").collect()).map((r) => r.endpointHash).sort(),
+      lines: (await ctx.db.query("bulletinPushAlerts").collect()).map((r) => r.endpointHash).sort(),
+    }));
+    expect(left).toEqual({ cases: ["open", "recent"], lines: ["open"] });
+  });
+});

@@ -19,6 +19,7 @@
 | Failed emails waiting to retry | **14 days** at most | Deleted when sent; the drain drops any older than 14 days | `emailRetries`: the whole rendered email (recipient, subject, body), so it can be sent again; never sign-in codes |
 | Daily email counts | **400 days** | Daily cron (3:20 AM UTC) | `emailDays`: counts only, no addresses |
 | Unconfirmed case-alert sign-ups | **30 days** | Daily cron (3:20 AM UTC) | `caseStatusAlerts` rows never confirmed; nothing was ever sent to them |
+| Stopped browser notifications | **90 days** after stopping | Daily cron (3:20 AM UTC) | `caseStatusPushAlerts` and `bulletinPushAlerts` rows with `closedAt`: stopped, revoked or ended at a final status (since Nov 5 2026, owner's call) |
 
 ## Automated Cleanup Jobs
 
