@@ -872,15 +872,12 @@ export default function PrivacyPage() {
                 The script in your browser removes request contents before it
                 sends an error. Cookies aren&apos;t sent
               </li>{" "}
-              {/* REVIEW (server error reports): the website server's Sentry setup keeps Sentry's default, which can
-                  attach part of a failed request's body to its report; nobody has read a real server report to see.
-                  This wording discloses that. Setting the Sentry option maxIncomingRequestBodySize to "none" (a
-                  one-line change) would let this say request contents are never sent. */}
+              {/* REVIEW (server error reports): true from the Nov 5 2026 2 AM deploy (commit 1a82294a turned off
+                  Sentry's default of attaching up to 10 KB of a failed request's body). This branch ships after it. */}
               <li>
-                Error reports from the website&apos;s own server can include the
-                page address and details of the request that failed, which for a
-                form can include part of what was sent. We use them only to fix
-                the error
+                Error reports from the website&apos;s own server carry the page
+                address and the error, never what was sent in the request that
+                failed. We use them only to fix the error
               </li>{" "}
               <li>
                 Sentry runs only on the live site; copies we run for development
@@ -1317,6 +1314,9 @@ export default function PrivacyPage() {
               .
             </p>{" "}
 
+            {/* REVIEW (Section 13): the old sentence said every provider is "prohibited from using it for their own
+                purposes"; Gemini's unpaid tier and Senja aren't. Whether those two still count as CCPA service
+                providers, and so whether "we don't share" holds as written, is the attorney's call. */}
             <div className="bg-tint p-4 mt-4 border-2 border-black shadow-hard-sm">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>
@@ -1326,9 +1326,11 @@ export default function PrivacyPage() {
                 cross-context behavioral advertising, as those terms are defined
                 under the California Consumer Privacy Act (CCPA). We disclose
                 personal information only to the service providers listed above,
-                who process it on our behalf under written agreements and are
-                prohibited from using it for their own purposes. We run no
-                third-party advertising trackers.
+                to run the site, and they process it for us under their terms.
+                Two exceptions: the chat&apos;s AI providers may use what the chat
+                sends them as Section 6 describes for each, and Senja keeps its
+                own copy of a review left on its form. We run no third-party
+                advertising trackers.
               </p>
             </div>
           </details>{" "}
@@ -1558,9 +1560,12 @@ export default function PrivacyPage() {
               Your data is primarily stored and processed in the United States.
               If you’re located in the European Economic Area (EEA), United
               Kingdom, or Switzerland, your data may be transferred to the United
-              States by our service providers (Convex, AI providers, Sentry,
-              PostHog).
+              States by our service providers (Convex, Cloudflare, Resend,
+              Google, Zoho, Sentry, PostHog and the AI chat providers).
             </p>{" "}
+            {/* REVIEW (Section 16): nobody has confirmed that every provider's terms carry SCCs or a data processing
+                agreement (Gemini's unpaid tier, Senja and Zoho are the ones to check). The attorney decides whether
+                this sentence stays, narrows to the providers that do, or goes. */}
             <p className="text-soft leading-relaxed mt-4">
               These transfers are protected by Standard Contractual Clauses (SCCs)
               approved by the European Commission, as well as Data Processing
