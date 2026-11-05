@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowDownIcon,
+  ArrowLeftIcon,
   ArrowRightIcon,
   ArrowUpIcon,
   CaretDownIcon,
@@ -261,8 +262,14 @@ export function CutoffLine({
   return (
     <figure className="flex h-full flex-col justify-end" aria-label={label}>
       <p className="flex justify-between text-sm font-bold">
-        <span className="text-data-good-ink">← Current</span>{" "}
-        <span className="text-data-info-ink">Waiting →</span>
+        <span className="inline-flex items-center gap-1 text-data-good-ink">
+          <ArrowLeftIcon aria-hidden="true" weight="bold" className="size-3.5" />
+          Current
+        </span>{" "}
+        <span className="inline-flex items-center gap-1 text-data-info-ink">
+          Waiting
+          <ArrowRightIcon aria-hidden="true" weight="bold" className="size-3.5" />
+        </span>
       </p>{" "}
       <div className="relative mt-2 h-3.5">
         <div className="absolute inset-y-0 left-0 bg-data-good-ink" style={{ width: `${at}%` }} />

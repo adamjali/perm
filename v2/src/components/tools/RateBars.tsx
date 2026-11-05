@@ -27,6 +27,7 @@ import { formatInt } from "@/lib/format";
 import { BaselineMultiple } from "./Insight";
 import { DataView, ScopeSelect } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "./FilterableStatTable";
+import { SortMark } from "@/components/ui/sort-mark";
 
 export interface RateRow {
   label: string;
@@ -218,8 +219,10 @@ export function RateTable({
           (sortKey === key ? " text-foreground" : "")
         }
       >
-        {label}
-        {sortKey === key ? (desc ? " ↓" : " ↑") : ""}
+        <span className={"inline-flex items-center gap-1.5" + (numeric ? " flex-row-reverse" : "")}>
+          <SortMark dir={sortKey === key ? (desc ? "desc" : "asc") : null} />
+          {label}
+        </span>
       </button>{" "}
     </th>
   );

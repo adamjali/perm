@@ -12,6 +12,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SEARCH_TEXT_MAX } from "@/lib/search/limits";
 import { compareNullsLast } from "@/lib/tableSort";
 import { Pagination } from "@/components/ui/pagination";
+import { SortMark } from "@/components/ui/sort-mark";
 
 /**
  * The searchable, filterable, paged table every entity index stands on.
@@ -562,8 +563,10 @@ export function FilterableStatTable<T>({
                           (isSorted ? " text-foreground" : "")
                         }
                       >
-                        {c.label}
-                        {isSorted ? (sortDesc ? " ↓" : " ↑") : ""}
+                        <span className={"inline-flex items-center gap-1.5" + (c.numeric ? " flex-row-reverse" : "")}>
+                          <SortMark dir={isSorted ? (sortDesc ? "desc" : "asc") : null} />
+                          {c.label}
+                        </span>
                         {/* Separator INSIDE the cell. Between two <th> it is
                             a whitespace text node whose parent is <tr>, which
                             is invalid HTML; React warns it will break

@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback } from "react";
-import { ArrowsDownUpIcon, CaretDoubleLeftIcon, CaretDoubleRightIcon, CaretLeftIcon, CaretRightIcon, EnvelopeIcon as Mail, MagnifyingGlassIcon as Search, TrashIcon as Trash2 } from "@phosphor-icons/react";
+import { CaretDoubleLeftIcon, CaretDoubleRightIcon, CaretLeftIcon, CaretRightIcon, EnvelopeIcon as Mail, MagnifyingGlassIcon as Search, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
+import { SortMark } from "@/components/ui/sort-mark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -332,6 +333,8 @@ export function UsersTable({
                   {COLUMNS.map((col) => (
                     <th
                       key={col.key}
+                      scope="col"
+                      aria-sort={sortField === col.key ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                       className={`p-3 text-left text-sm whitespace-nowrap ${col.className || ""}`}
                     >
                       <button
@@ -339,9 +342,7 @@ export function UsersTable({
                         className="flex items-center gap-1 hover:text-primary-text transition-colors font-bold"
                       >
                         {col.label}
-                        <ArrowsDownUpIcon
-                          className={`size-3 ${sortField === col.key ? "text-primary" : "opacity-30"}`}
-                        />
+                        <SortMark dir={sortField === col.key ? sortOrder : null} />
                       </button>
                     </th>
                   ))}

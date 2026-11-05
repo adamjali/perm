@@ -28,6 +28,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { fiscalYearSpan, ISO_MONTH_RE } from "@convex/lib/months";
 import { entityHref } from "@/lib/entityPayload";
 import { compareNullsLast } from "@/lib/tableSort";
+import { SortMark } from "@/components/ui/sort-mark";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
 const EMPTY_ROWS: CaseRow[] = [];
@@ -1164,10 +1165,10 @@ function CaseTable({
                   <button
                     type="button"
                     onClick={() => (c.key ? onSort(c.key) : undefined)}
-                    className="min-h-[44px] underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     {c.label}
-                    {active ? (sortAsc ? " ↑" : " ↓") : ""}
+                    <SortMark dir={active ? (sortAsc ? "asc" : "desc") : null} />
                   </button>
                 ) : (
                   c.label

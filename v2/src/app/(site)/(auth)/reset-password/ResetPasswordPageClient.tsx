@@ -3,6 +3,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction } from "convex/react";
 import { useMemo, useState } from "react";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authPageHref } from "@/lib/auth/returnTo";
@@ -308,9 +309,10 @@ export function ResetPasswordPageClient() {
           <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("email")}
-              className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
             >
-              ← Back to email
+              <ArrowLeftIcon aria-hidden="true" weight="bold" className="size-4" />
+              Back to email
             </button>
           </div>
         </CardContent>

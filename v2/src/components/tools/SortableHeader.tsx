@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 
 import type { SortColumn, SortState } from "@/lib/tableSort";
+import { SortMark } from "@/components/ui/sort-mark";
 
 /**
  * The header row of a sortable table, on this site's inverted header bar.
@@ -68,9 +69,7 @@ export function SortableHeader<T>({
                   }
                 >
                   {c.label}
-                  <span aria-hidden="true" className={active ? "" : "opacity-30"}>
-                    {active ? (sort.dir === 1 ? "↑" : "↓") : "↕"}
-                  </span>
+                  <SortMark dir={active ? (sort.dir === 1 ? "asc" : "desc") : null} />
                 </button>{" "}
             </th>
             </Fragment>
