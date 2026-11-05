@@ -3,13 +3,17 @@ import { describe, expect, it } from "vitest";
 import { MIN_CASE_REPORTERS } from "./communityTimeline";
 import {
   MIN_REPORTS,
+  OWNER_LIST_MAX,
   REPORT_CATEGORIES,
   activityDay,
   latestAllowedDay,
+  ownerDigest,
+  postWords,
   summarizeReports,
   validateReport,
   waitDays,
   weekStarts,
+  type ReportChange,
   type ReportInput,
   type ReportRecord,
 } from "./consularReport";
@@ -256,5 +260,52 @@ describe("summarizeReports: the floor", () => {
     expect(v.windows.find((w) => w.days === 90)?.total).toBe(3);
     // Two held interviews that week: under the floor.
     expect(v.weeks[v.weeks.length - 1]?.count).toBeNull();
+  });
+});
+
+describe("ownerDigest: the owner's daily email", () => {
+  const since = 1_000_000;
+  const row = (over: Partial<ReportChange> = {}): ReportChange => ({
+    post: "manila",
+    category: "k1",
+    outcome: "221g",
+    refusalGround: null,
+    interviewOn: "2026-11-03",
+    createdAt: since + 10,
+    updatedAt: since + 10,
+    hidden: false,
+    ...over,
+  });
+
+  it("sends nothing on a day with no reports", () => {
+    expect(ownerDigest([], since, "https://x")).toBeNull();
+  });
+
+  it("names each report's consulate, visa, result and appointment, new or edited, with its page", () => {
+    const d = ownerDigest(
+      [row(), row({ post: "ciudad-juarez", category: "immediate", outcome: "refused", refusalGround: "public-charge", createdAt: since - 5, hidden: true })],
+      since,
+      "https://x",
+    )!;
+    expect(d.subject).toBe("Consulate reports today: 2 reports");
+    expect(d.text).toContain("1 new, 1 edited");
+    expect(d.text).toContain("- Manila, K-1 fiancé(e): 221(g), more processing. appointment Nov 3. new. https://x/consular-posts/manila#reports");
+    expect(d.text).toContain("Ciudad Juarez");
+    expect(d.text).toContain("Refused (Public charge)");
+    expect(d.text).toContain("edited. hidden.");
+    expect(d.text).toContain("https://x/admin#reviews");
+  });
+
+  it("lists at most OWNER_LIST_MAX and counts the rest; says 'at least' when the read stopped short", () => {
+    const many = Array.from({ length: OWNER_LIST_MAX + 3 }, () => row());
+    const d = ownerDigest(many, since, "https://x", true)!;
+    expect(d.text.split("\n").filter((l) => l.startsWith("- "))).toHaveLength(OWNER_LIST_MAX);
+    expect(d.text).toContain("3 more on the admin page.");
+    expect(d.subject).toBe(`Consulate reports today: at least ${OWNER_LIST_MAX + 3} reports`);
+  });
+
+  it("reads a slug as words", () => {
+    expect(postWords("ciudad-juarez")).toBe("Ciudad Juarez");
+    expect(postWords("manila")).toBe("Manila");
   });
 });

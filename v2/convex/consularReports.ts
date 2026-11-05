@@ -2,11 +2,12 @@ import { v, type Infer } from "convex/values";
 
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
-import { requireAdmin } from "./lib/admin";
+import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { getSecurityAlertEmail, requireAdmin } from "./lib/admin";
 import {
   MIN_REPORTS,
   POST_SLUG,
+  ownerDigest,
   REPORT_FIELD_KEYS,
   isoToday,
   summarizeReports,
@@ -14,6 +15,11 @@ import {
   type ReportRecord,
   type ReportView,
 } from "./lib/consularReport";
+import { getResend } from "./lib/email";
+import { recordError } from "./lib/errorRecording";
+import { SITE_URL } from "./lib/links";
+import { createLogger } from "./lib/logging";
+import { sendOwnerMail } from "./lib/ownerMail";
 import { checkRateLimit, recordRateLimitAttempt } from "./lib/rateLimit";
 import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 
@@ -381,6 +387,91 @@ export const setHiddenForAdmin = mutation({
   handler: async (ctx, a) => {
     await requireAdmin(ctx);
     await ctx.db.patch(a.id, { hidden: a.hidden ? true : undefined });
+    return null;
+  },
+});
+
+// ============================================================================
+// The owner's daily email
+// ============================================================================
+
+const log = createLogger("consularReports");
+
+/** Read past the day's new-report budget and the edits on top, so the email's count is right. */
+const CHANGED_READ = 1_000;
+
+/** Every report saved or edited after `since`, newest change first. */
+export const changedSince = internalQuery({
+  args: { since: v.number() },
+  returns: v.object({
+    rows: v.array(
+      v.object({
+        post: v.string(),
+        category: v.string(),
+        outcome: v.string(),
+        refusalGround: v.union(v.string(), v.null()),
+        interviewOn: v.union(v.string(), v.null()),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+        hidden: v.boolean(),
+      }),
+    ),
+    more: v.boolean(),
+  }),
+  handler: async (ctx, a) => {
+    const got = await ctx.db
+      .query("consularReports")
+      .withIndex("by_updated", (q) => q.gt("updatedAt", a.since))
+      .order("desc")
+      .take(CHANGED_READ + 1);
+    return {
+      rows: got.slice(0, CHANGED_READ).map((r) => ({
+        post: r.post,
+        category: r.category,
+        outcome: r.outcome,
+        refusalGround: r.refusalGround ?? null,
+        interviewOn: r.interviewOn ?? null,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        hidden: r.hidden === true,
+      })),
+      more: got.length > CHANGED_READ,
+    };
+  },
+});
+
+/**
+ * Once a day (crons.ts), the owner hears about the reports saved or edited in the last 24 hours, with a
+ * link to hide or delete each one; nothing is sent on a day with none. Reports post at once and are
+ * taken down after, never held for approval (owner, Nov 5 2026). `sendOwnerMail` carries it through the
+ * Cloudflare mail Worker, so it spends none of Resend's 100 a day unless the Worker fails.
+ */
+export const emailOwnerDaily = internalAction({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const to = getSecurityAlertEmail();
+    if (!to) {
+      log.warn("no owner address configured; the consulate reports email wasn't sent", {});
+      return null;
+    }
+    try {
+      const since = Date.now() - MS_PER_DAY;
+      const changed = await ctx.runQuery(internal.consularReports.changedSince, { since });
+      const digest = ownerDigest(changed.rows, since, SITE_URL, changed.more);
+      if (!digest) return null;
+      const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const html = digest.text
+        .split("\n")
+        .map((l) => (l ? `<p>${esc(l)}</p>` : ""))
+        .join("");
+      const result = await sendOwnerMail(ctx, "consular-reports", getResend(), { to, subject: digest.subject, html, text: digest.text });
+      if (result.error) {
+        await recordError(ctx, "action", "consularReports.emailOwnerDaily", new Error(`owner email failed: ${JSON.stringify(result.error)}`));
+      }
+    } catch (error) {
+      await recordError(ctx, "action", "consularReports.emailOwnerDaily", error);
+    }
     return null;
   },
 });

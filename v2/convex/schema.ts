@@ -2406,7 +2406,9 @@ export default defineSchema({
     .index("by_post", ["post"])
     .index("by_post_key", ["post", "editKeyHash"])
     .index("by_post_ip", ["post", "ipHash"])
-    .index("by_ip_until", ["ipHashUntil"]),
+    .index("by_ip_until", ["ipHashUntil"])
+    // The owner's daily email reads the day's saves and edits by this.
+    .index("by_updated", ["updatedAt"]),
 
   /**
    * Browser push subscriptions for case-status changes, with no account and

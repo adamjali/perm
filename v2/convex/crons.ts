@@ -416,6 +416,17 @@ crons.hourly(
 );
 
 /**
+ * Consulate reports: one email to the owner listing the reports saved or edited in the last day, sent
+ * only on a day with any (convex/consularReports.ts). 13:30 UTC is 8:30 AM EST, 9:30 AM EDT.
+ */
+crons.daily(
+  "consular-reports-owner-email",
+  { hourUTC: 13, minuteUTC: 30 },
+  internal.consularReports.emailOwnerDaily,
+  {}
+);
+
+/**
  * The weekly digest. Composes Tuesday's issue from what the ingests
  * already hold (DOL's queue, the newest bulletin's moves, the week's Federal
  * Register documents) and stores it as a preview. Sending is gated on the

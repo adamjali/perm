@@ -23,6 +23,7 @@
  */
 
 import { MIN_CASE_REPORTERS } from "./communityTimeline";
+import { monthDay } from "./months";
 import { MS_PER_DAY } from "./time";
 
 /**
@@ -581,3 +582,72 @@ export const CATEGORY_LABEL: Record<ReportCategoryId, string> = Object.fromEntri
 export const OUTCOME_LABEL: Record<ReportOutcomeId, string> = Object.fromEntries(
   REPORT_OUTCOMES.map((o) => [o.id, o.label]),
 ) as Record<ReportOutcomeId, string>;
+
+/** "ciudad-juarez" to "Ciudad Juarez", for the owner's email; the consulate's page carries State's own name. */
+export function postWords(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w[0]!.toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** What the owner's daily email reads from each report saved or edited that day. */
+export interface ReportChange {
+  post: string;
+  category: string;
+  outcome: string;
+  refusalGround: string | null;
+  interviewOn: string | null;
+  createdAt: number;
+  updatedAt: number;
+  hidden: boolean;
+}
+
+/** The most lines one email lists; the rest are counted and left to the admin page. */
+export const OWNER_LIST_MAX = 40;
+
+/**
+ * The owner's once-a-day email about consulate reports (owner, Nov 5 2026: "one email a day", and
+ * reports post at once and are taken down after, never held for approval). One line per report saved or
+ * edited after `since`, newest first, each with its consulate's page. Null on a day with none, so a quiet
+ * day sends nothing. `total` is how many changed when the caller read more than it lists; `more` says the
+ * read itself stopped short.
+ */
+export function ownerDigest(
+  rows: readonly ReportChange[],
+  since: number,
+  siteUrl: string,
+  more = false,
+): { subject: string; text: string } | null {
+  if (rows.length === 0) return null;
+  const added = rows.filter((r) => r.createdAt > since).length;
+  const edited = rows.length - added;
+  const atLeast = more ? "at least " : "";
+  const counts = [added ? `${atLeast}${added} new` : "", edited ? `${edited} edited` : ""].filter(Boolean).join(", ");
+  const lines = rows.slice(0, OWNER_LIST_MAX).map((r) => {
+    const label = CATEGORY_LABEL[r.category as ReportCategoryId] ?? r.category;
+    const outcome = OUTCOME_LABEL[r.outcome as ReportOutcomeId] ?? r.outcome;
+    const ground = r.refusalGround ? REFUSAL_GROUNDS.find((g) => g.id === r.refusalGround)?.label : undefined;
+    const day = monthDay(r.interviewOn);
+    const parts = [`${postWords(r.post)}, ${label}: ${outcome}${ground ? ` (${ground})` : ""}`];
+    if (day) parts.push(`appointment ${day}`);
+    parts.push(r.createdAt > since ? "new" : "edited");
+    if (r.hidden) parts.push("hidden");
+    return `- ${parts.join(". ")}. ${siteUrl}/consular-posts/${r.post}#reports`;
+  });
+  const left = rows.length - lines.length;
+  const text = [
+    `Consulate reports saved or changed in the last day: ${counts}.`,
+    "",
+    ...lines,
+    ...(left > 0 ? ["", `${left} more on the admin page.`] : []),
+    "",
+    `A consulate's figures show only once ${MIN_REPORTS} people have reported there.`,
+    `Hide or delete a report on the admin page: ${siteUrl}/admin#reviews`,
+    "",
+    "You get this at most once a day, and only on a day with reports.",
+  ].join("\n");
+  const n = rows.length;
+  return { subject: `Consulate reports today: ${more ? "at least " : ""}${n} ${n === 1 ? "report" : "reports"}`, text };
+}

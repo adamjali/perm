@@ -306,3 +306,61 @@ describe("the HTTP routes", () => {
     expect(res.status).toBe(429);
   });
 });
+
+describe("consularReports.emailOwnerDaily", () => {
+  const OWNER = "owner@example.com";
+  const WORKER = "https://mail.example.com/owner";
+
+  function stubWorker() {
+    vi.stubEnv("SECURITY_ALERT_EMAIL", OWNER);
+    vi.stubEnv("OWNER_MAIL_URL", WORKER);
+    vi.stubEnv("OWNER_MAIL_KEY", "key");
+    vi.stubEnv("AUTH_RESEND_KEY", "re_test");
+    const calls = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    vi.stubGlobal("fetch", calls);
+    return calls;
+  }
+
+  const report = (post: string, createdAt: number, updatedAt: number, outcome = "221g") => ({
+    post,
+    category: "h1b" as const,
+    outcome: outcome as "221g",
+    editKeyHash: KEY,
+    createdAt,
+    updatedAt,
+  });
+
+  it("sends nothing on a day with no reports", async () => {
+    const calls = stubWorker();
+    const t = createTestContext();
+    const old = Date.now() - 3 * 86_400_000;
+    await t.run((ctx) => ctx.db.insert("consularReports", report("manila", old, old)));
+    await t.action(internal.consularReports.emailOwnerDaily, {});
+    expect(calls).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("lists the day's new and edited reports, once, through the Worker, and leaves older ones out", async () => {
+    const calls = stubWorker();
+    const t = createTestContext();
+    const now = Date.now();
+    const old = now - 3 * 86_400_000;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("consularReports", report("manila", now - 60_000, now - 60_000));
+      await ctx.db.insert("consularReports", report("ciudad-juarez", old, now - 120_000, "refused"));
+      await ctx.db.insert("consularReports", report("mumbai", old, old));
+    });
+    await t.action(internal.consularReports.emailOwnerDaily, {});
+    const sends = calls.mock.calls.filter(([u]) => String(u) === WORKER);
+    expect(sends).toHaveLength(1);
+    const body = JSON.parse(String(sends[0]![1]?.body)) as { to: string; subject: string; text: string };
+    expect(body.to).toBe(OWNER);
+    expect(body.subject).toBe("Consulate reports today: 2 reports");
+    expect(body.text).toContain("1 new, 1 edited");
+    expect(body.text).toContain("Manila, H-1B");
+    expect(body.text).toContain("Ciudad Juarez, H-1B: Refused");
+    expect(body.text).not.toContain("Mumbai");
+    expect(body.text).toContain("/admin#reviews");
+    vi.unstubAllGlobals();
+  });
+});
