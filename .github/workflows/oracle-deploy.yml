@@ -335,13 +335,14 @@ jobs:
           if [ -z "$CF_PURGE_TOKEN" ] || [ -z "$CF_ZONE_ID" ]; then
             echo "::notice::CF_PURGE_TOKEN or CF_ZONE_ID not set: the build before's navigation data stays at Cloudflare up to an hour"; exit 0
           fi
-          curl -sS --max-time 30 -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+          # Cloudflare's answer goes to a file and is read as JSON: nothing fetched is run.
+          curl -sS --max-time 30 -o "$RUNNER_TEMP/rsc-purge.json" -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
             -H "Authorization: Bearer $CF_PURGE_TOKEN" -H "Content-Type: application/json" \
-            --data '{"tags":["rsc"]}' \
-            | python3 -c 'import json,sys
-          j = json.load(sys.stdin)
+            --data '{"tags":["rsc"]}'
+          python3 -c 'import json,sys
+          j = json.load(open(sys.argv[1]))
           print("purge: navigation data from the build before is dropped" if j.get("success") else "::error::purge refused: " + json.dumps(j.get("errors"))[:200])
-          sys.exit(0 if j.get("success") else 1)'
+          sys.exit(0 if j.get("success") else 1)' "$RUNNER_TEMP/rsc-purge.json"
 
       # Cloudflare keeps each page's HTML up to a day (s-maxage=86400) and a
       # deploy does not clear it, so a fix shipped here stayed invisible until

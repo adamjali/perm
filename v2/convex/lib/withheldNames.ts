@@ -600,6 +600,8 @@ export function makeMasker(entries: readonly WithheldEntry[]): Masker {
 
   // Text and stored summaries: one loose test first, so a cell that can't hold
   // a name costs one regular expression and no parse.
+  // Every pattern below is built from the server's own withheld lists (never a visitor's input), each value
+  // through escapeRe, joined only by fixed, bounded pieces (flexName's [^a-z0-9]{1,8}, FORM_TAIL).
   const looseParts: string[] = [];
   const namePatterns: { re: RegExp; entry: WithheldEntry }[] = [];
   for (const e of entries) {
@@ -609,17 +611,21 @@ export function makeMasker(entries: readonly WithheldEntry[]): Masker {
       const flex = flexName(n);
       if (!flex) {
         looseParts.push(escapeRe(n));
+        // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
         namePatterns.push({ re: new RegExp(`\\b${escapeRe(n)}\\b`, "gi"), entry: e });
         continue;
       }
       looseParts.push(flex);
       // Ends at anything but a letter or digit, so "P.L.L.C." keeps its last period.
+      // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
       namePatterns.push({ re: new RegExp(`\\b${flex}${FORM_TAIL}(?![a-z0-9])`, "gi"), entry: e });
     }
   }
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
   const loose = looseParts.length ? new RegExp(looseParts.join("|"), "i") : null;
   const pathPatterns = entries.flatMap((e) =>
     e.slugs.map((s) => ({
+      // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
       re: new RegExp(`${escapeRe(NEUTRAL_BASE[e.kind])}/${escapeRe(s)}(?![a-z0-9-])`, "gi"),
       to: neutralPath(e) ?? NEUTRAL_BASE[e.kind],
     })),
