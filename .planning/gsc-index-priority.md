@@ -1895,3 +1895,41 @@ Still to request:
    `/consular-posts` (the category switch), `/filings-by-day` (new), then `/today`, `/pwd-cases`, `/perm-cases`,
    `/case-search`, `/lca-cases`, `/layoffs`.
 Then `node scripts/gsc_queue.mjs --since 57f4ea8a` for anything else.
+
+### Round, Friday Nov 6 2026 (about 11:12 to 11:34 AM EST)
+
+What's live is 0e20b3db (release 525), switched at 5:16 AM EST. Since the last round, efb3ec2d shipped at 8:15 PM on
+Nov 5 (the consulate report fields and the K-1 tab links) and 55bea33d at 6:05 PM (the consulate pages, `/visa-refusals`,
+masked names). dcba50b9 (live-data pages dated by the sweep, the still-filling bar) waits for the 2:00 AM EST run on
+Sat Nov 7.
+
+Requested (11, then Quota Exceeded on the twelfth):
+- `/tools/priority-date-retention`: crawled Nov 1, 6:19 PM.
+- `/perm-processing-times`: crawled Nov 5, 3:41 PM, before the 6:05 PM release changed it.
+- `/visa-bulletin`: crawled Nov 4, 11:44 PM.
+- `/policy-changes`: crawled Nov 2, 9:26 PM.
+- `/h1b-employers`: crawled Nov 2, 9:15 PM.
+- `/debarments`: crawled Nov 1, 3:39 PM.
+- `/estimate-scorecard`: crawled Nov 2, 8:38 PM.
+- `/consular-posts`: crawled Nov 5, 11:28 AM. The first try answered "Something went wrong"; the retry went through.
+- `/today`: crawled Nov 1, 1:11 PM.
+- `/pwd-cases`: crawled Nov 5, 12:43 PM.
+- `/perm-cases`: crawled Nov 5, 7:41 AM.
+
+Refused by the quota: `/case-search` (crawled Nov 5, 4:40 PM, before the 6:05 PM release).
+
+Skipped, crawled after their last change: `/perm-employers/google-llc` (Nov 6, 7:51 AM), `/perm-decision-activity`
+(Nov 6, 2:52 AM), `/perm-case-status` (Nov 6, 5:21 AM), `/filings-by-day` (Nov 6, 4:26 AM, indexed).
+
+Still to request:
+1. `/case-search`, then `/lca-cases`, `/layoffs`.
+2. New since the last round: `/visa-refusals`, `/changelog/every-visa-at-each-consulate`.
+3. Only after the 2:00 AM EST run on Sat Nov 7 ships dcba50b9 or later (each page's "Updated" day moves to the
+   sweep's): `/perm-case-status`, `/filings-by-day`, `/perm-by-the-numbers`, `/seasonal-cases`.
+4. Then the rest of `node scripts/gsc_queue.mjs --since 57f4ea8a`: `/`, `/for-attorneys`, `/h1b-cap-exempt-employers`,
+   `/nvc-waiting-list`, `/open-data`, `/perm-layoff-disclosures`, `/privacy`, `/terms`, `/visa-issuances`,
+   `/visa-wait-times`, `/wage-violations`, `/tools/green-card-line`, `/tools/green-card-timeline`,
+   `/tools/priority-date-calculator`, `/visa-bulletin/family`, the samples `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
+   and `/visa-bulletin/categories/eb2-india`, then `/api-terms`, `/i485-by-field-office`, `/perm-attorneys`,
+   `/perm-by-state`, `/perm-denial-risk`, `/perm-employers`, `/perm-wages`, `/perm-employers/under-review`,
+   `/guides/tracking-a-case-without-an-account`, `/guides/tracking-perm-deadlines`.
