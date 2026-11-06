@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { TimelineWire } from "./communityTimelines";
 import type { ReportWire } from "./consularReports";
+import { REPORT_FIELD_KEYS } from "./lib/consularReport";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
@@ -1962,10 +1963,6 @@ async function reportBody(
   return { ok: true, body: b };
 }
 
-const REPORT_FIELDS = [
-  "category", "mode", "nvcCompleteMonth", "scheduledOn", "interviewOn", "outcome", "refusalGround", "approvedOn",
-  "resolvedOn", "slipColor", "askedToEmailDocs",
-] as const;
 
 for (const path of ["/consular-report/save", "/consular-report/mine", "/consular-report/remove"]) {
   http.route({
@@ -1989,7 +1986,7 @@ http.route({
     const b = parsed.body;
     // Narrow every field to a short string or nothing; the mutation validates meaning.
     const input: Record<string, string> = {};
-    for (const k of REPORT_FIELDS) {
+    for (const k of REPORT_FIELD_KEYS) {
       const x = b[k];
       if (x === undefined || x === null || x === "") continue;
       if (typeof x !== "string" || x.length > 24) return json({ ok: false, message: "Malformed request." }, 400);

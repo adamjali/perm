@@ -98,6 +98,54 @@ export const REPORT_MODES = [
 ] as const;
 export type ReportModeId = (typeof REPORT_MODES)[number]["id"];
 
+/**
+ * The exact category within a kind of visa, as State's visa bulletin and scheduling tool name it (owner, Nov
+ * 5 2026): State schedules interviews category by category, so "Family preference" alone can't say whether
+ * F2A is moving at a post. Optional, and only for the three kinds that have one.
+ */
+export const REPORT_LINES = [
+  { id: "eb1", label: "EB-1", category: "employment" },
+  { id: "eb2", label: "EB-2", category: "employment" },
+  { id: "eb3", label: "EB-3", category: "employment" },
+  { id: "ew", label: "EB-3 other workers", category: "employment" },
+  { id: "eb4", label: "EB-4", category: "employment" },
+  { id: "eb5", label: "EB-5", category: "employment" },
+  { id: "f1", label: "F1", category: "family" },
+  { id: "f2a", label: "F2A", category: "family" },
+  { id: "f2b", label: "F2B", category: "family" },
+  { id: "f3", label: "F3", category: "family" },
+  { id: "f4", label: "F4", category: "family" },
+  { id: "ir1", label: "Spouse (IR-1 or CR-1)", category: "immediate" },
+  { id: "ir2", label: "Child (IR-2 or CR-2)", category: "immediate" },
+  { id: "ir3", label: "Adopted child (IR-3, IR-4)", category: "immediate" },
+  { id: "ir5", label: "Parent (IR-5)", category: "immediate" },
+] as const;
+export type ReportLineId = (typeof REPORT_LINES)[number]["id"];
+
+/** The exact categories a kind of visa offers; empty when it has none. */
+export function linesFor(category: string | null | undefined): readonly (typeof REPORT_LINES)[number][] {
+  return REPORT_LINES.filter((l) => l.category === category);
+}
+
+/** Why the 221(g), as the officer put it; for any kind of visa. Public charge is the question people ask most. */
+export const HOLD_REASONS = [
+  { id: "documents", label: "Asked for documents" },
+  { id: "admin", label: "Administrative processing" },
+  { id: "public-charge", label: "Public charge or I-864" },
+  { id: "not-told", label: "Not told why" },
+] as const;
+export type HoldReasonId = (typeof HOLD_REASONS)[number]["id"];
+
+/** Who cancelled or moved the interview. */
+export const CANCELLED_BY = [
+  { id: "consulate", label: "The consulate" },
+  { id: "me", label: "I did" },
+] as const;
+export type CancelledById = (typeof CANCELLED_BY)[number]["id"];
+
+/** Outcomes where the interview didn't take place as booked: who cancelled or moved it applies. */
+export const MOVED_OUTCOMES: ReadonlySet<string> = new Set(["cancelled", "rescheduled"]);
+
 /** The colour of the 221(g) slip the officer handed back. */
 export const SLIP_COLORS = [
   { id: "white", label: "White" },
@@ -153,6 +201,9 @@ export interface ReportInput {
   resolvedOn?: string | null;
   slipColor?: string | null;
   askedToEmailDocs?: string | null;
+  line?: string | null;
+  holdReason?: string | null;
+  cancelledBy?: string | null;
 }
 
 /** A checked report: the post, the category and the outcome always, the rest when given. */
@@ -169,6 +220,9 @@ export interface ReportFields {
   resolvedOn?: string;
   slipColor?: SlipColorId;
   askedToEmailDocs?: YesNoUnsureId;
+  line?: ReportLineId;
+  holdReason?: HoldReasonId;
+  cancelledBy?: CancelledById;
 }
 
 /** The fields a save writes beyond the post, each one written so an edit can clear it. */
@@ -184,6 +238,9 @@ export const REPORT_FIELD_KEYS = [
   "resolvedOn",
   "slipColor",
   "askedToEmailDocs",
+  "line",
+  "holdReason",
+  "cancelledBy",
 ] as const;
 
 export type ReportProblem =
@@ -199,6 +256,9 @@ export type ReportProblem =
   | "nvc"
   | "nonimmigrant"
   | "221g-detail"
+  | "line"
+  | "hold-reason"
+  | "cancelled-by"
   | "order";
 
 export type ReportCheck = { ok: true; value: ReportFields } | { ok: false; code: ReportProblem; message: string };
@@ -277,11 +337,14 @@ export function validateReport(input: ReportInput, today: string = isoToday()): 
     refusalGround: pick(REFUSAL_GROUNDS, input.refusalGround),
     slipColor: pick(SLIP_COLORS, input.slipColor),
     askedToEmailDocs: pick(YES_NO_UNSURE, input.askedToEmailDocs),
+    line: pick(REPORT_LINES, input.line),
+    holdReason: pick(HOLD_REASONS, input.holdReason),
+    cancelledBy: pick(CANCELLED_BY, input.cancelledBy),
   };
   if (Object.values(choices).some((x) => x === null)) {
     return { ok: false, code: "choice", message: "One of the answers isn't one this form records." };
   }
-  const { mode, refusalGround, slipColor, askedToEmailDocs } = choices;
+  const { mode, refusalGround, slipColor, askedToEmailDocs, line, holdReason, cancelledBy } = choices;
 
   const nvcCompleteMonth = month(input.nvcCompleteMonth, latest);
   const scheduledOn = day(input.scheduledOn, latest);
@@ -307,6 +370,15 @@ export function validateReport(input: ReportInput, today: string = isoToday()): 
   }
   if ((slipColor || askedToEmailDocs) && outcome !== "221g") {
     return { ok: false, code: "221g-detail", message: "The slip colour and the emailed documents go with a 221(g)." };
+  }
+  if (line && !linesFor(category).some((l) => l.id === line)) {
+    return { ok: false, code: "line", message: "That category doesn't go with that kind of visa." };
+  }
+  if (holdReason && outcome !== "221g") {
+    return { ok: false, code: "hold-reason", message: "The reason for a 221(g) goes with a 221(g) only." };
+  }
+  if (cancelledBy && !MOVED_OUTCOMES.has(outcome)) {
+    return { ok: false, code: "cancelled-by", message: "Who cancelled it goes with a cancelled or moved interview." };
   }
   if (refusalGround && outcome !== "refused") {
     return { ok: false, code: "refusal-ground", message: "A refusal ground goes with a refusal only." };
@@ -352,6 +424,9 @@ export function validateReport(input: ReportInput, today: string = isoToday()): 
   if (resolvedOn) value.resolvedOn = resolvedOn;
   if (slipColor) value.slipColor = slipColor;
   if (askedToEmailDocs) value.askedToEmailDocs = askedToEmailDocs;
+  if (line) value.line = line;
+  if (holdReason) value.holdReason = holdReason;
+  if (cancelledBy) value.cancelledBy = cancelledBy;
   return { ok: true, value };
 }
 
@@ -466,6 +541,8 @@ export interface ReportCategoryCell {
   count: number | null;
   open: boolean;
   byOutcome: ReportCount[];
+  /** The exact categories reported (EB-2, F2A...), when the cell is open and anyone gave one. */
+  byLine: ReportCount[];
   /** The NVC-to-interview median for this category; null under the floor. */
   waitMedian: number | null;
   after: AfterView;
@@ -484,7 +561,12 @@ export interface ReportView {
   categories: ReportCategoryCell[];
   weeks: ReportWeek[];
   /** Interviews with a result in the last RESULT_WINDOW_DAYS, and how many were a 221(g); null under the floor. */
-  results: { days: number; n: number | null; g221: number | null; share: number | null };
+  results: { days: number; n: number | null; g221: number | null; share: number | null; holdReasons: ReportCount[] };
+  /**
+   * Interviews cancelled or moved in the last 90 days, and who did it among the reports that say; empty under
+   * the floor.
+   */
+  moved: { days: number; n: number | null; byWho: ReportCount[] };
   /** NVC's month to the interview, over interviews held in the last WAIT_WINDOW_DAYS; null under the floor. */
   wait: { days: number; n: number | null; median: number | null };
 }
@@ -495,6 +577,13 @@ function outcomeCounts(rows: readonly ReportRecord[]): ReportCount[] {
   return REPORT_OUTCOMES.map((o) => ({ id: o.id as string, label: o.label as string, count: rows.filter((r) => r.outcome === o.id).length })).filter(
     (c) => c.count > 0,
   );
+}
+
+/** How many reports gave each answer from a list, in the list's order, leaving out answers nobody gave. */
+function choiceCounts(rows: readonly ReportRecord[], list: readonly { id: string; label: string }[], pickOf: (r: ReportRecord) => string | undefined): ReportCount[] {
+  return list
+    .map((x) => ({ id: x.id, label: x.label, count: rows.filter((r) => pickOf(r) === x.id).length }))
+    .filter((c) => c.count > 0);
 }
 
 function afterOf(rows: readonly ReportRecord[]): AfterView {
@@ -541,6 +630,7 @@ export function summarizeReports(records: readonly ReportRecord[], today: string
       count: open ? rows.length : null,
       open,
       byOutcome: open ? outcomeCounts(rows) : [],
+      byLine: open ? choiceCounts(rows, linesFor(c.id), (r) => r.line) : [],
       waitMedian: floor(waits.length) ? median(waits) : null,
       after: afterOf(recentAppt(mineAll)),
     };
@@ -556,6 +646,9 @@ export function summarizeReports(records: readonly ReportRecord[], today: string
   const decided = live.filter((r) => DECIDED.has(r.outcome) && activityDay(r) >= resultFrom);
   const g221 = decided.filter((r) => r.outcome === "221g").length;
   const resultsOpen = floor(decided.length);
+  const holds = decided.filter((r) => r.outcome === "221g");
+  const movedRows = recent.filter((r) => MOVED_OUTCOMES.has(r.outcome));
+  const movedOpen = floor(movedRows.length);
 
   const waits = waitsOf(live);
   const waitOpen = floor(waits.length);
@@ -570,6 +663,12 @@ export function summarizeReports(records: readonly ReportRecord[], today: string
       n: resultsOpen ? decided.length : null,
       g221: resultsOpen ? g221 : null,
       share: resultsOpen ? g221 / decided.length : null,
+      holdReasons: resultsOpen && floor(holds.length) ? choiceCounts(holds, HOLD_REASONS, (r) => r.holdReason) : [],
+    },
+    moved: {
+      days: 90,
+      n: movedOpen ? movedRows.length : null,
+      byWho: movedOpen ? choiceCounts(movedRows, CANCELLED_BY, (r) => r.cancelledBy) : [],
     },
     wait: { days: WAIT_WINDOW_DAYS, n: waitOpen ? waits.length : null, median: waitOpen ? median(waits) : null },
   };
@@ -599,6 +698,9 @@ export interface ReportChange {
   outcome: string;
   refusalGround: string | null;
   interviewOn: string | null;
+  line: string | null;
+  holdReason: string | null;
+  cancelledBy: string | null;
   createdAt: number;
   updatedAt: number;
   hidden: boolean;
@@ -628,9 +730,13 @@ export function ownerDigest(
   const lines = rows.slice(0, OWNER_LIST_MAX).map((r) => {
     const label = CATEGORY_LABEL[r.category as ReportCategoryId] ?? r.category;
     const outcome = OUTCOME_LABEL[r.outcome as ReportOutcomeId] ?? r.outcome;
-    const ground = r.refusalGround ? REFUSAL_GROUNDS.find((g) => g.id === r.refusalGround)?.label : undefined;
+    const line = r.line ? REPORT_LINES.find((l) => l.id === r.line)?.label : undefined;
+    const detail =
+      (r.refusalGround ? REFUSAL_GROUNDS.find((g) => g.id === r.refusalGround)?.label : undefined) ??
+      (r.holdReason ? HOLD_REASONS.find((g) => g.id === r.holdReason)?.label : undefined) ??
+      (r.cancelledBy ? CANCELLED_BY.find((g) => g.id === r.cancelledBy)?.label : undefined);
     const day = monthDay(r.interviewOn);
-    const parts = [`${postWords(r.post)}, ${label}: ${outcome}${ground ? ` (${ground})` : ""}`];
+    const parts = [`${postWords(r.post)}, ${label}${line ? `, ${line}` : ""}: ${outcome}${detail ? ` (${detail})` : ""}`];
     if (day) parts.push(`appointment ${day}`);
     parts.push(r.createdAt > since ? "new" : "edited");
     if (r.hidden) parts.push("hidden");

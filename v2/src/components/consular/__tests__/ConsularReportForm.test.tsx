@@ -104,6 +104,28 @@ describe("ConsularReportForm", () => {
     expect(sent()!.askedToEmailDocs ?? null).toBeNull();
   });
 
+  it("asks the exact category, why the 221(g) and who cancelled only where they apply, and drops each with it", async () => {
+    render(<ConsularReportForm post={POST} name="Mumbai" />);
+    pick("Kind of visa", "h1b");
+    expect(screen.queryByLabelText("Exact category")).toBeNull();
+    pick("Kind of visa", "family");
+    pick("Exact category", "f2a");
+    // A different kind of visa has its own list: F2A isn't an employment category, so it goes.
+    pick("Kind of visa", "employment");
+    expect(screen.getByLabelText("Exact category")).toHaveValue("");
+    pick("Exact category", "eb2");
+    pick("Interview", daysAgo(6));
+    pick("Result", "221g");
+    pick("Why the 221(g)", "public-charge");
+    pick("Result", "cancelled");
+    expect(screen.queryByLabelText("Why the 221(g)")).toBeNull();
+    pick("Who cancelled or moved it", "consulate");
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(sent()).not.toBeNull());
+    expect(sent()).toMatchObject({ category: "employment", line: "eb2", outcome: "cancelled", cancelledBy: "consulate" });
+    expect(sent()!.holdReason ?? null).toBeNull();
+  });
+
   it("calls the date a drop-off when the visa went into the drop box", () => {
     render(<ConsularReportForm post={POST} name="Mumbai" />);
     pick("Kind of visa", "h4");

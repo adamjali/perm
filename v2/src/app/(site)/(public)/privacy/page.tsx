@@ -345,12 +345,14 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 On a consulate’s page, anyone who had a visa appointment there
-                can report it: the kind of visa, whether it was an interview or
-                a drop box, the month NVC said the case was complete, the dates
-                of the appointment letter, the interview, the approval and the
-                visa, and what happened (such as a 221(g) with its slip colour
-                and whether you were asked to email documents, or a refusal and
-                its ground). Each is a date or a choice from a fixed list.
+                can report it: the kind of visa and its exact category (such as
+                EB-2 or F2A), whether it was an interview or a drop box, the
+                month NVC said the case was complete, the dates of the
+                appointment letter, the interview, the approval and the visa,
+                and what happened (such as a 221(g) with the reason given, its
+                slip colour and whether you were asked to email documents, a
+                refusal and its ground, or who cancelled or moved the
+                interview). Each is a date or a choice from a fixed list.
                 There’s no free-text box
               </li>{" "}
               <li>

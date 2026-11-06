@@ -2349,6 +2349,10 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
   found by its title (Table XX to FY2019, XIX from FY2020; FY2000-12's "Table XIX" is something else). Step 6c, twice a month.
 - **Visitor reports on each consulate page**, any visa, no account, name or case number, shown once 3 people report
   (`convex/lib/consularReport.ts`, label `SELF_REPORTED`). The Privacy Policy and Terms cover them.
+  They post at once and are moderated after (owner, Nov 5): Admin > Reviews hides or deletes, and one email a day at
+  13:30 UTC lists the last 24 hours' reports (`emailOwnerDaily`, through the mail Worker, nothing on a quiet day).
+  Optional choices since that evening: the exact category (`REPORT_LINES`: EB-1 to EB-5, F1 to F4, IR/CR), why a
+  221(g) (`HOLD_REASONS`, public charge among them) and who cancelled (`CANCELLED_BY`), each under the same floor.
 - **Open data is CC BY-NC 4.0 from Nov 6 2026** (`OPEN_DATA_LICENSE` in `src/lib/openData.ts`): news, research and
   teaching may use it anywhere, other commercial use needs our permission, and copies taken before Nov 6 keep CC BY.
   The Terms add a no-replacement rule (§4). The API's terms are unchanged until pricing exists.

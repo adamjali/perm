@@ -2393,6 +2393,32 @@ export default defineSchema({
     ),
     /** A nonimmigrant visa's 221(g): whether the officer asked for documents by email. */
     askedToEmailDocs: v.optional(v.union(v.literal("yes"), v.literal("no"), v.literal("unsure"))),
+    /** The exact category (EB-2, F2A, IR-1...) within employment, family preference or immediate relative. */
+    line: v.optional(
+      v.union(
+        v.literal("eb1"),
+        v.literal("eb2"),
+        v.literal("eb3"),
+        v.literal("ew"),
+        v.literal("eb4"),
+        v.literal("eb5"),
+        v.literal("f1"),
+        v.literal("f2a"),
+        v.literal("f2b"),
+        v.literal("f3"),
+        v.literal("f4"),
+        v.literal("ir1"),
+        v.literal("ir2"),
+        v.literal("ir3"),
+        v.literal("ir5"),
+      ),
+    ),
+    /** Only with outcome "221g", any kind of visa: why, as the officer put it. */
+    holdReason: v.optional(
+      v.union(v.literal("documents"), v.literal("admin"), v.literal("public-charge"), v.literal("not-told")),
+    ),
+    /** Only with outcome "cancelled" or "rescheduled". */
+    cancelledBy: v.optional(v.union(v.literal("consulate"), v.literal("me"))),
     editKeyHash: v.string(),
     /** Cleared about a day after the report is saved. */
     ipHash: v.optional(v.string()),

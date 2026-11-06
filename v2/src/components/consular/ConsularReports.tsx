@@ -53,6 +53,11 @@ const OUTCOME_SHORT: Record<string, string> = {
   rescheduled: "rescheduled",
 };
 
+/** "2 EB-2, 1 EB-3": the exact categories people gave, in one line. */
+function countLine(counts: readonly ReportCount[]): string {
+  return counts.map((c) => `${formatInt(c.count)} ${c.label}`).join(", ");
+}
+
 /** "2 issued, 1 in 221(g)": a cell's outcomes in one line. */
 function outcomeLine(counts: readonly ReportCount[]): string {
   return counts.map((c) => `${formatInt(c.count)} ${OUTCOME_SHORT[c.id] ?? c.label.toLowerCase()}`).join(", ");
@@ -228,7 +233,37 @@ export function ConsularReports({
                 </div>
               ))}
             </div>
+            {view.moved.n !== null && view.moved.byWho.length ? (
+              <p className="mt-6 text-base">
+                Of {plural(view.moved.n, "interview")} cancelled or moved in the last {view.moved.days} days,{" "}
+                {view.moved.byWho.map((c) => `${formatInt(c.count)} by ${c.id === "me" ? "the applicant" : "the consulate"}`).join(" and ")}
+                {view.moved.byWho.reduce((t, c) => t + c.count, 0) < view.moved.n ? "; the rest didn't say" : ""}.
+              </p>
+            ) : null}
           </FigurePlate>
+
+          {view.results.holdReasons.length ? (
+            <FigurePlate
+              title="Why the 221(g)"
+              subject={`Interviews that ended in 221(g), last ${view.results.days} days`}
+              caption={`What the officer said, as the people who got a 221(g) report it. It shows once ${MIN_REPORTS} people report a 221(g); a report that didn't say isn't counted.`}
+              source={`${SELF_REPORTED}.`}
+              className="mt-10"
+            >
+              <BarRows
+                inline
+                rows={view.results.holdReasons.map((c) => ({
+                  key: c.id,
+                  label: c.label,
+                  value: c.count,
+                  text: plural(c.count, "report"),
+                  tone: c.id === "public-charge" ? "blue" : "yellow",
+                  tip: `${c.label}\n${plural(c.count, "report")} of ${formatInt(view.results.g221!)} 221(g)\n${SELF_REPORTED}`,
+                }))}
+                label={`Why interviews in ${name} ended in 221(g), last ${view.results.days} days`}
+              />
+            </FigurePlate>
+          ) : null}
 
           <FigurePlate
             title="By kind of visa"
@@ -245,7 +280,11 @@ export function ConsularReports({
                   label: c.label,
                   value: c.count,
                   text: plural(c.count ?? 0, "report"),
-                  sub: [outcomeLine(c.byOutcome), c.waitMedian !== null ? `NVC to interview: ${formatInt(c.waitMedian)} days` : null]
+                  sub: [
+                    outcomeLine(c.byOutcome),
+                    c.byLine.length ? `By category: ${countLine(c.byLine)}` : null,
+                    c.waitMedian !== null ? `NVC to interview: ${formatInt(c.waitMedian)} days` : null,
+                  ]
                     .filter(Boolean)
                     .join(". "),
                   tone: "primary",

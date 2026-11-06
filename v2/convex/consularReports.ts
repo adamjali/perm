@@ -78,6 +78,9 @@ const reportInput = v.object({
   resolvedOn: optionalText,
   slipColor: optionalText,
   askedToEmailDocs: optionalText,
+  line: optionalText,
+  holdReason: optionalText,
+  cancelledBy: optionalText,
 });
 
 /** The wire shape of a submission, for the HTTP layer that builds one. */
@@ -221,12 +224,20 @@ const viewV = v.object({
       count: nullableNumber,
       open: v.boolean(),
       byOutcome: v.array(countV),
+      byLine: v.array(countV),
       waitMedian: nullableNumber,
       after: v.object({ finished: nullableNumber, waiting: nullableNumber, median: nullableNumber }),
     }),
   ),
   weeks: v.array(v.object({ start: v.string(), count: nullableNumber, partial: v.boolean() })),
-  results: v.object({ days: v.number(), n: nullableNumber, g221: nullableNumber, share: nullableNumber }),
+  results: v.object({
+    days: v.number(),
+    n: nullableNumber,
+    g221: nullableNumber,
+    share: nullableNumber,
+    holdReasons: v.array(countV),
+  }),
+  moved: v.object({ days: v.number(), n: nullableNumber, byWho: v.array(countV) }),
   wait: v.object({ days: v.number(), n: nullableNumber, median: nullableNumber }),
 });
 
@@ -351,6 +362,9 @@ export const listForAdmin = query({
       resolvedOn: v.union(v.string(), v.null()),
       slipColor: v.union(v.string(), v.null()),
       askedToEmailDocs: v.union(v.string(), v.null()),
+      line: v.union(v.string(), v.null()),
+      holdReason: v.union(v.string(), v.null()),
+      cancelledBy: v.union(v.string(), v.null()),
       createdAt: v.number(),
       updatedAt: v.number(),
       hidden: v.boolean(),
@@ -373,10 +387,26 @@ export const listForAdmin = query({
       resolvedOn: r.resolvedOn ?? null,
       slipColor: r.slipColor ?? null,
       askedToEmailDocs: r.askedToEmailDocs ?? null,
+      line: r.line ?? null,
+      holdReason: r.holdReason ?? null,
+      cancelledBy: r.cancelledBy ?? null,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       hidden: r.hidden === true,
     }));
+  },
+});
+
+/** The admin page's Delete button: the report is gone for good, from every figure and from this list. */
+export const deleteForAdmin = mutation({
+  args: { id: v.id("consularReports") },
+  returns: v.boolean(),
+  handler: async (ctx, a) => {
+    await requireAdmin(ctx);
+    const row = await ctx.db.get(a.id);
+    if (!row) return false;
+    await ctx.db.delete(a.id);
+    return true;
   },
 });
 
@@ -411,6 +441,9 @@ export const changedSince = internalQuery({
         outcome: v.string(),
         refusalGround: v.union(v.string(), v.null()),
         interviewOn: v.union(v.string(), v.null()),
+        line: v.union(v.string(), v.null()),
+        holdReason: v.union(v.string(), v.null()),
+        cancelledBy: v.union(v.string(), v.null()),
         createdAt: v.number(),
         updatedAt: v.number(),
         hidden: v.boolean(),
@@ -431,6 +464,9 @@ export const changedSince = internalQuery({
         outcome: r.outcome,
         refusalGround: r.refusalGround ?? null,
         interviewOn: r.interviewOn ?? null,
+        line: r.line ?? null,
+        holdReason: r.holdReason ?? null,
+        cancelledBy: r.cancelledBy ?? null,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         hidden: r.hidden === true,

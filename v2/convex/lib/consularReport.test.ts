@@ -7,6 +7,7 @@ import {
   REPORT_CATEGORIES,
   activityDay,
   latestAllowedDay,
+  linesFor,
   ownerDigest,
   postWords,
   summarizeReports,
@@ -148,6 +149,63 @@ describe("validateReport", () => {
   });
 });
 
+describe("the exact category, why the 221(g), who cancelled", () => {
+  const ok = (over: ReportInput) => validateReport({ ...base, ...over }, TODAY);
+
+  it("takes an exact category only from the kind of visa's own list", () => {
+    expect(ok({ line: "eb2" })).toMatchObject({ ok: true, value: { line: "eb2" } });
+    expect(ok({ category: "family", line: "f2a" })).toMatchObject({ ok: true, value: { line: "f2a" } });
+    expect(ok({ category: "immediate", line: "ir1" })).toMatchObject({ ok: true, value: { line: "ir1" } });
+    // F2A isn't an employment category, and an H-1B has none.
+    expect(ok({ line: "f2a" })).toMatchObject({ ok: false, code: "line" });
+    expect(ok({ category: "h1b", line: "eb2" })).toMatchObject({ ok: false, code: "line" });
+    expect(ok({ line: "eb9" })).toMatchObject({ ok: false, code: "choice" });
+    expect(linesFor("h1b")).toEqual([]);
+    expect(linesFor("family").map((l) => l.id)).toEqual(["f1", "f2a", "f2b", "f3", "f4"]);
+  });
+
+  it("keeps why the 221(g) only on a 221(g), for any kind of visa", () => {
+    expect(ok({ category: "immediate", outcome: "221g", holdReason: "public-charge" })).toMatchObject({
+      ok: true,
+      value: { holdReason: "public-charge" },
+    });
+    expect(ok({ category: "h1b", outcome: "221g", holdReason: "admin" })).toMatchObject({ ok: true });
+    expect(ok({ outcome: "refused", holdReason: "documents" })).toMatchObject({ ok: false, code: "hold-reason" });
+  });
+
+  it("keeps who cancelled only on a cancelled or moved interview", () => {
+    expect(ok({ outcome: "cancelled", cancelledBy: "consulate" })).toMatchObject({ ok: true, value: { cancelledBy: "consulate" } });
+    expect(ok({ outcome: "rescheduled", cancelledBy: "me" })).toMatchObject({ ok: true, value: { cancelledBy: "me" } });
+    expect(ok({ outcome: "issued", cancelledBy: "me" })).toMatchObject({ ok: false, code: "cancelled-by" });
+  });
+
+  it("prints each breakdown only past the floor, and leaves out answers nobody gave", () => {
+    const twoEb2 = [rec({ line: "eb2" }), rec({ line: "eb2" })];
+    // Two employment reports: the cell is shut, so no category breakdown either.
+    expect(summarizeReports(twoEb2, TODAY).categories.find((c) => c.id === "employment")!.byLine).toEqual([]);
+    const cell = summarizeReports([...twoEb2, rec({ line: "eb3" }), rec()], TODAY).categories.find((c) => c.id === "employment")!;
+    expect(cell.byLine).toEqual([
+      { id: "eb2", label: "EB-2", count: 2 },
+      { id: "eb3", label: "EB-3", count: 1 },
+    ]);
+
+    const g = (holdReason?: string) => rec({ outcome: "221g", holdReason } as Partial<ReportRecord>);
+    expect(summarizeReports([g("public-charge"), g("documents"), rec(), rec()], TODAY).results.holdReasons).toEqual([]);
+    expect(summarizeReports([g("public-charge"), g("public-charge"), g()], TODAY).results.holdReasons).toEqual([
+      { id: "public-charge", label: "Public charge or I-864", count: 2 },
+    ]);
+
+    const moved = (cancelledBy?: string) =>
+      rec({ outcome: "cancelled", interviewOn: undefined, scheduledOn: "2026-11-01", cancelledBy } as Partial<ReportRecord>);
+    expect(summarizeReports([moved("consulate"), moved("me")], TODAY).moved).toEqual({ days: 90, n: null, byWho: [] });
+    expect(summarizeReports([moved("consulate"), moved("consulate"), moved()], TODAY).moved).toEqual({
+      days: 90,
+      n: 3,
+      byWho: [{ id: "consulate", label: "The consulate", count: 2 }],
+    });
+  });
+});
+
 describe("the dates a report is read by", () => {
   it("dates a report by its newest step, or the day it was saved", () => {
     expect(activityDay(rec({ scheduledOn: "2026-09-01", interviewOn: "2026-10-01", resolvedOn: "2026-10-15" }))).toBe("2026-10-15");
@@ -173,7 +231,8 @@ describe("summarizeReports: the floor", () => {
     const w30 = v.windows.find((w) => w.days === 30)!;
     expect(w30).toMatchObject({ total: 2, open: false, byOutcome: [] });
     expect(v.categories.find((c) => c.id === "employment")).toMatchObject({ count: null, open: false, byOutcome: [] });
-    expect(v.results).toEqual({ days: 90, n: null, g221: null, share: null });
+    expect(v.results).toEqual({ days: 90, n: null, g221: null, share: null, holdReasons: [] });
+    expect(v.moved).toEqual({ days: 90, n: null, byWho: [] });
     expect(v.wait).toMatchObject({ n: null, median: null });
     expect(v.weeks.every((w) => w.count === null)).toBe(true);
   });
@@ -193,7 +252,7 @@ describe("summarizeReports: the floor", () => {
     expect(v.categories.find((c) => c.id === "employment")).toMatchObject({ count: 3, open: true });
     expect(v.categories.find((c) => c.id === "h4")).toMatchObject({ count: null, open: false, byOutcome: [] });
     // Four interviews with a result: two issued, one 221(g), one refused.
-    expect(v.results).toEqual({ days: 90, n: 4, g221: 1, share: 0.25 });
+    expect(v.results).toEqual({ days: 90, n: 4, g221: 1, share: 0.25, holdReasons: [] });
     // The week of Nov 2 holds four interviews held; the weeks before hold none.
     expect(v.weeks[v.weeks.length - 1]).toMatchObject({ start: "2026-11-02", count: 4, partial: true });
     expect(v.weeks[v.weeks.length - 2]?.count).toBeNull();
@@ -271,6 +330,9 @@ describe("ownerDigest: the owner's daily email", () => {
     outcome: "221g",
     refusalGround: null,
     interviewOn: "2026-11-03",
+    line: null,
+    holdReason: null,
+    cancelledBy: null,
     createdAt: since + 10,
     updatedAt: since + 10,
     hidden: false,
@@ -293,6 +355,8 @@ describe("ownerDigest: the owner's daily email", () => {
     expect(d.text).toContain("Ciudad Juarez");
     expect(d.text).toContain("Refused (Public charge)");
     expect(d.text).toContain("edited. hidden.");
+    const g = ownerDigest([row({ category: "family", line: "f2a", holdReason: "public-charge" })], since, "https://x")!;
+    expect(g.text).toContain("- Manila, Family preference, F2A: 221(g), more processing (Public charge or I-864).");
     expect(d.text).toContain("https://x/admin#reviews");
   });
 

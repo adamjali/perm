@@ -67,10 +67,22 @@ describe("consularReports.save", () => {
       outcome: "221g",
       slipColor: "white",
       askedToEmailDocs: "yes",
+      holdReason: "admin",
       resolvedOn: daysAgo(3),
     };
     const r = await t.mutation(internal.consularReports.save, save(details));
     expect(r.ok).toBe(true);
+    expect(await t.query(internal.consularReports.mine, { post: POST, editKeyHash: KEY })).toEqual(details);
+  });
+
+  it("keeps the exact category and who cancelled, and reads them back", async () => {
+    const t = createTestContext();
+    const details = { category: "family", line: "f2a", scheduledOn: daysAgo(20), interviewOn: daysAgo(2), outcome: "cancelled", cancelledBy: "consulate" };
+    expect((await t.mutation(internal.consularReports.save, save(details))).ok).toBe(true);
+    expect(await t.query(internal.consularReports.mine, { post: POST, editKeyHash: KEY })).toEqual(details);
+    // An exact category from another kind of visa is refused and nothing changes.
+    const bad = await t.mutation(internal.consularReports.save, save({ ...details, line: "eb2" }));
+    expect(bad.ok).toBe(false);
     expect(await t.query(internal.consularReports.mine, { post: POST, editKeyHash: KEY })).toEqual(details);
   });
 

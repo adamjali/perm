@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   APPROVED_OUTCOMES,
+  CANCELLED_BY,
+  HOLD_REASONS,
   MIN_REPORTS,
+  MOVED_OUTCOMES,
   POST_SLUG,
   REFUSAL_GROUNDS,
   REPORT_CATEGORIES,
@@ -19,6 +22,7 @@ import {
   SLIP_COLORS,
   YES_NO_UNSURE,
   isoToday,
+  linesFor,
   takesNonimmigrant,
   takesNvc,
   validateReport,
@@ -31,8 +35,9 @@ import { cn } from "@/lib/utils";
 /**
  * "Share your interview": one report for one consulate, no account (convex/consularReports.ts).
  *
- * No name, no case number and no free-text box: a kind of visa, NVC's month, the appointment dates and what
- * happened, each from a fixed list. It's for anyone interviewing at the post, whatever the visa (owner, Nov 5
+ * No name, no case number and no free-text box: a kind of visa and its exact category (EB-2, F2A, IR-1),
+ * NVC's month, the appointment dates and what happened, why a 221(g) and who cancelled an interview, each from
+ * a fixed list. It's for anyone interviewing at the post, whatever the visa (owner, Nov 5
  * 2026: everyone goes through the same posts), with employment and the work visas listed first. A question
  * shows only where it applies (NVC's month for an immigrant visa or a K-1; the drop box, the 221(g) slip and
  * the emailed documents for a nonimmigrant visa), and an answer is dropped when the one it depends on
@@ -130,6 +135,7 @@ export function ConsularReportForm({ post, name, className }: { post: string; na
     setForm((f) => {
       const next = { ...f, [k]: v };
       if (k === "category") {
+        if (!linesFor(next.category).some((l) => l.id === next.line)) next.line = null;
         if (!takesNvc(next.category)) next.nvcCompleteMonth = null;
         if (!takesNonimmigrant(next.category)) {
           next.mode = null;
@@ -144,7 +150,9 @@ export function ConsularReportForm({ post, name, className }: { post: string; na
         if (next.outcome !== "221g") {
           next.slipColor = null;
           next.askedToEmailDocs = null;
+          next.holdReason = null;
         }
+        if (!MOVED_OUTCOMES.has(next.outcome ?? "")) next.cancelledBy = null;
       }
       return next;
     });
@@ -221,6 +229,7 @@ export function ConsularReportForm({ post, name, className }: { post: string; na
   }
 
   const outcome = form.outcome ?? "";
+  const lines = linesFor(form.category);
   const nvcOpen = takesNvc(form.category);
   const nonimmigrant = takesNonimmigrant(form.category);
   const dropbox = form.mode === "dropbox";
@@ -271,6 +280,24 @@ export function ConsularReportForm({ post, name, className }: { post: string; na
                 ))}
               </select>
             </div>
+            {lines.length ? (
+              <Fragment>
+                {" "}
+                <ChoiceField
+                  id={`${uid}-line`}
+                  label="Exact category"
+                  value={form.line}
+                  options={lines}
+                  blank="Not saying"
+                  hint={
+                    form.category === "family"
+                      ? "F1 a citizen's unmarried children 21 and over, F2A a green card holder's spouse or children under 21, F2B their unmarried children 21 and over, F3 a citizen's married children, F4 a citizen's brothers and sisters."
+                      : "As it appears on the case. Interviews are scheduled category by category."
+                  }
+                  onChange={(v) => set("line", v)}
+                />
+              </Fragment>
+            ) : null}
             {nvcOpen ? (
               <Fragment>
                 {" "}
@@ -387,6 +414,32 @@ export function ConsularReportForm({ post, name, className }: { post: string; na
                 <DateField id={`${uid}-resolved`} label={resolvedLabel} value={form.resolvedOn} onChange={(v) => set("resolvedOn", v)} />
               </Fragment>
             ) : null}
+            {outcome === "221g" ? (
+              <Fragment>
+                {" "}
+                <ChoiceField
+                  id={`${uid}-hold`}
+                  label="Why the 221(g)"
+                  value={form.holdReason}
+                  options={HOLD_REASONS}
+                  blank="Not saying"
+                  onChange={(v) => set("holdReason", v)}
+                />
+              </Fragment>
+            ) : null}
+            {MOVED_OUTCOMES.has(outcome) ? (
+              <Fragment>
+                {" "}
+                <ChoiceField
+                  id={`${uid}-who`}
+                  label="Who cancelled or moved it"
+                  value={form.cancelledBy}
+                  options={CANCELLED_BY}
+                  blank="Not saying"
+                  onChange={(v) => set("cancelledBy", v)}
+                />
+              </Fragment>
+            ) : null}
             {outcome === "221g" && nonimmigrant ? (
               <Fragment>
                 {" "}
@@ -447,6 +500,7 @@ function ChoiceField({
   value,
   options,
   blank,
+  hint,
   onChange,
 }: {
   id: string;
@@ -454,12 +508,19 @@ function ChoiceField({
   value: string | null | undefined;
   options: readonly { id: string; label: string }[];
   blank: string;
+  hint?: string;
   onChange: (v: string | null) => void;
 }) {
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
-      <select id={id} className={selectCls} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
+      <select
+        id={id}
+        className={selectCls}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        aria-describedby={hint ? `${id}-hint` : undefined}
+      >
         <option value="">{blank}</option>
         {options.map((o) => (
           <option key={o.id} value={o.id}>
@@ -467,6 +528,14 @@ function ChoiceField({
           </option>
         ))}
       </select>
+      {hint ? (
+        <>
+          {" "}
+          <p id={`${id}-hint`} className="mt-1.5 text-sm text-muted-foreground">
+            {hint}
+          </p>
+        </>
+      ) : null}
     </div>
   );
 }
