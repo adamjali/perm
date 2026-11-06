@@ -149,6 +149,16 @@ export const DATE_SOURCE: Readonly<Record<string, DateSource>> = {
   "/perm-rfi-audit/[stage]": "sweep",
   "/perm-decision-activity": "sweep",
   "/perm-employers/under-review": "sweep",
+  // Pages that print the sweep's live record (a case lookup, the case lists, the boards): dated by the day the
+  // record was last read, never by their code's last change (a lookup read "Updated November 4" on Nov 6).
+  "/perm-case-status": "sweep",
+  "/pwd-cases": "sweep",
+  "/lca-cases": "sweep",
+  "/seasonal-cases": "sweep",
+  "/case-search": "sweep",
+  "/filings-by-day": "sweep",
+  "/perm-by-the-numbers": "sweep",
+  "/today": "sweep",
 
   "/h1b-employers": "h1b",
   "/h1b-employers/[state]": "h1b",

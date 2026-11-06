@@ -169,7 +169,9 @@ export function ColumnChart({
                 className={cn(
                   "relative flex-1 border-t-2",
                   c.now ? "border-foreground bg-primary" : FILL[tone],
-                  c.partial && "bg-hatch text-input",
+                  // A whole outline around the stripes: with a top line alone, a short
+                  // striped bar (and the key's small square) read as the letter Z.
+                  c.partial && "border-2 border-foreground bg-hatch text-input",
                 )}
                 style={{ height: `${h}%` }}
               >
@@ -197,7 +199,7 @@ export function ColumnChart({
           ) : null}{" "}
           {columns.some((c) => c.partial) ? (
             <li className="flex items-start gap-2">
-              <span aria-hidden="true" className="mt-1 inline-block size-3.5 shrink-0 border-t-2 border-foreground bg-hatch text-input" />
+              <span aria-hidden="true" className="mt-0.5 inline-block size-4 shrink-0 border-2 border-foreground bg-hatch text-input" />
               {partialKey}{" "}
             </li>
           ) : null}
