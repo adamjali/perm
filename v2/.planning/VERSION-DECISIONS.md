@@ -324,3 +324,14 @@ average near 26); they get 60 s. **0.0.67** (Nov 2) is inside the release floor 
 line are gone: 10.6.5 carries the `parentRenderTree` fix upstream (read in its build). Checked in Storybook on
 this Mac: all 13 tour stories render with no error, the dashboard with its 21 `next/link` links, the reminder
 email inside its frame.
+
+## November 6 2026: `convex` 1.49.0
+
+Published Oct 30 2026, 4:55 PM UTC (`npm view convex time`), so it cleared the 7-day release floor at 11:55 AM EST
+Nov 6; installed at 12:03 PM, from 1.48.0. No `@convex-dev/*` or `convex-test` peer asked for a change. What 1.49
+brings (changelog read Nov 2): `v.function()` for function-handle arguments, and the end of Node 20 support. Every
+workflow runs Node 24.x and the server runs v24.22.2, so nothing here ran Node 20. Nothing in the code uses function
+handles yet, and `npx convex codegen` (dev only) left `_generated/api` unchanged. `npx convex ai-files update`
+rewrote `convex/_generated/ai/guidelines.md` (the same rules, regrouped, with notes on newer APIs) and the three
+Convex agent skills under `.agents/skills/`. Both typecheckers passed; the gate and the full suite are recorded in the
+commit that takes it.
