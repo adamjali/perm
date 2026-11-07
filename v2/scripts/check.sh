@@ -85,8 +85,10 @@ fi
 # The gates that walk the whole tree (glued text, grid tracks, nothing pressable
 # in a summary, every page in the palette...) name no file, so neither run above
 # finds them, and three pushes went red on them (Oct 11, 16 and 23 2026). Any
-# change under src/ or convex/ runs every test that reads a directory: about 90 s.
-if { git diff --name-only --relative "$base" 2>/dev/null; git ls-files --others --exclude-standard; } | grep -qE '^(src|convex)/'; then
+# change in a folder those gates read runs every test that reads a directory:
+# about 90 s. Until Nov 7 2026 only src/ and convex/ counted, and a docs-only
+# push went red on the legal-name gate, which also reads docs/ and scripts/.
+if { git diff --name-only --relative "$base" 2>/dev/null; git ls-files --others --exclude-standard; } | grep -qE '^(src|convex|scripts|docs|sdk|sdk-python|claude-plugin|extension|workers|test-utils)/'; then
   walkers=$(grep -rlE "readdirSync|globSync|readdir\(|opendirSync" --include='*.test.ts' --include='*.test.tsx' src convex test-utils 2>/dev/null | xargs -n1 basename | sort -u | tr '\n' ' ')
   echo "   and the gates that walk the whole tree:"
   # shellcheck disable=SC2086

@@ -2203,3 +2203,10 @@ Ledger with every finding: [`.planning/audit-2026-11-04.md`](.planning/audit-202
   The package step copies the folder's contents and fails on any file missing from the package; nginx serves
   `/videos` from disk with the other public folders.
 - **The homepage's approval figure is one bar** (`ApprovalBar`, `approvalRate().parts`): certified, denied, withdrawn.
+
+## Nov 7 2026, in two lines
+
+- **Both CLAUDE.md files hold only what every session needs** (12 KB and 33 KB, from 972 KB); every lesson moved word
+  for word to `v2/docs/notes/`, and `scripts/test_instruction_size.py` keeps them small. Detail in `testing.md`.
+- **New lessons go in their area's notes file and a line here**; a CLAUDE.md takes only a standing decision or a rule
+  every change follows.

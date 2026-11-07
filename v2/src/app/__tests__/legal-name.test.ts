@@ -41,6 +41,12 @@ const ALLOWED = new Set([
   // Instructions for the store listing, where the trader's legal name is the law's question.
   "extension/STORE.md",
 ]);
+/**
+ * The project's history (moved word for word from the CLAUDE.md files on Nov 7 2026) records the rename and the
+ * decision about where the name may appear. It's a record, never shown on the site, as the CLAUDE.md files it came
+ * from were never scanned.
+ */
+const ALLOWED_DIRS = ["docs/notes/"];
 const SCAN = ["src", "convex", "scripts", "sdk", "sdk-python", "claude-plugin", "extension", "docs", "workers"];
 const SKIP_DIRS = new Set(["node_modules", "_generated", "dist", ".next", "__pycache__", "__fixtures__", "fixtures"]);
 const TEXT = /\.(tsx?|mjs|cjs|js|py|md|json|toml|txt)$|(^|\/)LICENSE$/;
@@ -75,7 +81,7 @@ describe("the legal entity", () => {
         const rel = relative(V2, f).split("\\").join("/");
         if (!TEXT.test(rel) || /(^|\/)__tests__\/|\.test\.|(^|\/)test_[^/]+\.py$/.test(rel)) continue;
         scanned += 1;
-        if (NAMES.test(readFileSync(f, "utf8")) && !ALLOWED.has(rel)) named.push(rel);
+        if (NAMES.test(readFileSync(f, "utf8")) && !ALLOWED.has(rel) && !ALLOWED_DIRS.some((d) => rel.startsWith(d))) named.push(rel);
       }
     }
     // A scan that read nothing would pass anything.

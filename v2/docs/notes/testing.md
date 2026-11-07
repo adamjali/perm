@@ -562,3 +562,20 @@ table above was updated with it.
 
 **The weekly digest may send 30 a day** (`NEWSLETTER_DAILY_CAP=30` on production, from 15; the code's default and the
 email ledger already counted 30).
+
+## Nov 7 2026: the instruction files were the thing that didn't fit
+
+- **Every session loaded 972 KB before its first word**: `v2/CLAUDE.md` was 753 KB (10,742 lines, 255 sections) and the
+  root `CLAUDE.md` 220 KB, because every session appended its lessons there. A reopened session failed with "Prompt is
+  too long" on a conversation of only about 40,000 tokens: these two files filled the rest.
+- **They're 12 KB and 33 KB now.** Every section moved word for word into this folder; a line-by-line count of the old
+  files against the new set found every line except five intended edits (two dates, the stack versions, the docs line,
+  one stale troubleshooting row). The root keeps deployment and the owner's standing decisions; `v2/CLAUDE.md` keeps
+  the engineering sections and "Rules every change follows".
+- **`scripts/test_instruction_size.py`** (run by `pnpm check` and CI) fails when the root passes 16 KB or v2 passes 40 KB,
+  when a notes file isn't listed in the README or v2's table, or when a link names a missing file. Probed: 41,000 extra
+  bytes in v2 and an unlisted notes file each turned it red (exit 1).
+- **The first push went red on the legal-name gate**, which reads `docs/` as well as `src/`: the moved history records
+  the Oct rename, and the old CLAUDE.md files had never been scanned. `docs/notes/` is allowed there now (a record,
+  never shown on the site; probed: the name in any other `docs/` file still fails). `pnpm check` had skipped the gate
+  because it ran the whole-tree gates only for `src/` and `convex/`; it now runs them for any folder they read.
