@@ -108,7 +108,8 @@ Each was decided once and holds until the owner changes it. The reasons are in t
 - Meta's AI crawler, Perplexity, ClaudeBot and Applebot read at 30 pages a minute; people's AI assistants have their own room at the front door (Oct 2 to Oct 22).
 - Sign-in has no Cloudflare check; sign-up and password reset keep one (Oct 23).
 - Cloudflare Web Analytics stays off; never ask again (Oct 25, Oct 26).
-- Analytics: clicks from one page load in four, no automatic field-change or form-submit events (Nov 5); click text is masked in the signed-in app (Oct 12).
+- Analytics: PostHog sends fewer events rather than paying (Nov 4): clicks and web vitals from one page load in four, no automatic field-change or form-submit events (Nov 5); click text is masked in the signed-in app (Oct 12).
+- The chat stays on Gemini's free tier, as the Privacy Policy discloses, with OpenRouter as its last fallback (Oct 29, Nov 5).
 
 **What the site says and shows**
 - English only: translated pages answer 308 to their English pages (Oct 29, Oct 31). No DACA section (Oct 24).
@@ -141,6 +142,7 @@ Each was decided once and holds until the owner changes it. The reasons are in t
 - `/press` and the firm's-site section stay as they were built (Oct 11). The homepage opens with the answer, and the header offers Sign in only (Oct 27).
 - Sign-up is minimal: a heading, Google, email, an optional name, a password and one line of small print (Oct 26). Nobody is sent out of the app for their role (Oct 26).
 - Phones with a notch run edge to edge; Chrome on iPhone's light side strips stay (Oct 24).
+- The caution-tape banner and the hero's grain stay (Nov 4). A deleted account's reviews, support mail, contact messages and ratings are kept (Nov 4).
 
 ## Resources
 
